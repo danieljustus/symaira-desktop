@@ -6338,9 +6338,10 @@ mod tests {
         let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
         let body_text = String::from_utf8_lossy(&body);
         let expected_path = format!("notebooks{}research.md", std::path::MAIN_SEPARATOR);
+        let expected_path_json = serde_json::to_string(&expected_path).unwrap();
         assert!(
             body_text.starts_with(&format!(
-                r#"{{"id":"research","path":"{expected_path}","title":"Research","created":"","sources":[{{"path":"../outside.md"#
+                r#"{{"id":"research","path":{expected_path_json},"title":"Research","created":"","sources":[{{"path":"../outside.md"#
             )),
             "unexpected notebook JSON order: {body_text}"
         );

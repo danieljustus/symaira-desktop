@@ -154,9 +154,7 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
     ));
     for path in paths.iter().take(3) {
-        let markdown_path =
-            vault_relative_markdown_path(Path::new(path)).unwrap_or_else(|| path.clone());
-        events.push(AskEvent::answer(&format!("- [[{markdown_path}]]\n")));
+        events.push(AskEvent::answer(&format!("- [[{path}]]\n")));
     }
     events.push(AskEvent::tool("done"));
     if let Some(event) = events.last_mut() {
@@ -197,17 +195,6 @@ fn display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
     } else {
         super::relative_path(root, path)
     }
-}
-
-fn vault_relative_markdown_path(path: &Path) -> Option<String> {
-    path.components()
-        .map(|component| match component {
-            std::path::Component::Normal(part) => part.to_str(),
-            _ => None,
-        })
-        .collect::<Option<Vec<_>>>()
-        .filter(|parts| !parts.is_empty())
-        .map(|parts| parts.join("/"))
 }
 
 fn emit_ask_events(events: &[AskEvent], output_json: bool) -> ExitCode {
@@ -281,24 +268,5 @@ fn emit_chunk(chunk: &str, output_json: bool) -> ExitCode {
         }
     } else {
         super::write_stdout(format!("{{{chunk}}}\n"))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::vault_relative_markdown_path;
-    use std::path::Path;
-
-    #[test]
-    fn ask_markdown_links_use_forward_slashes_without_normalizing_other_paths() {
-        let relative = Path::new("nested").join("Note.md");
-        assert_eq!(
-            vault_relative_markdown_path(&relative).as_deref(),
-            Some("nested/Note.md")
-        );
-        assert_eq!(
-            vault_relative_markdown_path(Path::new("nested/../outside.md")),
-            None
-        );
     }
 }

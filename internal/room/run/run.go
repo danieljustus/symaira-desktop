@@ -11,6 +11,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/internal/room/members"
 )
 
 var (
@@ -246,9 +247,15 @@ func Fail(roomDir, runID, errMsg string, id *identity.Identity) (*event.Event, e
 
 func ProjectRuns(events []*event.Event) map[string]*Run {
 	runs := make(map[string]*Run)
+	membership := members.NewState()
 
 	for _, ev := range events {
 		switch ev.Kind {
+		case event.KindRoomCreated, event.KindMemberAdded, event.KindMemberRemoved, event.KindMemberRoleChanged:
+			// Replay membership in journal order; ApplyEvent rejects
+			// unauthorized changes before mutating state.
+			_ = membership.ApplyEvent(ev)
+
 		case event.KindRunRequested:
 			var b struct {
 				RunID    string `json:"run_id"`
@@ -275,6 +282,12 @@ func ProjectRuns(events []*event.Event) map[string]*Run {
 				ApprovalID string `json:"approval_id"`
 				Scope      string `json:"scope"`
 				ExpiresAt  string `json:"expires_at"`
+			}
+			// Only a current member allowed to approve, with a valid
+			// signature, can approve; anything else leaves the run as is.
+			// `symroom verify` reports such events as membership findings.
+			if !approvalAuthorized(membership, ev) {
+				continue
 			}
 			if err := json.Unmarshal(ev.Body, &b); err == nil {
 				if r, exists := runs[b.RunID]; exists {
@@ -399,4 +412,12 @@ func Get(roomDir, runID string) (*Run, error) {
 		return nil, ErrRunNotFound
 	}
 	return r, nil
+}
+
+func approvalAuthorized(membership *members.State, ev *event.Event) bool {
+	author, ok := membership.Members[ev.Author]
+	if !ok || ev.VerifySignature(author.PublicKey) != nil {
+		return false
+	}
+	return membership.ApplyEvent(ev) == nil
 }

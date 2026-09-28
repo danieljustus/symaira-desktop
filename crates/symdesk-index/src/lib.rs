@@ -1746,6 +1746,21 @@ fn storage_path(vault_root: &Path, relative: &Path) -> Result<ValidatedStoragePa
     Ok(ValidatedStoragePath { io_path, key_path })
 }
 
+/// Builds the ordinary absolute path key used by `refresh_index` for a
+/// vault-relative document path.
+///
+/// This is useful when a caller indexes bytes it has just written: filesystem
+/// operations may use a canonical Windows verbatim root (`\\?\C:\...`),
+/// while persisted sidecar keys intentionally omit that prefix to match Go's
+/// `filepath.Join` keys.
+///
+/// # Errors
+/// Returns an error when the path is outside the vault or the root/path cannot
+/// be represented as a UTF-8 sidecar key.
+pub fn vault_document_path(vault_root: &Path, relative: &Path) -> Result<PathBuf, SidecarError> {
+    Ok(storage_path(vault_root, relative)?.key_path)
+}
+
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
     validate_utf8_path(path, "vault root")?;
     let absolute = if path.is_absolute() {
@@ -2067,6 +2082,7 @@ mod source_tests {
     use super::absolute_non_verbatim;
     use super::{
         IndexedDocument, MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry,
+        vault_document_path,
     };
 
     fn temp_dir(label: &str) -> PathBuf {
@@ -2082,6 +2098,22 @@ mod source_tests {
         path
     }
 
+    #[test]
+    fn written_document_key_uses_refresh_index_root_spelling_and_rejects_traversal() {
+        let vault = temp_dir("document-key-vault");
+        let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
+        let expected = canonical_root.join("nested").join("note.md");
+
+        assert_eq!(
+            vault_document_path(&canonical_root, Path::new("nested/note.md"))
+                .expect("document key"),
+            expected
+        );
+        assert!(vault_document_path(&canonical_root, Path::new("../outside.md")).is_err());
+
+        let _ = fs::remove_dir_all(vault);
+    }
+
     #[cfg(windows)]
     #[test]
     fn external_source_root_matches_unprefixed_storage_keys() {
@@ -2090,6 +2122,26 @@ mod source_tests {
         let stored_path = Path::new(r"C:\sources\external\nested\note.md");
 
         assert!(stored_path.starts_with(&key_root));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn written_document_key_matches_refresh_index_verbatim_root_key() {
+        let vault = temp_dir("document-key-vault");
+        let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
+        let expected = absolute_non_verbatim(&canonical_root)
+            .expect("ordinary root")
+            .join("nested")
+            .join("note.md");
+
+        assert_eq!(
+            vault_document_path(&canonical_root, Path::new(r"nested\note.md"))
+                .expect("document key"),
+            expected
+        );
+        assert!(vault_document_path(&canonical_root, Path::new(r"nested\..\outside.md")).is_err());
+
+        let _ = fs::remove_dir_all(vault);
     }
 
     #[cfg(unix)]

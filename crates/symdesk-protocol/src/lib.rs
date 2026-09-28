@@ -3799,7 +3799,10 @@ fn write_completed_note(
     if let Err(error) = write_atomic_root(root, &relative, content.as_bytes(), 0o644) {
         return Err(error.to_string());
     }
-    let file_path = state.vault_root.join(&relative);
+    let file_path = match symdesk_index::vault_document_path(&state.vault_root, &relative) {
+        Ok(path) => path,
+        Err(error) => return Err(error.to_string()),
+    };
     let Some(file_key) = file_path.to_str() else {
         return Err("document path is not valid UTF-8".to_owned());
     };
@@ -4740,7 +4743,12 @@ async fn handle_put_file(
     if let Err(error) = write_atomic_root(&root, &relative, &data, 0o644) {
         return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
     }
-    let file_path = state.vault_root.join(&relative);
+    let file_path = match symdesk_index::vault_document_path(&state.vault_root, &relative) {
+        Ok(path) => path,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
     let Some(file_key) = file_path.to_str() else {
         return json_error(
             StatusCode::INTERNAL_SERVER_ERROR,

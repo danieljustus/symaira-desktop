@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -170,4 +172,44 @@ func newFixtureTreeRepository(t *testing.T) (string, string) {
 	portgenGit(t, repoRoot, "add", "--", ".")
 	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: complete fixture tree")
 	return repoRoot, portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
+}
+
+func TestCommitFixtureOutputsAndCreatePatchArtifact(t *testing.T) {
+	repoRoot, base := newFixtureTreeRepository(t)
+	if err := verifyCallerSnapshot(repoRoot, base); err != nil {
+		t.Fatalf("verifyCallerSnapshot() at P error = %v", err)
+	}
+	if err := commitFixtureOutputs(repoRoot, base); !errors.Is(err, errNoFixtureChanges) {
+		t.Fatalf("commitFixtureOutputs() without changes error = %v, want errNoFixtureChanges", err)
+	}
+	empty, err := createPatchArtifact(repoRoot, base)
+	if err != nil {
+		t.Fatalf("createPatchArtifact() at P error = %v", err)
+	}
+	if want := artifactMagic + "\n# base-commit: " + base + "\n"; string(empty) != want {
+		t.Fatalf("empty artifact = %q, want %q", empty, want)
+	}
+	fixturePath := filepath.Join(repoRoot, filepath.FromSlash(fixturePaths[0]))
+	if err := os.WriteFile(fixturePath, []byte("generated fixture\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := commitFixtureOutputs(repoRoot, base); err != nil {
+		t.Fatalf("commitFixtureOutputs() error = %v", err)
+	}
+	if err := verifyCallerSnapshot(repoRoot, base); err == nil {
+		t.Fatal("verifyCallerSnapshot() accepted a moved HEAD")
+	}
+	artifact, err := createPatchArtifact(repoRoot, base)
+	if err != nil {
+		t.Fatalf("createPatchArtifact() error = %v", err)
+	}
+	if !bytes.Contains(artifact, []byte("+generated fixture")) {
+		t.Fatalf("artifact lacks generated change:\n%s", artifact)
+	}
+	if err := os.WriteFile(filepath.Join(repoRoot, "stray.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := commitFixtureOutputs(repoRoot, base); err == nil || !strings.Contains(err.Error(), "untracked") {
+		t.Fatalf("commitFixtureOutputs() with untracked output error = %v", err)
+	}
 }

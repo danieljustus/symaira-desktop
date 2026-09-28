@@ -451,6 +451,8 @@ fn mismatched_stored_run_id_cannot_change_a_different_proposal() {
     assert_ok(&output, b"null\n");
 }
 
+// Go's retention writer cannot sync a directory on Windows (issue #967).
+#[cfg(not(windows))]
 #[test]
 fn go_nil_items_survive_rejection_and_render_as_null() {
     for items_field in [",\"items\":null", ""] {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -211,5 +212,44 @@ func TestCommitFixtureOutputsAndCreatePatchArtifact(t *testing.T) {
 	}
 	if err := commitFixtureOutputs(repoRoot, base); err == nil || !strings.Contains(err.Error(), "untracked") {
 		t.Fatalf("commitFixtureOutputs() with untracked output error = %v", err)
+	}
+}
+
+func TestApplyArtifactCommitRejectsMissingAndForeignArtifacts(t *testing.T) {
+	repoRoot, base := newFixtureTreeRepository(t)
+	if err := applyArtifactCommit(repoRoot, filepath.Join(t.TempDir(), "missing.patch")); err == nil || !strings.Contains(err.Error(), "read patch artifact") {
+		t.Fatalf("applyArtifactCommit(missing) error = %v", err)
+	}
+	foreign := filepath.Join(t.TempDir(), "foreign.patch")
+	other := strings.Repeat("b", len(base))
+	if err := os.WriteFile(foreign, []byte(artifactMagic+"\n# base-commit: "+other+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := applyArtifactCommit(repoRoot, foreign); err == nil || !strings.Contains(err.Error(), "does not match checked-out P") {
+		t.Fatalf("applyArtifactCommit(foreign base) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(repoRoot, filepath.FromSlash(fixturePaths[0])), []byte("dirty\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := applyArtifactCommit(repoRoot, foreign); err == nil || !strings.Contains(err.Error(), "clean worktree") {
+		t.Fatalf("applyArtifactCommit(dirty) error = %v", err)
+	}
+}
+
+func TestRunGeneratorCommandReportsFailureOutput(t *testing.T) {
+	goTool, err := exec.LookPath("go")
+	if err != nil {
+		t.Skip("go tool not on PATH")
+	}
+	environment := generationEnvWithActivation(os.Environ())
+	if environment[len(environment)-1] != "PORT_GENERATE=1" {
+		t.Fatalf("generationEnvWithActivation() tail = %q", environment[len(environment)-1])
+	}
+	if err := runGeneratorCommand(goTool, t.TempDir(), environment, "version", "version"); err != nil {
+		t.Fatalf("runGeneratorCommand(version) error = %v", err)
+	}
+	err = runGeneratorCommand(goTool, t.TempDir(), environment, "bogus", "no-such-subcommand")
+	if err == nil || !strings.Contains(err.Error(), "generate bogus") {
+		t.Fatalf("runGeneratorCommand(bogus) error = %v", err)
 	}
 }

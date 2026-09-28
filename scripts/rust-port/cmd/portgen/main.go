@@ -295,19 +295,11 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "MCP initialize fixture", "run", "./scripts/rust-port/cmd/mcpgen"); err != nil {
 		return err
 	}
-	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
-	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/notebookwritegen")
-	cmd.Dir = repoRoot
-	cmd.Env = generationEnv
-	if out, err := cmd.CombinedOutput(); err != nil {
-		fatal("generate notebook write fixture: %v\noutput: %s", err, string(out))
+	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "notebook write fixture", "run", "./scripts/rust-port/cmd/notebookwritegen"); err != nil {
+		return err
 	}
-	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
-	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/baseviewwritegen")
-	cmd.Dir = repoRoot
-	cmd.Env = generationEnv
-	if out, err := cmd.CombinedOutput(); err != nil {
-		fatal("generate base/view write fixture: %v\noutput: %s", err, string(out))
+	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "base/view write fixture", "run", "./scripts/rust-port/cmd/baseviewwritegen"); err != nil {
+		return err
 	}
 
 	commit, release := oracle.Commit, oracle.Release

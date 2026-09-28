@@ -1758,7 +1758,17 @@ fn storage_path(vault_root: &Path, relative: &Path) -> Result<ValidatedStoragePa
 /// Returns an error when the path is outside the vault or the root/path cannot
 /// be represented as a UTF-8 sidecar key.
 pub fn vault_document_path(vault_root: &Path, relative: &Path) -> Result<PathBuf, SidecarError> {
-    Ok(storage_path(vault_root, relative)?.key_path)
+    if relative.as_os_str().is_empty()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(SidecarError::Contract(
+            "document path must contain only vault-relative normal components".to_owned(),
+        ));
+    }
+    let normalized_relative: PathBuf = relative.components().collect();
+    Ok(storage_path(vault_root, &normalized_relative)?.key_path)
 }
 
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
@@ -2078,11 +2088,9 @@ mod source_tests {
         time::{Duration, Instant, SystemTime},
     };
 
-    #[cfg(windows)]
-    use super::absolute_non_verbatim;
     use super::{
         IndexedDocument, MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry,
-        vault_document_path,
+        absolute_non_verbatim, vault_document_path,
     };
 
     fn temp_dir(label: &str) -> PathBuf {
@@ -2102,7 +2110,10 @@ mod source_tests {
     fn written_document_key_uses_refresh_index_root_spelling_and_rejects_traversal() {
         let vault = temp_dir("document-key-vault");
         let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
-        let expected = canonical_root.join("nested").join("note.md");
+        let expected = absolute_non_verbatim(&canonical_root)
+            .expect("ordinary vault root")
+            .join("nested")
+            .join("note.md");
 
         assert_eq!(
             vault_document_path(&canonical_root, Path::new("nested/note.md"))

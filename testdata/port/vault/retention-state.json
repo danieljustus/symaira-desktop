@@ -8,7 +8,7 @@
   "source_hashes": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/retention/fingerprint.go": "d07bc03938544087e0a62ae5e9b1c6ad803cffb6132ea2f845f0fccf7d0bfa74",
-    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c",
+    "internal/retention/retention.go": "97078902c21b47976777f61c844f778e82e5715085d8d5be56ac9eb4aad7506c",
     "internal/service/dataset_retention.go": "ca86878cdbed89df1665fcf6c67804c86f964d5f92833a6f613ea8db880278a0",
     "internal/service/port_retention_state_contract_test.go": "4f23c4693543f0ce351ce79c515e14c2718c7d8274995509ef5238e63859beca",
     "internal/service/port_retention_state_unix_test.go": "722e434cac74c4e9a8530658719db27e66d170525667f602b354a5bea39f8876",

@@ -6,7 +6,7 @@
     "release": "v0.1.0"
   },
   "source_hashes": {
-    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c",
+    "internal/retention/retention.go": "97078902c21b47976777f61c844f778e82e5715085d8d5be56ac9eb4aad7506c",
     "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
   },
   "load_rules": [

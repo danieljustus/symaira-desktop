@@ -643,7 +643,15 @@ pub fn load_proposal(vault_root: &Path, run_id: &str) -> Result<Proposal, Retent
     let path = proposal_dir(vault_root).join(format!("{run_id}.json"));
     let data = std::fs::read(&path)
         .map_err(|err| RetentionError::ReadFailed(go_path_error("open", &path, &err)))?;
-    json_decoder::decode_proposal(&data).map_err(RetentionError::DecodeFailed)
+    let proposal = json_decoder::decode_proposal(&data).map_err(RetentionError::DecodeFailed)?;
+    if proposal.run_id != run_id {
+        return Err(RetentionError::Validation(format!(
+            "retention proposal run ID {} does not match requested {}",
+            go_quote(&proposal.run_id),
+            go_quote(run_id)
+        )));
+    }
+    Ok(proposal)
 }
 
 /// Go: `retention.AppendHistory` — idempotent for entries carrying an action id,

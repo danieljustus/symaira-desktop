@@ -206,7 +206,7 @@ func TestNormalizeIngestJobPreservesOnlyStableFields(t *testing.T) {
 	id := strings.Repeat("a", 32)
 	period := time.Now().UTC().Format("2006/01")
 	job := map[string]any{
-		"id": id, "source_path": "archive/" + period + "/" + id + "-report.pdf",
+		"id": id, "source_path": filepath.Join("archive", filepath.FromSlash(period), id+"-report.pdf"),
 		"schema_version": 1, "status": "pending", "original_name": "report.pdf",
 		"content_type": "application/octet-stream", "capability": "ocr",
 		"created_at": now, "updated_at": now,
@@ -226,7 +226,7 @@ func TestNormalizeIngestJobPreservesOnlyStableFields(t *testing.T) {
 	if got["id"] != "<job-id>" || got["source_path"] != "archive/<month>/<upload-id>-report.pdf" || got["created_at"] != "<dynamic>" {
 		t.Fatalf("normalized ingest job = %#v", got)
 	}
-	job["source_path"] = "archive/../escape.pdf"
+	job["source_path"] = filepath.Join("archive", "..", "escape.pdf")
 	body, _ = json.Marshal(job)
 	if _, err := normalizeIngestJob(body); err == nil {
 		t.Fatal("normalizeIngestJob accepted an unsafe archive path")

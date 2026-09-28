@@ -1362,7 +1362,7 @@ func normalizeIngestJob(body []byte) ([]byte, error) {
 		return nil, fmt.Errorf("invalid job id %q", id)
 	}
 	source, _ := job["source_path"].(string)
-	parts := strings.Split(source, "/")
+	parts := strings.Split(filepath.ToSlash(source), "/")
 	if len(parts) != 4 || parts[0] != "archive" || len(parts[1]) != 4 || len(parts[2]) != 2 {
 		return nil, fmt.Errorf("invalid archive path %q", source)
 	}
@@ -1406,7 +1406,7 @@ func assertIngestWrite(vault string, response []byte, body string) error {
 	if err := json.Unmarshal(response, &job); err != nil {
 		return err
 	}
-	if !filepath.IsLocal(job.SourcePath) || !strings.HasPrefix(job.SourcePath, "archive/") {
+	if !filepath.IsLocal(job.SourcePath) || !strings.HasPrefix(filepath.ToSlash(job.SourcePath), "archive/") {
 		return fmt.Errorf("unsafe archive path %q", job.SourcePath)
 	}
 	uploadPath := filepath.Join(vault, filepath.FromSlash(job.SourcePath))

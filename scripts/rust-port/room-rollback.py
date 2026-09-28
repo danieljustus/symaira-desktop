@@ -47,6 +47,57 @@ def ensure_report_safe(report, sensitive_key, failure, cleanup_error):
         raise RuntimeError("source-bound report contains identity private key; report suppressed")
 
 
+def select_msvc_linker(where_output):
+    return next((path.strip() for path in where_output.splitlines()
+                 if "\\vc\\tools\\msvc\\" in path.casefold()
+                 and path.casefold().endswith("\\link.exe")), None)
+
+
+def msvc_linker_from_installation(installation, target, host):
+    if not installation:
+        return None
+    tools = Path(installation) / "VC" / "Tools" / "MSVC"
+    for version in sorted(tools.glob("*"), reverse=True):
+        for host_name in (host, "Hostx64", "HostARM64"):
+            linker = version / "bin" / host_name / target / "link.exe"
+            if linker.is_file():
+                return str(linker)
+    return None
+
+
+def parse_msvc_library_environment(output):
+    allowed = {"LIB", "LIBPATH", "INCLUDE", "VCToolsInstallDir", "WindowsSdkDir",
+               "WindowsSDKVersion", "UniversalCRTSdkDir"}
+    return {name: value for line in output.splitlines()
+            for name, separator, value in [line.partition("=")]
+            if separator and name in allowed}
+
+
+def msvc_library_environment(installation, target, temp, system_root):
+    if not installation:
+        return {}
+    dev_cmd = Path(installation) / "Common7" / "Tools" / "VsDevCmd.bat"
+    if not dev_cmd.is_file():
+        return {}
+    arch = "arm64" if target == "arm64" else "amd64"
+    batch = temp / "msvc-env.cmd"
+    batch.write_text(
+        f'@echo off\ncall "{dev_cmd}" -no_logo -arch={arch} -host_arch={arch} >nul\n'
+        'if errorlevel 1 exit /b 1\nset\n', encoding="utf-8",
+    )
+    result = subprocess.run(
+        [str(system_root / "System32" / "cmd.exe"), "/d", "/c", str(batch)],
+        cwd=temp, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if result.returncode:
+        return {}
+    return parse_msvc_library_environment(result.stdout)
+
+
+def is_git_posix_bin(path):
+    return path.replace("/", "\\").casefold().endswith("\\git\\usr\\bin")
+
+
 def build_environment(temp, rustc):
     home = temp / "build-home"
     data = temp / "build-data"
@@ -60,8 +111,12 @@ def build_environment(temp, rustc):
     # Native compilers and linkers are installed on the runner and may live
     # outside fixed system directories. Keep PATH for tool discovery, while
     # clearing HOME and the credential/user-state environment.
-    path_entries = [os.environ.get("PATH", "")]
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
     if os.name == "nt":
+        # Git Bash ships a GNU link.exe. Rust can discover the MSVC linker
+        # through the installed toolchain, but only if that GNU binary is
+        # absent from the isolated build PATH.
+        path_entries = [path for path in path_entries if not is_git_posix_bin(path)]
         system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
         path_entries.extend((system_root / "System32", system_root))
 
@@ -92,6 +147,38 @@ def build_environment(temp, rustc):
     if os.name == "nt":
         env["SystemRoot"] = str(system_root)
         env["WINDIR"] = str(system_root)
+        linker_paths = subprocess.run(["where.exe", "link.exe"], text=True,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        linker = select_msvc_linker(linker_paths.stdout)
+        target = "arm64" if platform.machine().casefold() in ("arm64", "aarch64") else "x64"
+        vswhere = shutil.which("vswhere.exe") or str(
+            Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+            / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+        )
+        installation = ""
+        if Path(vswhere).is_file():
+            installation = subprocess.run(
+                [vswhere, "-latest", "-products", "*", "-property", "installationPath"],
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            ).stdout.strip()
+        if not linker:
+            host = "HostARM64" if target == "arm64" else "Hostx64"
+            linker = msvc_linker_from_installation(installation, target, host)
+        if linker and Path(linker).is_file():
+            triple_arch = "AARCH64" if target == "arm64" else "X86_64"
+            env[f"CARGO_TARGET_{triple_arch}_PC_WINDOWS_MSVC_LINKER"] = linker
+            env["PATH"] = os.pathsep.join((str(Path(linker).parent), env["PATH"]))
+            if not os.environ.get("LIB"):
+                env.update(msvc_library_environment(installation, target, temp, system_root))
+        # MSVC discovery and its library search paths are part of the native
+        # toolchain environment. Dropping them lets Git's GNU link.exe win.
+        for name in (
+            "INCLUDE", "LIB", "LIBPATH", "VCINSTALLDIR", "VCToolsInstallDir",
+            "WindowsSdkDir", "WindowsSDKVersion", "UniversalCRTSdkDir",
+            "VSCMD_ARG_HOST_ARCH", "VSCMD_ARG_TGT_ARCH",
+        ):
+            if value := os.environ.get(name):
+                env[name] = value
     for name in ("build-tmp", "go-cache", "go-mod-cache", "go-path", "go-tmp"):
         (temp / name).mkdir(parents=True, exist_ok=True)
     return env
@@ -145,10 +232,75 @@ def remove_temp_tree(path):
                 continue
             if stat.S_ISLNK(mode):
                 continue
-            os.chmod(candidate, mode | stat.S_IWUSR, follow_symlinks=False)
+            if os.name == "nt":
+                os.chmod(candidate, mode | stat.S_IWUSR)
+            else:
+                os.chmod(candidate, mode | stat.S_IWUSR, follow_symlinks=False)
         function(failed_path)
 
     shutil.rmtree(path, onerror=make_writable_and_retry)
+
+
+def extract_git_blobs(root, revision, destination, env, git, excluded_prefixes=()):
+    """Materialize regular blobs without asking Git for Windows to unpack invalid names."""
+    tree = subprocess.run(
+        [git, "ls-tree", "-r", "-z", revision], cwd=root, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if tree.returncode:
+        raise RuntimeError(f"git ls-tree exited {tree.returncode}: {tree.stderr.decode(errors='replace')}")
+    entries = []
+    for entry in tree.stdout.split(b"\0"):
+        if not entry:
+            continue
+        meta, path_bytes = entry.split(b"\t", 1)
+        mode, kind, object_id = meta.split(b" ")
+        path = path_bytes.decode("utf-8")
+        parts = path.split("/")
+        if path.startswith("/") or any(part in ("", ".", "..") for part in parts):
+            raise RuntimeError(f"unsafe Git tree path: {path!r}")
+        if any(path.startswith(prefix) for prefix in excluded_prefixes):
+            continue
+        if kind != b"blob" or mode not in (b"100644", b"100755"):
+            continue
+        entries.append((path, object_id, mode))
+
+    destination.mkdir(parents=True)
+    process = subprocess.Popen(
+        [git, "cat-file", "--batch"], cwd=root, env=env,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    try:
+        for path, object_id, mode in entries:
+            process.stdin.write(object_id + b"\n")
+            process.stdin.flush()
+            header = process.stdout.readline().split()
+            if len(header) != 3 or header[0] != object_id or header[1] != b"blob":
+                raise RuntimeError(f"unexpected Git blob header for {path!r}: {header!r}")
+            remaining = int(header[2])
+            target = destination.joinpath(*path.split("/"))
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open("wb") as output:
+                while remaining:
+                    block = process.stdout.read(min(remaining, 1024 * 1024))
+                    if not block:
+                        raise RuntimeError(f"truncated Git blob for {path!r}")
+                    output.write(block)
+                    remaining -= len(block)
+            if process.stdout.read(1) != b"\n":
+                raise RuntimeError(f"missing Git blob delimiter for {path!r}")
+            if mode == b"100755":
+                target.chmod(target.stat().st_mode | stat.S_IXUSR)
+        process.stdin.close()
+        if process.wait() != 0:
+            raise RuntimeError(f"git cat-file failed: {process.stderr.read().decode(errors='replace')}")
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+        process.stdin.close()
+        process.stdout.close()
+        process.stderr.close()
 
 
 def invoke(binary, args, work, room, identity, label, expected_code=0):
@@ -222,7 +374,12 @@ def main():
     sensitive_key = None
     try:
         run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
-        run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
+        if os.name == "nt":
+            # Git for Windows rejects the frozen tag's Notion test fixture filenames.
+            extract_git_blobs(root, go_revision, go_tree, build_env, git,
+                              ("internal/ingest/internal/notionimport/testdata/fixture/",))
+        else:
+            run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
         suffix = ".exe" if os.name == "nt" else ""
         rust_bin = rust_bin.with_suffix(suffix) if suffix else rust_bin
@@ -306,7 +463,7 @@ def main():
         }
     except BaseException as error:
         failure = error
-    cleanup_failures = cleanup_worktrees(root, [rust_tree, go_tree], build_env, git)
+    cleanup_failures = cleanup_worktrees(root, [rust_tree] if os.name == "nt" else [rust_tree, go_tree], build_env, git)
     cleanup_error = None
     if cleanup_failures:
         report["cleanup"] = {

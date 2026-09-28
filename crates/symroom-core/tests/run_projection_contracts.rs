@@ -410,8 +410,20 @@ fn replay_read_error(fixture: &ReadErrorFixture) {
         return;
     }
 
-    assert_run_query_error(runs::list(&root, false), fixture);
-    assert_run_query_error(runs::get(&root, "any-run"), fixture);
+    if cfg!(windows) && fixture.go_error_class == "not_a_directory" {
+        assert!(
+            runs::list(&root, false)
+                .expect("Windows Go treats journal file as missing")
+                .is_empty()
+        );
+        assert!(matches!(
+            runs::get(&root, "any-run"),
+            Err(runs::RunQueryError::NotFound)
+        ));
+    } else {
+        assert_run_query_error(runs::list(&root, false), fixture);
+        assert_run_query_error(runs::get(&root, "any-run"), fixture);
+    }
     fs::remove_dir_all(&root).expect("remove only this test's read-error journal");
 }
 

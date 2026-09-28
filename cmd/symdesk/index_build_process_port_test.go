@@ -11,10 +11,12 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
@@ -77,6 +79,24 @@ func TestIndexBuildProcessPortFixture(t *testing.T) {
 	}
 }
 
+func TestIndexBuildProcessConfigQuotesWindowsPaths(t *testing.T) {
+	const path = `C:\Users\runner\Temp\fixture\data\retrieval.db`
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+	contents := "index_path = " + strconv.Quote(path) + "\n"
+	if err := os.WriteFile(configPath, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		IndexPath string `toml:"index_path"`
+	}
+	if _, err := toml.DecodeFile(configPath, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.IndexPath != path {
+		t.Fatalf("parsed index_path = %q, want %q", got.IndexPath, path)
+	}
+}
+
 func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	t.Helper()
 	root := t.TempDir()
@@ -118,7 +138,7 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	config := "index_path = \"" + filepath.Join(dataHome, "retrieval.db") + "\"\nollama_url = \"" + server.URL + "/api/embeddings\"\nembedding_dim = 8\ntimeout_seconds = 1\nretry_count = 0\nmodel = \"fixture\"\n"
+	config := "index_path = " + strconv.Quote(filepath.Join(dataHome, "retrieval.db")) + "\nollama_url = \"" + server.URL + "/api/embeddings\"\nembedding_dim = 8\ntimeout_seconds = 1\nretry_count = 0\nmodel = \"fixture\"\n"
 	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(config), 0o600); err != nil {
 		t.Fatal(err)
 	}

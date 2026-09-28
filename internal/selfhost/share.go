@@ -55,7 +55,24 @@ func NewShareStore(configDir string) (*ShareStore, error) {
 	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return nil, fmt.Errorf("shares: create config dir: %w", err)
 	}
-	return &ShareStore{path: filepath.Join(configDir, "shares.json")}, nil
+	store := &ShareStore{path: filepath.Join(configDir, "shares.json")}
+	links, err := store.loadLocked()
+	if err != nil {
+		return nil, err
+	}
+	legacyTokens := false
+	for i := range links {
+		if links[i].Token != "" {
+			links[i].Token = ""
+			legacyTokens = true
+		}
+	}
+	if legacyTokens {
+		if err := store.saveLocked(links); err != nil {
+			return nil, err
+		}
+	}
+	return store, nil
 }
 
 // loadLocked reads and parses shares.json. The caller must already hold
@@ -161,12 +178,11 @@ func (s *ShareStore) Create(path, createdBy string, duration time.Duration) (*Sh
 		ExpiresAt: now.Add(duration),
 		TokenHash: tokenHash,
 	}
-	link.Token = token
-
 	links = append(links, link)
 	if err := s.saveLocked(links); err != nil {
 		return nil, "", err
 	}
+	link.Token = token
 	return &link, token, nil
 }
 

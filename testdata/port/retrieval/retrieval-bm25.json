@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "migrations": [
+    "0001_baseline",
+    "0002_meta",
+    "0003_index_storage",
+    "0004_binary_signature",
+    "0005_quantized_sidecar",
+    "0006_folder_contexts",
+    "0007_backfill_embedding_dim",
+    "0008_chunk_spans",
+    "0009_extractions",
+    "0010_embedding_pending",
+    "0011_location_anchors",
+    "0012_german_norm",
+    "0013_german_trigram"
+  ],
+  "documents": [
+    {
+      "path": "/vault/alpha/a.md",
+      "hash": "doc-a",
+      "updated_at": "2026-01-02T03:04:05Z"
+    },
+    {
+      "path": "/vault/alpha/b.md",
+      "hash": "doc-b",
+      "updated_at": "2026-01-02T03:04:05Z"
+    },
+    {
+      "path": "/vault/beta/c.md",
+      "hash": "doc-c",
+      "updated_at": "2026-01-02T03:04:05Z"
+    },
+    {
+      "path": "/vault/beta/d.md",
+      "hash": "doc-d",
+      "updated_at": "2026-01-02T03:04:05Z"
+    }
+  ],
+  "chunks": [
+    {
+      "id": 1,
+      "uuid": "retrieval-a",
+      "document_path": "/vault/alpha/a.md",
+      "chunk_index": 0,
+      "content": "quartz quartz quartz guide",
+      "embedding": [],
+      "hash": "hash-a",
+      "norm": 0,
+      "dim": 0,
+      "embedding_model": "",
+      "char_start": 0,
+      "char_end": 26,
+      "anchor_kind": "heading",
+      "anchor_value": "alpha",
+      "embedding_pending": false
+    },
+    {
+      "id": 2,
+      "uuid": "retrieval-b",
+      "document_path": "/vault/alpha/b.md",
+      "chunk_index": 0,
+      "content": "quartz quartz guide",
+      "embedding": [],
+      "hash": "hash-b",
+      "norm": 0,
+      "dim": 0,
+      "embedding_model": "",
+      "char_start": 0,
+      "char_end": 19,
+      "anchor_kind": "heading",
+      "anchor_value": "beta",
+      "embedding_pending": false
+    },
+    {
+      "id": 3,
+      "uuid": "retrieval-c",
+      "document_path": "/vault/beta/c.md",
+      "chunk_index": 0,
+      "content": "quartz guide",
+      "embedding": [],
+      "hash": "hash-c",
+      "norm": 0,
+      "dim": 0,
+      "embedding_model": "",
+      "char_start": 0,
+      "char_end": 12,
+      "anchor_kind": "heading",
+      "anchor_value": "gamma",
+      "embedding_pending": false
+    },
+    {
+      "id": 4,
+      "uuid": "retrieval-d",
+      "document_path": "/vault/beta/d.md",
+      "chunk_index": 0,
+      "content": "unrelated material",
+      "embedding": [],
+      "hash": "hash-d",
+      "norm": 0,
+      "dim": 0,
+      "embedding_model": "",
+      "char_start": 0,
+      "char_end": 18,
+      "anchor_kind": "heading",
+      "anchor_value": "delta",
+      "embedding_pending": false
+    }
+  ],
+  "by_document": [
+    {
+      "path": "/vault/alpha/a.md",
+      "chunks": [
+        {
+          "id": 1,
+          "uuid": "retrieval-a",
+          "document_path": "/vault/alpha/a.md",
+          "chunk_index": 0,
+          "content": "quartz quartz quartz guide",
+          "embedding": [],
+          "hash": "hash-a",
+          "norm": 0,
+          "dim": 0,
+          "embedding_model": "",
+          "char_start": 0,
+          "char_end": 26,
+          "anchor_kind": "heading",
+          "anchor_value": "alpha",
+          "embedding_pending": false
+        }
+      ]
+    },
+    {
+      "path": "/vault/alpha/b.md",
+      "chunks": [
+        {
+          "id": 2,
+          "uuid": "retrieval-b",
+          "document_path": "/vault/alpha/b.md",
+          "chunk_index": 0,
+          "content": "quartz quartz guide",
+          "embedding": [],
+          "hash": "hash-b",
+          "norm": 0,
+          "dim": 0,
+          "embedding_model": "",
+          "char_start": 0,
+          "char_end": 19,
+          "anchor_kind": "heading",
+          "anchor_value": "beta",
+          "embedding_pending": false
+        }
+      ]
+    },
+    {
+      "path": "/vault/beta/c.md",
+      "chunks": [
+        {
+          "id": 3,
+          "uuid": "retrieval-c",
+          "document_path": "/vault/beta/c.md",
+          "chunk_index": 0,
+          "content": "quartz guide",
+          "embedding": [],
+          "hash": "hash-c",
+          "norm": 0,
+          "dim": 0,
+          "embedding_model": "",
+          "char_start": 0,
+          "char_end": 12,
+          "anchor_kind": "heading",
+          "anchor_value": "gamma",
+          "embedding_pending": false
+        }
+      ]
+    },
+    {
+      "path": "/vault/beta/d.md",
+      "chunks": [
+        {
+          "id": 4,
+          "uuid": "retrieval-d",
+          "document_path": "/vault/beta/d.md",
+          "chunk_index": 0,
+          "content": "unrelated material",
+          "embedding": [],
+          "hash": "hash-d",
+          "norm": 0,
+          "dim": 0,
+          "embedding_model": "",
+          "char_start": 0,
+          "char_end": 18,
+          "anchor_kind": "heading",
+          "anchor_value": "delta",
+          "embedding_pending": false
+        }
+      ]
+    }
+  ],
+  "searches": [
+    {
+      "query": "quartz",
+      "path": "",
+      "limit": 10,
+      "results": [
+        {
+          "bm25_rank": 1,
+          "chunk": {
+            "id": 1,
+            "uuid": "retrieval-a",
+            "document_path": "/vault/alpha/a.md",
+            "chunk_index": 0,
+            "content": "quartz quartz quartz guide",
+            "embedding": [],
+            "hash": "hash-a"
+          }
+        },
+        {
+          "bm25_rank": 2,
+          "chunk": {
+            "id": 2,
+            "uuid": "retrieval-b",
+            "document_path": "/vault/alpha/b.md",
+            "chunk_index": 0,
+            "content": "quartz quartz guide",
+            "embedding": [],
+            "hash": "hash-b"
+          }
+        },
+        {
+          "bm25_rank": 3,
+          "chunk": {
+            "id": 3,
+            "uuid": "retrieval-c",
+            "document_path": "/vault/beta/c.md",
+            "chunk_index": 0,
+            "content": "quartz guide",
+            "embedding": [],
+            "hash": "hash-c"
+          }
+        }
+      ]
+    },
+    {
+      "query": "quartz",
+      "path": "/vault/alpha/",
+      "limit": 1,
+      "results": [
+        {
+          "bm25_rank": 1,
+          "chunk": {
+            "id": 1,
+            "uuid": "retrieval-a",
+            "document_path": "/vault/alpha/a.md",
+            "chunk_index": 0,
+            "content": "quartz quartz quartz guide",
+            "embedding": [],
+            "hash": "hash-a"
+          }
+        }
+      ]
+    },
+    {
+      "query": "quartz",
+      "path": "/vault/beta/",
+      "limit": 1,
+      "results": [
+        {
+          "bm25_rank": 1,
+          "chunk": {
+            "id": 3,
+            "uuid": "retrieval-c",
+            "document_path": "/vault/beta/c.md",
+            "chunk_index": 0,
+            "content": "quartz guide",
+            "embedding": [],
+            "hash": "hash-c"
+          }
+        }
+      ]
+    },
+    {
+      "query": "no-match",
+      "path": "",
+      "limit": 10,
+      "results": []
+    },
+    {
+      "query": "the",
+      "path": "",
+      "limit": 10,
+      "results": []
+    }
+  ]
+}

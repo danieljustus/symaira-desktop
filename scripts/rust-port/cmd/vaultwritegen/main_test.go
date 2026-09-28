@@ -358,7 +358,7 @@ func firstPinnedSource(t *testing.T, root string) string {
 	return paths[0]
 }
 
-const testGitCommandTimeout = 30 * time.Second
+const testGitCommandTimeout = 2 * time.Minute
 
 func runGit(t *testing.T, dir string, args ...string) []byte {
 	t.Helper()

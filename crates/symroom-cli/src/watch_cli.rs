@@ -4,7 +4,7 @@ use std::{
     ffi::OsString,
     io::{self, BufReader, Write},
     path::{Path, PathBuf},
-    process::{Command, ExitCode, Stdio},
+    process::{ExitCode, Stdio},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -92,10 +92,16 @@ async fn watch(vault: &str, signer: identity::Identity) -> ExitCode {
     {
         return process_exit(CoreExitCode::Generic);
     }
+    let Some(symdesk_path) = crate::doctor_cli::look_path("symdesk") else {
+        return stderr(
+            "Watch error: symdesk binary not found\n",
+            CoreExitCode::Generic,
+        );
+    };
 
     let mut backoff = Duration::from_millis(100);
     loop {
-        let mut child = match Command::new("symdesk")
+        let mut child = match crate::symdesk_command(&symdesk_path)
             .args(["events", vault])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

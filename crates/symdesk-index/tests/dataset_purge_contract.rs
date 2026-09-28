@@ -12,6 +12,9 @@ use symdesk_index::{
 use symdesk_vault::{HistoryStore, Provenance, retention_state::retention_state};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
+#[cfg(windows)]
+const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge-windows.json");
+#[cfg(not(windows))]
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge.json");
 
 struct Sandbox {
@@ -245,8 +248,15 @@ fn dataset_purge_matches_go_service_fixture() {
                     .map(|error| error.to_string())
                     .unwrap_or_default();
                 let after = snapshot(&sandbox);
+                // Go's Windows oracle checks this branch as "was replaced":
+                // its stored fixture records the Unix error fragment here.
+                let expected_error = if cfg!(windows) {
+                    "was replaced"
+                } else {
+                    case["error"].as_str().expect("retry error fragment")
+                };
                 assert!(
-                    retry_error.contains(case["error"].as_str().expect("retry error fragment")),
+                    retry_error.contains(expected_error),
                     "case {id}: unexpected retry error {retry_error:?}"
                 );
                 assert_eq!(before, case["before"], "case {id} before retry");

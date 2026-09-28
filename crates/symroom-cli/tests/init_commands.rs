@@ -168,9 +168,14 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
                 .collect::<Vec<_>>();
             assert_eq!(actual, expected, "Go/Rust room bytes {}", case.name);
             for (name, expected) in &case.modes {
+                let expected = if cfg!(unix) {
+                    expected.as_str()
+                } else {
+                    "platform"
+                };
                 assert_eq!(
                     mode(&room.join(name)),
-                    expected.as_str(),
+                    expected,
                     "Go/Rust mode {} {name}",
                     case.name
                 );

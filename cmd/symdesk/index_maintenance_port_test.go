@@ -253,6 +253,7 @@ func normalizeProcessOutput(value, root string) string {
 	value = strings.ReplaceAll(value, strings.ReplaceAll(root, `\`, `\\`), "$ROOT")
 	value = strings.ReplaceAll(value, `\\`, "/")
 	value = filepath.ToSlash(value)
+	value = strings.ReplaceAll(value, "GetFileAttributesEx $ROOT/missing: The system cannot find the file specified.", "stat $ROOT/missing: no such file or directory")
 	if strings.HasPrefix(value, "map[") && strings.HasSuffix(value, "]\n") {
 		fields := strings.Fields(strings.TrimSuffix(strings.TrimPrefix(value, "map["), "]\n"))
 		sort.Strings(fields)
@@ -265,6 +266,14 @@ func TestNormalizeProcessOutputWindowsJSONPath(t *testing.T) {
 	const root = `C:\Users\runner\Temp\fixture`
 	got := normalizeProcessOutput(`{"index_location":"C:\\Users\\runner\\Temp\\fixture\\data\\retrieval.db"}`+"\n", root)
 	want := `{"index_location":"$ROOT/data/retrieval.db"}` + "\n"
+	if got != want {
+		t.Fatalf("normalizeProcessOutput() = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeProcessOutputWindowsMissingPath(t *testing.T) {
+	got := normalizeProcessOutput(`{"error":"vault path does not exist: GetFileAttributesEx C:\\Users\\runner\\Temp\\fixture\\missing: The system cannot find the file specified."}`+"\n", `C:\Users\runner\Temp\fixture`)
+	want := `{"error":"vault path does not exist: stat $ROOT/missing: no such file or directory"}` + "\n"
 	if got != want {
 		t.Fatalf("normalizeProcessOutput() = %q, want %q", got, want)
 	}

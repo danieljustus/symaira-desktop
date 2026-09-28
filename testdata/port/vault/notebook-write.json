@@ -1,0 +1,190 @@
+{
+  "schema_version": 2,
+  "oracle": "internal/notebook (Go production API)",
+  "source_sha256": "4bdaa3f06ef51bc96623c8439cf32dd0c59d4e9e60cbb2be1d75cc6446737d6c",
+  "path": "notebooks/research.md",
+  "initial": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n  - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n  - z.md\nquery: source query\ncustom: keep me\n---\n\n# Original body\n",
+  "steps": [
+    {
+      "operation": "add",
+      "source": "b.md",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [
+          "b.md",
+          "z.md"
+        ],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n    - b.md\n    - z.md\nquery: source query\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n- [[b]] (`b.md`)\n- [[z]] (`z.md`)\n",
+      "unix_mode": 384
+    },
+    {
+      "operation": "add",
+      "source": "a.md",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [
+          "a.md",
+          "b.md",
+          "z.md"
+        ],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n    - a.md\n    - b.md\n    - z.md\nquery: source query\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n- [[a]] (`a.md`)\n- [[b]] (`b.md`)\n- [[z]] (`z.md`)\n",
+      "unix_mode": 384
+    },
+    {
+      "operation": "add",
+      "source": "b.md",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [
+          "a.md",
+          "b.md",
+          "z.md"
+        ],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n    - a.md\n    - b.md\n    - z.md\nquery: source query\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n- [[a]] (`a.md`)\n- [[b]] (`b.md`)\n- [[z]] (`z.md`)\n",
+      "unix_mode": 384
+    },
+    {
+      "operation": "remove",
+      "source": "z.md",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [
+          "a.md",
+          "b.md"
+        ],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n    - a.md\n    - b.md\nquery: source query\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n- [[a]] (`a.md`)\n- [[b]] (`b.md`)\n",
+      "unix_mode": 384
+    },
+    {
+      "operation": "remove",
+      "source": "missing.md",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [
+          "a.md",
+          "b.md"
+        ],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n    - a.md\n    - b.md\nquery: source query\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n- [[a]] (`a.md`)\n- [[b]] (`b.md`)\n",
+      "unix_mode": 384
+    }
+  ],
+  "creations": [
+    {
+      "name": "trimmed_title",
+      "operation": "new",
+      "title": "  Research  ",
+      "description": "Keep me",
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Research",
+        "description": "Keep me",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": []
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Keep me\nsources: []\n---\n\n# Research\n\nKeep me\n\n## Sources\n\n_No sources yet._\n",
+      "unix_mode": 384,
+      "notebooks_dir_mode": 488
+    },
+    {
+      "name": "slug_collisions",
+      "operation": "new",
+      "title": "Research",
+      "description": "",
+      "existing": [
+        "research.md",
+        "research-2.md"
+      ],
+      "output": {
+        "id": "research-3",
+        "path": "notebooks/research-3.md",
+        "title": "Research",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": []
+      },
+      "markdown": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: research-3\nsources: []\n---\n\n# Research\n\n## Sources\n\n_No sources yet._\n",
+      "unix_mode": 384,
+      "notebooks_dir_mode": 488
+    },
+    {
+      "name": "punctuation_slug",
+      "operation": "new",
+      "title": "!!!",
+      "description": "",
+      "output": {
+        "id": "notebook",
+        "path": "notebooks/notebook.md",
+        "title": "!!!",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": []
+      },
+      "markdown": "---\ntype: notebook\ntitle: '!!!'\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: notebook\nsources: []\n---\n\n# !!!\n\n## Sources\n\n_No sources yet._\n",
+      "unix_mode": 384,
+      "notebooks_dir_mode": 488
+    },
+    {
+      "name": "query_trimmed",
+      "operation": "new_with_query",
+      "title": "Query Results",
+      "description": "Promoted from search",
+      "query": "  source query \n",
+      "output": {
+        "id": "query-results",
+        "path": "notebooks/query-results.md",
+        "title": "Query Results",
+        "description": "Promoted from search",
+        "created": "2026-01-02T03:04:05Z",
+        "sources": [],
+        "query": "source query"
+      },
+      "markdown": "---\ntype: notebook\ntitle: Query Results\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - notebook\nnotebook_id: query-results\ndescription: Promoted from search\nsources: []\nquery: source query\n---\n\n# Query Results\n\nPromoted from search\n\n## Sources\n\n_No sources yet._\n",
+      "unix_mode": 384,
+      "notebooks_dir_mode": 488
+    }
+  ],
+  "rejected": [
+    {
+      "name": "empty_title",
+      "operation": "new",
+      "title": "  ",
+      "error": "title is required"
+    },
+    {
+      "name": "missing_vault_root",
+      "operation": "new",
+      "title": "Valid",
+      "root": "missing",
+      "error": "cannot resolve vault root"
+    }
+  ]
+}

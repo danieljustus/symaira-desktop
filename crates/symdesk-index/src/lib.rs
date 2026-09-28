@@ -3,14 +3,19 @@
 //! Minimal SQLite sidecar index compatible with the Go oracle.
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashSet},
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
-    time::UNIX_EPOCH,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, RecvTimeoutError},
+    },
+    time::{Duration, Instant, UNIX_EPOCH},
 };
 
 use cap_std::{ambient_authority, fs::Dir};
+use notify::{EventKind, RecursiveMode, Watcher};
 use noyalib::Value;
 use rusqlite::{Connection, OptionalExtension, Transaction, params, params_from_iter};
 use serde::Deserialize;
@@ -23,6 +28,7 @@ mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
 mod metadata;
+mod retrieval;
 mod retrieval_config;
 
 pub use backup::{backup_database, relocate_database, restore_database};
@@ -35,6 +41,12 @@ pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
+};
+pub use retrieval::{
+    RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
+    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
+    RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
+    materialize_chunks,
 };
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,
@@ -79,6 +91,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
 ];
 
 const MAX_INDEX_BATCH_SIZE: usize = 200;
+const MAX_EXTERNAL_TEXT_FILE_SIZE: u64 = 10 << 20;
 const FTS_MATCH_JOIN: &str = r#" JOIN (
     SELECT rowid, MAX(rank) AS rank, MAX(snip) AS snip, MAX(body) AS body FROM (
         SELECT rowid, rank, snippet(fts_search, 1, '', '', '...', 64) AS snip, body FROM fts_search WHERE fts_search MATCH ?
@@ -237,6 +250,20 @@ pub struct DatasetQueryFilter {
 
 pub use symdesk_vault::FilterGroup as DatasetQueryFilterGroup;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct DatasetGroupCountRow {
+    pub group_value: serde_json::Value,
+    pub count: i64,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DatasetGroupCountResult {
+    pub rows: Vec<DatasetGroupCountRow>,
+    pub total_groups: usize,
+    pub limit: usize,
+    pub capped: bool,
+}
+
 pub struct Sidecar {
     connection: Connection,
     closed: bool,
@@ -260,6 +287,7 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
         std::env::current_dir()?.join(vault_root)
     };
     let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
+    let canonical = absolute_non_verbatim(&canonical)?;
     let explicit_data_home = std::env::var("XDG_DATA_HOME")
         .ok()
         .map(|value| value.trim().to_owned())
@@ -432,6 +460,20 @@ fn dataset_query_filter_where(
 
 fn dataset_json_path(key: &str) -> String {
     format!(r#"$."{}""#, key.replace('"', r#"\""#))
+}
+
+fn dataset_sql_value_to_json(value: rusqlite::types::Value) -> serde_json::Value {
+    match value {
+        rusqlite::types::Value::Null => serde_json::Value::Null,
+        rusqlite::types::Value::Integer(value) => serde_json::json!(value),
+        rusqlite::types::Value::Real(value) => serde_json::Number::from_f64(value)
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null),
+        rusqlite::types::Value::Text(value) => serde_json::Value::String(value),
+        rusqlite::types::Value::Blob(value) => {
+            serde_json::Value::String(String::from_utf8_lossy(&value).into_owned())
+        }
+    }
 }
 
 fn sidecar_storage_root(
@@ -629,6 +671,76 @@ impl Sidecar {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    /// Returns an ordered, capped grouped row count projection.
+    ///
+    /// # Errors
+    /// Returns a contract error for an empty dataset or group column, the stable
+    /// closed-database diagnostic, or SQLite query errors.
+    pub fn dataset_group_count(
+        &self,
+        dataset_slug: &str,
+        group_by: &str,
+        limit: usize,
+    ) -> Result<DatasetGroupCountResult, SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        if dataset_slug.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset slug is required".to_owned(),
+            ));
+        }
+        if group_by.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset group column is required".to_owned(),
+            ));
+        }
+        let path = dataset_json_path(group_by);
+        let expression = "json_extract(values_json, ?)";
+        let total: i64 = self.connection.query_row(
+            &format!(
+                "SELECT COUNT(*) FROM (SELECT {expression} FROM dataset_rows WHERE dataset_slug = ? GROUP BY {expression})"
+            ),
+            params![path, dataset_slug, path],
+            |row| row.get(0),
+        )?;
+        let limit = if limit == 0 { 10 } else { limit.min(1000) };
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT {expression}, COUNT(*) FROM dataset_rows WHERE dataset_slug = ? GROUP BY {expression} ORDER BY {expression} ASC LIMIT ?"
+        ))?;
+        let groups = statement.query_map(
+            params![
+                path,
+                dataset_slug,
+                path,
+                path,
+                i64::try_from(limit).unwrap_or(1000)
+            ],
+            |row| {
+                Ok((
+                    row.get::<_, rusqlite::types::Value>(0)?,
+                    row.get::<_, i64>(1)?,
+                ))
+            },
+        )?;
+        let mut rows = Vec::with_capacity(limit.min(usize::try_from(total).unwrap_or(usize::MAX)));
+        for group in groups {
+            let (value, count) = group?;
+            rows.push(DatasetGroupCountRow {
+                group_value: dataset_sql_value_to_json(value),
+                count,
+            });
+        }
+        let total_groups = usize::try_from(total).unwrap_or(usize::MAX);
+        let capped = rows.len() < total_groups;
+        Ok(DatasetGroupCountResult {
+            rows,
+            total_groups,
+            limit,
+            capped,
+        })
+    }
+
     /// Returns one key-ordered page of dataset rows and the uncapped total.
     ///
     /// # Errors
@@ -790,6 +902,181 @@ impl Sidecar {
         Ok(())
     }
 
+    /// Indexes Markdown and bounded raw-text files from a canonical source root.
+    pub fn refresh_external_source(&mut self, source_root: &Path) -> Result<(), SidecarError> {
+        let root = fs::canonicalize(source_root)?;
+        if !root.is_dir() {
+            return Err(SidecarError::Contract(
+                "source path is not a directory".to_owned(),
+            ));
+        }
+        validate_utf8_path(&root, "external source root")?;
+        // Database keys deliberately omit Windows' verbatim prefix, so all
+        // comparisons against persisted paths must use the same root spelling.
+        let key_root = absolute_non_verbatim(&root)?;
+        let source_dir = open_vault_dir(&root)?;
+        let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
+        let mut found = HashSet::new();
+        for entry in symdesk_vault::walk_all(&root)? {
+            if entry.entry_type != symdesk_vault::WalkEntryType::File {
+                continue;
+            }
+            let relative = entry.path;
+            let key = key_root.join(&relative);
+            let raw_text = is_external_raw_text(&relative);
+            if raw_text && source_dir.metadata(&relative)?.len() > MAX_EXTERNAL_TEXT_FILE_SIZE {
+                continue;
+            }
+            let markdown = relative.extension().and_then(|value| value.to_str()) == Some("md");
+            if !raw_text && !markdown {
+                continue;
+            }
+            found.insert(validate_utf8_path(&key, "external source storage key")?.to_owned());
+            if raw_text {
+                self.refresh_path(
+                    &source_dir,
+                    &root,
+                    &relative,
+                    Some(MAX_EXTERNAL_TEXT_FILE_SIZE),
+                    true,
+                    &mut batch,
+                )?;
+            } else {
+                self.refresh_path(&source_dir, &root, &relative, None, false, &mut batch)?;
+            }
+        }
+        self.flush_refresh_batch(&mut batch)?;
+        let indexed: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        for path in indexed {
+            if (Path::new(&path).starts_with(&key_root) || Path::new(&path).starts_with(&root))
+                && !found.contains(&path)
+            {
+                self.delete_document(&path)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Indexes a registered external source, then keeps it current until stopped.
+    ///
+    /// Watcher setup and initial indexing errors are returned. Later event and
+    /// refresh errors are reported to stderr while watching continues.
+    pub fn watch_external_source(
+        &mut self,
+        source_root: &Path,
+        stop: &AtomicBool,
+    ) -> Result<(), SidecarError> {
+        let root = fs::canonicalize(source_root)?;
+        if !root.is_dir() {
+            return Err(SidecarError::Contract(
+                "source path is not a directory".to_owned(),
+            ));
+        }
+        validate_utf8_path(&root, "external source root")?;
+        let key_root = absolute_non_verbatim(&root)?;
+        let (sender, receiver) = mpsc::channel();
+        let mut watcher = notify::recommended_watcher(move |event| {
+            let _ = sender.send(event);
+        })
+        .map_err(|error| {
+            SidecarError::Contract(format!("failed to create file watcher: {error}"))
+        })?;
+        watcher
+            .watch(&root, RecursiveMode::Recursive)
+            .map_err(|error| {
+                SidecarError::Contract(format!("failed to setup watchers: {error}"))
+            })?;
+
+        eprintln!("Performing initial sync for: {}", root.display());
+        self.refresh_external_source(&root)
+            .map_err(|error| SidecarError::Contract(format!("initial sync failed: {error}")))?;
+        let indexed_paths: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        let file_count = indexed_paths
+            .iter()
+            .filter(|path| {
+                Path::new(path).starts_with(&key_root) || Path::new(path).starts_with(&root)
+            })
+            .count();
+        eprintln!("Watching {file_count} files in {}", root.display());
+
+        let debounce = Duration::from_millis(500);
+        let poll_interval = Duration::from_millis(100);
+        let mut deadline = None;
+        loop {
+            if stop.load(Ordering::SeqCst) {
+                return Ok(());
+            }
+            let timeout = deadline
+                .map(|at: Instant| {
+                    at.saturating_duration_since(Instant::now())
+                        .min(poll_interval)
+                })
+                .unwrap_or(poll_interval);
+            match receiver.recv_timeout(timeout) {
+                Ok(Ok(event)) => {
+                    if matches!(
+                        event.kind,
+                        EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)
+                    ) {
+                        deadline = Some(Instant::now() + debounce);
+                    }
+                }
+                Ok(Err(error)) => eprintln!("Watcher error: {error}"),
+                Err(RecvTimeoutError::Timeout) => {
+                    if deadline.is_some_and(|at| Instant::now() >= at) {
+                        deadline = None;
+                        if let Err(error) = self.refresh_external_source(&root) {
+                            if fs::metadata(&root).is_err_and(|source_error| {
+                                source_error.kind() == io::ErrorKind::NotFound
+                            }) {
+                                if let Err(prune_error) = self.remove_external_source(&root) {
+                                    eprintln!("Incremental re-index error: {prune_error}");
+                                }
+                            } else {
+                                eprintln!("Incremental re-index error: {error}");
+                            }
+                        }
+                    }
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    return Err(SidecarError::Contract(
+                        "watcher event channel closed".to_owned(),
+                    ));
+                }
+            }
+        }
+    }
+
+    /// Deletes only index rows rooted under an external source.
+    pub fn remove_external_source(&mut self, source_root: &Path) -> Result<usize, SidecarError> {
+        let root = fs::canonicalize(source_root).unwrap_or_else(|_| source_root.to_path_buf());
+        let key_root = absolute_non_verbatim(&root)?;
+        let paths: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        let paths = paths
+            .into_iter()
+            .filter(|path| {
+                Path::new(path).starts_with(&key_root) || Path::new(path).starts_with(&root)
+            })
+            .collect::<Vec<_>>();
+        let removed = paths.len();
+        for path in paths {
+            self.delete_document(&path)?;
+        }
+        Ok(removed)
+    }
+
     /// Refreshes the index from lowercase-extension Markdown files under `vault_root`.
     ///
     /// The vault root is opened once as a capability directory. Each file read
@@ -826,6 +1113,7 @@ impl Sidecar {
         record_lifecycle: bool,
     ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
+        let canonical_root = fs::canonicalize(vault_root)?;
         if record_lifecycle {
             for entry in symdesk_vault::walk_all(vault_root)? {
                 let Some(extension) = entry.path.extension().and_then(|value| value.to_str())
@@ -847,6 +1135,15 @@ impl Sidecar {
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
+            let candidate = vault_root.join(relative);
+            if fs::symlink_metadata(&candidate)?.file_type().is_symlink()
+                && fs::canonicalize(&candidate)
+                    .map_or(true, |target| !target.starts_with(&canonical_root))
+            {
+                // Go's RefreshIndex skips links that cannot be opened through
+                // the vault root, while keeping contained symlinks indexable.
+                return Ok(());
+            }
             let storage_key = match storage_path(vault_root, relative) {
                 Ok(path) => path.key_path,
                 Err(error) => {
@@ -871,7 +1168,8 @@ impl Sidecar {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
-            let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
+            let result =
+                self.refresh_path(&vault_dir, vault_root, relative, None, false, &mut batch);
             if let Err(error) = result {
                 if record_lifecycle {
                     let _ = self.set_lifecycle_state(key, "failed", &error.to_string());
@@ -911,6 +1209,8 @@ impl Sidecar {
         vault_dir: &Dir,
         vault_root: &Path,
         relative: &Path,
+        max_file_size: Option<u64>,
+        raw_text: bool,
         batch: &mut Vec<IndexedDocument>,
     ) -> Result<(), SidecarError> {
         let storage_path = storage_path(vault_root, relative)?;
@@ -926,6 +1226,9 @@ impl Sidecar {
         // file is deferred until it must be read so unreadable unchanged files
         // remain a no-read/no-write success.
         let metadata = vault_dir.metadata(relative)?;
+        if max_file_size.is_some_and(|limit| metadata.len() > limit) {
+            return self.delete_document(path_string);
+        }
         let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
         let file_size = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
         if let Some(cached) = self.stat_cache(path_string)?
@@ -938,10 +1241,24 @@ impl Sidecar {
         // Keep metadata and bytes tied to the same capability-opened handle.
         let mut file = vault_dir.open(relative)?;
         let metadata = file.metadata()?;
+        if max_file_size.is_some_and(|limit| metadata.len() > limit) {
+            return self.delete_document(path_string);
+        }
         let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
         let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes)?;
-        let document = symdesk_vault::parse_bytes(path_string, &bytes)?;
+        if let Some(limit) = max_file_size {
+            file.take(limit + 1).read_to_end(&mut bytes)?;
+            if bytes.len() as u64 > limit {
+                return self.delete_document(path_string);
+            }
+        } else {
+            file.read_to_end(&mut bytes)?;
+        }
+        let document = if raw_text {
+            external_raw_text_document(path_string, &bytes)
+        } else {
+            symdesk_vault::parse_bytes(path_string, &bytes)?
+        };
         if document.derived {
             return self.delete_document(path_string);
         }
@@ -1174,7 +1491,7 @@ impl Sidecar {
     /// # Errors
     /// Returns SQLite syntax/provider errors.
     pub fn search(&self, query: &str) -> Result<Vec<SearchHit>, SidecarError> {
-        self.search_impl(query, None)
+        self.search_impl(query, None, None)
     }
 
     /// Executes basic FTS inside an exact path allowlist. An empty scope never widens.
@@ -1189,13 +1506,43 @@ impl Sidecar {
         if allowed_paths.is_empty() {
             return Ok(Vec::new());
         }
-        self.search_impl(query, Some(allowed_paths))
+        self.search_impl(query, Some(allowed_paths), None)
+    }
+
+    /// Executes basic FTS only within the supplied filesystem roots.
+    pub fn search_in_roots(
+        &self,
+        query: &str,
+        roots: &[String],
+    ) -> Result<Vec<SearchHit>, SidecarError> {
+        if roots.is_empty() {
+            return Ok(Vec::new());
+        }
+        self.search_impl(query, None, Some(roots))
+    }
+
+    /// Searches the active vault and its registered external roots.
+    pub fn search_with_sources(
+        &self,
+        vault_root: &Path,
+        query: &str,
+    ) -> Result<Vec<SearchHit>, SidecarError> {
+        let vault = fs::canonicalize(vault_root)?;
+        let registry = SourceRegistry::open(&vault)?;
+        let lexical_vault = absolute_non_verbatim(vault_root)?;
+        let mut roots = vec![lexical_vault.to_string_lossy().into_owned()];
+        if vault != lexical_vault {
+            roots.push(vault.to_string_lossy().into_owned());
+        }
+        roots.extend(registry.list()?.into_iter().map(|source| source.path));
+        self.search_in_roots(query, &roots)
     }
 
     fn search_impl(
         &self,
         raw_query: &str,
         allowed_paths: Option<&[String]>,
+        allowed_roots: Option<&[String]>,
     ) -> Result<Vec<SearchHit>, SidecarError> {
         let query = symdesk_core::german::fts_query(raw_query);
         if query.is_empty() {
@@ -1210,6 +1557,30 @@ impl Sidecar {
             sql.push_str(&vec!["?"; paths.len()].join(","));
             sql.push(')');
             arguments.extend(paths.iter().cloned());
+        }
+        if let Some(roots) = allowed_roots {
+            sql.push_str(if allowed_paths.is_some() {
+                " AND ("
+            } else {
+                " WHERE ("
+            });
+            for (index, root) in roots.iter().enumerate() {
+                if index != 0 {
+                    sql.push_str(" OR ");
+                }
+                sql.push_str("f.path = ? OR substr(f.path, 1, length(?)) = ?");
+                let root_with_separator = format!(
+                    "{}{}",
+                    root.trim_end_matches(['/', '\\']),
+                    std::path::MAIN_SEPARATOR
+                );
+                arguments.extend([
+                    root.clone(),
+                    root_with_separator.clone(),
+                    root_with_separator,
+                ]);
+            }
+            sql.push(')');
         }
         sql.push_str(" ORDER BY sm.rank IS NULL, sm.rank LIMIT 20");
         let mut statement = self.connection.prepare(&sql)?;
@@ -1267,6 +1638,48 @@ fn unsupported_index_reason(extension: &str) -> Option<&'static str> {
         "djvu" => Some("DjVu parser is not available"),
         "odg" => Some("OpenDocument drawing parser is not available"),
         _ => None,
+    }
+}
+
+fn is_external_raw_text(path: &Path) -> bool {
+    path.extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|extension| {
+            matches!(
+                extension.to_ascii_lowercase().as_str(),
+                "txt" | "text" | "go" | "py" | "js" | "ts" | "json" | "yaml" | "yml" | "sh" | "css"
+            )
+        })
+}
+
+fn external_raw_text_document(path: &str, bytes: &[u8]) -> Document {
+    Document {
+        path: path.to_owned(),
+        sha256: symdesk_vault::sha256_hex(bytes),
+        title: Path::new(path)
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or(path)
+            .to_owned(),
+        created: String::new(),
+        tags: Vec::new(),
+        aliases: Vec::new(),
+        frontmatter: BTreeMap::new(),
+        yaml_timestamps: BTreeMap::new(),
+        body: String::from_utf8_lossy(bytes).into_owned(),
+        links: Vec::new(),
+        size: i64::try_from(bytes.len()).unwrap_or(i64::MAX),
+        document_date: String::new(),
+        person: String::new(),
+        status: String::new(),
+        due_date: String::new(),
+        confidence: 0,
+        ocr_json_path: String::new(),
+        simhash: String::new(),
+        asn: None,
+        document_type: String::new(),
+        derived_from: String::new(),
+        derived: false,
     }
 }
 
@@ -1331,6 +1744,31 @@ fn storage_path(vault_root: &Path, relative: &Path) -> Result<ValidatedStoragePa
     let key_path = absolute_non_verbatim(vault_root)?.join(relative);
     validate_utf8_path(&key_path, "storage key")?;
     Ok(ValidatedStoragePath { io_path, key_path })
+}
+
+/// Builds the ordinary absolute path key used by `refresh_index` for a
+/// vault-relative document path.
+///
+/// This is useful when a caller indexes bytes it has just written: filesystem
+/// operations may use a canonical Windows verbatim root (`\\?\C:\...`),
+/// while persisted sidecar keys intentionally omit that prefix to match Go's
+/// `filepath.Join` keys.
+///
+/// # Errors
+/// Returns an error when the path is outside the vault or the root/path cannot
+/// be represented as a UTF-8 sidecar key.
+pub fn vault_document_path(vault_root: &Path, relative: &Path) -> Result<PathBuf, SidecarError> {
+    if relative.as_os_str().is_empty()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(SidecarError::Contract(
+            "document path must contain only vault-relative normal components".to_owned(),
+        ));
+    }
+    let normalized_relative: PathBuf = relative.components().collect();
+    Ok(storage_path(vault_root, &normalized_relative)?.key_path)
 }
 
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
@@ -1636,3 +2074,550 @@ fn go_value(value: &Value) -> String {
 
 #[cfg(test)]
 mod contract_tests;
+
+#[cfg(test)]
+mod source_tests {
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        },
+        thread,
+        time::{Duration, Instant, SystemTime},
+    };
+
+    use super::{
+        IndexedDocument, MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry,
+        absolute_non_verbatim, vault_document_path,
+    };
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let stamp = SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "symdesk-sources-{label}-{}-{stamp}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&path).expect("create temp dir");
+        path
+    }
+
+    #[test]
+    fn written_document_key_uses_refresh_index_root_spelling_and_rejects_traversal() {
+        let vault = temp_dir("document-key-vault");
+        let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
+        let expected = absolute_non_verbatim(&canonical_root)
+            .expect("ordinary vault root")
+            .join("nested")
+            .join("note.md");
+
+        assert_eq!(
+            vault_document_path(&canonical_root, Path::new("nested/note.md"))
+                .expect("document key"),
+            expected
+        );
+        assert!(vault_document_path(&canonical_root, Path::new("../outside.md")).is_err());
+
+        let _ = fs::remove_dir_all(vault);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn external_source_root_matches_unprefixed_storage_keys() {
+        let verbatim = Path::new(r"\\?\C:\sources\external");
+        let key_root = absolute_non_verbatim(verbatim).expect("normalize storage root");
+        let stored_path = Path::new(r"C:\sources\external\nested\note.md");
+
+        assert!(stored_path.starts_with(&key_root));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn written_document_key_matches_refresh_index_verbatim_root_key() {
+        let vault = temp_dir("document-key-vault");
+        let canonical_root = fs::canonicalize(&vault).expect("canonical vault root");
+        let expected = absolute_non_verbatim(&canonical_root)
+            .expect("ordinary root")
+            .join("nested")
+            .join("note.md");
+
+        assert_eq!(
+            vault_document_path(&canonical_root, Path::new(r"nested\note.md"))
+                .expect("document key"),
+            expected
+        );
+        assert!(vault_document_path(&canonical_root, Path::new(r"nested\..\outside.md")).is_err());
+
+        let _ = fs::remove_dir_all(vault);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn refresh_index_skips_external_and_broken_symlinks_but_keeps_contained_links() {
+        use std::os::unix::fs::symlink;
+
+        let vault = temp_dir("symlink-refresh-vault");
+        let outside = temp_dir("symlink-refresh-outside");
+        let marker = "symlink-refresh-unique-marker";
+        fs::write(vault.join("inside.md"), marker).expect("write in-vault note");
+        fs::write(outside.join("secret.md"), marker).expect("write outside note");
+        symlink("inside.md", vault.join("contained.md")).expect("contained symlink");
+        symlink(outside.join("secret.md"), vault.join("escape.md")).expect("external symlink");
+        symlink("missing.md", vault.join("broken.md")).expect("broken symlink");
+
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_index(&vault)
+            .expect("refresh skips uncontained links");
+        let hits = sidecar.search(marker).expect("search indexed content");
+        assert_eq!(
+            hits.iter().map(|hit| hit.path.as_str()).collect::<Vec<_>>(),
+            vec![
+                vault.join("contained.md").to_str().expect("UTF-8 path"),
+                vault.join("inside.md").to_str().expect("UTF-8 path"),
+            ]
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[test]
+    fn registry_canonicalizes_idempotently_and_reopens() {
+        let vault = temp_dir("vault");
+        let parent = temp_dir("parent");
+        let source_path = parent.join("source");
+        fs::create_dir(&source_path).expect("source dir");
+        #[cfg(unix)]
+        let alias = parent.join("alias");
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&source_path, &alias).expect("source symlink");
+
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let first = registry.add(&source_path).expect("add canonical");
+        #[cfg(windows)]
+        assert!(!first.path.starts_with(r"\\?\"));
+        #[cfg(unix)]
+        assert_eq!(registry.add(&alias).expect("add alias"), first);
+        assert_eq!(registry.list().expect("list"), vec![first.clone()]);
+        let reopened = SourceRegistry::open(&vault).expect("reopen");
+        assert_eq!(reopened.list().expect("reopened list"), vec![first]);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(vault.join(".symdesk/search-sources.json"))
+                .expect("registry stat")
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600);
+        }
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(parent);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn registry_normalizes_legacy_verbatim_source_paths() {
+        let vault = temp_dir("legacy-source-registry-vault");
+        let source_root = temp_dir("legacy-source-registry-root");
+        let verbatim = fs::canonicalize(&source_root)
+            .expect("canonical source root")
+            .to_string_lossy()
+            .into_owned();
+        let expected = super::strip_verbatim_prefix(&verbatim);
+        let registry_dir = vault.join(".symdesk");
+        fs::create_dir_all(&registry_dir).expect("registry dir");
+        let registry_path = registry_dir.join("search-sources.json");
+        fs::write(
+            &registry_path,
+            serde_json::json!({
+                "version": 1,
+                "sources": [{"id": "legacy-id", "path": verbatim}]
+            })
+            .to_string(),
+        )
+        .expect("write legacy registry");
+
+        let registry = SourceRegistry::open(&vault).expect("open registry");
+        let listed = registry.list().expect("list legacy registry");
+        assert_eq!(listed[0].path, expected);
+        assert_eq!(
+            registry
+                .remove(&expected)
+                .expect("remove normalized path")
+                .id,
+            "legacy-id"
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn registry_rejects_vault_subtrees_and_remove_preserves_external_files() {
+        let vault = temp_dir("boundary");
+        let inside = vault.join("nested");
+        fs::create_dir(&inside).expect("nested dir");
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        assert!(
+            registry
+                .add(&inside)
+                .expect_err("inside vault rejected")
+                .to_string()
+                .contains("outside the vault")
+        );
+
+        #[cfg(unix)]
+        {
+            let symlink_target = temp_dir("symlink-target");
+            let vault_link = vault.join("external-alias");
+            std::os::unix::fs::symlink(&symlink_target, &vault_link).expect("vault source symlink");
+            assert!(registry.add(&vault_link).is_err());
+            let outside_alias = symlink_target.join("inside-alias");
+            std::os::unix::fs::symlink(&inside, &outside_alias).expect("alias to vault subtree");
+            assert!(registry.add(&outside_alias).is_err());
+            let _ = fs::remove_dir_all(symlink_target);
+        }
+
+        let external = temp_dir("remove");
+        let marker = external.join("keep.md");
+        fs::write(&marker, "keep me").expect("marker");
+        let source = registry.add(&external).expect("add");
+        assert_eq!(registry.remove(&source.id).expect("remove"), source);
+        assert_eq!(
+            fs::read_to_string(marker).expect("external file survives"),
+            "keep me"
+        );
+        assert!(registry.list().expect("list after remove").is_empty());
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(external);
+    }
+
+    #[test]
+    fn search_indexes_registered_external_markdown_and_excludes_unregistered_roots() {
+        let vault = temp_dir("search-vault");
+        let registered = temp_dir("registered");
+        let unregistered = temp_dir("unregistered");
+        let needle = "external-source-search-needle";
+        fs::write(vault.join("vault.md"), needle).expect("vault note");
+        fs::write(registered.join("registered.md"), needle).expect("registered note");
+        fs::write(unregistered.join("unregistered.md"), needle).expect("unregistered note");
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let source: SearchSource = registry.add(&registered).expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&registered)
+            .expect("index registered");
+        sidecar
+            .refresh_external_source(&unregistered)
+            .expect("index other root");
+        sidecar.refresh_index(&vault).expect("index vault");
+        let hits = sidecar
+            .search_with_sources(&vault, needle)
+            .expect("scoped search");
+        assert_eq!(hits.len(), 2);
+        assert!(hits.iter().any(|hit| {
+            hit.path
+                == PathBuf::from(&source.path)
+                    .join("registered.md")
+                    .to_string_lossy()
+        }));
+        assert!(
+            hits.iter()
+                .any(|hit| hit.path == vault.join("vault.md").to_string_lossy())
+        );
+        fs::remove_file(PathBuf::from(&source.path).join("registered.md"))
+            .expect("remove registered note");
+        sidecar
+            .refresh_external_source(&registered)
+            .expect("prune removed external note");
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, needle)
+                .expect("search after refresh")
+                .len(),
+            1
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(registered);
+        let _ = fs::remove_dir_all(unregistered);
+    }
+
+    #[test]
+    fn refresh_external_source_prunes_indexed_unsupported_paths() {
+        let vault = temp_dir("unsupported-prune-vault");
+        let source_root = fs::canonicalize(temp_dir("unsupported-prune-source"))
+            .expect("canonicalize source root");
+        let markdown = source_root.join("document.md");
+        let unsupported = source_root.join("document.bin");
+        let marker = "stale-unsupported-index-marker";
+        fs::write(&markdown, marker).expect("write markdown source");
+
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index markdown source");
+        fs::rename(&markdown, &unsupported).expect("rename markdown to unsupported path");
+
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("refresh unsupported source");
+        assert!(
+            sidecar
+                .search(marker)
+                .expect("search after refresh")
+                .is_empty(),
+            "renamed markdown must be removed when its new extension is unsupported"
+        );
+
+        // Model a pre-existing stale row for this unsupported path. The walk
+        // must not count it as found merely because a file exists at that path.
+        let stale = symdesk_vault::parse_bytes(
+            unsupported.to_str().expect("UTF-8 path"),
+            marker.as_bytes(),
+        )
+        .expect("parse stale indexed document");
+        let stale = IndexedDocument::from_vault(&stale, None).expect("convert stale document");
+        sidecar
+            .index_document(&stale)
+            .expect("seed stale indexed path");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("prune stale unsupported path");
+        assert!(
+            sidecar
+                .search(marker)
+                .expect("search after pruning")
+                .is_empty(),
+            "unsupported existing paths must not keep stale index rows"
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn external_txt_and_go_sources_add_search_refresh_and_remove_in_place() {
+        let vault = temp_dir("raw-text-vault");
+        let source_root = temp_dir("raw-text-source");
+        let txt_path = source_root.join("text-fixture.txt");
+        let go_path = source_root.join("code-fixture.go");
+        fs::write(
+            &txt_path,
+            "---\ntitle: parsed markdown title\n---\nplaintextoldmarker",
+        )
+        .expect("write txt source");
+        fs::write(&go_path, "package sample\nconst oldgomarker = true\n").expect("write go source");
+
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let source = registry.add(&source_root).expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index raw text files");
+
+        let txt_hits = sidecar
+            .search_with_sources(&vault, "plaintextoldmarker")
+            .expect("search txt");
+        assert_eq!(txt_hits.len(), 1);
+        assert_eq!(txt_hits[0].title, "text-fixture");
+        assert_eq!(
+            txt_hits[0].path,
+            PathBuf::from(&source.path)
+                .join("text-fixture.txt")
+                .to_string_lossy()
+        );
+        let go_hits = sidecar
+            .search_with_sources(&vault, "oldgomarker")
+            .expect("search go");
+        assert_eq!(go_hits.len(), 1);
+        assert_eq!(go_hits[0].title, "code-fixture");
+        assert_eq!(
+            go_hits[0].path,
+            PathBuf::from(&source.path)
+                .join("code-fixture.go")
+                .to_string_lossy()
+        );
+
+        fs::write(&txt_path, "plain text now has plaintextnewmarker").expect("refresh txt source");
+        fs::write(&go_path, "package sample\nconst newgomarker = true\n")
+            .expect("refresh go source");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("refresh raw text files");
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "plaintextoldmarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "plaintextnewmarker")
+                .unwrap()
+                .len(),
+            1
+        );
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "oldgomarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "newgomarker")
+                .unwrap()
+                .len(),
+            1
+        );
+
+        assert_eq!(
+            sidecar
+                .remove_external_source(Path::new(&source.path))
+                .expect("remove indexed source"),
+            2
+        );
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "plaintextnewmarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            fs::read_to_string(&txt_path).unwrap(),
+            "plain text now has plaintextnewmarker"
+        );
+        assert_eq!(
+            fs::read_to_string(&go_path).unwrap(),
+            "package sample\nconst newgomarker = true\n"
+        );
+        assert_eq!(
+            registry.remove(&source.id).expect("unregister source"),
+            source
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn oversized_external_raw_text_is_skipped_and_pruned() {
+        let vault = temp_dir("raw-limit-vault");
+        let source_root = temp_dir("raw-limit-source");
+        let text_path = source_root.join("oversized.text");
+        fs::write(&text_path, "limitmarker").expect("write small source");
+        SourceRegistry::open(&vault)
+            .expect("registry")
+            .add(&source_root)
+            .expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index small source");
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "limitmarker")
+                .unwrap()
+                .len(),
+            1
+        );
+
+        fs::write(
+            &text_path,
+            vec![b'x'; usize::try_from(MAX_EXTERNAL_TEXT_FILE_SIZE + 1).unwrap()],
+        )
+        .expect("grow beyond Go's 10 MiB limit");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("skip oversized source");
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "limitmarker")
+                .unwrap()
+                .is_empty()
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn external_source_watch_syncs_nested_create_modify_delete_and_stops() {
+        let vault = temp_dir("source-watch-vault");
+        let source_root = temp_dir("source-watch-root");
+        let nested = source_root.join("nested");
+        fs::create_dir_all(&nested).expect("create initial nested directory");
+        let existing = nested.join("existing.md");
+        fs::write(&existing, "initialwatchmarker").expect("write existing source");
+        SourceRegistry::open(&vault)
+            .expect("registry")
+            .add(&source_root)
+            .expect("register source");
+        let database = vault.join(".symdesk/watch-sidecar.db");
+        let observer = Sidecar::open(&database).expect("observer sidecar");
+        let stop = Arc::new(AtomicBool::new(false));
+        let worker_stop = Arc::clone(&stop);
+        let worker_root = source_root.clone();
+        let worker_database = database.clone();
+        let worker = thread::spawn(move || {
+            Sidecar::open(&worker_database)
+                .expect("watch sidecar")
+                .watch_external_source(&worker_root, &worker_stop)
+        });
+
+        fn wait_for_query(sidecar: &Sidecar, vault: &Path, query: &str, found: bool) {
+            let deadline = Instant::now() + Duration::from_secs(8);
+            while Instant::now() < deadline {
+                let actual = !sidecar
+                    .search_with_sources(vault, query)
+                    .expect("watch search")
+                    .is_empty();
+                if actual == found {
+                    return;
+                }
+                thread::sleep(Duration::from_millis(40));
+            }
+            assert_eq!(
+                !sidecar
+                    .search_with_sources(vault, query)
+                    .expect("final watch search")
+                    .is_empty(),
+                found,
+                "query state did not settle for {query:?}"
+            );
+        }
+
+        wait_for_query(&observer, &vault, "initialwatchmarker", true);
+        fs::write(&existing, "modifiedwatchmarker with a different size")
+            .expect("modify existing source");
+        wait_for_query(&observer, &vault, "initialwatchmarker", false);
+        wait_for_query(&observer, &vault, "modifiedwatchmarker", true);
+
+        let new_dir = source_root.join("new-nested").join("deeper");
+        fs::create_dir_all(&new_dir).expect("create watched nested directories");
+        let created = new_dir.join("created.md");
+        fs::write(&created, "createdwatchmarker").expect("create nested source");
+        wait_for_query(&observer, &vault, "createdwatchmarker", true);
+        fs::remove_file(&created).expect("delete nested source");
+        wait_for_query(&observer, &vault, "createdwatchmarker", false);
+
+        let root_deleted = source_root.join("root-deleted.md");
+        fs::write(&root_deleted, "rootdeletedwatchmarker").expect("write root-delete source");
+        wait_for_query(&observer, &vault, "rootdeletedwatchmarker", true);
+        fs::remove_dir_all(&source_root).expect("delete watched source root");
+        wait_for_query(&observer, &vault, "rootdeletedwatchmarker", false);
+
+        stop.store(true, Ordering::SeqCst);
+        worker
+            .join()
+            .expect("watch worker thread")
+            .expect("watch stops cleanly");
+        let _ = fs::remove_dir_all(vault);
+    }
+}

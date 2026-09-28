@@ -146,6 +146,11 @@ func TestConsoleComparisonNormalizesRootsAndCRLF(t *testing.T) {
 	if err := Compare(testCase, left, right); err != nil {
 		t.Fatal(err)
 	}
+	left = Result{Stdout: []byte(`{"error":"sync C:\\Temp\\left\\workspace: Access is denied."}`), SandboxRoot: `C:\Temp\left`}
+	right = Result{Stdout: []byte(`{"error":"sync C:\\Temp\\right\\workspace: Access is denied."}`), SandboxRoot: `C:\Temp\right`}
+	if err := Compare(testCase, left, right); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRetentionEvalComparisonNormalizesOnlyRunID(t *testing.T) {

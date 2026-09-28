@@ -41,6 +41,8 @@ var fixturePaths = []string{
 	"testdata/port/vault/health-links.json",
 	"testdata/port/vault/typed.json",
 	"testdata/port/vault/notebook.json",
+	"testdata/port/vault/notebook-write.json",
+	"testdata/port/vault/base-view-write.json",
 	"testdata/port/vault/metadata.json",
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/vault/filesystem-writes.json",
@@ -79,6 +81,10 @@ var fixturePaths = []string{
 	"testdata/port/room/doctor-cli.json",
 	"testdata/port/room/checkpoint-cli.json",
 	"testdata/port/room/run-approval-cli.json",
+	"testdata/port/retrieval/retrieval-chunks.json",
+	"testdata/port/retrieval/retrieval-bm25.json",
+	"testdata/port/retrieval/embedding-state.json",
+	"testdata/port/retrieval/retrieval-vector.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",
 	"testdata/port/retrieval/index-relocate.json",
@@ -86,6 +92,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/index-maintenance-process.json",
 	"testdata/port/cli/index-build-process.json",
 	"testdata/port/ai/recipe-validate.json",
+	"testdata/port/render/json-ir.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",
 	"testdata/port/room/mcp-mutations.json",
@@ -93,7 +100,9 @@ var fixturePaths = []string{
 	"testdata/port/dataset/service-sync.json",
 	"testdata/port/dataset/import.json",
 	"testdata/port/dataset/purge.json",
+	"testdata/port/dataset/purge-windows.json",
 	"testdata/port/dataset/cli.json",
+	"testdata/port/dataset/query-aggregate.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",
@@ -173,6 +182,16 @@ func runGenerate(repoRoot, commit, release string) {
 	cmd.Dir = repoRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
+	}
+	cmd = exec.Command("go", "run", "./scripts/rust-port/cmd/notebookwritegen")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fatal("generate notebook write fixture: %v\noutput: %s", err, string(out))
+	}
+	cmd = exec.Command("go", "run", "./scripts/rust-port/cmd/baseviewwritegen")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fatal("generate base/view write fixture: %v\noutput: %s", err, string(out))
 	}
 
 	sidecarOracle := inventory.Oracle{Commit: commit, Release: release}

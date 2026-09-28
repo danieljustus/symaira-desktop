@@ -1,14 +1,32 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
-    "release": "post-v0.12.2-security-880"
+    "commit": "8fc4b67fcd84468f91ede73774ca6adf3e1fec99",
+    "release": "post-v0.12.2-security-880+share-token-8fc4b67f"
   },
   "cases": [
     {
       "id": "healthz",
       "method": "GET",
       "path": "/healthz"
+    },
+    {
+      "id": "healthz-slow-header",
+      "method": "GET",
+      "path": "/healthz",
+      "header_delay_ms": 6000
+    },
+    {
+      "id": "healthz-large-header",
+      "method": "GET",
+      "path": "/healthz",
+      "header_padding_bytes": 524288
+    },
+    {
+      "id": "healthz-many-headers",
+      "method": "GET",
+      "path": "/healthz",
+      "header_repeat_count": 101
     },
     {
       "id": "status-missing-auth",
@@ -32,6 +50,12 @@
       "method": "GET",
       "path": "/api/v1/status",
       "auth": "valid"
+    },
+    {
+      "id": "status-worker-token",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "worker"
     },
     {
       "id": "status-wrong-auth-2",
@@ -100,6 +124,516 @@
       }
     },
     {
+      "id": "file-get-worker-acl-denied",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "worker",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "file-get-worker-acl-group",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Note.md",
+      "auth": "worker"
+    },
+    {
+      "id": "file-get-worker-acl-public",
+      "method": "GET",
+      "path": "/api/v1/files?path=notebooks/archive.md",
+      "auth": "worker"
+    },
+    {
+      "id": "file-put-worker-denied",
+      "method": "PUT",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "worker",
+      "body": "# unauthorized update\n"
+    },
+    {
+      "id": "snapshot-worker-acl-filter",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "worker"
+    },
+    {
+      "id": "notebook-worker-acl-filter",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "worker"
+    },
+    {
+      "id": "file-get-named-user-denied",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "named",
+      "populate_named_user": true
+    },
+    {
+      "id": "status-named-user",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "named"
+    },
+    {
+      "id": "file-get-named-user-allowed",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named"
+    },
+    {
+      "id": "file-get-named-user-range",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "headers": {
+        "Range": "bytes=0-5"
+      },
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-not-modified",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      },
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-denied-not-modified",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "named",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      },
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-wrong-token",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named-wrong"
+    },
+    {
+      "id": "snapshot-named-user-filter",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "named"
+    },
+    {
+      "id": "snapshot-named-user-head-gzip",
+      "method": "HEAD",
+      "path": "/api/v1/snapshot",
+      "auth": "named",
+      "headers": {
+        "Accept-Encoding": "gzip"
+      }
+    },
+    {
+      "id": "notebooks-list-named-user",
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "named"
+    },
+    {
+      "id": "notebook-get-named-user-filter",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "named"
+    },
+    {
+      "id": "notebook-head-named-user",
+      "method": "HEAD",
+      "path": "/api/v1/notebooks/research",
+      "auth": "named"
+    },
+    {
+      "id": "jobs-named-user-forbidden",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "named"
+    },
+    {
+      "id": "jobs-named-worker-forbidden",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "named-worker",
+      "populate_named_user": true
+    },
+    {
+      "id": "command-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "body": "{"
+    },
+    {
+      "id": "command-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "worker",
+      "body": "{"
+    },
+    {
+      "id": "command-named-user-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "named",
+      "body": "{",
+      "populate_named_user": true
+    },
+    {
+      "id": "command-named-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "named-worker",
+      "body": "{",
+      "populate_named_user": true
+    },
+    {
+      "id": "command-admin-empty",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[]}"
+    },
+    {
+      "id": "command-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/command",
+      "auth": "valid"
+    },
+    {
+      "id": "command-admin-null-arguments",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":null}"
+    },
+    {
+      "id": "command-admin-unavailable",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}"
+    },
+    {
+      "id": "command-admin-controlled-path",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ls\",\"--vault=/tmp/other-vault\"]}"
+    },
+    {
+      "id": "command-admin-stream-controlled-path",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ask\",\"--vault=/tmp/other-vault\"]}"
+    },
+    {
+      "id": "command-admin-stream-transform",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"transform\",\"summarize\",\"--text\",\"short input\"]}"
+    },
+    {
+      "id": "command-admin-stream-ask-no-provider",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ask\",\"hello\"]}"
+    },
+    {
+      "id": "ai-transform-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "body": "{\"text\":\"short input\"}"
+    },
+    {
+      "id": "ai-transform-empty-text",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"  \\n \"}"
+    },
+    {
+      "id": "ai-transform-null-strings",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":null,\"intent\":null}"
+    },
+    {
+      "id": "ai-transform-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short input\"}"
+    },
+    {
+      "id": "ai-transform-local-ollama-stream",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short provider input\"}",
+      "provider_ollama": true
+    },
+    {
+      "id": "ai-transform-local-ollama-error",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"provider error input\"}",
+      "provider_failure": true
+    },
+    {
+      "id": "ai-transform-local-ollama-oversized-line",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"oversized provider input\"}",
+      "provider_oversized": true
+    },
+    {
+      "id": "ai-transform-local-ollama-disconnect",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"disconnect provider input\"}",
+      "provider_disconnect": true
+    },
+    {
+      "id": "ai-question-local-ollama-empty-results",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"provider ask question\"}",
+      "provider_ask_ollama": true
+    },
+    {
+      "id": "ai-question-local-ollama-worker-denied-source-not-forwarded",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Hello\"}",
+      "populate_worker_acl": true,
+      "provider_ask_ollama": true
+    },
+    {
+      "id": "ai-question-local-ollama-with-citation",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}",
+      "provider_ask_ollama": true,
+      "provider_ask_expected_source": true
+    },
+    {
+      "id": "ai-question-local-ollama-disconnect",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"disconnect provider input\"}",
+      "provider_ask_ollama": true,
+      "provider_disconnect": true,
+      "disconnect_after_events": 4
+    },
+    {
+      "id": "ai-question-local-ollama-notebook-citation-warning",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"notebook citation warning\",\"notebook\":\"research\"}",
+      "provider_ask_ollama": true,
+      "provider_ask_expected_source": true,
+      "provider_ask_notebook": true
+    },
+    {
+      "id": "ai-question-local-ollama-notebook-worker-acl",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Hello\",\"notebook\":\"research\"}",
+      "populate_worker_acl": true,
+      "provider_ask_ollama": true,
+      "provider_ask_notebook": true
+    },
+    {
+      "id": "ai-transform-openai-provider-falls-back-to-local-ollama",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short provider input\"}",
+      "provider_openai_fallback": true
+    },
+    {
+      "id": "ai-transform-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short input\"}{\"ignored\":true}"
+    },
+    {
+      "id": "ai-transform-named-user-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "named",
+      "body": "{\"text\":\"short input\",\"intent\":\"rewrite\"}",
+      "populate_named_user": true
+    },
+    {
+      "id": "ai-transform-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid"
+    },
+    {
+      "id": "ai-ask-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "ai-ask-empty-query",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"  \"}"
+    },
+    {
+      "id": "ai-ask-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-ranked-citations",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}{\"ignored\":true}"
+    },
+    {
+      "id": "ai-ask-named-user-acl-filter",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "named",
+      "body": "{\"query\":\"named\"}",
+      "populate_named_user": true
+    },
+    {
+      "id": "ai-ask-worker-acl-filter",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"nested\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-worker-acl-denied",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Body\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-notebook-scoped-sources",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\",\"notebook\":\"mixed\"}"
+    },
+    {
+      "id": "ai-ask-notebook-unmatched-fallback",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"conceptual-question-no-match\",\"notebook\":\"mixed\"}"
+    },
+    {
+      "id": "ai-ask-notebook-worker-acl",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Body\",\"notebook\":\"mixed\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-notebook-worker-acl-fallback",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"conceptual-question-no-match\",\"notebook\":\"mixed\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid"
+    },
+    {
+      "id": "command-admin-invalid-subcommand",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"note\",\"not-real\"]}"
+    },
+    {
+      "id": "command-admin-trailing-data",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}{\"ignored\":true}"
+    },
+    {
+      "id": "command-admin-over-limit-prefix",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}",
+      "body_repeat": 2097127
+    },
+    {
+      "id": "file-put-worker-group",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Note.md",
+      "auth": "worker",
+      "body": "# authorized worker update\n"
+    },
+    {
+      "id": "file-put-named-user",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "body": "# authorized named user update\n"
+    },
+    {
+      "id": "file-get-named-user-updated",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named"
+    },
+    {
       "id": "file-exact-bytes",
       "method": "GET",
       "path": "/api/v1/files?path=Hello.md",
@@ -117,6 +651,46 @@
       "path": "/api/v1/files?path=Hello.md",
       "auth": "valid",
       "headers": {
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-match",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Fri, 02 Jan 2026 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-legacy-date",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Friday, 02-Jan-26 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-stale",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Thu, 01 Jan 2026 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-etag",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "\"unavailable-etag\"",
         "Range": "bytes=0-4"
       }
     },
@@ -190,6 +764,79 @@
       "auth": "valid"
     },
     {
+      "id": "file-put-missing-auth",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "body": "# Created\n"
+    },
+    {
+      "id": "file-put-bad-extension",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.txt",
+      "auth": "valid",
+      "body": "plain"
+    },
+    {
+      "id": "file-put-internal",
+      "method": "PUT",
+      "path": "/api/v1/files?path=.symdesk/server/secret.md",
+      "auth": "valid",
+      "body": "secret"
+    },
+    {
+      "id": "file-put-traversal",
+      "method": "PUT",
+      "path": "/api/v1/files?path=../outside.md",
+      "auth": "valid",
+      "body": "outside"
+    },
+    {
+      "id": "file-put-symlink-parent",
+      "method": "PUT",
+      "path": "/api/v1/files?path=escape-dir/new.md",
+      "auth": "valid",
+      "body": "outside"
+    },
+    {
+      "id": "file-put-create",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid",
+      "body": "# Created\n\nfirst state\n"
+    },
+    {
+      "id": "file-put-read-created",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-put-update",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid",
+      "body": "# Created\n\nsecond state\n"
+    },
+    {
+      "id": "file-put-read-updated",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-put-over-limit",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/TooBig.md",
+      "auth": "valid",
+      "body_repeat": 8388609
+    },
+    {
+      "id": "files-method-not-allowed",
+      "method": "POST",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid"
+    },
+    {
       "id": "health-method-not-allowed",
       "method": "POST",
       "path": "/healthz"
@@ -223,11 +870,738 @@
       "auth": "valid"
     },
     {
+      "id": "notebook-get-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research"
+    },
+    {
+      "id": "notebook-get-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "wrong"
+    },
+    {
+      "id": "notebook-get-research",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "valid"
+    },
+    {
+      "id": "notebook-get-mixed-sources",
+      "method": "GET",
+      "path": "/api/v1/notebooks/mixed",
+      "auth": "valid"
+    },
+    {
+      "id": "notebook-get-unknown",
+      "method": "GET",
+      "path": "/api/v1/notebooks/does-not-exist",
+      "auth": "valid"
+    },
+    {
       "id": "notebooks-empty",
       "method": "GET",
       "path": "/api/v1/notebooks",
       "auth": "valid",
       "empty_notebooks": true
+    },
+    {
+      "id": "jobs-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/jobs"
+    },
+    {
+      "id": "jobs-worker-token",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "worker"
+    },
+    {
+      "id": "jobs-worker-head",
+      "method": "HEAD",
+      "path": "/api/v1/jobs",
+      "auth": "worker"
+    },
+    {
+      "id": "jobs-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "wrong"
+    },
+    {
+      "id": "worker-lease-no-jobs",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "worker",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-lease-valid-prefix-over-limit-trailing",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "body_repeat": 65486
+    },
+    {
+      "id": "jobs-empty",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-populated",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "valid",
+      "populate_jobs": true
+    },
+    {
+      "id": "jobs-first-page",
+      "method": "GET",
+      "path": "/api/v1/jobs?limit=1",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-second-page",
+      "method": "GET",
+      "path": "/api/v1/jobs?limit=1\u0026offset=1",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-beyond-end",
+      "method": "GET",
+      "path": "/api/v1/jobs?offset=3",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-invalid-limit",
+      "method": "GET",
+      "path": "/api/v1/jobs?limit=0",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-invalid-offset",
+      "method": "GET",
+      "path": "/api/v1/jobs?offset=-1",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-retry-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003"
+    },
+    {
+      "id": "jobs-retry-worker-token",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "worker"
+    },
+    {
+      "id": "jobs-retry-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/jobs/retry",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-retry-nonfailed",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000001",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-retry-failed",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "valid"
+    },
+    {
+      "id": "worker-input-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003"
+    },
+    {
+      "id": "worker-input-worker-token",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "worker"
+    },
+    {
+      "id": "worker-input-missing-job",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid"
+    },
+    {
+      "id": "worker-input-valid",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-input-named-worker",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "named-worker",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-input-head-range",
+      "method": "HEAD",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid",
+      "headers": {
+        "Range": "bytes=0-5"
+      },
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid"
+    },
+    {
+      "id": "worker-lease-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "worker-lease-missing-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-lease-oversized",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body_repeat": 65537
+    },
+    {
+      "id": "worker-lease-no-capability",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"pdf\"]}",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "named-worker",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-lease-expired-reclaim",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_expired_job": true
+    },
+    {
+      "id": "worker-complete-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"ocr\",\"engine\":\"tesseract\"}"
+    },
+    {
+      "id": "worker-complete-worker-token",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"text\":\"ignored\",\"engine\":\"tesseract\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-complete-missing-job",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000099\",\"worker_id\":\"worker-1\",\"text\":\"ocr\",\"engine\":\"tesseract\"}"
+    },
+    {
+      "id": "worker-complete-null-strings",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":null,\"worker_id\":null,\"text\":null,\"engine\":null,\"model\":null}"
+    },
+    {
+      "id": "worker-complete-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000099\"}{\"ignored\":true}"
+    },
+    {
+      "id": "worker-complete-not-leased",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"text\":\"ignored\",\"engine\":\"tesseract\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-complete-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "worker-complete-oversized",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"",
+      "body_repeat": 25165749
+    },
+    {
+      "id": "worker-complete-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"yes\",\"model\":\"123\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-complete-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "named-worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"yes\",\"model\":\"123\"}",
+      "populate_worker_job": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-fail-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"scan failed\"}"
+    },
+    {
+      "id": "worker-fail-worker-token",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"error\":\"scan failed\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-not-leased",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"error\":\"scan failed\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "named-worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
+      "populate_worker_job": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "worker-fail-retry",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  retry me \\n\",\"retry\":true}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "ingest-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "ingest-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ingest",
+      "auth": "valid"
+    },
+    {
+      "id": "ingest-worker-token",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "worker",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "ingest-invalid-multipart",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=broken"
+      },
+      "body": "not multipart"
+    },
+    {
+      "id": "ingest-missing-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=empty"
+      },
+      "body": "--empty--\r\n"
+    },
+    {
+      "id": "ingest-valid",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "shares-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/shares"
+    },
+    {
+      "id": "shares-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "wrong"
+    },
+    {
+      "id": "shares-empty",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "valid"
+    },
+    {
+      "id": "shares-populated",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "valid",
+      "populate_shares": true
+    },
+    {
+      "id": "shares-worker-owned",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "worker",
+      "populate_shares": true
+    },
+    {
+      "id": "share-revoke-missing-auth",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old"
+    },
+    {
+      "id": "share-revoke-wrong-auth",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "wrong"
+    },
+    {
+      "id": "share-revoke-unknown",
+      "method": "DELETE",
+      "path": "/api/v1/share/does-not-exist",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-worker-nonowned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "worker",
+      "populate_shares": true
+    },
+    {
+      "id": "share-revoke-worker-owned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-worker",
+      "auth": "worker",
+      "populate_shares": true
+    },
+    {
+      "id": "share-revoke-already",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-revoked",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-valid",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-repeat",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "valid"
+    },
+    {
+      "id": "share-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/share",
+      "auth": "valid"
+    },
+    {
+      "id": "share-item-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/share/does-not-exist",
+      "auth": "valid"
+    },
+    {
+      "id": "share-create-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-wrong-auth",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "wrong",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-worker-token",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "worker",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{not-json"
+    },
+    {
+      "id": "share-create-missing-path",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"expiry\":24}"
+    },
+    {
+      "id": "share-create-traversal",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"../outside.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-internal",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\".symdesk/server/shares.json\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-dataset",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"datasets/raw.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-expiry-zero",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":0}"
+    },
+    {
+      "id": "share-create-expiry-high",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":169}"
+    },
+    {
+      "id": "share-create-missing-document",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"missing.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-valid",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-access-valid",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "populate_share_access": true
+    },
+    {
+      "id": "share-access-head",
+      "method": "HEAD",
+      "path": "/s/share-valid-token"
+    },
+    {
+      "id": "share-access-range",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "headers": {
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "share-access-not-modified",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      }
+    },
+    {
+      "id": "share-access-dataset",
+      "method": "GET",
+      "path": "/s/share-dataset-token"
+    },
+    {
+      "id": "share-access-missing-file",
+      "method": "GET",
+      "path": "/s/share-missing-token"
+    },
+    {
+      "id": "share-access-symlink-escape",
+      "method": "GET",
+      "path": "/s/share-escape-token"
+    },
+    {
+      "id": "share-access-large-file",
+      "method": "GET",
+      "path": "/s/share-large-token"
+    },
+    {
+      "id": "share-access-large-range",
+      "method": "GET",
+      "path": "/s/share-large-token",
+      "headers": {
+        "Range": "bytes=1-8388609"
+      }
+    },
+    {
+      "id": "share-access-invalid-first",
+      "method": "GET",
+      "path": "/s/unknown-share-token"
+    },
+    {
+      "id": "share-access-expired",
+      "method": "GET",
+      "path": "/s/share-expired-token"
+    },
+    {
+      "id": "share-access-revoked-threshold",
+      "method": "GET",
+      "path": "/s/share-revoked-token"
+    },
+    {
+      "id": "share-access-invalid-blocked",
+      "method": "GET",
+      "path": "/s/unknown-share-token"
+    },
+    {
+      "id": "shares-named-user-owned",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-revoke-named-nonowned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-worker",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-revoke-named-owned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-user-denied",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-worker-denied",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named-worker",
+      "body": "{\"path\":\"nested/Named.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-user-valid",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named",
+      "body": "{\"path\":\"nested/Named.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "command-admin-exec-ls",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ls\",\"--dir\",\"nested\"]}",
+      "remove_symlink_escapes": true
     }
   ]
 }

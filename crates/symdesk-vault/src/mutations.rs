@@ -7,7 +7,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use noyalib::Value;
+use noyalib::{Mapping, Value};
 use thiserror::Error;
 
 mod go_yaml;
@@ -182,6 +182,10 @@ pub(crate) fn render_go_yaml_string(
 ) -> Result<String, MutationError> {
     go_yaml::render_string(value, indent_spaces, key)
         .map_err(|detail| MutationError::Marshal { detail })
+}
+
+pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, MutationError> {
+    go_yaml::render_mapping(mapping).map_err(|detail| MutationError::Marshal { detail })
 }
 
 fn yaml_value_string(value: &Value) -> Result<String, MutationError> {

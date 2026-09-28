@@ -11,12 +11,17 @@ publish = false
 cap-std.workspace = true
 axum.workspace = true
 flate2.workspace = true
+futures-core = "=0.3.34"
 hyper.workspace = true
-hyper-util.workspace = true
+hyper-util = { workspace = true, features = ["client-legacy"] }
+http-body-util.workspace = true
 httpdate.workspace = true
+getrandom = "=0.4.3"
 notify.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+symdesk-core.workspace = true
+symdesk-index.workspace = true
 symdesk-vault.workspace = true
 time.workspace = true
 tokio.workspace = true
@@ -25,3 +30,6 @@ tower.workspace = true
 [target.'cfg(windows)'.dependencies]
 same-file = "=1.0.6"
 winreg = "=0.56.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"

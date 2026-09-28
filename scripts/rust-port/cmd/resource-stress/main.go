@@ -20,10 +20,12 @@ import (
 )
 
 const (
-	maxMCPBytes       = 1 << 20
-	maxNoteBytes      = 8 << 20
-	maxBodyBytes      = 16 << 20
-	httpHeaderTimeout = 5 * time.Second
+	maxMCPBytes  = 1 << 20
+	maxNoteBytes = 8 << 20
+	maxBodyBytes = 16 << 20
+	// Go's internal/selfhost/server.go and the Rust HTTP listener both allow
+	// ten seconds to finish request headers.
+	httpHeaderTimeout = 10 * time.Second
 	token             = "0123456789abcdef0123456789abcdef"
 )
 
@@ -384,9 +386,6 @@ func slowPeerCancellation(name, address string) error {
 		return err
 	}
 	timeout := httpHeaderTimeout
-	if strings.EqualFold(name, "go") {
-		timeout = 10 * time.Second
-	}
 	if err := conn.SetReadDeadline(time.Now().Add(timeout + 2*time.Second)); err != nil {
 		_ = conn.Close()
 		return err

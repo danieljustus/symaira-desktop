@@ -26,7 +26,16 @@ fn render_mapping_at(mapping: &Mapping, depth: usize) -> Result<String, String> 
     }
 
     let mut entries: Vec<_> = mapping.iter().collect();
-    entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+    if let Some(field_order) = struct_field_order(mapping) {
+        entries.sort_by_key(|(key, _)| {
+            field_order
+                .iter()
+                .position(|field| *field == key.as_str())
+                .unwrap_or(usize::MAX)
+        });
+    } else {
+        entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+    }
 
     let mut lines = Vec::new();
     for (key, value) in entries {
@@ -49,6 +58,65 @@ fn render_mapping_at(mapping: &Mapping, depth: usize) -> Result<String, String> 
         append_mapping_value(&mut lines, &prefix, value, depth)?;
     }
     Ok(lines.join("\n"))
+}
+
+fn struct_field_order(mapping: &Mapping) -> Option<&'static [&'static str]> {
+    const PROPERTY_CONFIG: &[&str] = &["type", "label", "options", "description", "default"];
+    const VIEW: &[&str] = &[
+        "id",
+        "name",
+        "type",
+        "group_by",
+        "date_property",
+        "computed",
+        "filters",
+        "filter_group",
+        "sorts",
+        "columns",
+        "source",
+        "template",
+    ];
+    const FILTER: &[&str] = &["key", "operator", "value"];
+    const FILTER_GROUP: &[&str] = &["operator", "filters", "groups"];
+    const SORT: &[&str] = &["key", "ascending"];
+    const COMPUTED_COLUMN: &[&str] = &["formula", "rollup"];
+    const TEMPLATE: &[&str] = &["ref", "defaults"];
+
+    let has_only_fields = |fields: &[&str]| {
+        mapping
+            .iter()
+            .all(|(key, _)| fields.contains(&key.as_str()))
+    };
+    if mapping.contains_key("id") && mapping.contains_key("name") && has_only_fields(VIEW) {
+        Some(VIEW)
+    } else if mapping.len() > 1 && has_only_fields(PROPERTY_CONFIG) {
+        Some(PROPERTY_CONFIG)
+    } else if mapping.contains_key("key")
+        && mapping.contains_key("value")
+        && has_only_fields(FILTER)
+    {
+        Some(FILTER)
+    } else if mapping.contains_key("operator")
+        && (mapping.contains_key("filters") || mapping.contains_key("groups"))
+        && has_only_fields(FILTER_GROUP)
+    {
+        Some(FILTER_GROUP)
+    } else if mapping.contains_key("key")
+        && mapping.contains_key("ascending")
+        && has_only_fields(SORT)
+    {
+        Some(SORT)
+    } else if (mapping.contains_key("formula") || mapping.contains_key("rollup"))
+        && has_only_fields(COMPUTED_COLUMN)
+    {
+        Some(COMPUTED_COLUMN)
+    } else if (mapping.contains_key("ref") || mapping.contains_key("defaults"))
+        && has_only_fields(TEMPLATE)
+    {
+        Some(TEMPLATE)
+    } else {
+        None
+    }
 }
 
 fn append_mapping_value(
@@ -101,7 +169,16 @@ fn render_sequence(items: &[Value], depth: usize) -> Result<Vec<String>, String>
                     continue;
                 }
                 let mut entries: Vec<_> = mapping.iter().collect();
-                entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+                if let Some(field_order) = struct_field_order(mapping) {
+                    entries.sort_by_key(|(key, _)| {
+                        field_order
+                            .iter()
+                            .position(|field| *field == key.as_str())
+                            .unwrap_or(usize::MAX)
+                    });
+                } else {
+                    entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+                }
 
                 let (first_key, first_val) = entries[0];
                 if first_key.contains('\n') {
@@ -420,7 +497,7 @@ pub(super) fn render_string(
         && !is_base60_float(value)
         && !is_yaml_keyword_or_number(value)
         && single_quoted_allowed
-        && (leading_space || trailing_space || line_breaks)
+        && (leading_space || trailing_space || line_breaks || has_indicator_start)
     {
         return Ok(single_quote(value, indent_spaces));
     }

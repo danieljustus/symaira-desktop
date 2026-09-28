@@ -221,16 +221,23 @@ fn write_fallback(name: &str, content: &[u8], absent: bool) -> Result<String, St
 }
 
 fn create_dirs_0700(path: &Path) -> io::Result<()> {
-    let mut current = PathBuf::new();
-    for component in path.components() {
-        current.push(component);
-        match fs::create_dir(&current) {
-            Ok(()) => set_mode(&current, 0o700)?,
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error),
-        }
+    #[cfg(not(unix))]
+    {
+        fs::create_dir_all(path)
     }
-    Ok(())
+    #[cfg(unix)]
+    {
+        let mut current = PathBuf::new();
+        for component in path.components() {
+            current.push(component);
+            match fs::create_dir(&current) {
+                Ok(()) => set_mode(&current, 0o700)?,
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(())
+    }
 }
 
 fn open_profile(path: &Path, content: &[u8]) -> io::Result<fs::File> {
@@ -246,17 +253,10 @@ fn open_profile(path: &Path, content: &[u8]) -> io::Result<fs::File> {
     Ok(file)
 }
 
+#[cfg(unix)]
 fn set_mode(path: &Path, mode: u32) -> io::Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(path, fs::Permissions::from_mode(mode))
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = (path, mode);
-        Ok(())
-    }
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(path, fs::Permissions::from_mode(mode))
 }
 
 fn home_dir() -> Option<PathBuf> {

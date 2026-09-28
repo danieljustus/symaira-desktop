@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"syscall"
@@ -419,12 +420,15 @@ func makeRunReadErrorFixtures(t *testing.T) []runReadErrorFixture {
 	if err := os.WriteFile(filepath.Join(notDirectoryRoot, "journal"), []byte("not a directory"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, notDirectoryErr := List(notDirectoryRoot, false)
-	if !errors.Is(notDirectoryErr, syscall.ENOTDIR) {
-		t.Fatalf("expected Go not-a-directory read error, got %v", notDirectoryErr)
-	}
-	if _, getErr := Get(notDirectoryRoot, "missing-run"); !errors.Is(getErr, syscall.ENOTDIR) {
-		t.Fatalf("expected Go Get not-a-directory read error, got %v", getErr)
+	list, notDirectoryErr := List(notDirectoryRoot, false)
+	_, getErr := Get(notDirectoryRoot, "missing-run")
+	if runtime.GOOS == "windows" {
+		// Windows classifies ReadDir(file) as missing; Go's journal reader ignores it.
+		if notDirectoryErr != nil || len(list) != 0 || !errors.Is(getErr, ErrRunNotFound) {
+			t.Fatalf("expected Windows Go missing-journal behavior, got list=%v listErr=%v getErr=%v", list, notDirectoryErr, getErr)
+		}
+	} else if !errors.Is(notDirectoryErr, syscall.ENOTDIR) || !errors.Is(getErr, syscall.ENOTDIR) {
+		t.Fatalf("expected Go not-a-directory read errors, got listErr=%v getErr=%v", notDirectoryErr, getErr)
 	}
 	return []runReadErrorFixture{
 		{

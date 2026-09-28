@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core"]
+members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render"]
 resolver = "3"
 
 [workspace.package]
@@ -31,14 +31,15 @@ ed25519-dalek = { version = "=2.2.0" }
 sha2 = { version = "=0.10.9" }
 hex = { version = "=0.4.3" }
 cap-std = { version = "=4.0.3", default-features = false }
-axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "multipart", "query", "tokio"] }
 flate2 = "=1.1.2"
 httpdate = "=1.0.3"
+http-body-util = "=0.1.5"
 notify = "=8.2.0"
-tokio = { version = "=1.47.1", default-features = false, features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+tokio = { version = "=1.47.1", default-features = false, features = ["io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
 tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
-hyper-util = { version = "=0.1.20", default-features = false, features = ["service", "tokio"] }
-hyper = { version = "=1.11.1", default-features = false, features = ["http1", "server"] }
+hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }
+hyper = { version = "=1.11.1", default-features = false, features = ["client", "http1", "server"] }
 
 [profile.release]
 codegen-units = 1

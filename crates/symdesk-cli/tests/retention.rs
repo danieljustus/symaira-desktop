@@ -392,17 +392,17 @@ fn reject_persists_and_diff_reads_back_the_proposal() {
 
 #[cfg(windows)]
 #[test]
-fn reject_reports_directory_sync_error_after_persisting() {
+fn reject_persists_on_windows_without_directory_sync() {
     let root = TempRoot::new("reject-windows");
     let proposal_path = write_proposal(&root);
     let output = run(&root, ["retention", "reject", "ret-safe", "--json"]);
-    assert_eq!(output.status.code(), Some(1));
-    let error: serde_json::Value = serde_json::from_slice(&output.stdout).expect("error JSON");
-    assert!(error["error"].as_str().unwrap_or("").starts_with("sync "));
-    let persisted: serde_json::Value = serde_json::from_slice(
-        &fs::read(proposal_path).expect("rejected proposal persisted before sync error"),
-    )
-    .expect("persisted proposal JSON");
+    assert_ok(
+        &output,
+        b"{\"run_id\":\"ret-safe\",\"status\":\"rejected\"}\n",
+    );
+    let persisted: serde_json::Value =
+        serde_json::from_slice(&fs::read(proposal_path).expect("read rejected proposal"))
+            .expect("persisted proposal JSON");
     assert_eq!(persisted["status"], "rejected");
 }
 

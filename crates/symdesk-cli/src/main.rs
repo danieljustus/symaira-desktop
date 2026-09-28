@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod ai_cli;
 mod dataset;
 mod history;
 mod http;
@@ -7,6 +8,7 @@ mod index_cli;
 mod mcp;
 mod recipe;
 mod retention;
+mod source_cli;
 
 use std::{
     collections::BTreeMap,
@@ -21,15 +23,15 @@ use serde::Serialize;
 use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
-use symdesk_index::{ListedDocument, open_for_vault};
+use symdesk_index::{ListedDocument, SearchSource, SourceRegistry, open_for_vault};
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
 
 fn local_offset_at(value: time::OffsetDateTime) -> time::UtcOffset {
-    // Go honors TZ=UTC on Windows; the time crate's Windows local offset does not.
-    // ponytail: Other TZ overrides need a timezone database if required for parity.
+    // Go uses the host timezone on Windows even when TZ=UTC is set.
+    #[cfg(not(windows))]
     if std::env::var("TZ").ok().as_deref() == Some("UTC") {
         return time::UtcOffset::UTC;
     }
@@ -118,9 +120,16 @@ fn main() -> ExitCode {
             Ok(()) => process_exit(CoreExitCode::Ok),
             Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
         },
+        Some(("transform", command)) => ai_cli::run_transform(command, output_json),
+        Some(("ask", command)) => ai_cli::run_ask(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
+            command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("dataset", command)) => dataset::run(
@@ -133,6 +142,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
             matches.get_flag("json"),
+        ),
+        Some(("sources", command)) => source_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
         ),
         Some(("history", command)) => match command.subcommand() {
             Some(("tasks", _)) => history::run_tasks(
@@ -222,6 +236,7 @@ fn rewrite_index_output_flag(args: &mut [OsString]) {
 fn run_http_server(
     listen: Option<String>,
     token: Option<String>,
+    worker_token: Option<String>,
     vault: Option<String>,
 ) -> ExitCode {
     let vault = match resolve_vault(vault.as_deref()) {
@@ -232,6 +247,10 @@ fn run_http_server(
         .filter(|value| !value.is_empty())
         .or_else(|| std::env::var("SYMDESK_SERVER_TOKEN").ok())
         .unwrap_or_default();
+    let worker_token = worker_token
+        .filter(|value| !value.is_empty())
+        .or_else(|| std::env::var("SYMDESK_WORKER_TOKEN").ok())
+        .filter(|value| !value.is_empty());
     let config = http::HttpConfig {
         listen_address: listen
             .filter(|value| !value.is_empty())
@@ -239,6 +258,7 @@ fn run_http_server(
             .unwrap_or_else(|| "127.0.0.1:8787".to_owned()),
         vault_root: vault,
         token,
+        worker_token,
         version: VERSION.to_owned(),
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
@@ -275,6 +295,8 @@ fn cli() -> Command {
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
+        .subcommand(ai_cli::transform_cli())
+        .subcommand(ai_cli::ask_cli())
         .subcommand(Command::new("mcp"))
         .subcommand(
             Command::new("history")
@@ -284,11 +306,13 @@ fn cli() -> Command {
         .subcommand(retention::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
+        .subcommand(source_cli::cli())
         .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))
-                .arg(Arg::new("token").long("token").num_args(1)),
+                .arg(Arg::new("token").long("token").num_args(1))
+                .arg(Arg::new("worker-token").long("worker-token").num_args(1)),
         )
 }
 
@@ -331,11 +355,15 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let Some(query) = parsed.query.as_deref() else {
                 return emit_error("search query is required".to_owned(), output_json);
             };
-            let hits = match sidecar.search(query) {
+            let hits = match sidecar.search_with_sources(&vault, query) {
                 Ok(hits) => hits,
                 Err(error) => return emit_error(error.to_string(), output_json),
             };
-            render_search(&vault, &hits, output_json)
+            let sources = match SourceRegistry::open(&vault).and_then(|registry| registry.list()) {
+                Ok(sources) => sources,
+                Err(error) => return emit_error(error.to_string(), output_json),
+            };
+            render_search(&vault, &hits, &sources, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),
     }
@@ -408,6 +436,19 @@ fn relative_path(root: &Path, path: &str) -> String {
         .ok()
         .map(Path::to_path_buf)
         .or_else(|| {
+            // Windows canonicalize() uses the verbatim `\\?\` prefix,
+            // while sidecar storage keys intentionally omit it. Compare
+            // those lexical spellings before the canonical fallback below:
+            // canonicalizing the full file path follows an in-vault symlink
+            // and changes its user-visible citation from the alias to target.
+            let normalized_root = strip_windows_verbatim_prefix(root);
+            let normalized_path = strip_windows_verbatim_prefix(path);
+            normalized_path
+                .strip_prefix(&normalized_root)
+                .ok()
+                .map(Path::to_path_buf)
+        })
+        .or_else(|| {
             let canonical_root = std::fs::canonicalize(root).ok()?;
             let canonical_path = std::fs::canonicalize(path).ok()?;
             canonical_path
@@ -426,6 +467,24 @@ fn relative_path(root: &Path, path: &str) -> String {
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }
 
+fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
+    let Some(path) = path.to_str() else {
+        return path.to_path_buf();
+    };
+    #[cfg(windows)]
+    {
+        const UNC_PREFIX: &str = r"\\?\UNC\";
+        const VERBATIM_PREFIX: &str = r"\\?\";
+        if let Some(rest) = path.strip_prefix(UNC_PREFIX) {
+            return PathBuf::from(format!(r"\\{rest}"));
+        }
+        if let Some(rest) = path.strip_prefix(VERBATIM_PREFIX) {
+            return PathBuf::from(rest);
+        }
+    }
+    PathBuf::from(path)
+}
+
 #[derive(Serialize)]
 struct LsJsonEntry {
     path: String,
@@ -441,6 +500,14 @@ struct SearchJsonHit {
     title: String,
     snippet: String,
     score: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source_type: Option<&'static str>,
+    #[serde(skip_serializing_if = "is_false")]
+    read_only: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
 }
 
 #[derive(Serialize)]
@@ -482,15 +549,30 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
     write_stdout(format!("[{}]\n", entries.join(" ")))
 }
 
-fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bool) -> ExitCode {
+fn render_search(
+    root: &Path,
+    hits: &[symdesk_index::SearchHit],
+    sources: &[SearchSource],
+    json_output: bool,
+) -> ExitCode {
+    let is_external = |path: &str| {
+        let path = Path::new(path);
+        sources.iter().any(|source| path.starts_with(&source.path))
+    };
     if json_output {
         let results = hits
             .iter()
             .map(|hit| SearchJsonHit {
-                path: relative_path(root, &hit.path),
+                path: if is_external(&hit.path) {
+                    hit.path.clone()
+                } else {
+                    relative_path(root, &hit.path)
+                },
                 title: hit.title.clone(),
                 snippet: hit.snippet.clone(),
                 score: 0,
+                source_type: is_external(&hit.path).then_some("external"),
+                read_only: is_external(&hit.path),
             })
             .collect::<Vec<_>>();
         return write_stdout(format!(
@@ -502,10 +584,16 @@ fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bo
         .iter()
         .map(|hit| {
             format!(
-                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType: ReadOnly:false}}",
-                relative_path(root, &hit.path),
+                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType:{} ReadOnly:{}}}",
+                if is_external(&hit.path) {
+                    hit.path.clone()
+                } else {
+                    relative_path(root, &hit.path)
+                },
                 hit.title,
-                hit.snippet
+                hit.snippet,
+                if is_external(&hit.path) { "external" } else { "" },
+                is_external(&hit.path)
             )
         })
         .collect::<Vec<_>>();
@@ -576,6 +664,45 @@ mod exit_code_tests {
         ];
         for (code, expected) in codes {
             assert_eq!(code.as_u8(), expected);
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn relative_path_keeps_windows_file_symlink_alias() {
+        use super::{relative_path, strip_windows_verbatim_prefix};
+        use std::{
+            fs,
+            os::windows::fs::symlink_file,
+            time::{SystemTime, UNIX_EPOCH},
+        };
+
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock after epoch")
+            .as_nanos();
+        let lexical_root = std::env::temp_dir().join(format!("symdesk-alias-{suffix}"));
+        fs::create_dir(&lexical_root).expect("create alias test root");
+        let _cleanup = DropPath(lexical_root.clone());
+        fs::write(lexical_root.join("Hello.md"), "Body").expect("write target");
+        symlink_file("Hello.md", lexical_root.join("internal.md")).expect("create symlink");
+
+        let canonical_root = fs::canonicalize(&lexical_root).expect("canonicalize test root");
+        let stored_root = strip_windows_verbatim_prefix(&canonical_root);
+        let stored_alias = stored_root.join("internal.md");
+        assert_eq!(
+            relative_path(&canonical_root, &stored_alias.to_string_lossy()),
+            "internal.md"
+        );
+    }
+
+    #[cfg(windows)]
+    struct DropPath(std::path::PathBuf);
+
+    #[cfg(windows)]
+    impl Drop for DropPath {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
         }
     }
 }

@@ -323,6 +323,52 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     }
 
     replay_file_cases(&fixture, modes_observable);
+    #[cfg(unix)]
+    replay_provider_cases(&fixture);
+}
+
+#[cfg(unix)]
+fn replay_provider_cases(fixture: &Fixture) {
+    let data_home = temp_data_home("provider-fallback");
+    let provider_dir = data_home.join("bin");
+    fs::create_dir_all(&provider_dir).expect("create fake provider directory");
+    let original_path = std::env::var_os("PATH");
+    set_env("XDG_DATA_HOME", &data_home.to_string_lossy());
+    set_env("SYMROOM_IDENTITY_KEY", "");
+    set_env("PATH", &provider_dir.to_string_lossy());
+
+    let provider = provider_dir.join("symvault");
+    let provider_identity = identity::identity_from_private_key(
+        "provider",
+        &hex::decode(&fixture.identities[0].seed_hex).expect("provider fixture seed"),
+    )
+    .expect("provider fixture identity");
+    let file_identity = identity::identity_from_private_key(
+        "file",
+        &hex::decode(&fixture.identities[1].seed_hex).expect("file fixture seed"),
+    )
+    .expect("file fixture identity");
+    identity::save(&file_identity).expect("save fallback file identity");
+    write_fake_provider(&provider, &hex::encode(&provider_identity.private_key));
+
+    let loaded = identity::load("provider").expect("load fake symvault identity");
+    assert_eq!(loaded.member_id, provider_identity.member_id);
+
+    write_fake_provider(&provider, "not-hex");
+    let loaded = identity::load("file").expect("invalid provider output falls through to file");
+    assert_eq!(loaded.member_id, file_identity.member_id);
+    if let Some(path) = original_path {
+        set_env("PATH", &path.to_string_lossy());
+    }
+}
+
+#[cfg(unix)]
+fn write_fake_provider(path: &Path, value: &str) {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::write(path, format!("#!/bin/sh\nprintf '%s\\n' '{value}'\n")).expect("write fake symvault");
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+        .expect("make fake symvault executable");
 }
 
 #[test]

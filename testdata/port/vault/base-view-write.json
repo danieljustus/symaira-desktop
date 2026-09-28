@@ -1,0 +1,691 @@
+{
+  "schema_version": 1,
+  "oracle": "internal/dbviews.Manager file APIs",
+  "steps": [
+    {
+      "operation": "save_base",
+      "base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "save_view",
+      "view": {
+        "id": "all",
+        "name": "Open invoices",
+        "type": "table",
+        "filters": [
+          {
+            "key": "status",
+            "operator": "equals",
+            "value": "open"
+          }
+        ],
+        "sorts": [],
+        "columns": [
+          "title"
+        ],
+        "source": "tag:invoice"
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "Open invoices",
+            "type": "table",
+            "filters": [
+              {
+                "key": "status",
+                "operator": "equals",
+                "value": "open"
+              }
+            ],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: Open invoices\n      type: table\n      filters:\n        - key: status\n          operator: equals\n          value: open\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Open invoices** (`table`) · Source: tag:invoice · Filters: status = open\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "save_view",
+      "view": {
+        "id": "paid",
+        "name": "Paid invoices",
+        "type": "table",
+        "filters": [],
+        "sorts": [],
+        "columns": [
+          "title"
+        ],
+        "source": "tag:invoice"
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "Open invoices",
+            "type": "table",
+            "filters": [
+              {
+                "key": "status",
+                "operator": "equals",
+                "value": "open"
+              }
+            ],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          },
+          {
+            "id": "paid",
+            "name": "Paid invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: Open invoices\n      type: table\n      filters:\n        - key: status\n          operator: equals\n          value: open\n      columns:\n        - title\n      source: tag:invoice\n    - id: paid\n      name: Paid invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Open invoices** (`table`) · Source: tag:invoice · Filters: status = open\n- **Paid invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "delete_view",
+      "reference": "all",
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "paid",
+            "name": "Paid invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: paid\n      name: Paid invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Paid invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "delete_base",
+      "reference": "invoices",
+      "exists": false,
+      "unix_mode": 0
+    }
+  ],
+  "migration_cases": [
+    {
+      "id": "grouping-and-existing-view-id",
+      "legacy_json": "[\n  {\"id\":\"already-present\",\"name\":\"Already present\",\"source\":\"invoices/\"},\n  {\"id\":\"legacy-invoice-open\",\"name\":\"Open invoices\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}]},\n  {\"id\":\"legacy-invoice-paid\",\"name\":\"Paid invoices\",\"source\":\"invoices/\"},\n  {\"id\":\"legacy-tag\",\"name\":\"Tagged invoices\",\"source\":\"tag:invoice\"},\n  {\"id\":\"legacy-notebook\",\"name\":\"Research\",\"source\":\"notebook:research\"},\n  {\"id\":\"legacy-all\",\"name\":\"All Notes\"}\n]",
+      "existing_bases": [
+        {
+          "id": "existing",
+          "path": "bases/existing.md",
+          "title": "Existing",
+          "created": "2026-01-02T03:04:05Z",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "already-present",
+              "name": "Old invoice view",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        }
+      ],
+      "expected_bases": [
+        {
+          "id": "all-notes",
+          "path": "bases/all-notes.md",
+          "title": "All Notes",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-all",
+              "name": "All Notes",
+              "filters": [],
+              "sorts": [],
+              "columns": []
+            }
+          ]
+        },
+        {
+          "id": "existing",
+          "path": "bases/existing.md",
+          "title": "Existing",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "already-present",
+              "name": "Old invoice view",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        },
+        {
+          "id": "tag-invoice",
+          "path": "bases/tag-invoice.md",
+          "title": "Invoice",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-tag",
+              "name": "Tagged invoices",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "tag:invoice"
+            }
+          ]
+        },
+        {
+          "id": "invoices",
+          "path": "bases/invoices.md",
+          "title": "Invoices",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-invoice-open",
+              "name": "Open invoices",
+              "filters": [
+                {
+                  "key": "status",
+                  "operator": "equals",
+                  "value": "open"
+                }
+              ],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            },
+            {
+              "id": "legacy-invoice-paid",
+              "name": "Paid invoices",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        },
+        {
+          "id": "notebook-research",
+          "path": "bases/notebook-research.md",
+          "title": "Research",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-notebook",
+              "name": "Research",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "notebook:research"
+            }
+          ]
+        }
+      ],
+      "expected_created": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": true,
+      "bases_dir_mode": 488,
+      "base_modes": [
+        384,
+        384,
+        384,
+        384,
+        384
+      ]
+    },
+    {
+      "id": "malformed-json",
+      "legacy_json": "[{not-json",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    },
+    {
+      "id": "empty-json-array",
+      "legacy_json": "[]",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    },
+    {
+      "id": "empty-file",
+      "legacy_json": "",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    }
+  ],
+  "snapshot_cases": [
+    {
+      "id": "create_base",
+      "operation": "create_base",
+      "base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "reference": "all",
+      "events": [
+        "snapshot",
+        "operation"
+      ],
+      "snapshots": [
+        {
+          "path": "bases/invoices.md",
+          "exists": false
+        }
+      ],
+      "exists": true,
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n",
+      "error": false
+    },
+    {
+      "id": "save_base",
+      "operation": "save_base",
+      "existing_base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices Updated",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "reference": "all",
+      "events": [
+        "snapshot",
+        "operation"
+      ],
+      "snapshots": [
+        {
+          "path": "bases/invoices.md",
+          "exists": true,
+          "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n"
+        }
+      ],
+      "exists": true,
+      "markdown": "---\ntype: base\ntitle: Invoices Updated\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices Updated\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n",
+      "error": false
+    },
+    {
+      "id": "save_view",
+      "operation": "save_view",
+      "existing_base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "view": {
+        "id": "all",
+        "name": "Open invoices",
+        "type": "table",
+        "filters": [],
+        "sorts": [],
+        "columns": [
+          "title"
+        ],
+        "source": "tag:invoice"
+      },
+      "reference": "all",
+      "events": [
+        "snapshot",
+        "operation"
+      ],
+      "snapshots": [
+        {
+          "path": "bases/invoices.md",
+          "exists": true,
+          "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n"
+        }
+      ],
+      "exists": true,
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: Open invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Open invoices** (`table`) · Source: tag:invoice\n",
+      "error": false
+    },
+    {
+      "id": "delete_view",
+      "operation": "delete_view",
+      "existing_base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "reference": "all",
+      "events": [
+        "snapshot",
+        "operation"
+      ],
+      "snapshots": [
+        {
+          "path": "bases/invoices.md",
+          "exists": true,
+          "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n"
+        }
+      ],
+      "exists": true,
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews: []\n---\n\n# Invoices\n\n## Views\n\n_No views yet._\n",
+      "error": false
+    },
+    {
+      "id": "delete_base",
+      "operation": "delete_base",
+      "existing_base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "reference": "invoices",
+      "events": [
+        "snapshot",
+        "operation"
+      ],
+      "snapshots": [
+        {
+          "path": "bases/invoices.md",
+          "exists": true,
+          "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n"
+        }
+      ],
+      "exists": false,
+      "error": false
+    },
+    {
+      "id": "missing_delete_view",
+      "operation": "missing_delete_view",
+      "reference": "all",
+      "events": [
+        "operation"
+      ],
+      "snapshots": [],
+      "exists": false,
+      "error": true
+    }
+  ]
+}

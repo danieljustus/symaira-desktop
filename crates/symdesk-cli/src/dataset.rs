@@ -10,7 +10,7 @@ use symdesk_index::{
     DatasetQueryFilter, DatasetQueryFilterGroup, DatasetSyncOptions, DatasetSyncRow,
     DatasetSyncService, open_for_vault,
 };
-use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle};
+use symdesk_vault::{Coverage, PropertyConfig, Provenance, parse_dataset_handle};
 
 use crate::{emit_error, write_go_json, write_stdout};
 
@@ -41,6 +41,11 @@ pub fn cli() -> Command {
                 ),
         )
         .subcommand(
+            Command::new("describe")
+                .about("Describe a dataset")
+                .arg(Arg::new("dataset").required(true)),
+        )
+        .subcommand(
             Command::new("query")
                 .about("Query a dataset with bounded structured selection")
                 .arg(Arg::new("dataset").required(true))
@@ -59,9 +64,87 @@ pub fn cli() -> Command {
 pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
     match command.subcommand() {
         Some(("sync", args)) => run_sync(args, vault, json_output),
+        Some(("describe", args)) => run_describe(args, vault, json_output),
         Some(("query", args)) => run_query(args, vault, json_output),
         Some((other, _)) => emit_error(format!("unknown dataset subcommand: {other}"), json_output),
         None => emit_error("dataset subcommand is required".to_owned(), json_output),
+    }
+}
+
+#[derive(Serialize)]
+struct Description<'a> {
+    slug: &'a str,
+    title: &'a str,
+    path: &'a str,
+    source: &'a str,
+    rows: usize,
+    columns: &'a BTreeMap<String, PropertyConfig>,
+    #[serde(skip_serializing_if = "str::is_empty")]
+    identity_field: &'a str,
+    sensitivity: &'a str,
+    retention_rule: &'a str,
+    provenance: &'a Provenance,
+    coverage: &'a Coverage,
+    #[serde(skip_serializing_if = "str::is_empty")]
+    refresh_command: &'a str,
+}
+
+fn run_describe(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
+    let slug = value_or_empty(args, "dataset");
+    let root = match crate::resolve_vault(vault) {
+        Ok(root) => root,
+        Err(error) => return emit_error(error, json_output),
+    };
+    let rel = format!("datasets/{slug}.md");
+    let safe_rel = Path::new(&rel);
+    if safe_rel
+        .components()
+        .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        return emit_error(format!("dataset {slug:?} not found"), json_output);
+    }
+    let vault_dir = match Dir::open_ambient_dir(&root, ambient_authority()) {
+        Ok(dir) => dir,
+        Err(_) => return emit_error(format!("dataset {slug:?} not found"), json_output),
+    };
+    let bytes = match read_dataset_handle(&vault_dir, safe_rel) {
+        Ok(Some(bytes)) => bytes,
+        Ok(None) => return emit_error(format!("dataset {slug:?} not found"), json_output),
+        Err(error) => return emit_error(error, json_output),
+    };
+    let handle = match parse_dataset_handle(&rel, &bytes) {
+        Ok(handle) => handle,
+        Err(error) => return emit_error(error.to_string(), json_output),
+    };
+    let sidecar = match open_for_vault(&root) {
+        Ok(sidecar) => sidecar,
+        Err(error) => return emit_error(error.to_string(), json_output),
+    };
+    let rows = match sidecar.dataset_query_page(&handle.slug, 0) {
+        Ok((rows, _)) => rows,
+        Err(error) => return emit_error(error.to_string(), json_output),
+    };
+    let description = Description {
+        slug: &handle.slug,
+        title: &handle.title,
+        path: &handle.path,
+        source: &handle.source,
+        rows,
+        columns: &handle.schema,
+        identity_field: &handle.identity_field,
+        sensitivity: &handle.sensitivity,
+        retention_rule: &handle.retention_rule,
+        provenance: &handle.provenance,
+        coverage: &handle.coverage,
+        refresh_command: &handle.refresh_command,
+    };
+    if json_output {
+        write_go_json(&description)
+    } else {
+        write_stdout(format!(
+            "{}\n",
+            serde_json::to_string(&description).unwrap_or_default()
+        ))
     }
 }
 

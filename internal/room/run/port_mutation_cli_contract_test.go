@@ -146,7 +146,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 		}
 		cmd := exec.Command(executable, vector.args...) //nolint:gosec // executable is the test-built symroom and vectors are fixed
 		cmd.Env = []string{
-			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
+			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + caseRoom,
 			"SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
 			"SYMROOM_DEFAULT_IDENTITY=" + vector.defaultEnv,

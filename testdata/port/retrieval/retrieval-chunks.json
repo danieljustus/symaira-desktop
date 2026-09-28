@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "unicode-sections-and-overlap",
+      "source": "/vault/研究/über.md",
+      "sections": [
+        {
+          "Text": "Einleitung: Grüße 🧭",
+          "Start": 7,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:7"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "# Überblick\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\n",
+          "Start": 42,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Überblick"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "owner: Zoë 🧪",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "metadata",
+            "Value": "owner"
+          },
+          "Synthetic": true
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "35558b81-aa13-5b21-9db7-72cc13642642",
+          "chunk_index": 0,
+          "content": "Einleitung: Grüße 🧭",
+          "hash": "aa3da058742bf12559a8ac0c8cc5656ab6c822de35cd1c018ea3cf3473cec79f",
+          "char_start": 7,
+          "char_end": 31,
+          "anchor_kind": "text",
+          "anchor_value": "offset:7"
+        },
+        {
+          "uuid": "4521c946-ebdf-5ef2-a5fb-b670286a347f",
+          "chunk_index": 1,
+          "content": "# Überblick\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.",
+          "hash": "1b03a6382ed98e1df29c62051617ce363e527f9e4a0f793dc66c3b5e1fc92cf8",
+          "char_start": 42,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Überblick"
+        },
+        {
+          "uuid": "01a825f9-1d45-57ff-b25b-215367a12048",
+          "chunk_index": 2,
+          "content": "en hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.",
+          "hash": "4dc0ac23c57d855aabe7e7ef2c2eefed59c63f72b8128143490347a70fa4918e",
+          "char_start": 814,
+          "char_end": 1782,
+          "anchor_kind": "heading",
+          "anchor_value": "Überblick"
+        },
+        {
+          "uuid": "360ec569-9086-51f4-b400-99ec216a0284",
+          "chunk_index": 3,
+          "content": "en hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.",
+          "hash": "4dc0ac23c57d855aabe7e7ef2c2eefed59c63f72b8128143490347a70fa4918e",
+          "char_start": 1582,
+          "char_end": 2550,
+          "anchor_kind": "heading",
+          "anchor_value": "Überblick"
+        },
+        {
+          "uuid": "4fa721e7-2e02-5d8a-be6a-4650a5ff8e76",
+          "chunk_index": 4,
+          "content": "en hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\nAbschnitt αβγ bleibt bytegenau. Weitere Wörter folgen hier.\n",
+          "hash": "6cca4f83d95a748e1dcab792588c81706b7b039c9bd3820d25e37ee103f53fea",
+          "char_start": 2350,
+          "char_end": 2935,
+          "anchor_kind": "heading",
+          "anchor_value": "Überblick"
+        },
+        {
+          "uuid": "d8949874-d181-5cd8-90ad-2735769b20dd",
+          "chunk_index": 5,
+          "content": "owner: Zoë 🧪",
+          "hash": "c5deeb42883ddd680ba5c4afb914a4f25449ccf4586bd446be5cd0466d7e3234",
+          "anchor_kind": "metadata",
+          "anchor_value": "owner"
+        }
+      ]
+    },
+    {
+      "id": "empty-section",
+      "source": "/vault/empty.md",
+      "sections": [
+        {
+          "Text": "",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:0"
+          },
+          "Synthetic": false
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "7b8d87aa-1fab-5291-8ec7-3c75ecf9f4b8",
+          "chunk_index": 0,
+          "content": "",
+          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "char_start": 0,
+          "char_end": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0"
+        }
+      ]
+    },
+    {
+      "id": "no-sections",
+      "source": "/vault/no-sections.md",
+      "sections": [],
+      "chunks": []
+    }
+  ]
+}

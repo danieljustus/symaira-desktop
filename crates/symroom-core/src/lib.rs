@@ -9,11 +9,9 @@
 //! canonical signed bytes, signatures, the JSON line format and the identity
 //! file round trip are compared byte for byte against the Go implementation.
 //!
-//! ponytail: identity resolution covers the environment and file chains only.
-//! The `symvault` shell-out and the macOS Keychain chain of the Go `Load` stay
-//! with the CLI port, because they are process and platform behaviour rather
-//! than a signed-bytes contract; add them when ROOMCLI-002 lands and drive them
-//! with a live differential instead of vectors.
+//! Identity resolution follows the Go environment, optional `symvault`,
+//! macOS Keychain, and file fallback chain. Provider fallbacks are tested
+//! with isolated fake executables.
 
 pub mod approval;
 pub mod artifact;

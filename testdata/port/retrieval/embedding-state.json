@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
+    "release": "post-v0.13.0-dependency-refresh"
+  },
+  "documents": [
+    {
+      "path": "/docs/alpha.md",
+      "hash": "alpha"
+    },
+    {
+      "path": "/docs/beta.md",
+      "hash": "beta"
+    },
+    {
+      "path": "/docs/legacy.md",
+      "hash": "legacy"
+    }
+  ],
+  "chunks": [
+    {
+      "uuid": "alpha-768",
+      "document_path": "/docs/alpha.md",
+      "chunk_index": 0,
+      "content": "alpha vector a",
+      "embedding": [
+        1,
+        0
+      ],
+      "hash": "alpha-768",
+      "dim": 768,
+      "embedding_model": "model-a",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "alpha-384",
+      "document_path": "/docs/alpha.md",
+      "chunk_index": 1,
+      "content": "alpha vector b",
+      "embedding": [
+        0,
+        1
+      ],
+      "hash": "alpha-384",
+      "dim": 384,
+      "embedding_model": "model-b",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "alpha-pending",
+      "document_path": "/docs/alpha.md",
+      "chunk_index": 2,
+      "content": "alpha local hash",
+      "embedding": [
+        1,
+        0
+      ],
+      "hash": "alpha-pending",
+      "dim": 64,
+      "embedding_model": "local-hash",
+      "embedding_pending": true
+    },
+    {
+      "uuid": "beta-768",
+      "document_path": "/docs/beta.md",
+      "chunk_index": 0,
+      "content": "beta vector a",
+      "embedding": [
+        1,
+        1
+      ],
+      "hash": "beta-768",
+      "dim": 768,
+      "embedding_model": "model-a",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "beta-pending",
+      "document_path": "/docs/beta.md",
+      "chunk_index": 1,
+      "content": "beta local hash",
+      "embedding": [
+        0,
+        1
+      ],
+      "hash": "beta-pending",
+      "dim": 64,
+      "embedding_model": "local-hash",
+      "embedding_pending": true
+    },
+    {
+      "uuid": "legacy-null",
+      "document_path": "/docs/legacy.md",
+      "chunk_index": 0,
+      "content": "legacy embedding",
+      "embedding": [
+        1,
+        0
+      ],
+      "hash": "legacy-null",
+      "dim": 0,
+      "embedding_model": "",
+      "embedding_pending": false
+    }
+  ],
+  "legacy_null_uuids": [
+    "legacy-null"
+  ],
+  "pending_total": 2,
+  "pending_by_document": [
+    {
+      "path": "/docs/alpha.md",
+      "count": 1
+    },
+    {
+      "path": "/docs/beta.md",
+      "count": 1
+    },
+    {
+      "path": "/docs/legacy.md",
+      "count": 0
+    },
+    {
+      "path": "/docs/missing.md",
+      "count": 0
+    }
+  ],
+  "embedding_spaces": [
+    {
+      "space": "384/model-b",
+      "count": 1
+    },
+    {
+      "space": "768/model-a",
+      "count": 2
+    },
+    {
+      "space": "unknown/unknown",
+      "count": 1
+    }
+  ]
+}

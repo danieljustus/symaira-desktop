@@ -709,7 +709,11 @@ fn go_io_error(error: &std::io::Error) -> String {
     match error.kind() {
         std::io::ErrorKind::NotFound => {
             if cfg!(windows) {
-                "The system cannot find the file specified.".to_owned()
+                if error.raw_os_error() == Some(3) {
+                    "The system cannot find the path specified.".to_owned()
+                } else {
+                    "The system cannot find the file specified.".to_owned()
+                }
             } else {
                 "no such file or directory".to_owned()
             }
@@ -755,6 +759,9 @@ fn write_file_atomic(path: &Path, data: &[u8], perm: u32) -> Result<(), Retentio
         let _ = std::fs::remove_file(&tmp_path);
         return Err(RetentionError::Message(err.to_string()));
     }
+    std::fs::File::open(dir)
+        .and_then(|file| file.sync_all())
+        .map_err(|error| RetentionError::Message(go_path_error("sync", dir, &error)))?;
     Ok(())
 }
 

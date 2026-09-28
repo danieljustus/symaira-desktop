@@ -36,6 +36,17 @@ func TestShareStoreCreateAndLookup(t *testing.T) {
 	if link.Token != token {
 		t.Fatal("returned token does not match link.Token")
 	}
+	stored, err := os.ReadFile(filepath.Join(dir, "shares.json")) //nolint:gosec // G304: dir is a t.TempDir() for this test
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persisted []ShareLink
+	if err := json.Unmarshal(stored, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if len(persisted) != 1 || persisted[0].Token != "" || persisted[0].TokenHash != hashToken(token) {
+		t.Fatal("share store must persist only the token hash")
+	}
 
 	// Lookup with correct token succeeds.
 	found, err := store.Lookup(token)
@@ -56,6 +67,33 @@ func TestShareStoreCreateAndLookup(t *testing.T) {
 	_, err = store.Lookup("")
 	if err == nil {
 		t.Fatal("expected error for empty token")
+	}
+}
+
+func TestShareStoreScrubsLegacyPlaintextToken(t *testing.T) {
+	dir := t.TempDir()
+	token := "legacy-plaintext-token"
+	legacy := []ShareLink{{ID: "legacy", Path: "doc.md", CreatedBy: "admin", CreatedAt: time.Now().UTC(), ExpiresAt: time.Now().UTC().Add(time.Hour), TokenHash: hashToken(token), Token: token}}
+	data, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "shares.json"), data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewShareStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, err := os.ReadFile(filepath.Join(dir, "shares.json")) //nolint:gosec // G304: dir is a t.TempDir() for this test
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(stored), token) {
+		t.Fatal("legacy plaintext token remains in share store")
+	}
+	if _, err := store.Lookup(token); err != nil {
+		t.Fatalf("legacy share stopped working after scrub: %v", err)
 	}
 }
 

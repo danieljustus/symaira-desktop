@@ -52,12 +52,35 @@ type httpSuite struct {
 }
 
 type httpCase struct {
-	ID             string            `json:"id"`
-	Method         string            `json:"method"`
-	Path           string            `json:"path"`
-	Auth           string            `json:"auth,omitempty"`
-	Headers        map[string]string `json:"headers,omitempty"`
-	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
+	ID                        string            `json:"id"`
+	Method                    string            `json:"method"`
+	Path                      string            `json:"path"`
+	Auth                      string            `json:"auth,omitempty"`
+	Headers                   map[string]string `json:"headers,omitempty"`
+	Body                      string            `json:"body,omitempty"`
+	BodyRepeat                int               `json:"body_repeat,omitempty"`
+	HeaderDelayMS             int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes        int               `json:"header_padding_bytes,omitempty"`
+	HeaderRepeatCount         int               `json:"header_repeat_count,omitempty"`
+	MultipartFile             string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks            bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs              bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob         bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob        bool              `json:"populate_expired_job,omitempty"`
+	PopulateShares            bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess       bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL         bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser         bool              `json:"populate_named_user,omitempty"`
+	RemoveSymlinkEscapes      bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama            bool              `json:"provider_ollama,omitempty"`
+	ProviderOpenAIFallback    bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderAskOllama         bool              `json:"provider_ask_ollama,omitempty"`
+	ProviderAskExpectedSource bool              `json:"provider_ask_expected_source,omitempty"`
+	ProviderAskNotebook       bool              `json:"provider_ask_notebook,omitempty"`
+	ProviderDisconnect        bool              `json:"provider_disconnect,omitempty"`
+	DisconnectAfterEvents     int               `json:"disconnect_after_events,omitempty"`
+	ProviderFailure           bool              `json:"provider_failure,omitempty"`
+	ProviderOversized         bool              `json:"provider_oversized,omitempty"`
 }
 
 func main() {
@@ -112,6 +135,10 @@ func generated() suite {
 			{ID: "desk-search-text", Args: []string{"--output=text", "search", "needle", "--vault", vault}, PrepareArgs: prepare, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles(), CompareSidecarLayout: true},
 			{ID: "desk-search-inherited-output", Args: []string{"--output=json", "search", "needle", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles(), CompareSidecarLayout: true},
 			{ID: "desk-search-fresh-index-empty", Args: []string{"search", "needle", "--vault", vault, "--json"}, Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "transform-no-provider-json", Args: []string{"--json", "transform", "summarize", "--text", "short input"}},
+			{ID: "transform-empty-text-json", Args: []string{"--json", "transform", "summarize", "--text", "   "}},
+			{ID: "ask-no-provider-json", Args: []string{"--json", "ask", "needle", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles()},
+			{ID: "ask-no-provider-no-results-json", Args: []string{"--json", "ask", "missing", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles()},
 			{ID: "desk-search-too-many-json", Args: []string{"search", "--json", "one", "two"}},
 			{ID: "desk-search-required-text", Args: []string{"search"}, StdoutMode: "console_text", StderrMode: "console_text"},
 			{ID: "desk-search-required-json", Args: []string{"search", "--json"}},

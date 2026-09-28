@@ -118,6 +118,9 @@ func observeRecipeValidateCLI(t *testing.T) recipeValidateFixture {
 			if exit, ok := err.(*exec.ExitError); ok {
 				caseResult.ExitCode = exit.ExitCode()
 				caseResult.Stderr = strings.ReplaceAll(string(exit.Stderr), path, "<recipe>")
+				if runtime.GOOS == "windows" && input.name == "missing_file" {
+					caseResult.Stderr = strings.ReplaceAll(caseResult.Stderr, "The system cannot find the file specified.", "no such file or directory")
+				}
 			} else {
 				t.Fatalf("run Go CLI %s: %v", input.name, err)
 			}

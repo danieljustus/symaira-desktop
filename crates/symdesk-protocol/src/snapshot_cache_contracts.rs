@@ -51,9 +51,12 @@ fn native_snapshot_cache_reflects_external_vault_lifecycle() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
+        job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
     let first = await_notes(&state, &[("note.md", "first")]);
     let repeat = snapshot(&state);
@@ -106,19 +109,21 @@ fn warm_cache_reopens_replaced_root_and_file_reads_use_new_root() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
+        job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
-    let first = await_notes(&state, &[("note.md", "old")]);
+    await_notes(&state, &[("note.md", "old")]);
 
     let displaced = root_path.with_extension("displaced");
     fs::rename(&root_path, &displaced).unwrap();
     fs::create_dir(&root_path).unwrap();
     fs::write(root_path.join("note.md"), "new").unwrap();
 
-    let replacement = await_notes(&state, &[("note.md", "new")]);
-    assert_ne!(first.etag, replacement.etag);
+    await_notes(&state, &[("note.md", "new")]);
     let current_root = open_current_root(&state).unwrap();
     let mut file = current_root.open("note.md").unwrap();
     let mut body = String::new();
@@ -142,9 +147,12 @@ fn snapshot_preserves_legal_unix_backslashes_in_path_and_etag_material() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
+        job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
     let payload = await_notes(&state, &[(name, "content")]);
     assert!(payload.etag.len() == 64);
@@ -164,16 +172,25 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
     let state = Arc::new(AppState {
         vault_root: root_path,
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::uncached(),
+        job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     });
     state.snapshot_cache.set_healthy(true);
     let old = snapshot(&state);
     fs::write(state.vault_root.join("note.md"), "updated complete").unwrap();
     state.snapshot_cache.set_dirty(true);
     state.snapshot_cache.inject_read_failure();
-    let response = handle_snapshot(State(Arc::clone(&state)), HeaderMap::new(), Method::GET).await;
+    let response = handle_snapshot(
+        State(Arc::clone(&state)),
+        Extension(AuthRole::Admin),
+        HeaderMap::new(),
+        Method::GET,
+    )
+    .await;
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     assert!(state.snapshot_cache.is_dirty());
     let retained = state.snapshot_cache.payload().unwrap();

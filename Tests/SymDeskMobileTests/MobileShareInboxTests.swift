@@ -44,14 +44,14 @@ final class MobileShareInboxTests: XCTestCase {
         await inbox.drain()
 
         XCTAssertEqual(inbox.pendingCount(), 0, "inbox must be empty after a successful drain")
-        let entries = await coordinator.entries()
-        XCTAssertEqual(entries.count, 2, "both shares must be queued in the write layer")
-        XCTAssertEqual(entries[0].originalFilename, "1000.txt")
-        XCTAssertEqual(entries[1].originalFilename, "2000.pdf")
-        // Queued uploads apply to the consume folder in Files mode; the
-        // applied entries transition through queued → uploading → done
-        // (removed from the outbox), so a queued state here is fine.
-        XCTAssertTrue(entries.allSatisfy { $0.state == .queued || $0.state == .uploading || $0.state == .failed })
+        let first = vaultRoot.appendingPathComponent("inbox_watch/1000.txt")
+        let second = vaultRoot.appendingPathComponent("inbox_watch/2000.pdf")
+        for _ in 0..<100 {
+            if FileManager.default.fileExists(atPath: first.path), FileManager.default.fileExists(atPath: second.path) { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(try Data(contentsOf: first), Data("url: https://example.com/a\n".utf8))
+        XCTAssertEqual(try Data(contentsOf: second), Data("pdf-bytes".utf8))
     }
 
     func testDrainKeepsFileWhenEnqueueFails() async throws {

@@ -10,6 +10,7 @@ use symroom_core::{event::Event, identity, room_init};
 struct Fixture {
     schema_version: i64,
     files: BTreeMap<String, String>,
+    #[cfg(unix)]
     modes: BTreeMap<String, String>,
     nonempty_error: String,
     preserved: String,
@@ -52,6 +53,7 @@ fn replays_go_room_init_contract() {
             "Go/Rust bytes for {name}"
         );
     }
+    #[cfg(unix)]
     for (name, expected) in &fixture.modes {
         assert_eq!(
             mode(&room.join(name)),
@@ -89,20 +91,13 @@ fn replays_go_room_init_contract() {
     );
 }
 
+#[cfg(unix)]
 fn mode(path: &std::path::Path) -> String {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        format!(
-            "{:04o}",
-            fs::metadata(path).unwrap().permissions().mode() & 0o7777
-        )
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-        "platform".to_owned()
-    }
+    use std::os::unix::fs::PermissionsExt;
+    format!(
+        "{:04o}",
+        fs::metadata(path).unwrap().permissions().mode() & 0o7777
+    )
 }
 
 struct TempDir {

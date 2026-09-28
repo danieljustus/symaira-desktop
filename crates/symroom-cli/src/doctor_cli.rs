@@ -539,7 +539,7 @@ fn check_tool(name: &str) -> Tool {
     tool
 }
 
-fn look_path(name: &str) -> Option<PathBuf> {
+pub(crate) fn look_path(name: &str) -> Option<PathBuf> {
     for directory in std::env::split_paths(&std::env::var_os("PATH")?) {
         #[cfg(windows)]
         let names = windows_tool_names(name);

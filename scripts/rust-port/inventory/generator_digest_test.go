@@ -69,6 +69,7 @@ func TestGeneratorDigestIncludesPackageLocalFixtureGenerators(t *testing.T) {
 		"internal/service/port_retention_state_contract_test.go",
 		"internal/service/port_noteops_contract_test.go",
 		"internal/vault/port_writefs_contract_test.go",
+		"internal/sidecar/port_metadata_contract_test.go",
 		"internal/history/port_lifecycle_contract_test.go",
 		"internal/retention/port_retention_contract_test.go",
 		"internal/retention/port_retention_rules_contract_test.go",

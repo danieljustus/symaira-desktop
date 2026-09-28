@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "733cb2ebb2bac6566886ad65ce6652c298515e95",
+    "commit": "4d3b6ffd91dc8524937d6b4e5d6cdbca4d439eac",
     "release": "post-v0.12.2-security-880"
   },
   "source": "internal/sidecar + crates/symdesk-index",

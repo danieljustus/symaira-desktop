@@ -144,12 +144,6 @@ func main() {
 	}
 }
 
-func runGenerate(repoRoot, commit, release string) {
-	if err := generateArtifact(repoRoot, commit, release, "", os.Stdout); err != nil {
-		fatal("generate fixture artifact: %v", err)
-	}
-}
-
 func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, output io.Writer) error {
 	resolvedCommit, err := resolveGenerationOracleCommit(repoRoot, commit)
 	if err != nil {

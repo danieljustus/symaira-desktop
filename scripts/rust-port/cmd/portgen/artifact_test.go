@@ -60,6 +60,7 @@ func TestApplyPatchCreatesSingleParentQWithoutEscapingAllowlist(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		hooks := t.TempDir()
 		hook := filepath.Join(hooks, "pre-commit")
+		//nolint:gosec // the fake hook must be executable to exercise hook isolation.
 		if err := os.WriteFile(hook, []byte("#!/bin/sh\nexit 73\n"), 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -90,6 +91,7 @@ func TestApplyPatchCreatesSingleParentQWithoutEscapingAllowlist(t *testing.T) {
 	if err := validateQChanges(repoRoot, base, q); err != nil {
 		t.Fatalf("validateQChanges() error = %v", err)
 	}
+	//nolint:gosec // fixturePath is under this test's temporary repository.
 	actual, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatal(err)

@@ -17,6 +17,7 @@ const maxArtifactSize = 64 << 20
 var errNoFixtureChanges = errors.New("fixture generation produced no changes")
 
 func runGeneratorCommand(goTool, repoRoot string, environment []string, name string, args ...string) error {
+	//nolint:gosec // goTool is selected by trustedGoTool and args are fixed generator commands.
 	command := exec.Command(goTool, args...)
 	command.Dir = repoRoot
 	command.Env = environment
@@ -69,7 +70,7 @@ func commitStagedFixtureOutputs(repoRoot, base string) error {
 	if err != nil {
 		return fmt.Errorf("create empty private Git hooks directory: %w", err)
 	}
-	defer os.RemoveAll(hooksDir)
+	defer func() { _ = os.RemoveAll(hooksDir) }()
 	if _, err := gitOutput(repoRoot,
 		"-c", "core.hooksPath="+hooksDir,
 		"-c", "user.name=Symaira Port Fixture Generator",
@@ -166,8 +167,8 @@ func applyArtifactCommit(repoRoot, artifactPath string) error {
 		if finalState != callerState {
 			return errors.New("no-op artifact application changed the invoking worktree or Git index")
 		}
-		fmt.Fprintf(os.Stdout, "No fixture changes for P=%s; no Q commit was created.\n", base)
-		return nil
+		_, err = fmt.Fprintf(os.Stdout, "No fixture changes for P=%s; no Q commit was created.\n", base)
+		return err
 	}
 	if err := validatePatchPaths(patch); err != nil {
 		return err
@@ -194,8 +195,8 @@ func applyArtifactCommit(repoRoot, artifactPath string) error {
 	if finalState != callerState {
 		return errors.New("artifact application changed the invoking worktree or Git index")
 	}
-	fmt.Fprintf(os.Stdout, "Validated fixture commit Q=%s (parent P=%s). Review the artifact, then explicitly move your branch to Q.\n", q, base)
-	return nil
+	_, err = fmt.Fprintf(os.Stdout, "Validated fixture commit Q=%s (parent P=%s). Review the artifact, then explicitly move your branch to Q.\n", q, base)
+	return err
 }
 
 func applyPatchInWorktree(snapshot, base string, patch []byte) error {
@@ -329,7 +330,7 @@ func validateQChanges(repoRoot, base, q string) error {
 	}
 	fields := strings.Fields(string(parent))
 	if len(fields) != 2 || fields[1] != base {
-		return fmt.Errorf("Q must have exactly one parent P: got %q", strings.TrimSpace(string(parent)))
+		return fmt.Errorf("q must have exactly one parent P: got %q", strings.TrimSpace(string(parent)))
 	}
 	return nil
 }

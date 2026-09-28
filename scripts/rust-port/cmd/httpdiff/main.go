@@ -668,6 +668,14 @@ func run() (runErr error) {
 				if err := assertIndexedWrite(vault, "nested/Named.md", tc.Body); err != nil {
 					fatal("%s side effect: %v", tc.ID, err)
 				}
+				// The following readback compares Last-Modified. Stabilize both
+				// independently written files after the update so this contract
+				// checks the same fixture timestamp on every platform.
+				modified := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
+				path := filepath.Join(vault, "nested", "Named.md")
+				if err := os.Chtimes(path, modified, modified); err != nil {
+					fatal("%s fixture timestamp: %v", tc.ID, err)
+				}
 			}
 		}
 		leftETag, rightETag = nextLeftETag, nextRightETag
@@ -1230,6 +1238,7 @@ func leasedWorkerJob(vault string, response []byte, jobID string) ([]byte, error
 }
 
 func completedWorkerJob(vault string, response []byte) ([]byte, error) {
+	wantNotePath := filepath.Join("inbox", "c-00000000.md")
 	path := filepath.Join(vault, ".symdesk", "server", "jobs", "00000000000000000000000000000004.json")
 	info, err := os.Stat(path)
 	if err != nil {
@@ -1250,7 +1259,7 @@ func completedWorkerJob(vault string, response []byte) ([]byte, error) {
 		return nil, err
 	}
 	for _, job := range []map[string]any{responseJob, persistedJob} {
-		if job["id"] != "00000000000000000000000000000004" || job["status"] != "completed" || job["worker_id"] != "worker-1" || job["engine"] != "yes" || job["model"] != "123" || job["note_path"] != "inbox/c-00000000.md" || job["lease_until"] != nil || job["error"] != nil {
+		if job["id"] != "00000000000000000000000000000004" || job["status"] != "completed" || job["worker_id"] != "worker-1" || job["engine"] != "yes" || job["model"] != "123" || job["note_path"] != wantNotePath || job["lease_until"] != nil || job["error"] != nil {
 			return nil, fmt.Errorf("wrong worker completion state: %q", response)
 		}
 		updatedText, ok := job["updated_at"].(string)
@@ -1269,13 +1278,14 @@ func completedWorkerJob(vault string, response []byte) ([]byte, error) {
 }
 
 func completedNote(vault string, response []byte) ([]byte, error) {
+	wantNotePath := filepath.Join("inbox", "c-00000000.md")
 	var job struct {
 		NotePath string `json:"note_path"`
 	}
 	if err := json.Unmarshal(response, &job); err != nil {
 		return nil, err
 	}
-	if job.NotePath != "inbox/c-00000000.md" {
+	if job.NotePath != wantNotePath {
 		return nil, fmt.Errorf("note_path = %q", job.NotePath)
 	}
 	path := filepath.Join(vault, filepath.FromSlash(job.NotePath))

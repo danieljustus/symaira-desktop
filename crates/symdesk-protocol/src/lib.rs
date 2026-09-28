@@ -3818,7 +3818,11 @@ fn write_completed_note(
     sidecar
         .index_document(&indexed)
         .map_err(|error| error.to_string())?;
-    Ok(relative.to_string_lossy().replace('\\', "/"))
+    Ok(relative
+        .components()
+        .collect::<PathBuf>()
+        .to_string_lossy()
+        .into_owned())
 }
 
 fn yaml_scalar(value: &str) -> String {

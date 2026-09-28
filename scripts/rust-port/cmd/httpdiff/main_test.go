@@ -280,7 +280,7 @@ func TestNormalizeCreatedShareChecksAndReplacesDynamicFields(t *testing.T) {
 	expires := created.Add(24 * time.Hour)
 	share := map[string]string{
 		"id": strings.Repeat("a", 24), "token": strings.Repeat("b", 64),
-		"path": "nested/Note.md", "created_at": created.Format(time.RFC3339),
+		"path": filepath.Join("nested", "Note.md"), "created_at": created.Format(time.RFC3339),
 		"expires_at": expires.Format(time.RFC3339),
 		"url":        "/s/" + strings.Repeat("b", 64),
 	}
@@ -288,7 +288,7 @@ func TestNormalizeCreatedShareChecksAndReplacesDynamicFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	normalized, err := normalizeCreatedShareFor(body, "nested/Note.md")
+	normalized, err := normalizeCreatedShareFor(body, filepath.Join("nested", "Note.md"))
 	if err != nil {
 		t.Fatalf("normalizeCreatedShareFor() error = %v", err)
 	}
@@ -301,7 +301,7 @@ func TestNormalizeCreatedShareChecksAndReplacesDynamicFields(t *testing.T) {
 	}
 	share["path"] = "escape.md"
 	body, _ = json.Marshal(share)
-	if _, err := parseCreatedShareFor(body, "nested/Note.md"); err == nil {
+	if _, err := parseCreatedShareFor(body, filepath.Join("nested", "Note.md")); err == nil {
 		t.Fatal("parseCreatedShareFor accepted the wrong shared path")
 	}
 }

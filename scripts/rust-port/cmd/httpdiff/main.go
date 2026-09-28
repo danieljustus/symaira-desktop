@@ -789,7 +789,7 @@ func assertNamedShareList(data []byte) error {
 }
 
 func assertNamedCreatedShare(vault string, body []byte) error {
-	share, err := parseCreatedShareFor(body, "nested/Named.md")
+	share, err := parseCreatedShareFor(body, filepath.Join("nested", "Named.md"))
 	if err != nil {
 		return err
 	}
@@ -1062,7 +1062,7 @@ func parseCreatedShareFor(body []byte, expectedPath string) (createdShare, error
 	if err := json.Unmarshal(body, &fields); err != nil || len(fields) != 6 {
 		return share, fmt.Errorf("unexpected share response fields")
 	}
-	if len(share.ID) != 24 || len(share.Token) != 64 || share.Path != expectedPath || share.URL != "/s/"+share.Token {
+	if len(share.ID) != 24 || len(share.Token) != 64 || filepath.ToSlash(share.Path) != filepath.ToSlash(expectedPath) || share.URL != "/s/"+share.Token {
 		return share, fmt.Errorf("invalid share response: %q", body)
 	}
 	if _, err := hex.DecodeString(share.ID); err != nil {
@@ -1086,7 +1086,7 @@ func normalizeCreatedShareFor(body []byte, expectedPath string) ([]byte, error) 
 	if _, err := parseCreatedShareFor(body, expectedPath); err != nil {
 		return nil, err
 	}
-	return []byte(fmt.Sprintf(`{"id":"<dynamic>","token":"<dynamic>","path":%q,"created_at":"<dynamic>","expires_at":"<dynamic>","url":"/s/<dynamic>"}`, expectedPath)), nil
+	return []byte(fmt.Sprintf(`{"id":"<dynamic>","token":"<dynamic>","path":%q,"created_at":"<dynamic>","expires_at":"<dynamic>","url":"/s/<dynamic>"}`, filepath.ToSlash(expectedPath))), nil
 }
 
 func assertedCreatedShare(vault string, response []byte) ([]map[string]any, error) {
@@ -2127,7 +2127,7 @@ func compare(id string, left, right transcript) error {
 	if id == "share-create-valid" || id == "share-create-named-user-valid" {
 		path := "Hello.md"
 		if id == "share-create-named-user-valid" {
-			path = "nested/Named.md"
+			path = filepath.Join("nested", "Named.md")
 		}
 		if left.Status != http.StatusCreated {
 			return fmt.Errorf("share create status = %d, want 201", left.Status)

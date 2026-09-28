@@ -134,11 +134,15 @@ func FindInlineTagSpans(body string) []TagSpan {
 			temp++
 		}
 		if hashCount >= 1 && hashCount <= 6 && (temp == n || body[temp] == ' ' || body[temp] == '\t' || body[temp] == '\r' || body[temp] == '\n') {
-			// Skip heading marker and following spaces
-			i = temp
-			for i < n && (body[i] == ' ' || body[i] == '\t') {
+			// VAULT.md: tags inside ATX headings are not indexed, so skip
+			// the complete heading line.
+			for i < n && body[i] != '\n' {
 				i++
 			}
+			if i < n {
+				i++
+			}
+			continue
 		}
 
 		// Scan line characters

@@ -329,12 +329,18 @@ release contract, or the fixture generators:
 
 1. Merge the functional change as **P**; `main` is briefly red on the port
    contract until step 4 lands.
-2. On the updated `main`, run `make port-fixtures-generate` from a clean
-   worktree. Generation resolves the oracle to `HEAD` by default, and the
-   `--oracle-commit` flag accepts an explicit revision only when it is `HEAD`
-   or one of its ancestors.
-3. Inspect the resulting `testdata/port` diff, then commit the allowlisted
-   derived fixture paths and `testdata/port/provenance.json` as **Q**.
+2. On the updated `main`, run `make port-fixtures-generate > q.patch` from a
+   clean worktree (no untracked or ignored Go inputs under `cmd`, `internal`,
+   `scripts/rust-port` or `vendor`). Generation runs in a disposable worktree,
+   resolves the oracle to `HEAD` by default, and writes a
+   `# SYMAIRA PORT FIXTURE PATCH V1` artifact to stdout; it never touches the
+   caller's worktree. The `--oracle-commit` flag accepts an explicit revision
+   only when it is `HEAD` or one of its ancestors.
+3. Inspect the artifact, which is limited to the allowlisted derived fixture
+   paths and `testdata/port/provenance.json`. Either validate it with
+   `make port-fixtures-apply PORT_FIXTURES_ARTIFACT=q.patch` (builds and checks
+   **Q** in a private worktree) or apply it with `git apply --index q.patch`,
+   then commit it as **Q**.
 4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git blobs,
    validates regular-file tree entries, runs every manifest-covered generator and
    package check from a disposable linked worktree at **Q**, and strips ambient

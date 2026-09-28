@@ -84,12 +84,7 @@ final class MobileComposerTests: XCTestCase {
         try await coordinator.enqueue(entry)
 
         // Wait for the drain to apply the write.
-        for _ in 0..<250 {
-            if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent(filename).path) {
-                break
-            }
-            try? await Task.sleep(for: .milliseconds(20))
-        }
+        try await waitForWrite(vaultRoot.appendingPathComponent(filename), coordinator: coordinator)
 
         let written = try String(contentsOf: vaultRoot.appendingPathComponent(filename), encoding: .utf8)
         XCTAssertTrue(written.hasPrefix("---\ntitle: \"Einkaufsliste\"\n"), "contract-v6-compatible frontmatter expected, got: \(written)")
@@ -117,12 +112,7 @@ final class MobileComposerTests: XCTestCase {
         let content = MobileNoteWriter.noteDocument(title: "Notiz", body: "Inhalt")
         try await coordinator.enqueue(MobileOutboxEntry(kind: .createNote, path: path, content: content))
 
-        for _ in 0..<250 {
-            if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent(path).path) {
-                break
-            }
-            try? await Task.sleep(for: .milliseconds(20))
-        }
+        try await waitForWrite(vaultRoot.appendingPathComponent(path), coordinator: coordinator)
         XCTAssertTrue(try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent(path).path))
     }
 
@@ -195,5 +185,16 @@ final class MobileComposerTests: XCTestCase {
         XCTAssertTrue(written.contains("- [ ] Punkt 1"))
         XCTAssertTrue(written.contains("| Spalte A | Spalte B |"))
         XCTAssertTrue(written.contains("[[wikilink]]"))
+    }
+
+    /// Drives the outbox drain until the file exists. Bounded at 60 s because
+    /// simulator CI has taken 27 s for a single drain under load (#1019).
+    private func waitForWrite(_ url: URL, coordinator: MobileWriteCoordinator) async throws {
+        let deadline = ContinuousClock.now + .seconds(60)
+        while ContinuousClock.now < deadline {
+            if FileManager.default.fileExists(atPath: url.path) { return }
+            await coordinator.drain()
+            try? await Task.sleep(for: .milliseconds(20))
+        }
     }
 }

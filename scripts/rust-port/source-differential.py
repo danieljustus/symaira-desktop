@@ -14,7 +14,7 @@ import threading
 import time
 
 
-GO_ORACLE = "cc3f1db375d819a255651186412d0169a86c2bc8"
+GO_ORACLE = "67ac6e97ca5f613e26412255dee93c35faf38b3c"
 GO_SOURCES = (
     "cmd/symdesk/sources.go",
     "internal/retrieval/sources.go",

@@ -1,6 +1,10 @@
 #![deny(unsafe_code)]
 
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::PathBuf,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -247,14 +251,16 @@ fn notebook_source_write_rejects_self_and_escape() {
 }
 
 fn temp_vault() -> PathBuf {
+    static NEXT_ID: AtomicU64 = AtomicU64::new(0);
     let path = std::env::temp_dir().join(format!(
-        "symdesk-notebook-write-{}-{}",
+        "symdesk-notebook-write-{}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("clock after epoch")
-            .as_nanos()
+            .as_nanos(),
+        NEXT_ID.fetch_add(1, Ordering::Relaxed)
     ));
-    fs::create_dir_all(&path).expect("create temporary vault");
+    fs::create_dir(&path).expect("create unique temporary vault");
     path
 }

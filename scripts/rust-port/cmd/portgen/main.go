@@ -200,13 +200,15 @@ func runGenerate(repoRoot, commit, release string) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
 	}
-	cmd = exec.Command("go", "run", "./scripts/rust-port/cmd/notebookwritegen")
+	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/notebookwritegen")
 	cmd.Dir = repoRoot
+	cmd.Env = generationEnv
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate notebook write fixture: %v\noutput: %s", err, string(out))
 	}
-	cmd = exec.Command("go", "run", "./scripts/rust-port/cmd/baseviewwritegen")
+	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/baseviewwritegen")
 	cmd.Dir = repoRoot
+	cmd.Env = generationEnv
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate base/view write fixture: %v\noutput: %s", err, string(out))
 	}

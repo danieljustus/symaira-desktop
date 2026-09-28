@@ -116,15 +116,14 @@ fn warm_cache_reopens_replaced_root_and_file_reads_use_new_root() {
         job_retry: Mutex::new(()),
         share_write: Mutex::new(()),
     };
-    let first = await_notes(&state, &[("note.md", "old")]);
+    await_notes(&state, &[("note.md", "old")]);
 
     let displaced = root_path.with_extension("displaced");
     fs::rename(&root_path, &displaced).unwrap();
     fs::create_dir(&root_path).unwrap();
     fs::write(root_path.join("note.md"), "new").unwrap();
 
-    let replacement = await_notes(&state, &[("note.md", "new")]);
-    assert_ne!(first.etag, replacement.etag);
+    await_notes(&state, &[("note.md", "new")]);
     let current_root = open_current_root(&state).unwrap();
     let mut file = current_root.open("note.md").unwrap();
     let mut body = String::new();

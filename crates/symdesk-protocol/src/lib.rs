@@ -6311,7 +6311,7 @@ mod tests {
         let hits = sidecar.search("putneedleunique").expect("search index");
         assert!(
             hits.iter()
-                .any(|hit| { hit.path == root.join("notes/new.MD").to_string_lossy() })
+                .any(|hit| { hit.path == root.join("notes").join("new.MD").to_string_lossy() })
         );
         drop(sidecar);
 

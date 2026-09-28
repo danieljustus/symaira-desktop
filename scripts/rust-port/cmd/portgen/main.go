@@ -200,12 +200,14 @@ func runGenerate(repoRoot, commit, release string) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
 	}
+	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
 	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/notebookwritegen")
 	cmd.Dir = repoRoot
 	cmd.Env = generationEnv
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate notebook write fixture: %v\noutput: %s", err, string(out))
 	}
+	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
 	cmd = exec.Command(goTool, "run", "./scripts/rust-port/cmd/baseviewwritegen")
 	cmd.Dir = repoRoot
 	cmd.Env = generationEnv

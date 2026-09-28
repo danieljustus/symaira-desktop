@@ -256,24 +256,22 @@ fn retention_vectors_match_the_go_oracle() {
         );
     }
 
-    // A Windows gap must always be explained, and it never skips the port: the
-    // Go writer is the platform-limited side, not the Rust replay.
+    // #967 restores the Go and Rust atomic writers on Windows; none of the
+    // proposal/history vectors should remain platform-gated.
     let gapped: Vec<&FileVector> = fixture
         .proposals
         .iter()
         .chain(fixture.history.iter())
         .filter(|vector| vector.platform == "unix")
         .collect();
-    for vector in &gapped {
-        assert!(
-            !vector.windows_gap.is_empty(),
-            "{}: a platform mark needs a reason",
-            vector.id
-        );
-    }
     assert!(
-        gapped.len() >= 3,
-        "the three Go write vectors should carry the Unix mark, found {}",
+        gapped.is_empty()
+            && fixture
+                .proposals
+                .iter()
+                .chain(fixture.history.iter())
+                .all(|vector| vector.windows_gap.is_empty()),
+        "retention vectors still carry a Windows gap: {}",
         gapped.len()
     );
 
@@ -288,12 +286,7 @@ fn replay_proposals(fixture: &Fixture) {
     let write_vector = vector_by_id(&fixture.proposals, "write-proposal");
     let proposal: Proposal =
         serde_json::from_str(&write_vector.content).expect("the recorded proposal parses");
-    let write = retention::write_proposal(&root, &proposal);
-    if cfg!(windows) {
-        assert!(write.unwrap_err().to_string().starts_with("sync "));
-    } else {
-        write.expect("write proposal");
-    }
+    retention::write_proposal(&root, &proposal).expect("write proposal");
     let written = root.join(&write_vector.paths[0]);
     compare_file(&written, write_vector, modes, "write-proposal");
 
@@ -393,15 +386,8 @@ fn replay_history(fixture: &Fixture) {
         "the second entry carries an action id"
     );
     for (label, entry) in [("legacy", &legacy), ("modern", &modern)] {
-        let write = retention::append_history(&root, entry);
-        if cfg!(windows) {
-            assert!(
-                write.unwrap_err().to_string().starts_with("sync "),
-                "{label}"
-            );
-        } else {
-            write.unwrap_or_else(|error| panic!("append {label}: {error}"));
-        }
+        retention::append_history(&root, entry)
+            .unwrap_or_else(|error| panic!("append {label}: {error}"));
     }
     let mut retry = modern.clone();
     retry.timestamp = modern.timestamp + time::Duration::minutes(1);

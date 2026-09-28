@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -460,7 +461,12 @@ func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 		_ = os.Remove(tmpName)
 		return err
 	}
-	// Persist the directory entry as well where the platform supports it.
+	// Windows does not allow flushing an opened directory handle. The file was
+	// synced before the rename, so keep that durability guarantee there while
+	// syncing the directory entry on platforms that support it.
+	if runtime.GOOS == "windows" {
+		return nil
+	}
 	dirFile, err := os.Open(dir) //nolint:gosec // dir is rooted in the selected vault
 	if err != nil {
 		return err

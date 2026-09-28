@@ -77,8 +77,8 @@ type retentionFileVector struct {
 	Error       string   `json:"error,omitempty"`
 	ErrorClass  string   `json:"error_class,omitempty"`
 	Loaded      string   `json:"loaded"`
-	// Platform marks a vector whose Go writer only behaves on Unix; the port
-	// replays it everywhere and the reason is recorded in windows_gap.
+	// Platform gates an oracle vector to hosts with defined behavior; the port
+	// replays it everywhere and WindowsGap records the reason for the gate.
 	Platform   string `json:"platform,omitempty"`
 	WindowsGap string `json:"windows_gap,omitempty"`
 }
@@ -174,7 +174,7 @@ func buildRetentionFixture(t *testing.T) retentionFixture {
 			"Evaluate keeps an item whose expiry equals 'now' and skips documents without a parsable reference date.",
 			"LoadRules is not covered yet: the YAML multi-document reader needs a Rust YAML parser and belongs to the CLI slice.",
 			"DocMetaFromDocument is not covered yet: it needs the vault document model and belongs to the document slice.",
-			"Vectors marked platform=unix come from a Go writer that fails on Windows (issue #967); the port replays them everywhere, only the Go harness skips them there.",
+			"Windows replays the proposal and history write vectors; POSIX file modes are normalized away on that platform.",
 		},
 	}
 }
@@ -433,43 +433,32 @@ func retentionProposalVectors(t *testing.T) []retentionFileVector {
 		},
 	}
 	out := []retentionFileVector{}
-	if runtime.GOOS == "windows" {
-		// The Go writer fsyncs the state directory, which Windows refuses with
-		// "Access is denied"; the vectors keep their Unix mark and are compared
-		// on the other platforms. See the gap note below.
-		t.Log("skipping the Go proposal write vectors: the engine cannot sync a directory on Windows")
-	} else {
-		if err := WriteProposal(root, proposal); err != nil {
-			t.Fatal(err)
-		}
-		written := retentionFileVectorFor(t, root, "write-proposal", "a proposal is written as indented JSON through the atomic writer",
-			[]string{filepath.ToSlash(filepath.Join(ProposalDir(root), "run-20260918.json"))}, "", nil)
-		markUnixOnly(&written)
-		out = append(out, written)
+	if err := WriteProposal(root, proposal); err != nil {
+		t.Fatal(err)
 	}
+	written := retentionFileVectorFor(t, root, "write-proposal", "a proposal is written as indented JSON through the atomic writer",
+		[]string{filepath.ToSlash(filepath.Join(ProposalDir(root), "run-20260918.json"))}, "", nil)
+	out = append(out, written)
 
-	if runtime.GOOS != "windows" {
-		loaded, loadErr := LoadProposal(root, "run-20260918")
-		if loadErr != nil {
-			t.Fatal(loadErr)
-		}
-		encoded, marshalErr := json.Marshal(loaded)
-		if marshalErr != nil {
-			t.Fatal(marshalErr)
-		}
-		loadedVector := retentionFileVector{
-			ID:          "load-proposal",
-			Description: "loading returns the written proposal",
-			Paths:       []string{},
-			Content:     "",
-			Size:        0,
-			SHA256:      "",
-			Mode:        nil,
-			Loaded:      string(encoded),
-		}
-		markUnixOnly(&loadedVector)
-		out = append(out, loadedVector)
+	loaded, loadErr := LoadProposal(root, "run-20260918")
+	if loadErr != nil {
+		t.Fatal(loadErr)
 	}
+	encoded, marshalErr := json.Marshal(loaded)
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
+	loadedVector := retentionFileVector{
+		ID:          "load-proposal",
+		Description: "loading returns the written proposal",
+		Paths:       []string{},
+		Content:     "",
+		Size:        0,
+		SHA256:      "",
+		Mode:        nil,
+		Loaded:      string(encoded),
+	}
+	out = append(out, loadedVector)
 
 	_, err := LoadProposal(root, "missing-run")
 	message, class := retentionError(err)
@@ -530,28 +519,23 @@ func retentionHistoryVectors(t *testing.T) []retentionFileVector {
 	retry := modern
 	retry.Timestamp = stamp.Add(2 * time.Minute)
 
-	if runtime.GOOS == "windows" {
-		t.Log("skipping the Go append vectors: the engine cannot sync a directory on Windows")
-	} else {
-		if err := AppendHistory(root, legacy); err != nil {
-			t.Fatal(err)
-		}
-		if err := AppendHistory(root, modern); err != nil {
-			t.Fatal(err)
-		}
-		if err := AppendHistory(root, retry); err != nil {
-			t.Fatal(err)
-		}
-		entries, loadErr := LoadHistory(root)
-		if loadErr != nil {
-			t.Fatal(loadErr)
-		}
-		appendVector := retentionFileVectorFor(t, root, "append-and-deduplicate",
-			"a retried action id is not appended twice, the older entry format still appends",
-			[]string{HistoryPath(root)}, retentionJSON(entries), nil)
-		markUnixOnly(&appendVector)
-		out = append(out, appendVector)
+	if err := AppendHistory(root, legacy); err != nil {
+		t.Fatal(err)
 	}
+	if err := AppendHistory(root, modern); err != nil {
+		t.Fatal(err)
+	}
+	if err := AppendHistory(root, retry); err != nil {
+		t.Fatal(err)
+	}
+	entries, loadErr := LoadHistory(root)
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	appendVector := retentionFileVectorFor(t, root, "append-and-deduplicate",
+		"a retried action id is not appended twice, the older entry format still appends",
+		[]string{HistoryPath(root)}, retentionJSON(entries), nil)
+	out = append(out, appendVector)
 
 	nullRoot := newRetentionTempDir(t, "symdesk-port-retention-null-")
 	//nolint:gosec // the state directory mirrors what the Go writer creates
@@ -591,16 +575,6 @@ func retentionHistoryVectors(t *testing.T) []retentionFileVector {
 		ErrorClass:  class,
 	})
 	return out
-}
-
-// markUnixOnly records that the vector was produced by a Go path that only
-// works on Unix: `writeFileAtomicRoot` syncs the containing directory, which
-// Windows rejects with "Access is denied" (issue #967). The port itself writes
-// the same bytes on every platform, so the Rust replay still runs these
-// vectors everywhere.
-func markUnixOnly(vector *retentionFileVector) {
-	vector.Platform = "unix"
-	vector.WindowsGap = "Go writeFileAtomicRoot syncs the state directory; Windows refuses the sync (issue #967)"
 }
 
 func retentionActionIDVectors() []retentionActionIDVector {
@@ -746,8 +720,8 @@ func newRetentionTempDir(t *testing.T, prefix string) string {
 }
 
 // retentionPlatformDocument prepares both sides of the drift check: the
-// generating platform is metadata and the Unix-only file modes cannot be
-// observed elsewhere.
+// generating platform is metadata and POSIX file modes cannot be observed on
+// Windows.
 func retentionPlatformDocument(document []byte) ([]byte, error) {
 	var parsed retentionFixture
 	if err := json.Unmarshal(document, &parsed); err != nil {
@@ -755,8 +729,8 @@ func retentionPlatformDocument(document []byte) ([]byte, error) {
 	}
 	parsed.GeneratedOn = ""
 	if runtime.GOOS == "windows" {
-		// Modes do not exist here, and a Unix-only Go writer cannot run at all,
-		// so both sides drop those vectors instead of comparing hollow entries.
+		// Keep the Go-written Windows vectors but discard any explicitly
+		// Unix-only cases and normalize modes, which Windows does not expose.
 		parsed.Proposals = retentionWithoutUnixOnlyVectors(parsed.Proposals)
 		parsed.History = retentionWithoutUnixOnlyVectors(parsed.History)
 		for _, section := range [][]retentionFileVector{parsed.Proposals, parsed.History} {

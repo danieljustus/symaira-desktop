@@ -26,7 +26,7 @@ pub fn parse_markdown_retrieval_sections(
             error.valid_up_to()
         ))
     })?;
-    let (body, frontmatter_bytes) = strip_frontmatter(&text);
+    let (body, frontmatter_bytes) = strip_frontmatter(text);
     let mut sections = parse_sections(body, frontmatter_bytes);
 
     if let Ok(document) = symdesk_vault::parse_bytes(source_path, markdown) {

@@ -1,5 +1,32 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated CLI hybrid search checkpoint — 2026-09-29
+
+Candidate `4bf26cab4c065611f5bab2f6c6c215fd3f947481` connects plain CLI
+search to the existing hybrid retrieval engine. Scoped queries retain sidecar
+search. Query vectors are reused across source roots; dimensions, mixed embedding
+spaces, local-hash fallback, path confinement, titles, metadata matches and Go
+snippet projection are exercised through the real Rust CLI against eight actual
+Go `Service.SearchWithMeta` cases. A partial Kelvin-sign byte prefix proves Go's
+per-invalid-byte rune counting. Only equal-score tie order is normalized.
+
+Full immutable generation and reviewed fixture application pass. Production Go
+source digest remains `9928661e32e94a46528dc10b54d6b6fbdebd1915a530fd032ad4b87e84ee2fb3`;
+generator digest is `4261248ce9be8a78c806064a7692c90c3bae6edb4f74c4d64fdef8bd56aeca00`.
+Search fixture SHA256 is
+`3a3199c0bfa412f98eb840e4b5f0020e7bb0c28217adc8d1cc9a538baa506f12`.
+
+Independent clean-candidate Darwin/arm64 and Linux/arm64 each pass seven Go/Rust
+differentials and all197 CLI/index/protocol tests, zero failed or ignored. Darwin
+strict Clippy, formatting and workflow validation pass. Source-path metadata,
+log hashes and receipts `search-cli-receipt-4bf26cab.json` remain in the existing
+Desktop and native-linux build roots. Native CI includes the new differential;
+no remote run is claimed. MCP/ask facade wiring, expansion, quantization, other
+formats and remaining native platforms keep INDEX-005/RUST-008 open. Unsupported
+retrieval settings fail explicitly. No publication, installed cutover or Go
+removal occurred.
+
+
 ## Integrated local-hash embedding checkpoint — 2026-09-29
 
 `06446c614699583863394f7fddba696afc50bfb4` adds the Go-compatible local-hash

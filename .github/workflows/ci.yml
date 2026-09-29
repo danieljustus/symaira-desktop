@@ -473,6 +473,10 @@ jobs:
         shell: bash
         run: make retrieval-search-cli-differential
 
+      - name: Run native hybrid search MCP differential
+        shell: bash
+        run: make retrieval-search-mcp-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

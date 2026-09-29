@@ -1,5 +1,26 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated offline MCP Notebook Ask — 2026-09-29
+
+Candidate `4e120ef21cc5324c9101dfe9a229c0748138847b` shares the notebook
+source resolver between HTTP and MCP Ask. Scoped retrieval confines sources,
+retains Go's unmatched excerpt fallback and avoids the unscoped source
+registry. Thirty actual Go call envelopes across three scenarios now match,
+including six scoped notebook cases and the prior raw-argument/hybrid cases.
+The shared search projection also handles an authorized symlinked vault root.
+
+Immutable generation/application, ten retrieval differentials, 208 CLI/index/
+protocol tests and 231 actual HTTP Go/Rust cases pass on Darwin/arm64 and
+Linux/arm64, zero failed/ignored. Darwin strict Clippy/fmt/actionlint pass.
+Both build roots retain `notebook-ask-receipt-4e120ef2.json`. Linux initially
+reused a stale relative-path Cargo artifact from another worktree; refreshing
+only source mtimes forced a rebuild. Its separate receipt proves identical
+file contents before and after, with no cache deletion.
+
+Configured AI provider execution, HTTP hybrid Ask, remaining native targets
+and whole AI-002/RUST-012 acceptance remain open. No publication or cutover.
+
+
 ## Integrated raw MCP arguments and measured hybrid Ask — 2026-09-29
 
 Candidate `2a00af4fd10022aae10ec8287eafba7523f16ecf` preserves the raw MCP

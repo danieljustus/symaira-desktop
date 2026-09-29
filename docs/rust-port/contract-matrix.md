@@ -105,3 +105,16 @@ behavior oracle is commit `745c08e8144971c61133c5d0e5d61c7ce405aad2` / release r
 - Every ignored timestamp, temp root, port, random ID, or process ID is named with a reason. Unexplained differences fail.
 - Fixtures use synthetic vaults, generated identities/tokens, fake servers, local remotes, and isolated HOME/XDG roots. They never copy Daniel's live data.
 - Go bugs are not silently preserved or fixed. Record a versioned contract decision and test both implementations.
+
+### Local retrieval additions (2026-09-29)
+
+The pending-document replacement primitive and UTF-8 Markdown section parser
+are covered by `make retrieval-pending-rebuild-differential` and
+`make retrieval-sections-differential`. Both regenerate real Go observations
+through the immutable `portgen` source snapshot. Replacement covers the same
+extraction deletion, FTS state and two generation increments as Go; Rust uses
+a single transaction with stronger rollback guarantees. Markdown sections and
+materialized chunks cover frontmatter, Unicode byte offsets, headings and
+synthetic metadata. Invalid UTF-8 is explicitly rejected in Rust; Go raw-byte
+parity, PDF/external parsing, provider execution and complete CLI re-embedding
+remain open. These additions do not close RUST-008 or its platform acceptance.

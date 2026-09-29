@@ -140,6 +140,7 @@ func generatorSourcePaths() []string {
 		"internal/retrieval/internal/engine/port_metadata_test.go",
 		"internal/retrieval/internal/engine/port_hybrid_test.go",
 		"internal/retrieval/internal/engine/sync_test.go",
+		"internal/retrieval/internal/engine/port_sections_test.go",
 		"internal/retrieval/internal/engine/retrieval_chunks_fixture_test.go",
 		"internal/retrieval/internal/db/retrieval_bm25_fixture_test.go",
 		"internal/retrieval/internal/db/retrieval_embedding_state_fixture_test.go",

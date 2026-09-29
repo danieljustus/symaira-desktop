@@ -453,6 +453,10 @@ jobs:
         shell: bash
         run: make retrieval-pending-rebuild-differential
 
+      - name: Run native Markdown retrieval section differential
+        shell: bash
+        run: make retrieval-sections-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

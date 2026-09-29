@@ -205,6 +205,8 @@
         "make retrieval-embedding-http-differential",
         "make retrieval-reembed-http-differential",
         "make retrieval-local-hash-differential",
+        "make retrieval-search-cli-differential",
+        "make retrieval-search-mcp-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
         "make benchmark-large"

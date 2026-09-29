@@ -1,5 +1,33 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated shared query plan and MCP hybrid search — 2026-09-29
+
+Candidate `7e65075f1cd183452773ad664f81086dc1927747` connects `desk_search`
+to the same hybrid query/embedding path used by the CLI. Parsed filters and regex
+queries use a shared sidecar SearchPlan executor; malformed syntax preserves the
+plain-search hint. Actual Go `ServeIO` handler envelopes replay through a real
+Rust MCP subprocess in ten cases, including metadata, source roots and retained
+rows for negated path/status/type. Snippets are compared unchanged.
+
+Review found and corrected two defects: singleton SQL filters were applied again
+with placeholder post-filter results, discarding negated-filter survivors; and
+fallback search omitted registered external sources. Both paths now reuse the
+vault/registered-source root helper. Unregistered rows are excluded, intentionally
+more strictly than Go's unscoped `DB.SearchPlan`; a separate negative control makes
+that boundary explicit. Unix root prefixes preserve a legal trailing backslash.
+
+Full immutable generation, artifact review and validated application passed.
+The production Go digest remains 9928661e32e94a46528dc10b54d6b6fbdebd1915a530fd032ad4b87e84ee2fb3.
+Independent clean Darwin/arm64 and Linux/arm64 gates pass eight Go/Rust
+differentials and all 200 CLI/index/protocol tests, zero failures or ignored tests.
+Darwin strict Clippy, fmt and actionlint pass. Receipts
+`search-mcp-receipt-7e65075f.json` in the Desktop/native-linux build roots retain
+worktree metadata, source/fixture digests and log hashes.
+
+INDEX-005/RUST-008 remain open for expansion, reranking, quantization, other
+formats/facades and remaining native platforms. Existing CI now invokes the MCP
+differential; no remote run, publication, cutover or Go removal is claimed.
+
 ## Integrated CLI hybrid search checkpoint — 2026-09-29
 
 Candidate `4bf26cab4c065611f5bab2f6c6c215fd3f947481` connects plain CLI

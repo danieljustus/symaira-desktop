@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "7f814c6702f12de829dbff6a5347bef7f312a6b4",
+    "commit": "a826b22858c7bac42a42ccc1ac1cb6d9b3fadef9",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "9928661e32e94a46528dc10b54d6b6fbdebd1915a530fd032ad4b87e84ee2fb3",
-  "generator_source_digest": "775ea866c6cce663af1f53956b08bf21ad72ea3d8e4e068b39642fa3c798d0f6",
+  "generator_source_digest": "3c81dd407bd37dd6fe5d0bdec9bd360b8ad01d5cd293df78267a9ef8c8a252f8",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -90,10 +90,10 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "76e74f5db996f919be94c8bb3ef356cb7a52a9db1bd93f02f79885f196284c9b",
-    "testdata/port/sidecar/lifecycle.json": "922acd331ec1bd6956f7ae48acbb5e1fc77154778b3feed2cd5d9fb6d9ab4242",
+    "testdata/port/sidecar/large-corpus.json": "e64efd89a3a83c260c5ab6d97fbd64a62f88c85d1c544c715583e241faf5b223",
+    "testdata/port/sidecar/lifecycle.json": "3cec681929124f57e683ee809adbf3bc24be66efe3e60483fdf2c9045c95ed51",
     "testdata/port/sidecar/metadata.json": "319b08ad672a9955eace69d1d07df7674889bde2599dea369edf15c3d26ea400",
-    "testdata/port/sidecar/roundtrip.json": "b156521ef9ffc006f9c798b102571358f6e5689b6a47f3c2fe580a473752cfac",
+    "testdata/port/sidecar/roundtrip.json": "63f57faec260d24a56845524e2ac983004e19800669f5ab8e64cb9a70ec933c1",
     "testdata/port/vault/base-view-write.json": "15ab195e2e6693c7286abcede276e58290e0c08b79a226baea26a16f881bc967",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",

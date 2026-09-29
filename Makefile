@@ -41,6 +41,7 @@
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
 .PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -485,6 +486,13 @@ retrieval-embedding-state-fixtures-generate:
 retrieval-embedding-state-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
+
+retrieval-hybrid-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+
+retrieval-hybrid-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_hybrid_contracts
 
 retrieval-vector-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'

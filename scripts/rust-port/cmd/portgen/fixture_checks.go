@@ -48,6 +48,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom doctor CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortDoctorCLIContract$"}, []string{"testdata/port/room/doctor-cli.json"}, false},
 	{"symroom checkpoint CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortCheckpointCLIContract$"}, []string{"testdata/port/room/checkpoint-cli.json"}, false},
 	{"symroom run approval CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortRunApprovalCLIContract$"}, []string{"testdata/port/room/run-approval-cli.json"}, false},
+	{"retrieval hybrid", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalHybridFixture$"}, []string{"testdata/port/retrieval/hybrid.json"}, false},
 	{"retrieval chunks", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalChunksFixture$"}, []string{"testdata/port/retrieval/retrieval-chunks.json"}, false},
 	{"retrieval BM25", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalBM25Fixture$"}, []string{"testdata/port/retrieval/retrieval-bm25.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},

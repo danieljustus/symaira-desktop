@@ -138,6 +138,7 @@ func generatorSourcePaths() []string {
 		"internal/health/port_links_test.go",
 		"internal/notebook/port_parse_test.go",
 		"internal/retrieval/internal/engine/port_metadata_test.go",
+		"internal/retrieval/internal/engine/port_hybrid_test.go",
 		"internal/retrieval/internal/engine/retrieval_chunks_fixture_test.go",
 		"internal/retrieval/internal/db/retrieval_bm25_fixture_test.go",
 		"internal/retrieval/internal/db/retrieval_embedding_state_fixture_test.go",

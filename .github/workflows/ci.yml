@@ -445,6 +445,10 @@ jobs:
         shell: bash
         run: make retrieval-vector-differential
 
+      - name: Run native local hybrid retrieval differential
+        shell: bash
+        run: make retrieval-hybrid-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

@@ -210,7 +210,7 @@ fn replaces_one_document_and_rolls_back_failed_rebuild() {
         updated_at: "2026-09-02T00:00:00Z".to_owned(),
     };
     database
-        .replace_document_chunks(&document, &[replacement.clone()])
+        .replace_document_chunks(&document, std::slice::from_ref(&replacement))
         .expect("replace pending document chunks");
     assert_eq!(
         database

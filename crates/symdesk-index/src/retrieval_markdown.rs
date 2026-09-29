@@ -6,7 +6,9 @@ const MAX_MARKDOWN_BYTES: usize = 10 << 20;
 /// then prepends the vault metadata section when the existing vault parser can
 /// read the document metadata.
 ///
-/// This covers Markdown only. PDF and other format extraction remain separate.
+/// Input must be valid UTF-8 because retrieval section offsets and contents are
+/// represented as Rust strings. This covers Markdown only. PDF and other format
+/// extraction remain separate.
 pub fn parse_markdown_retrieval_sections(
     source_path: &str,
     markdown: &[u8],
@@ -18,7 +20,12 @@ pub fn parse_markdown_retrieval_sections(
         )));
     }
 
-    let text = String::from_utf8_lossy(markdown);
+    let text = std::str::from_utf8(markdown).map_err(|error| {
+        SidecarError::Contract(format!(
+            "markdown content must be valid UTF-8 (invalid byte at {})",
+            error.valid_up_to()
+        ))
+    })?;
     let (body, frontmatter_bytes) = strip_frontmatter(&text);
     let mut sections = parse_sections(body, frontmatter_bytes);
 

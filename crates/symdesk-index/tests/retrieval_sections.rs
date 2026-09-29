@@ -73,3 +73,19 @@ fn parses_go_markdown_sections_and_materializes_their_chunks() {
         }
     }
 }
+
+#[test]
+fn rejects_invalid_utf8_instead_of_shifting_section_offsets() {
+    let error =
+        parse_markdown_retrieval_sections("/vault/invalid.md", b"before\n\xFF\n# Heading\n")
+            .expect_err("invalid UTF-8 must not be lossy-decoded");
+    assert!(error.to_string().contains("valid UTF-8"));
+}
+
+#[test]
+fn rejects_markdown_over_the_size_limit() {
+    let markdown = vec![b'a'; (10 << 20) + 1];
+    let error = parse_markdown_retrieval_sections("/vault/large.md", &markdown)
+        .expect_err("oversized Markdown must be rejected");
+    assert!(error.to_string().contains("10485760 byte limit"));
+}

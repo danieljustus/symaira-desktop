@@ -1,0 +1,1059 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "3c1ef32f7de92420a972d34f6067a9b5f2de63c9",
+  "source_hashes": {
+    "internal/retrieval/internal/db/db.go": "0e088953959bc9ff9018aa02604abb77869f9669ed61498301478f762317852b",
+    "internal/retrieval/internal/db/migrations/0001_baseline.sql": "b262f7561e218aa92dced583908d93526858395503413ef801ab2780344c14a5",
+    "internal/retrieval/internal/db/migrations/0002_meta.sql": "ec08e7167a2ee6e75a90ac96685c332b23971a6e82fda2508990be1f35dc77c8",
+    "internal/retrieval/internal/db/migrations/0003_index_storage.sql": "09de47fcf7f9f9a5a4142a1f6b9a2cae3c9df09e8e7df07b7e6ed082c3a6924e",
+    "internal/retrieval/internal/db/migrations/0004_binary_signature.sql": "4c3ab0d44ffc643c99f457c32de959aa19c9b83fd55fc3fe630295d2974a4d1c",
+    "internal/retrieval/internal/db/migrations/0005_quantized_sidecar.sql": "f4742e2d3cdeeab820e12dcdd3e5845072c31a7309bd83e49d1828be0dd1149a",
+    "internal/retrieval/internal/db/migrations/0006_folder_contexts.sql": "f01f71c9821ed14acccf4a21d07ebf95683eb4da5f47a34f1977e113bca9cfa2",
+    "internal/retrieval/internal/db/migrations/0007_backfill_embedding_dim.sql": "f07052f4e304eb0d6cd5e8d38ea6721482e45b25a06131dfddafd97ea7ff2717",
+    "internal/retrieval/internal/db/migrations/0008_chunk_spans.sql": "9cd1ef5e6d3850220592af3c4356facb8e44af39eb422f7c69e5aaaae0ac2519",
+    "internal/retrieval/internal/db/migrations/0009_extractions.sql": "0ed5beead4f0f28d3a188441e4881a4b41d60b9b1a46e0b60da21c04dbdf4884",
+    "internal/retrieval/internal/db/migrations/0010_embedding_pending.sql": "4c757194a0ef5292fde57e63c74147466973bb431cf9283e8b32f158b75273ec",
+    "internal/retrieval/internal/db/migrations/0011_location_anchors.sql": "bf2f57c5a207405c837fee27208848e72090d795c1ce01ca0320614af5b1dd09",
+    "internal/retrieval/internal/db/migrations/0012_german_norm.sql": "649b1cf7adb8696c620af2e440b97e59b93e911dbc54121b559e53c83da70325",
+    "internal/retrieval/internal/db/migrations/0013_german_trigram.sql": "fc3d34e15425f848800d4df107c17f7244028465681cdf2a8176331159fce61a",
+    "internal/retrieval/internal/db/search.go": "de944a561f7f11586258bf2158604d8ee28c12c22f8535fba10a5fee295f3769",
+    "internal/retrieval/internal/db/search_quantized.go": "2c81e2a47739487ed29a1331e24dbb8f59393d53d993f6da0295e4ee8d810c34",
+    "internal/retrieval/internal/db/vecmath.go": "1f433c5851eb3de9a6da09a49a8cf4d74ef59128c5257a92a5d4147959cf85dd",
+    "internal/retrieval/internal/db/vectorstore.go": "b73b4c4ae61ae678d2fe78e5a64702b276fcf1d7844c1363a84ac90476b37077",
+    "internal/retrieval/internal/engine/embeddings.go": "448f7d0fdc6003ae49f23d3e86a8a083fc81ae5ee96052a5f5cd86b5adf0585b",
+    "internal/retrieval/internal/engine/metadata.go": "771e7aca7dc745233b944fa6f741f79b5e6903048e799dc7c09a7eda55ef5e03",
+    "internal/retrieval/internal/engine/retrieval.go": "59ce6dc3e4bff15ba8d2a39a4787df3578099d56650fa87ea18a439e9c8f0a70",
+    "internal/searchquery/german.go": "3da47379c1182a6cabd2abfd4eff801575793b430519debafd849f5500d59a32"
+  },
+  "normalizations": [
+    "results with equal final float32 rrf_score are compared by uuid only within the contiguous tie group because Go merges a map and does not define that order",
+    "BM25 failure warning compares the stable warning class and fallback behavior; database error detail differs by backend",
+    "mixed embedding error example pairs are sorted by space/count because Go ranges its space map in nondeterministic order"
+  ],
+  "cases": [
+    {
+      "id": "empty-query",
+      "query": "",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [],
+      "warnings": []
+    },
+    {
+      "id": "keyword-leg",
+      "query": "orchid",
+      "embedding": [
+        0,
+        1
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 10,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 4,
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "hash-metadata",
+          "bm25_rank": 4,
+          "vector_rank": 2,
+          "rrf_score": 0.13175404,
+          "cosine_score": 0.97980404,
+          "metadata_matches": [
+            "title"
+          ]
+        },
+        {
+          "id": 2,
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "hash": "hash-keyword",
+          "bm25_rank": 3,
+          "vector_rank": 1,
+          "rrf_score": 0.03226646,
+          "cosine_score": 1
+        },
+        {
+          "id": 5,
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "hash": "hash-outside",
+          "bm25_rank": 1,
+          "vector_rank": 5,
+          "rrf_score": 0.031778056,
+          "cosine_score": 0
+        },
+        {
+          "id": 1,
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "hash": "hash-overlap",
+          "bm25_rank": 2,
+          "vector_rank": 4,
+          "rrf_score": 0.03175403,
+          "cosine_score": 0
+        },
+        {
+          "id": 3,
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "hash": "hash-semantic",
+          "bm25_rank": 0,
+          "vector_rank": 3,
+          "rrf_score": 0.015873017,
+          "cosine_score": 0.6
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "semantic-leg",
+      "query": "unmatched term",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 10,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 1,
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "hash": "hash-overlap",
+          "bm25_rank": 0,
+          "vector_rank": 1,
+          "rrf_score": 0.016393442,
+          "cosine_score": 1
+        },
+        {
+          "id": 3,
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "hash": "hash-semantic",
+          "bm25_rank": 0,
+          "vector_rank": 2,
+          "rrf_score": 0.016129032,
+          "cosine_score": 0.8
+        },
+        {
+          "id": 4,
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "hash-metadata",
+          "bm25_rank": 0,
+          "vector_rank": 3,
+          "rrf_score": 0.015873017,
+          "cosine_score": 0.19996001
+        },
+        {
+          "id": 2,
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "hash": "hash-keyword",
+          "bm25_rank": 0,
+          "vector_rank": 4,
+          "rrf_score": 0.015625,
+          "cosine_score": 0
+        },
+        {
+          "id": 5,
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "hash": "hash-outside",
+          "bm25_rank": 0,
+          "vector_rank": 5,
+          "rrf_score": 0.015384615,
+          "cosine_score": -1
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "overlap-and-metadata",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 10,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 4,
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "hash-metadata",
+          "bm25_rank": 4,
+          "vector_rank": 3,
+          "rrf_score": 0.13149801,
+          "cosine_score": 0.19996001,
+          "metadata_matches": [
+            "title"
+          ]
+        },
+        {
+          "id": 1,
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "hash": "hash-overlap",
+          "bm25_rank": 2,
+          "vector_rank": 1,
+          "rrf_score": 0.032522473,
+          "cosine_score": 1
+        },
+        {
+          "id": 5,
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "hash": "hash-outside",
+          "bm25_rank": 1,
+          "vector_rank": 5,
+          "rrf_score": 0.031778056,
+          "cosine_score": -1
+        },
+        {
+          "id": 2,
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "hash": "hash-keyword",
+          "bm25_rank": 3,
+          "vector_rank": 4,
+          "rrf_score": 0.031498015,
+          "cosine_score": 0
+        },
+        {
+          "id": 3,
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "hash": "hash-semantic",
+          "bm25_rank": 0,
+          "vector_rank": 2,
+          "rrf_score": 0.016129032,
+          "cosine_score": 0.8
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "equal-rrf-tie",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "tie",
+      "chunks": [
+        {
+          "uuid": "tie-a",
+          "document_path": "/vault/tie/a.md",
+          "chunk_index": 0,
+          "content": "orchid orchid orchid",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-tie-a",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "tie-b",
+          "document_path": "/vault/tie/b.md",
+          "chunk_index": 1,
+          "content": "orchid",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-tie-b",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 1,
+          "uuid": "tie-a",
+          "document_path": "/vault/tie/a.md",
+          "chunk_index": 0,
+          "content": "orchid orchid orchid",
+          "hash": "hash-tie-a",
+          "bm25_rank": 1,
+          "vector_rank": 2,
+          "rrf_score": 0.032522473,
+          "cosine_score": 0.8
+        },
+        {
+          "id": 2,
+          "uuid": "tie-b",
+          "document_path": "/vault/tie/b.md",
+          "chunk_index": 1,
+          "content": "orchid",
+          "hash": "hash-tie-b",
+          "bm25_rank": 2,
+          "vector_rank": 1,
+          "rrf_score": 0.032522473,
+          "cosine_score": 1
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "limit-and-path",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "/vault/project/",
+      "limit": 1,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 4,
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "hash-metadata",
+          "bm25_rank": 3,
+          "vector_rank": 3,
+          "rrf_score": 0.13174604,
+          "cosine_score": 0.19996001,
+          "metadata_matches": [
+            "title"
+          ]
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "mixed-space-rejected",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "mixed",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "other-model"
+        }
+      ],
+      "results": [],
+      "warnings": [],
+      "error_class": "mixed_embedding_spaces",
+      "error": "index contains mixed embedding spaces (2/fixture-model (1 chunks), 2/other-model (1 chunks)); re-index with a single model before searching"
+    },
+    {
+      "id": "local-hash-fallback-warning",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "local-hash",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "remote",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "remote-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "remote-model"
+        }
+      ],
+      "results": [
+        {
+          "id": 1,
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "hash": "hash-overlap",
+          "bm25_rank": 1,
+          "vector_rank": 1,
+          "rrf_score": 0.032786883,
+          "cosine_score": 1,
+          "vector_mode": "fallback"
+        },
+        {
+          "id": 2,
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "hash": "hash-keyword",
+          "bm25_rank": 2,
+          "vector_rank": 2,
+          "rrf_score": 0.032258064,
+          "cosine_score": 0,
+          "vector_mode": "fallback"
+        }
+      ],
+      "warnings": [
+        "warning: query embedding fell back to local hash while the index uses an Ollama model; semantic scores may be unreliable"
+      ]
+    },
+    {
+      "id": "bm25-degrades-to-vector",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "failure": "bm25",
+      "results": [
+        {
+          "id": 4,
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "hash-metadata",
+          "bm25_rank": 0,
+          "vector_rank": 3,
+          "rrf_score": 0.11587302,
+          "cosine_score": 0.19996001,
+          "metadata_matches": [
+            "title"
+          ]
+        },
+        {
+          "id": 1,
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "hash": "hash-overlap",
+          "bm25_rank": 0,
+          "vector_rank": 1,
+          "rrf_score": 0.016393442,
+          "cosine_score": 1
+        },
+        {
+          "id": 3,
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "hash": "hash-semantic",
+          "bm25_rank": 0,
+          "vector_rank": 2,
+          "rrf_score": 0.016129032,
+          "cosine_score": 0.8
+        },
+        {
+          "id": 2,
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "hash": "hash-keyword",
+          "bm25_rank": 0,
+          "vector_rank": 4,
+          "rrf_score": 0.015625,
+          "cosine_score": 0
+        },
+        {
+          "id": 5,
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "hash": "hash-outside",
+          "bm25_rank": 0,
+          "vector_rank": 5,
+          "rrf_score": 0.015384615,
+          "cosine_score": -1
+        }
+      ],
+      "warnings": [
+        "warning: BM25 search failed, falling back to vector-only: fixture BM25 failure"
+      ]
+    },
+    {
+      "id": "vector-error-propagates",
+      "query": "orchid",
+      "embedding": [
+        1,
+        0
+      ],
+      "query_model": "fixture-model",
+      "path_prefix": "",
+      "limit": 5,
+      "corpus": "base",
+      "chunks": [
+        {
+          "uuid": "hybrid-overlap",
+          "document_path": "/vault/project/overlap.md",
+          "chunk_index": 0,
+          "content": "orchid manual for careful gardeners",
+          "embedding": [
+            1,
+            0
+          ],
+          "hash": "hash-overlap",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-keyword",
+          "document_path": "/vault/project/keyword.md",
+          "chunk_index": 1,
+          "content": "orchid grows well in shade",
+          "embedding": [
+            0,
+            1
+          ],
+          "hash": "hash-keyword",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-semantic",
+          "document_path": "/vault/project/semantic.md",
+          "chunk_index": 2,
+          "content": "a plant guide for garden care",
+          "embedding": [
+            0.8,
+            0.6
+          ],
+          "hash": "hash-semantic",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-metadata",
+          "document_path": "/vault/project/metadata.md",
+          "chunk_index": 3,
+          "content": "general notes\n__SYMDESK_SEARCH_METADATA_START__\ntitle: orchid field notes\nsource: garden archive\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.2,
+            0.98
+          ],
+          "hash": "hash-metadata",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        },
+        {
+          "uuid": "hybrid-outside",
+          "document_path": "/vault/other/outside.md",
+          "chunk_index": 4,
+          "content": "orchid outside project",
+          "embedding": [
+            -1,
+            0
+          ],
+          "hash": "hash-outside",
+          "dim": 2,
+          "embedding_model": "fixture-model"
+        }
+      ],
+      "failure": "vector",
+      "results": [],
+      "warnings": [],
+      "error_class": "vector_failure",
+      "error": "fixture vector failure"
+    }
+  ]
+}

@@ -44,6 +44,7 @@ pub use metadata::{
 };
 pub use retrieval::{
     RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
+    RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
     RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
     RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
     materialize_chunks,

@@ -105,6 +105,48 @@ pub struct RetrievalVectorSearchChunk {
     pub hash: String,
 }
 
+/// One result from local hybrid search, combining BM25 and vector ranks with
+/// the same reciprocal-rank and metadata scoring used by the Go engine.
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchResult {
+    pub chunk: RetrievalHybridSearchChunk,
+    pub bm25_rank: usize,
+    pub vector_rank: usize,
+    pub rrf_score: f32,
+    pub cosine_score: f32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata_matches: Vec<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub vector_mode: String,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchChunk {
+    pub id: i64,
+    pub uuid: String,
+    pub document_path: String,
+    pub chunk_index: i64,
+    pub content: String,
+    pub hash: String,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchResponse {
+    pub results: Vec<RetrievalHybridSearchResult>,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+struct HybridAccumulator {
+    chunk: RetrievalHybridSearchChunk,
+    bm25_rank: usize,
+    vector_rank: usize,
+    cosine_score: f32,
+}
+
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RetrievalSearchChunk {
@@ -683,6 +725,158 @@ impl RetrievalDb {
             result.vector_rank = index + 1;
         }
         Ok(results)
+    }
+
+    /// Combines the existing local BM25 and full-scan vector searches using
+    /// the Go engine's fetch window, metadata boost, and float32 RRF scores.
+    /// The caller supplies an already-produced query vector and model name;
+    /// this method never contacts an embedding or reranking provider.
+    pub fn search_hybrid_with_path(
+        &self,
+        query: &str,
+        query_embedding: &[f32],
+        query_model: &str,
+        path_prefix: &str,
+        limit: i64,
+    ) -> Result<RetrievalHybridSearchResponse, SidecarError> {
+        if query.is_empty() {
+            return Ok(RetrievalHybridSearchResponse {
+                results: Vec::new(),
+                warnings: Vec::new(),
+            });
+        }
+
+        let spaces = self.detect_mixed_embedding_spaces()?;
+        if spaces.len() > 1 {
+            let examples = spaces
+                .iter()
+                .map(|entry| format!("{} ({} chunks)", entry.space, entry.count))
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(SidecarError::Contract(format!(
+                "index contains mixed embedding spaces ({examples}); re-index with a single model before searching"
+            )));
+        }
+
+        let mut warnings = Vec::new();
+        let mut vector_mode = String::new();
+        if query_model == "local-hash" {
+            let index_has_ollama = spaces.iter().any(|entry| {
+                entry
+                    .space
+                    .split_once('/')
+                    .is_some_and(|(_, model)| model != "local-hash")
+            });
+            let index_has_fallback = spaces.iter().any(|entry| {
+                entry
+                    .space
+                    .split_once('/')
+                    .is_some_and(|(_, model)| model == "local-hash")
+            });
+            if index_has_ollama && !index_has_fallback {
+                warnings.push("warning: query embedding fell back to local hash while the index uses an Ollama model; semantic scores may be unreliable".to_owned());
+                vector_mode = "fallback".to_owned();
+            }
+        }
+
+        let fetch_limit = limit.saturating_mul(3).clamp(50, 200);
+        let (bm25_results, warnings) =
+            match self.search_bm25_with_path(query, path_prefix, fetch_limit) {
+                Ok(results) => (results, warnings),
+                Err(error) => {
+                    warnings.push(format!(
+                        "warning: BM25 search failed, falling back to vector-only: {error}"
+                    ));
+                    (Vec::new(), warnings)
+                }
+            };
+        let vector_results =
+            self.search_vector_with_path(query_embedding, path_prefix, fetch_limit)?;
+
+        let mut merged = std::collections::HashMap::<String, HybridAccumulator>::new();
+        for result in bm25_results {
+            let uuid = result.chunk.uuid.clone();
+            merged.insert(
+                uuid,
+                HybridAccumulator {
+                    chunk: RetrievalHybridSearchChunk {
+                        id: result.chunk.id,
+                        uuid: result.chunk.uuid,
+                        document_path: result.chunk.document_path,
+                        chunk_index: result.chunk.chunk_index,
+                        content: result.chunk.content,
+                        hash: result.chunk.hash,
+                    },
+                    bm25_rank: result.bm25_rank,
+                    vector_rank: 0,
+                    cosine_score: 0.0,
+                },
+            );
+        }
+        for result in vector_results {
+            let uuid = result.chunk.uuid.clone();
+            let entry = merged.entry(uuid).or_insert_with(|| HybridAccumulator {
+                chunk: RetrievalHybridSearchChunk {
+                    id: result.chunk.id,
+                    uuid: result.chunk.uuid.clone(),
+                    document_path: result.chunk.document_path.clone(),
+                    chunk_index: result.chunk.chunk_index,
+                    content: result.chunk.content.clone(),
+                    hash: result.chunk.hash.clone(),
+                },
+                bm25_rank: 0,
+                vector_rank: 0,
+                cosine_score: 0.0,
+            });
+            entry.vector_rank = result.vector_rank;
+            entry.cosine_score = result.cosine_score;
+        }
+
+        let mut results = merged
+            .into_values()
+            .map(|entry| {
+                let metadata_matches = symdesk_vault::metadata_matches(query, &entry.chunk.content);
+                let mut rrf_score = 0.0_f32;
+                if entry.bm25_rank > 0 {
+                    rrf_score += 1.0_f32 / (60.0_f32 + entry.bm25_rank as f32);
+                }
+                if entry.vector_rank > 0 {
+                    rrf_score += 1.0_f32 / (60.0_f32 + entry.vector_rank as f32);
+                }
+                rrf_score += retrieval_metadata_boost(&metadata_matches);
+                RetrievalHybridSearchResult {
+                    chunk: entry.chunk,
+                    bm25_rank: entry.bm25_rank,
+                    vector_rank: entry.vector_rank,
+                    rrf_score,
+                    cosine_score: entry.cosine_score,
+                    metadata_matches,
+                    vector_mode: vector_mode.clone(),
+                }
+            })
+            .collect::<Vec<_>>();
+        results.sort_by(|left, right| {
+            right
+                .rrf_score
+                .partial_cmp(&left.rrf_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(limit.max(0) as usize);
+
+        Ok(RetrievalHybridSearchResponse { results, warnings })
+    }
+}
+
+fn retrieval_metadata_boost(fields: &[String]) -> f32 {
+    if fields
+        .iter()
+        .any(|field| field == "title" || field == "tags")
+    {
+        0.1_f32
+    } else if fields.is_empty() {
+        0.0_f32
+    } else {
+        0.02_f32
     }
 }
 

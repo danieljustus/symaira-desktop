@@ -40,7 +40,7 @@ behavior oracle is commit `745c08e8144971c61133c5d0e5d61c7ce405aad2` / release r
 | INDEX-002 | Index lifecycle | full/incremental/no-op/delete/relocate/restore | Go sidecar/service | SHA/stat cache, transactional visibility, stale recovery, backups | Initial/incremental/no-op/update/delete, refresh/stat/prune and partial-batch snapshots pass. Go-owned WAL backup, validated atomic restore, and relocation snapshot fixtures replay locally via `make index-backup-differential`, `make index-restore-differential`, and `make index-relocate-differential`. Standalone retrieval config/path resolution and relocation persistence replay from Go via `make index-location-differential`; the `index maintenance location/backup/restore/relocate` process and database rows replay via `make index-maintenance-cli-differential`. Bare `index [path]` now replays Go process output, incremental counts, FTS rows, lifecycle metadata, prune and missing-vault behavior via `make index-build-cli-differential`. Provider-free `--re-embed` and non-Markdown lifecycle reasons now replay the Go process fixture locally. Pending embedding chunks, hybrid/vector updates, and exact integrated native matrix evidence remain open. | all | rows + side effects | TODO |
 | INDEX-003 | FTS/tokenization | German/Unicode/punctuation/prefix/phrase corpus | Go SQLite/FTS5 | tokenization, ranking, snippets, ordering, limits | original/German/trigram fixture plus deterministic 10k full-state hash and exact search paths pass in all Go/Rust create/reopen combinations | all | semantic + ordering | PASS |
 | INDEX-004 | Search grammar | fields, dates/ranges/relative windows, negation, phrases, RE2-compatible regex, malformed fallback | Go `internal/searchquery` | parser tree, inclusive nanosecond date bounds, `RequiresSidecar`, regex probes and classified errors | 22-query/17-date Go fixture + Rust parity; native Linux/macOS/Windows CI run 34102228025 | all | semantic + bytes except backend regex detail | PASS |
-| INDEX-005 | Retrieval/chunking | Markdown/PDF/text corpus, model states | Go retrieval | chunk spans/anchors, BM25/RRF/vector fallback, dimensions, quantization | Go-owned section-to-chunk fixture covers Unicode byte spans, overlap, stable IDs, headings, synthetic metadata and empty input via `make retrieval-chunks-differential`; separate retrieval DB migration and provider-free BM25/path/limit fixtures replay through `make retrieval-bm25-differential`. Pending counts and mixed embedding-space grouping replay through `make retrieval-embedding-state-differential`. Provider-free full-scan cosine ranks with fixed vectors replay through `make retrieval-vector-differential`; that fixture and the exact native matrix remain pending. The local hybrid primitive and ten source-bound Go cases cover float32 RRF, shared metadata matches, fallback warnings, path/limit and split search failures (`make retrieval-hybrid-differential`); coordinator and native target acceptance are pending. IVF, provider-backed embedding and the retrieval service facade remain open. | all | semantic/numeric tolerance declared | TODO |
+| INDEX-005 | Retrieval/chunking | Markdown/PDF/text corpus, model states | Go retrieval | chunk spans/anchors, BM25/RRF/vector fallback, dimensions, quantization | Go-owned section-to-chunk fixture covers Unicode byte spans, overlap, stable IDs, headings, synthetic metadata and empty input via `make retrieval-chunks-differential`; separate retrieval DB migration and provider-free BM25/path/limit fixtures replay through `make retrieval-bm25-differential`. Pending counts and mixed embedding-space grouping replay through `make retrieval-embedding-state-differential`. Provider-free full-scan cosine ranks with fixed vectors replay through `make retrieval-vector-differential`; that fixture and the exact native matrix remain pending. The hybrid primitive and ten source-bound Go cases cover float32 RRF, shared metadata matches, fallback warnings, path/limit and split search failures (`make retrieval-hybrid-differential`). The local HTTP embedding primitive has 16 real Go llmkit cases (`make retrieval-embedding-http-differential`). Integrated `dcf5b09a` passes these and pending/Markdown differentials plus all 144 index/protocol tests on Darwin/arm64 and Linux/arm64; other native targets remain open. IVF, provider-backed CLI integration and the retrieval service facade remain open. | all | semantic/numeric tolerance declared | TODO |
 | INDEX-006 | SQLite concurrency/time | readers/writers, busy, locked, NULL/timestamps | Go stores | busy timeout, rollback, UTC encoding, NULL scan and no deadlock | bidirectional NULL/nanosecond/rollback/corruption/read-only and early-release/timeout lock suites pass in native Linux/macOS/Windows CI run 34102228025 | native OS | state + timing bounds | PASS |
 | INDEX-007 | German normalization | stopwords, conservative stems, umlaut folding, duplicates, phrases, FTS prefix and trigram guards | Go `internal/searchquery/german.go` | exact token order and FTS/trigram expressions | Go-generated fixture + Rust parity + Miri; native Linux/macOS/Windows CI run 34102228025 | all | bytes | PASS |
 | DATA-001 | Dataset sync | typed rows, duplicate provenance, schema changes | Go dataset/service | Markdown manifest first, idempotency, row identity, sidecar projection | Go-owned parser, service sync, source import/collision, and purge fixtures replay in Rust; `dataset sync` CLI runs a Go↔Rust process differential. The purge fixture includes a symlink-journal rejection before mutation; `make dataset-sync-differential dataset-cli-differential dataset-purge-differential` pass locally. Native Linux/macOS/Windows evidence for the exact integrated commit remains pending. | all | bytes + rows | TODO |
@@ -125,3 +125,32 @@ coordinator executed both new Go/Rust differential targets and all 69
 ignored tests). Darwin also passed strict all-target Clippy, actionlint and
 the full immutable `portgen --check`. Remaining required target platforms
 are not established by these two local runs.
+
+### Integrated local HTTP embeddings (2026-09-29)
+
+Candidate `dcf5b09a7b175b01cb672aff69f7b4f6cc683e6a` includes the previous
+retrieval additions and a single-attempt local Ollama embedding client. It
+reuses the existing numeric-loopback HTTP boundary and HTTP dependencies.
+Sixteen actual Go llmkit observations pin request shape, float32 vectors,
+case-insensitive and duplicate JSON fields, null vectors, timeout/count/decode
+failures and HTTP error categories. A long 400 response proves classification
+uses the first 8 KiB before its display excerpt is shortened to 512 bytes.
+No running Ollama or external provider was contacted.
+
+`make retrieval-embedding-http-differential` is wired into native CI and the
+immutable global fixture manifest. Full generation and reviewed artifact
+validation passed; Go production source digest remains unchanged. The gate
+also found and fixed the hybrid fixture normalizer's nested-parenthesis bug;
+it now sorts the complete map-derived error list and preserves other errors.
+The committed hybrid fixture bytes did not change.
+
+Independent Darwin/arm64 and Linux/arm64 checks pass the Go/Rust differentials
+and all 144 `symdesk-index`/`symdesk-protocol` tests, with zero failed or ignored.
+Darwin also passes strict all-target Clippy, fmt and actionlint. Its first full
+suite attempt used umask077 and failed pre-existing directory-mode fixture
+assertions; an isolated private-root umask022 rerun passed without relaxing
+assertions or changing runtime permissions.
+Receipts: `../builds/symaira-desktop/retrieval-markdown-sections-20260929/coordinator-http-receipt-dcf5b09a.json`
+and `../builds/native-linux-20260929/desktop-http-receipt-dcf5b09a.json`.
+This primitive does not yet wire the CLI re-embedding path, retries or fallback;
+those and other required native target evidence remain open. RUST-008 stays open.

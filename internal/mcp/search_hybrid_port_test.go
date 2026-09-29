@@ -34,6 +34,12 @@ type searchHybridMCPFixtureCase struct {
 	EmbeddingDim          int                       `json:"embedding_dim"`
 	ProviderStatus        int                       `json:"provider_status"`
 	ProviderDimension     int                       `json:"provider_dimension"`
+	ExpandQuery           bool                      `json:"expand_query,omitempty"`
+	ExpandModel           string                    `json:"expand_model,omitempty"`
+	ExpandedText          string                    `json:"expanded_text,omitempty"`
+	ChatResponse          string                    `json:"chat_response,omitempty"`
+	ChatErrorBody         string                    `json:"chat_error_body,omitempty"`
+	ChatStatus            int                       `json:"chat_status,omitempty"`
 	Documents             []searchHybridMCPDocument `json:"documents"`
 	ExternalDocuments     []searchHybridMCPDocument `json:"external_documents,omitempty"`
 	UnregisteredDocuments []searchHybridMCPDocument `json:"unregistered_documents,omitempty"`
@@ -194,6 +200,27 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
 			Documents: []searchHybridMCPDocument{{Path: "ignored.md", Body: "Whitespace queries return no results."}},
 		},
+		{
+			ID: "hyde-expansion-success", Query: "orbital greenhouse",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			ExpandQuery: true, ExpandModel: "fixture-chat-model",
+			ExpandedText: "A greenhouse in orbit grows food for a space station.",
+			ChatResponse: `{"meſſage":{"CONTENT":"discarded"},"message":{"content":null,"Content":"A greenhouse in orbit grows food for a space station."}} {"trailing":true}`,
+			Documents:    []searchHybridMCPDocument{{Path: "space.md", Body: "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."}},
+		},
+		{
+			ID: "hyde-chat-failure-keeps-query-vector", Query: "orbital greenhouse",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			ExpandQuery: true, ExpandedText: "unused", ChatStatus: http.StatusServiceUnavailable,
+			ChatErrorBody: strings.Repeat("x", 512) + "TAIL_MARKER",
+			Documents:     []searchHybridMCPDocument{{Path: "space.md", Body: "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."}},
+		},
+		{
+			ID: "hyde-identical-passage-reuses-query-cache", Query: "cached identical passage",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			ExpandQuery: true, ExpandModel: "fixture-chat-model", ExpandedText: "cached identical passage",
+			Documents: []searchHybridMCPDocument{{Path: "cache.md", Body: "# Cache behavior\n\nA cached identical passage remains searchable."}},
+		},
 	}
 }
 
@@ -216,15 +243,37 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 		if err != nil {
 			t.Errorf("read embedding request: %v", err)
 		}
+		requestMu.Lock()
+		requests = append(requests, capturedSearchEmbeddingRequest{Method: r.Method, Path: r.URL.RequestURI(), Body: body})
+		requestMu.Unlock()
+		if r.URL.Path == "/api/chat" {
+			status := input.ChatStatus
+			if status == 0 {
+				status = http.StatusOK
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			if status >= 300 {
+				body := input.ChatErrorBody
+				if body == "" {
+					body = `{"error":"fixture chat failure"}`
+				}
+				_, _ = w.Write([]byte(body))
+				return
+			}
+			if input.ChatResponse != "" {
+				_, _ = w.Write([]byte(input.ChatResponse))
+				return
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": map[string]string{"content": input.ExpandedText}})
+			return
+		}
 		var request struct {
 			Input []string `json:"input"`
 		}
 		if err := json.Unmarshal(body, &request); err != nil {
 			t.Errorf("decode embedding request: %v", err)
 		}
-		requestMu.Lock()
-		requests = append(requests, capturedSearchEmbeddingRequest{Method: r.Method, Path: r.URL.RequestURI(), Body: body})
-		requestMu.Unlock()
 		status := http.StatusOK
 		dimension := input.EmbeddingDim
 		if len(request.Input) == 1 && request.Input[0] == input.Query {
@@ -237,10 +286,6 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 			_, _ = w.Write([]byte(`{"error":"fixture provider failure"}`))
 			return
 		}
-		vector := make([]float32, dimension)
-		if len(vector) > 0 {
-			vector[0] = 1
-		}
 		response := struct {
 			Data []struct {
 				Embedding []float32 `json:"embedding"`
@@ -249,6 +294,12 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 			Embedding []float32 `json:"embedding"`
 		}, len(request.Input))}
 		for index := range response.Data {
+			vector := make([]float32, dimension)
+			if request.Input[index] == input.ExpandedText && len(vector) > 1 {
+				vector[1] = 1
+			} else if len(vector) > 0 {
+				vector[0] = 1
+			}
 			response.Data[index].Embedding = vector
 		}
 		_ = json.NewEncoder(w).Encode(response)
@@ -260,7 +311,7 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	configText := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\n", indexPath, server.URL+"/api/embeddings", "fixture-model", input.EmbeddingDim)
+	configText := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\n", indexPath, server.URL+"/api/embeddings", "fixture-model", input.EmbeddingDim, input.ExpandQuery, input.ExpandModel)
 	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(configText), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -358,12 +409,6 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	defer requestMu.Unlock()
 	input.Requests = make([]searchHybridMCPRequest, 0, len(requests))
 	for _, request := range requests {
-		var body struct {
-			Input []string `json:"input"`
-		}
-		if json.Unmarshal(request.Body, &body) != nil || len(body.Input) != 1 || body.Input[0] != input.Query {
-			continue
-		}
 		input.Requests = append(input.Requests, searchHybridMCPRequest{Method: request.Method, Path: request.Path, Body: request.Body})
 	}
 	return input

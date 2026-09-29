@@ -23,13 +23,25 @@ struct Fixture {
     cases: Vec<FixtureCase>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureCase {
     id: String,
     query: String,
     embedding_dim: usize,
     provider_status: u16,
     provider_dimension: usize,
+    #[serde(default)]
+    expand_query: bool,
+    #[serde(default)]
+    expand_model: String,
+    #[serde(default)]
+    expanded_text: String,
+    #[serde(default)]
+    chat_response: String,
+    #[serde(default)]
+    chat_error_body: String,
+    #[serde(default)]
+    chat_status: u16,
     index_documents: bool,
     documents: Vec<FixtureDocument>,
     #[serde(default, deserialize_with = "null_default")]
@@ -46,7 +58,7 @@ where
     Ok(Option::<T>::deserialize(deserializer)?.unwrap_or_default())
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureDocument {
     path: String,
     body: String,
@@ -56,7 +68,7 @@ struct FixtureDocument {
     index_model: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureRequest {
     method: String,
     path: String,
@@ -119,7 +131,7 @@ fn fixture() -> Fixture {
 fn real_search_cli_replays_go_service_oracle() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 8);
+    assert_eq!(fixture.cases.len(), 13);
     for case in fixture.cases {
         replay_case(&case);
     }
@@ -212,10 +224,12 @@ fn replay_case(case: &FixtureCase) {
     let config_dir = home.join(".config/symseek");
     fs::create_dir_all(&config_dir).expect("create isolated retrieval config directory");
     let config = format!(
-        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\n",
+        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\n",
         index_path.to_string_lossy(),
         endpoint,
-        case.embedding_dim
+        case.embedding_dim,
+        case.expand_query,
+        case.expand_model
     );
     fs::write(config_dir.join("config.toml"), config).expect("write private retrieval config");
 
@@ -273,6 +287,24 @@ fn replay_case(case: &FixtureCase) {
         "{} provider requests",
         case.id
     );
+    if case.chat_status >= 300 {
+        let prefix = case.chat_error_body.chars().take(512).collect::<String>();
+        let expected_error = format!(
+            "engine: HyDE expansion failed (hyde expansion failed: ollama returned HTTP {}: {prefix})",
+            case.chat_status
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains(&expected_error),
+            "{} stderr: {stderr}",
+            case.id
+        );
+        assert!(
+            !stderr.contains("TAIL_MARKER"),
+            "{} included bytes beyond Go's 512-byte error prefix",
+            case.id
+        );
+    }
 
     let actual: Value = serde_json::from_slice(&output.stdout).unwrap_or_else(|error| {
         panic!(
@@ -310,8 +342,7 @@ fn start_embedding_server(case: &FixtureCase) -> EmbeddingServer {
     );
     let captured = Arc::new(Mutex::new(Vec::new()));
     let thread_capture = Arc::clone(&captured);
-    let status = case.provider_status;
-    let dimension = case.provider_dimension;
+    let case = case.clone();
     let (stop, stopped) = mpsc::channel();
     let worker = thread::spawn(move || {
         loop {
@@ -320,12 +351,11 @@ fn start_embedding_server(case: &FixtureCase) -> EmbeddingServer {
             }
             match listener.accept() {
                 Ok((stream, _)) => {
-                    let request = serve_embedding_request(stream, status, dimension);
+                    let request = serve_fixture_provider_request(stream, &case);
                     thread_capture
                         .lock()
                         .expect("capture HTTP request")
                         .push(request);
-                    break;
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                     thread::sleep(Duration::from_millis(5));
@@ -337,11 +367,7 @@ fn start_embedding_server(case: &FixtureCase) -> EmbeddingServer {
     (endpoint, captured, stop, worker)
 }
 
-fn serve_embedding_request(
-    mut stream: TcpStream,
-    status: u16,
-    dimension: usize,
-) -> CapturedRequest {
+fn serve_fixture_provider_request(mut stream: TcpStream, case: &FixtureCase) -> CapturedRequest {
     stream
         .set_nonblocking(false)
         .expect("make accepted test stream blocking");
@@ -372,18 +398,55 @@ fn serve_embedding_request(
         path: parts.next().unwrap_or_default().to_owned(),
         body,
     };
-    let (status_line, response_body) = if status >= 300 {
-        (
-            format!("HTTP/1.1 {status} Fixture Failure"),
-            br#"{"error":"fixture provider failure"}"#.to_vec(),
-        )
+    let (_, status_line, response_body) = if request.path == "/api/chat" {
+        let status = if case.chat_status == 0 {
+            200
+        } else {
+            case.chat_status
+        };
+        let response = if status >= 300 {
+            json!({"error":"fixture chat failure"})
+        } else {
+            json!({"message":{"content":case.expanded_text}})
+        };
+        let response_body = if case.chat_response.is_empty() {
+            serde_json::to_vec(&response).expect("encode chat response")
+        } else {
+            case.chat_response.as_bytes().to_vec()
+        };
+        let response_body = if status >= 300 && !case.chat_error_body.is_empty() {
+            case.chat_error_body.as_bytes().to_vec()
+        } else {
+            response_body
+        };
+        (status, format!("HTTP/1.1 {status} Fixture"), response_body)
     } else {
-        let vector = std::iter::once(1.0_f32)
-            .chain(std::iter::repeat_n(0.0_f32, dimension.saturating_sub(1)))
-            .collect::<Vec<_>>();
+        let input = request.body["input"][0].as_str().unwrap_or_default();
+        let status = if input == case.query {
+            case.provider_status
+        } else {
+            200
+        };
+        let dimension = if input == case.query || case.embedding_dim == 0 {
+            case.provider_dimension
+        } else {
+            case.embedding_dim
+        };
+        let mut vector = vec![0.0_f32; dimension];
+        if input == case.expanded_text && vector.len() > 1 {
+            vector[1] = 1.0;
+        } else if let Some(first) = vector.first_mut() {
+            *first = 1.0;
+        }
+        let response = json!({"data":[{"embedding":vector}]});
         (
-            "HTTP/1.1 200 OK".to_owned(),
-            serde_json::to_vec(&json!({"data":[{"embedding":vector}]})).expect("encode response"),
+            status,
+            format!("HTTP/1.1 {status} Fixture"),
+            if status >= 300 {
+                br#"{"error":"fixture provider failure"}"#.to_vec()
+            } else {
+                serde_json::to_vec(&response).expect("encode embedding response")
+            },
         )
     };
     write!(

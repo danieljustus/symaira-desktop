@@ -9,7 +9,9 @@ use symdesk_index::{
     go_simple_lowercase, index_location_for_vault, local_hash_embedding,
     retrieval_embedding_config,
 };
-use symdesk_protocol::{embed_local_ollama, local_ollama_embeddings_endpoint};
+use symdesk_protocol::{
+    embed_local_ollama, expand_local_ollama_query, local_ollama_embeddings_endpoint,
+};
 
 const SEARCH_LIMIT: i64 = 5;
 const DEFAULT_QUERY_DIMENSION: usize = 768;
@@ -66,9 +68,10 @@ pub fn hybrid_search(
         std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
     let config = retrieval_embedding_config(&environment, &cwd)
         .map_err(|error| format!("load retrieval configuration: {error}"))?;
-    if config.expand_query || config.rerank_query {
+    if config.rerank_query {
         return Err(
-            "hybrid search does not support configured query expansion or reranking yet; disable expand_query and rerank_query".to_owned(),
+            "hybrid search does not support configured query reranking yet; disable rerank_query"
+                .to_owned(),
         );
     }
     if config.vector_backend != "sqlite" || config.vector_quantization != "off" {
@@ -98,7 +101,10 @@ pub fn hybrid_search(
         Ok(_) | Err(_) => return Ok(None),
     };
 
-    let query_vector = query_embedding(query, &config)?;
+    let mut query_vector = query_embedding(query, &config)?;
+    if config.expand_query {
+        apply_query_expansion(query, &config, &mut query_vector);
+    }
     let query_model = if query_vector.model == "local-hash" {
         "local-hash"
     } else {
@@ -212,6 +218,7 @@ pub fn lexical_hits(
 struct QueryVector {
     vector: Vec<f32>,
     model: String,
+    dimension_known: bool,
 }
 
 fn query_embedding(query: &str, config: &RetrievalEmbeddingConfig) -> Result<QueryVector, String> {
@@ -236,6 +243,7 @@ fn query_embedding(query: &str, config: &RetrievalEmbeddingConfig) -> Result<Que
             return Ok(QueryVector {
                 vector,
                 model: config.model.clone(),
+                dimension_known: true,
             });
         }
         if let Some(expected) = dimensions {
@@ -251,7 +259,115 @@ fn query_embedding(query: &str, config: &RetrievalEmbeddingConfig) -> Result<Que
     Ok(QueryVector {
         vector,
         model: "local-hash".to_owned(),
+        dimension_known: dimensions.is_some(),
     })
+}
+
+fn apply_query_expansion(
+    query: &str,
+    config: &RetrievalEmbeddingConfig,
+    original: &mut QueryVector,
+) {
+    let runtime = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            eprintln!(
+                "engine: HyDE expansion failed (create runtime: {error}), using original query vector"
+            );
+            return;
+        }
+    };
+    let passage = runtime.block_on(expand_local_ollama_query(
+        &config.ollama_url,
+        &config.expand_model,
+        query,
+        Duration::from_secs(config.expand_timeout_seconds),
+    ));
+    let passage = match passage {
+        Ok(passage) => trim_hypothetical_passage(&passage),
+        Err(error) => {
+            eprintln!(
+                "engine: HyDE expansion failed (hyde expansion failed: {error}), using original query vector"
+            );
+            return;
+        }
+    };
+    if passage.is_empty() {
+        eprintln!(
+            "engine: HyDE expansion failed (hyde expansion failed: hyde expansion returned empty passage), using original query vector"
+        );
+        return;
+    }
+
+    let expansion_vector = if passage == query {
+        // The Go generator caches by exact text, so an identical hypothetical
+        // passage reuses the already generated original-query vector.
+        original.vector.clone()
+    } else {
+        let embedded = runtime.block_on(embed_local_ollama(
+            &config.ollama_url,
+            &config.model,
+            std::slice::from_ref(&passage),
+            config.embedding_dim,
+            Duration::from_secs(config.timeout_seconds),
+        ));
+        match embedded {
+            Ok(mut vectors)
+                if vectors.len() == 1
+                    && (!original.dimension_known || vectors[0].len() == original.vector.len()) =>
+            {
+                vectors.remove(0)
+            }
+            Ok(vectors) => {
+                eprintln!(
+                    "engine: HyDE embedding dimension mismatch: expected {}, got {}; using local hash vector",
+                    original.vector.len(),
+                    vectors.first().map_or(0, Vec::len)
+                );
+                match local_hash_embedding(&passage, original.vector.len()) {
+                    Ok(vector) => vector,
+                    Err(error) => {
+                        eprintln!(
+                            "engine: HyDE embedding fallback failed ({error}), using original query vector"
+                        );
+                        return;
+                    }
+                }
+            }
+            Err(error) => {
+                eprintln!("engine: HyDE embedding failed ({error}), using local hash vector");
+                match local_hash_embedding(&passage, original.vector.len()) {
+                    Ok(vector) => vector,
+                    Err(error) => {
+                        eprintln!(
+                            "engine: HyDE embedding fallback failed ({error}), using original query vector"
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+    };
+    if expansion_vector.len() == original.vector.len() {
+        for (query_value, passage_value) in original.vector.iter_mut().zip(expansion_vector) {
+            *query_value = (*query_value + passage_value) / 2.0;
+        }
+    }
+}
+
+fn trim_hypothetical_passage(text: &str) -> String {
+    let trimmed = if text.chars().count() <= 512 {
+        text.to_owned()
+    } else {
+        let prefix = text.chars().take(512).collect::<String>();
+        prefix
+            .rfind(' ')
+            .map_or(prefix.clone(), |boundary| prefix[..boundary].to_owned())
+    };
+    trimmed.trim().to_owned()
 }
 
 fn project_hit(
@@ -373,7 +489,7 @@ fn go_rune_count_prefix(value: &str, byte_end: usize) -> usize {
 mod tests {
     use symdesk_index::{SearchHit, SearchSource};
 
-    use super::{go_rune_count_prefix, go_search_snippet, lexical_hits};
+    use super::{go_rune_count_prefix, go_search_snippet, lexical_hits, trim_hypothetical_passage};
 
     #[test]
     fn lexical_fallback_keeps_registered_external_source_projection() {
@@ -416,5 +532,17 @@ mod tests {
         assert_eq!(go_rune_count_prefix("İx", 1), 1);
         assert_eq!(go_rune_count_prefix("İx", 2), 1);
         assert_eq!(go_rune_count_prefix("Kx", 2), 2);
+    }
+
+    #[test]
+    fn hyde_passage_trim_matches_go_rune_limit_and_space_boundary() {
+        let with_boundary = format!("{} tail", "x".repeat(511));
+        assert_eq!(trim_hypothetical_passage(&with_boundary), "x".repeat(511));
+        let no_boundary = "é".repeat(513);
+        assert_eq!(trim_hypothetical_passage(&no_boundary), "é".repeat(512));
+        assert_eq!(
+            trim_hypothetical_passage("  short passage  "),
+            "short passage"
+        );
     }
 }

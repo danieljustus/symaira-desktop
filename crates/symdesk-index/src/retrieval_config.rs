@@ -35,8 +35,11 @@ pub struct RetrievalEmbeddingConfig {
     pub retry_count: usize,
     pub retry_backoff_ms: u64,
     /// Optional Go search transformations that the current Rust CLI does not
-    /// implement. Callers must reject them before provider access.
+    /// implement. The command path may opt into the supported HyDE subset;
+    /// configured reranking remains unsupported.
     pub expand_query: bool,
+    pub expand_model: String,
+    pub expand_timeout_seconds: u64,
     pub rerank_query: bool,
     pub vector_backend: String,
     pub vector_quantization: String,
@@ -50,17 +53,23 @@ pub fn retrieval_embedding_config(
 ) -> Result<RetrievalEmbeddingConfig, SidecarError> {
     let path = symseek_config_path(environment, cwd);
     let config = load_config(&path)?;
+    let model = if config.model.is_empty() {
+        "qwen3-embedding:0.6b".to_owned()
+    } else {
+        config.model.clone()
+    };
+    let expand_model = if config.expand_model.is_empty() {
+        model.clone()
+    } else {
+        config.expand_model.clone()
+    };
     Ok(RetrievalEmbeddingConfig {
         ollama_url: if config.ollama_url.is_empty() {
             "http://localhost:11434/api/embeddings".to_owned()
         } else {
             config.ollama_url
         },
-        model: if config.model.is_empty() {
-            "qwen3-embedding:0.6b".to_owned()
-        } else {
-            config.model
-        },
+        model,
         embedding_dim: usize::try_from(config.embedding_dim)
             .ok()
             .filter(|value| *value > 0),
@@ -77,6 +86,11 @@ pub fn retrieval_embedding_config(
             .filter(|value| *value > 0)
             .unwrap_or(500),
         expand_query: config.expand_query,
+        expand_model,
+        expand_timeout_seconds: u64::try_from(config.expand_timeout_seconds)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(120),
         rerank_query: config.rerank_query,
         vector_backend: config.vector_backend,
         vector_quantization: config.vector_quantization,
@@ -443,9 +457,42 @@ mod tests {
         assert_eq!(config.timeout_seconds, 120);
         assert_eq!(config.retry_count, 2);
         assert_eq!(config.retry_backoff_ms, 500);
+        assert_eq!(config.expand_model, "qwen3-embedding:0.6b");
+        assert_eq!(config.expand_timeout_seconds, 120);
         fs::remove_file(config_dir.join("config.toml")).expect("remove override");
         let defaults = retrieval_embedding_config(&environment, Path::new("/")).expect("defaults");
         assert_eq!(defaults.embedding_dim, Some(768));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn expansion_projection_uses_model_fallback_and_timeout_defaults() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("symseek-expansion-config-{nonce}"));
+        let config_dir = root.join(".config/symseek");
+        fs::create_dir_all(&config_dir).expect("create config directory");
+        fs::write(
+            config_dir.join("config.toml"),
+            "model = \"embedding-model\"\nexpand_query = true\nexpand_timeout_seconds = 0\n",
+        )
+        .expect("write existing config format");
+        let environment =
+            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
+        assert!(config.expand_query);
+        assert_eq!(config.expand_model, "embedding-model");
+        assert_eq!(config.expand_timeout_seconds, 120);
+        fs::write(
+            config_dir.join("config.toml"),
+            "model = \"embedding-model\"\nexpand_query = true\nexpand_model = \"chat-model\"\nexpand_timeout_seconds = 7\n",
+        )
+        .expect("write explicit expansion config");
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("reload");
+        assert_eq!(config.expand_model, "chat-model");
+        assert_eq!(config.expand_timeout_seconds, 7);
         let _ = fs::remove_dir_all(root);
     }
 

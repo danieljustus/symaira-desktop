@@ -11,6 +11,7 @@ mod mime;
 #[cfg(target_os = "windows")]
 mod native_mime;
 mod retrieval_embedding;
+mod retrieval_query_expansion;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
@@ -18,6 +19,7 @@ mod snapshot_cache_contracts;
 pub use retrieval_embedding::{
     LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
 };
+pub use retrieval_query_expansion::expand_local_ollama_query;
 
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 

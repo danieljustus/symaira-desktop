@@ -356,6 +356,346 @@
           }
         ]
       }
+    },
+    {
+      "id": "hyde-expansion-success",
+      "query": "orbital greenhouse",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expand_model": "fixture-chat-model",
+      "expanded_text": "A greenhouse in orbit grows food for a space station.",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "space.md",
+          "body": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "orbital greenhouse"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: orbital greenhouse",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-chat-model",
+            "stream": false
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "A greenhouse in orbit grows food for a space station."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "",
+            "score": 0.016393441706895828
+          },
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station.",
+            "score": 0.016129031777381897
+          }
+        ]
+      }
+    },
+    {
+      "id": "hyde-chat-failure-keeps-query-vector",
+      "query": "orbital greenhouse",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expanded_text": "unused",
+      "chat_error_body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxTAIL_MARKER",
+      "chat_status": 503,
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "space.md",
+          "body": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "orbital greenhouse"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: orbital greenhouse",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-model",
+            "stream": false
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "",
+            "score": 0.016393441706895828
+          },
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station.",
+            "score": 0.016129031777381897
+          }
+        ]
+      }
+    },
+    {
+      "id": "hyde-chat-go-json-duplicate-case-null-and-trailing",
+      "query": "orbital greenhouse",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expand_model": "fixture-chat-model",
+      "expanded_text": "A greenhouse in orbit grows food for a space station.",
+      "chat_response": "{\"meſſage\":{\"CONTENT\":\"discarded\"},\"message\":{\"content\":null,\"Content\":\"A greenhouse in orbit grows food for a space station.\"}} {\"trailing\":true}",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "space.md",
+          "body": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "orbital greenhouse"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: orbital greenhouse",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-chat-model",
+            "stream": false
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "A greenhouse in orbit grows food for a space station."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "",
+            "score": 0.016393441706895828
+          },
+          {
+            "path": "@vault/space.md",
+            "title": "space",
+            "snippet": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station.",
+            "score": 0.016129031777381897
+          }
+        ]
+      }
+    },
+    {
+      "id": "hyde-identical-passage-reuses-query-cache",
+      "query": "cached identical passage",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expand_model": "fixture-chat-model",
+      "expanded_text": "cached identical passage",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "cache.md",
+          "body": "# Cache behavior\n\nA cached identical passage remains searchable."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "cached identical passage"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: cached identical passage",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-chat-model",
+            "stream": false
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/cache.md",
+            "title": "cache",
+            "snippet": "# Cache behavior\n\nA cached identical passage remains searchable.",
+            "score": 0.032522473484277725
+          },
+          {
+            "path": "@vault/cache.md",
+            "title": "cache",
+            "snippet": "",
+            "score": 0.016393441706895828
+          }
+        ]
+      }
+    },
+    {
+      "id": "hyde-unknown-dimension-mismatch-keeps-original",
+      "query": "unknown dimension query",
+      "embedding_dim": 0,
+      "provider_status": 503,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expanded_text": "a different length passage",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "unknown-dim.md",
+          "body": "# Unknown dimensions\n\nA different length passage."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "unknown dimension query"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: unknown dimension query",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-model",
+            "stream": false
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "a different length passage"
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/unknown-dim.md",
+            "title": "unknown-dim",
+            "snippet": "",
+            "score": 0.11639344692230225,
+            "metadata_matches": [
+              "title"
+            ]
+          },
+          {
+            "path": "@vault/unknown-dim.md",
+            "title": "unknown-dim",
+            "snippet": "# Unknown dimensions\n\nA different length passage.",
+            "score": 0.016129031777381897
+          }
+        ]
+      }
     }
   ]
 }

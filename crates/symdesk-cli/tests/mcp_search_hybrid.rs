@@ -25,13 +25,25 @@ struct Fixture {
     cases: Vec<FixtureCase>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureCase {
     id: String,
     query: String,
     embedding_dim: usize,
     provider_status: u16,
     provider_dimension: usize,
+    #[serde(default)]
+    expand_query: bool,
+    #[serde(default)]
+    expand_model: String,
+    #[serde(default)]
+    expanded_text: String,
+    #[serde(default)]
+    chat_response: String,
+    #[serde(default)]
+    chat_error_body: String,
+    #[serde(default)]
+    chat_status: u16,
     documents: Vec<FixtureDocument>,
     #[serde(default)]
     external_documents: Vec<FixtureDocument>,
@@ -41,7 +53,7 @@ struct FixtureCase {
     expected: Value,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureDocument {
     path: String,
     body: String,
@@ -251,10 +263,12 @@ fn replay_case(case: &FixtureCase) {
     let config_dir = home.join(".config/symseek");
     fs::create_dir_all(&config_dir).expect("create isolated config");
     let config = format!(
-        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\n",
+        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\n",
         index_path.to_string_lossy(),
         endpoint,
-        case.embedding_dim
+        case.embedding_dim,
+        case.expand_query,
+        case.expand_model
     );
     fs::write(config_dir.join("config.toml"), config).expect("write isolated config");
 
@@ -305,6 +319,24 @@ fn replay_case(case: &FixtureCase) {
         case.id,
         String::from_utf8_lossy(&output.stderr)
     );
+    if case.chat_status >= 300 {
+        let prefix = case.chat_error_body.chars().take(512).collect::<String>();
+        let expected_error = format!(
+            "engine: HyDE expansion failed (hyde expansion failed: ollama returned HTTP {}: {prefix})",
+            case.chat_status
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains(&expected_error),
+            "{} stderr: {stderr}",
+            case.id
+        );
+        assert!(
+            !stderr.contains("TAIL_MARKER"),
+            "{} included bytes beyond Go's 512-byte error prefix",
+            case.id
+        );
+    }
 
     let mut actual_requests = captured.lock().expect("request capture").clone();
     let mut expected_requests = case.requests.clone();
@@ -384,10 +416,7 @@ fn start_embedding_server(case: &FixtureCase) -> RunningEmbeddingServer {
     let captured = Arc::new(Mutex::new(Vec::new()));
     let capture = Arc::clone(&captured);
     let (stop, stopped) = mpsc::channel();
-    let status_for_query = case.provider_status;
-    let dimension_for_query = case.provider_dimension;
-    let default_dimension = case.embedding_dim;
-    let query = case.query.clone();
+    let case = case.clone();
     let server = thread::spawn(move || {
         loop {
             if stopped.try_recv().is_ok() {
@@ -399,6 +428,7 @@ fn start_embedding_server(case: &FixtureCase) -> RunningEmbeddingServer {
                     let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
                     let request = read_request(&mut stream);
                     if let Some((method, path, body)) = request {
+                        let is_chat = path == "/api/chat";
                         if let Ok(mut requests) = capture.lock() {
                             requests.push(FixtureRequest {
                                 method,
@@ -406,27 +436,52 @@ fn start_embedding_server(case: &FixtureCase) -> RunningEmbeddingServer {
                                 body: body.clone(),
                             });
                         }
-                        let input = body["input"]
-                            .as_array()
-                            .and_then(|items| items.first())
-                            .and_then(Value::as_str)
-                            .unwrap_or_default();
-                        let (status, dimension) = if input == query {
-                            (status_for_query, dimension_for_query)
+                        let (status, response) = if is_chat {
+                            let status = if case.chat_status == 0 {
+                                200
+                            } else {
+                                case.chat_status
+                            };
+                            let response = if status >= 400 {
+                                json!({"error":"fixture chat failure"})
+                            } else {
+                                json!({"message":{"content":case.expanded_text}})
+                            };
+                            let response_body = if case.chat_response.is_empty() {
+                                serde_json::to_vec(&response).expect("encode chat response")
+                            } else {
+                                case.chat_response.as_bytes().to_vec()
+                            };
+                            let response_body = if status >= 400 && !case.chat_error_body.is_empty()
+                            {
+                                case.chat_error_body.as_bytes().to_vec()
+                            } else {
+                                response_body
+                            };
+                            (status, response_body)
                         } else {
-                            (200, default_dimension)
-                        };
-                        let response = if status >= 400 {
-                            json!({"error":"fixture provider failure"})
-                        } else {
+                            let input = body["input"]
+                                .as_array()
+                                .and_then(|items| items.first())
+                                .and_then(Value::as_str)
+                                .unwrap_or_default();
+                            let (status, dimension) = if input == case.query {
+                                (case.provider_status, case.provider_dimension)
+                            } else {
+                                (200, case.embedding_dim)
+                            };
                             let mut vector = vec![0.0_f32; dimension];
-                            if let Some(first) = vector.first_mut() {
+                            if input == case.expanded_text && vector.len() > 1 {
+                                vector[1] = 1.0;
+                            } else if let Some(first) = vector.first_mut() {
                                 *first = 1.0;
                             }
-                            json!({"data":[{"embedding":vector}]})
+                            (
+                                status,
+                                serde_json::to_vec(&json!({"data":[{"embedding":vector}]}))
+                                    .expect("encode embedding response"),
+                            )
                         };
-                        let body =
-                            serde_json::to_vec(&response).expect("encode fake provider response");
                         let reason = if status >= 400 {
                             "Service Unavailable"
                         } else {
@@ -434,10 +489,10 @@ fn start_embedding_server(case: &FixtureCase) -> RunningEmbeddingServer {
                         };
                         let header = format!(
                             "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                            body.len()
+                            response.len()
                         );
                         let _ = stream.write_all(header.as_bytes());
-                        let _ = stream.write_all(&body);
+                        let _ = stream.write_all(&response);
                     }
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {

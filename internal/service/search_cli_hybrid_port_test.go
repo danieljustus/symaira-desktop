@@ -30,6 +30,12 @@ type searchCLIHybridFixtureCase struct {
 	EmbeddingDim      int                       `json:"embedding_dim"`
 	ProviderStatus    int                       `json:"provider_status"`
 	ProviderDimension int                       `json:"provider_dimension"`
+	ExpandQuery       bool                      `json:"expand_query,omitempty"`
+	ExpandModel       string                    `json:"expand_model,omitempty"`
+	ExpandedText      string                    `json:"expanded_text,omitempty"`
+	ChatResponse      string                    `json:"chat_response,omitempty"`
+	ChatErrorBody     string                    `json:"chat_error_body,omitempty"`
+	ChatStatus        int                       `json:"chat_status,omitempty"`
 	IndexDocuments    bool                      `json:"index_documents"`
 	Documents         []searchCLIHybridDocument `json:"documents"`
 	Sources           []string                  `json:"sources"`
@@ -146,6 +152,41 @@ func searchCLIHybridCases() []searchCLIHybridFixtureCase {
 			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3, IndexDocuments: true,
 			Documents: []searchCLIHybridDocument{{Path: "unicode-kelvin.md", Body: strings.Repeat("x", 200) + "KKneedle" + strings.Repeat("y", 400)}},
 		},
+		{
+			ID: "hyde-expansion-success", Query: "orbital greenhouse",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3, IndexDocuments: true,
+			ExpandQuery: true, ExpandModel: "fixture-chat-model",
+			ExpandedText: "A greenhouse in orbit grows food for a space station.",
+			Documents:    []searchCLIHybridDocument{{Path: "space.md", Body: "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."}},
+		},
+		{
+			ID: "hyde-chat-failure-keeps-query-vector", Query: "orbital greenhouse",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3, IndexDocuments: true,
+			ExpandQuery: true, ExpandedText: "unused", ChatStatus: http.StatusServiceUnavailable,
+			ChatErrorBody: strings.Repeat("x", 512) + "TAIL_MARKER",
+			Documents:     []searchCLIHybridDocument{{Path: "space.md", Body: "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."}},
+		},
+		{
+			ID: "hyde-chat-go-json-duplicate-case-null-and-trailing", Query: "orbital greenhouse",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3, IndexDocuments: true,
+			ExpandQuery: true, ExpandModel: "fixture-chat-model",
+			ExpandedText: "A greenhouse in orbit grows food for a space station.",
+			ChatResponse: `{"meſſage":{"CONTENT":"discarded"},"message":{"content":null,"Content":"A greenhouse in orbit grows food for a space station."}} {"trailing":true}`,
+			Documents:    []searchCLIHybridDocument{{Path: "space.md", Body: "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."}},
+		},
+		{
+			ID: "hyde-identical-passage-reuses-query-cache", Query: "cached identical passage",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3, IndexDocuments: true,
+			ExpandQuery: true, ExpandModel: "fixture-chat-model",
+			ExpandedText: "cached identical passage",
+			Documents:    []searchCLIHybridDocument{{Path: "cache.md", Body: "# Cache behavior\n\nA cached identical passage remains searchable."}},
+		},
+		{
+			ID: "hyde-unknown-dimension-mismatch-keeps-original", Query: "unknown dimension query",
+			EmbeddingDim: 0, ProviderStatus: http.StatusServiceUnavailable, ProviderDimension: 3, IndexDocuments: true,
+			ExpandQuery: true, ExpandedText: "a different length passage",
+			Documents: []searchCLIHybridDocument{{Path: "unknown-dim.md", Body: "# Unknown dimensions\n\nA different length passage."}},
+		},
 	}
 }
 
@@ -166,15 +207,37 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 		if readErr != nil {
 			t.Errorf("read embedding request: %v", readErr)
 		}
+		requestMu.Lock()
+		requests = append(requests, capturedSearchEmbedding{method: r.Method, path: r.URL.RequestURI(), body: requestBody})
+		requestMu.Unlock()
+		if r.URL.Path == "/api/chat" {
+			status := input.ChatStatus
+			if status == 0 {
+				status = http.StatusOK
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			if status >= 300 {
+				body := input.ChatErrorBody
+				if body == "" {
+					body = `{"error":"fixture chat failure"}`
+				}
+				_, _ = w.Write([]byte(body))
+				return
+			}
+			if input.ChatResponse != "" {
+				_, _ = w.Write([]byte(input.ChatResponse))
+				return
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": map[string]string{"content": input.ExpandedText}})
+			return
+		}
 		var request struct {
 			Input []string `json:"input"`
 		}
 		if err := json.Unmarshal(requestBody, &request); err != nil {
 			t.Errorf("decode embedding request: %v", err)
 		}
-		requestMu.Lock()
-		requests = append(requests, capturedSearchEmbedding{method: r.Method, path: r.URL.RequestURI(), body: requestBody})
-		requestMu.Unlock()
 		status := http.StatusOK
 		dimension := 3
 		if len(request.Input) == 1 && request.Input[0] == input.Query {
@@ -187,10 +250,6 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 			_, _ = w.Write([]byte(`{"error":"fixture provider failure"}`))
 			return
 		}
-		vector := make([]float32, dimension)
-		if len(vector) > 0 {
-			vector[0] = 1
-		}
 		type embedding struct {
 			Embedding []float32 `json:"embedding"`
 		}
@@ -198,6 +257,12 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 			Data []embedding `json:"data"`
 		}{Data: make([]embedding, len(request.Input))}
 		for index := range response.Data {
+			vector := make([]float32, dimension)
+			if request.Input[index] == input.ExpandedText && len(vector) > 1 {
+				vector[1] = 1
+			} else if len(vector) > 0 {
+				vector[0] = 1
+			}
 			response.Data[index].Embedding = vector
 		}
 		_ = json.NewEncoder(w).Encode(response)
@@ -209,7 +274,7 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 	}
 	writeConfig := func(model string) {
 		t.Helper()
-		config := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\n", indexPath, server.URL+"/api/embeddings", model, input.EmbeddingDim)
+		config := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\n", indexPath, server.URL+"/api/embeddings", model, input.EmbeddingDim, input.ExpandQuery, input.ExpandModel)
 		if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(config), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -321,12 +386,6 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 	input.Requests = make([]searchCLIHybridRequest, 0, len(requests))
 	for _, request := range requests {
 		if len(request.body) == 0 {
-			continue
-		}
-		var body struct {
-			Input []string `json:"input"`
-		}
-		if json.Unmarshal(request.body, &body) != nil || len(body.Input) != 1 || body.Input[0] != input.Query {
 			continue
 		}
 		input.Requests = append(input.Requests, searchCLIHybridRequest{Method: request.method, Path: request.path, Body: request.body})

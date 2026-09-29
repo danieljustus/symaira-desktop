@@ -35,6 +35,8 @@ struct AskEvent {
     #[serde(skip_serializing_if = "Option::is_none")]
     snippet: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    score: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     tool_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     status: Option<String>,
@@ -48,18 +50,20 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: Some("search".to_owned()),
             status: Some(status.to_owned()),
         }
     }
 
-    fn citation(path: &str, title: &str, snippet: &str) -> Self {
+    fn citation(path: &str, title: &str, snippet: &str, score: f64) -> Self {
         Self {
             kind: "citation".to_owned(),
             text: None,
             path: Some(path.to_owned()),
             title: Some(title.to_owned()),
-            snippet: Some(snippet.to_owned()),
+            snippet: (!snippet.is_empty()).then(|| snippet.to_owned()),
+            score: (score != 0.0).then_some(score),
             tool_name: None,
             status: None,
         }
@@ -72,6 +76,7 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: None,
             status: None,
         }
@@ -84,6 +89,7 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: None,
             status: None,
         }
@@ -118,24 +124,25 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
             output_json,
         );
     }
-    if retrieval_index_has_chunks(&root) {
-        return super::emit_error(
-            "Rust ask hybrid retrieval is not implemented for indexes containing chunks".to_owned(),
-            output_json,
-        );
-    }
-
     let sidecar = match open_for_vault(&root) {
         Ok(sidecar) => sidecar,
-        Err(error) => return super::emit_error(error.to_string(), output_json),
-    };
-    let hits = match sidecar.search_with_sources(&root, query) {
-        Ok(hits) => hits,
         Err(error) => return super::emit_error(error.to_string(), output_json),
     };
     let sources = match SourceRegistry::open(&root).and_then(|registry| registry.list()) {
         Ok(sources) => sources,
         Err(error) => return super::emit_error(error.to_string(), output_json),
+    };
+
+    let hits = if query.trim().is_empty() {
+        Vec::new()
+    } else {
+        match super::search_cli::hybrid_search(&root, query, &sources, &sidecar) {
+            Ok(Some(hits)) => hits,
+            Ok(None) | Err(_) => match sidecar.search_plan(&root, query) {
+                Ok(response) => super::search_cli::lexical_hits(response.results, &sources),
+                Err(error) => return super::emit_error(error.to_string(), output_json),
+            },
+        }
     };
 
     let mut events = vec![AskEvent::tool("running"), AskEvent::tool("done")];
@@ -144,7 +151,12 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         .map(|hit| display_path(&root, &hit.path, &sources))
         .collect::<Vec<_>>();
     for (hit, path) in hits.iter().zip(&paths) {
-        events.push(AskEvent::citation(path, &hit.title, &hit.snippet));
+        events.push(AskEvent::citation(
+            path,
+            &hit.title,
+            &hit.snippet,
+            hit.score,
+        ));
     }
     events.push(AskEvent::tool("running"));
     if let Some(event) = events.last_mut() {
@@ -162,28 +174,6 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
     }
     events.push(AskEvent::done());
     emit_ask_events(&events, output_json)
-}
-
-fn retrieval_index_has_chunks(vault_root: &Path) -> bool {
-    let Some(vault_root) = vault_root.to_str() else {
-        return false;
-    };
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
-    let Ok(cwd) = std::env::current_dir() else {
-        return false;
-    };
-    let temp_root = std::env::temp_dir();
-    let Ok(path) =
-        symdesk_index::index_location_for_vault(vault_root, &environment, &cwd, &temp_root)
-    else {
-        return false;
-    };
-    if !path.exists() {
-        return false;
-    }
-    symdesk_index::RetrievalDb::open_at(path)
-        .and_then(|database| database.count_chunks())
-        .is_ok_and(|count| count > 0)
 }
 
 fn display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {

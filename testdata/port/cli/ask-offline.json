@@ -1,0 +1,469 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "hybrid-multi-source-more-than-three-fallback-links",
+      "query": "ask offline needle",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "one.md",
+          "body": "ask offline needle first note"
+        },
+        {
+          "path": "two.md",
+          "body": "ask offline needle second note ask offline needle"
+        },
+        {
+          "path": "three.md",
+          "body": "ask offline needle third note ask offline needle ask offline needle"
+        },
+        {
+          "path": "four.md",
+          "body": "ask offline needle fourth note ask offline needle ask offline needle ask offline needle"
+        },
+        {
+          "path": "five.md",
+          "body": "ask offline needle fifth note ask offline needle ask offline needle ask offline needle ask offline needle"
+        },
+        {
+          "path": "guide.md",
+          "body": "ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ",
+          "source": "guide"
+        }
+      ],
+      "sources": [
+        "guide"
+      ],
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "citation",
+          "path": "@source/guide/guide.md",
+          "title": "guide",
+          "snippet": "ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ask offline needle registered guide ",
+          "score": 0.032522473484277725
+        },
+        {
+          "type": "citation",
+          "path": "one.md",
+          "title": "one",
+          "snippet": "ask offline needle first note",
+          "score": 0.03151364624500275
+        },
+        {
+          "type": "citation",
+          "path": "two.md",
+          "title": "two",
+          "snippet": "ask offline needle second note ask offline needle",
+          "score": 0.03125
+        },
+        {
+          "type": "citation",
+          "path": "three.md",
+          "title": "three",
+          "snippet": "ask offline needle third note ask offline needle ask offline needle",
+          "score": 0.03102453239262104
+        },
+        {
+          "type": "citation",
+          "path": "four.md",
+          "title": "four",
+          "snippet": "ask offline needle fourth note ask offline needle ask offline needle ask offline needle",
+          "score": 0.03083491325378418
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[@source/guide/guide.md]]\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[one.md]]\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[two.md]]\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "ask-fixture-model",
+            "input": [
+              "ask offline needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "hybrid-semantic-query-can-return-nonlexical-hit",
+      "query": "ask offline absent phrase",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "semantic.md",
+          "body": "The indexed passage has no matching query terms."
+        }
+      ],
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "citation",
+          "path": "semantic.md",
+          "title": "semantic",
+          "score": 0.016393441706895828
+        },
+        {
+          "type": "citation",
+          "path": "semantic.md",
+          "title": "semantic",
+          "snippet": "The indexed passage has no matching query terms.",
+          "score": 0.016129031777381897
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[semantic.md]]\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[semantic.md]]\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "ask-fixture-model",
+            "input": [
+              "ask offline absent phrase"
+            ],
+            "dimensions": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "registered-external-source-only",
+      "query": "ask external-only needle",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "guide.md",
+          "body": "ask external-only needle from a registered source.",
+          "source": "guide"
+        }
+      ],
+      "sources": [
+        "guide"
+      ],
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "citation",
+          "path": "@source/guide/guide.md",
+          "title": "guide",
+          "snippet": "ask external-only needle from a registered source.",
+          "score": 0.032522473484277725
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[@source/guide/guide.md]]\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "ask-fixture-model",
+            "input": [
+              "ask external-only needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "tag-plan-zero-embedding-requests",
+      "query": "tag:askscope",
+      "index_documents": false,
+      "documents": [
+        {
+          "path": "tagged.md",
+          "body": "---\ntags: [askscope]\n---\n\nThe scoped note is retrieved without provider access."
+        }
+      ],
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "citation",
+          "path": "tagged.md",
+          "title": "tagged",
+          "snippet": "\nThe scoped note is retrieved without provider access."
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[tagged.md]]\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": []
+    },
+    {
+      "id": "hybrid-empty-results",
+      "query": "ask offline absent phrase",
+      "index_documents": false,
+      "documents": null,
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "ask-fixture-model",
+            "input": [
+              "ask offline absent phrase"
+            ],
+            "dimensions": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "retrieval-unavailable-sidecar-fallback",
+      "query": "ask sidecar-only needle",
+      "index_documents": false,
+      "documents": [
+        {
+          "path": "sidecar.md",
+          "body": "# Sidecar Only\n\nThe ask sidecar-only needle is indexed only in FTS."
+        }
+      ],
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "citation",
+          "path": "sidecar.md",
+          "title": "sidecar",
+          "snippet": "# Sidecar Only\n\nThe ask sidecar-only needle is indexed only in FTS."
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "answer",
+          "text": "- [[sidecar.md]]\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "ask-fixture-model",
+            "input": [
+              "ask sidecar-only needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty-query-zero-provider-requests",
+      "query": "   ",
+      "index_documents": false,
+      "documents": null,
+      "expected": [
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "running"
+        },
+        {
+          "type": "tool",
+          "tool_name": "search",
+          "status": "done"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "running"
+        },
+        {
+          "type": "answer",
+          "text": "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n"
+        },
+        {
+          "type": "tool",
+          "tool_name": "llm",
+          "status": "done"
+        },
+        {
+          "type": "done"
+        }
+      ],
+      "requests": []
+    }
+  ]
+}

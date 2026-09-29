@@ -48,7 +48,7 @@ pub use retrieval::{
     RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
     RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
     RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
-    materialize_chunks,
+    local_hash_embedding, materialize_chunks,
 };
 pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, relocate_index_for_vault,

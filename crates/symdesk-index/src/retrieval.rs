@@ -9,6 +9,7 @@ use std::{
 
 use rusqlite::{Connection, params};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 #[cfg(windows)]
 use crate::strip_verbatim_prefix;
@@ -19,6 +20,180 @@ const CHUNK_OVERLAP: usize = 200;
 const CHUNK_NAMESPACE: [u8; 16] = [
     0x23, 0x40, 0xd1, 0x2a, 0x65, 0x6a, 0x5d, 0x01, 0x97, 0x1a, 0x40, 0x58, 0x6e, 0xe6, 0x13, 0xa6,
 ];
+
+const LOCAL_HASH_STOP_WORDS: &[&str] = &[
+    "and", "the", "a", "an", "of", "to", "in", "is", "it", "that", "und", "der", "die", "das",
+    "ein", "eine", "ist", "es", "dass", "von", "zu", "mit", "auf", "für", "den", "dem", "des",
+    "im", "am",
+];
+
+/// Reproduces Go retrieval's deterministic local-hash embedding fallback.
+/// The caller chooses the positive dimension, including Go's 768 default
+/// when no successful provider request has taught a dimension yet.
+///
+/// # Errors
+/// Returns a contract error when `dimensions` is zero.
+pub fn local_hash_embedding(text: &str, dimensions: usize) -> Result<Vec<f32>, SidecarError> {
+    if dimensions == 0 {
+        return Err(SidecarError::Contract(
+            "local hash embedding dimension must be greater than zero".to_owned(),
+        ));
+    }
+
+    let mut vector = vec![0.0_f32; dimensions];
+    let mut cleaned = go_simple_lowercase(text);
+    for punctuation in [
+        '.', ',', '!', '?', ';', ':', '-', '_', '(', ')', '[', ']', '{', '}',
+    ] {
+        cleaned = cleaned.replace(punctuation, " ");
+    }
+    let words = cleaned.split_whitespace().collect::<Vec<_>>();
+    if words.is_empty() {
+        vector[0] = 1.0;
+        return Ok(vector);
+    }
+
+    let text_hash = Sha256::digest(text.as_bytes());
+    for (position, word) in words.iter().enumerate() {
+        if LOCAL_HASH_STOP_WORDS.contains(word) {
+            continue;
+        }
+        let hash = word
+            .as_bytes()
+            .iter()
+            .fold(2_166_136_261_u32, |hash, byte| {
+                (hash ^ u32::from(*byte)).wrapping_mul(16_777_619)
+            });
+        let index = (hash as usize) % dimensions;
+        let mut weight = 1.0_f32;
+        if position < text_hash.len() {
+            weight += f32::from(text_hash[position]) / 255.0_f32;
+        }
+        vector[index] += weight;
+    }
+
+    let sum_squares = vector
+        .iter()
+        .map(|value| f64::from(*value * *value))
+        .sum::<f64>();
+    if sum_squares > 0.0 {
+        let norm = sum_squares.sqrt() as f32;
+        for value in &mut vector {
+            *value /= norm;
+        }
+    } else {
+        vector[0] = 1.0;
+    }
+    Ok(vector)
+}
+
+fn go_simple_lowercase(text: &str) -> String {
+    text.chars().map(go_simple_lowercase_char).collect()
+}
+
+fn go_simple_lowercase_char(character: char) -> char {
+    // The pinned Go 1.26.6 oracle uses Unicode 15.0; the Rust standard
+    // library has newer simple-case mappings for these later-assigned letters.
+    // Keep their Go-15 identity mapping before using Rust's one-scalar result.
+    if matches!(
+        character as u32,
+        0x1C89
+            | 0xA7CB
+            | 0xA7CC
+            | 0xA7CE
+            | 0xA7D2
+            | 0xA7D4
+            | 0xA7DA
+            | 0xA7DC
+            | 0x10D50..=0x10D65
+            | 0x16EA0..=0x16EB8
+    ) {
+        return character;
+    }
+    // Taking the first scalar mirrors Go's one-to-one unicode.ToLower mapping
+    // for expanding full-lowercase mappings such as U+0130.
+    character.to_lowercase().next().unwrap_or(character)
+}
+
+#[cfg(test)]
+mod local_hash_tests {
+    use std::{fs, path::Path};
+
+    use serde::Deserialize;
+    use sha2::{Digest, Sha256};
+
+    use super::{go_simple_lowercase_char, local_hash_embedding};
+
+    #[derive(Deserialize)]
+    struct Fixture {
+        schema_version: u32,
+        simple_lower_mapping_sha256: String,
+        cases: Vec<FixtureCase>,
+    }
+
+    #[derive(Deserialize)]
+    struct FixtureCase {
+        id: String,
+        text: String,
+        dimensions: usize,
+        vector: Vec<f32>,
+    }
+
+    fn fixture() -> Fixture {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../testdata/port/retrieval/local-hash.json");
+        serde_json::from_slice(&fs::read(path).expect("read Go local-hash oracle"))
+            .expect("decode Go local-hash oracle")
+    }
+
+    #[test]
+    fn local_hash_matches_go_generated_float32_vectors_bit_for_bit() {
+        let fixture = fixture();
+        assert_eq!(fixture.schema_version, 1);
+        assert_eq!(fixture.cases.len(), 10);
+        for case in fixture.cases {
+            let actual = local_hash_embedding(&case.text, case.dimensions)
+                .unwrap_or_else(|error| panic!("{}: {error}", case.id));
+            assert_eq!(
+                actual
+                    .iter()
+                    .map(|value| value.to_bits())
+                    .collect::<Vec<_>>(),
+                case.vector
+                    .iter()
+                    .map(|value| value.to_bits())
+                    .collect::<Vec<_>>(),
+                "Go local-hash vector mismatch for {}",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn simple_lowercase_mapping_matches_go_for_every_unicode_scalar() {
+        let fixture = fixture();
+        let mut digest = Sha256::new();
+        for value in 0..=0x10_FFFF_u32 {
+            let Some(character) = char::from_u32(value) else {
+                continue;
+            };
+            digest.update(value.to_be_bytes());
+            digest.update((go_simple_lowercase_char(character) as u32).to_be_bytes());
+        }
+        let actual = format!("{:x}", digest.finalize());
+        assert_eq!(actual, fixture.simple_lower_mapping_sha256);
+    }
+
+    #[test]
+    fn local_hash_rejects_zero_dimension_instead_of_panicking() {
+        let error = local_hash_embedding("query", 0).expect_err("zero dimension is invalid");
+        assert!(
+            error
+                .to_string()
+                .contains("dimension must be greater than zero")
+        );
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "PascalCase")]

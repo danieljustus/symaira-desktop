@@ -55,6 +55,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"retrieval local-hash embedding", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestLocalHashPortFixture$"}, []string{"testdata/port/retrieval/local-hash.json"}, false},
 	{"hybrid search CLI", []string{"test", "-count=1", "./internal/service", "-run", "^TestSearchCLIHybridOracle$"}, []string{"testdata/port/cli/search-hybrid.json"}, false},
 	{"offline hybrid Ask CLI", []string{"test", "-count=1", "./internal/service", "-run", "^TestAskHybridOfflineOracle$"}, []string{"testdata/port/cli/ask-offline.json"}, false},
+	{"offline Ask MCP", []string{"test", "-count=1", "./internal/mcp", "-run", "^TestAskOfflineMCPOracle$"}, []string{"testdata/port/mcp/ask-offline.json"}, false},
 	{"hybrid search MCP", []string{"test", "-count=1", "./internal/mcp", "-run", "^TestSearchHybridMCPOracle$"}, []string{"testdata/port/mcp/search-hybrid.json"}, false},
 	{"retrieval hybrid", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalHybridFixture$"}, []string{"testdata/port/retrieval/hybrid.json"}, false},
 	{"retrieval chunks", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalChunksFixture$"}, []string{"testdata/port/retrieval/retrieval-chunks.json"}, false},

@@ -95,6 +95,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/search-hybrid.json",
 	"testdata/port/cli/ask-offline.json",
 	"testdata/port/mcp/search-hybrid.json",
+	"testdata/port/mcp/ask-offline.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",
 	"testdata/port/retrieval/index-relocate.json",

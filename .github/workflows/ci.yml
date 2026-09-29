@@ -481,6 +481,10 @@ jobs:
         shell: bash
         run: make retrieval-ask-offline-differential
 
+      - name: Run native offline Ask MCP differential
+        shell: bash
+        run: make retrieval-ask-mcp-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

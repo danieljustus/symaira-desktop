@@ -124,7 +124,7 @@ pub fn hybrid_search_results(
             eprintln!("{warning}");
         }
         for result in response.results {
-            if by_path.insert(result.chunk.document_path.clone()) {
+            if !scoped || by_path.insert(result.chunk.document_path.clone()) {
                 results.push(result);
             }
         }

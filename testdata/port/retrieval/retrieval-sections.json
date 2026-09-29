@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "headings-inside-code-fence",
+      "source": "$VAULT/headings-inside-code-fence.md",
+      "markdown": "Intro text before headings.\n\n# Guide\nBody one.\n\n```md\n## Fence Heading\ncode content\n```\n\n### Install 🧪\nBody two.\n\n## Next\nFinal.\n",
+      "sections": [
+        {
+          "Text": "__SYMDESK_SEARCH_METADATA_START__\ntitle: headings-inside-code-fence\ntitle: headings-inside-code-fence\ntitle: headings-inside-code-fence\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "section",
+            "Value": "metadata"
+          },
+          "Synthetic": true
+        },
+        {
+          "Text": "Intro text before headings.",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:0"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "# Guide\nBody one.\n\n```md",
+          "Start": 29,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Guide"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "## Fence Heading\ncode content\n```",
+          "Start": 54,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Guide \u003e Fence Heading"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "### Install 🧪\nBody two.",
+          "Start": 89,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Guide \u003e Fence Heading \u003e Install 🧪"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "## Next\nFinal.",
+          "Start": 117,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Guide \u003e Next"
+          },
+          "Synthetic": false
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "1b63b385-ff2e-507e-83c7-42cec12fe0c2",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: headings-inside-code-fence\ntitle: headings-inside-code-fence\ntitle: headings-inside-code-fence\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "97917a9a325f4d9a0b05bab1c707f34afbe290a675df3aeee61cfd5c176f0557",
+          "anchor_kind": "section",
+          "anchor_value": "metadata"
+        },
+        {
+          "uuid": "9adc48d1-2c71-5437-bad3-89671f679a59",
+          "chunk_index": 1,
+          "content": "Intro text before headings.",
+          "hash": "26c6cd8db5d48a7464b24b06b5ae04a819fdcb1a8fe42f846b036ff1b214af75",
+          "char_start": 0,
+          "char_end": 27,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0"
+        },
+        {
+          "uuid": "699379c9-c60a-5606-bc24-c7feaf852cdd",
+          "chunk_index": 2,
+          "content": "# Guide\nBody one.\n\n```md",
+          "hash": "6d5d32c1745f075019d0440887026fcbfecc5031ee22cbbc06ff12972c6ca261",
+          "char_start": 29,
+          "char_end": 53,
+          "anchor_kind": "heading",
+          "anchor_value": "Guide"
+        },
+        {
+          "uuid": "985ccb84-f8bf-51df-96bb-f6c6378f5d2e",
+          "chunk_index": 3,
+          "content": "## Fence Heading\ncode content\n```",
+          "hash": "40e691afae2f524fcc358f85f2ff5f101fa1ccb7261140598d6020ee2175cf04",
+          "char_start": 54,
+          "char_end": 87,
+          "anchor_kind": "heading",
+          "anchor_value": "Guide \u003e Fence Heading"
+        },
+        {
+          "uuid": "0c7e3914-e160-53b6-99f3-87af79ca3e71",
+          "chunk_index": 4,
+          "content": "### Install 🧪\nBody two.",
+          "hash": "d98b498f41ba74c152db70f59058d9c7834b639dee3cd75fa8a2fdd90a115745",
+          "char_start": 89,
+          "char_end": 115,
+          "anchor_kind": "heading",
+          "anchor_value": "Guide \u003e Fence Heading \u003e Install 🧪"
+        },
+        {
+          "uuid": "c29f5ac7-8c4e-53f8-8cf7-bf1381b9e7e9",
+          "chunk_index": 5,
+          "content": "## Next\nFinal.",
+          "hash": "951709f2950a99a1a67c3d937e6f6ed6d03fe2184c3965a731391a3b134f08a4",
+          "char_start": 117,
+          "char_end": 131,
+          "anchor_kind": "heading",
+          "anchor_value": "Guide \u003e Next"
+        }
+      ]
+    },
+    {
+      "id": "unicode-frontmatter-offsets-crlf",
+      "source": "$VAULT/unicode-frontmatter-offsets-crlf.md",
+      "markdown": "---\r\ntitle: Überblick 🧭\r\ntags: [Müller, Forschung]\r\naliases: [Leitfaden]\r\nstatus: offen\r\n---\r\nVorspann äΩ\r\n# Abschnitt 🗂\r\nText beginnt hier.\r\n## Unterpunkt\r\nNoch Text.\r\n",
+      "sections": [
+        {
+          "Text": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Überblick 🧭\ntitle: Überblick 🧭\ntitle: Überblick 🧭\ntags: Müller Forschung\ntags: Müller Forschung\ntags: Müller Forschung\naliases: Leitfaden\naliases: Leitfaden\ntype: note\nstatus: offen\n__SYMDESK_SEARCH_METADATA_END__",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "section",
+            "Value": "metadata"
+          },
+          "Synthetic": true
+        },
+        {
+          "Text": "Vorspann äΩ",
+          "Start": 99,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:99"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "# Abschnitt 🗂\r\nText beginnt hier.",
+          "Start": 114,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Abschnitt 🗂"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "## Unterpunkt\r\nNoch Text.",
+          "Start": 152,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Abschnitt 🗂 \u003e Unterpunkt"
+          },
+          "Synthetic": false
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "32fdc4b0-b74b-56bf-951d-97adc36c23cb",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Überblick 🧭\ntitle: Überblick 🧭\ntitle: Überblick 🧭\ntags: Müller Forschung\ntags: Müller Forschung\ntags: Müller Forschung\naliases: Leitfaden\naliases: Leitfaden\ntype: note\nstatus: offen\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "0048dae6fe668da781a812cf215e3f4910d185f0f3fd8329234bd362005e417f",
+          "anchor_kind": "section",
+          "anchor_value": "metadata"
+        },
+        {
+          "uuid": "f837e914-7c9c-5ba0-8a8b-e698c0dd6b8e",
+          "chunk_index": 1,
+          "content": "Vorspann äΩ",
+          "hash": "23099ac5abfbd60cd99fee0bc322e1c04b76cdc630a991186c8b5617293cf7fa",
+          "char_start": 99,
+          "char_end": 112,
+          "anchor_kind": "text",
+          "anchor_value": "offset:99"
+        },
+        {
+          "uuid": "8d6db137-6bb6-526c-a924-5ca43a215f37",
+          "chunk_index": 2,
+          "content": "# Abschnitt 🗂\r\nText beginnt hier.",
+          "hash": "05f69f405d9566261f39c47a9ff692fe9095564d4be915923c4f3017e496686c",
+          "char_start": 114,
+          "char_end": 150,
+          "anchor_kind": "heading",
+          "anchor_value": "Abschnitt 🗂"
+        },
+        {
+          "uuid": "78ce28f3-8186-58c4-8990-c61ef1666dc6",
+          "chunk_index": 3,
+          "content": "## Unterpunkt\r\nNoch Text.",
+          "hash": "66056b5c80af3e2f24c90989757bde8c255a603e5f80462b27ba33e387c62f16",
+          "char_start": 152,
+          "char_end": 177,
+          "anchor_kind": "heading",
+          "anchor_value": "Abschnitt 🗂 \u003e Unterpunkt"
+        }
+      ]
+    },
+    {
+      "id": "plain-unicode-without-headings",
+      "source": "$VAULT/plain-unicode-without-headings.md",
+      "markdown": "  Grüß Gott\nZeile αβγ 🧭\n ",
+      "sections": [
+        {
+          "Text": "__SYMDESK_SEARCH_METADATA_START__\ntitle: plain-unicode-without-headings\ntitle: plain-unicode-without-headings\ntitle: plain-unicode-without-headings\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "section",
+            "Value": "metadata"
+          },
+          "Synthetic": true
+        },
+        {
+          "Text": "  Grüß Gott\nZeile αβγ 🧭\n ",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:0"
+          },
+          "Synthetic": false
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "7c06eb64-8b93-53b6-95b0-562457fa702d",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: plain-unicode-without-headings\ntitle: plain-unicode-without-headings\ntitle: plain-unicode-without-headings\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "f5add1f1594640ae550f702281b7048090d0aa0a0fb7e7642f3b8869674f569c",
+          "anchor_kind": "section",
+          "anchor_value": "metadata"
+        },
+        {
+          "uuid": "cf00a64f-761f-586a-b6c3-b75decbbaf19",
+          "chunk_index": 1,
+          "content": "  Grüß Gott\nZeile αβγ 🧭\n ",
+          "hash": "14c0e3e1aaa60719ca0234d0d3a1780b63772bbce2c99173d7981493188ebd3c",
+          "char_start": 0,
+          "char_end": 33,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0"
+        }
+      ]
+    },
+    {
+      "id": "empty-body",
+      "source": "$VAULT/empty-body.md",
+      "markdown": "---\ntitle: \"\"\ntags: []\naliases: []\n---\n \n\t\n",
+      "sections": [
+        {
+          "Text": "__SYMDESK_SEARCH_METADATA_START__\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "section",
+            "Value": "metadata"
+          },
+          "Synthetic": true
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "6b1eac7d-d0a3-5d87-b3b5-c71f65752077",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "39cfbd7868f02c12200fb5225212dcb289730949584126685d8edc3ee3f7b8c1",
+          "anchor_kind": "section",
+          "anchor_value": "metadata"
+        }
+      ]
+    },
+    {
+      "id": "unterminated-frontmatter",
+      "source": "$VAULT/unterminated-frontmatter.md",
+      "markdown": "---\ntitle: name\n# Heading\nBody stays after malformed delimiter.\n",
+      "sections": [
+        {
+          "Text": "__SYMDESK_SEARCH_METADATA_START__\ntitle: unterminated-frontmatter\ntitle: unterminated-frontmatter\ntitle: unterminated-frontmatter\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "section",
+            "Value": "metadata"
+          },
+          "Synthetic": true
+        },
+        {
+          "Text": "---\ntitle: name",
+          "Start": 0,
+          "Anchor": {
+            "Kind": "text",
+            "Value": "offset:0"
+          },
+          "Synthetic": false
+        },
+        {
+          "Text": "# Heading\nBody stays after malformed delimiter.",
+          "Start": 16,
+          "Anchor": {
+            "Kind": "heading",
+            "Value": "Heading"
+          },
+          "Synthetic": false
+        }
+      ],
+      "chunks": [
+        {
+          "uuid": "97995129-7e35-51de-9c11-8c1777ee84aa",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: unterminated-frontmatter\ntitle: unterminated-frontmatter\ntitle: unterminated-frontmatter\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "hash": "c85fde7b0adee64511eee241472082481c3572585a87f7ade52cfd3e88383f8a",
+          "anchor_kind": "section",
+          "anchor_value": "metadata"
+        },
+        {
+          "uuid": "3fe31bfb-8b8d-572d-a561-e9d0dbea81c3",
+          "chunk_index": 1,
+          "content": "---\ntitle: name",
+          "hash": "a50ccf94261b217d921faabcb9351d302a6cc40bb0bd6d4c4c3f9b44764192ca",
+          "char_start": 0,
+          "char_end": 15,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0"
+        },
+        {
+          "uuid": "75c458f2-71a2-5a62-8862-9fe6b5474088",
+          "chunk_index": 2,
+          "content": "# Heading\nBody stays after malformed delimiter.",
+          "hash": "696067f1eb367c142d6852741028eb32a3d1a5f6a4bc90f0efb3291bc2e7f253",
+          "char_start": 16,
+          "char_end": 63,
+          "anchor_kind": "heading",
+          "anchor_value": "Heading"
+        }
+      ]
+    }
+  ]
+}

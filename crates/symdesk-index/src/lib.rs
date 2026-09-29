@@ -30,6 +30,7 @@ mod history_sync;
 mod metadata;
 mod retrieval;
 mod retrieval_config;
+mod retrieval_markdown;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -52,6 +53,7 @@ pub use retrieval::{
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,
 };
+pub use retrieval_markdown::parse_markdown_retrieval_sections;
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_init", include_str!("../migrations/001_init.sql")),

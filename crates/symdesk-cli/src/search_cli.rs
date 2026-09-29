@@ -21,6 +21,7 @@ pub struct CliSearchHit {
     pub path: String,
     pub title: String,
     pub snippet: String,
+    #[serde(serialize_with = "serialize_go_score")]
     pub score: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor: Option<CliSearchAnchor>,
@@ -40,6 +41,17 @@ pub struct CliSearchAnchor {
 
 fn is_false(value: &bool) -> bool {
     !value
+}
+
+fn serialize_go_score<S>(score: &f64, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    if *score == 0.0 && !score.is_sign_negative() {
+        serializer.serialize_i32(0)
+    } else {
+        serializer.serialize_f64(*score)
+    }
 }
 
 /// Returns the Go search hint for malformed query syntax.
@@ -480,7 +492,36 @@ fn go_rune_count_prefix(value: &str, byte_end: usize) -> usize {
 mod tests {
     use symdesk_index::{SearchHit, SearchSource};
 
-    use super::{go_rune_count_prefix, go_search_snippet, lexical_hits, trim_hypothetical_passage};
+    use super::{
+        CliSearchHit, go_rune_count_prefix, go_search_snippet, lexical_hits,
+        trim_hypothetical_passage,
+    };
+
+    #[test]
+    fn search_score_matches_go_zero_number_format_without_erasing_negative_zero() {
+        let hit = |score| CliSearchHit {
+            path: "note.md".to_owned(),
+            title: "Note".to_owned(),
+            snippet: "needle".to_owned(),
+            score,
+            anchor: None,
+            metadata_matches: Vec::new(),
+            source_type: None,
+            read_only: false,
+        };
+        assert_eq!(
+            serde_json::to_string(&hit(0.0)).unwrap(),
+            r#"{"path":"note.md","title":"Note","snippet":"needle","score":0}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&hit(-0.0)).unwrap(),
+            r#"{"path":"note.md","title":"Note","snippet":"needle","score":-0.0}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&hit(0.25)).unwrap(),
+            r#"{"path":"note.md","title":"Note","snippet":"needle","score":0.25}"#
+        );
+    }
 
     #[test]
     fn lexical_fallback_keeps_registered_external_source_projection() {

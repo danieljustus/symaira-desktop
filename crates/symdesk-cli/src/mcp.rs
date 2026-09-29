@@ -1,6 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use std::{
+    collections::BTreeMap,
     io::{self, BufRead, Write},
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -8,8 +9,11 @@ use std::{
 };
 
 use crate::search_cli::{self, CliSearchHit};
-use serde::Serialize;
-use serde_json::{Value, json};
+use serde::{
+    Deserialize, Serialize,
+    de::{MapAccess, Visitor},
+};
+use serde_json::{Value, json, value::RawValue};
 use symdesk_index::{
     ListedDocument, SearchHit, SearchSource, Sidecar, SourceRegistry, open_for_vault,
 };
@@ -39,6 +43,40 @@ struct Request {
     has_id: bool,
     method: String,
     params: Value,
+    raw_arguments: Option<String>,
+}
+
+#[derive(Default)]
+struct OrderedFields(Vec<(String, Value)>);
+
+impl<'de> Deserialize<'de> for OrderedFields {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct OrderedFieldsVisitor;
+
+        impl<'de> Visitor<'de> for OrderedFieldsVisitor {
+            type Value = OrderedFields;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("an object of ordered string arguments")
+            }
+
+            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                let mut fields = Vec::new();
+                while let Some(key) = map.next_key::<String>()? {
+                    fields.push((key, map.next_value::<Value>()?));
+                }
+                Ok(OrderedFields(fields))
+            }
+        }
+
+        deserializer.deserialize_map(OrderedFieldsVisitor)
+    }
 }
 
 #[derive(Serialize)]
@@ -269,7 +307,7 @@ where
         );
     }
 
-    match call_tool(name, arguments, config) {
+    match call_tool(name, arguments, request.raw_arguments.as_deref(), config) {
         Ok(value) => send_tool_result(output, mode, request.id.clone(), value, false),
         Err(message) => send_tool_result(
             output,
@@ -281,7 +319,12 @@ where
     }
 }
 
-fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Value, String> {
+fn call_tool(
+    name: &str,
+    arguments: Value,
+    raw_arguments: Option<&str>,
+    config: &ServerConfig,
+) -> Result<Value, String> {
     match name {
         "desk_status" => Ok(json!({
             "version": config.version,
@@ -317,11 +360,7 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
             ))
         }
         "desk_search" => {
-            let args = object_arguments(arguments)?;
-            let query = args
-                .get("query")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
+            let (query, _) = go_string_arguments(raw_arguments, &arguments, false)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
@@ -335,14 +374,14 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
                     hint: None,
                 }
             } else {
-                match search_cli::hybrid_search(&vault, query, &sources, &sidecar)? {
+                match search_cli::hybrid_search(&vault, &query, &sources, &sidecar)? {
                     Some(results) => McpSearchResponse {
                         results,
                         hint: None,
                     },
                     None => {
                         let response = sidecar
-                            .search_plan(&vault, query)
+                            .search_plan(&vault, &query)
                             .map_err(|error| error.to_string())?;
                         McpSearchResponse {
                             results: response
@@ -360,13 +399,7 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
             ))
         }
         "desk_ask" => {
-            let args = if arguments.is_null() {
-                serde_json::Map::new()
-            } else {
-                object_arguments(arguments)?
-            };
-            let query = go_string_argument(&args, "query")?;
-            let notebook = go_string_argument(&args, "notebook")?;
+            let (query, notebook) = go_string_arguments(raw_arguments, &arguments, true)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
@@ -392,35 +425,66 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
     }
 }
 
-fn go_string_argument(
-    arguments: &serde_json::Map<String, Value>,
-    field: &str,
-) -> Result<String, String> {
-    let mut matches = arguments
-        .iter()
-        .filter(|(key, _)| symdesk_vault::dataset::go_equal_fold(key, field));
-    let Some((_, value)) = matches.next() else {
-        return Ok(String::new());
-    };
-    if matches.next().is_some() {
-        return Err(format!("ambiguous {field} arguments"));
+fn go_string_arguments(
+    raw_arguments: Option<&str>,
+    parsed_arguments: &Value,
+    include_notebook: bool,
+) -> Result<(String, String), String> {
+    let raw_arguments = raw_arguments.ok_or_else(|| "unexpected end of JSON input".to_owned())?;
+    if parsed_arguments.is_null() {
+        return Ok((String::new(), String::new()));
     }
-    match value {
-        Value::Null => Ok(String::new()),
-        Value::String(value) => Ok(value.clone()),
-        Value::Bool(_) => Err(format!(
-            "json: cannot unmarshal bool into Go struct field .{field} of type string"
-        )),
-        Value::Number(_) => Err(format!(
-            "json: cannot unmarshal number into Go struct field .{field} of type string"
-        )),
-        Value::Array(_) => Err(format!(
-            "json: cannot unmarshal array into Go struct field .{field} of type string"
-        )),
-        Value::Object(_) => Err(format!(
-            "json: cannot unmarshal object into Go struct field .{field} of type string"
-        )),
+    if !parsed_arguments.is_object() {
+        let go_type = match parsed_arguments {
+            Value::Bool(_) => "bool",
+            Value::Number(_) => "number",
+            Value::String(_) => "string",
+            Value::Array(_) => "array",
+            Value::Object(_) | Value::Null => unreachable!("handled above"),
+        };
+        let target = if include_notebook {
+            r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#
+        } else {
+            r#"struct { Query string "json:\"query\"" }"#
+        };
+        return Err(format!(
+            "json: cannot unmarshal {go_type} into Go value of type {target}"
+        ));
     }
+    let fields: OrderedFields = serde_json::from_str(raw_arguments).map_err(|error| {
+        if error.is_eof() {
+            "unexpected end of JSON input".to_owned()
+        } else {
+            error.to_string()
+        }
+    })?;
+    let mut query = String::new();
+    let mut notebook = String::new();
+    for (key, value) in fields.0 {
+        let field = if symdesk_vault::dataset::go_equal_fold(&key, "query") {
+            Some((&mut query, "query"))
+        } else if include_notebook && symdesk_vault::dataset::go_equal_fold(&key, "notebook") {
+            Some((&mut notebook, "notebook"))
+        } else {
+            None
+        };
+        let Some((target, field_name)) = field else {
+            continue;
+        };
+        match value {
+            Value::Null => {}
+            Value::String(value) => *target = value,
+            Value::Bool(_) => return Err(go_string_field_type_error("bool", field_name)),
+            Value::Number(_) => return Err(go_string_field_type_error("number", field_name)),
+            Value::Array(_) => return Err(go_string_field_type_error("array", field_name)),
+            Value::Object(_) => return Err(go_string_field_type_error("object", field_name)),
+        }
+    }
+    Ok((query, notebook))
+}
+
+fn go_string_field_type_error(value_type: &str, field: &str) -> String {
+    format!("json: cannot unmarshal {value_type} into Go struct field .{field} of type string")
 }
 
 fn object_arguments(arguments: Value) -> Result<serde_json::Map<String, Value>, String> {
@@ -695,15 +759,24 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
         }
     };
     let id = object.get("id").cloned().unwrap_or(Value::Null);
+    let raw_arguments = raw_arguments_from_frame(data);
     Ok((
         Request {
             id,
             has_id: object.contains_key("id"),
             method,
             params: object.get("params").cloned().unwrap_or(Value::Null),
+            raw_arguments,
         },
         mode,
     ))
+}
+
+fn raw_arguments_from_frame(data: &[u8]) -> Option<String> {
+    let frame: BTreeMap<String, Box<RawValue>> = serde_json::from_slice(data).ok()?;
+    let params = frame.get("params")?;
+    let params: BTreeMap<String, Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
+    params.get("arguments").map(|raw| raw.get().to_owned())
 }
 
 fn read_non_empty_line<R: BufRead>(reader: &mut R) -> io::Result<Option<(Vec<u8>, bool)>> {

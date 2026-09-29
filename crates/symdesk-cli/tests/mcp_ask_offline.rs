@@ -2,15 +2,22 @@
 
 use std::{
     fs,
-    io::Write,
+    io::{BufRead, Read, Write},
+    net::{TcpListener, TcpStream},
     path::PathBuf,
     process::{Command, Stdio},
+    sync::{Arc, Mutex, mpsc},
+    thread,
+    time::Duration,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use serde::Deserialize;
-use serde_json::Value;
-use symdesk_index::Sidecar;
+use serde_json::{Value, json};
+use symdesk_index::{
+    RetrievalDb, RetrievalDocument, Sidecar, StoredRetrievalChunk, materialize_chunks,
+    parse_markdown_retrieval_sections,
+};
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -18,26 +25,62 @@ struct Fixture {
     cases: Vec<FixtureCase>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureCase {
     id: String,
+    #[serde(default)]
+    embedding_dim: usize,
     documents: Vec<FixtureDocument>,
     expected_tool: Value,
     calls: Vec<FixtureCall>,
-    provider_requests: Vec<Value>,
+    #[serde(default)]
+    provider_requests: Vec<FixtureRequest>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureCall {
     id: String,
+    #[serde(default)]
+    tool: String,
     arguments_json: String,
+    #[serde(default)]
+    raw_params_json: String,
+    #[serde(default)]
+    raw_frame_json: String,
     expected: Value,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FixtureDocument {
     path: String,
     body: String,
+    #[serde(default)]
+    embedding_marker: String,
+    #[serde(default)]
+    embedding: Vec<f32>,
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+struct FixtureRequest {
+    method: String,
+    path: String,
+    body: Value,
+}
+
+struct RunningAskEmbeddingServer {
+    endpoint: String,
+    captured: Arc<Mutex<Vec<FixtureRequest>>>,
+    stop: mpsc::Sender<()>,
+    server: Option<thread::JoinHandle<()>>,
+}
+
+impl Drop for RunningAskEmbeddingServer {
+    fn drop(&mut self) {
+        let _ = self.stop.send(());
+        if let Some(server) = self.server.take() {
+            let _ = server.join();
+        }
+    }
 }
 
 struct TestRoot(PathBuf);
@@ -78,7 +121,7 @@ fn real_mcp_ask_replays_go_handler_envelope() {
     )
     .expect("decode offline Ask MCP fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 1);
+    assert_eq!(fixture.cases.len(), 2);
     for case in &fixture.cases {
         replay_case(case);
     }
@@ -101,15 +144,44 @@ fn replay_case(case: &FixtureCase) {
         .expect("index test vault for scoped FTS");
     drop(sidecar);
 
+    let embedding_server = if case.embedding_dim > 0 {
+        let server = start_ask_embedding_server(case);
+        let index_path = root.path("data/retrieval.db");
+        seed_ask_retrieval_index(case, &vault, &index_path);
+        let config_dir = root.path("home/.config/symseek");
+        fs::create_dir_all(&config_dir).expect("create isolated retrieval config directory");
+        fs::write(
+            config_dir.join("config.toml"),
+            format!(
+                "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\n",
+                index_path.to_string_lossy(),
+                server.endpoint,
+                case.embedding_dim
+            ),
+        )
+        .expect("write isolated retrieval config");
+        Some(server)
+    } else {
+        None
+    };
+
     let mut requests = vec![r#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#.to_owned()];
     for (index, call) in case.calls.iter().enumerate() {
-        requests.push(call_request(index + 2, &call.arguments_json));
+        requests.push(call_fixture_request(index + 2, call));
     }
     let frames = run_mcp(&root, &vault, &sidecar_path, &requests, None);
     assert_eq!(
         frames.len(),
         case.calls.len() + 1,
         "{} returned unexpected MCP frames",
+        case.id
+    );
+    let actual_provider_requests = embedding_server.as_ref().map_or_else(Vec::new, |server| {
+        server.captured.lock().expect("capture lock").clone()
+    });
+    assert_eq!(
+        actual_provider_requests, case.provider_requests,
+        "{} actual MCP Ask embedding requests differ from Go",
         case.id
     );
     let by_id = frames
@@ -136,36 +208,23 @@ fn replay_case(case: &FixtureCase) {
             .clone(),
             &vault,
         );
-        match call.id.as_str() {
-            "duplicate-folded-query-last-valid" | "duplicate-folded-query-last-empty" => {
-                assert!(
-                    response["result"]["isError"] == true,
-                    "{}: {response}",
-                    call.id
-                );
-                assert_eq!(
-                    response["result"]["content"][0]["text"],
-                    "ambiguous query arguments"
-                );
-            }
-            "notebook-kelvin-case" => {
-                assert!(
-                    response["result"]["isError"] == true,
-                    "{}: {response}",
-                    call.id
-                );
-                assert_eq!(
-                    response["result"]["content"][0]["text"],
-                    "notebook-scoped desk_ask is not implemented by the Rust MCP port"
-                );
-            }
-            _ => assert_eq!(response, call.expected, "{}", call.id),
+        if matches!(
+            call.id.as_str(),
+            "notebook-kelvin-case" | "duplicate-notebook-null-keeps-value"
+        ) {
+            assert!(
+                response["result"]["isError"] == true,
+                "{}: {response}",
+                call.id
+            );
+            assert_eq!(
+                response["result"]["content"][0]["text"],
+                "notebook-scoped desk_ask is not implemented by the Rust MCP port"
+            );
+        } else {
+            assert_eq!(response, call.expected, "{}", call.id);
         }
     }
-    assert!(
-        case.provider_requests.is_empty(),
-        "offline Ask fixture must not make provider calls"
-    );
 
     let notebook_frames = run_mcp(
         &root,
@@ -251,10 +310,215 @@ fn run_mcp(
         .collect()
 }
 
+fn seed_ask_retrieval_index(
+    case: &FixtureCase,
+    vault: &std::path::Path,
+    index_path: &std::path::Path,
+) {
+    let index = RetrievalDb::open_at(index_path).expect("open isolated Ask retrieval index");
+    for document in &case.documents {
+        assert_eq!(
+            document.embedding.len(),
+            case.embedding_dim,
+            "{} embedding fixture dimension",
+            document.path
+        );
+        let path = vault
+            .join(&document.path)
+            .canonicalize()
+            .expect("canonical Ask document path");
+        let path_text = path.to_string_lossy().into_owned();
+        let sections = parse_markdown_retrieval_sections(&path_text, document.body.as_bytes())
+            .expect("parse Ask fixture Markdown");
+        let chunks = materialize_chunks(&path_text, &sections);
+        index
+            .save_document(&RetrievalDocument {
+                path: path_text.clone(),
+                hash: symdesk_vault::sha256_hex(document.body.as_bytes()),
+                updated_at: "2026-09-29T00:00:00Z".to_owned(),
+            })
+            .expect("save Ask retrieval document");
+        let norm = document
+            .embedding
+            .iter()
+            .map(|value| value * value)
+            .sum::<f32>()
+            .sqrt();
+        let stored = chunks
+            .into_iter()
+            .map(|chunk| {
+                let embedding = if chunk.content.contains("__SYMDESK_SEARCH_METADATA_START__") {
+                    vec![0.0, 1.0, 0.0]
+                } else {
+                    document.embedding.clone()
+                };
+                StoredRetrievalChunk {
+                    id: 0,
+                    uuid: chunk.uuid,
+                    document_path: path_text.clone(),
+                    chunk_index: chunk.chunk_index as i64,
+                    content: chunk.content,
+                    embedding,
+                    hash: chunk.hash,
+                    norm,
+                    dim: case.embedding_dim as i64,
+                    model: "fixture-model".to_owned(),
+                    char_start: chunk.char_start.map(|value| value as i64),
+                    char_end: chunk.char_end.map(|value| value as i64),
+                    anchor_kind: chunk.anchor_kind,
+                    anchor_value: chunk.anchor_value,
+                    embedding_pending: false,
+                }
+            })
+            .collect::<Vec<_>>();
+        index
+            .save_chunks(&stored)
+            .expect("save Ask retrieval chunks");
+    }
+}
+
+fn start_ask_embedding_server(case: &FixtureCase) -> RunningAskEmbeddingServer {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind fake Ask embedding provider");
+    listener
+        .set_nonblocking(true)
+        .expect("set listener nonblocking");
+    let address = listener.local_addr().expect("embedding listener address");
+    let endpoint = format!("http://{address}/api/embeddings");
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let capture = Arc::clone(&captured);
+    let case = case.clone();
+    let (stop, stopped) = mpsc::channel();
+    let server = thread::spawn(move || {
+        loop {
+            if stopped.try_recv().is_ok() {
+                break;
+            }
+            match listener.accept() {
+                Ok((mut stream, _)) => {
+                    let _ = stream.set_nonblocking(false);
+                    let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
+                    let Some((method, path, body)) = read_ask_http_request(&mut stream) else {
+                        continue;
+                    };
+                    if let Ok(mut requests) = capture.lock() {
+                        requests.push(FixtureRequest {
+                            method,
+                            path,
+                            body: body.clone(),
+                        });
+                    }
+                    let input = body["input"]
+                        .as_array()
+                        .and_then(|items| items.first())
+                        .and_then(Value::as_str)
+                        .unwrap_or_default();
+                    let vector = if input == "violet cosmic wavelength" {
+                        Some(vec![1.0_f32, 0.0, 0.0])
+                    } else {
+                        case.documents
+                            .iter()
+                            .find(|document| {
+                                !document.embedding_marker.is_empty()
+                                    && input.contains(&document.embedding_marker)
+                            })
+                            .map(|document| document.embedding.clone())
+                    };
+                    let (status, response) = match vector {
+                        Some(vector) if vector.len() == case.embedding_dim => {
+                            (200, json!({"data":[{"embedding":vector}]}))
+                        }
+                        _ => (400, json!({"error":"no configured fixture embedding"})),
+                    };
+                    let response = serde_json::to_vec(&response).expect("encode fake response");
+                    let reason = if status == 200 { "OK" } else { "Bad Request" };
+                    let header = format!(
+                        "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                        response.len()
+                    );
+                    let _ = stream.write_all(header.as_bytes());
+                    let _ = stream.write_all(&response);
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(5));
+                }
+                Err(_) => break,
+            }
+        }
+    });
+    RunningAskEmbeddingServer {
+        endpoint,
+        captured,
+        stop,
+        server: Some(server),
+    }
+}
+
+fn read_ask_http_request(stream: &mut TcpStream) -> Option<(String, String, Value)> {
+    let mut reader = std::io::BufReader::new(stream);
+    let mut first = String::new();
+    reader.read_line(&mut first).ok()?;
+    let mut parts = first.split_whitespace();
+    let method = parts.next()?.to_owned();
+    let path = parts.next()?.to_owned();
+    let mut content_length = 0_usize;
+    loop {
+        let mut line = String::new();
+        reader.read_line(&mut line).ok()?;
+        if line == "\r\n" || line == "\n" {
+            break;
+        }
+        if let Some((name, value)) = line.trim_end().split_once(':')
+            && name.eq_ignore_ascii_case("content-length")
+        {
+            content_length = value.trim().parse().ok()?;
+        }
+    }
+    let mut body = vec![0_u8; content_length];
+    reader.read_exact(&mut body).ok()?;
+    Some((method, path, serde_json::from_slice(&body).ok()?))
+}
+
 fn call_request(id: usize, arguments_json: &str) -> String {
-    format!(
-        r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{{"name":"desk_ask","arguments":{arguments_json}}}}}"#
-    )
+    if arguments_json.is_empty() {
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{{"name":"desk_ask"}}}}"#
+        )
+    } else {
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{{"name":"desk_ask","arguments":{arguments_json}}}}}"#
+        )
+    }
+}
+
+fn call_fixture_request(id: usize, call: &FixtureCall) -> String {
+    if !call.raw_frame_json.is_empty() {
+        call.raw_frame_json
+            .replace("\"id\":0", &format!("\"id\":{id}"))
+    } else if !call.raw_params_json.is_empty() {
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{}}}"#,
+            call.raw_params_json
+        )
+    } else if call.arguments_json.is_empty() {
+        let tool = if call.tool.is_empty() {
+            "desk_ask"
+        } else {
+            &call.tool
+        };
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{{"name":"{tool}"}}}}"#
+        )
+    } else {
+        let tool = if call.tool.is_empty() {
+            "desk_ask"
+        } else {
+            &call.tool
+        };
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{id},"method":"tools/call","params":{{"name":"{tool}","arguments":{}}}}}"#,
+            call.arguments_json
+        )
+    }
 }
 
 fn normalize_value(mut value: Value, vault: &std::path::Path) -> Value {

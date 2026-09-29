@@ -47,6 +47,7 @@
 .PHONY: retrieval-embedding-http-fixtures-generate retrieval-embedding-http-differential
 .PHONY: retrieval-reembed-http-fixtures-generate retrieval-reembed-http-differential
 .PHONY: retrieval-local-hash-fixtures-generate retrieval-local-hash-differential
+.PHONY: retrieval-search-cli-fixtures-generate retrieval-search-cli-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -533,6 +534,13 @@ retrieval-local-hash-fixtures-generate:
 retrieval-local-hash-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked local_hash_tests
+
+retrieval-search-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+
+retrieval-search-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+	$(CARGO) test -p symdesk-cli --locked --test search_hybrid
 
 retrieval-vector-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'

@@ -469,6 +469,10 @@ jobs:
         shell: bash
         run: make retrieval-local-hash-differential
 
+      - name: Run native hybrid search CLI differential
+        shell: bash
+        run: make retrieval-search-cli-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

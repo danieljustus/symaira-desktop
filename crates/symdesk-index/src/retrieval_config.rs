@@ -34,6 +34,12 @@ pub struct RetrievalEmbeddingConfig {
     pub timeout_seconds: u64,
     pub retry_count: usize,
     pub retry_backoff_ms: u64,
+    /// Optional Go search transformations that the current Rust CLI does not
+    /// implement. Callers must reject them before provider access.
+    pub expand_query: bool,
+    pub rerank_query: bool,
+    pub vector_backend: String,
+    pub vector_quantization: String,
 }
 
 /// Loads the effective embedding settings from the existing standalone
@@ -70,6 +76,10 @@ pub fn retrieval_embedding_config(
             .ok()
             .filter(|value| *value > 0)
             .unwrap_or(500),
+        expand_query: config.expand_query,
+        rerank_query: config.rerank_query,
+        vector_backend: config.vector_backend,
+        vector_quantization: config.vector_quantization,
     })
 }
 

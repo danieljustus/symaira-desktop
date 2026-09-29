@@ -48,7 +48,7 @@ pub use retrieval::{
     RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
     RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
     RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
-    local_hash_embedding, materialize_chunks,
+    go_simple_lowercase, local_hash_embedding, materialize_chunks,
 };
 pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, relocate_index_for_vault,
@@ -1490,6 +1490,19 @@ impl Sidecar {
             })
         })?;
         rows.collect::<Result<Vec<_>, rusqlite::Error>>()
+            .map_err(Into::into)
+    }
+
+    /// Returns an indexed title for the exact stored path, matching Go's
+    /// `DB.GetTitle` lookup without enumerating the whole vault.
+    ///
+    /// # Errors
+    /// Returns an error when no row exists or SQLite cannot execute the query.
+    pub fn get_title(&self, path: &str) -> Result<String, SidecarError> {
+        self.connection
+            .query_row("SELECT title FROM files WHERE path = ?1", [path], |row| {
+                row.get(0)
+            })
             .map_err(Into::into)
     }
 

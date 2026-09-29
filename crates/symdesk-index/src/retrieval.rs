@@ -87,7 +87,11 @@ pub fn local_hash_embedding(text: &str, dimensions: usize) -> Result<Vec<f32>, S
     Ok(vector)
 }
 
-fn go_simple_lowercase(text: &str) -> String {
+/// Applies Go 1.26.6's Unicode 15 simple lowercase mapping.
+///
+/// This is shared with CLI snippet matching so search and embedding use the
+/// same pinned Go behavior.
+pub fn go_simple_lowercase(text: &str) -> String {
     text.chars().map(go_simple_lowercase_char).collect()
 }
 

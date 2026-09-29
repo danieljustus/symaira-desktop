@@ -389,7 +389,7 @@ fn project_hit(
     let display_path = if source {
         path.to_string_lossy().into_owned()
     } else {
-        path.strip_prefix(vault)
+        path.strip_prefix(roots.first()?)
             .ok()?
             .to_string_lossy()
             .into_owned()
@@ -493,8 +493,8 @@ mod tests {
     use symdesk_index::{SearchHit, SearchSource};
 
     use super::{
-        CliSearchHit, go_rune_count_prefix, go_search_snippet, lexical_hits,
-        trim_hypothetical_passage,
+        CliSearchHit, RetrievalHybridSearchResult, go_rune_count_prefix, go_search_snippet,
+        lexical_hits, project_hit, trim_hypothetical_passage,
     };
 
     #[test]
@@ -540,6 +540,56 @@ mod tests {
         assert_eq!(hits[0].path, "/outside/registered/note.md");
         assert_eq!(hits[0].source_type, Some("external"));
         assert!(hits[0].read_only);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn hybrid_projection_keeps_vault_relative_path_for_symlinked_root() {
+        use std::{
+            fs,
+            os::unix::fs::symlink,
+            time::{SystemTime, UNIX_EPOCH},
+        };
+
+        use symdesk_index::{RetrievalHybridSearchChunk, Sidecar};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let scratch = std::env::temp_dir().join(format!(
+            "symdesk-search-symlink-root-{}-{nonce}",
+            std::process::id()
+        ));
+        let actual_root = scratch.join("vault");
+        let alias_root = scratch.join("vault-alias");
+        fs::create_dir_all(&actual_root).expect("create actual vault");
+        fs::write(actual_root.join("note.md"), "# Note\n\nneedle").expect("write note");
+        symlink(&actual_root, &alias_root).expect("create vault alias");
+        let canonical_root = actual_root.canonicalize().expect("canonical vault root");
+        let document_path = canonical_root.join("note.md");
+        let sidecar = Sidecar::open(&scratch.join("sidecar.db")).expect("open sidecar");
+        let result = RetrievalHybridSearchResult {
+            chunk: RetrievalHybridSearchChunk {
+                id: 1,
+                uuid: "fixture-chunk".to_owned(),
+                document_path: document_path.to_string_lossy().into_owned(),
+                chunk_index: 0,
+                content: "needle".to_owned(),
+                hash: "fixture-hash".to_owned(),
+            },
+            bm25_rank: 1,
+            vector_rank: 1,
+            rrf_score: 0.5,
+            cosine_score: 1.0,
+            metadata_matches: Vec::new(),
+            vector_mode: String::new(),
+        };
+
+        let (hit, _) = project_hit(&alias_root, &[canonical_root], "needle", result, &sidecar)
+            .expect("project canonical indexed path under aliased vault root");
+        assert_eq!(hit.path, "note.md");
+        let _ = fs::remove_dir_all(scratch);
     }
 
     #[test]

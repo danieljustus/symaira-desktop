@@ -67,6 +67,9 @@ func TestAskOfflineMCPOracle(t *testing.T) {
 		Documents: []askOfflineMCPDocument{{
 			Path: "notes/ask.md",
 			Body: "---\ntitle: Ask note\ntags: [askscope]\n---\n\nThis note is selected by the tag plan.",
+		}, {
+			Path: "notebooks/notebook-fixture.md",
+			Body: "---\ntype: notebook\ntitle: Fixture notebook\nnotebook_id: notebook-fixture\nsources:\n  - notes/ask.md\n---\n\n# Fixture notebook\n",
 		}},
 		Calls: []askOfflineMCPFixtureCall{
 			{ID: "query-lowercase", ArgumentsJSON: `{"query":"tag:askscope"}`},
@@ -106,9 +109,29 @@ func TestAskOfflineMCPOracle(t *testing.T) {
 	}
 	got := observeAskOfflineMCPCase(t, input)
 	assertAskOfflineMCPOracleBehavior(t, got)
+	notebook := askOfflineMCPFixtureCase{
+		ID: "notebook-scoped-offline-search",
+		Documents: []askOfflineMCPDocument{
+			{Path: "notebooks/notebook-fixture.md", Body: "---\ntype: notebook\ntitle: Fixture notebook\nnotebook_id: notebook-fixture\nsources:\n  - notes/unmatched.md\n  - notes/missing.md\n  - notes/matched.md\n---\n\n# Fixture notebook\n"},
+			{Path: "notebooks/empty.md", Body: "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: empty\nsources: []\n---\n\n# Empty notebook\n"},
+			{Path: "notes/matched.md", Body: "---\ntitle: Matched source\n---\n\nThe needle is visible only inside this notebook source."},
+			{Path: "notes/unmatched.md", Body: "---\ntitle: Fallback source\n---\n\nFallback-only passage for conceptual questions."},
+			{Path: "notes/outside.md", Body: "---\ntitle: Outside source\n---\n\nThe needle outside the selected notebook must not appear."},
+		},
+		Calls: []askOfflineMCPFixtureCall{
+			{ID: "scoped-hit-plus-unmatched-fallback", ArgumentsJSON: `{"query":"needle","notebook":"notebook-fixture"}`},
+			{ID: "scoped-conceptual-fallback", ArgumentsJSON: `{"query":"summarize these sources","notebook":"notebook-fixture"}`},
+			{ID: "scoped-path-reference", ArgumentsJSON: `{"query":"needle","notebook":"notebooks/notebook-fixture.md"}`},
+			{ID: "scoped-whitespace-query-fallback", ArgumentsJSON: `{"query":"   ","notebook":"notebook-fixture"}`},
+			{ID: "empty-notebook-source-set", ArgumentsJSON: `{"query":"needle","notebook":"empty"}`},
+			{ID: "missing-notebook", ArgumentsJSON: `{"query":"needle","notebook":"does-not-exist"}`},
+		},
+	}
+	gotNotebook := observeAskOfflineMCPCase(t, notebook)
+	assertNotebookAskOracleBehavior(t, gotNotebook)
 	hybridGot := observeAskOfflineMCPCase(t, hybrid)
 	assertAskHybridMCPOracleBehavior(t, hybridGot)
-	current := askOfflineMCPFixture{SchemaVersion: 1, Cases: []askOfflineMCPFixtureCase{got, hybridGot}}
+	current := askOfflineMCPFixture{SchemaVersion: 1, Cases: []askOfflineMCPFixtureCase{got, gotNotebook, hybridGot}}
 	if os.Getenv("PORT_GENERATE") == "1" {
 		encoded, err := json.MarshalIndent(current, "", "  ")
 		if err != nil {
@@ -241,14 +264,44 @@ func assertAskOfflineMCPOracleBehavior(t *testing.T, fixture askOfflineMCPFixtur
 	if got := askMCPText(t, byID["search-missing-arguments"].Expected); got != "unexpected end of JSON input" {
 		t.Fatalf("Go desk_search missing Arguments error = %q", got)
 	}
-	if !sameAskMCPResult(t, byID["notebook-kelvin-case"].Expected, byID["duplicate-notebook-null-keeps-value"].Expected) {
+	if !sameAskMCPResult(t, byID["query-lowercase"].Expected, byID["notebook-kelvin-case"].Expected) ||
+		!sameAskMCPResult(t, byID["notebook-kelvin-case"].Expected, byID["duplicate-notebook-null-keeps-value"].Expected) {
 		t.Fatalf("Go null duplicate did not preserve the earlier Notebook value")
-	}
-	if got := askMCPText(t, byID["notebook-kelvin-case"].Expected); got != "notebook not found" {
-		t.Fatalf("Go EqualFold did not recognize Kelvin-sign Notebook key: %q", got)
 	}
 	if got := askMCPText(t, byID["query-whitespace"].Expected); !strings.HasSuffix(got, "Here are the most relevant search results from your vault:\\n\\n\"}") {
 		t.Fatalf("Go whitespace query should succeed with an empty-result fallback, got %q", got)
+	}
+}
+
+func assertNotebookAskOracleBehavior(t *testing.T, fixture askOfflineMCPFixtureCase) {
+	t.Helper()
+	byID := make(map[string]askOfflineMCPFixtureCall, len(fixture.Calls))
+	for _, call := range fixture.Calls {
+		byID[call.ID] = call
+	}
+	matched := askMCPText(t, byID["scoped-hit-plus-unmatched-fallback"].Expected)
+	for _, path := range []string{"notes/matched.md", "notes/unmatched.md"} {
+		if !strings.Contains(matched, "[["+path+"]]") {
+			t.Fatalf("scoped match/fallback omitted %s: %q", path, matched)
+		}
+	}
+	for _, path := range []string{"notes/outside.md", "notes/missing.md"} {
+		if strings.Contains(matched, path) {
+			t.Fatalf("scoped match/fallback leaked or retained %s: %q", path, matched)
+		}
+	}
+	conceptual := askMCPText(t, byID["scoped-conceptual-fallback"].Expected)
+	if strings.Count(conceptual, "[[") != 2 {
+		t.Fatalf("conceptual scoped fallback citations = %d, want 2: %q", strings.Count(conceptual, "[["), conceptual)
+	}
+	if !sameAskMCPResult(t, byID["scoped-hit-plus-unmatched-fallback"].Expected, byID["scoped-path-reference"].Expected) {
+		t.Fatal("notebook path reference differed from notebook id lookup")
+	}
+	if got := askMCPText(t, byID["empty-notebook-source-set"].Expected); strings.Contains(got, "[[") {
+		t.Fatalf("empty notebook scope emitted citations: %q", got)
+	}
+	if !askMCPIsError(t, byID["missing-notebook"].Expected) || askMCPText(t, byID["missing-notebook"].Expected) != "notebook not found" {
+		t.Fatalf("missing notebook result = %s", byID["missing-notebook"].Expected)
 	}
 }
 

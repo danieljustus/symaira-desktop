@@ -121,7 +121,7 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         Err(error) => return super::emit_error(error.to_string(), output_json),
     };
 
-    let hits = match search_for_ask(&root, query, &sources, &sidecar) {
+    let hits = match search_for_ask(&root, query, None, &sources, &sidecar) {
         Ok(hits) => hits,
         Err(error) => return super::emit_error(error, output_json),
     };
@@ -233,9 +233,27 @@ pub(crate) fn ensure_offline_ask_provider() -> Result<(), String> {
 pub(crate) fn search_for_ask(
     vault: &std::path::Path,
     query: &str,
+    notebook: Option<&str>,
     sources: &[SearchSource],
     sidecar: &symdesk_index::Sidecar,
 ) -> Result<Vec<crate::search_cli::CliSearchHit>, String> {
+    if let Some(notebook) = notebook {
+        let (hits, _) =
+            symdesk_protocol::search_notebook_ask_sources(vault, notebook, query, sidecar)?;
+        return Ok(hits
+            .into_iter()
+            .map(|hit| crate::search_cli::CliSearchHit {
+                path: hit.path,
+                title: hit.title,
+                snippet: hit.snippet,
+                score: hit.score,
+                anchor: None,
+                metadata_matches: Vec::new(),
+                source_type: None,
+                read_only: false,
+            })
+            .collect());
+    }
     if query.trim().is_empty() {
         return Ok(Vec::new());
     }

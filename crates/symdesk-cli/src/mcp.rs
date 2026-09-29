@@ -403,17 +403,22 @@ fn call_tool(
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
-            if !notebook.is_empty() {
-                return Err(
-                    "notebook-scoped desk_ask is not implemented by the Rust MCP port".to_owned(),
-                );
-            }
             crate::ai_cli::ensure_offline_ask_provider()?;
             let (vault, sidecar) = open_sidecar(config)?;
-            let sources = SourceRegistry::open(&vault)
-                .and_then(|registry| registry.list())
-                .map_err(|error| error.to_string())?;
-            let hits = crate::ai_cli::search_for_ask(&vault, &query, &sources, &sidecar)?;
+            let sources = if notebook.is_empty() {
+                SourceRegistry::open(&vault)
+                    .and_then(|registry| registry.list())
+                    .map_err(|error| error.to_string())?
+            } else {
+                Vec::new()
+            };
+            let hits = crate::ai_cli::search_for_ask(
+                &vault,
+                &query,
+                (!notebook.is_empty()).then_some(notebook.as_str()),
+                &sources,
+                &sidecar,
+            )?;
             let paths = hits
                 .iter()
                 .map(|hit| crate::ai_cli::ask_display_path(&vault, &hit.path, &sources))

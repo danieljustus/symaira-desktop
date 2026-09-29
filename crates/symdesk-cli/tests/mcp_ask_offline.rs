@@ -121,7 +121,7 @@ fn real_mcp_ask_replays_go_handler_envelope() {
     )
     .expect("decode offline Ask MCP fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 2);
+    assert_eq!(fixture.cases.len(), 3);
     for case in &fixture.cases {
         replay_case(case);
     }
@@ -208,39 +208,26 @@ fn replay_case(case: &FixtureCase) {
             .clone(),
             &vault,
         );
-        if matches!(
-            call.id.as_str(),
-            "notebook-kelvin-case" | "duplicate-notebook-null-keeps-value"
-        ) {
-            assert!(
-                response["result"]["isError"] == true,
-                "{}: {response}",
-                call.id
-            );
-            assert_eq!(
-                response["result"]["content"][0]["text"],
-                "notebook-scoped desk_ask is not implemented by the Rust MCP port"
-            );
-        } else {
-            assert_eq!(response, call.expected, "{}", call.id);
-        }
+        assert_eq!(response, call.expected, "{}", call.id);
     }
 
-    let notebook_frames = run_mcp(
-        &root,
-        &vault,
-        &sidecar_path,
-        &[call_request(
-            100,
-            r#"{"query":"tag:askscope","notebook":"notebook-fixture"}"#,
-        )],
-        None,
-    );
-    assert!(notebook_frames[0]["result"]["isError"] == true);
-    assert_eq!(
-        notebook_frames[0]["result"]["content"][0]["text"],
-        "notebook-scoped desk_ask is not implemented by the Rust MCP port"
-    );
+    if case.id == "notebook-scoped-offline-search" {
+        let registry_path = vault.join(".symdesk/search-sources.json");
+        fs::create_dir_all(registry_path.parent().expect("registry parent"))
+            .expect("create source registry directory");
+        fs::write(&registry_path, b"not valid JSON")
+            .expect("write invalid unrelated external-source registry");
+        let call = &case.calls[0];
+        let actual = run_mcp(
+            &root,
+            &vault,
+            &sidecar_path,
+            &[call_request(101, &call.arguments_json)],
+            None,
+        );
+        let actual_result = normalize_value(actual[0]["result"].clone(), &vault);
+        assert_eq!(actual_result, call.expected["result"]);
+    }
 
     let configured_provider_frames = run_mcp(
         &root,

@@ -1155,6 +1155,123 @@ fn format_provider_status_error(status: u16, body: &[u8]) -> String {
     format!("ollama: llmkit: {code} (status {status}){detail}")
 }
 
+/// One source returned by Go-compatible notebook-scoped Ask retrieval.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NotebookAskSearchHit {
+    /// Vault-relative path with forward slashes for logical scope matching.
+    pub path: String,
+    /// Native `filepath.Rel` spelling used by citations and prompt links.
+    pub native_path: String,
+    pub title: String,
+    pub snippet: String,
+    pub score: f64,
+}
+
+/// Searches only the sources named by a notebook and adds Go's unmatched
+/// source excerpt fallback. This is shared by the HTTP Ask handler and the
+/// offline MCP Ask path so neither can widen retrieval beyond the notebook.
+pub fn search_notebook_ask_sources(
+    vault_root: &Path,
+    notebook_ref: &str,
+    query: &str,
+    sidecar: &Sidecar,
+) -> Result<(Vec<NotebookAskSearchHit>, Vec<String>), String> {
+    let mut notebook_path = notebook_ref.trim().to_owned();
+    if notebook_path.is_empty() {
+        return Err("notebook reference is required".to_owned());
+    }
+    if !notebook_path.ends_with(".md") {
+        notebook_path.push_str(".md");
+    }
+    if !notebook_path.starts_with("notebooks/") {
+        let Some(name) = Path::new(&notebook_path).file_name() else {
+            return Err("notebook not found".to_owned());
+        };
+        notebook_path = format!("notebooks/{}", name.to_string_lossy());
+    }
+    if secure_path(vault_root, &notebook_path).is_err() {
+        return Err("notebook not found".to_owned());
+    }
+    let root_dir = cap_std::fs::Dir::open_ambient_dir(vault_root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))?;
+    let notebook_bytes = read_root_file(&root_dir, Path::new(&notebook_path))
+        .map_err(|_| "notebook not found".to_owned())?;
+    let notebook =
+        parse_notebook(&notebook_path, &notebook_bytes).map_err(|error| error.to_string())?;
+
+    let mut sources = Vec::with_capacity(notebook.sources.len());
+    let mut absolute_paths = Vec::with_capacity(notebook.sources.len());
+    for source_path in notebook.sources {
+        let Ok(absolute) = secure_path(vault_root, &source_path) else {
+            continue;
+        };
+        let Ok(contents) = read_root_file(&root_dir, Path::new(&source_path)) else {
+            continue;
+        };
+        let Ok(document) = parse_bytes(&source_path, &contents) else {
+            continue;
+        };
+        let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
+            continue;
+        };
+        absolute_paths.push(absolute_path);
+        let Some((path, native_path)) = vault_relative_paths(Path::new(&source_path)) else {
+            continue;
+        };
+        sources.push((path, native_path, document.title, document.body));
+    }
+
+    let in_scope = sources
+        .iter()
+        .map(|(path, _, _, _)| path.clone())
+        .collect::<Vec<_>>();
+    let search_hits = if query.trim().is_empty() {
+        Vec::new()
+    } else {
+        sidecar
+            .search_scoped(query, &absolute_paths)
+            .map_err(|error| error.to_string())?
+    };
+    let mut matched = std::collections::HashSet::with_capacity(search_hits.len());
+    let mut results = Vec::new();
+    for hit in search_hits {
+        let Some(relative) = path_relative_to_root(vault_root, &hit.path) else {
+            continue;
+        };
+        let Some((path, native_path)) = vault_relative_paths(&relative) else {
+            continue;
+        };
+        if sources.iter().any(|(source, _, _, _)| *source == path) {
+            matched.insert(native_path.clone());
+            results.push(NotebookAskSearchHit {
+                path,
+                native_path,
+                title: hit.title,
+                snippet: hit.snippet,
+                score: 1.0,
+            });
+        }
+    }
+    for (path, native_path, title, body) in sources {
+        if notebook_source_was_matched(&path, &matched) {
+            continue;
+        }
+        let snippet = if body.len() > 1500 {
+            String::from_utf8_lossy(&body.as_bytes()[..1500]).into_owned()
+        } else {
+            body
+        };
+        results.push(NotebookAskSearchHit {
+            path,
+            native_path,
+            title,
+            snippet,
+            score: 0.0,
+        });
+    }
+    Ok((results, in_scope))
+}
+
 async fn handle_ai_ask(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
@@ -1267,21 +1384,13 @@ async fn handle_ai_ask(
             documents.push((path, native_path, hit.title, hit.snippet, 0.0));
         }
     } else {
-        let mut notebook_path = input.notebook.clone();
-        if !notebook_path.ends_with(".md") {
-            notebook_path.push_str(".md");
-        }
-        if !notebook_path.starts_with("notebooks/") {
-            let Some(name) = Path::new(&notebook_path).file_name() else {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "retrieval failed: notebook not found",
-                );
-            };
-            notebook_path = format!("notebooks/{}", name.to_string_lossy());
-        }
-        let root_dir = match open_current_root(&state) {
-            Ok(root_dir) => root_dir,
+        let (results, in_scope) = match search_notebook_ask_sources(
+            &state.vault_root,
+            &input.notebook,
+            &input.query,
+            &sidecar,
+        ) {
+            Ok(results) => results,
             Err(error) => {
                 return json_error(
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -1289,93 +1398,15 @@ async fn handle_ai_ask(
                 );
             }
         };
-        if secure_path(&state.vault_root, &notebook_path).is_err() {
-            return json_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "retrieval failed: notebook not found",
-            );
-        }
-        let notebook_bytes = match read_root_file(&root_dir, Path::new(&notebook_path)) {
-            Ok(contents) => contents,
-            Err(_) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "retrieval failed: notebook not found",
-                );
-            }
-        };
-        let notebook = match parse_notebook(&notebook_path, &notebook_bytes) {
-            Ok(notebook) => notebook,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
-        };
-
-        let mut sources = Vec::with_capacity(notebook.sources.len());
-        let mut absolute_paths = Vec::with_capacity(notebook.sources.len());
-        for path in notebook.sources {
-            let Ok(absolute) = secure_path(&state.vault_root, &path) else {
-                continue;
-            };
-            let Ok(contents) = read_root_file(&root_dir, Path::new(&path)) else {
-                continue;
-            };
-            let Ok(document) = parse_bytes(&path, &contents) else {
-                continue;
-            };
-            let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
-                continue;
-            };
-            absolute_paths.push(absolute_path);
-            let Some((path, native_path)) = vault_relative_paths(Path::new(&path)) else {
-                continue;
-            };
-            sources.push((path, native_path, document.title, document.body));
-        }
-        let in_scope = sources
-            .iter()
-            .map(|(path, _, _, _)| path.clone())
-            .collect::<Vec<_>>();
-        let hits = match sidecar.search_scoped(&input.query, &absolute_paths) {
-            Ok(hits) => hits,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
-        };
-        let mut matched = std::collections::HashSet::with_capacity(hits.len());
-        for hit in hits {
-            let Some(relative) = path_relative_to_root(&state.vault_root, &hit.path) else {
-                continue;
-            };
-            let Some((path, native_path)) = vault_relative_paths(&relative) else {
-                continue;
-            };
-            if sources.iter().any(|(source, _, _, _)| *source == path) {
-                // Go stores filepath.Rel's native spelling in `matched`, then
-                // compares it with notebook paths previously normalized by
-                // filepath.ToSlash. Preserve that Windows behavior: a nested
-                // source can also be emitted through the unmatched fallback.
-                matched.insert(native_path.clone());
-                documents.push((path, native_path, hit.title, hit.snippet, 1.0));
-            }
-        }
-        for (path, native_path, title, body) in sources {
-            if notebook_source_was_matched(&path, &matched) {
-                continue;
-            }
-            let excerpt = if body.len() > 1500 {
-                String::from_utf8_lossy(&body.as_bytes()[..1500]).into_owned()
-            } else {
-                body
-            };
-            documents.push((path, native_path, title, excerpt, 0.0));
-        }
+        documents.extend(results.into_iter().map(|result| {
+            (
+                result.path,
+                result.native_path,
+                result.title,
+                result.snippet,
+                result.score,
+            )
+        }));
         scoped_paths = Some(in_scope);
     }
 

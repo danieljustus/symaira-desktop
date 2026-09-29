@@ -1,5 +1,22 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated inert retrieval settings — 2026-09-29
+
+Candidate `bacaaff839a925b0daba945d914475f28ed14ebe` removes Rust-only rejection
+of vector-backend and quantization settings in shared hybrid search. Actual
+Go production openClientAt wires neither setting into its engine. New real
+CLI and MCP cases preserve output and embedding requests for turbo-prod and
+unknown backend/quantization values loaded from TOML. No dormant alternate
+backend or TurboQuant implementation is activated.
+
+Full immutable generation/application, nine actual Go/Rust differentials and
+205 CLI/index/protocol tests pass on native Darwin/arm64 and Linux/arm64 with
+zero failures or ignored tests; Darwin strict Clippy/fmt/actionlint also pass.
+`inert-settings-receipt-bacaaff8.json` in both build roots binds source, metadata,
+fixtures and log hashes. Remaining facades, format repair, dormant algorithm
+contracts and other required native targets keep INDEX-005/RUST-008 open.
+
+
 ## Integrated offline Ask CLI retrieval — 2026-09-29
 
 Candidate `a427ce7b0693d30b17b0b8c85003f9479810da93` connects the existing

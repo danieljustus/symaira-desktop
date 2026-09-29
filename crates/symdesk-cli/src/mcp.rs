@@ -7,6 +7,7 @@ use std::{
     thread,
 };
 
+use crate::search_cli::{self, CliSearchHit};
 use serde::Serialize;
 use serde_json::{Value, json};
 use symdesk_index::{
@@ -66,24 +67,10 @@ struct McpLsEntry {
 }
 
 #[derive(Serialize)]
-struct McpSearchEntry {
-    path: String,
-    title: String,
-    snippet: String,
-    score: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    source_type: Option<&'static str>,
-    #[serde(skip_serializing_if = "is_false")]
-    read_only: bool,
-}
-
-fn is_false(value: &bool) -> bool {
-    !value
-}
-
-#[derive(Serialize)]
 struct McpSearchResponse {
-    results: Vec<McpSearchEntry>,
+    results: Vec<CliSearchHit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hint: Option<&'static str>,
 }
 
 #[derive(Debug)]
@@ -339,20 +326,37 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
                 return Err("query is required".to_owned());
             }
             let (vault, sidecar) = open_sidecar(config)?;
-            let hits = sidecar
-                .search_with_sources(&vault, query)
-                .map_err(|error| error.to_string())?;
             let sources = SourceRegistry::open(&vault)
                 .and_then(|registry| registry.list())
                 .map_err(|error| error.to_string())?;
+            let response = if query.trim().is_empty() {
+                McpSearchResponse {
+                    results: Vec::new(),
+                    hint: None,
+                }
+            } else {
+                match search_cli::hybrid_search(&vault, query, &sources, &sidecar)? {
+                    Some(results) => McpSearchResponse {
+                        results,
+                        hint: None,
+                    },
+                    None => {
+                        let response = sidecar
+                            .search_plan(&vault, query)
+                            .map_err(|error| error.to_string())?;
+                        McpSearchResponse {
+                            results: response
+                                .results
+                                .iter()
+                                .map(|hit| search_entry(&vault, hit, &sources))
+                                .collect(),
+                            hint: response.hint,
+                        }
+                    }
+                }
+            };
             Ok(Value::String(
-                serde_json::to_string(&McpSearchResponse {
-                    results: hits
-                        .iter()
-                        .map(|hit| search_entry(&vault, hit, &sources))
-                        .collect(),
-                })
-                .map_err(|error| error.to_string())?,
+                serde_json::to_string(&response).map_err(|error| error.to_string())?,
             ))
         }
         _ => Err(format!("Unknown tool: {name}")),
@@ -381,15 +385,11 @@ fn list_entry(root: &std::path::Path, file: &ListedDocument) -> McpLsEntry {
     }
 }
 
-fn search_entry(
-    root: &std::path::Path,
-    hit: &SearchHit,
-    sources: &[SearchSource],
-) -> McpSearchEntry {
+fn search_entry(root: &std::path::Path, hit: &SearchHit, sources: &[SearchSource]) -> CliSearchHit {
     let external = sources
         .iter()
         .any(|source| std::path::Path::new(&hit.path).starts_with(&source.path));
-    McpSearchEntry {
+    CliSearchHit {
         path: if external {
             hit.path.clone()
         } else {
@@ -397,7 +397,9 @@ fn search_entry(
         },
         title: hit.title.clone(),
         snippet: hit.snippet.clone(),
-        score: 0,
+        score: 0.0,
+        anchor: None,
+        metadata_matches: Vec::new(),
         source_type: external.then_some("external"),
         read_only: external,
     }

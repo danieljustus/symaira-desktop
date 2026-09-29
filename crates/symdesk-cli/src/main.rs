@@ -360,15 +360,10 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
                 Ok(sources) => sources,
                 Err(error) => return emit_error(error.to_string(), output_json),
             };
-            let parsed_query = symdesk_core::query::parse(query);
-            let hint = parsed_query
-                .as_ref()
-                .err()
-                .map(|_| "Search syntax was invalid, so this was searched as plain full text.");
             let hits = match search_cli::hybrid_search(&vault, query, &sources, &sidecar) {
                 Ok(Some(hits)) => hits,
-                Ok(None) => match sidecar.search_with_sources(&vault, query) {
-                    Ok(hits) => search_cli::lexical_hits(hits, &sources)
+                Ok(None) => match sidecar.search_plan(&vault, query) {
+                    Ok(response) => search_cli::lexical_hits(response.results, &[])
                         .into_iter()
                         .map(|mut hit| {
                             if hit.source_type.is_none() {
@@ -381,6 +376,7 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
                 },
                 Err(error) => return emit_error(error, output_json),
             };
+            let hint = search_cli::syntax_fallback_hint(query);
             render_search(&hits, hint, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),

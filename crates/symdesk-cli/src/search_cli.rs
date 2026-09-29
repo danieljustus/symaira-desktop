@@ -14,15 +14,19 @@ use symdesk_protocol::{embed_local_ollama, local_ollama_embeddings_endpoint};
 const SEARCH_LIMIT: i64 = 5;
 const DEFAULT_QUERY_DIMENSION: usize = 768;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub struct CliSearchHit {
     pub path: String,
     pub title: String,
     pub snippet: String,
     pub score: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor: Option<CliSearchAnchor>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub metadata_matches: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_type: Option<&'static str>,
+    #[serde(skip_serializing_if = "is_false")]
     pub read_only: bool,
 }
 
@@ -30,6 +34,18 @@ pub struct CliSearchHit {
 pub struct CliSearchAnchor {
     pub kind: String,
     pub value: String,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
+}
+
+/// Returns the Go search hint for malformed query syntax.
+#[must_use]
+pub fn syntax_fallback_hint(query: &str) -> Option<&'static str> {
+    symdesk_core::query::parse(query)
+        .err()
+        .map(|_| "Search syntax was invalid, so this was searched as plain full text.")
 }
 
 /// Searches through the retrieval index for an eligible plain-text query.

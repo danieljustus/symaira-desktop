@@ -31,6 +31,7 @@ mod metadata;
 mod retrieval;
 mod retrieval_config;
 mod retrieval_markdown;
+mod search_plan;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -57,6 +58,7 @@ pub use retrieval_config::{
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,
 };
+pub use search_plan::SearchPlanResponse;
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_init", include_str!("../migrations/001_init.sql")),
@@ -1555,6 +1557,35 @@ impl Sidecar {
         }
         roots.extend(registry.list()?.into_iter().map(|source| source.path));
         self.search_in_roots(query, &roots)
+    }
+
+    /// Executes the shared query language against indexed vault documents.
+    /// Invalid syntax follows Go's plain-text fallback and includes its hint.
+    ///
+    /// # Errors
+    /// Returns SQLite or filesystem errors from searching the sidecar.
+    pub fn search_plan(
+        &self,
+        vault_root: &Path,
+        query: &str,
+    ) -> Result<SearchPlanResponse, SidecarError> {
+        if query.trim().is_empty() {
+            return Ok(SearchPlanResponse {
+                results: Vec::new(),
+                hint: None,
+            });
+        }
+        let plan = match symdesk_core::query::parse(query) {
+            Ok(plan) => plan,
+            Err(_) => {
+                let roots = vec![vault_root.to_string_lossy().into_owned()];
+                return Ok(SearchPlanResponse {
+                    results: self.search_in_roots(query, &roots)?,
+                    hint: Some(search_plan::INVALID_SYNTAX_HINT),
+                });
+            }
+        };
+        search_plan::search_plan(&self.connection, vault_root, &plan)
     }
 
     fn search_impl(

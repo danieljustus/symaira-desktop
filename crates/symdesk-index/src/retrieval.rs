@@ -508,17 +508,22 @@ impl RetrievalDb {
         }
         let transaction = self.connection.unchecked_transaction()?;
         transaction.execute(
-            "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)
-             ON CONFLICT(path) DO UPDATE SET hash=excluded.hash, updated_at=excluded.updated_at",
-            params![document.path, document.hash, document.updated_at],
+            "DELETE FROM extractions WHERE document_path = ?1",
+            [&document.path],
         )?;
         transaction.execute(
             "DELETE FROM chunks WHERE document_path = ?1",
             [&document.path],
         )?;
+        transaction.execute("DELETE FROM documents WHERE path = ?1", [&document.path])?;
+        transaction.execute(
+            "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)
+             ",
+            params![document.path, document.hash, document.updated_at],
+        )?;
         insert_chunks(&transaction, chunks)?;
         transaction.execute(
-            "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
+            "UPDATE index_meta SET value = value + 2 WHERE key = 'generation'",
             [],
         )?;
         transaction.commit()?;

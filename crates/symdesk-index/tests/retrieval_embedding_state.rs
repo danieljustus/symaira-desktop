@@ -163,6 +163,7 @@ fn replaces_one_document_and_rolls_back_failed_rebuild() {
     let unrelated = StoredRetrievalChunk {
         uuid: "other-chunk".to_owned(),
         document_path: "/vault/b.md".to_owned(),
+        content: "unrelated document marker".to_owned(),
         ..old.clone()
     };
     database
@@ -182,6 +183,14 @@ fn replaces_one_document_and_rolls_back_failed_rebuild() {
     database
         .save_chunks(&[old.clone(), unrelated.clone()])
         .expect("save original chunks");
+    let raw = rusqlite::Connection::open(&path).expect("open extraction fixture view");
+    raw.execute(
+        "INSERT INTO extractions (document_path, class, value, evidence_text, created_at)
+         VALUES ('/vault/a.md', 'fact', 'old fact', 'old evidence', '2026-09-01T00:00:00Z')",
+        [],
+    )
+    .expect("insert document extraction");
+    drop(raw);
 
     let replacement = StoredRetrievalChunk {
         uuid: "resolved-chunk".to_owned(),
@@ -221,6 +230,46 @@ fn replaces_one_document_and_rolls_back_failed_rebuild() {
         unrelated.uuid
     );
     assert_eq!(database.count_pending_chunks().expect("pending count"), 1);
+    let raw = rusqlite::Connection::open(&path).expect("check Go-compatible rebuild effects");
+    let generation: i64 = raw
+        .query_row(
+            "SELECT value FROM index_meta WHERE key = 'generation'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("read generation");
+    assert_eq!(generation, 3, "save plus Go-equivalent delete/save bumps");
+    let extractions: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM extractions WHERE document_path = '/vault/a.md'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count removed extractions");
+    assert_eq!(extractions, 0, "Go rebuild deletes document extractions");
+    let old_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'pending'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search deleted chunk content");
+    let new_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'semantic'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search replacement chunk content");
+    assert_eq!(old_fts_hits, 0, "deleted chunk text leaves FTS");
+    assert_eq!(new_fts_hits, 1, "replacement chunk text enters FTS");
+    raw.execute(
+        "INSERT INTO extractions (document_path, class, value, evidence_text, created_at)
+         VALUES ('/vault/a.md', 'fact', 'rollback fact', 'rollback evidence', '2026-09-02T00:00:00Z')",
+        [],
+    )
+    .expect("insert extraction for rollback check");
+    drop(raw);
 
     let raw = rusqlite::Connection::open(&path).expect("open replacement failure trigger");
     raw.execute_batch(
@@ -244,6 +293,16 @@ fn replaces_one_document_and_rolls_back_failed_rebuild() {
             )
             .is_err()
     );
+    let raw = rusqlite::Connection::open(&path).expect("verify extraction rollback");
+    let extraction_count: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM extractions WHERE document_path = '/vault/a.md'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count rolled-back extraction");
+    assert_eq!(extraction_count, 1);
+    drop(raw);
     assert_eq!(
         database
             .get_chunks_for_document("/vault/a.md")

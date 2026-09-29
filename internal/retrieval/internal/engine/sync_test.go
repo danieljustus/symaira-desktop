@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
@@ -22,6 +23,10 @@ type pendingRebuildFixture struct {
 	Pending       []pendingRebuildChunk `json:"pending_chunks"`
 	Resolved      []pendingRebuildChunk `json:"resolved_chunks"`
 	Reembedded    int                   `json:"reembedded_documents"`
+	Generation    int64                 `json:"generation"`
+	Extractions   int                   `json:"remaining_extractions"`
+	OldFTSHits    int                   `json:"old_text_fts_hits"`
+	NewFTSHits    int                   `json:"new_text_fts_hits"`
 }
 
 type pendingRebuildChunk struct {
@@ -63,32 +68,67 @@ func TestPendingRebuildPortFixture(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = dbClient.Close() })
 	source := "doc.md"
-	body := "# Pending rebuild\n\n" + strings.Repeat("source-bound fake embedding replacement ", 34)
-	if err := os.WriteFile(source, []byte(body), 0o600); err != nil {
+	oldBody := "# Pending rebuild\n\n" + strings.Repeat("staleonlymarker pending text ", 34)
+	newBody := "# Pending rebuild\n\n" + strings.Repeat("freshonlymarker rebuilt text ", 34)
+	if err := os.WriteFile(source, []byte(oldBody), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 8}, strings.NewReader(body), source); err != nil {
+	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 8}, strings.NewReader(oldBody), source); err != nil {
 		t.Fatal(err)
 	}
 	pending, err := dbClient.GetChunksForDocument(source)
 	if err != nil {
 		t.Fatal(err)
 	}
+	connection, err := sqlitekit.Open(filepath.Join(root, "retrieval.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := connection.Exec("INSERT INTO extractions (document_path, class, value, evidence_text, created_at) VALUES (?, 'fact', 'old value', 'old evidence', '2026-09-01T00:00:00Z')", source); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(source, []byte(newBody), 0o600); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
 	reembedded, err := ReembedPending(dbClient, &fakeEmbedder{dim: 8})
 	if err != nil {
+		_ = connection.Close()
 		t.Fatal(err)
 	}
 	resolved, err := dbClient.GetChunksForDocument(source)
 	if err != nil {
+		_ = connection.Close()
 		t.Fatal(err)
 	}
 	document, err := dbClient.GetDocument(source)
 	if err != nil || document == nil {
+		_ = connection.Close()
 		t.Fatalf("read rebuilt document: document=%v error=%v", document, err)
 	}
 	fixture := pendingRebuildFixture{SchemaVersion: 1, DocumentHash: document.Hash, Reembedded: reembedded}
 	fixture.Pending = portPendingRebuildChunks(pending)
 	fixture.Resolved = portPendingRebuildChunks(resolved)
+	if err := connection.QueryRow("SELECT value FROM index_meta WHERE key='generation'").Scan(&fixture.Generation); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
+	if err := connection.QueryRow("SELECT COUNT(*) FROM extractions WHERE document_path = ?", source).Scan(&fixture.Extractions); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
+	if err := connection.QueryRow("SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'staleonlymarker'").Scan(&fixture.OldFTSHits); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
+	if err := connection.QueryRow("SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'freshonlymarker'").Scan(&fixture.NewFTSHits); err != nil {
+		_ = connection.Close()
+		t.Fatal(err)
+	}
+	if err := connection.Close(); err != nil {
+		t.Fatal(err)
+	}
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
 		t.Fatal(err)

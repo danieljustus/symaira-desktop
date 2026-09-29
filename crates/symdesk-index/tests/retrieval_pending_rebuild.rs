@@ -10,6 +10,10 @@ struct Fixture {
     pending_chunks: Vec<Chunk>,
     resolved_chunks: Vec<Chunk>,
     reembedded_documents: usize,
+    generation: i64,
+    remaining_extractions: i64,
+    old_text_fts_hits: i64,
+    new_text_fts_hits: i64,
 }
 
 #[derive(Clone, Deserialize)]
@@ -91,6 +95,14 @@ fn replaces_pending_document_with_go_fake_embedder_output() {
     database
         .save_chunks(&pending)
         .expect("save Go pending chunks");
+    let raw = rusqlite::Connection::open(&path).expect("open Go extraction state");
+    raw.execute(
+        "INSERT INTO extractions (document_path, class, value, evidence_text, created_at)
+         VALUES ('$DOC', 'fact', 'old value', 'old evidence', '2026-09-01T00:00:00Z')",
+        [],
+    )
+    .expect("save source document extraction");
+    drop(raw);
     let resolved: Vec<_> = fixture.resolved_chunks.iter().map(stored).collect();
     database
         .replace_document_chunks(
@@ -121,6 +133,40 @@ fn replaces_pending_document_with_go_fake_embedder_output() {
         assert_eq!(actual.embedding_pending, expected.embedding_pending);
     }
     assert_eq!(database.count_pending_chunks().expect("pending count"), 0);
+    let raw = rusqlite::Connection::open(&path).expect("inspect replacement side effects");
+    let generation: i64 = raw
+        .query_row(
+            "SELECT value FROM index_meta WHERE key = 'generation'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("read generation");
+    assert_eq!(generation, fixture.generation);
+    let extractions: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM extractions WHERE document_path = '$DOC'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count deleted extractions");
+    assert_eq!(extractions, fixture.remaining_extractions);
+    let old_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'staleonlymarker'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search stale content");
+    assert_eq!(old_fts_hits, fixture.old_text_fts_hits);
+    let new_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'freshonlymarker'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search fresh content");
+    assert_eq!(new_fts_hits, fixture.new_text_fts_hits);
+    drop(raw);
     drop(database);
     let _ = fs::remove_file(path);
 }

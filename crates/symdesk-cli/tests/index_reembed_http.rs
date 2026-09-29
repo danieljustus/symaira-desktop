@@ -23,6 +23,8 @@ struct Fixture {
 #[derive(Clone, Deserialize)]
 struct FixtureCase {
     id: String,
+    #[serde(default)]
+    document_path: String,
     document_body: String,
     response_status: u16,
     embedding_dim: usize,
@@ -296,10 +298,16 @@ fn stored(path: &str, chunk: &FixtureChunk) -> StoredRetrievalChunk {
 fn reembed_cli_replays_go_http_success_and_failure_cases() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 5);
+    assert_eq!(fixture.cases.len(), 6);
     for case in fixture.cases {
         let root = TempRoot::new();
-        fs::write(root.path("cwd/doc.md"), &case.document_body).expect("write source Markdown");
+        let document_path = if case.document_path.is_empty() {
+            "doc.md"
+        } else {
+            case.document_path.as_str()
+        };
+        fs::write(root.path("cwd").join(document_path), &case.document_body)
+            .expect("write source document");
         let config_dir = root.path("home/.config/symseek");
         fs::create_dir_all(&config_dir).expect("create existing symseek config directory");
         let retrieval_path = root.path("data/retrieval.db");
@@ -320,7 +328,7 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
         let database = RetrievalDb::open_at(&retrieval_path).expect("create legacy retrieval DB");
         database
             .save_document(&RetrievalDocument {
-                path: "doc.md".to_owned(),
+                path: document_path.to_owned(),
                 hash: "old-pending-hash".to_owned(),
                 updated_at: "2026-09-01T00:00:00Z".to_owned(),
             })
@@ -328,7 +336,7 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
         let chunks = case
             .pending_chunks
             .iter()
-            .map(|chunk| stored("doc.md", chunk))
+            .map(|chunk| stored(document_path, chunk))
             .collect::<Vec<_>>();
         database.save_chunks(&chunks).expect("seed pending chunks");
         drop(database);
@@ -420,11 +428,11 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
             .prepare(
                 "SELECT uuid, chunk_index, content, embedding, hash, embedding_dim, embedding_model,
                         char_start, char_end, anchor_kind, anchor_value, embedding_pending
-                 FROM chunks WHERE document_path = 'doc.md' ORDER BY chunk_index",
+                 FROM chunks WHERE document_path = ? ORDER BY chunk_index",
             )
             .expect("prepare rebuilt chunks");
         let actual = statement
-            .query_map([], |row| {
+            .query_map([document_path], |row| {
                 Ok((
                     row.get::<_, String>(0)?,
                     row.get::<_, i64>(1)?,
@@ -467,8 +475,8 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
         }
         let hash: String = database
             .query_row(
-                "SELECT hash FROM documents WHERE path='doc.md'",
-                [],
+                "SELECT hash FROM documents WHERE path=?",
+                [document_path],
                 |row| row.get(0),
             )
             .expect("read rebuilt document hash");

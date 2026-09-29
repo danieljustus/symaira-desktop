@@ -54,7 +54,9 @@ pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, relocate_index_for_vault,
     retrieval_embedding_config, symseek_config_path,
 };
-pub use retrieval_markdown::parse_markdown_retrieval_sections;
+pub use retrieval_markdown::{
+    MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,
+};
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_init", include_str!("../migrations/001_init.sql")),

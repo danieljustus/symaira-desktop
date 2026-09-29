@@ -1,6 +1,7 @@
 use std::{
     collections::BTreeMap,
     fs,
+    io::Read,
     path::{Path, PathBuf},
     process::ExitCode,
 };
@@ -10,10 +11,10 @@ use rusqlite::Connection;
 use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
-    RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig, StoredRetrievalChunk,
-    backup_database, index_location_for_vault, materialize_chunks,
-    parse_markdown_retrieval_sections, relocate_index_for_vault, restore_database,
-    retrieval_embedding_config,
+    MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
+    StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_chunks,
+    parse_markdown_retrieval_sections, parse_text_retrieval_sections, relocate_index_for_vault,
+    restore_database, retrieval_embedding_config,
 };
 use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -360,14 +361,21 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
             .extension()
             .and_then(|value| value.to_str())
             .unwrap_or_default();
-        if !extension.eq_ignore_ascii_case("md") && !extension.eq_ignore_ascii_case("markdown") {
+        let markdown =
+            extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown");
+        let plain_text = extension.eq_ignore_ascii_case("txt");
+        if !markdown && !plain_text {
             eprintln!(
-                "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown only",
+                "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown and UTF-8 plain text only",
                 document.path
             );
             continue;
         }
-        let bytes = match fs::read(&document.path) {
+        let bytes = match if plain_text {
+            read_limited_plain_text(&document.path)
+        } else {
+            fs::read(&document.path).map_err(|error| error.to_string())
+        } {
             Ok(bytes) => bytes,
             Err(error) => {
                 eprintln!(
@@ -377,7 +385,11 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 continue;
             }
         };
-        let sections = match parse_markdown_retrieval_sections(&document.path, &bytes) {
+        let sections = match if plain_text {
+            parse_text_retrieval_sections(&document.path, &bytes)
+        } else {
+            parse_markdown_retrieval_sections(&document.path, &bytes)
+        } {
             Ok(sections) => sections,
             Err(error) => {
                 eprintln!(
@@ -449,6 +461,21 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
         resolved_documents,
         pending_documents,
     })
+}
+
+fn read_limited_plain_text(path: &str) -> Result<Vec<u8>, String> {
+    let file = fs::File::open(path).map_err(|error| error.to_string())?;
+    let mut bytes = Vec::new();
+    file.take((MAX_RETRIEVAL_SOURCE_BYTES + 1) as u64)
+        .read_to_end(&mut bytes)
+        .map_err(|error| error.to_string())?;
+    if bytes.len() > MAX_RETRIEVAL_SOURCE_BYTES {
+        return Err(format!(
+            "file {path} exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
+            bytes.len()
+        ));
+    }
+    Ok(bytes)
 }
 
 async fn embed_chunks(
@@ -618,5 +645,29 @@ fn emit_result(result: serde_json::Value, json_output: bool) -> ExitCode {
             .collect::<Vec<_>>()
             .join(" ");
         super::write_stdout(format!("map[{fields}]\n"))
+    }
+}
+
+#[cfg(test)]
+mod plain_text_read_tests {
+    use super::{MAX_RETRIEVAL_SOURCE_BYTES, read_limited_plain_text};
+    use std::{fs, time::SystemTime};
+
+    #[test]
+    fn bounded_reader_rejects_over_limit_file_without_loading_it_whole() {
+        let nonce = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "symdesk-text-reembed-limit-{}-{nonce}.txt",
+            std::process::id()
+        ));
+        fs::write(&path, vec![b'x'; MAX_RETRIEVAL_SOURCE_BYTES + 1])
+            .expect("write generated over-limit text");
+        let error = read_limited_plain_text(path.to_str().expect("UTF-8 temp path"))
+            .expect_err("over-limit text is rejected");
+        let _ = fs::remove_file(path);
+        assert!(error.contains("exceeds 10485760 byte limit (10485761 bytes)"));
     }
 }

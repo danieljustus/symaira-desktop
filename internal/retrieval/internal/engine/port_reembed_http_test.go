@@ -23,6 +23,7 @@ type reembedHTTPFixture struct {
 
 type reembedHTTPFixtureCase struct {
 	ID                  string                      `json:"id"`
+	DocumentPath        string                      `json:"document_path,omitempty"`
 	DocumentBody        string                      `json:"document_body"`
 	ResponseStatus      int                         `json:"response_status"`
 	EmbeddingDim        int                         `json:"embedding_dim"`
@@ -61,6 +62,7 @@ func TestReembedHTTPPortFixture(t *testing.T) {
 		{ID: "provider-404-keeps-pending-markdown", ResponseStatus: http.StatusNotFound, EmbeddingDim: 3},
 		{ID: "provider-auto-detects-response-dimension", ResponseStatus: http.StatusOK, ResponseDimension: 3},
 		{ID: "provider-dimension-mismatch-keeps-pending-markdown", ResponseStatus: http.StatusOK, EmbeddingDim: 3, ResponseDimension: 2},
+		{ID: "provider-resolves-pending-plain-text", DocumentPath: "doc.txt", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 	}
 	fixture := reembedHTTPFixture{SchemaVersion: 1}
 	for index := range cases {
@@ -132,19 +134,31 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	}
 	t.Cleanup(func() { _ = dbClient.Close() })
 	documentBody := "# Re-embed oracle\n\n" + strings.Repeat("local embedding contract text ", 62)
+	documentPath := testCase.DocumentPath
+	if documentPath == "" {
+		documentPath = "doc.md"
+	}
+	if documentPath == "doc.txt" {
+		documentBody = "Re-embed oracle\n\n" + strings.Repeat("local embedding contract text ", 62)
+	}
+	testCase.DocumentPath = documentPath
 	testCase.DocumentBody = documentBody
-	if err := os.WriteFile("doc.md", []byte("# Old pending content\n\nold state"), 0o600); err != nil {
+	oldBody := "# Old pending content\n\nold state"
+	if documentPath == "doc.txt" {
+		oldBody = "Old pending content\n\nold state"
+	}
+	if err := os.WriteFile(documentPath, []byte(oldBody), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 3}, strings.NewReader("# Old pending content\n\nold state"), "doc.md"); err != nil {
+	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 3}, strings.NewReader(oldBody), documentPath); err != nil {
 		t.Fatal(err)
 	}
-	pending, err := dbClient.GetChunksForDocument("doc.md")
+	pending, err := dbClient.GetChunksForDocument(documentPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	testCase.PendingChunks = portPendingRebuildChunks(pending)
-	if err := os.WriteFile("doc.md", []byte(documentBody), 0o600); err != nil {
+	if err := os.WriteFile(documentPath, []byte(documentBody), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	requests := make([]reembedHTTPFixtureRequest, 0, 4)
@@ -206,11 +220,11 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	if err != nil {
 		t.Fatal(err)
 	}
-	resolved, err := dbClient.GetChunksForDocument("doc.md")
+	resolved, err := dbClient.GetChunksForDocument(documentPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	document, err := dbClient.GetDocument("doc.md")
+	document, err := dbClient.GetDocument(documentPath)
 	if err != nil || document == nil {
 		t.Fatalf("read rebuilt document: document=%v error=%v", document, err)
 	}

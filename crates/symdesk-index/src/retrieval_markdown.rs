@@ -1,6 +1,6 @@
 use crate::{RetrievalAnchor, RetrievalSection, SidecarError};
 
-const MAX_MARKDOWN_BYTES: usize = 10 << 20;
+pub const MAX_RETRIEVAL_SOURCE_BYTES: usize = 10 << 20;
 
 /// Parses Markdown into the same durable sections used by Go retrieval indexing,
 /// then prepends the vault metadata section when the existing vault parser can
@@ -13,9 +13,9 @@ pub fn parse_markdown_retrieval_sections(
     source_path: &str,
     markdown: &[u8],
 ) -> Result<Vec<RetrievalSection>, SidecarError> {
-    if markdown.len() > MAX_MARKDOWN_BYTES {
+    if markdown.len() > MAX_RETRIEVAL_SOURCE_BYTES {
         return Err(SidecarError::Contract(format!(
-            "markdown content exceeds {MAX_MARKDOWN_BYTES} byte limit ({} bytes)",
+            "markdown content exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
             markdown.len()
         )));
     }
@@ -48,6 +48,39 @@ pub fn parse_markdown_retrieval_sections(
         }
     }
     Ok(sections)
+}
+
+/// Parses the generic text section used by Go's `ParseFileSections` fallback.
+/// It intentionally adds no vault metadata: Go only derives search metadata
+/// from Markdown paths.
+pub fn parse_text_retrieval_sections(
+    source_path: &str,
+    content: &[u8],
+) -> Result<Vec<RetrievalSection>, SidecarError> {
+    if content.len() > MAX_RETRIEVAL_SOURCE_BYTES {
+        return Err(SidecarError::Contract(format!(
+            "file {source_path} exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
+            content.len()
+        )));
+    }
+    let text = std::str::from_utf8(content).map_err(|error| {
+        SidecarError::Contract(format!(
+            "file {source_path} must be valid UTF-8 (invalid byte at {})",
+            error.valid_up_to()
+        ))
+    })?;
+    if text.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+    Ok(vec![RetrievalSection {
+        text: text.to_owned(),
+        start: 0,
+        anchor: RetrievalAnchor {
+            kind: "text".to_owned(),
+            value: "offset:0".to_owned(),
+        },
+        synthetic: false,
+    }])
 }
 
 fn strip_frontmatter(text: &str) -> (&str, usize) {
@@ -144,4 +177,41 @@ fn markdown_heading(line: &str) -> Option<(usize, &str)> {
     }
     let name = line[level..].trim();
     (!name.is_empty()).then_some((level, name))
+}
+
+#[cfg(test)]
+mod plain_text_tests {
+    use super::{MAX_RETRIEVAL_SOURCE_BYTES, parse_text_retrieval_sections};
+    use crate::{RetrievalAnchor, RetrievalSection};
+
+    #[test]
+    fn generic_text_uses_one_offset_zero_section_and_skips_whitespace() {
+        assert_eq!(
+            parse_text_retrieval_sections("notes/readme.txt", "über text\n".as_bytes()).unwrap(),
+            vec![RetrievalSection {
+                text: "über text\n".to_owned(),
+                start: 0,
+                anchor: RetrievalAnchor {
+                    kind: "text".to_owned(),
+                    value: "offset:0".to_owned(),
+                },
+                synthetic: false,
+            }]
+        );
+        assert!(
+            parse_text_retrieval_sections("notes/empty.txt", b" \n\t")
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn generic_text_rejects_invalid_utf8_and_over_limit_input() {
+        let invalid = parse_text_retrieval_sections("notes/binary.txt", b"ok\xff").unwrap_err();
+        assert!(invalid.to_string().contains("valid UTF-8"));
+
+        let too_large = vec![b'x'; MAX_RETRIEVAL_SOURCE_BYTES + 1];
+        let error = parse_text_retrieval_sections("notes/large.txt", &too_large).unwrap_err();
+        assert!(error.to_string().contains("exceeds 10485760 byte limit"));
+    }
 }

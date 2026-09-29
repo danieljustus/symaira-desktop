@@ -118,3 +118,10 @@ materialized chunks cover frontmatter, Unicode byte offsets, headings and
 synthetic metadata. Invalid UTF-8 is explicitly rejected in Rust; Go raw-byte
 parity, PDF/external parsing, provider execution and complete CLI re-embedding
 remain open. These additions do not close RUST-008 or its platform acceptance.
+
+At integrated commit `c2a634055e8f3f82fdb2f87add49b78a39fa3c8b`, the
+coordinator executed both new Go/Rust differential targets and all 69
+`symdesk-index` tests on Darwin/arm64 and native Linux/aarch64 (zero failed or
+ignored tests). Darwin also passed strict all-target Clippy, actionlint and
+the full immutable `portgen --check`. Remaining required target platforms
+are not established by these two local runs.

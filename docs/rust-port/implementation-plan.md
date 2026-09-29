@@ -1,5 +1,26 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated inert rerank configuration parity — 2026-09-29
+
+Candidate `3d4d8a569e4da39bb431e97e30f9198927c98a39` removes Rust's rejection
+of `rerank_query=true`. Go's actual CLI/MCP retrieval client never supplies a
+RerankCfg to the engine, so that flag is currently inert on both surfaces.
+The migration preserves this behavior; it does not activate the dormant Go
+reranker or introduce provider calls.
+
+Two actual Go fixture cases cover the configured flag through CLI search and
+MCP search, asserting an embeddings-only request trace and unchanged results.
+Real Rust processes replay both cases. Full immutable generation and reviewed
+artifact apply passed. Independent clean Darwin/arm64 and Linux/arm64 gates
+pass eight Go/Rust differentials and all204 CLI/index/protocol tests with zero
+failures/ignored. Darwin strict Clippy, fmt and actionlint pass. Both build roots
+contain `rerank-config-receipt-3d4d8a56.json` with source/fixture/log identity.
+
+INDEX-005/RUST-008 remain open for Ask and other service facades, formats,
+quantization and required native targets. No publication, installed cutover,
+Go removal or live model request occurred.
+
+
 ## Integrated local HyDE query expansion — 2026-09-29
 
 Candidate `ce97dcf18aa60118a78fde84cf23c9884429ce18` sends Go's HyDE prompt

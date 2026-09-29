@@ -12,6 +12,7 @@ mod mime;
 mod native_mime;
 mod retrieval_embedding;
 mod retrieval_query_expansion;
+mod retrieval_search;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
@@ -20,6 +21,7 @@ pub use retrieval_embedding::{
     LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
 };
 pub use retrieval_query_expansion::expand_local_ollama_query;
+pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
@@ -64,7 +66,7 @@ use hyper_util::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use symdesk_index::{IndexedDocument, Sidecar};
+use symdesk_index::{IndexedDocument, Sidecar, SourceRegistry};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::{
@@ -719,8 +721,11 @@ struct AiAskEvent<'a> {
     title: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     snippet: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    score: Option<serde_json::Number>,
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "serialize_go_f64"
+    )]
+    score: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tool_name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -729,6 +734,61 @@ struct AiAskEvent<'a> {
     citation_warnings: Option<&'a [AiCitationWarning]>,
     #[serde(skip_serializing_if = "Option::is_none")]
     read_paths: Option<&'a [String]>,
+}
+
+fn serialize_go_f64<S>(value: &Option<f64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let Some(value) = value else {
+        return serializer.serialize_none();
+    };
+    if value.is_finite()
+        && value.fract() == 0.0
+        && (*value >= i64::MIN as f64)
+        && (*value < i64::MAX as f64)
+    {
+        serializer.serialize_i64(*value as i64)
+    } else {
+        serializer.serialize_f64(*value)
+    }
+}
+
+#[cfg(test)]
+mod ai_ask_score_tests {
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct ScoreEvent {
+        #[serde(
+            skip_serializing_if = "Option::is_none",
+            serialize_with = "super::serialize_go_f64"
+        )]
+        score: Option<f64>,
+    }
+
+    #[test]
+    fn hybrid_event_score_keeps_go_float64_json_format() {
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: Some(1.0) }).unwrap(),
+            r#"{"score":1}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: Some(0.5) }).unwrap(),
+            r#"{"score":0.5}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent {
+                score: Some(f64::from(0.1_f32)),
+            })
+            .unwrap(),
+            r#"{"score":0.10000000149011612}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: None }).unwrap(),
+            "{}"
+        );
+    }
 }
 
 async fn handle_ai_transform(
@@ -1309,8 +1369,9 @@ async fn handle_ai_ask(
     }
 
     // Provider-backed Ask stays on the supported local Ollama and sidecar
-    // retrieval path. The empty hybrid-index check below prevents unmatched
-    // ranking behavior; ACL filtering still precedes context and citations.
+    // response path. Unscoped retrieval can use the shared hybrid selector;
+    // notebook scope remains sidecar-only. ACL filtering still precedes
+    // context and citations.
     let config = ai_transform_config_or_default(load_ai_transform_config());
     let configured_ollama = if ai_ask_provider_is_unconfigured(&config) {
         None
@@ -1333,24 +1394,6 @@ async fn handle_ai_ask(
             }
         }
     };
-    if !notebook_scoped {
-        match ai_ask_retrieval_index_is_empty(&state.vault_root) {
-            Ok(true) => {}
-            Ok(false) => {
-                return json_error(
-                    StatusCode::NOT_IMPLEMENTED,
-                    "hybrid retrieval ask is not implemented for indexes containing chunks",
-                );
-            }
-            Err(error) => {
-                return json_error(
-                    StatusCode::NOT_IMPLEMENTED,
-                    &format!("ask retrieval mode could not be verified: {error}"),
-                );
-            }
-        }
-    }
-
     let sidecar = match Sidecar::open(&state.vault_root.join(".symdesk/server/sidecar.db")) {
         Ok(sidecar) => sidecar,
         Err(error) => {
@@ -1365,25 +1408,76 @@ async fn handle_ai_ask(
     let mut documents: Vec<(String, String, String, String, f64)> = Vec::new();
     let mut scoped_paths: Option<Vec<String>> = None;
     if input.notebook.is_empty() {
-        let hits = match sidecar.search(&input.query) {
-            Ok(hits) => hits,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
+        let sources = SourceRegistry::open(&state.vault_root)
+            .and_then(|registry| registry.list())
+            .unwrap_or_default();
+        let hybrid_index_populated = matches!(
+            ai_ask_retrieval_index_is_empty(&state.vault_root),
+            Ok(false)
+        );
+        let hybrid_results = if hybrid_index_populated {
+            let vault_root = state.vault_root.clone();
+            let query = input.query.clone();
+            let sources = sources.clone();
+            tokio::task::spawn_blocking(move || {
+                hybrid_search_results(&vault_root, &query, &sources, 5)
+            })
+            .await
+            .ok()
+            .and_then(Result::ok)
+            .flatten()
+        } else {
+            None
         };
-        for hit in hits {
-            let relative = match path_relative_to_root(&state.vault_root, &hit.path) {
-                Some(relative) if !relative.as_os_str().is_empty() => relative,
-                // A stale index row outside the vault must never become context.
-                _ => continue,
+        let mut used_hybrid_results = false;
+        if let Some(results) = hybrid_results {
+            for result in results {
+                let Some(document) = hybrid_ask_document(
+                    &state.vault_root,
+                    &sources,
+                    &input.query,
+                    result,
+                    &sidecar,
+                ) else {
+                    continue;
+                };
+                documents.push(document);
+            }
+            used_hybrid_results = !documents.is_empty();
+        }
+        if documents.is_empty() {
+            let hits_result = match symdesk_core::query::parse(&input.query) {
+                Ok(plan) if plan.requires_sidecar() => sidecar
+                    .search_plan(&state.vault_root, &input.query)
+                    .map(|response| response.results),
+                Err(_) => sidecar
+                    .search_plan(&state.vault_root, &input.query)
+                    .map(|response| response.results),
+                _ => sidecar.search(&input.query),
             };
-            let Some((path, native_path)) = vault_relative_paths(&relative) else {
-                continue;
+            let hits = match hits_result {
+                Ok(hits) => hits,
+                Err(error) => {
+                    return json_error(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        &format!("retrieval failed: {error}"),
+                    );
+                }
             };
-            documents.push((path, native_path, hit.title, hit.snippet, 0.0));
+            for hit in hits {
+                let relative = match path_relative_to_root(&state.vault_root, &hit.path) {
+                    Some(relative) if !relative.as_os_str().is_empty() => relative,
+                    // A stale index row outside the vault must never become context.
+                    _ => continue,
+                };
+                let Some((path, native_path)) = vault_relative_paths(&relative) else {
+                    continue;
+                };
+                documents.push((path, native_path, hit.title, hit.snippet, 0.0));
+            }
+        }
+        if used_hybrid_results {
+            documents.truncate(5);
         }
     } else {
         let (results, in_scope) = match search_notebook_ask_sources(
@@ -1463,7 +1557,7 @@ async fn handle_ai_ask(
                 path: Some(path),
                 title: Some(title),
                 snippet: Some(snippet),
-                score: (*score != 0.0).then(|| serde_json::Number::from(1)),
+                score: (*score != 0.0).then_some(*score),
                 tool_name: None,
                 status: None,
                 citation_warnings: None,
@@ -1988,6 +2082,66 @@ fn is_ask_table_separator(line: &str) -> bool {
             let trimmed = cell.trim_matches(['-', ':']);
             trimmed.trim().is_empty()
         })
+}
+
+fn hybrid_ask_document(
+    vault_root: &Path,
+    sources: &[symdesk_index::SearchSource],
+    query: &str,
+    result: symdesk_index::RetrievalHybridSearchResult,
+    sidecar: &Sidecar,
+) -> Option<(String, String, String, String, f64)> {
+    let raw_path = PathBuf::from(&result.chunk.document_path);
+    let resolved = if raw_path.is_absolute() {
+        raw_path.canonicalize().ok()?
+    } else {
+        vault_root.join(&raw_path).canonicalize().ok()?
+    };
+    if !resolved.is_file() {
+        return None;
+    }
+    let vault_root = vault_root.canonicalize().ok()?;
+    let mut allowed_roots = vec![(vault_root.clone(), false)];
+    for source in sources {
+        if let Ok(root) = PathBuf::from(&source.path).canonicalize()
+            && !allowed_roots.iter().any(|(existing, _)| *existing == root)
+        {
+            allowed_roots.push((root, true));
+        }
+    }
+    let (root, external) = allowed_roots
+        .iter()
+        .find(|(root, _)| resolved.starts_with(root))?;
+    let display_path = if *external {
+        resolved.to_string_lossy().into_owned()
+    } else {
+        let relative = resolved.strip_prefix(root).ok()?;
+        vault_relative_paths(relative)?.0
+    };
+    let native_path = if *external {
+        resolved.to_string_lossy().into_owned()
+    } else {
+        vault_relative_paths(resolved.strip_prefix(root).ok()?)?.1
+    };
+    let title = sidecar
+        .get_title(&raw_path.to_string_lossy())
+        .or_else(|_| sidecar.get_title(&resolved.to_string_lossy()))
+        .unwrap_or_else(|_| {
+            raw_path
+                .file_stem()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_owned()
+        });
+    let snippet =
+        symdesk_vault::strip_search_metadata(&go_search_snippet(&result.chunk.content, &[query]));
+    Some((
+        display_path,
+        native_path,
+        title,
+        snippet,
+        f64::from(result.rrf_score),
+    ))
 }
 
 fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {

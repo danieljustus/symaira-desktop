@@ -62,6 +62,7 @@ type httpCase struct {
 	PopulateWorkerACL         bool              `json:"populate_worker_acl,omitempty"`
 	PopulateNamedUser         bool              `json:"populate_named_user,omitempty"`
 	PopulateHybridIndex       bool              `json:"populate_hybrid_index,omitempty"`
+	HybridQuery               bool              `json:"hybrid_query,omitempty"`
 	RemoveSymlinkEscapes      bool              `json:"remove_symlink_escapes,omitempty"`
 	ProviderOllama            bool              `json:"provider_ollama,omitempty"`
 	ProviderOpenAIFallback    bool              `json:"provider_openai_fallback,omitempty"`
@@ -207,6 +208,7 @@ func run() (runErr error) {
 		}
 	}()
 	leftETag, rightETag := "", ""
+	hybridIndexPrepared := false
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
 		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderAskOllama || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
@@ -214,7 +216,7 @@ func run() (runErr error) {
 		}
 	}
 	for _, tc := range suite.Cases {
-		if tc.PopulateHybridIndex {
+		if tc.PopulateHybridIndex && !hybridIndexPrepared {
 			if err := leftServer.stop(); err != nil {
 				fatal("stop Go server before hybrid fixture: %v", err)
 			}
@@ -238,6 +240,7 @@ func run() (runErr error) {
 			if err := provider.assertEmbeddingRequests(4, "Body"); err != nil {
 				fatal("hybrid fixture embedding requests: %v", err)
 			}
+			hybridIndexPrepared = true
 		}
 		if tc.RemoveSymlinkEscapes {
 			for _, vault := range []string{leftVault, rightVault} {
@@ -367,6 +370,17 @@ func run() (runErr error) {
 			}
 			if err := provider.assertNoChatRequests(); err != nil {
 				fatal("%s unexpected scoped-query chat request: %v", tc.ID, err)
+			}
+		}
+		if tc.HybridQuery {
+			if err := provider.assertEmbeddingRequests(2, "Body"); err != nil {
+				fatal("%s hybrid-query embedding requests: %v", tc.ID, err)
+			}
+			if err := provider.assertNoEmbeddingRequests(); err != nil {
+				fatal("%s unexpected extra hybrid-query embedding: %v", tc.ID, err)
+			}
+			if err := provider.assertNoChatRequests(); err != nil {
+				fatal("%s unexpected hybrid-query chat request: %v", tc.ID, err)
 			}
 		}
 		if tc.ProviderOllama || tc.ProviderOpenAIFallback {
@@ -901,6 +915,9 @@ func populateHybridIndex(vault, binary, providerURL string) error {
 	home := filepath.Join(vault, ".http-harness", filepath.Base(binary))
 	configDir := filepath.Join(home, ".config", "symseek")
 	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Join(home, "tmp"), 0o700); err != nil {
 		return err
 	}
 	config := fmt.Sprintf("ollama_url = %q\nmodel = \"fixture-model\"\nembedding_dim = 2\ntimeout_seconds = 2\nretry_count = 0\nretry_backoff_ms = 1\n", providerURL+"/api/embeddings")
@@ -2148,6 +2165,31 @@ func compare(id string, left, right transcript) error {
 			}
 			if count < 2 {
 				return fmt.Errorf("%s ranked ask citations = %d, want at least two", item.name, count)
+			}
+		}
+	}
+	if id == "ai-ask-unscoped-hybrid-index" {
+		for _, item := range []struct {
+			name     string
+			response transcript
+		}{{"Go", left}, {"Rust", right}} {
+			count := 0
+			nonzeroScore := false
+			for _, line := range bytes.Split(bytes.TrimSpace(item.response.Body), []byte{'\n'}) {
+				var event struct {
+					Type  string   `json:"type"`
+					Score *float64 `json:"score"`
+				}
+				if err := json.Unmarshal(line, &event); err != nil {
+					return fmt.Errorf("%s hybrid ask event: %w", item.name, err)
+				}
+				if event.Type == "citation" {
+					count++
+					nonzeroScore = nonzeroScore || (event.Score != nil && *event.Score > 0)
+				}
+			}
+			if count == 0 || !nonzeroScore {
+				return fmt.Errorf("%s hybrid ask citations = %d, nonzero score present = %t; want citation with retrieval score", item.name, count, nonzeroScore)
 			}
 		}
 	}

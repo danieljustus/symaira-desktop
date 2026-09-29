@@ -1,5 +1,27 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated bounded offline Ask MCP — 2026-09-29
+
+Candidate `bd5fb252627c1a008622dda71f1bf8c749325dc3` exposes desk_ask through
+MCP and reuses the existing offline Ask/search helpers. The real Go tools
+registry and ServeIO oracle supplies the catalog and11 call envelopes for
+one tag-search scenario. Rust matches8 call envelopes (including case-folded
+keys, null, whitespace and field type errors). Two folded-duplicate cases
+currently reject instead of Go last-write-wins; the notebook case explicitly
+reports unsupported scope. Those3 controls are declared differences.
+
+Full immutable generation/application, ten differentials and206 CLI/index/
+protocol tests pass on native Darwin/arm64 and Linux/arm64, zero failed or
+ignored. Darwin strict Clippy/fmt/actionlint pass. Both build roots retain
+`ask-mcp-receipt-bd5fb252.json` with source, fixture, metadata and log hashes.
+
+This fixture does not exercise hybrid MCP Ask: its empty provider_requests
+array is assigned, not measured. Existing CLI/search hybrid tests are separate
+evidence. Raw argument ordering, a measured hybrid MCP Ask case, notebook
+scope, configured AI providers, HTTP hybrid Ask and remaining native targets
+keep AI-002/RUST-012 open. No live provider or installed cutover was used.
+
+
 ## Integrated inert retrieval settings — 2026-09-29
 
 Candidate `bacaaff839a925b0daba945d914475f28ed14ebe` removes Rust-only rejection

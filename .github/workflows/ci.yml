@@ -449,6 +449,10 @@ jobs:
         shell: bash
         run: make retrieval-hybrid-differential
 
+      - name: Run native pending document rebuild differential
+        shell: bash
+        run: make retrieval-pending-rebuild-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

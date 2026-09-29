@@ -465,6 +465,10 @@ jobs:
         shell: bash
         run: make retrieval-reembed-http-differential
 
+      - name: Run native local-hash embedding differential
+        shell: bash
+        run: make retrieval-local-hash-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

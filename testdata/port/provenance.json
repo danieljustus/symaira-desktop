@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "216c7f70f49f8412eae95194227b78b3883feb37",
+    "commit": "7f814c6702f12de829dbff6a5347bef7f312a6b4",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "9928661e32e94a46528dc10b54d6b6fbdebd1915a530fd032ad4b87e84ee2fb3",
-  "generator_source_digest": "6cb8433b3ae786d2f8681124029683868d6ea41c7d0dab84e274210c0668b3ea",
+  "generator_source_digest": "775ea866c6cce663af1f53956b08bf21ad72ea3d8e4e068b39642fa3c798d0f6",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -40,7 +40,7 @@
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
     "testdata/port/http/representative.json": "531ba9621c5f6de63cff9c8c4a31d154e9940c41ac29231b0f598df5717aa726",
     "testdata/port/http/routes.json": "43c706ede035052e9eb6392eeec84ed67abc48ab108a0c01a3aefd00cef0ecd1",
-    "testdata/port/mcp/ask-offline.json": "6484bf4f7c119e18a5770d221e2555f62334e91e05e59c022b3d0ab3aa81e673",
+    "testdata/port/mcp/ask-offline.json": "9076a5f99d00d76b5edb3333cdd267a981d9133c036a23b1c52c5450419bc2af",
     "testdata/port/mcp/representative.json": "7cd97912b2b79b6efd4e6f36a56981552f052bb0ef1c6dcd546dcc17f0d3e2bc",
     "testdata/port/mcp/search-hybrid.json": "9c2317d7bacdd4e8907f8815be154da2ec5c75ebe7637ed50c2a6e536b9ad566",
     "testdata/port/mcp/symdesk-tools.json": "f436a6e77c19b263e7816e13d9dfeac1305350f156b4532159d1abb9b431757d",
@@ -90,10 +90,10 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "9ec266091f5a8f5573e115ea8244a6e70a0f38ae3d2e3b93477bed768df92b82",
-    "testdata/port/sidecar/lifecycle.json": "a4caf56c6a8027b2377fc9614add4fc8d743ed29895c54e97d84b4698c948e4d",
+    "testdata/port/sidecar/large-corpus.json": "76e74f5db996f919be94c8bb3ef356cb7a52a9db1bd93f02f79885f196284c9b",
+    "testdata/port/sidecar/lifecycle.json": "922acd331ec1bd6956f7ae48acbb5e1fc77154778b3feed2cd5d9fb6d9ab4242",
     "testdata/port/sidecar/metadata.json": "319b08ad672a9955eace69d1d07df7674889bde2599dea369edf15c3d26ea400",
-    "testdata/port/sidecar/roundtrip.json": "45cbe6ecc87d9e4e0c136f25a9e6dbede28cf4d9ecff764d24e08b0908d57f73",
+    "testdata/port/sidecar/roundtrip.json": "b156521ef9ffc006f9c798b102571358f6e5689b6a47f3c2fe580a473752cfac",
     "testdata/port/vault/base-view-write.json": "15ab195e2e6693c7286abcede276e58290e0c08b79a226baea26a16f881bc967",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",

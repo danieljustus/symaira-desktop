@@ -1,5 +1,30 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated raw MCP arguments and measured hybrid Ask — 2026-09-29
+
+Candidate `2a00af4fd10022aae10ec8287eafba7523f16ecf` preserves the raw MCP
+arguments through envelope decoding and shares Go-compatible string decoding
+between Ask and Search. The actual Go registry/ServeIO fixture now has24 calls:
+22 exact envelopes and2 explicitly unsupported notebook controls. It covers
+folded and exact duplicate keys, null retention, first type errors, missing
+arguments, duplicate arguments envelopes and duplicate top-level params.
+
+The hybrid scenario indexes four synthetic documents, records one actual
+`POST /v1/embeddings` request for a nonlexical query, and compares the exact
+three fallback citations. Positive-zero search scores retain Go JSON bytes.
+The provenance digest now binds all package-local cmd/internal Go tests,
+helpers and testdata, replacing an incomplete manual generator allowlist.
+The existing provenance test also works when Git has no installed templates.
+
+Full immutable generation/application, ten Go/Rust differentials, inventory/
+portgen tests and207 CLI/index/protocol tests pass on native Darwin/arm64 and
+Linux/arm64, zero failed/ignored. Darwin strict Clippy/fmt/actionlint pass.
+Both build roots retain `raw-arguments-receipt-2a00af4f.json`, binding the
+candidate, metadata, fixtures and log hashes. Notebook scope, configured AI
+providers, HTTP hybrid Ask and other native targets keep AI-002/RUST-012 open.
+No live provider, publication or installed cutover was used.
+
+
 ## Integrated bounded offline Ask MCP — 2026-09-29
 
 Candidate `bd5fb252627c1a008622dda71f1bf8c749325dc3` exposes desk_ask through

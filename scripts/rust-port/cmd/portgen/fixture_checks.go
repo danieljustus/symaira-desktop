@@ -51,6 +51,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"retrieval pending rebuild", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestPendingRebuildPortFixture$"}, []string{"testdata/port/retrieval/pending-rebuild.json"}, false},
 	{"retrieval Markdown sections", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalSectionsFixture$"}, []string{"testdata/port/retrieval/retrieval-sections.json"}, false},
 	{"retrieval embedding HTTP", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestEmbeddingHTTPPortFixture$"}, []string{"testdata/port/retrieval/embedding-http.json"}, false},
+	{"retrieval re-embed HTTP CLI", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestReembedHTTPPortFixture$"}, []string{"testdata/port/retrieval/reembed-http-cli.json"}, false},
 	{"retrieval hybrid", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalHybridFixture$"}, []string{"testdata/port/retrieval/hybrid.json"}, false},
 	{"retrieval chunks", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalChunksFixture$"}, []string{"testdata/port/retrieval/retrieval-chunks.json"}, false},
 	{"retrieval BM25", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalBM25Fixture$"}, []string{"testdata/port/retrieval/retrieval-bm25.json"}, false},

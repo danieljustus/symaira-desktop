@@ -90,6 +90,7 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/pending-rebuild.json",
 	"testdata/port/retrieval/retrieval-sections.json",
 	"testdata/port/retrieval/embedding-http.json",
+	"testdata/port/retrieval/reembed-http-cli.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",
 	"testdata/port/retrieval/index-relocate.json",

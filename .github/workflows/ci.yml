@@ -461,6 +461,10 @@ jobs:
         shell: bash
         run: make retrieval-embedding-http-differential
 
+      - name: Run native pending re-embed HTTP CLI differential
+        shell: bash
+        run: make retrieval-reembed-http-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

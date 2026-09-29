@@ -313,15 +313,33 @@ func hybridLines(output string) []string {
 }
 
 func hybridNormalizeMixedError(message string) string {
-	start := strings.Index(message, "(")
-	end := strings.Index(message[start+1:], ")")
-	if start < 0 || end < 0 {
+	const prefix = "index contains mixed embedding spaces ("
+	const suffix = "); re-index with a single model before searching"
+	body, ok := strings.CutPrefix(message, prefix)
+	if !ok {
 		return message
 	}
-	end += start + 1
-	pairs := strings.Split(message[start+1:end], ", ")
+	body, ok = strings.CutSuffix(body, suffix)
+	if !ok {
+		return message
+	}
+	// Each map-derived pair has its own parenthesized chunk count. The
+	// envelope, rather than the first closing parenthesis, bounds the list.
+	pairs := strings.Split(body, ", ")
 	sort.Strings(pairs)
-	return message[:start+1] + strings.Join(pairs, ", ") + message[end:]
+	return prefix + strings.Join(pairs, ", ") + suffix
+}
+
+func TestHybridMixedErrorNormalization(t *testing.T) {
+	const ordered = "index contains mixed embedding spaces (2/fixture-model (1 chunks), 2/other-model (1 chunks)); re-index with a single model before searching"
+	const reversed = "index contains mixed embedding spaces (2/other-model (1 chunks), 2/fixture-model (1 chunks)); re-index with a single model before searching"
+	if got := hybridNormalizeMixedError(reversed); got != ordered {
+		t.Fatalf("nested count parentheses must not truncate the sortable list: %s", got)
+	}
+	const unrelated = "vector failure (second, first)"
+	if got := hybridNormalizeMixedError(unrelated); got != unrelated {
+		t.Fatalf("unrelated diagnostics must stay unchanged: %s", got)
+	}
 }
 
 func hybridRepoRoot(t *testing.T) string {

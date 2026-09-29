@@ -181,6 +181,7 @@
       "id": "RUST-008",
       "title": "Port full sidecar and retrieval stack",
       "status": "blocked",
+      "note": "Integrated ce97dcf1 passes full immutable fixture generation/application, eight Go/Rust differentials and 204 CLI/index/protocol tests on Darwin/arm64 and Linux/arm64. Shared CLI/MCP local HyDE expansion preserves Go prompt, cache, dimensions and failure behavior; success bodies are bounded to 4 MiB. Rerank-config rejection, remaining facades/formats/quantization and other native targets stay open.",
       "depends_on": [
         "RUST-006",
         "RUST-007"

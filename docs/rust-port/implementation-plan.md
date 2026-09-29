@@ -1,5 +1,33 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated local HyDE query expansion — 2026-09-29
+
+Candidate `ce97dcf18aa60118a78fde84cf23c9884429ce18` sends Go's HyDE prompt
+through a bounded local Ollama chat request, trims the generated passage with
+Go's rune/word boundary rules and averages its embedding with the original
+query vector. CLI and MCP share this implementation. Failure preserves the
+original vector; lexical search still uses the original query.
+
+Actual Go service/ServeIO fixtures and real Rust processes cover successful
+expansion, failure, identical-text embedding-cache reuse, an initially unknown
+embedding dimension with unequal returned vectors, the first 512 error bytes,
+and Go chat JSON case/null/duplicate/trailing-document behavior. The transport
+uses loopback HTTP only and caps a successful chat body at 4 MiB; this bound is
+stricter than Go's unbounded decoder. No live model or provider was contacted.
+
+Complete immutable fixture generation and reviewed artifact application passed.
+Independent clean Darwin/arm64 and Linux/arm64 gates then passed eight Go/Rust
+differentials and all 204 CLI/index/protocol tests, zero failed/ignored. Darwin
+strict all-target Clippy, formatting and actionlint passed. Both build roots
+contain `query-expansion-receipt-ce97dcf1.json` with candidate/source metadata,
+fixture hashes and log hashes. The Go production digest remains `9928661e...`.
+
+INDEX-005/RUST-008 remain open for remaining facades, formats, quantization and
+native targets. Go's actual CLI/MCP path currently ignores rerank configuration;
+Rust still rejects that option in this candidate, to be corrected separately
+without activating a new Go feature. No publication, installed cutover or Go removal.
+
+
 ## Integrated shared query plan and MCP hybrid search — 2026-09-29
 
 Candidate `7e65075f1cd183452773ad664f81086dc1927747` connects `desk_search`

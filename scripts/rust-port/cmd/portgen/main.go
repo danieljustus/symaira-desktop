@@ -93,6 +93,7 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/reembed-http-cli.json",
 	"testdata/port/retrieval/local-hash.json",
 	"testdata/port/cli/search-hybrid.json",
+	"testdata/port/cli/ask-offline.json",
 	"testdata/port/mcp/search-hybrid.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",

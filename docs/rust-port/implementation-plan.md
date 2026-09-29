@@ -1,5 +1,16 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated pending Markdown repair checkpoint — 2026-09-29
+
+`058ff6d7d95fff96232287601182f4bf09681d00` passes the five Go/Rust retrieval
+differentials and all 188 CLI/index/protocol tests on native Darwin/arm64 and
+Linux/arm64. The reembed CLI fixture covers success, retry, provider failure,
+learned dimensions and mismatches. Full immutable provenance, Darwin strict
+Clippy/fmt/actionlint also pass. See the contract matrix's integrated Markdown
+repair section for the intentional incomplete-result behavior and remaining
+provider/parser/facade/platform limits. No whole ledger row is promoted.
+
+
 > **For implementers:** work strictly in dependency order from
 > `work-items.json`. Use separate branches/worktrees for independent items; keep
 > parity-sensitive dependent slices under one coordinator.

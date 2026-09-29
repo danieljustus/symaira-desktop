@@ -46,9 +46,7 @@ func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
 	if err := os.Remove(filepath.Join(repoRoot, "internal/core/untracked_test.go")); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(repoRoot, ".git/info/exclude"), []byte("ignored_test.go\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writePortgenTestFile(t, repoRoot, ".git/info/exclude", "ignored_test.go\n")
 	writePortgenTestFile(t, repoRoot, "internal/core/ignored_test.go", "package core\n")
 	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err == nil {
 		t.Fatal("generation accepted an ignored Go generator")

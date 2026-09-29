@@ -21,6 +21,58 @@ pub fn symseek_config_path(environment: &BTreeMap<String, String>, cwd: &Path) -
     absolute_clean(&path, cwd)
 }
 
+/// The provider settings used by the explicit pending-embedding repair path.
+/// This is a projection of the existing symseek config, not a second config
+/// format or loader.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetrievalEmbeddingConfig {
+    pub ollama_url: String,
+    pub model: String,
+    /// `None` preserves Go's zero-dimension behavior: omit the request field
+    /// and learn the expected dimension from the first successful response.
+    pub embedding_dim: Option<usize>,
+    pub timeout_seconds: u64,
+    pub retry_count: usize,
+    pub retry_backoff_ms: u64,
+}
+
+/// Loads the effective embedding settings from the existing standalone
+/// symseek config path and applies the same defaults as Go's OllamaConfig.
+pub fn retrieval_embedding_config(
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<RetrievalEmbeddingConfig, SidecarError> {
+    let path = symseek_config_path(environment, cwd);
+    let config = load_config(&path)?;
+    Ok(RetrievalEmbeddingConfig {
+        ollama_url: if config.ollama_url.is_empty() {
+            "http://localhost:11434/api/embeddings".to_owned()
+        } else {
+            config.ollama_url
+        },
+        model: if config.model.is_empty() {
+            "qwen3-embedding:0.6b".to_owned()
+        } else {
+            config.model
+        },
+        embedding_dim: usize::try_from(config.embedding_dim)
+            .ok()
+            .filter(|value| *value > 0),
+        timeout_seconds: u64::try_from(config.timeout_seconds)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(120),
+        retry_count: usize::try_from(config.retry_count)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(2),
+        retry_backoff_ms: u64::try_from(config.retry_backoff_ms)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(500),
+    })
+}
+
 /// Resolves the Go retrieval index path without opening or creating the DB.
 /// A configured `index_path` wins for standalone and vault-scoped requests.
 pub fn index_location_for_vault(
@@ -354,10 +406,43 @@ fn lexical_clean(path: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::BTreeMap, fs, path::Path};
+
+    use super::retrieval_embedding_config;
+
+    #[test]
+    fn embedding_projection_uses_existing_config_and_go_defaults() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("symseek-config-projection-{nonce}"));
+        let config_dir = root.join(".config/symseek");
+        fs::create_dir_all(&config_dir).expect("create config directory");
+        fs::write(
+            config_dir.join("config.toml"),
+            "ollama_url = \"\"\nmodel = \"\"\nembedding_dim = 0\ntimeout_seconds = 0\nretry_count = 0\nretry_backoff_ms = 0\n",
+        )
+        .expect("write existing config format");
+        let environment =
+            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
+        assert_eq!(config.ollama_url, "http://localhost:11434/api/embeddings");
+        assert_eq!(config.model, "qwen3-embedding:0.6b");
+        assert_eq!(config.embedding_dim, None);
+        assert_eq!(config.timeout_seconds, 120);
+        assert_eq!(config.retry_count, 2);
+        assert_eq!(config.retry_backoff_ms, 500);
+        fs::remove_file(config_dir.join("config.toml")).expect("remove override");
+        let defaults = retrieval_embedding_config(&environment, Path::new("/")).expect("defaults");
+        assert_eq!(defaults.embedding_dim, Some(768));
+        let _ = fs::remove_dir_all(root);
+    }
+
     #[cfg(unix)]
     use super::lexical_clean;
     #[cfg(unix)]
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     #[cfg(unix)]
     #[test]

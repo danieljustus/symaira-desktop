@@ -115,7 +115,24 @@ impl LocalEmbeddingError {
 /// and no URL credentials. Configured path and query are discarded just as
 /// Go's `ollamaBaseURL` does before appending `/v1/embeddings`.
 pub fn local_ollama_embeddings_endpoint(configured_url: &str) -> Option<Uri> {
-    local_ollama_endpoint_for_path(configured_url, "/v1/embeddings")
+    let parsed = configured_url.parse::<Uri>().ok()?;
+    let authority = parsed.authority()?;
+    if authority.as_str().contains('@')
+        || parsed.scheme_str()? != "http"
+        || !parsed.host()?.eq_ignore_ascii_case("localhost")
+    {
+        return local_ollama_endpoint_for_path(configured_url, "/v1/embeddings");
+    }
+    // Go's Ollama client accepts the default localhost URL. Resolve only this
+    // exact hostname to IPv4 loopback so the existing numeric-loopback policy
+    // remains in force without DNS or changes to the chat endpoint boundary.
+    // A provider bound exclusively to ::1 is outside this supported subset.
+    let port = parsed
+        .port_u16()
+        .map(|port| format!(":{port}"))
+        .unwrap_or_default();
+    let normalized = format!("http://127.0.0.1{port}");
+    local_ollama_endpoint_for_path(&normalized, "/v1/embeddings")
 }
 
 /// Sends one OpenAI-wire embedding request to a numeric loopback Ollama

@@ -170,3 +170,57 @@ fn replaces_pending_document_with_go_fake_embedder_output() {
     drop(database);
     let _ = fs::remove_file(path);
 }
+
+#[test]
+fn pending_document_listing_matches_go_updated_at_order_and_filters_clean_docs() {
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time after epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "symdesk-pending-list-{}-{nonce}.db",
+        std::process::id()
+    ));
+    let database = RetrievalDb::open_at(&path).expect("open isolated retrieval database");
+    let make_chunk = |document_path: &str, pending: bool| StoredRetrievalChunk {
+        id: 0,
+        uuid: format!("{document_path}-{pending}"),
+        document_path: document_path.to_owned(),
+        chunk_index: 0,
+        content: "chunk".to_owned(),
+        embedding: Vec::new(),
+        hash: "hash".to_owned(),
+        norm: 0.0,
+        dim: 0,
+        model: "local-hash".to_owned(),
+        char_start: None,
+        char_end: None,
+        anchor_kind: "text".to_owned(),
+        anchor_value: "offset:0".to_owned(),
+        embedding_pending: pending,
+    };
+    for (name, timestamp, pending) in [
+        ("old.md", "2026-09-01T00:00:00Z", true),
+        ("clean.md", "2026-09-03T00:00:00Z", false),
+        ("new.md", "2026-09-02T00:00:00Z", true),
+    ] {
+        let document = RetrievalDocument {
+            path: name.to_owned(),
+            hash: "hash".to_owned(),
+            updated_at: timestamp.to_owned(),
+        };
+        database.save_document(&document).expect("save doc");
+        database
+            .save_chunks(&[make_chunk(name, pending)])
+            .expect("save chunk");
+    }
+    let paths = database
+        .list_pending_documents()
+        .expect("list pending docs")
+        .into_iter()
+        .map(|document| document.path)
+        .collect::<Vec<_>>();
+    assert_eq!(paths, ["new.md", "old.md"]);
+    drop(database);
+    let _ = fs::remove_file(path);
+}

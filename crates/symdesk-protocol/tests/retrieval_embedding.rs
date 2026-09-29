@@ -260,7 +260,10 @@ fn embeddings_endpoint_keeps_existing_loopback_http_boundary() {
             "http://[::1]:11434/api/embeddings",
             Some("http://[::1]:11434/v1/embeddings"),
         ),
-        ("http://localhost:11434", None),
+        (
+            "http://localhost:11434",
+            Some("http://127.0.0.1:11434/v1/embeddings"),
+        ),
         ("https://127.0.0.1:11434", None),
         ("http://192.0.2.10:11434", None),
         ("http://user:secret@127.0.0.1:11434", None),

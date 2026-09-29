@@ -543,6 +543,28 @@ impl RetrievalDb {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    /// Returns documents with at least one pending embedding, in the same
+    /// newest-first order as Go's ListDocuments followed by pending counts.
+    pub fn list_pending_documents(&self) -> Result<Vec<RetrievalDocument>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT d.path, d.hash, d.updated_at
+             FROM documents d
+             WHERE EXISTS (
+                 SELECT 1 FROM chunks c
+                 WHERE c.document_path = d.path AND c.embedding_pending = 1
+             )
+             ORDER BY d.updated_at DESC",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(RetrievalDocument {
+                path: row.get(0)?,
+                hash: row.get(1)?,
+                updated_at: row.get(2)?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     pub fn count_pending_chunks(&self) -> Result<i64, SidecarError> {
         self.connection
             .query_row(

@@ -457,6 +457,10 @@ jobs:
         shell: bash
         run: make retrieval-sections-differential
 
+      - name: Run native retrieval embedding HTTP differential
+        shell: bash
+        run: make retrieval-embedding-http-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

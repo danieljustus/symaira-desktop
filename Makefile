@@ -44,6 +44,7 @@
 .PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
 .PHONY: retrieval-pending-rebuild-fixtures-generate retrieval-pending-rebuild-differential
 .PHONY: retrieval-sections-fixtures-generate retrieval-sections-differential
+.PHONY: retrieval-embedding-http-fixtures-generate retrieval-embedding-http-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -509,6 +510,13 @@ retrieval-sections-fixtures-generate:
 retrieval-sections-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_sections --test retrieval_chunks
+
+retrieval-embedding-http-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+
+retrieval-embedding-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+	$(CARGO) test -p symdesk-protocol --locked --test retrieval_embedding
 
 retrieval-vector-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'

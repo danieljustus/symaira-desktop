@@ -1,5 +1,15 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated UTF-8 text repair checkpoint — 2026-09-29
+
+`f0704449b27189e46544af75d2bd48f7b20268b9` extends the Markdown checkpoint
+below with bounded UTF-8 `.txt` pending repair. Six Go/Rust HTTP CLI cases and
+all 191 CLI/index/protocol tests pass on native Darwin/arm64 and Linux/arm64,
+zero failed/ignored. Complete immutable provenance and Darwin strict lint gates
+pass. Invalid UTF8, other document formats/providers and remaining platforms
+remain open; no whole ledger row is promoted.
+
+
 ## Integrated pending Markdown repair checkpoint — 2026-09-29
 
 `058ff6d7d95fff96232287601182f4bf09681d00` passes the five Go/Rust retrieval

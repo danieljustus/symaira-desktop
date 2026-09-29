@@ -29,14 +29,16 @@ type searchHybridMCPFixture struct {
 }
 
 type searchHybridMCPFixtureCase struct {
-	ID                string                    `json:"id"`
-	Query             string                    `json:"query"`
-	EmbeddingDim      int                       `json:"embedding_dim"`
-	ProviderStatus    int                       `json:"provider_status"`
-	ProviderDimension int                       `json:"provider_dimension"`
-	Documents         []searchHybridMCPDocument `json:"documents"`
-	Requests          []searchHybridMCPRequest  `json:"requests"`
-	Expected          json.RawMessage           `json:"expected"`
+	ID                    string                    `json:"id"`
+	Query                 string                    `json:"query"`
+	EmbeddingDim          int                       `json:"embedding_dim"`
+	ProviderStatus        int                       `json:"provider_status"`
+	ProviderDimension     int                       `json:"provider_dimension"`
+	Documents             []searchHybridMCPDocument `json:"documents"`
+	ExternalDocuments     []searchHybridMCPDocument `json:"external_documents,omitempty"`
+	UnregisteredDocuments []searchHybridMCPDocument `json:"unregistered_documents,omitempty"`
+	Requests              []searchHybridMCPRequest  `json:"requests"`
+	Expected              json.RawMessage           `json:"expected"`
 }
 
 type searchHybridMCPDocument struct {
@@ -93,7 +95,10 @@ func TestSearchHybridMCPOracle(t *testing.T) {
 		sameExpected := sameSearchJSON(got.Expected, previous.Expected)
 		if got.ID != previous.ID || got.Query != previous.Query || got.EmbeddingDim != previous.EmbeddingDim ||
 			got.ProviderStatus != previous.ProviderStatus || got.ProviderDimension != previous.ProviderDimension ||
-			!reflect.DeepEqual(got.Documents, previous.Documents) || !sameRequests || !sameExpected {
+			!reflect.DeepEqual(got.Documents, previous.Documents) ||
+			!reflect.DeepEqual(got.ExternalDocuments, previous.ExternalDocuments) ||
+			!reflect.DeepEqual(got.UnregisteredDocuments, previous.UnregisteredDocuments) ||
+			!sameRequests || !sameExpected {
 			currentJSON, _ := json.MarshalIndent(got, "", "  ")
 			previousJSON, _ := json.MarshalIndent(previous, "", "  ")
 			t.Fatalf("MCP search fixture case %q is stale (requests=%t expected=%t); regenerate with PORT_GENERATE=1 go test ./internal/mcp -run '^TestSearchHybridMCPOracle$'\ncurrent: %s\nfixture: %s", got.ID, sameRequests, sameExpected, currentJSON, previousJSON)
@@ -131,6 +136,13 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 			Documents: []searchHybridMCPDocument{{Path: "offline.md", Body: "# Offline Note\n\nAn offline needle remains searchable through the lexical branch."}},
 		},
 		{
+			ID: "hybrid-registered-external-source", Query: "registered external needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			Documents:             []searchHybridMCPDocument{},
+			ExternalDocuments:     []searchHybridMCPDocument{{Path: "registered.md", Body: "# Registered Source\n\nA registered external needle."}},
+			UnregisteredDocuments: []searchHybridMCPDocument{{Path: "unregistered.md", Body: "# Unregistered Source\n\nAn unregistered external needle."}},
+		},
+		{
 			ID: "scoped-tag-and-positive-term", Query: "tag:retrieval needle",
 			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
 			Documents: []searchHybridMCPDocument{
@@ -153,6 +165,15 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 				{Path: "projects/public.md", Body: "# Public Note\n\nA public needle is available."},
 				{Path: "projects/private.md", Body: "# Private Note\n\nA private needle is excluded."},
 				{Path: "archive/other.md", Body: "# Other Note\n\nAn unrelated needle is outside the path."},
+			},
+		},
+		{
+			ID: "scoped-negated-singleton-filters-keep-matches", Query: "-path:private -status:draft -type:pdf needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			Documents: []searchHybridMCPDocument{
+				{Path: "public.md", Body: "---\ntitle: Public Note\nstatus: open\ndocument_type: note\n---\n\nA public needle remains."},
+				{Path: "archive/other.md", Body: "---\ntitle: Other Note\nstatus: open\ndocument_type: note\n---\n\nAnother retained needle."},
+				{Path: "private.md", Body: "---\ntitle: Private Note\nstatus: draft\ndocument_type: pdf\n---\n\nA private needle is excluded."},
 			},
 		},
 		{
@@ -180,6 +201,8 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	t.Helper()
 	home := t.TempDir()
 	vaultRoot := filepath.Join(t.TempDir(), "vault")
+	registeredRoot := filepath.Join(t.TempDir(), "registered-source")
+	unregisteredRoot := filepath.Join(t.TempDir(), "unregistered-source")
 	if err := os.MkdirAll(vaultRoot, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -242,13 +265,13 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 		t.Fatal(err)
 	}
 	for _, document := range input.Documents {
-		path := filepath.Join(vaultRoot, filepath.FromSlash(document.Path))
-		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(document.Body), 0o600); err != nil {
-			t.Fatal(err)
-		}
+		writeSearchHybridDocument(t, vaultRoot, document)
+	}
+	for _, document := range input.ExternalDocuments {
+		writeSearchHybridDocument(t, registeredRoot, document)
+	}
+	for _, document := range input.UnregisteredDocuments {
+		writeSearchHybridDocument(t, unregisteredRoot, document)
 	}
 	sidecarDB, err := sidecar.OpenForVault(vaultRoot)
 	if err != nil {
@@ -268,6 +291,33 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 			_ = index.Close()
 			_ = sidecarDB.Close()
 			t.Fatalf("index fixture document: %v", err)
+		}
+	}
+	if len(input.ExternalDocuments) > 0 {
+		registry, err := retrieval.NewSourceRegistry(vaultRoot)
+		if err != nil {
+			_ = index.Close()
+			_ = sidecarDB.Close()
+			t.Fatal(err)
+		}
+		if _, err := registry.Add(registeredRoot); err != nil {
+			_ = index.Close()
+			_ = sidecarDB.Close()
+			t.Fatalf("register external fixture source: %v", err)
+		}
+		for _, document := range input.ExternalDocuments {
+			if err := index.Index(filepath.Join(registeredRoot, filepath.FromSlash(document.Path)), ""); err != nil {
+				_ = index.Close()
+				_ = sidecarDB.Close()
+				t.Fatalf("index registered external fixture document: %v", err)
+			}
+		}
+	}
+	for _, document := range input.UnregisteredDocuments {
+		if err := index.Index(filepath.Join(unregisteredRoot, filepath.FromSlash(document.Path)), ""); err != nil {
+			_ = index.Close()
+			_ = sidecarDB.Close()
+			t.Fatalf("index unregistered fixture document: %v", err)
 		}
 	}
 	if err := index.Close(); err != nil {
@@ -303,7 +353,7 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	if err := sidecarDB.Close(); err != nil {
 		t.Fatal(err)
 	}
-	input.Expected = normalizeSearchHybridMCPFrame(t, output.Bytes(), vaultRoot)
+	input.Expected = normalizeSearchHybridMCPFrame(t, output.Bytes(), vaultRoot, registeredRoot, unregisteredRoot)
 	requestMu.Lock()
 	defer requestMu.Unlock()
 	input.Requests = make([]searchHybridMCPRequest, 0, len(requests))
@@ -319,7 +369,18 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	return input
 }
 
-func normalizeSearchHybridMCPFrame(t *testing.T, frame []byte, vaultRoot string) json.RawMessage {
+func writeSearchHybridDocument(t *testing.T, root string, document searchHybridMCPDocument) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(document.Path))
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(document.Body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func normalizeSearchHybridMCPFrame(t *testing.T, frame []byte, vaultRoot, registeredRoot, unregisteredRoot string) json.RawMessage {
 	t.Helper()
 	var response map[string]json.RawMessage
 	if err := json.Unmarshal(frame, &response); err != nil {
@@ -337,6 +398,8 @@ func normalizeSearchHybridMCPFrame(t *testing.T, frame []byte, vaultRoot string)
 		t.Fatalf("Go MCP result is not one text block: %v: %s", err, response["result"])
 	}
 	content[0].Text = strings.ReplaceAll(content[0].Text, vaultRoot, "$VAULT")
+	content[0].Text = strings.ReplaceAll(content[0].Text, registeredRoot, "$EXTERNAL")
+	content[0].Text = strings.ReplaceAll(content[0].Text, unregisteredRoot, "$UNREGISTERED")
 	result["content"], _ = json.Marshal(content)
 	response["result"], _ = json.Marshal(result)
 	normalized, err := json.Marshal(response)

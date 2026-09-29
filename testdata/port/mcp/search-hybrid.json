@@ -80,6 +80,52 @@
       }
     },
     {
+      "id": "hybrid-registered-external-source",
+      "query": "registered external needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [],
+      "external_documents": [
+        {
+          "path": "registered.md",
+          "body": "# Registered Source\n\nA registered external needle."
+        }
+      ],
+      "unregistered_documents": [
+        {
+          "path": "unregistered.md",
+          "body": "# Unregistered Source\n\nAn unregistered external needle."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "registered external needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"$EXTERNAL/registered.md\",\"title\":\"registered\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\"],\"source_type\":\"external\",\"read_only\":true}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
       "id": "scoped-tag-and-positive-term",
       "query": "tag:retrieval needle",
       "embedding_dim": 3,
@@ -170,6 +216,41 @@
             {
               "type": "text",
               "text": "{\"results\":[{\"path\":\"projects/public.md\",\"title\":\"public\",\"snippet\":\"# Public Note\\n\\nA public needle is available.\",\"score\":0}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-negated-singleton-filters-keep-matches",
+      "query": "-path:private -status:draft -type:pdf needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "public.md",
+          "body": "---\ntitle: Public Note\nstatus: open\ndocument_type: note\n---\n\nA public needle remains."
+        },
+        {
+          "path": "archive/other.md",
+          "body": "---\ntitle: Other Note\nstatus: open\ndocument_type: note\n---\n\nAnother retained needle."
+        },
+        {
+          "path": "private.md",
+          "body": "---\ntitle: Private Note\nstatus: draft\ndocument_type: pdf\n---\n\nA private needle is excluded."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"archive/other.md\",\"title\":\"Other Note\",\"snippet\":\"\\nAnother retained needle.\",\"score\":0},{\"path\":\"public.md\",\"title\":\"Public Note\",\"snippet\":\"\\nA public needle remains.\",\"score\":0}]}"
             }
           ],
           "isError": false

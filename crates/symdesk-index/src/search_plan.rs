@@ -17,15 +17,15 @@ pub struct SearchPlanResponse {
 
 pub(crate) fn search_plan(
     connection: &Connection,
-    vault_root: &Path,
+    roots: &[String],
     plan: &Plan,
 ) -> Result<SearchPlanResponse, SidecarError> {
-    search_parsed(connection, vault_root, plan)
+    search_parsed(connection, roots, plan)
 }
 
 fn search_parsed(
     connection: &Connection,
-    vault_root: &Path,
+    roots: &[String],
     plan: &Plan,
 ) -> Result<SearchPlanResponse, SidecarError> {
     let positives = plan
@@ -76,7 +76,7 @@ fn search_parsed(
     } else {
         sql.push_str("LEFT JOIN fts_search ON fts_search.rowid=f.id WHERE ");
     }
-    sql.push_str(root_predicate());
+    sql.push_str(&root_predicate(roots.len()));
 
     let mut args = Vec::<Value>::new();
     if has_full_text {
@@ -86,11 +86,14 @@ fn search_parsed(
             Value::Text(trigram_query),
         ]);
     }
-    args.extend([
-        Value::Text(vault_root.to_string_lossy().into_owned()),
-        Value::Text(root_prefix(vault_root)),
-        Value::Text(root_prefix(vault_root)),
-    ]);
+    for root in roots {
+        let prefix = root_prefix(root);
+        args.extend([
+            Value::Text(root.clone()),
+            Value::Text(prefix.clone()),
+            Value::Text(prefix),
+        ]);
+    }
     for filter in &plan.filters {
         match filter.field {
             Field::Path if !filter.value.contains(',') => {
@@ -186,6 +189,13 @@ struct PlanRow {
 
 fn post_filters_match(row: &PlanRow, plan: &Plan, reference: OffsetDateTime) -> bool {
     for filter in &plan.filters {
+        // These singleton filters are applied in SQL, so don't evaluate a
+        // placeholder match here (in particular for negated filters).
+        if !filter.value.contains(',')
+            && matches!(filter.field, Field::Path | Field::Status | Field::Type)
+        {
+            continue;
+        }
         let matched = match filter.field {
             Field::Path if filter.value.contains(',') => {
                 any_value(&row.hit.path, &filter.value, |raw, wanted| {
@@ -290,14 +300,19 @@ fn parse_timestamp(raw: &str) -> Option<OffsetDateTime> {
         })
 }
 
-fn root_predicate() -> &'static str {
-    "(f.path = ? OR substr(f.path, 1, length(?)) = ?)"
+fn root_predicate(root_count: usize) -> String {
+    let mut predicate = String::from("(");
+    for index in 0..root_count {
+        if index > 0 {
+            predicate.push_str(" OR ");
+        }
+        predicate.push_str("(f.path = ? OR substr(f.path, 1, length(?)) = ?)");
+    }
+    predicate.push(')');
+    predicate
 }
-fn root_prefix(root: &Path) -> String {
-    let mut value = root
-        .to_string_lossy()
-        .trim_end_matches(['/', '\\'])
-        .to_owned();
+fn root_prefix(root: &str) -> String {
+    let mut value = root.trim_end_matches(std::path::MAIN_SEPARATOR).to_owned();
     value.push(std::path::MAIN_SEPARATOR);
     value
 }
@@ -306,4 +321,14 @@ fn escape_like(value: &str) -> String {
         .replace('\\', "\\\\")
         .replace('%', "\\%")
         .replace('_', "\\_")
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(unix)]
+    #[test]
+    fn root_prefix_preserves_legal_trailing_backslash() {
+        let root = "/tmp/vault\\";
+        assert_eq!(super::root_prefix(root), "/tmp/vault\\/");
+    }
 }

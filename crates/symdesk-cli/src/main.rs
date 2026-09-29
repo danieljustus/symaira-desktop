@@ -363,7 +363,7 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let hits = match search_cli::hybrid_search(&vault, query, &sources, &sidecar) {
                 Ok(Some(hits)) => hits,
                 Ok(None) => match sidecar.search_plan(&vault, query) {
-                    Ok(response) => search_cli::lexical_hits(response.results, &[])
+                    Ok(response) => search_cli::lexical_hits(response.results, &sources)
                         .into_iter()
                         .map(|mut hit| {
                             if hit.source_type.is_none() {

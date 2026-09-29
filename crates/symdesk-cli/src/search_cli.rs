@@ -371,7 +371,28 @@ fn go_rune_count_prefix(value: &str, byte_end: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::{go_rune_count_prefix, go_search_snippet};
+    use symdesk_index::{SearchHit, SearchSource};
+
+    use super::{go_rune_count_prefix, go_search_snippet, lexical_hits};
+
+    #[test]
+    fn lexical_fallback_keeps_registered_external_source_projection() {
+        let hits = lexical_hits(
+            vec![SearchHit {
+                path: "/outside/registered/note.md".to_owned(),
+                title: "External note".to_owned(),
+                snippet: "needle".to_owned(),
+            }],
+            &[SearchSource {
+                id: "fixture-source".to_owned(),
+                path: "/outside/registered".to_owned(),
+            }],
+        );
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].path, "/outside/registered/note.md");
+        assert_eq!(hits[0].source_type, Some("external"));
+        assert!(hits[0].read_only);
+    }
 
     #[test]
     fn snippet_uses_go_lowercase_byte_offset_and_original_text_rune_count() {

@@ -15,7 +15,7 @@ use std::{
 use serde::Deserialize;
 use serde_json::{Value, json};
 use symdesk_index::{
-    IndexedDocument, RetrievalDb, RetrievalDocument, Sidecar, StoredRetrievalChunk,
+    IndexedDocument, RetrievalDb, RetrievalDocument, Sidecar, SourceRegistry, StoredRetrievalChunk,
     materialize_chunks, parse_markdown_retrieval_sections,
 };
 
@@ -33,6 +33,10 @@ struct FixtureCase {
     provider_status: u16,
     provider_dimension: usize,
     documents: Vec<FixtureDocument>,
+    #[serde(default)]
+    external_documents: Vec<FixtureDocument>,
+    #[serde(default)]
+    unregistered_documents: Vec<FixtureDocument>,
     requests: Vec<FixtureRequest>,
     expected: Value,
 }
@@ -116,6 +120,8 @@ fn replay_case(case: &FixtureCase) {
     let home = root.path("home");
     let index_path = root.path("data/retrieval.db");
     let sidecar_path = root.path("data/sidecar.db");
+    let external_root = root.path("external");
+    let unregistered_root = root.path("unregistered");
     let (endpoint, captured, stop, server) = start_embedding_server(case);
 
     let mut documents = Vec::new();
@@ -125,11 +131,41 @@ fn replay_case(case: &FixtureCase) {
         fs::write(&path, &document.body).expect("write fixture document");
         documents.push((path, document));
     }
+    let mut external_documents = Vec::new();
+    for document in &case.external_documents {
+        let path = external_root.join(&document.path);
+        fs::create_dir_all(path.parent().expect("external document parent"))
+            .expect("create external document dir");
+        fs::write(&path, &document.body).expect("write external fixture document");
+        external_documents.push((path, document));
+    }
+    let mut unregistered_documents = Vec::new();
+    for document in &case.unregistered_documents {
+        let path = unregistered_root.join(&document.path);
+        fs::create_dir_all(path.parent().expect("unregistered document parent"))
+            .expect("create unregistered document dir");
+        fs::write(&path, &document.body).expect("write unregistered fixture document");
+        unregistered_documents.push((path, document));
+    }
 
     let mut sidecar = Sidecar::open(&sidecar_path).expect("open sidecar");
     sidecar
         .refresh_index_for_cli(&vault)
         .expect("refresh sidecar");
+    if !external_documents.is_empty() {
+        SourceRegistry::open(&vault)
+            .expect("open source registry")
+            .add(&external_root)
+            .expect("register fixture source");
+        sidecar
+            .refresh_external_source(&external_root)
+            .expect("index registered external source");
+    }
+    if !unregistered_documents.is_empty() {
+        sidecar
+            .refresh_external_source(&unregistered_root)
+            .expect("index unregistered boundary control");
+    }
     if case.id == "scoped-path-and-negative-term" {
         index_outside_candidate(&mut sidecar, &root);
     }
@@ -170,6 +206,45 @@ fn replay_case(case: &FixtureCase) {
             })
             .collect::<Vec<_>>();
         index.save_chunks(&stored).expect("save retrieval chunks");
+    }
+    for (path, document) in external_documents.iter().chain(&unregistered_documents) {
+        let path = path
+            .canonicalize()
+            .expect("canonical external document path");
+        let path_text = path.to_string_lossy().into_owned();
+        let sections = parse_markdown_retrieval_sections(&path_text, document.body.as_bytes())
+            .expect("parse external fixture Markdown");
+        let chunks = materialize_chunks(&path_text, &sections);
+        index
+            .save_document(&RetrievalDocument {
+                path: path_text.clone(),
+                hash: symdesk_vault::sha256_hex(document.body.as_bytes()),
+                updated_at: "2026-09-29T00:00:00Z".to_owned(),
+            })
+            .expect("save external retrieval document");
+        let stored = chunks
+            .into_iter()
+            .map(|chunk| StoredRetrievalChunk {
+                id: 0,
+                uuid: chunk.uuid,
+                document_path: path_text.clone(),
+                chunk_index: chunk.chunk_index as i64,
+                content: chunk.content,
+                embedding: vec![1.0; case.embedding_dim],
+                hash: chunk.hash,
+                norm: (case.embedding_dim as f32).sqrt(),
+                dim: case.embedding_dim as i64,
+                model: "fixture-model".to_owned(),
+                char_start: chunk.char_start.map(|value| value as i64),
+                char_end: chunk.char_end.map(|value| value as i64),
+                anchor_kind: chunk.anchor_kind,
+                anchor_value: chunk.anchor_value,
+                embedding_pending: false,
+            })
+            .collect::<Vec<_>>();
+        index
+            .save_chunks(&stored)
+            .expect("save external retrieval chunks");
     }
     drop(index);
 
@@ -248,7 +323,11 @@ fn replay_case(case: &FixtureCase) {
             String::from_utf8_lossy(&output.stdout)
         )
     });
+    let actual = replace_root(actual, &external_root, "$EXTERNAL");
+    let actual = replace_root(actual, &unregistered_root, "$UNREGISTERED");
     let expected = replace_vault(case.expected.clone(), &vault);
+    let expected = replace_root(expected, &external_root, "$EXTERNAL");
+    let expected = replace_root(expected, &unregistered_root, "$UNREGISTERED");
     assert_eq!(
         normalize_response(actual),
         normalize_response(expected),
@@ -409,20 +488,24 @@ fn read_request(stream: &mut TcpStream) -> Option<(String, String, Value)> {
 }
 
 fn replace_vault(value: Value, vault: &Path) -> Value {
+    replace_root(value, vault, "$VAULT")
+}
+
+fn replace_root(value: Value, root: &Path, token: &str) -> Value {
     match value {
         Value::String(text) => {
-            Value::String(text.replace(&vault.to_string_lossy().to_string(), "$VAULT"))
+            Value::String(text.replace(&root.to_string_lossy().to_string(), token))
         }
         Value::Array(items) => Value::Array(
             items
                 .into_iter()
-                .map(|item| replace_vault(item, vault))
+                .map(|item| replace_root(item, root, token))
                 .collect(),
         ),
         Value::Object(items) => Value::Object(
             items
                 .into_iter()
-                .map(|(key, item)| (key, replace_vault(item, vault)))
+                .map(|(key, item)| (key, replace_root(item, root, token)))
                 .collect(),
         ),
         other => other,

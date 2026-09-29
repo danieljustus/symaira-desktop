@@ -1,5 +1,34 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated local-hash embedding checkpoint — 2026-09-29
+
+`06446c614699583863394f7fddba696afc50bfb4` adds the Go-compatible local-hash
+primitive and its source-bound oracle to the preceding retrieval/repair stack.
+Ten actual Go vectors match Rust by exact float32 bits: empty/stopword inputs,
+punctuation, collisions, Unicode whitespace/case, positions beyond32 and the
+768-dimension default. Zero dimensions fail explicitly instead of Go's panic.
+A digest over every Unicode scalar's simple lowercase mapping found55 mappings
+introduced after the pinned Go1.26.6 Unicode15 table; exact identity overrides
+preserve Go behavior, and the complete mapping digest now passes.
+
+Full immutable fixture generation and reviewed application pass. Go production
+source digest stays `9928661e32e94a46528dc10b54d6b6fbdebd1915a530fd032ad4b87e84ee2fb3`;
+generator digest is `d474c91b39d21487eafa06d17a934bab9cd81047de089e482aeb3203dae8c6f5`,
+and local-hash fixture SHA256 is
+`8826522fe8f00757aeca3f4250eec042985c3eac2feca7740981bd2656aeb2d1`.
+The generation/apply artifact and logs are retained under the existing Desktop
+build root. Core/vault fixture baselines remain unchanged.
+
+Independent clean-candidate Darwin/arm64 and Linux/arm64 each pass six Go/Rust
+retrieval differentials and all194 CLI/index/protocol tests, zero failed/ignored.
+Darwin strict Clippy, formatting and workflow checks pass. Receipts
+`local-hash-receipt-06446c61.json` are in the existing Desktop/native-linux build
+roots. CI includes the native local-hash differential; no remote candidate run
+is claimed. This is the primitive only: query caller wiring, complete retrieval
+facade and remaining native platforms keep INDEX-005/RUST-008 open. No publication,
+installed cutover or Go removal occurred.
+
+
 ## Integrated UTF-8 text repair checkpoint — 2026-09-29
 
 `f0704449b27189e46544af75d2bd48f7b20268b9` extends the Markdown checkpoint

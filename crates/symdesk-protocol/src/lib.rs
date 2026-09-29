@@ -10,9 +10,14 @@
 mod mime;
 #[cfg(target_os = "windows")]
 mod native_mime;
+mod retrieval_embedding;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
+
+pub use retrieval_embedding::{
+    LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
+};
 
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
@@ -849,6 +854,13 @@ async fn handle_ai_transform(
 }
 
 fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
+    local_ollama_endpoint_for_path(base_url, "/api/generate")
+}
+
+pub(crate) fn local_ollama_endpoint_for_path(
+    base_url: &str,
+    endpoint_path: &str,
+) -> Option<hyper::Uri> {
     let parsed = base_url.parse::<hyper::Uri>().ok()?;
     if parsed.scheme_str()? != "http" {
         return None;
@@ -866,7 +878,7 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
     if !loopback {
         return None;
     }
-    format!("http://{authority}/api/generate").parse().ok()
+    format!("http://{authority}{endpoint_path}").parse().ok()
 }
 
 fn build_ai_ask_prompt(

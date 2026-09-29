@@ -522,6 +522,46 @@
           "isError": false
         }
       }
+    },
+    {
+      "id": "rerank-config-flag-is-inert-in-mcp-search",
+      "query": "rerank flag needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "rerank_query": true,
+      "documents": [
+        {
+          "path": "rerank.md",
+          "body": "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "rerank flag needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"rerank.md\",\"title\":\"rerank\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\"]},{\"path\":\"rerank.md\",\"title\":\"rerank\",\"snippet\":\"# Rerank Flag\\n\\nA rerank flag needle remains on ordinary hybrid search.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
     }
   ]
 }

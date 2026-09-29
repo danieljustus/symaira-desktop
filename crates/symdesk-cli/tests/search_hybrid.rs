@@ -33,6 +33,8 @@ struct FixtureCase {
     #[serde(default)]
     expand_query: bool,
     #[serde(default)]
+    rerank_query: bool,
+    #[serde(default)]
     expand_model: String,
     #[serde(default)]
     expanded_text: String,
@@ -131,7 +133,7 @@ fn fixture() -> Fixture {
 fn real_search_cli_replays_go_service_oracle() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 13);
+    assert_eq!(fixture.cases.len(), 14);
     for case in fixture.cases {
         replay_case(&case);
     }
@@ -224,12 +226,13 @@ fn replay_case(case: &FixtureCase) {
     let config_dir = home.join(".config/symseek");
     fs::create_dir_all(&config_dir).expect("create isolated retrieval config directory");
     let config = format!(
-        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\n",
+        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\nrerank_query = {}\n",
         index_path.to_string_lossy(),
         endpoint,
         case.embedding_dim,
         case.expand_query,
-        case.expand_model
+        case.expand_model,
+        case.rerank_query
     );
     fs::write(config_dir.join("config.toml"), config).expect("write private retrieval config");
 

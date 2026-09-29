@@ -35,6 +35,7 @@ type searchHybridMCPFixtureCase struct {
 	ProviderStatus        int                       `json:"provider_status"`
 	ProviderDimension     int                       `json:"provider_dimension"`
 	ExpandQuery           bool                      `json:"expand_query,omitempty"`
+	RerankQuery           bool                      `json:"rerank_query,omitempty"`
 	ExpandModel           string                    `json:"expand_model,omitempty"`
 	ExpandedText          string                    `json:"expanded_text,omitempty"`
 	ChatResponse          string                    `json:"chat_response,omitempty"`
@@ -221,6 +222,12 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 			ExpandQuery: true, ExpandModel: "fixture-chat-model", ExpandedText: "cached identical passage",
 			Documents: []searchHybridMCPDocument{{Path: "cache.md", Body: "# Cache behavior\n\nA cached identical passage remains searchable."}},
 		},
+		{
+			ID: "rerank-config-flag-is-inert-in-mcp-search", Query: "rerank flag needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			RerankQuery: true,
+			Documents:   []searchHybridMCPDocument{{Path: "rerank.md", Body: "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."}},
+		},
 	}
 }
 
@@ -311,7 +318,7 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	configText := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\n", indexPath, server.URL+"/api/embeddings", "fixture-model", input.EmbeddingDim, input.ExpandQuery, input.ExpandModel)
+	configText := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\nrerank_query = %t\n", indexPath, server.URL+"/api/embeddings", "fixture-model", input.EmbeddingDim, input.ExpandQuery, input.ExpandModel, input.RerankQuery)
 	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(configText), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -410,6 +417,13 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	input.Requests = make([]searchHybridMCPRequest, 0, len(requests))
 	for _, request := range requests {
 		input.Requests = append(input.Requests, searchHybridMCPRequest{Method: request.Method, Path: request.Path, Body: request.Body})
+	}
+	if input.RerankQuery {
+		for _, request := range input.Requests {
+			if request.Path == "/api/chat" {
+				t.Fatal("production Go MCP search unexpectedly activated rerank_query")
+			}
+		}
 	}
 	return input
 }

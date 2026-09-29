@@ -696,6 +696,45 @@
           }
         ]
       }
+    },
+    {
+      "id": "rerank-config-flag-is-inert-in-cli-search",
+      "query": "rerank flag needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "rerank_query": true,
+      "index_documents": false,
+      "documents": [
+        {
+          "path": "rerank.md",
+          "body": "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."
+        }
+      ],
+      "sources": null,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "rerank flag needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/rerank.md",
+            "title": "rerank",
+            "snippet": "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search.",
+            "score": 0
+          }
+        ]
+      }
     }
   ]
 }

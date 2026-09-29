@@ -68,12 +68,8 @@ pub fn hybrid_search(
         std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
     let config = retrieval_embedding_config(&environment, &cwd)
         .map_err(|error| format!("load retrieval configuration: {error}"))?;
-    if config.rerank_query {
-        return Err(
-            "hybrid search does not support configured query reranking yet; disable rerank_query"
-                .to_owned(),
-        );
-    }
+    // The Go Client used by the real CLI/MCP search path currently ignores
+    // rerank_query; preserve that behavior until a caller activates reranking.
     if config.vector_backend != "sqlite" || config.vector_quantization != "off" {
         return Err(format!(
             "hybrid search does not support configured vector backend {:?} with quantization {:?}; use sqlite with vector_quantization=off",

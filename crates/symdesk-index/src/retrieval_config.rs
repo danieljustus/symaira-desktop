@@ -34,9 +34,9 @@ pub struct RetrievalEmbeddingConfig {
     pub timeout_seconds: u64,
     pub retry_count: usize,
     pub retry_backoff_ms: u64,
-    /// Optional Go search transformations that the current Rust CLI does not
-    /// implement. The command path may opt into the supported HyDE subset;
-    /// configured reranking remains unsupported.
+    /// Optional Go search transformations. The command path may opt into the
+    /// supported HyDE subset; the production Go CLI/MCP path currently ignores
+    /// `rerank_query`, so Rust preserves that behavior until a Go caller uses it.
     pub expand_query: bool,
     pub expand_model: String,
     pub expand_timeout_seconds: u64,

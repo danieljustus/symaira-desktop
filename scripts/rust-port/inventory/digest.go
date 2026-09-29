@@ -118,41 +118,8 @@ func generatorSourcePaths() []string {
 		"Makefile",
 		".gitattributes",
 		"scripts/rust-port",
-		"cmd/symdesk/port_inventory_test.go",
-		"cmd/symdesk/history_tasks_port_test.go",
-		"cmd/symroom/port_grammar_test.go",
-		"internal/tools/port_mcp_test.go",
-		"internal/selfhost/port_http_test.go",
-		"internal/service/port_resolution_test.go",
-		"internal/service/port_dataset_contract_test.go",
-		"internal/service/port_dataset_sync_service_contract_test.go",
-		"internal/service/port_dataset_query_aggregate_contract_test.go",
-		"internal/service/port_dataset_import_contract_test.go",
-		"internal/service/port_dataset_purge_contract_test.go",
-		"internal/service/port_retention_state_contract_test.go",
-		"internal/room/run/port_projection_contract_test.go",
-		"internal/service/port_noteops_contract_test.go",
-		"internal/history/port_lifecycle_contract_test.go",
-		"internal/retention/port_retention_contract_test.go",
-		"internal/retention/port_retention_rules_contract_test.go",
-		"internal/health/port_links_test.go",
-		"internal/notebook/port_parse_test.go",
-		"internal/retrieval/internal/engine/port_metadata_test.go",
-		"internal/retrieval/internal/engine/port_hybrid_test.go",
-		"internal/retrieval/internal/engine/sync_test.go",
-		"internal/retrieval/internal/engine/port_sections_test.go",
-		"internal/retrieval/internal/engine/port_embedding_http_test.go",
-		"internal/retrieval/internal/engine/port_reembed_http_test.go",
-		"internal/retrieval/internal/engine/port_local_hash_test.go",
-		"internal/retrieval/internal/engine/retrieval_chunks_fixture_test.go",
-		"internal/retrieval/internal/db/retrieval_bm25_fixture_test.go",
-		"internal/retrieval/internal/db/retrieval_embedding_state_fixture_test.go",
-		"internal/retrieval/internal/db/retrieval_vector_fixture_test.go",
-		"internal/vault/port_mobile_test.go",
-		"internal/vault/port_writefs_contract_test.go",
-		"internal/sidecar/port_contract_test.go",
-		"internal/sidecar/port_metadata_contract_test.go",
-		"internal/sidecar/port_lifecycle_contract_test.go",
+		"cmd",
+		"internal",
 		"crates/symdesk-index/src/contract_tests.rs",
 		"Tests/SymDeskMobileTests/MobileRustPortContractTests.swift",
 	}
@@ -181,6 +148,11 @@ func listGeneratorDigestInputs(repoRoot, revision string) ([]string, error) {
 			continue
 		}
 		rel = filepath.ToSlash(rel)
+		// Package-local fixtures compile their test helpers and can read testdata.
+		// Cover the complement of the production digest without a stale allowlist.
+		if (strings.HasPrefix(rel, "cmd/") || strings.HasPrefix(rel, "internal/")) && isProductionContractInput(rel) {
+			continue
+		}
 		if _, exists := seen[rel]; exists {
 			continue
 		}

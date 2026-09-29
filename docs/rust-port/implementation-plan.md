@@ -1,5 +1,30 @@
 # Symaira Desktop Rust Migration Implementation Plan
 
+## Integrated offline Ask CLI retrieval — 2026-09-29
+
+Candidate `a427ce7b0693d30b17b0b8c85003f9479810da93` connects the existing
+shared hybrid retrieval and SearchPlan paths to the no-provider Ask CLI. The
+Go Service.Ask oracle and actual Rust CLI compare seven cases: more than three
+citations with three fallback links, a registered external source, semantic
+hits without lexical matches, empty results, missing-index sidecar fallback,
+empty input and a tag operator. Captured synthetic embedding requests prove
+which retrieval path ran; operator and empty input cases make no provider call.
+Only exact temporary roots are normalized. Scores and event content are not masked.
+
+Full immutable fixture generation and reviewed application passed. Independent
+clean Darwin/arm64 and Linux/arm64 runs pass nine Go/Rust differentials and all
+205 CLI/index/protocol tests, zero failed or ignored. Darwin strict Clippy,
+formatting and actionlint pass. Receipts `ask-offline-receipt-a427ce7b.json` in
+the existing Desktop and native-linux build roots retain source metadata and
+fixture/log hashes.
+
+INDEX-005, AI-002, RUST-008 and RUST-012 remain open. Configured AI providers,
+MCP Ask, HTTP hybrid Ask, other required native targets and complete ledger
+acceptance are not established by this slice. The prior stricter Rust query
+root allowlist is retained. No live provider/model, publication, installed
+cutover or Go removal occurred.
+
+
 ## Integrated inert rerank configuration parity — 2026-09-29
 
 Candidate `3d4d8a569e4da39bb431e97e30f9198927c98a39` removes Rust's rejection

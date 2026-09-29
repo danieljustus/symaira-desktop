@@ -89,7 +89,7 @@
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "43795aad046e1d8f9d86617ad3acbc736e055ed088ff05b3bd1d6b47d6fc97a6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
-    "testdata/port/vault/history-lifecycle.json": "71ab1a91e9f991e4e5e1ed2a5096fb4a6cd7c326a05f770864745a285bf1d5fc",
+    "testdata/port/vault/history-lifecycle.json": "5fd2d97f6dec8d18a74f3326dd67c7cbccaf6391acdc7df291e58180898f3d6e",
     "testdata/port/vault/history-prune.json": "c5f17a210ba26e851bf89709e4b69189b46e254e656da9293473a95967ccd84c",
     "testdata/port/vault/history-purge.json": "46a8b9a19b6ac2d35036aa3fec6410ce7ad9db4915c303de9d0127d48af9f660",
     "testdata/port/vault/history-service.json": "a0ac512e7d58548eb4cc5ede8519bde476fc7efc16fd9650c3087be2f3a5b04c",

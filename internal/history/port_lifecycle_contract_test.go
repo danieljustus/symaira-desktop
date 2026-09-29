@@ -28,6 +28,9 @@ import (
 // error text and its class.
 func TestPortHistoryLifecycleContract(t *testing.T) {
 	document := buildHistoryLifecycleFixture(t)
+	if err := validateHistoryLifecycleCoverage(document.Cases, runtime.GOOS); err != nil {
+		t.Fatal(err)
+	}
 	encoded, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -59,6 +62,8 @@ func TestPortHistoryLifecycleContract(t *testing.T) {
 
 const historyLifecycleFixtureRel = "../../testdata/port/vault/history-lifecycle.json"
 
+const historyLifecycleCaseCount = 18
+
 const (
 	historyOracleCommit  = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
 	historyOracleRelease = "post-v0.13.0-dependency-refresh"
@@ -82,13 +87,9 @@ type historyCase struct {
 	Description string `json:"description"`
 	// Operation names the ported entry point under test.
 	Operation string `json:"operation"`
-	// Platform is "any" or "unix". A Unix-only case either needs Unix
-	// permission bits or exercises a Go path that the os.Root fs.FS rejects on
-	// Windows; WindowsGap records which, so the gap is visible instead of
-	// silently missing.
+	// Platform is "any" or "unix" when the case genuinely requires Unix-only
+	// behavior, such as permission bits.
 	Platform string `json:"platform"`
-	// WindowsGap explains why Windows does not run the case.
-	WindowsGap string `json:"windows_gap,omitempty"`
 	// Files lists the vault files that exist before the operation.
 	Files []historyFileSpec `json:"files"`
 	// Call carries the sanitised operation arguments.
@@ -177,16 +178,6 @@ func buildHistoryLifecycleFixture(t *testing.T) historyLifecycleFixture {
 		historyCaseTrashPurgeByAge(t),
 		historyCaseTrashPurgeRefusesCorrupt(t),
 	}
-	cases := gated
-	if runtime.GOOS == "windows" {
-		cases = make([]historyCase, 0, len(gated))
-		for _, item := range gated {
-			if item.Platform == "unix" {
-				continue
-			}
-			cases = append(cases, item)
-		}
-	}
 	return historyLifecycleFixture{
 		SchemaVersion: 1,
 		Oracle: historyOracleBlock{
@@ -194,7 +185,43 @@ func buildHistoryLifecycleFixture(t *testing.T) historyLifecycleFixture {
 			Release: historyOracleRelease,
 		},
 		SourceHashes: hashes,
-		Cases:        cases,
+		Cases:        gated,
+	}
+}
+
+// validateHistoryLifecycleCoverage makes the required Windows replay explicit:
+// every currently defined lifecycle case is portable, so a platform marker
+// must not silently remove one from the native Windows gate.
+func validateHistoryLifecycleCoverage(cases []historyCase, goos string) error {
+	if goos != "windows" {
+		return nil
+	}
+	if len(cases) != historyLifecycleCaseCount {
+		return fmt.Errorf("Windows history lifecycle fixture has %d cases; want %d", len(cases), historyLifecycleCaseCount)
+	}
+	for _, item := range cases {
+		if item.Platform == "unix" {
+			return fmt.Errorf("Windows history lifecycle case %q is still Unix-only", item.ID)
+		}
+	}
+	return nil
+}
+
+func TestHistoryLifecycleWindowsCoverageGuard(t *testing.T) {
+	cases := make([]historyCase, historyLifecycleCaseCount)
+	for i := range cases {
+		cases[i].Platform = "any"
+	}
+	if err := validateHistoryLifecycleCoverage(cases, "windows"); err != nil {
+		t.Fatalf("complete Windows case set rejected: %v", err)
+	}
+	if err := validateHistoryLifecycleCoverage(cases[:len(cases)-1], "windows"); err == nil {
+		t.Fatal("Windows guard accepted a fixture with a missing case")
+	}
+	cases[0].ID = "unix-only-regression"
+	cases[0].Platform = "unix"
+	if err := validateHistoryLifecycleCoverage(cases, "windows"); err == nil {
+		t.Fatal("Windows guard accepted a Unix-only case")
 	}
 }
 
@@ -273,10 +300,8 @@ func writeScenarioFile(t *testing.T, root string, spec historyFileSpec, fallback
 func recordHistoryCase(t *testing.T, document historyCase, run func(*scenario) (string, error)) historyCase {
 	t.Helper()
 	if document.Platform == "unix" && runtime.GOOS == "windows" {
-		// Windows does not run this case: it needs Unix permission bits or a Go
-		// path that #962 records as broken there. Nothing executes, so the case
-		// cannot fail the Windows lane, and the comparison drops it on both
-		// sides of the drift check.
+		// Preserve support for genuinely Unix-only future cases. Current Windows
+		// fixture coverage is guarded separately and all 18 current cases run.
 		document.After = []historyFileRecord{}
 		return document
 	}
@@ -660,8 +685,7 @@ func historyCaseCheckpointList(t *testing.T) historyCase {
 		ID:          "checkpoint-list",
 		Description: "listing returns newest first and skips a corrupt manifest",
 		Operation:   "list_checkpoints",
-		Platform:    "unix",
-		WindowsGap:  "ListCheckpoints reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+		Platform:    "any",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{TaskID: "task-1", ExtraTaskID: "task-2"},
 	}
@@ -696,8 +720,7 @@ func historyCaseTrashListEmpty(t *testing.T) historyCase {
 		ID:          "trash-list-empty",
 		Description: "a missing trash directory lists as empty, not as an error",
 		Operation:   "trash_list",
-		Platform:    "unix",
-		WindowsGap:  "TrashList reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+		Platform:    "any",
 		Call:        historyCall{},
 	}
 	return recordHistoryCase(t, document, func(s *scenario) (string, error) {
@@ -715,8 +738,7 @@ func historyCaseTrashListOrder(t *testing.T) historyCase {
 		ID:          "trash-list-order",
 		Description: "trash entries are listed newest deletion first",
 		Operation:   "trash_list",
-		Platform:    "unix",
-		WindowsGap:  "TrashList/TrashListStrict read through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+		Platform:    "any",
 		Files: []historyFileSpec{
 			{Path: "notes/a.md", Content: "alpha\n"},
 			{Path: "notes/b.md", Content: "bravo\n"},
@@ -749,8 +771,7 @@ func historyCaseTrashListStrictCorrupt(t *testing.T) historyCase {
 		ID:          "trash-list-strict-corrupt-metadata",
 		Description: "the strict inventory refuses corrupt metadata instead of skipping it",
 		Operation:   "trash_list_strict",
-		Platform:    "unix",
-		WindowsGap:  "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+		Platform:    "any",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md"},
 	}
@@ -788,8 +809,7 @@ func historyCaseTrashListStrictOrphan(t *testing.T) historyCase {
 		ID:          "trash-list-strict-orphan-payload",
 		Description: "the strict inventory refuses a payload without metadata",
 		Operation:   "trash_list_strict",
-		Platform:    "unix",
-		WindowsGap:  "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+		Platform:    "any",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md"},
 	}
@@ -866,8 +886,7 @@ func historyCaseTrashRestoreMissing(t *testing.T) historyCase {
 		ID:          "trash-restore-missing",
 		Description: "restoring an unknown item fails without touching the trash",
 		Operation:   "trash_restore",
-		Platform:    "unix",
-		WindowsGap:  "the precondition uses TrashListStrict, which rejects Windows separators (#962)",
+		Platform:    "any",
 		Call:        historyCall{Name: "does-not-exist.md"},
 	}
 	return recordHistoryCase(t, document, func(s *scenario) (string, error) {
@@ -910,8 +929,7 @@ func historyCaseTrashPurgeAll(t *testing.T) historyCase {
 		ID:          "trash-purge-all",
 		Description: "a non-positive age purges every entry and leaves the trash empty",
 		Operation:   "trash_purge",
-		Platform:    "unix",
-		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+		Platform:    "any",
 		Files: []historyFileSpec{
 			{Path: "notes/a.md", Content: "alpha\n"},
 			{Path: "notes/b.md", Content: "bravo\n"},
@@ -943,8 +961,7 @@ func historyCaseTrashPurgeByAge(t *testing.T) historyCase {
 		ID:          "trash-purge-by-age",
 		Description: "an entry older than the age is purged, a fresher one is kept",
 		Operation:   "trash_purge",
-		Platform:    "unix",
-		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+		Platform:    "any",
 		Files: []historyFileSpec{
 			{Path: "notes/old.md", Content: "old\n"},
 			{Path: "notes/fresh.md", Content: "fresh\n"},
@@ -988,8 +1005,7 @@ func historyCaseTrashPurgeRefusesCorrupt(t *testing.T) historyCase {
 		ID:          "trash-purge-refuses-corrupt",
 		Description: "purge fails closed on a corrupt inventory and removes nothing",
 		Operation:   "trash_purge",
-		Platform:    "unix",
-		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+		Platform:    "any",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md", MaxAgeSeconds: 0},
 	}

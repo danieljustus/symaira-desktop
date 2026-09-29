@@ -57,8 +57,8 @@ each [release](https://github.com/danieljustus/symaira-relate/releases).
 
 Requires Go 1.26.5+. `symrelate` builds with `CGO_ENABLED=0` and has no
 compile-time dependency on any other Symaira tool — it runs standalone with
-no other Symaira binary installed. See [ARCHITECTURE.md](ARCHITECTURE.md)
-for the standalone-first and data-ownership boundaries this implies.
+no other Symaira binary installed. The historical standalone architecture
+document referenced by this README was not archived in this repository.
 
 ## Quick start
 
@@ -114,8 +114,8 @@ full policy.
 ## Optional integrations
 
 `symrelate` never requires another Symaira tool to build, run, or pass
-its tests (see [ARCHITECTURE.md](ARCHITECTURE.md)'s standalone-first
-rule). Two integrations are detected at runtime and degrade gracefully
+its tests (the historical standalone-first rule). Two integrations are
+detected at runtime and degrade gracefully
 when absent:
 
 - `symrelate memory status|link|unlink|show` — an optional link from a
@@ -209,7 +209,7 @@ Key principles:
 - **Privacy by design**: Sensitive values never leave the local machine
 - **Optional integrations**: SymMemory and SymMeet detected at runtime, degrade gracefully
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed design decisions.
+The historical standalone `ARCHITECTURE.md` is not available in this archive.
 
 ## Development
 

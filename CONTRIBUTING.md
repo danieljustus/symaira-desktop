@@ -11,11 +11,20 @@ Thanks for helping improve SymDesk. Contributions should preserve the project’
 
 ## Local checks
 
+The frozen Go/Rust oracle contracts require Go 1.26.6. Select that toolchain
+explicitly rather than regenerating fixtures after a newer Go version changes
+the recorded behavior.
+
 ```sh
+export GOTOOLCHAIN=go1.26.6
 make build
 make lint
-make test
+make test # macOS: CGO_ENABLED=0 go test -race ./...
 ```
+
+On Linux and Windows, run `CGO_ENABLED=1 go test -race -count=1 ./...` with a
+C toolchain instead of `make test`: the race detector requires CGO on those
+platforms. This matches the CI test command; production builds stay CGO-free.
 
 For macOS app changes, also run:
 

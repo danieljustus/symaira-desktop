@@ -167,23 +167,33 @@ symdesk config get [key]       # print resolved configuration (all keys or one)
 symdesk config set <key> <value>  # update a config value
 symdesk config init            # create the default config file
 symdesk version --json         # {"tool":"symdesk","version":...,"schema_version":1}
+```
 
 ## CLI sample
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.13.0","schema_version":1}
+{"tool":"symdesk","version":"0.12.2","schema_version":1}
 ```
 
 ## Development
 
+Use Go 1.26.6 for the frozen Go/Rust oracle contracts. A newer Go version can
+change their Unicode and JSON behavior; do not regenerate fixtures to work
+around a toolchain mismatch.
+
 ```sh
+export GOTOOLCHAIN=go1.26.6
 make build          # → bin/symdesk
-make test           # go test -race ./...
-make lint           # gofmt + go vet + corekit-guard + boundary-guard
+make test           # macOS: CGO_ENABLED=0 go test -race ./...
+make lint           # formatting, vet, dependency/boundary/version/signing guards
 make benchmark-large # generate and index a deterministic 10k-document vault
 docker compose build # multi-architecture-compatible Linux server/worker image
 ```
+
+On Linux or Windows, `make test` cannot run the race detector with CGO disabled.
+Use `CGO_ENABLED=1 go test -race -count=1 ./...` with a C toolchain, as CI does.
+CGO-free production builds remain supported.
 
 ### macOS app (requires xcodegen)
 
@@ -193,6 +203,8 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 ```
 
 ## Document workflow (vault contract v6)
+
+```sh
 symdesk docs list --type invoice          # list indexed documents, with filters
 symdesk docs review                       # list documents needing review (low-confidence / missing metadata)
 symdesk docs status <file> paid           # set document status (open|paid|submitted|done|...) (alias: `doc status`)

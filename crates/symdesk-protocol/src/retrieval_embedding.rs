@@ -30,10 +30,17 @@ pub enum LocalEmbeddingError {
     InvalidEndpoint,
     Transport(String),
     Timeout,
-    HttpStatus { status: u16, body: String },
+    HttpStatus {
+        status: u16,
+        code: &'static str,
+        body: String,
+    },
     ResponseTooLarge,
     InvalidResponse(String),
-    EmbeddingCount { expected: usize, actual: usize },
+    EmbeddingCount {
+        expected: usize,
+        actual: usize,
+    },
 }
 
 impl fmt::Display for LocalEmbeddingError {
@@ -49,14 +56,14 @@ impl fmt::Display for LocalEmbeddingError {
             Self::Timeout => {
                 formatter.write_str("ollama: transport_error: context deadline exceeded")
             }
-            Self::HttpStatus { status, body } if body.is_empty() => {
+            Self::HttpStatus { status, body, .. } if body.is_empty() => {
                 write!(
                     formatter,
                     "ollama: {} (status {status})",
                     self.contract_code()
                 )
             }
-            Self::HttpStatus { status, body } => {
+            Self::HttpStatus { status, body, .. } => {
                 write!(
                     formatter,
                     "ollama: {} (status {status}): {body}",
@@ -87,28 +94,10 @@ impl LocalEmbeddingError {
             Self::EmptyInputs => "input_validation",
             Self::InvalidEndpoint => "invalid_endpoint",
             Self::Transport(_) | Self::Timeout => "transport_error",
-            Self::HttpStatus {
-                status: 401 | 403, ..
-            } => "auth_failure",
-            Self::HttpStatus { status: 429, .. } => "rate_limited",
-            Self::HttpStatus { status: 404, .. } => "model_not_found",
-            Self::HttpStatus { status: 400, body }
-                if [
-                    "context_length_exceeded",
-                    "maximum context length",
-                    "context window",
-                    "too many tokens",
-                    "input length exceeds",
-                ]
-                .iter()
-                .any(|marker| body.to_ascii_lowercase().contains(marker)) =>
-            {
-                "context_overflow"
+            Self::HttpStatus { code, .. } => code,
+            Self::ResponseTooLarge | Self::InvalidResponse(_) | Self::EmbeddingCount { .. } => {
+                "provider_error"
             }
-            Self::HttpStatus { .. }
-            | Self::ResponseTooLarge
-            | Self::InvalidResponse(_)
-            | Self::EmbeddingCount { .. } => "provider_error",
         }
     }
 
@@ -190,6 +179,7 @@ async fn parse_embedding_response(
     if status >= 300 {
         let body = read_body_prefix(response.into_body(), MAX_PROVIDER_ERROR_BYTES).await;
         let mut body = String::from_utf8_lossy(&body).trim().to_owned();
+        let code = http_status_contract_code(status, &body);
         if body.len() > MAX_PROVIDER_ERROR_EXCERPT_BYTES {
             let mut end = MAX_PROVIDER_ERROR_EXCERPT_BYTES;
             while !body.is_char_boundary(end) {
@@ -197,7 +187,7 @@ async fn parse_embedding_response(
             }
             body.truncate(end);
         }
-        return Err(LocalEmbeddingError::HttpStatus { status, body });
+        return Err(LocalEmbeddingError::HttpStatus { status, code, body });
     }
     let mut body = response.into_body();
     let mut bytes = Vec::new();
@@ -221,6 +211,32 @@ async fn parse_embedding_response(
         });
     }
     Ok(parsed.data.into_iter().map(|item| item.embedding).collect())
+}
+
+fn http_status_contract_code(status: u16, body: &str) -> &'static str {
+    match status {
+        401 | 403 => "auth_failure",
+        429 => "rate_limited",
+        404 => "model_not_found",
+        400 => {
+            let body = body.to_ascii_lowercase();
+            if [
+                "context_length_exceeded",
+                "maximum context length",
+                "context window",
+                "too many tokens",
+                "input length exceeds",
+            ]
+            .iter()
+            .any(|marker| body.contains(marker))
+            {
+                "context_overflow"
+            } else {
+                "provider_error"
+            }
+        }
+        _ => "provider_error",
+    }
 }
 
 #[derive(Default)]

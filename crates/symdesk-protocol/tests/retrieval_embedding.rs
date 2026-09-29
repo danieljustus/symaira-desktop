@@ -144,7 +144,7 @@ fn failure_kind(error: &LocalEmbeddingError) -> &'static str {
 async fn replays_go_embedding_http_fixture_against_local_ollama_server() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 15);
+    assert_eq!(fixture.cases.len(), 16);
     for case in fixture.cases {
         let (url, captured, server) = start_mock(&case).await;
         let dimensions = (case.dimensions != 0).then_some(case.dimensions);

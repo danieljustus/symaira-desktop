@@ -113,6 +113,12 @@ func TestEmbeddingHTTPPortFixture(t *testing.T) {
 			ExpectedErrorCode: string(llmkit.ErrCodeContextOverflow), ExpectedErrorStatus: http.StatusBadRequest,
 		},
 		{
+			ID: "context-overflow-marker-after-display-excerpt", Model: "test-model", Inputs: []string{"too long"},
+			TimeoutMillis: 2000, ResponseStatus: http.StatusBadRequest,
+			ResponseBody:      `{"error":"` + strings.Repeat("x", 600) + ` context_length_exceeded"}`,
+			ExpectedErrorCode: string(llmkit.ErrCodeContextOverflow), ExpectedErrorStatus: http.StatusBadRequest,
+		},
+		{
 			ID: "malformed-success-body", Model: "test-model", Inputs: []string{"decode this"},
 			TimeoutMillis: 2000, ResponseStatus: http.StatusOK, ResponseBody: `{"data":[`,
 			ExpectedErrorCode: string(llmkit.ErrCodeProvider),

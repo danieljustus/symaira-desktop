@@ -69,13 +69,8 @@ pub fn hybrid_search(
     let config = retrieval_embedding_config(&environment, &cwd)
         .map_err(|error| format!("load retrieval configuration: {error}"))?;
     // The Go Client used by the real CLI/MCP search path currently ignores
-    // rerank_query; preserve that behavior until a caller activates reranking.
-    if config.vector_backend != "sqlite" || config.vector_quantization != "off" {
-        return Err(format!(
-            "hybrid search does not support configured vector backend {:?} with quantization {:?}; use sqlite with vector_quantization=off",
-            config.vector_backend, config.vector_quantization
-        ));
-    }
+    // rerank_query, vector_backend, and vector_quantization. Preserve that runtime behavior
+    // until a production caller activates those settings.
     if local_ollama_embeddings_endpoint(&config.ollama_url).is_none() {
         return Err(format!(
             "hybrid search does not support configured embedding endpoint {:?}; configure an HTTP Ollama endpoint on loopback",

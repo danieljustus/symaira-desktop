@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -25,23 +26,25 @@ type searchCLIHybridFixture struct {
 }
 
 type searchCLIHybridFixtureCase struct {
-	ID                string                    `json:"id"`
-	Query             string                    `json:"query"`
-	EmbeddingDim      int                       `json:"embedding_dim"`
-	ProviderStatus    int                       `json:"provider_status"`
-	ProviderDimension int                       `json:"provider_dimension"`
-	ExpandQuery       bool                      `json:"expand_query,omitempty"`
-	RerankQuery       bool                      `json:"rerank_query,omitempty"`
-	ExpandModel       string                    `json:"expand_model,omitempty"`
-	ExpandedText      string                    `json:"expanded_text,omitempty"`
-	ChatResponse      string                    `json:"chat_response,omitempty"`
-	ChatErrorBody     string                    `json:"chat_error_body,omitempty"`
-	ChatStatus        int                       `json:"chat_status,omitempty"`
-	IndexDocuments    bool                      `json:"index_documents"`
-	Documents         []searchCLIHybridDocument `json:"documents"`
-	Sources           []string                  `json:"sources"`
-	Requests          []searchCLIHybridRequest  `json:"requests"`
-	Expected          SearchResponse            `json:"expected"`
+	ID                 string                    `json:"id"`
+	Query              string                    `json:"query"`
+	EmbeddingDim       int                       `json:"embedding_dim"`
+	ProviderStatus     int                       `json:"provider_status"`
+	ProviderDimension  int                       `json:"provider_dimension"`
+	ExpandQuery        bool                      `json:"expand_query,omitempty"`
+	RerankQuery        bool                      `json:"rerank_query,omitempty"`
+	VectorBackend      string                    `json:"vector_backend,omitempty"`
+	VectorQuantization string                    `json:"vector_quantization,omitempty"`
+	ExpandModel        string                    `json:"expand_model,omitempty"`
+	ExpandedText       string                    `json:"expanded_text,omitempty"`
+	ChatResponse       string                    `json:"chat_response,omitempty"`
+	ChatErrorBody      string                    `json:"chat_error_body,omitempty"`
+	ChatStatus         int                       `json:"chat_status,omitempty"`
+	IndexDocuments     bool                      `json:"index_documents"`
+	Documents          []searchCLIHybridDocument `json:"documents"`
+	Sources            []string                  `json:"sources"`
+	Requests           []searchCLIHybridRequest  `json:"requests"`
+	Expected           SearchResponse            `json:"expected"`
 }
 
 type searchCLIHybridDocument struct {
@@ -72,6 +75,7 @@ func TestSearchCLIHybridOracle(t *testing.T) {
 			fixture.Cases = append(fixture.Cases, observed)
 		})
 	}
+	assertSearchCLIInertVectorSettingsMatchControl(t, fixture.Cases)
 	if os.Getenv("PORT_GENERATE") == "1" {
 		encoded, err := json.MarshalIndent(fixture, "", "  ")
 		if err != nil {
@@ -194,6 +198,39 @@ func searchCLIHybridCases() []searchCLIHybridFixtureCase {
 			RerankQuery: true,
 			Documents:   []searchCLIHybridDocument{{Path: "rerank.md", Body: "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."}},
 		},
+		{
+			ID: "turbo-prod-quantization-config-is-inert-in-cli-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "sqlite", VectorQuantization: "turbo-prod", IndexDocuments: true,
+			Documents: []searchCLIHybridDocument{
+				{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."},
+				{Path: "guide.md", Source: "source", Body: "# Source Heading\n\nA retrieval needle appears in this registered read-only guide."},
+				{Path: "nested/note.md", Source: "source", Body: "# Nested Heading\n\nA retrieval needle appears in this nested note."},
+			},
+			Sources: []string{"source", "source/nested"},
+		},
+		{
+			ID: "raw-unknown-backend-is-inert-in-cli-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "alternate-fixture-backend", VectorQuantization: "off", IndexDocuments: true,
+			Documents: []searchCLIHybridDocument{
+				{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."},
+				{Path: "guide.md", Source: "source", Body: "# Source Heading\n\nA retrieval needle appears in this registered read-only guide."},
+				{Path: "nested/note.md", Source: "source", Body: "# Nested Heading\n\nA retrieval needle appears in this nested note."},
+			},
+			Sources: []string{"source", "source/nested"},
+		},
+		{
+			ID: "raw-unknown-quantization-is-inert-in-cli-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "sqlite", VectorQuantization: "unknown-fixture-mode", IndexDocuments: true,
+			Documents: []searchCLIHybridDocument{
+				{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."},
+				{Path: "guide.md", Source: "source", Body: "# Source Heading\n\nA retrieval needle appears in this registered read-only guide."},
+				{Path: "nested/note.md", Source: "source", Body: "# Nested Heading\n\nA retrieval needle appears in this nested note."},
+			},
+			Sources: []string{"source", "source/nested"},
+		},
 	}
 }
 
@@ -282,6 +319,12 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 	writeConfig := func(model string) {
 		t.Helper()
 		config := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\nrerank_query = %t\n", indexPath, server.URL+"/api/embeddings", model, input.EmbeddingDim, input.ExpandQuery, input.ExpandModel, input.RerankQuery)
+		if input.VectorBackend != "" {
+			config += fmt.Sprintf("vector_backend = %q\n", input.VectorBackend)
+		}
+		if input.VectorQuantization != "" {
+			config += fmt.Sprintf("vector_quantization = %q\n", input.VectorQuantization)
+		}
 		if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(config), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -413,6 +456,43 @@ func equalSearchCLIHybridCase(left, right searchCLIHybridFixtureCase) bool {
 	leftJSON, leftErr := json.Marshal(left)
 	rightJSON, rightErr := json.Marshal(right)
 	return leftErr == nil && rightErr == nil && string(leftJSON) == string(rightJSON)
+}
+
+func assertSearchCLIInertVectorSettingsMatchControl(t *testing.T, cases []searchCLIHybridFixtureCase) {
+	t.Helper()
+	var control *searchCLIHybridFixtureCase
+	for index := range cases {
+		if cases[index].ID == "multi-root-success-metadata-anchor-snippet" {
+			control = &cases[index]
+		}
+	}
+	if control == nil {
+		t.Fatal("inert vector config comparison control case missing")
+	}
+	for _, id := range []string{
+		"turbo-prod-quantization-config-is-inert-in-cli-search",
+		"raw-unknown-backend-is-inert-in-cli-search",
+		"raw-unknown-quantization-is-inert-in-cli-search",
+	} {
+		var configured *searchCLIHybridFixtureCase
+		for index := range cases {
+			if cases[index].ID == id {
+				configured = &cases[index]
+				break
+			}
+		}
+		if configured == nil {
+			t.Fatalf("inert vector config comparison case %q missing", id)
+		}
+		controlResults := sortedSearchCLIResults(control.Expected.Results)
+		configuredResults := sortedSearchCLIResults(configured.Expected.Results)
+		if control.Expected.Hint != configured.Expected.Hint || !reflect.DeepEqual(controlResults, configuredResults) {
+			t.Fatalf("%s search result differs from off control: control=%+v configured=%+v", id, control.Expected, configured.Expected)
+		}
+		if !reflect.DeepEqual(control.Requests, configured.Requests) {
+			t.Fatalf("%s provider requests differ from off control: control=%+v configured=%+v", id, control.Requests, configured.Requests)
+		}
+	}
 }
 
 func sortedSearchCLIResults(results []SearchResult) []SearchResult {

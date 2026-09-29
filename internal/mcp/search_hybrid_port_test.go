@@ -36,6 +36,8 @@ type searchHybridMCPFixtureCase struct {
 	ProviderDimension     int                       `json:"provider_dimension"`
 	ExpandQuery           bool                      `json:"expand_query,omitempty"`
 	RerankQuery           bool                      `json:"rerank_query,omitempty"`
+	VectorBackend         string                    `json:"vector_backend,omitempty"`
+	VectorQuantization    string                    `json:"vector_quantization,omitempty"`
 	ExpandModel           string                    `json:"expand_model,omitempty"`
 	ExpandedText          string                    `json:"expanded_text,omitempty"`
 	ChatResponse          string                    `json:"chat_response,omitempty"`
@@ -74,6 +76,7 @@ func TestSearchHybridMCPOracle(t *testing.T) {
 			fixture.Cases = append(fixture.Cases, observeSearchHybridMCPCase(t, input))
 		})
 	}
+	assertSearchHybridMCPInertVectorSettingsMatchControl(t, fixture.Cases)
 	if os.Getenv("PORT_GENERATE") == "1" {
 		encoded, err := json.MarshalIndent(fixture, "", "  ")
 		if err != nil {
@@ -128,6 +131,41 @@ func sameSearchRequests(left, right []searchHybridMCPRequest) bool {
 		}
 	}
 	return true
+}
+
+func assertSearchHybridMCPInertVectorSettingsMatchControl(t *testing.T, cases []searchHybridMCPFixtureCase) {
+	t.Helper()
+	var control *searchHybridMCPFixtureCase
+	for index := range cases {
+		if cases[index].ID == "hybrid-success-float-metadata" {
+			control = &cases[index]
+		}
+	}
+	if control == nil {
+		t.Fatal("inert vector config comparison control case missing")
+	}
+	for _, id := range []string{
+		"turbo-prod-quantization-config-is-inert-in-mcp-search",
+		"raw-unknown-backend-is-inert-in-mcp-search",
+		"raw-unknown-quantization-is-inert-in-mcp-search",
+	} {
+		var configured *searchHybridMCPFixtureCase
+		for index := range cases {
+			if cases[index].ID == id {
+				configured = &cases[index]
+				break
+			}
+		}
+		if configured == nil {
+			t.Fatalf("inert vector config comparison case %q missing", id)
+		}
+		if !sameSearchJSON(control.Expected, configured.Expected) {
+			t.Fatalf("%s MCP result differs from off control: control=%s configured=%s", id, control.Expected, configured.Expected)
+		}
+		if !sameSearchRequests(control.Requests, configured.Requests) {
+			t.Fatalf("%s MCP provider requests differ from off control: control=%+v configured=%+v", id, control.Requests, configured.Requests)
+		}
+	}
 }
 
 func searchHybridMCPCases() []searchHybridMCPFixtureCase {
@@ -228,6 +266,24 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 			RerankQuery: true,
 			Documents:   []searchHybridMCPDocument{{Path: "rerank.md", Body: "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."}},
 		},
+		{
+			ID: "turbo-prod-quantization-config-is-inert-in-mcp-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "sqlite", VectorQuantization: "turbo-prod",
+			Documents: []searchHybridMCPDocument{{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."}},
+		},
+		{
+			ID: "raw-unknown-backend-is-inert-in-mcp-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "alternate-fixture-backend", VectorQuantization: "off",
+			Documents: []searchHybridMCPDocument{{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."}},
+		},
+		{
+			ID: "raw-unknown-quantization-is-inert-in-mcp-search", Query: "retrieval needle",
+			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
+			VectorBackend: "sqlite", VectorQuantization: "unknown-fixture-mode",
+			Documents: []searchHybridMCPDocument{{Path: "vault.md", Body: "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."}},
+		},
 	}
 }
 
@@ -319,6 +375,12 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 		t.Fatal(err)
 	}
 	configText := fmt.Sprintf("index_path = %q\nollama_url = %q\nmodel = %q\nembedding_dim = %d\ntimeout_seconds = 5\nretry_count = 0\nexpand_query = %t\nexpand_model = %q\nexpand_timeout_seconds = 5\nrerank_query = %t\n", indexPath, server.URL+"/api/embeddings", "fixture-model", input.EmbeddingDim, input.ExpandQuery, input.ExpandModel, input.RerankQuery)
+	if input.VectorBackend != "" {
+		configText += fmt.Sprintf("vector_backend = %q\n", input.VectorBackend)
+	}
+	if input.VectorQuantization != "" {
+		configText += fmt.Sprintf("vector_quantization = %q\n", input.VectorQuantization)
+	}
 	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(configText), 0o600); err != nil {
 		t.Fatal(err)
 	}

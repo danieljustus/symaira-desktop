@@ -562,6 +562,129 @@
           "isError": false
         }
       }
+    },
+    {
+      "id": "turbo-prod-quantization-config-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "turbo-prod",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "raw-unknown-backend-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "alternate-fixture-backend",
+      "vector_quantization": "off",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "raw-unknown-quantization-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "unknown-fixture-mode",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
     }
   ]
 }

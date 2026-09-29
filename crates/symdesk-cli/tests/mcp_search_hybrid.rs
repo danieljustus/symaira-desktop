@@ -37,6 +37,10 @@ struct FixtureCase {
     #[serde(default)]
     rerank_query: bool,
     #[serde(default)]
+    vector_backend: String,
+    #[serde(default)]
+    vector_quantization: String,
+    #[serde(default)]
     expand_model: String,
     #[serde(default)]
     expanded_text: String,
@@ -264,11 +268,23 @@ fn replay_case(case: &FixtureCase) {
 
     let config_dir = home.join(".config/symseek");
     fs::create_dir_all(&config_dir).expect("create isolated config");
+    let vector_backend = if case.vector_backend.is_empty() {
+        "sqlite"
+    } else {
+        &case.vector_backend
+    };
+    let vector_quantization = if case.vector_quantization.is_empty() {
+        "off"
+    } else {
+        &case.vector_quantization
+    };
     let config = format!(
-        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = \"sqlite\"\nvector_quantization = \"off\"\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\nrerank_query = {}\n",
+        "index_path = {:?}\nollama_url = {:?}\nmodel = \"fixture-model\"\nembedding_dim = {}\ntimeout_seconds = 2\nretry_count = 0\nvector_backend = {:?}\nvector_quantization = {:?}\nexpand_query = {}\nexpand_model = {:?}\nexpand_timeout_seconds = 5\nrerank_query = {}\n",
         index_path.to_string_lossy(),
         endpoint,
         case.embedding_dim,
+        vector_backend,
+        vector_quantization,
         case.expand_query,
         case.expand_model,
         case.rerank_query

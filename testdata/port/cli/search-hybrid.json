@@ -735,6 +735,225 @@
           }
         ]
       }
+    },
+    {
+      "id": "turbo-prod-quantization-config-is-inert-in-cli-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "turbo-prod",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."
+        },
+        {
+          "path": "guide.md",
+          "body": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+          "source": "source"
+        },
+        {
+          "path": "nested/note.md",
+          "body": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+          "source": "source"
+        }
+      ],
+      "sources": [
+        "source",
+        "source/nested"
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/vault.md",
+            "title": "Vault Retrieval Note",
+            "snippet": "",
+            "score": 0.11639344692230225,
+            "metadata_matches": [
+              "title",
+              "tags"
+            ]
+          },
+          {
+            "path": "@source/source/guide.md",
+            "title": "guide",
+            "snippet": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+            "score": 0.032258063554763794,
+            "source_type": "external",
+            "read_only": true
+          },
+          {
+            "path": "@source/source/nested/note.md",
+            "title": "note",
+            "snippet": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+            "score": 0.03201844170689583,
+            "source_type": "external",
+            "read_only": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "raw-unknown-backend-is-inert-in-cli-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "alternate-fixture-backend",
+      "vector_quantization": "off",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."
+        },
+        {
+          "path": "guide.md",
+          "body": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+          "source": "source"
+        },
+        {
+          "path": "nested/note.md",
+          "body": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+          "source": "source"
+        }
+      ],
+      "sources": [
+        "source",
+        "source/nested"
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/vault.md",
+            "title": "Vault Retrieval Note",
+            "snippet": "",
+            "score": 0.11639344692230225,
+            "metadata_matches": [
+              "title",
+              "tags"
+            ]
+          },
+          {
+            "path": "@source/source/guide.md",
+            "title": "guide",
+            "snippet": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+            "score": 0.032258063554763794,
+            "source_type": "external",
+            "read_only": true
+          },
+          {
+            "path": "@source/source/nested/note.md",
+            "title": "note",
+            "snippet": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+            "score": 0.03201844170689583,
+            "source_type": "external",
+            "read_only": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "raw-unknown-quantization-is-inert-in-cli-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "unknown-fixture-mode",
+      "index_documents": true,
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in the vault note near its conclusion."
+        },
+        {
+          "path": "guide.md",
+          "body": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+          "source": "source"
+        },
+        {
+          "path": "nested/note.md",
+          "body": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+          "source": "source"
+        }
+      ],
+      "sources": [
+        "source",
+        "source/nested"
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "results": [
+          {
+            "path": "@vault/vault.md",
+            "title": "Vault Retrieval Note",
+            "snippet": "",
+            "score": 0.11639344692230225,
+            "metadata_matches": [
+              "title",
+              "tags"
+            ]
+          },
+          {
+            "path": "@source/source/guide.md",
+            "title": "guide",
+            "snippet": "# Source Heading\n\nA retrieval needle appears in this registered read-only guide.",
+            "score": 0.032258063554763794,
+            "source_type": "external",
+            "read_only": true
+          },
+          {
+            "path": "@source/source/nested/note.md",
+            "title": "note",
+            "snippet": "# Nested Heading\n\nA retrieval needle appears in this nested note.",
+            "score": 0.03201844170689583,
+            "source_type": "external",
+            "read_only": true
+          }
+        ]
+      }
     }
   ]
 }

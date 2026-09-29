@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "document_hash": "d16e01fff7ae34399eb8eb1d8e18c8a71cefbb58f7b7be75feda2ba86ee1ebd5",
+  "pending_chunks": [
+    {
+      "uuid": "023c45df-d5d7-5ed5-9bd1-c7560a364cb3",
+      "document_path": "$DOC",
+      "chunk_index": 0,
+      "content": "# Pending rebuild",
+      "embedding": [],
+      "hash": "c2623e136ffeb340b51bf0fee9f4cdd1a5bcec106d5ddfb54cbfc93a859d8f71",
+      "dim": 0,
+      "embedding_model": "local-hash",
+      "char_start": 0,
+      "char_end": 17,
+      "anchor_kind": "text",
+      "anchor_value": "offset:0",
+      "embedding_pending": true
+    },
+    {
+      "uuid": "2692fab5-266e-54df-be35-a0360a295824",
+      "document_path": "$DOC",
+      "chunk_index": 1,
+      "content": "source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement",
+      "embedding": [],
+      "hash": "7370d907c3749f1512d464a624890b4148df9aff49cf3ada4906de258ab92e7b",
+      "dim": 0,
+      "embedding_model": "local-hash",
+      "char_start": 19,
+      "char_end": 1018,
+      "anchor_kind": "text",
+      "anchor_value": "offset:19",
+      "embedding_pending": true
+    },
+    {
+      "uuid": "2b111cf9-f518-52c6-8968-f46caa4a7db6",
+      "document_path": "$DOC",
+      "chunk_index": 2,
+      "content": " source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement ",
+      "embedding": [],
+      "hash": "b02b75bc90cd8ec0b4ec3ae522c5024bf3f49fc54028cdae7778c5022f4c2ac4",
+      "dim": 0,
+      "embedding_model": "local-hash",
+      "char_start": 818,
+      "char_end": 1379,
+      "anchor_kind": "text",
+      "anchor_value": "offset:818",
+      "embedding_pending": true
+    }
+  ],
+  "resolved_chunks": [
+    {
+      "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+      "document_path": "$DOC",
+      "chunk_index": 0,
+      "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+      "embedding": [
+        0.3568202,
+        0.38181025,
+        0.35270792,
+        0.3843409,
+        0.35334054,
+        0.33341178,
+        0.33309543,
+        0.32835045
+      ],
+      "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "anchor_kind": "section",
+      "anchor_value": "metadata",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "023c45df-d5d7-5ed5-9bd1-c7560a364cb3",
+      "document_path": "$DOC",
+      "chunk_index": 1,
+      "content": "# Pending rebuild",
+      "embedding": [
+        0.41997,
+        0.11293311,
+        0.34232846,
+        0.3564451,
+        0.3670326,
+        0.3829138,
+        0.37056175,
+        0.3846784
+      ],
+      "hash": "c2623e136ffeb340b51bf0fee9f4cdd1a5bcec106d5ddfb54cbfc93a859d8f71",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "char_start": 0,
+      "char_end": 17,
+      "anchor_kind": "heading",
+      "anchor_value": "Pending rebuild",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "2692fab5-266e-54df-be35-a0360a295824",
+      "document_path": "$DOC",
+      "chunk_index": 2,
+      "content": "source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement",
+      "embedding": [
+        0.38599053,
+        0.34221077,
+        0.38817948,
+        0.33856252,
+        0.32396936,
+        0.37577522,
+        0.34294054,
+        0.32376498
+      ],
+      "hash": "7370d907c3749f1512d464a624890b4148df9aff49cf3ada4906de258ab92e7b",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "char_start": 19,
+      "char_end": 1018,
+      "anchor_kind": "heading",
+      "anchor_value": "Pending rebuild",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "ac59054f-91f4-5564-a243-4cd2a0e2fafb",
+      "document_path": "$DOC",
+      "chunk_index": 3,
+      "content": " source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement source-bound fake embedding replacement",
+      "embedding": [
+        0.3246007,
+        0.38587368,
+        0.34210727,
+        0.38806197,
+        0.33846012,
+        0.3238713,
+        0.37566137,
+        0.34283686
+      ],
+      "hash": "42fe4fa211fd257f4ddc35e3cf988583e1726b8dcc9c7737c33e99ca57f9fa03",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "char_start": 818,
+      "char_end": 1378,
+      "anchor_kind": "heading",
+      "anchor_value": "Pending rebuild",
+      "embedding_pending": false
+    }
+  ],
+  "reembedded_documents": 1
+}

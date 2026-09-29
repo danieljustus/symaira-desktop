@@ -1,10 +1,13 @@
 package engine
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -12,6 +15,121 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
+
+type pendingRebuildFixture struct {
+	SchemaVersion int                   `json:"schema_version"`
+	DocumentHash  string                `json:"document_hash"`
+	Pending       []pendingRebuildChunk `json:"pending_chunks"`
+	Resolved      []pendingRebuildChunk `json:"resolved_chunks"`
+	Reembedded    int                   `json:"reembedded_documents"`
+}
+
+type pendingRebuildChunk struct {
+	UUID             string    `json:"uuid"`
+	DocumentPath     string    `json:"document_path"`
+	ChunkIndex       int       `json:"chunk_index"`
+	Content          string    `json:"content"`
+	Embedding        []float32 `json:"embedding"`
+	Hash             string    `json:"hash"`
+	Dim              int       `json:"dim"`
+	Model            string    `json:"embedding_model"`
+	CharStart        *int      `json:"char_start,omitempty"`
+	CharEnd          *int      `json:"char_end,omitempty"`
+	AnchorKind       string    `json:"anchor_kind,omitempty"`
+	AnchorValue      string    `json:"anchor_value,omitempty"`
+	EmbeddingPending bool      `json:"embedding_pending"`
+}
+
+// TestPendingRebuildPortFixture captures the real Go re-embed path with test
+// embedders only. The fixture deliberately records both pending local-hash
+// rows and resolved fake-model rows; it never contacts an embedding provider.
+func TestPendingRebuildPortFixture(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("HOME", filepath.Join(root, "home"))
+	if err := os.MkdirAll(filepath.Join(root, "home"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	previousWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(previousWD) })
+	dbClient, err := db.OpenAt(filepath.Join(root, "retrieval.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = dbClient.Close() })
+	source := "doc.md"
+	body := "# Pending rebuild\n\n" + strings.Repeat("source-bound fake embedding replacement ", 34)
+	if err := os.WriteFile(source, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 8}, strings.NewReader(body), source); err != nil {
+		t.Fatal(err)
+	}
+	pending, err := dbClient.GetChunksForDocument(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reembedded, err := ReembedPending(dbClient, &fakeEmbedder{dim: 8})
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := dbClient.GetChunksForDocument(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := dbClient.GetDocument(source)
+	if err != nil || document == nil {
+		t.Fatalf("read rebuilt document: document=%v error=%v", document, err)
+	}
+	fixture := pendingRebuildFixture{SchemaVersion: 1, DocumentHash: document.Hash, Reembedded: reembedded}
+	fixture.Pending = portPendingRebuildChunks(pending)
+	fixture.Resolved = portPendingRebuildChunks(resolved)
+	encoded, err := json.MarshalIndent(fixture, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded = append(encoded, '\n')
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("test source path unavailable")
+	}
+	path := filepath.Join(filepath.Dir(file), "../../../../testdata/port/retrieval/pending-rebuild.json")
+	if os.Getenv("PORT_GENERATE") == "1" {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	current, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(current, encoded) {
+		t.Fatal("pending rebuild fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$'")
+	}
+}
+
+func portPendingRebuildChunks(chunks []*db.Chunk) []pendingRebuildChunk {
+	result := make([]pendingRebuildChunk, 0, len(chunks))
+	for _, chunk := range chunks {
+		result = append(result, pendingRebuildChunk{
+			UUID: chunk.UUID, DocumentPath: "$DOC", ChunkIndex: chunk.ChunkIndex,
+			Content: chunk.Content, Embedding: chunk.Embedding, Hash: chunk.Hash,
+			Dim: chunk.Dim, Model: chunk.Model, CharStart: chunk.CharStart,
+			CharEnd: chunk.CharEnd, AnchorKind: chunk.AnchorKind,
+			AnchorValue: chunk.AnchorValue, EmbeddingPending: chunk.EmbeddingPending,
+		})
+	}
+	return result
+}
 
 type countingStore struct {
 	db.Store

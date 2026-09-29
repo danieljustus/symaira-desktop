@@ -480,39 +480,48 @@ impl RetrievalDb {
 
     pub fn save_chunks(&self, chunks: &[StoredRetrievalChunk]) -> Result<(), SidecarError> {
         let transaction = self.connection.unchecked_transaction()?;
-        {
-            let mut statement = transaction.prepare(
-                "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
-                 binary_signature, embedding_dim, embedding_model, char_start, char_end,
-                 embedding_pending, anchor_kind, anchor_value, content_norm)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
-            )?;
-            for chunk in chunks {
-                let embedding = encode_embedding(&chunk.embedding);
-                statement.execute(params![
-                    chunk.uuid,
-                    chunk.document_path,
-                    chunk.chunk_index,
-                    chunk.content,
-                    embedding,
-                    chunk.hash,
-                    embedding_norm(&chunk.embedding),
-                    chunk.dim,
-                    chunk.model,
-                    chunk.char_start,
-                    chunk.char_end,
-                    i64::from(chunk.embedding_pending),
-                    chunk.anchor_kind,
-                    chunk.anchor_value,
-                    symdesk_core::german::normalized_text(&chunk.content),
-                ])?;
-            }
-        }
+        insert_chunks(&transaction, chunks)?;
         transaction.commit()?;
         let _ = self.connection.execute(
             "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
             [],
         );
+        Ok(())
+    }
+
+    /// Replaces one document and all of its chunks atomically in the Rust DB.
+    /// Go's current commitIndex performs delete, document save, and chunk save
+    /// as separate operations; this helper guarantees rollback only for this
+    /// Rust operation and does not claim Go transaction parity.
+    pub fn replace_document_chunks(
+        &self,
+        document: &RetrievalDocument,
+        chunks: &[StoredRetrievalChunk],
+    ) -> Result<(), SidecarError> {
+        if chunks
+            .iter()
+            .any(|chunk| chunk.document_path != document.path)
+        {
+            return Err(SidecarError::Contract(
+                "replacement chunks must belong to the replacement document".to_owned(),
+            ));
+        }
+        let transaction = self.connection.unchecked_transaction()?;
+        transaction.execute(
+            "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)
+             ON CONFLICT(path) DO UPDATE SET hash=excluded.hash, updated_at=excluded.updated_at",
+            params![document.path, document.hash, document.updated_at],
+        )?;
+        transaction.execute(
+            "DELETE FROM chunks WHERE document_path = ?1",
+            [&document.path],
+        )?;
+        insert_chunks(&transaction, chunks)?;
+        transaction.execute(
+            "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
+            [],
+        )?;
+        transaction.commit()?;
         Ok(())
     }
 
@@ -942,6 +951,39 @@ fn backfill_content_norm(connection: &Connection) -> Result<(), SidecarError> {
         )?;
     }
     transaction.commit()?;
+    Ok(())
+}
+
+fn insert_chunks(
+    transaction: &rusqlite::Transaction<'_>,
+    chunks: &[StoredRetrievalChunk],
+) -> Result<(), SidecarError> {
+    let mut statement = transaction.prepare(
+        "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
+         binary_signature, embedding_dim, embedding_model, char_start, char_end,
+         embedding_pending, anchor_kind, anchor_value, content_norm)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+    )?;
+    for chunk in chunks {
+        let embedding = encode_embedding(&chunk.embedding);
+        statement.execute(params![
+            chunk.uuid,
+            chunk.document_path,
+            chunk.chunk_index,
+            chunk.content,
+            embedding,
+            chunk.hash,
+            embedding_norm(&chunk.embedding),
+            chunk.dim,
+            chunk.model,
+            chunk.char_start,
+            chunk.char_end,
+            i64::from(chunk.embedding_pending),
+            chunk.anchor_kind,
+            chunk.anchor_value,
+            symdesk_core::german::normalized_text(&chunk.content),
+        ])?;
+    }
     Ok(())
 }
 

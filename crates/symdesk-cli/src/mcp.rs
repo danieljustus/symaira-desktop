@@ -259,7 +259,7 @@ where
         .and_then(Value::as_str)
         .unwrap_or_default();
     let arguments = params.get("arguments").cloned().unwrap_or(Value::Null);
-    if !matches!(name, "desk_status" | "desk_ls" | "desk_search") {
+    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask") {
         return send_error(
             output,
             mode,
@@ -359,7 +359,67 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
                 serde_json::to_string(&response).map_err(|error| error.to_string())?,
             ))
         }
+        "desk_ask" => {
+            let args = if arguments.is_null() {
+                serde_json::Map::new()
+            } else {
+                object_arguments(arguments)?
+            };
+            let query = go_string_argument(&args, "query")?;
+            let notebook = go_string_argument(&args, "notebook")?;
+            if query.is_empty() {
+                return Err("query is required".to_owned());
+            }
+            if !notebook.is_empty() {
+                return Err(
+                    "notebook-scoped desk_ask is not implemented by the Rust MCP port".to_owned(),
+                );
+            }
+            crate::ai_cli::ensure_offline_ask_provider()?;
+            let (vault, sidecar) = open_sidecar(config)?;
+            let sources = SourceRegistry::open(&vault)
+                .and_then(|registry| registry.list())
+                .map_err(|error| error.to_string())?;
+            let hits = crate::ai_cli::search_for_ask(&vault, &query, &sources, &sidecar)?;
+            let paths = hits
+                .iter()
+                .map(|hit| crate::ai_cli::ask_display_path(&vault, &hit.path, &sources))
+                .collect::<Vec<_>>();
+            let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
+            Ok(json!({"answer": answer}))
+        }
         _ => Err(format!("Unknown tool: {name}")),
+    }
+}
+
+fn go_string_argument(
+    arguments: &serde_json::Map<String, Value>,
+    field: &str,
+) -> Result<String, String> {
+    let mut matches = arguments
+        .iter()
+        .filter(|(key, _)| symdesk_vault::dataset::go_equal_fold(key, field));
+    let Some((_, value)) = matches.next() else {
+        return Ok(String::new());
+    };
+    if matches.next().is_some() {
+        return Err(format!("ambiguous {field} arguments"));
+    }
+    match value {
+        Value::Null => Ok(String::new()),
+        Value::String(value) => Ok(value.clone()),
+        Value::Bool(_) => Err(format!(
+            "json: cannot unmarshal bool into Go struct field .{field} of type string"
+        )),
+        Value::Number(_) => Err(format!(
+            "json: cannot unmarshal number into Go struct field .{field} of type string"
+        )),
+        Value::Array(_) => Err(format!(
+            "json: cannot unmarshal array into Go struct field .{field} of type string"
+        )),
+        Value::Object(_) => Err(format!(
+            "json: cannot unmarshal object into Go struct field .{field} of type string"
+        )),
     }
 }
 
@@ -423,6 +483,12 @@ fn tool_definitions() -> Vec<Value> {
             "name": "desk_search",
             "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
             "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+            "annotations": {"readOnlyHint": true},
+        }),
+        json!({
+            "name": "desk_ask",
+            "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+            "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "notebook": {"type": "string", "description": "optional: notebook id or path to restrict retrieval and citations to"}}, "required": ["query"]},
             "annotations": {"readOnlyHint": true},
         }),
     ]
@@ -707,13 +773,13 @@ mod tests {
             json!({"name":"symdesk","version":super::super::VERSION})
         );
         let tools = responses[1]["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 3);
+        assert_eq!(tools.len(), 4);
         assert_eq!(
             tools
                 .iter()
                 .map(|tool| tool["name"].as_str().unwrap())
                 .collect::<Vec<_>>(),
-            ["desk_status", "desk_ls", "desk_search"]
+            ["desk_status", "desk_ls", "desk_search", "desk_ask"]
         );
         assert!(
             tools

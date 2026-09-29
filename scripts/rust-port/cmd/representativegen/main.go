@@ -71,6 +71,7 @@ type httpCase struct {
 	PopulateShareAccess       bool              `json:"populate_share_access,omitempty"`
 	PopulateWorkerACL         bool              `json:"populate_worker_acl,omitempty"`
 	PopulateNamedUser         bool              `json:"populate_named_user,omitempty"`
+	PopulateHybridIndex       bool              `json:"populate_hybrid_index,omitempty"`
 	RemoveSymlinkEscapes      bool              `json:"remove_symlink_escapes,omitempty"`
 	ProviderOllama            bool              `json:"provider_ollama,omitempty"`
 	ProviderOpenAIFallback    bool              `json:"provider_openai_fallback,omitempty"`

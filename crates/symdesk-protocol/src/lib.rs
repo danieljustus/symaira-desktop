@@ -1333,19 +1333,21 @@ async fn handle_ai_ask(
             }
         }
     };
-    match ai_ask_retrieval_index_is_empty(&state.vault_root) {
-        Ok(true) => {}
-        Ok(false) => {
-            return json_error(
-                StatusCode::NOT_IMPLEMENTED,
-                "hybrid retrieval ask is not implemented for indexes containing chunks",
-            );
-        }
-        Err(error) => {
-            return json_error(
-                StatusCode::NOT_IMPLEMENTED,
-                &format!("ask retrieval mode could not be verified: {error}"),
-            );
+    if !notebook_scoped {
+        match ai_ask_retrieval_index_is_empty(&state.vault_root) {
+            Ok(true) => {}
+            Ok(false) => {
+                return json_error(
+                    StatusCode::NOT_IMPLEMENTED,
+                    "hybrid retrieval ask is not implemented for indexes containing chunks",
+                );
+            }
+            Err(error) => {
+                return json_error(
+                    StatusCode::NOT_IMPLEMENTED,
+                    &format!("ask retrieval mode could not be verified: {error}"),
+                );
+            }
         }
     }
 

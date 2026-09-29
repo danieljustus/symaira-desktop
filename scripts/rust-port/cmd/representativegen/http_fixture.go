@@ -94,6 +94,7 @@ func generatedHTTP() httpSuite {
 		{ID: "ai-ask-notebook-worker-acl", Method: "POST", Path: "/api/v1/ai/ask", Auth: "worker", Body: `{"query":"Body","notebook":"mixed"}`, PopulateWorkerACL: true},
 		{ID: "ai-ask-notebook-worker-acl-fallback", Method: "POST", Path: "/api/v1/ai/ask", Auth: "worker", Body: `{"query":"conceptual-question-no-match","notebook":"mixed"}`, PopulateWorkerACL: true},
 		{ID: "ai-ask-method-not-allowed", Method: "GET", Path: "/api/v1/ai/ask", Auth: "valid"},
+		{ID: "ai-ask-notebook-nonempty-hybrid-index", Method: "POST", Path: "/api/v1/ai/ask", Auth: "valid", Body: `{"query":"Body","notebook":"research"}`, PopulateHybridIndex: true},
 		{ID: "command-admin-invalid-subcommand", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["note","not-real"]}`},
 		{ID: "command-admin-trailing-data", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}{"ignored":true}`},
 		{ID: "command-admin-over-limit-prefix", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}`, BodyRepeat: (2 << 20) - len(`{"arguments":["not-real"]}`) + 1},

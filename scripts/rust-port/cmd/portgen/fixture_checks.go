@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -120,8 +121,12 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {
+	args, err := fixtureReplayArgs(repoRoot, target)
+	if err != nil {
+		return fmt.Errorf("%s: %w", target.name, err)
+	}
 	//nolint:gosec // target args are static fixture controls declared above.
-	command := exec.Command(goTool, target.args...)
+	command := exec.Command(goTool, args...)
 	command.Dir = repoRoot
 	command.Env = environment
 	output, err := command.CombinedOutput()
@@ -129,6 +134,48 @@ var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, 
 		return fmt.Errorf("%s: %w\noutput: %s", target.name, err, string(output))
 	}
 	return nil
+}
+
+// These five generators accept a selected core/vault oracle during generation.
+// Replay uses their immutable, checksummed document identity, not the global
+// sidecar identity or historical defaults. Full-document comparisons remain.
+func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, error) {
+	if len(target.args) < 2 || target.args[0] != "run" {
+		return target.args, nil
+	}
+	switch target.args[1] {
+	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen":
+	default:
+		return target.args, nil
+	}
+	var oracle inventory.Oracle
+	for i, rel := range target.outputs {
+		content, err := os.ReadFile(filepath.Join(repoRoot, rel))
+		if err != nil {
+			return nil, fmt.Errorf("read replay oracle %s: %w", rel, err)
+		}
+		var document struct {
+			Oracle inventory.Oracle `json:"oracle"`
+		}
+		if err := json.Unmarshal(content, &document); err != nil {
+			return nil, fmt.Errorf("decode replay oracle %s: %w", rel, err)
+		}
+		if !fullGitCommit.MatchString(document.Oracle.Commit) || document.Oracle.Release == "" {
+			return nil, fmt.Errorf("invalid replay oracle in %s", rel)
+		}
+		if i == 0 {
+			oracle = document.Oracle
+		} else if document.Oracle != oracle {
+			return nil, fmt.Errorf("inconsistent replay oracle in %s", rel)
+		}
+	}
+	if len(target.outputs) == 0 {
+		return nil, fmt.Errorf("replay oracle target has no outputs")
+	}
+	if err := verifyProvenanceAncestry(repoRoot, oracle.Commit); err != nil {
+		return nil, fmt.Errorf("replay oracle ancestry: %w", err)
+	}
+	return append(append([]string(nil), target.args...), "--oracle-commit", oracle.Commit, "--oracle-release", oracle.Release), nil
 }
 
 var fixtureGenerationEnvironment = map[string]struct{}{

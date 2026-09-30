@@ -225,6 +225,18 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 }
 
 func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string) error {
+	// The configurable identity must describe the production bytes actually read.
+	fixtureSource, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, fixtureOracleCommit)
+	if err != nil {
+		return fmt.Errorf("compute core/vault oracle source digest: %w", err)
+	}
+	currentSource, err := inventory.ComputeProductionSourceDigest(repoRoot)
+	if err != nil {
+		return fmt.Errorf("compute core/vault generating source digest: %w", err)
+	}
+	if fixtureSource != currentSource {
+		return fmt.Errorf("core/vault production source does not match fixture oracle commit %s", fixtureOracleCommit)
+	}
 	// These generator commands are the former core-fixtures-generate and
 	// vault-fixtures-generate Make prerequisites. They run in the private
 	// worktree so the top-level flow has one write boundary.

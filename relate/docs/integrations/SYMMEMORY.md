@@ -1,5 +1,7 @@
 # SymMemory integration
 
+> Historical standalone SymRelate integration contract. Current Desktop composition is documented in the [root README](../../../README.md); the standalone architecture document was not archived here.
+
 `symrelate` can optionally link a person or organization to a SymMemory
 entity so a user can pull up related context without SymMemory ever
 becoming a requirement, and without any contact-point data ever being
@@ -7,7 +9,7 @@ sent to it. This document is the status report for that integration —
 what is implemented, what was verified against a real installation, and
 what is still blocked on upstream work.
 
-See [ARCHITECTURE.md](../../ARCHITECTURE.md)'s standalone-first rule: no
+The historical standalone-first rule applies: no
 package in this repository imports a SymMemory package. Everything below
 talks to a `symmemory` binary on `PATH` via subprocess calls, exactly like
 `internal/domain/security.SymVaultKeyProvider` does for SymVault.

@@ -1,11 +1,13 @@
 # SymMeet integration
 
+> Historical standalone SymRelate integration contract. Current Desktop composition is documented in the [root README](../../../README.md); the standalone architecture document was not archived here.
+
 `symrelate` can turn a reviewed SymMeet meeting into a contact interaction
 — an opaque meeting reference on a person or organization's timeline,
 never a transcript, recording, or automatically-matched participant list.
 This document is the status report for that integration.
 
-See [ARCHITECTURE.md](../../ARCHITECTURE.md)'s standalone-first rule: no
+The historical standalone-first rule applies: no
 package in this repository imports a symaira-meet package. Discovery
 talks to a `symmeet` binary on `PATH` via subprocess calls, the same
 pattern [SYMMEMORY.md](SYMMEMORY.md) documents for SymMemory.

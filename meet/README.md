@@ -142,4 +142,4 @@ cloud; symmeet keeps the whole pipeline on your device.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0. See the repository [LICENSE](../LICENSE).

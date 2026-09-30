@@ -1745,7 +1745,9 @@ func startServerWithEnv(binary, vault string, extra map[string]string) *runningS
 
 func (s *runningServer) ready() error {
 	client := &http.Client{Timeout: 250 * time.Millisecond}
-	deadline := time.Now().Add(10 * time.Second)
+	// Windows runners can take longer than 10 s for the first launch of a
+	// freshly built server binary (#1118); a healthy server answers sooner.
+	deadline := time.Now().Add(60 * time.Second)
 	for time.Now().Before(deadline) {
 		response, err := client.Get(s.base + "/healthz")
 		if err == nil {

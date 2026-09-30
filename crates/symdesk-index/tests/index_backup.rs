@@ -1,3 +1,6 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
+
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -38,6 +41,11 @@ impl TestDir {
             .duration_since(UNIX_EPOCH)
             .expect("clock before Unix epoch")
             .as_nanos();
+        // Parallel tests can read the same clock value (coarse on macOS).
+        let nonce = format!(
+            "{nonce}-{}",
+            TEMP_DIR_COUNTER.fetch_add(1, Ordering::Relaxed)
+        );
         let path = std::env::temp_dir().join(format!(
             "symdesk-index-backup-{}-{nonce}",
             std::process::id()

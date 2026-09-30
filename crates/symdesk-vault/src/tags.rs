@@ -86,10 +86,9 @@ pub fn find_inline_tag_spans(body: &str) -> Vec<TagSpan> {
             && (temporary == bytes.len()
                 || matches!(bytes[temporary], b' ' | b'\t' | b'\r' | b'\n'))
         {
-            index = temporary;
-            while index < bytes.len() && matches!(bytes[index], b' ' | b'\t') {
-                index += 1;
-            }
+            // VAULT.md: tags inside ATX headings are not indexed.
+            index = skip_line(bytes, temporary);
+            continue;
         }
 
         while index < bytes.len() && bytes[index] != b'\n' {
@@ -266,4 +265,32 @@ fn line_end(bytes: &[u8], start: usize) -> usize {
 fn skip_line(bytes: &[u8], start: usize) -> usize {
     let end = line_end(bytes, start);
     if end < bytes.len() { end + 1 } else { end }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::extract_inline_tags;
+
+    #[test]
+    fn heading_lines_do_not_contribute_tags() {
+        let cases: [(&str, &[&str]); 5] = [
+            (
+                "# Heading #h1\n## Two #h2\n### Three #h3\n#### Four #h4\n##### Five #h5\n###### Six #h6\nBody #kept",
+                &["kept"],
+            ),
+            (
+                "   ## Indented #skip ##\n# Code `#x` and #skip\n# Ünïcödé #überschrift\nText #body",
+                &["body"],
+            ),
+            ("####### not heading #seven", &["seven"]),
+            ("Body #first\n# Last #skip", &["first"]),
+            (
+                "```\n# fenced #code\n```\n# Heading #skip\nAfter #ok",
+                &["ok"],
+            ),
+        ];
+        for (body, want) in cases {
+            assert_eq!(extract_inline_tags(body), want, "body: {body:?}");
+        }
+    }
 }

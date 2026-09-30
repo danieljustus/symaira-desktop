@@ -285,7 +285,7 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
 		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
 		{"./internal/history", "^TestPortHistory(PurgeContract|PruneContract|SelectedTrashPurgeContract)$"},
-		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
+		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$|^TestPortNoteOperationContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
 		{"./internal/sidecar", "^TestPortSidecar(Contract|MetadataContract)$"},

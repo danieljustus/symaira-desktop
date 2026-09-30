@@ -60,6 +60,31 @@ func TestExtractInlineTags(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "skip tags on complete ATX heading lines",
+			body: "# Heading #h1\n## Two #h2\n### Three #h3\n#### Four #h4\n##### Five #h5\n###### Six #h6\nBody #kept",
+			want: []string{"kept"},
+		},
+		{
+			name: "skip heading with closing markers and indentation",
+			body: "   ## Indented #skip ##\n# Code `#x` and #skip\n# Ünïcödé #überschrift\nText #body",
+			want: []string{"body"},
+		},
+		{
+			name: "seven hashes is not a heading",
+			body: "####### not heading #seven",
+			want: []string{"seven"},
+		},
+		{
+			name: "heading tag at EOF without newline",
+			body: "Body #first\n# Last #skip",
+			want: []string{"first"},
+		},
+		{
+			name: "fenced heading lines stay code",
+			body: "```\n# fenced #code\n```\n# Heading #skip\nAfter #ok",
+			want: []string{"ok"},
+		},
+		{
 			name: "skip ATX headings",
 			body: "# Heading 1\n## Heading 2\n### Heading 3\nBody with #actual-tag",
 			want: []string{"actual-tag"},

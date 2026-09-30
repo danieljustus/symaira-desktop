@@ -199,30 +199,75 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 	return nil
 }
 
+// removalIdentity resolves existing ancestors even when the source is gone.
+// Non-existence is the only resolution failure for which a lexical suffix is safe.
+func removalIdentity(path string) (string, error) {
+	candidate := path
+	var suffix []string
+	for {
+		resolved, err := filepath.EvalSymlinks(candidate)
+		if err == nil {
+			for i := len(suffix) - 1; i >= 0; i-- {
+				resolved = filepath.Join(resolved, suffix[i])
+			}
+			return filepath.Clean(resolved), nil
+		}
+		if !errors.Is(err, fs.ErrNotExist) {
+			return "", err
+		}
+		parent := filepath.Dir(candidate)
+		if parent == candidate {
+			return "", err
+		}
+		suffix = append(suffix, filepath.Base(candidate))
+		candidate = parent
+	}
+}
+
 // RemoveDirectory removes only indexed documents whose canonical identities are
 // within dirPath. It never touches the source folder on disk, so unregistering
 // a source is safe even when the folder is read-only or already gone.
+// The count is of distinct file identities, including legacy lexical aliases.
 func RemoveDirectory(dbClient db.Store, dirPath string) (int, error) {
 	absPath, err := filepath.Abs(dirPath)
 	if err != nil {
 		return 0, fmt.Errorf("resolve source directory: %w", err)
 	}
 	absPath = filepath.Clean(absPath)
+	root, err := removalIdentity(absPath)
+	if err != nil {
+		return 0, fmt.Errorf("resolve source directory: %w", err)
+	}
 	docs, err := dbClient.ListDocuments()
 	if err != nil {
 		return 0, fmt.Errorf("failed listing existing documents: %w", err)
 	}
-	removed := 0
+	removed := make(map[string]bool)
 	for _, doc := range docs {
-		if !isWithinDir(doc.Path, absPath) {
+		// Relative labels and URLs are not local source identities. Resolve the
+		// parent only: an indexed file symlink must not expand the removal scope.
+		if !filepath.IsAbs(doc.Path) {
+			continue
+		}
+		parent, err := removalIdentity(filepath.Dir(doc.Path))
+		if err != nil {
+			// An unrelated inaccessible identity must not prevent unregistering
+			// this source. Never guess that an unresolved alias belongs to it.
+			if !isWithinDir(doc.Path, absPath) && !isWithinDir(doc.Path, root) {
+				continue
+			}
+			return len(removed), fmt.Errorf("resolve indexed document directory: %w", err)
+		}
+		identity := filepath.Join(parent, filepath.Base(doc.Path))
+		if !isWithinDir(identity, root) {
 			continue
 		}
 		if err := dbClient.DeleteDocument(doc.Path); err != nil {
-			return removed, fmt.Errorf("failed to remove indexed document %s: %w", doc.Path, err)
+			return len(removed), fmt.Errorf("failed to remove indexed document %s: %w", doc.Path, err)
 		}
-		removed++
+		removed[identity] = true
 	}
-	return removed, nil
+	return len(removed), nil
 }
 
 // IndexFileWithSource indexes sourcePath's extracted content under source. This

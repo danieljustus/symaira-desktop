@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+use std::sync::atomic::{AtomicU64, Ordering};
+static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
+
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -140,6 +143,11 @@ impl TempDir {
             .duration_since(UNIX_EPOCH)
             .expect("clock")
             .as_nanos();
+        // Parallel tests can read the same clock value (coarse on macOS).
+        let nonce = format!(
+            "{nonce}-{}",
+            TEMP_DIR_COUNTER.fetch_add(1, Ordering::Relaxed)
+        );
         let path =
             std::env::temp_dir().join(format!("symroom-index-cli-{}-{nonce}", std::process::id()));
         fs::create_dir(&path).expect("create scratch directory");

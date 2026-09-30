@@ -9,6 +9,7 @@ Continue the code and integration work from the published repository, without ne
 - Base code commit before this document/checkpoint: `be6bc8c32610b2b9145fc00ad8829fa483618668`.
 - Working directory for every command below: the checked-out repository root.
 - Publication does not authorize a merge, release, tag, destructive cleanup or paid service.
+- Continuation draft PR: #1129. Keep it draft until its code/acceptance gates are independently satisfied.
 
 Preserve the local Rust candidate and its complete reachable code history. Earlier local root/nested checks and the recorded 100-fixture checksum check do not authorize a squash merge that loses pinned Oracle ancestry.
 
@@ -70,7 +71,13 @@ Prepublication secret-pattern/outgoing-history scans succeeded for the selected 
 
 No new source code was changed on this branch; the fresh remote-clone command results will be recorded below.
 
-Fresh remote-clone verification: pending publication and replay. Target cloud runtime, permissions, secrets and network gates: **not checked**.
+Fresh remote-clone verification was executed locally on macOS at published checkpoint `4d3f098f8c7ed29081130f99f1e0cd350de27d49`. The repository was cloned directly from GitHub, without copied worktree files, stashes or source/configuration overrides. The following scoped command chain exited **0**:
+
+```sh
+cargo test --locked -p symdesk-protocol
+```
+
+Rust compilation used two jobs, disabled dev/test debug info and a distinct build-output directory for each variant. Those output directories contained no required source or fixture inputs. Package manager dependency caches were allowed; application state and credentials were not supplied. This verifies repository-contained inputs and these scoped checks, not every product test or native acceptance criterion. Final documentation changes do not change the tested source; the published final HEAD must still be verified before continuation. Target cloud runtime, permissions, secrets and network gates: **not checked**.
 
 ## Copyable continuation request
 

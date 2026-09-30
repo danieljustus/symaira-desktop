@@ -139,13 +139,36 @@ fn real_search_cli_replays_go_service_oracle() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 17);
     for case in fixture.cases {
-        replay_case(&case);
+        replay_case(&case, false);
     }
 }
 
-fn replay_case(case: &FixtureCase) {
+#[cfg(unix)]
+#[test]
+fn search_alias_root_preserves_hybrid_titles_and_lexical_fallback() {
+    for case in fixture().cases {
+        if matches!(
+            case.id.as_str(),
+            "multi-root-success-metadata-anchor-snippet" | "empty-retrieval-falls-back-to-sidecar"
+        ) {
+            replay_case(&case, true);
+        }
+    }
+}
+
+fn replay_case(case: &FixtureCase, alias_vault: bool) {
     let root = TempRoot::new();
     let vault = root.path("vault");
+    #[cfg(unix)]
+    let vault = if alias_vault {
+        let alias = root.path("vault-alias");
+        std::os::unix::fs::symlink(&vault, &alias).expect("create vault-root alias");
+        alias
+    } else {
+        vault
+    };
+    #[cfg(not(unix))]
+    let _ = alias_vault;
     let home = root.path("home");
     let cwd = root.path("cwd");
     let index_path = root.path("data/retrieval.db");
@@ -155,7 +178,11 @@ fn replay_case(case: &FixtureCase) {
     for source in &case.sources {
         let path = root.path("outside").join(source);
         fs::create_dir_all(&path).expect("create external source root");
-        source_paths.insert(source.clone(), path);
+        source_paths.insert(
+            source.clone(),
+            path.canonicalize()
+                .expect("canonical registered source identity"),
+        );
     }
 
     let mut stored_documents = Vec::new();

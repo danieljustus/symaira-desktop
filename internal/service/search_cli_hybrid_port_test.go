@@ -340,6 +340,12 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 		if err := os.MkdirAll(root, 0o700); err != nil {
 			t.Fatal(err)
 		}
+		// SourceRegistry.Add stores the canonical identity. Retain that same
+		// coordinate system for fixture setup and source-token projection.
+		root, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			t.Fatal(err)
+		}
 		sourcePaths[source] = root
 	}
 	for _, document := range input.Documents {

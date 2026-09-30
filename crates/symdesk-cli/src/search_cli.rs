@@ -152,6 +152,14 @@ fn project_hit(
     let title = sidecar
         .get_title(&raw_path.to_string_lossy())
         .or_else(|_| sidecar.get_title(&path.to_string_lossy()))
+        .or_else(|error| {
+            if source {
+                return Err(error);
+            }
+            // CLI refresh can retain the caller's lexical vault spelling while
+            // retrieval stores canonical paths. Keep frontmatter titles intact.
+            sidecar.get_title(&vault.join(&display_path).to_string_lossy())
+        })
         .unwrap_or_else(|_| {
             raw_path
                 .file_stem()

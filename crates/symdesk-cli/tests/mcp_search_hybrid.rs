@@ -166,6 +166,13 @@ fn replay_case(case: &FixtureCase) {
         unregistered_documents.push((path, document));
     }
 
+    let external_root = if external_documents.is_empty() {
+        external_root
+    } else {
+        external_root
+            .canonicalize()
+            .expect("canonical registered source identity")
+    };
     let mut sidecar = Sidecar::open(&sidecar_path).expect("open sidecar");
     sidecar
         .refresh_index_for_cli(&vault)

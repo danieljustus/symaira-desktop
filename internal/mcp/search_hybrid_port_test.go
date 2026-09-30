@@ -420,11 +420,14 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 			_ = sidecarDB.Close()
 			t.Fatal(err)
 		}
-		if _, err := registry.Add(registeredRoot); err != nil {
+		registeredSource, err := registry.Add(registeredRoot)
+		if err != nil {
 			_ = index.Close()
 			_ = sidecarDB.Close()
 			t.Fatalf("register external fixture source: %v", err)
 		}
+		// Use the registry's identity for indexing and fixture path tokens.
+		registeredRoot = registeredSource.Path
 		for _, document := range input.ExternalDocuments {
 			if err := index.Index(filepath.Join(registeredRoot, filepath.FromSlash(document.Path)), ""); err != nil {
 				_ = index.Close()

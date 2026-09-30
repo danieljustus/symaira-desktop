@@ -30,10 +30,13 @@ import (
 // Service encapsulates the core operations of symdesk.
 type Service struct {
 	VaultRoot string
-	DB        *sidecar.DB
-	ViewsMgr  *dbviews.Manager
-	History   *history.Store
-	Config    *config.Config
+	// vaultInputRoot preserves the sidecar's lexical storage coordinate for
+	// title lookup only; canonical VaultRoot remains the security boundary.
+	vaultInputRoot string
+	DB             *sidecar.DB
+	ViewsMgr       *dbviews.Manager
+	History        *history.Store
+	Config         *config.Config
 
 	// retrievalClient is owned by this service instance when it is lazily
 	// opened by New. Server-owned pools and explicitly injected clients are
@@ -80,6 +83,7 @@ func newService(vaultRoot string, db *sidecar.DB, client *retrieval.Client, pool
 	}
 	svc := &Service{
 		VaultRoot:       canonical,
+		vaultInputRoot:  vaultRoot,
 		DB:              db,
 		ViewsMgr:        dbviews.NewManager(canonical),
 		History:         history.NewStore(canonical),
@@ -378,9 +382,9 @@ func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 		}
 		results := make([]SearchResult, 0, len(matches))
 		for _, match := range matches {
-			relPath, err := filepath.Rel(s.VaultRoot, match.Path)
-			if err != nil {
-				relPath = match.Path
+			relPath, ok := s.searchVaultPath(match.Path)
+			if !ok {
+				continue
 			}
 			results = append(results, SearchResult{
 				Path:    relPath,
@@ -417,6 +421,37 @@ func (s *Service) externalSourceRoots() []retrieval.Source {
 func pathWithin(path, root string) bool {
 	rel, err := filepath.Rel(root, path)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// searchVaultPath projects sidecar identities in the same canonical coordinates
+// as VaultRoot. Preserve sidecar-only rows while rejecting escaping symlinks.
+func (s *Service) searchVaultPath(path string) (string, bool) {
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(s.VaultRoot, path)
+	}
+	canonical, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return "", false
+		}
+		canonical = path
+	}
+	base := s.VaultRoot
+	// Keep in-vault link names and sidecar-only identities. SecurePath below
+	// resolves the target again before accepting the relative display path.
+	if pathWithin(path, s.VaultRoot) {
+		canonical = path
+	} else if s.vaultInputRoot != "" && pathWithin(path, s.vaultInputRoot) {
+		base, canonical = s.vaultInputRoot, path
+	}
+	rel, err := filepath.Rel(base, canonical)
+	if err != nil {
+		return "", false
+	}
+	if _, err := vault.SecurePath(s.VaultRoot, rel); err != nil {
+		return "", false
+	}
+	return rel, true
 }
 
 // searchPlain keeps the pre-query-language search behaviour while adding the
@@ -497,12 +532,14 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 			continue
 		}
 
-		title := ""
-		if docTitle, err := s.DB.GetTitle(r.Path); err == nil {
-			title = docTitle
-		} else if docTitle, err := s.DB.GetTitle(resolved); err == nil {
-			title = docTitle
-		} else {
+		title, titleErr := s.DB.GetTitle(r.Path)
+		if titleErr != nil {
+			title, titleErr = s.DB.GetTitle(resolved)
+		}
+		if titleErr != nil && !external && s.vaultInputRoot != "" {
+			title, titleErr = s.DB.GetTitle(filepath.Join(s.vaultInputRoot, relPath))
+		}
+		if titleErr != nil {
 			base := filepath.Base(r.Path)
 			title = strings.TrimSuffix(base, filepath.Ext(base))
 		}
@@ -540,7 +577,10 @@ func (s *Service) searchSidecarPlain(query string) ([]SearchResult, error) {
 
 	results := make([]SearchResult, 0, len(docs))
 	for _, d := range docs {
-		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
+		relPath, ok := s.searchVaultPath(d.Path)
+		if !ok {
+			continue
+		}
 		results = append(results, SearchResult{
 			Path:    relPath,
 			Title:   d.Title,

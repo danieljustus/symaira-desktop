@@ -354,8 +354,10 @@ func (c *Client) IndexWithMetadata(source, body string, metadata SearchMetadata)
 }
 
 // IndexMarkdownWithMetadata indexes already-confined Markdown content without
-// reopening source.
+// reopening source. Resolve only its identity, keeping the supplied bytes as
+// the sole content input and leaving the caller's sidecar path unchanged.
 func (c *Client) IndexMarkdownWithMetadata(source, body string, metadata SearchMetadata) error {
+	source = canonicalLocalSource(source)
 	_, err := engine.IndexMarkdownWithMetadata(c.db, c.embedder, source, []byte(body), metadata)
 	return err
 }

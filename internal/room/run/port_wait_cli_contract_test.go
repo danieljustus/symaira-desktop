@@ -22,6 +22,8 @@ const runWaitCLIContractFixture = "testdata/port/room/run-wait-cli.json"
 type runWaitCLIContract struct {
 	SchemaVersion  int               `json:"schema_version"`
 	OracleRevision string            `json:"oracle_revision"`
+	RootEvent      string            `json:"root_event"`
+	RootPubkey     string            `json:"root_pubkey"`
 	SourceHashes   map[string]string `json:"source_hashes"`
 	JournalFiles   []runJournalFile  `json:"journal_files"`
 	Cases          []runWaitCLICase  `json:"cases"`
@@ -110,6 +112,8 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 	fixture := runWaitCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		RootEvent:      "wait-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),

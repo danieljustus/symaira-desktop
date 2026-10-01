@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source_hashes": {
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
-    "internal/room/members/members.go": "12a08d20ab8b2476b3a8b7d32626abeeb967cfe6dfb1603966b5b53f10de6f7c"
+    "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727"
   },
   "cases": [
     {

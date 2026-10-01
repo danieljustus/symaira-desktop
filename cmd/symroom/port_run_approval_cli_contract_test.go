@@ -45,6 +45,8 @@ type runApprovalCLICase struct {
 type runApprovalCLIContract struct {
 	SchemaVersion  int                  `json:"schema_version"`
 	OracleRevision string               `json:"oracle_revision"`
+	RootEvent      string               `json:"root_event"`
+	RootPubkey     string               `json:"root_pubkey"`
 	Normalization  string               `json:"normalization"`
 	SourceHashes   map[string]string    `json:"source_hashes"`
 	IdentityKeys   map[string]string    `json:"identity_keys"`
@@ -111,6 +113,8 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 	fixture := runApprovalCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "558cac10528b2a03e344640190327a662d5a60e8",
+		RootEvent:      "approval-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(keys["owner"].PublicKey),
 		Normalization:  "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",
 		IdentityKeys:   make(map[string]string, len(keys)),
 		SourceHashes:   make(map[string]string),
@@ -172,7 +176,8 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		if err := os.MkdirAll(journalDir, 0o700); err != nil {
 			return fixture, err
 		}
-		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \""+approvalFixtureRoomID+"\"\n"), 0o600); err != nil {
+		roomConfig := "id = \"" + approvalFixtureRoomID + "\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 			return fixture, err
 		}
 		for _, file := range initial {

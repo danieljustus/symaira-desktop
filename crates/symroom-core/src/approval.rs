@@ -20,18 +20,19 @@ pub fn approve(
     ttl: time::Duration,
     signer: &Identity,
 ) -> Result<Event, ApprovalError> {
-    let room_id = runs::read_room_id(room_dir)?;
+    let config = runs::read_room_config(room_dir)?;
     let events = journal::merge_all(room_dir)
         .map_err(|error| ApprovalError::ReadJournal(error.to_string()))?;
     let mut state = members::State::default();
     for event in &events {
-        if event.room == room_id
+        if event.room == config.id
             && matches!(
                 event.kind.as_str(),
                 "room.created" | "member.added" | "member.removed" | "member.role_changed"
             )
         {
-            let _ = state.apply_signed_event(event);
+            let _ =
+                state.apply_signed_event_with_root(event, &config.root_event, &config.root_pubkey);
         }
     }
     let member = state

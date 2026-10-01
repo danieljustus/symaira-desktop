@@ -1,11 +1,13 @@
 package members
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
@@ -48,7 +50,8 @@ type Member struct {
 }
 
 type State struct {
-	Members map[string]*Member `json:"members"`
+	Members     map[string]*Member `json:"members"`
+	RoomCreated bool               `json:"-"`
 }
 
 func NewState() *State {
@@ -76,6 +79,9 @@ func (m *Member) CanPerform(act Action) bool {
 func (s *State) ApplyEvent(e *event.Event) error {
 	switch e.Kind {
 	case event.KindRoomCreated:
+		if s.RoomCreated {
+			return errors.New("room.created must be the first membership event")
+		}
 		var body struct {
 			Name      string `json:"name"`
 			PublicKey string `json:"public_key"`
@@ -94,6 +100,7 @@ func (s *State) ApplyEvent(e *event.Event) error {
 			Role:      RoleOwner,
 			Kind:      KindHuman,
 		}
+		s.RoomCreated = true
 
 	case event.KindMemberAdded:
 		// Must be signed by an owner
@@ -176,7 +183,7 @@ func (s *State) ApplyEvent(e *event.Event) error {
 func (s *State) ApplySignedEvent(e *event.Event) error {
 	var publicKey ed25519.PublicKey
 	if e.Kind == event.KindRoomCreated {
-		if len(s.Members) != 0 {
+		if s.RoomCreated {
 			return errors.New("room.created must be the first membership event")
 		}
 		var body struct {
@@ -207,4 +214,30 @@ func (s *State) ApplySignedEvent(e *event.Event) error {
 		return err
 	}
 	return s.ApplyEvent(e)
+}
+
+// ApplySignedEventWithRoot additionally binds room.created to the root event
+// and key recorded in room.toml. This is the production replay path for
+// journals whose ordering can be influenced by untrusted segments.
+func (s *State) ApplySignedEventWithRoot(e *event.Event, rootEvent, rootPubkey string) error {
+	if e.Kind == event.KindRoomCreated {
+		if e.ID != rootEvent {
+			return errors.New("room.created does not match configured root event")
+		}
+		var body struct {
+			PublicKey string `json:"public_key"`
+		}
+		if err := json.Unmarshal(e.Body, &body); err != nil {
+			return fmt.Errorf("unmarshal room.created body: %w", err)
+		}
+		configuredKey, err := hex.DecodeString(strings.TrimPrefix(rootPubkey, "ed25519:"))
+		if err != nil || len(configuredKey) != ed25519.PublicKeySize {
+			return errors.New("invalid configured root pubkey")
+		}
+		eventKey, err := hex.DecodeString(body.PublicKey)
+		if err != nil || !bytes.Equal(configuredKey, eventKey) {
+			return errors.New("room.created public key does not match configured root pubkey")
+		}
+	}
+	return s.ApplySignedEvent(e)
 }

@@ -49,6 +49,8 @@ type checkpointCLICase struct {
 type checkpointCLIContract struct {
 	SchemaVersion  int                 `json:"schema_version"`
 	OracleRevision string              `json:"oracle_revision"`
+	RootEvent      string              `json:"root_event"`
+	RootPubkey     string              `json:"root_pubkey"`
 	Normalization  string              `json:"normalization"`
 	SourceHashes   map[string]string   `json:"source_hashes"`
 	IdentityKey    string              `json:"identity_key"`
@@ -112,6 +114,8 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 	fixture := checkpointCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "def48b15ff6a9392ce4de3a824a0eec530557e8a",
+		RootEvent:      "event-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(owner.PublicKey),
 		Normalization:  "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event",
 		IdentityKey:    hex.EncodeToString(ownerSeed[:]),
 		AgentKey:       hex.EncodeToString(agentSeed[:]),
@@ -166,7 +170,8 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 				return fixture, err
 			}
 		}
-		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \"rm_checkpoint_fixture\"\n"), 0o600); err != nil {
+		roomConfig := "id = \"rm_checkpoint_fixture\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 			return fixture, err
 		}
 		var initial []checkpointCLIFile

@@ -20,6 +20,8 @@ const MUTATION_ORACLE_REVISION: &str = "6f1c04e38e283e0e722661725bd5baec9f3f5fe5
 struct Fixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     journal_files: Vec<JournalFile>,
     cases: Vec<Case>,
@@ -45,6 +47,8 @@ struct Case {
 struct WaitFixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     journal_files: Vec<JournalFile>,
     cases: Vec<Case>,
@@ -54,6 +58,8 @@ struct WaitFixture {
 struct MutationFixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     identity_key: String,
     identity_member: String,
@@ -93,16 +99,18 @@ fn run_list_and_show_match_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create fixture journal");
-    fs::write(main_room.join("room.toml"), "id = \"room-test\"\n")
-        .expect("write fixture room config");
+    let room_config = format!(
+        "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+        fixture.root_event, fixture.root_pubkey
+    );
+    fs::write(main_room.join("room.toml"), &room_config).expect("write fixture room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed fixture journal segment");
     }
     let empty_room = temp.path.join("empty");
     fs::create_dir(&empty_room).expect("create empty room");
-    fs::write(empty_room.join("room.toml"), "id = \"room-test\"\n")
-        .expect("write empty room config");
+    fs::write(empty_room.join("room.toml"), &room_config).expect("write empty room config");
 
     for case in &fixture.cases {
         let room = match case.room.as_str() {
@@ -156,7 +164,11 @@ fn run_wait_matches_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create wait fixture journal");
-    fs::write(main_room.join("room.toml"), "id = \"room-test\"\n").expect("write wait room config");
+    let room_config = format!(
+        "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+        fixture.root_event, fixture.root_pubkey
+    );
+    fs::write(main_room.join("room.toml"), room_config).expect("write wait room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed wait fixture segment");
@@ -228,8 +240,11 @@ fn run_request_start_cancel_match_go_process_contract() {
         let room = temp.path.join(format!("room-{}", case.name));
         let journal = room.join("journal");
         fs::create_dir_all(&journal).expect("create mutation fixture journal");
-        fs::write(room.join("room.toml"), "id = \"room-test\"\n")
-            .expect("write mutation room config");
+        let room_config = format!(
+            "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+            fixture.root_event, fixture.root_pubkey
+        );
+        fs::write(room.join("room.toml"), room_config).expect("write mutation room config");
         for file in &fixture.journal_files {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go-signed mutation fixture segment");

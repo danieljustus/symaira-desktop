@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_hashes": {
-    "internal/room/members/members.go": "12a08d20ab8b2476b3a8b7d32626abeeb967cfe6dfb1603966b5b53f10de6f7c",
+    "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
     "internal/room/members/port_membership_contract_test.go": "01d5846bc95140d4869e08bbbd9a86080976e48ec5fae2e50106fc7757a715b7"
   },
   "permissions": [
@@ -668,7 +668,7 @@
       "body": {
         "public_key": "0"
       },
-      "error": "invalid root pubkey: encoding/hex: odd length hex string",
+      "error": "room.created must be the first membership event",
       "members": [
         {
           "id": "observer",
@@ -693,7 +693,7 @@
       "body": {
         "public_key": "g"
       },
-      "error": "invalid root pubkey: encoding/hex: invalid byte: U+0067 'g'",
+      "error": "room.created must be the first membership event",
       "members": [
         {
           "id": "observer",

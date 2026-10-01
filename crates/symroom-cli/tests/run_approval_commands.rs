@@ -18,6 +18,8 @@ const NORMALIZATION: &str = "dynamic appended event ts and sig; approval ID, eve
 struct Fixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     normalization: String,
     source_hashes: BTreeMap<String, String>,
     identity_keys: BTreeMap<String, String>,
@@ -74,8 +76,11 @@ fn run_approval_and_denial_match_go_process_and_signed_journal() {
         for directory in [&journal, &home, &data_home, &tmp] {
             fs::create_dir_all(directory).expect("create isolated fixture directory");
         }
-        fs::write(room.join("room.toml"), "id = \"rm_approval_fixture\"\n")
-            .expect("write configured room ID");
+        let room_config = format!(
+            "id = \"rm_approval_fixture\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+            fixture.root_event, fixture.root_pubkey
+        );
+        fs::write(room.join("room.toml"), room_config).expect("write configured room ID");
         for file in &fixture.initial_journal {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go-signed initial journal");

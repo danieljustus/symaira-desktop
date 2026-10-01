@@ -20,6 +20,8 @@ const FIXTURE: &str = include_str!("../../../testdata/port/room/run-projection.j
 struct Fixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: BTreeMap<String, String>,
     events: Vec<Box<RawValue>>,
     records: Vec<String>,
@@ -29,6 +31,8 @@ struct Fixture {
 
 #[derive(Deserialize)]
 struct JournalQueries {
+    root_event: String,
+    root_pubkey: String,
     journal_files: Vec<JournalFile>,
     signers: BTreeMap<String, String>,
     merged_event_ids: Vec<String>,
@@ -97,8 +101,8 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         fixture.oracle_revision,
         "6f1c04e38e283e0e722661725bd5baec9f3f5fe5"
     );
-    assert_eq!(fixture.records.len(), 16, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 58, "fixture exercises all edge paths");
+    assert_eq!(fixture.records.len(), 17, "nonzero projected records");
+    assert_eq!(fixture.events.len(), 63, "fixture exercises all edge paths");
     assert_eq!(fixture.checkpoint_records.len(), 2);
     for source in [
         "internal/room/run/run.go",
@@ -144,6 +148,7 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
     }
     for id in [
         "malformed",
+        "low-lamport-forged-root",
         "projection-room-created",
         "projection-forged-room-created",
         "projection-reviewer-added",
@@ -161,6 +166,10 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         "current-key-approval",
         "projection-reviewer-demoted",
         "demoted-approval",
+        "request-room-takeover",
+        "owner-self-removed",
+        "takeover-room-created",
+        "takeover-approval",
         "empty-request",
         "unknown",
         "unmatched",
@@ -187,7 +196,12 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
             "fixture is missing edge case {id}"
         );
     }
-    let projected: BTreeMap<String, Run> = runs::project_runs_in_room(&events, "room-test");
+    let projected: BTreeMap<String, Run> = runs::project_runs_in_configured_room(
+        &events,
+        "room-test",
+        &fixture.root_event,
+        &fixture.root_pubkey,
+    );
     let actual_records = projected
         .values()
         .map(|run| serde_json::to_string(run).expect("run serializes"))
@@ -237,7 +251,11 @@ fn replay_journal_queries(fixture: &JournalQueries) {
     ));
     let journal_dir = root.join("journal");
     fs::create_dir_all(&journal_dir).expect("create fixture journal");
-    fs::write(root.join("room.toml"), "id = \"room-test\"\n").expect("write Go room config");
+    let room_config = format!(
+        "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+        fixture.root_event, fixture.root_pubkey
+    );
+    fs::write(root.join("room.toml"), room_config).expect("write Go room config");
     for file in &fixture.journal_files {
         fs::write(journal_dir.join(&file.name), file.content.as_bytes())
             .expect("write Go-produced journal segment");

@@ -35,7 +35,7 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 		switch e.Kind {
 		case event.KindRoomCreated, event.KindMemberAdded, event.KindMemberRemoved, event.KindMemberRoleChanged:
 			if e.Room == cfg.ID {
-				_ = state.ApplySignedEvent(e)
+				_ = state.ApplySignedEventWithRoot(e, cfg.RootEvent, cfg.RootPubkey)
 			}
 		}
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	roomconfig "github.com/danieljustus/symaira-desktop/internal/room/room"
 )
 
 const runProjectionFixture = "testdata/port/room/run-projection.json"
@@ -25,6 +26,8 @@ const runProjectionFixture = "testdata/port/room/run-projection.json"
 type runProjectionFixtureData struct {
 	SchemaVersion     int                    `json:"schema_version"`
 	OracleRevision    string                 `json:"oracle_revision"`
+	RootEvent         string                 `json:"root_event"`
+	RootPubkey        string                 `json:"root_pubkey"`
 	SourceHashes      map[string]string      `json:"source_hashes"`
 	Events            []*event.Event         `json:"events"`
 	Records           []string               `json:"records"`
@@ -47,6 +50,8 @@ type runGetVector struct {
 }
 
 type runJournalQueryFixture struct {
+	RootEvent               string                   `json:"root_event"`
+	RootPubkey              string                   `json:"root_pubkey"`
 	JournalFiles            []runJournalFile         `json:"journal_files"`
 	Signers                 map[string]string        `json:"signers"`
 	MergedEventIDs          []string                 `json:"merged_event_ids"`
@@ -116,8 +121,15 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	agent := runProjectionIdentity("projection-agent")
 	observer := runProjectionIdentity("projection-observer")
 	forged := runProjectionIdentity("projection-forged")
+	takeover := runProjectionIdentity("projection-room-takeover")
 	rotated := runProjectionIdentity("projection-reviewer-rotated-key")
+	lowLamportRoot := signedProjectionEvent(t, "low-lamport-forged-root", event.KindRoomCreated, `{"name":"Low Lamport attacker","public_key":"`+hex.EncodeToString(takeover.PublicKey)+`"}`, takeover, "2026-01-02T02:00:00.000Z")
+	lowLamportRoot.Lamport = 0
+	if err := lowLamportRoot.Sign(takeover); err != nil {
+		t.Fatal(err)
+	}
 	events := []*event.Event{
+		lowLamportRoot,
 		signedProjectionEvent(t, "projection-room-created", event.KindRoomCreated, `{"name":"Owner","public_key":"`+hex.EncodeToString(owner.PublicKey)+`"}`, owner, "2026-01-02T03:00:00.000Z"),
 		// A valid signature from a different key is not a room root when the key
 		// does not hash to the event author/member ID.
@@ -186,8 +198,14 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		signedProjectionEvent(t, "projection-reviewer-demoted", event.KindMemberRoleChanged, `{"id":"`+reviewer.MemberID+`","role":"observer"}`, owner, "2026-01-02T10:13:00.000Z"),
 		projectionEvent("request-demoted-approval", event.KindRunRequested, `{"run_id":"run-demoted-approval","title":"Demoted approval"}`, "author", "2026-01-02T10:14:00.000Z"),
 		signedProjectionEventAs(t, "demoted-approval", event.KindRunApproved, `{"run_id":"run-demoted-approval","approval_id":"demoted-approval","scope":"room"}`, reviewer.MemberID, rotated, "2026-01-02T10:15:00.000Z"),
+		projectionEvent("request-room-takeover", event.KindRunRequested, `{"run_id":"run-room-takeover","title":"Room takeover"}`, "author", "2026-01-02T10:16:00.000Z"),
+		signedProjectionEvent(t, "owner-self-removed", event.KindMemberRemoved, `{"id":"`+owner.MemberID+`"}`, owner, "2026-01-02T10:17:00.000Z"),
+		signedProjectionEvent(t, "takeover-room-created", event.KindRoomCreated, `{"name":"Takeover","public_key":"`+hex.EncodeToString(takeover.PublicKey)+`"}`, takeover, "2026-01-02T10:18:00.000Z"),
+		signedProjectionEvent(t, "takeover-approval", event.KindRunApproved, `{"run_id":"run-room-takeover","approval_id":"takeover-approval","scope":"room"}`, takeover, "2026-01-02T10:19:00.000Z"),
 	)
-	projected := ProjectRunsInRoom(events, "room-test")
+	projected := ProjectRunsInConfiguredRoom(events, &roomconfig.RoomConfig{
+		ID: "room-test", RootEvent: "projection-room-created", RootPubkey: "ed25519:" + hex.EncodeToString(owner.PublicKey),
+	})
 	ids := make([]string, 0, len(projected))
 	for id := range projected {
 		ids = append(ids, id)
@@ -218,6 +236,8 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	return runProjectionFixtureData{
 		SchemaVersion:  1,
 		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		RootEvent:      "projection-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(owner.PublicKey),
 		SourceHashes: map[string]string{
 			"internal/room/run/run.go":         fileSHA256(t, "internal/room/run/run.go"),
 			"internal/room/run/checkpoint.go":  fileSHA256(t, "internal/room/run/checkpoint.go"),
@@ -271,12 +291,16 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 	t.Helper()
 	alpha := runProjectionIdentity("alpha")
 	beta := runProjectionIdentity("beta")
+	takeover := runProjectionIdentity("query-takeover")
 	events := []*event.Event{
+		projectionEvent("query-forged-root", event.KindRoomCreated, `{"name":"Attacker root","public_key":"`+hex.EncodeToString(takeover.PublicKey)+`"}`, takeover.MemberID, "2026-02-01T09:59:57.000Z"),
 		projectionEvent("query-room-created", event.KindRoomCreated, `{"name":"Alpha","public_key":"`+hex.EncodeToString(alpha.PublicKey)+`"}`, alpha.MemberID, "2026-02-01T09:59:58.000Z"),
 		projectionEvent("query-member-added", event.KindMemberAdded, `{"id":"`+beta.MemberID+`","name":"Beta","public_key":"`+hex.EncodeToString(beta.PublicKey)+`","role":"member","kind":"human"}`, alpha.MemberID, "2026-02-01T09:59:59.000Z"),
 		projectionEvent("query-request-a", event.KindRunRequested, `{"run_id":"query-a","title":"Query Alpha"}`, alpha.MemberID, "2026-02-01T10:00:00.000Z"),
 		projectionEvent("query-request-b", event.KindRunRequested, `{"run_id":"query-b","title":"Query Beta"}`, beta.MemberID, "2026-02-01T10:01:00.000Z"),
 		projectionEvent("query-approve-b", event.KindRunApproved, `{"run_id":"query-b","approval_id":"approval-qb","scope":"room"}`, alpha.MemberID, "2026-02-01T10:02:00.000Z"),
+		projectionEvent("query-request-c", event.KindRunRequested, `{"run_id":"query-c","title":"Query takeover"}`, beta.MemberID, "2026-02-01T10:02:30.000Z"),
+		projectionEvent("query-approve-c", event.KindRunApproved, `{"run_id":"query-c","approval_id":"approval-qc","scope":"room"}`, takeover.MemberID, "2026-02-01T10:02:45.000Z"),
 		projectionEvent("query-checkpoint-a1", event.KindCheckpointReq, `{"checkpoint_id":"query-chk-a1","run_id":"query-a","question":"first question"}`, beta.MemberID, "2026-02-01T10:03:00.000Z"),
 		projectionEvent("query-finish-a", event.KindRunFinished, `{"run_id":"query-a","summary":"finished"}`, alpha.MemberID, "2026-02-01T10:04:00.000Z"),
 		projectionEvent("query-resolve-a1", event.KindCheckpointResolved, `{"checkpoint_id":"query-chk-a1","answer":"first answer"}`, alpha.MemberID, "2026-02-01T10:05:00.000Z"),
@@ -288,13 +312,14 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	identityByAuthor := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
+	identityByAuthor := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta, takeover.MemberID: takeover}
 	seqByAuthor := make(map[string]uint64)
 	prevByAuthor := make(map[string]string)
 	contentsByAuthor := make(map[string][]byte)
 	signers := map[string]string{
-		alpha.MemberID: hex.EncodeToString(alpha.PublicKey),
-		beta.MemberID:  hex.EncodeToString(beta.PublicKey),
+		alpha.MemberID:    hex.EncodeToString(alpha.PublicKey),
+		beta.MemberID:     hex.EncodeToString(beta.PublicKey),
+		takeover.MemberID: hex.EncodeToString(takeover.PublicKey),
 	}
 	for index, ev := range events {
 		ev.Seq = seqByAuthor[ev.Author] + 1
@@ -303,6 +328,9 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 			ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 		}
 		ev.Lamport = uint64(index + 1)
+		if ev.ID == "query-forged-root" {
+			ev.Lamport = 0
+		}
 		signer := identityByAuthor[ev.Author]
 		if err := ev.Sign(signer); err != nil {
 			t.Fatal(err)
@@ -335,7 +363,8 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 	}
 
 	roomDir := filepath.Dir(journalDir)
-	if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+	roomConfig := "id = \"room-test\"\nroot_event = \"query-room-created\"\nroot_pubkey = \"ed25519:" + hex.EncodeToString(alpha.PublicKey) + "\"\n"
+	if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	merged, err := journal.New(journalDir).MergeAll()
@@ -355,7 +384,7 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 		t.Fatal(err)
 	}
 	getCases := make([]runGetVector, 0, 3)
-	for _, runID := range []string{"query-a", "query-b", "missing-run"} {
+	for _, runID := range []string{"query-a", "query-b", "query-c", "missing-run"} {
 		got, err := Get(roomDir, runID)
 		if err != nil {
 			getCases = append(getCases, runGetVector{RunID: runID, Error: err.Error()})
@@ -378,6 +407,7 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 		checkpointRecords = append(checkpointRecords, string(data))
 	}
 	return runJournalQueryFixture{
+		RootEvent: "query-room-created", RootPubkey: "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		JournalFiles: files, Signers: signers, MergedEventIDs: mergedIDs,
 		ListAll: runProjectionRecords(t, all), ListPending: runProjectionRecords(t, pending),
 		Gets: getCases, CheckpointRecords: checkpointRecords,

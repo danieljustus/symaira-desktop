@@ -266,10 +266,15 @@ func Fail(roomDir, runID, errMsg string, id *identity.Identity) (*event.Event, e
 	return ev, nil
 }
 
-// ProjectRuns projects a trusted single-room event stream. For mixed or
-// untrusted journals, callers should use ProjectRunsInRoom with the room ID
-// loaded from that room's config.
+// ProjectRuns projects a trusted single-room event stream. For room
+// directories and mixed or untrusted journals, callers should use
+// ProjectRunsInConfiguredRoom so both the room ID and root identity are bound
+// to room.toml.
 func ProjectRuns(events []*event.Event) map[string]*Run {
+	return projectRuns(events, "", "")
+}
+
+func projectRuns(events []*event.Event, rootEvent, rootPubkey string) map[string]*Run {
 	runs := make(map[string]*Run)
 	membership := members.NewState()
 
@@ -279,7 +284,11 @@ func ProjectRuns(events []*event.Event) map[string]*Run {
 			// Membership changes also need the current signer's signature. Without
 			// this check, a forged member.added event with Author set to an owner
 			// could inject a key that later signs a projected approval.
-			_ = applySignedMembershipEvent(membership, ev)
+			if rootEvent != "" {
+				_ = membership.ApplySignedEventWithRoot(ev, rootEvent, rootPubkey)
+			} else {
+				_ = applySignedMembershipEvent(membership, ev)
+			}
 
 		case event.KindRunRequested:
 			var b struct {
@@ -401,9 +410,9 @@ func ProjectRuns(events []*event.Event) map[string]*Run {
 	return runs
 }
 
-// ProjectRunsInRoom excludes journal records whose signed room field does not
-// belong to the room directory being queried. Identity keys can be reused
-// across rooms, so signature verification alone is not a room boundary.
+// ProjectRunsInRoom excludes events whose signed room field does not belong to
+// the requested room. It assumes trusted root provenance; production room
+// directories should use ProjectRunsInConfiguredRoom.
 func ProjectRunsInRoom(events []*event.Event, roomID string) map[string]*Run {
 	roomEvents := make([]*event.Event, 0, len(events))
 	for _, ev := range events {
@@ -412,6 +421,19 @@ func ProjectRunsInRoom(events []*event.Event, roomID string) map[string]*Run {
 		}
 	}
 	return ProjectRuns(roomEvents)
+}
+
+// ProjectRunsInConfiguredRoom binds membership replay to the initialized
+// room's root event and key as well as its ID. Use this for room directories
+// and mixed or untrusted journals.
+func ProjectRunsInConfiguredRoom(events []*event.Event, cfg *roomconfig.RoomConfig) map[string]*Run {
+	roomEvents := make([]*event.Event, 0, len(events))
+	for _, ev := range events {
+		if ev.Room == cfg.ID {
+			roomEvents = append(roomEvents, ev)
+		}
+	}
+	return projectRuns(roomEvents, cfg.RootEvent, cfg.RootPubkey)
 }
 
 func List(roomDir string, pendingOnly bool) ([]*Run, error) {
@@ -425,7 +447,7 @@ func List(roomDir string, pendingOnly bool) ([]*Run, error) {
 	if err != nil {
 		return nil, err
 	}
-	runsMap := ProjectRunsInRoom(merged, cfg.ID)
+	runsMap := ProjectRunsInConfiguredRoom(merged, cfg)
 	var list []*Run
 	for _, r := range runsMap {
 		if pendingOnly && r.State != StateRequested && r.State != StateApproved {
@@ -452,7 +474,7 @@ func Get(roomDir, runID string) (*Run, error) {
 	if err != nil {
 		return nil, err
 	}
-	runsMap := ProjectRunsInRoom(merged, cfg.ID)
+	runsMap := ProjectRunsInConfiguredRoom(merged, cfg)
 	r, exists := runsMap[runID]
 	if !exists {
 		return nil, ErrRunNotFound

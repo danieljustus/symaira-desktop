@@ -1,15 +1,33 @@
 {
   "schema_version": 1,
   "oracle_revision": "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+  "root_event": "projection-room-created",
+  "root_pubkey": "ed25519:1c20211dd4a0c66b03c1963be852f35c186943957da8934afb6f4ef14298d210",
   "source_hashes": {
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
     "internal/room/journal/merge.go": "3cf6d92103419c8893d13ad36ec42b190d7059dc39620b8ff73607faea8cc5f2",
-    "internal/room/members/members.go": "12a08d20ab8b2476b3a8b7d32626abeeb967cfe6dfb1603966b5b53f10de6f7c",
+    "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
     "internal/room/run/checkpoint.go": "08005ebfa18c292dfca58e120721b0e215435cd0bf4ae97b10923f33bde53fdc",
-    "internal/room/run/run.go": "dd6d0d9d645ecf4fdadf96b9ab08ab254b0e213035998f6b8b090d81dca86773"
+    "internal/room/run/run.go": "296fc5fec6f66adef8390e3884e8ce5b8a68f6a20bdc38c7df7702b5f20bae7b"
   },
   "events": [
+    {
+      "v": 1,
+      "id": "low-lamport-forged-root",
+      "room": "room-test",
+      "author": "mem_54eb1204e21ebe54",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 0,
+      "ts": "2026-01-02T02:00:00.000Z",
+      "kind": "room.created",
+      "body": {
+        "name": "Low Lamport attacker",
+        "public_key": "f55b860bf26b0dcf8f4b765f5a3db1a70ce90f33fc6a6224213dc42cf8519bee"
+      },
+      "sig": "ed25519:8rpyngnS9HmmgmrFxv/N/vwVtY9Jw0otcPiq5xx3xatJqm+C7MPEgnABxgAg9nrYie4UXh9ClKJ32Im4N7IhDw=="
+    },
     {
       "v": 1,
       "id": "projection-room-created",
@@ -1198,6 +1216,69 @@
         "scope": "room"
       },
       "sig": "ed25519:2JMMuVdVM7GaXbD7m50F5KZrMKLxR1SPOsuVLCaYBouc7bGmvLrsa9cQjmD/73YQqCufkTFoJ0V9vp7j0SpLCA=="
+    },
+    {
+      "v": 1,
+      "id": "request-room-takeover",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T10:16:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-room-takeover",
+        "title": "Room takeover"
+      }
+    },
+    {
+      "v": 1,
+      "id": "owner-self-removed",
+      "room": "room-test",
+      "author": "mem_0db64de0534dd6ef",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 1,
+      "ts": "2026-01-02T10:17:00.000Z",
+      "kind": "member.removed",
+      "body": {
+        "id": "mem_0db64de0534dd6ef"
+      },
+      "sig": "ed25519:pD1XRxfxqvkmU9F+9dtQQDCzHrutnrxFNYXe6nRAWq2VADN3Ed/6SQTJX7nKtoewdABqI6rsHc6MI+n77nmTBQ=="
+    },
+    {
+      "v": 1,
+      "id": "takeover-room-created",
+      "room": "room-test",
+      "author": "mem_54eb1204e21ebe54",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 1,
+      "ts": "2026-01-02T10:18:00.000Z",
+      "kind": "room.created",
+      "body": {
+        "name": "Takeover",
+        "public_key": "f55b860bf26b0dcf8f4b765f5a3db1a70ce90f33fc6a6224213dc42cf8519bee"
+      },
+      "sig": "ed25519:xQ/mc/48qwi/fk3YSrfGAnkkdyruK2Ylm434MVo/1ecQcfupxLAOpOH0Pez8XpXvw2k9HctiFxcJxRNfSSfAAg=="
+    },
+    {
+      "v": 1,
+      "id": "takeover-approval",
+      "room": "room-test",
+      "author": "mem_54eb1204e21ebe54",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 1,
+      "ts": "2026-01-02T10:19:00.000Z",
+      "kind": "run.approved",
+      "body": {
+        "run_id": "run-room-takeover",
+        "approval_id": "takeover-approval",
+        "scope": "room"
+      },
+      "sig": "ed25519:Gvp0+G3oOvT17WUY8FCgV1rk+bZxljmfMITB+/HUWen+DBC+KwHx1Ab3MTrfXZjGJ5Wc51TKijIFBJYnsE94CQ=="
     }
   ],
   "records": [
@@ -1216,6 +1297,7 @@
     "{\"id\":\"run-key-order-two\",\"title\":\"lower then upper\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:01:00.000Z\",\"updated_at\":\"2026-01-02T08:01:00.000Z\"}",
     "{\"id\":\"run-observer-approval\",\"title\":\"Observer approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:02:00.000Z\",\"updated_at\":\"2026-01-02T10:02:00.000Z\"}",
     "{\"id\":\"run-old-key-approval\",\"title\":\"Old key approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:09:00.000Z\",\"updated_at\":\"2026-01-02T10:09:00.000Z\"}",
+    "{\"id\":\"run-room-takeover\",\"title\":\"Room takeover\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:16:00.000Z\",\"updated_at\":\"2026-01-02T10:16:00.000Z\"}",
     "{\"id\":\"run-tampered-approval\",\"title\":\"Tampered approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:06:00.000Z\",\"updated_at\":\"2026-01-02T10:06:00.000Z\"}"
   ],
   "checkpoint_records": [
@@ -1223,26 +1305,36 @@
     "{\"id\":\"chk-null\",\"run_id\":\"run-c\",\"question\":\"keep question\",\"answer\":\"keep answer\",\"state\":\"resolved\",\"author\":\"author-null\",\"created_at\":\"2026-01-02T09:05:00.000Z\",\"updated_at\":\"2026-01-02T09:06:00.000Z\"}"
   ],
   "journal_queries": {
+    "root_event": "query-room-created",
+    "root_pubkey": "ed25519:3c691d15e2f6dfe3bb09da17c5a4ea47938224c3b5267bf15b37eca5b2aca19a",
     "journal_files": [
       {
+        "name": "mem_3b3589a971bd3160.jsonl",
+        "content": "{\"author\":\"mem_3b3589a971bd3160\",\"body\":{\"name\":\"Attacker root\",\"public_key\":\"b8d93ee66e0e93b9d4ba431d3e4e8d1d535705f6310b79c62e26d05eb320e6dd\"},\"id\":\"query-forged-root\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:uXRYHaZHBcZhVWG1pNamSbEtvm1/lMxAIH50a/q0Fd8haKwU0DYh2ep4yk9KZbiKWnz72fdQJ2s63W1g9QyICQ==\",\"ts\":\"2026-02-01T09:59:57.000Z\",\"v\":1}\n{\"author\":\"mem_3b3589a971bd3160\",\"body\":{\"run_id\":\"query-c\",\"approval_id\":\"approval-qc\",\"scope\":\"room\"},\"id\":\"query-approve-c\",\"kind\":\"run.approved\",\"lamport\":8,\"prev\":\"sha256:f8cfc7d7825166a2da63cf53303dcd5f7d59aa368facb2ac680387cb4bbd82e5\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:AYarrCzJq8jz8ucma9VbnVYqdndGaF6wLG5Hvch1s+kZbMvqc6cPR5yNW6e1PW0ArV1z8L9IL0AhtA0d5QPYDw==\",\"ts\":\"2026-02-01T10:02:45.000Z\",\"v\":1}\n"
+      },
+      {
         "name": "mem_60b22b9015455836.jsonl",
-        "content": "{\"author\":\"mem_60b22b9015455836\",\"body\":{\"name\":\"Alpha\",\"public_key\":\"3c691d15e2f6dfe3bb09da17c5a4ea47938224c3b5267bf15b37eca5b2aca19a\"},\"id\":\"query-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:/3Q+tsuKWZjsWb3dN5iOfT+lAmaLwou/HHeiQo8E+u7f+abj7iO0YIsdTU2iogpwEwu1Hn4jA1bXhP5XBUptDQ==\",\"ts\":\"2026-02-01T09:59:58.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"id\":\"mem_7defb67d0d528436\",\"name\":\"Beta\",\"public_key\":\"ecb7a67137c8c15fafa18e19a3624fd6c5dcc994293e18cb4b9eaff884351526\",\"role\":\"member\",\"kind\":\"human\"},\"id\":\"query-member-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:396758cc9f0e8f55508c6e287fcdc0aa5f1824a9bc07462fc73018f049fc1e7c\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:nv5au3dqXmAtZ2JEe9mFUIo9CK2KHxcr6nbUBuZlSDcHN8IhAQiCYAG5Xnlnfa3ZPTXRIYXLwtB7XuvoN1NSAQ==\",\"ts\":\"2026-02-01T09:59:59.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"title\":\"Query Alpha\"},\"id\":\"query-request-a\",\"kind\":\"run.requested\",\"lamport\":3,\"prev\":\"sha256:0482dcc0b047b4049c241771f3ac3061cc00b2b60fa8ad60acfaba391c1a1ab5\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:o2cJcWy2F+nsG8DpRWZiTSEC6y0T+UnCg3xY4erqKhwWMiXA376YlSkMiZJKIjWH04Jeov+Uk8fDr6fM7y/pAA==\",\"ts\":\"2026-02-01T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-b\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"},\"id\":\"query-approve-b\",\"kind\":\"run.approved\",\"lamport\":5,\"prev\":\"sha256:ff0407b6fc5041ae6c677aa2adb2b96e40990ca1a9c21c1a0292800896d76aa0\",\"room\":\"room-test\",\"seq\":4,\"sig\":\"ed25519:9NlNAJ8dke7TJm/hTxnyVt6EmXw6qShyFWZ8vq7FWoI8csYz3YB0LoYXKbeBx9HO7C5cIMVceUjuZj81sASRCQ==\",\"ts\":\"2026-02-01T10:02:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"summary\":\"finished\"},\"id\":\"query-finish-a\",\"kind\":\"run.finished\",\"lamport\":7,\"prev\":\"sha256:e69895aa9c3cd79d422eeba7541601af6df4d9e5bfef4e07139ad795f457fde6\",\"room\":\"room-test\",\"seq\":5,\"sig\":\"ed25519:ij6dkJMapRJnI1JEr55e2Ly0yrTPwNWhVWuKZhqMOSoZ7wIrhNq68RHoeb44xx16b9MlGASGr1dT98qmv3rBCQ==\",\"ts\":\"2026-02-01T10:04:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"answer\":\"first answer\"},\"id\":\"query-resolve-a1\",\"kind\":\"checkpoint.resolved\",\"lamport\":8,\"prev\":\"sha256:c85c861c1459e7ae224824c90538fc43d486ac0e5811a5b247f90f84bca7bd12\",\"room\":\"room-test\",\"seq\":6,\"sig\":\"ed25519:7U2lq6VDVvPaY14onmGeVQBvDMQ8BK0dZt3zCXlHnQ8V83Lh+5DTFU53ubnys4JQuvrRi000f4cagAjFH4uPBQ==\",\"ts\":\"2026-02-01T10:05:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"answer\":\"second answer\"},\"id\":\"query-resolve-a2\",\"kind\":\"checkpoint.resolved\",\"lamport\":10,\"prev\":\"sha256:9e152e572fc067fcb29b8df1d1c67963dab2be133983ae79d1947acf7eb4fa26\",\"room\":\"room-test\",\"seq\":7,\"sig\":\"ed25519:pGCeXk+v0UpT9dOYbdt2JlJk72CU3Rf4+0SuL+qzFQSr/tTkqiGlRa2KRdKJab05sHc38edU8qMsMpNb/8YbCQ==\",\"ts\":\"2026-02-01T10:07:00.000Z\",\"v\":1}\n"
+        "content": "{\"author\":\"mem_60b22b9015455836\",\"body\":{\"name\":\"Alpha\",\"public_key\":\"3c691d15e2f6dfe3bb09da17c5a4ea47938224c3b5267bf15b37eca5b2aca19a\"},\"id\":\"query-room-created\",\"kind\":\"room.created\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:WQxutMmAsrTSrSYcQrvg+wgyY4SIlULRuzJE2NT3jNDnyO9wM9yd6HsnnHjGo8r8Mieekyc+shFQrfD/UQkACg==\",\"ts\":\"2026-02-01T09:59:58.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"id\":\"mem_7defb67d0d528436\",\"name\":\"Beta\",\"public_key\":\"ecb7a67137c8c15fafa18e19a3624fd6c5dcc994293e18cb4b9eaff884351526\",\"role\":\"member\",\"kind\":\"human\"},\"id\":\"query-member-added\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:5f1417edd29f957071de3865eb022737fb9e9250a03530d99e800e84bc6d80ea\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:1eqH6bpldypn77Qz5woH+x6YncNv55GxV6YFUKkNDAu0QLTUXGI/NBfjnpL2a+n4oZyZIBatG5Go+aSzdZGnAw==\",\"ts\":\"2026-02-01T09:59:59.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"title\":\"Query Alpha\"},\"id\":\"query-request-a\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"sha256:d70b9cf8ae9b16558f2e55a61cc0caaa2b05d7cd4c08c3bc4c4a2af702ad74d7\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:mJS3uu5OFf00ta11IZwSFgpaN4yJrb1DtJdwvU6JZzYFR2fSA+Rv+l0YNtf8hT0e4GFaQFSKpniw7HaWGxYgCw==\",\"ts\":\"2026-02-01T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-b\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"},\"id\":\"query-approve-b\",\"kind\":\"run.approved\",\"lamport\":6,\"prev\":\"sha256:d2449528b728fbcd2b36dd6af0908a22c2eb568aa4a08e2ee2b42b35c99c560e\",\"room\":\"room-test\",\"seq\":4,\"sig\":\"ed25519:Hki72LmNtWTz7aWkkDDpxXpZaKAaDp2mdfBsTg388mH0P2nB7wrz3DO2lb1XqsQpw8CcN0+prQWWYcYRKe8ECQ==\",\"ts\":\"2026-02-01T10:02:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"summary\":\"finished\"},\"id\":\"query-finish-a\",\"kind\":\"run.finished\",\"lamport\":10,\"prev\":\"sha256:dc5b32bf03583af934b4b249629cff2a455da24e58de5c50df7a3a2444ac0959\",\"room\":\"room-test\",\"seq\":5,\"sig\":\"ed25519:3OXoEewd7cGbhw30vOwHXIX0Uj63axi4RpsK/gCjGkdZFjVfdf2LL9xoviyxhH5KBCYoqGZ+nyYAH9gIYvQgDw==\",\"ts\":\"2026-02-01T10:04:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"answer\":\"first answer\"},\"id\":\"query-resolve-a1\",\"kind\":\"checkpoint.resolved\",\"lamport\":11,\"prev\":\"sha256:e45c7980cc40e6d0692dbe70f67b1c7653c96680cbcf7fe1f11a8945dd10206b\",\"room\":\"room-test\",\"seq\":6,\"sig\":\"ed25519:GgpKXTXDJaOHBDHt+LKoGh4n5KOAayh+gImi9kPnMnFZ0RD+laZ5t9L95VwczNeu1PlXjA1oYs4r443GaIb8Dg==\",\"ts\":\"2026-02-01T10:05:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"answer\":\"second answer\"},\"id\":\"query-resolve-a2\",\"kind\":\"checkpoint.resolved\",\"lamport\":13,\"prev\":\"sha256:3562de6930c71ab7a5ee69edf3d4c6de0784e371e561721e789c1087d1cecf9c\",\"room\":\"room-test\",\"seq\":7,\"sig\":\"ed25519:W9gAFjybK4whbNuRshHKdATSzb1SsyC7LALlD6oTSXxryqGs4dG/cdFqDuw7PBc3qTC6jIIm8J/6CycDWHN3BQ==\",\"ts\":\"2026-02-01T10:07:00.000Z\",\"v\":1}\n"
       },
       {
         "name": "mem_7defb67d0d528436.jsonl",
-        "content": "{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"run_id\":\"query-b\",\"title\":\"Query Beta\"},\"id\":\"query-request-b\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:ZXC3nGPxw7Ir5amJFZmeqTbeclFdklRuwytmU4ZWGU6f5+Zjdw802kX9EKOEAGzXYugj6emS/bYOOqeKZIvMCQ==\",\"ts\":\"2026-02-01T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\"},\"id\":\"query-checkpoint-a1\",\"kind\":\"checkpoint.requested\",\"lamport\":6,\"prev\":\"sha256:47e3e2f7ae07cf4bd761cf666d484d905417ff51bd859fd99a2f69c397131cdd\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:061DMAJCu5U9+j3cXmqAzV5tx8lwtdCasIwmCEkUU4718KH/FQDrnoMnRf3qRRtxnHWeB6Sn7QiJFWLlS3v8Ag==\",\"ts\":\"2026-02-01T10:03:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\"},\"id\":\"query-checkpoint-a2\",\"kind\":\"checkpoint.requested\",\"lamport\":9,\"prev\":\"sha256:f60332809b2573a54f2be97fe362c69a9770edee7a6933f2615d6392b0cadaeb\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:NyU6y1wPI6/Flx66zNYIlqKAJb8Ex4G2MrsDU22BRu2MzsU7Jb8b6dOBsKLraRO6UNxJN1b/3Ydoo8fJCPMpBQ==\",\"ts\":\"2026-02-01T10:06:00.000Z\",\"v\":1}\n"
+        "content": "{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"run_id\":\"query-b\",\"title\":\"Query Beta\"},\"id\":\"query-request-b\",\"kind\":\"run.requested\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:i03VDwVPDSGOJh61Wd3s7JnoRfEFnMvQEK+Q5aa2wHRPhFEs7HhkZLi19+fpQvFxJZcCwJeqKJzJf6KsWsRqAg==\",\"ts\":\"2026-02-01T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"run_id\":\"query-c\",\"title\":\"Query takeover\"},\"id\":\"query-request-c\",\"kind\":\"run.requested\",\"lamport\":7,\"prev\":\"sha256:754db26de3b72e431967fd8e3abc6d5cf030bed4b8fc636c1a769b72ae1f7b28\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:VaF4Wwt2vy1U+abnhGmt8sIcRu8e8QgZTRQeTJVl6l3ogpE0XsU824XJ6re6K8PVq+gOGDjAyb2Ku0raOjiCBQ==\",\"ts\":\"2026-02-01T10:02:30.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\"},\"id\":\"query-checkpoint-a1\",\"kind\":\"checkpoint.requested\",\"lamport\":9,\"prev\":\"sha256:ec573070b351f32ba6d830bce6056851f830774ded35b6ca6bdc762b3cc38e6b\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:gl3I5UxslXhfb6GuO2awXJFoMXp+HMhnq7hVtnTAsIU1pkakwZlI9IAipkwqsfGgX/R64UcYRi82h0VjeRmOBQ==\",\"ts\":\"2026-02-01T10:03:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\"},\"id\":\"query-checkpoint-a2\",\"kind\":\"checkpoint.requested\",\"lamport\":12,\"prev\":\"sha256:da57ee08f8582da7168f8f4d1cf9217c8f0eadf5b67df80dd37c070b7bacf768\",\"room\":\"room-test\",\"seq\":4,\"sig\":\"ed25519:Cz+OHabKWst7bN5VR3hXf8h2bcGlckQAFsfhpt7Khri34iCtKy+O6YCTuhVmehm05yOYWAmYArg4cHFt0ZuNCg==\",\"ts\":\"2026-02-01T10:06:00.000Z\",\"v\":1}\n"
       }
     ],
     "signers": {
+      "mem_3b3589a971bd3160": "b8d93ee66e0e93b9d4ba431d3e4e8d1d535705f6310b79c62e26d05eb320e6dd",
       "mem_60b22b9015455836": "3c691d15e2f6dfe3bb09da17c5a4ea47938224c3b5267bf15b37eca5b2aca19a",
       "mem_7defb67d0d528436": "ecb7a67137c8c15fafa18e19a3624fd6c5dcc994293e18cb4b9eaff884351526"
     },
     "merged_event_ids": [
+      "query-forged-root",
       "query-room-created",
       "query-member-added",
       "query-request-a",
       "query-request-b",
       "query-approve-b",
+      "query-request-c",
+      "query-approve-c",
       "query-checkpoint-a1",
       "query-finish-a",
       "query-resolve-a1",
@@ -1251,10 +1343,12 @@
     ],
     "list_all": [
       "{\"id\":\"query-a\",\"title\":\"Query Alpha\",\"state\":\"finished\",\"author\":\"mem_60b22b9015455836\",\"created_at\":\"2026-02-01T10:00:00.000Z\",\"updated_at\":\"2026-02-01T10:04:00.000Z\",\"summary\":\"finished\",\"checkpoints\":[{\"id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\",\"answer\":\"first answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:03:00.000Z\",\"updated_at\":\"2026-02-01T10:05:00.000Z\"},{\"id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\",\"answer\":\"second answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:06:00.000Z\",\"updated_at\":\"2026-02-01T10:07:00.000Z\"}]}",
-      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}"
+      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}",
+      "{\"id\":\"query-c\",\"title\":\"Query takeover\",\"state\":\"requested\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:02:30.000Z\",\"updated_at\":\"2026-02-01T10:02:30.000Z\"}"
     ],
     "list_pending": [
-      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}"
+      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}",
+      "{\"id\":\"query-c\",\"title\":\"Query takeover\",\"state\":\"requested\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:02:30.000Z\",\"updated_at\":\"2026-02-01T10:02:30.000Z\"}"
     ],
     "gets": [
       {
@@ -1265,6 +1359,11 @@
       {
         "run_id": "query-b",
         "record": "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}",
+        "error": ""
+      },
+      {
+        "run_id": "query-c",
+        "record": "{\"id\":\"query-c\",\"title\":\"Query takeover\",\"state\":\"requested\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:02:30.000Z\",\"updated_at\":\"2026-02-01T10:02:30.000Z\"}",
         "error": ""
       },
       {

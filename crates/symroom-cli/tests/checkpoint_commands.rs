@@ -23,6 +23,8 @@ const NORMALIZATION: &str = "normalize dynamic timestamps/signatures, generated 
 struct Fixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     normalization: String,
     source_hashes: BTreeMap<String, String>,
     identity_key: String,
@@ -111,8 +113,11 @@ fn checkpoint_cli_matches_go_process_stream_journal_and_authorization() {
         for directory in [&room, &journal, &home, &data_home, &tmp] {
             fs::create_dir_all(directory).expect("create isolated fixture directory");
         }
-        fs::write(room.join("room.toml"), "id = \"rm_checkpoint_fixture\"\n")
-            .expect("write configured room ID");
+        let room_config = format!(
+            "id = \"rm_checkpoint_fixture\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+            fixture.root_event, fixture.root_pubkey
+        );
+        fs::write(room.join("room.toml"), room_config).expect("write configured room ID");
         for file in &case.initial_journal {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go fixture journal bytes");

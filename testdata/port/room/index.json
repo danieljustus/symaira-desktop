@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_hash": "24dbc7c28e513455da16157d681a412a9c95aafb2cc8c0d206583316d48ec1ff",
+  "source_hash": "c6763342cc22c0a7ba44e4faa52fb003720884190decfc680e3992c7193c1c0c",
   "rebuild": {
     "tables": [
       "decisions",

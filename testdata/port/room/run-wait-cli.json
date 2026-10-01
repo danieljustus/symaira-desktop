@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
   "oracle_revision": "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+  "root_event": "wait-room-created",
+  "root_pubkey": "ed25519:2ed7d33f47510765179a8dc4b9b41a697f4943fc2036455bfa52afcf2b29d121",
   "source_hashes": {
     "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
-    "internal/room/members/members.go": "12a08d20ab8b2476b3a8b7d32626abeeb967cfe6dfb1603966b5b53f10de6f7c",
-    "internal/room/run/run.go": "dd6d0d9d645ecf4fdadf96b9ab08ab254b0e213035998f6b8b090d81dca86773",
+    "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
+    "internal/room/run/run.go": "296fc5fec6f66adef8390e3884e8ce5b8a68f6a20bdc38c7df7702b5f20bae7b",
     "internal/room/run/wait.go": "a3296dd538d35dd0cd2e2809ac2a084663fd35d9cbc23c18846697178c4c44d7"
   },
   "journal_files": [

@@ -20,6 +20,8 @@ const runMutationCLIContractFixture = "testdata/port/room/run-mutations-cli.json
 type runMutationCLIContract struct {
 	SchemaVersion  int                  `json:"schema_version"`
 	OracleRevision string               `json:"oracle_revision"`
+	RootEvent      string               `json:"root_event"`
+	RootPubkey     string               `json:"root_pubkey"`
 	SourceHashes   map[string]string    `json:"source_hashes"`
 	IdentityKey    string               `json:"identity_key"`
 	IdentityMember string               `json:"identity_member"`
@@ -78,6 +80,8 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 	fixture := runMutationCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		RootEvent:      "mut-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(roomOwner.PublicKey),
 		IdentityKey:    hex.EncodeToString(signer.PrivateKey[:ed25519.SeedSize]),
 		IdentityMember: signer.MemberID,
 		SourceHashes: map[string]string{
@@ -129,7 +133,8 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 		if err := os.MkdirAll(journalDir, 0o700); err != nil {
 			return runMutationCLIContract{}, err
 		}
-		if err := os.WriteFile(filepath.Join(caseRoom, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		roomConfig := "id = \"room-test\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+		if err := os.WriteFile(filepath.Join(caseRoom, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 			return runMutationCLIContract{}, err
 		}
 		for _, file := range initial {

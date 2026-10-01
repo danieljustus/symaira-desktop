@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -137,7 +138,7 @@ type noteTrash struct {
 }
 
 const (
-	noteOperationOracleCommit  = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
+	noteOperationOracleCommit  = "9b0bf8bda0e1b56eaf5e2766b00850b466d8021e"
 	noteOperationOracleRelease = "post-v0.12.2-security-880"
 	createdPlaceholder         = "{{CREATED}}"
 	deletedAtPlaceholder       = "{{DELETED_AT}}"
@@ -244,10 +245,83 @@ func noteOperationSourceHashes(t *testing.T) map[string]string {
 		if err != nil {
 			t.Fatal(err)
 		}
+		pinned, err := exec.Command("git", "-C", "../..", "show", noteOperationOracleCommit+":"+rel).Output() //nolint:gosec // fixed command and pinned repository source paths
+		if err != nil {
+			t.Fatalf("read pinned note oracle source %s: %v", rel, err)
+		}
+		if !bytes.Equal(data, pinned) {
+			t.Fatalf("note oracle source %s differs from pinned commit %s", rel, noteOperationOracleCommit)
+		}
 		sum := sha256.Sum256(data)
 		hashes[rel] = hex.EncodeToString(sum[:])
 	}
 	return hashes
+}
+
+func TestNoteOperationSourceProvenance(t *testing.T) {
+	if os.Getenv("NOTE_SOURCE_PROVENANCE_HELPER") == "1" {
+		noteOperationSourceHashes(t)
+		return
+	}
+	gitDir, err := exec.Command("git", "rev-parse", "--absolute-git-dir").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, ".git"), []byte("gitdir: "+strings.TrimSpace(string(gitDir))+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	fixtureRoot, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	sourceRoot, err := os.OpenRoot(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = sourceRoot.Close() }()
+	paths := []string{"internal/service/service.go", "internal/service/history.go", "internal/history/trash.go"}
+	for _, rel := range paths {
+		if !filepath.IsLocal(rel) {
+			t.Fatalf("source fixture path is not local: %s", rel)
+		}
+		data, err := sourceRoot.ReadFile(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := fixtureRoot.MkdirAll(filepath.Dir(rel), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := fixtureRoot.WriteFile(rel, data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	run := func() ([]byte, error) {
+		cmd := exec.Command(os.Args[0], "-test.run=^TestNoteOperationSourceProvenance$") //nolint:gosec // current test executable and fixed helper selector
+		cmd.Dir = filepath.Join(root, "internal/service")
+		cmd.Env = append(os.Environ(), "NOTE_SOURCE_PROVENANCE_HELPER=1")
+		return cmd.CombinedOutput()
+	}
+	if output, err := run(); err != nil {
+		t.Fatalf("matching pinned sources rejected: %v\n%s", err, output)
+	}
+	for _, rel := range paths {
+		data, err := fixtureRoot.ReadFile(rel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := fixtureRoot.WriteFile(rel, append(append([]byte(nil), data...), '\n'), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		output, err := run()
+		if err == nil || !strings.Contains(string(output), "note oracle source "+rel+" differs from pinned commit "+noteOperationOracleCommit) {
+			t.Fatalf("changed source %s was not rejected: %v\n%s", rel, err, output)
+		}
+		if err := fixtureRoot.WriteFile(rel, data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func modePointer(mode uint32) *uint32 {

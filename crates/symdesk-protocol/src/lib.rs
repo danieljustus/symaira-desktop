@@ -10,9 +10,19 @@
 mod mime;
 #[cfg(target_os = "windows")]
 mod native_mime;
+mod retrieval_embedding;
+mod retrieval_query_expansion;
+mod retrieval_search;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
+
+pub use retrieval_embedding::{
+    LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
+};
+pub use retrieval_query_expansion::expand_local_ollama_query;
+pub(crate) use retrieval_search::hybrid_search_results_if_populated;
+pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
@@ -57,7 +67,7 @@ use hyper_util::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use symdesk_index::{IndexedDocument, Sidecar};
+use symdesk_index::{IndexedDocument, Sidecar, SourceRegistry};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::{
@@ -712,8 +722,11 @@ struct AiAskEvent<'a> {
     title: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     snippet: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    score: Option<serde_json::Number>,
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "serialize_go_f64"
+    )]
+    score: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tool_name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -722,6 +735,61 @@ struct AiAskEvent<'a> {
     citation_warnings: Option<&'a [AiCitationWarning]>,
     #[serde(skip_serializing_if = "Option::is_none")]
     read_paths: Option<&'a [String]>,
+}
+
+fn serialize_go_f64<S>(value: &Option<f64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let Some(value) = value else {
+        return serializer.serialize_none();
+    };
+    if value.is_finite()
+        && value.fract() == 0.0
+        && (*value >= i64::MIN as f64)
+        && (*value < i64::MAX as f64)
+    {
+        serializer.serialize_i64(*value as i64)
+    } else {
+        serializer.serialize_f64(*value)
+    }
+}
+
+#[cfg(test)]
+mod ai_ask_score_tests {
+    use serde::Serialize;
+
+    #[derive(Serialize)]
+    struct ScoreEvent {
+        #[serde(
+            skip_serializing_if = "Option::is_none",
+            serialize_with = "super::serialize_go_f64"
+        )]
+        score: Option<f64>,
+    }
+
+    #[test]
+    fn hybrid_event_score_keeps_go_float64_json_format() {
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: Some(1.0) }).unwrap(),
+            r#"{"score":1}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: Some(0.5) }).unwrap(),
+            r#"{"score":0.5}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent {
+                score: Some(f64::from(0.1_f32)),
+            })
+            .unwrap(),
+            r#"{"score":0.10000000149011612}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&ScoreEvent { score: None }).unwrap(),
+            "{}"
+        );
+    }
 }
 
 async fn handle_ai_transform(
@@ -849,6 +917,13 @@ async fn handle_ai_transform(
 }
 
 fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
+    local_ollama_endpoint_for_path(base_url, "/api/generate")
+}
+
+pub(crate) fn local_ollama_endpoint_for_path(
+    base_url: &str,
+    endpoint_path: &str,
+) -> Option<hyper::Uri> {
     let parsed = base_url.parse::<hyper::Uri>().ok()?;
     if parsed.scheme_str()? != "http" {
         return None;
@@ -866,7 +941,7 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
     if !loopback {
         return None;
     }
-    format!("http://{authority}/api/generate").parse().ok()
+    format!("http://{authority}{endpoint_path}").parse().ok()
 }
 
 fn build_ai_ask_prompt(
@@ -1141,6 +1216,123 @@ fn format_provider_status_error(status: u16, body: &[u8]) -> String {
     format!("ollama: llmkit: {code} (status {status}){detail}")
 }
 
+/// One source returned by Go-compatible notebook-scoped Ask retrieval.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NotebookAskSearchHit {
+    /// Vault-relative path with forward slashes for logical scope matching.
+    pub path: String,
+    /// Native `filepath.Rel` spelling used by citations and prompt links.
+    pub native_path: String,
+    pub title: String,
+    pub snippet: String,
+    pub score: f64,
+}
+
+/// Searches only the sources named by a notebook and adds Go's unmatched
+/// source excerpt fallback. This is shared by the HTTP Ask handler and the
+/// offline MCP Ask path so neither can widen retrieval beyond the notebook.
+pub fn search_notebook_ask_sources(
+    vault_root: &Path,
+    notebook_ref: &str,
+    query: &str,
+    sidecar: &Sidecar,
+) -> Result<(Vec<NotebookAskSearchHit>, Vec<String>), String> {
+    let mut notebook_path = notebook_ref.trim().to_owned();
+    if notebook_path.is_empty() {
+        return Err("notebook reference is required".to_owned());
+    }
+    if !notebook_path.ends_with(".md") {
+        notebook_path.push_str(".md");
+    }
+    if !notebook_path.starts_with("notebooks/") {
+        let Some(name) = Path::new(&notebook_path).file_name() else {
+            return Err("notebook not found".to_owned());
+        };
+        notebook_path = format!("notebooks/{}", name.to_string_lossy());
+    }
+    if secure_path(vault_root, &notebook_path).is_err() {
+        return Err("notebook not found".to_owned());
+    }
+    let root_dir = cap_std::fs::Dir::open_ambient_dir(vault_root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))?;
+    let notebook_bytes = read_root_file(&root_dir, Path::new(&notebook_path))
+        .map_err(|_| "notebook not found".to_owned())?;
+    let notebook =
+        parse_notebook(&notebook_path, &notebook_bytes).map_err(|error| error.to_string())?;
+
+    let mut sources = Vec::with_capacity(notebook.sources.len());
+    let mut absolute_paths = Vec::with_capacity(notebook.sources.len());
+    for source_path in notebook.sources {
+        let Ok(absolute) = secure_path(vault_root, &source_path) else {
+            continue;
+        };
+        let Ok(contents) = read_root_file(&root_dir, Path::new(&source_path)) else {
+            continue;
+        };
+        let Ok(document) = parse_bytes(&source_path, &contents) else {
+            continue;
+        };
+        let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
+            continue;
+        };
+        absolute_paths.push(absolute_path);
+        let Some((path, native_path)) = vault_relative_paths(Path::new(&source_path)) else {
+            continue;
+        };
+        sources.push((path, native_path, document.title, document.body));
+    }
+
+    let in_scope = sources
+        .iter()
+        .map(|(path, _, _, _)| path.clone())
+        .collect::<Vec<_>>();
+    let search_hits = if query.trim().is_empty() {
+        Vec::new()
+    } else {
+        sidecar
+            .search_scoped(query, &absolute_paths)
+            .map_err(|error| error.to_string())?
+    };
+    let mut matched = std::collections::HashSet::with_capacity(search_hits.len());
+    let mut results = Vec::new();
+    for hit in search_hits {
+        let Some(relative) = path_relative_to_root(vault_root, &hit.path) else {
+            continue;
+        };
+        let Some((path, native_path)) = vault_relative_paths(&relative) else {
+            continue;
+        };
+        if sources.iter().any(|(source, _, _, _)| *source == path) {
+            matched.insert(native_path.clone());
+            results.push(NotebookAskSearchHit {
+                path,
+                native_path,
+                title: hit.title,
+                snippet: hit.snippet,
+                score: 1.0,
+            });
+        }
+    }
+    for (path, native_path, title, body) in sources {
+        if notebook_source_was_matched(&path, &matched) {
+            continue;
+        }
+        let snippet = if body.len() > 1500 {
+            String::from_utf8_lossy(&body.as_bytes()[..1500]).into_owned()
+        } else {
+            body
+        };
+        results.push(NotebookAskSearchHit {
+            path,
+            native_path,
+            title,
+            snippet,
+            score: 0.0,
+        });
+    }
+    Ok((results, in_scope))
+}
+
 async fn handle_ai_ask(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
@@ -1178,8 +1370,9 @@ async fn handle_ai_ask(
     }
 
     // Provider-backed Ask stays on the supported local Ollama and sidecar
-    // retrieval path. The empty hybrid-index check below prevents unmatched
-    // ranking behavior; ACL filtering still precedes context and citations.
+    // response path. Unscoped retrieval can use the shared hybrid selector;
+    // notebook scope remains sidecar-only. ACL filtering still precedes
+    // context and citations.
     let config = ai_transform_config_or_default(load_ai_transform_config());
     let configured_ollama = if ai_ask_provider_is_unconfigured(&config) {
         None
@@ -1202,22 +1395,6 @@ async fn handle_ai_ask(
             }
         }
     };
-    match ai_ask_retrieval_index_is_empty(&state.vault_root) {
-        Ok(true) => {}
-        Ok(false) => {
-            return json_error(
-                StatusCode::NOT_IMPLEMENTED,
-                "hybrid retrieval ask is not implemented for indexes containing chunks",
-            );
-        }
-        Err(error) => {
-            return json_error(
-                StatusCode::NOT_IMPLEMENTED,
-                &format!("ask retrieval mode could not be verified: {error}"),
-            );
-        }
-    }
-
     let sidecar = match Sidecar::open(&state.vault_root.join(".symdesk/server/sidecar.db")) {
         Ok(sidecar) => sidecar,
         Err(error) => {
@@ -1232,42 +1409,79 @@ async fn handle_ai_ask(
     let mut documents: Vec<(String, String, String, String, f64)> = Vec::new();
     let mut scoped_paths: Option<Vec<String>> = None;
     if input.notebook.is_empty() {
-        let hits = match sidecar.search(&input.query) {
-            Ok(hits) => hits,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
+        let sources = SourceRegistry::open(&state.vault_root)
+            .and_then(|registry| registry.list())
+            .unwrap_or_default();
+        let hybrid_results = {
+            let vault_root = state.vault_root.clone();
+            let query = input.query.clone();
+            let sources = sources.clone();
+            tokio::task::spawn_blocking(move || {
+                hybrid_search_results_if_populated(&vault_root, &query, &sources, 5)
+            })
+            .await
+            .ok()
+            .and_then(Result::ok)
+            .flatten()
         };
-        for hit in hits {
-            let relative = match path_relative_to_root(&state.vault_root, &hit.path) {
-                Some(relative) if !relative.as_os_str().is_empty() => relative,
-                // A stale index row outside the vault must never become context.
-                _ => continue,
+        let mut used_hybrid_results = false;
+        if let Some(results) = hybrid_results {
+            for result in results {
+                let Some(document) = hybrid_ask_document(
+                    &state.vault_root,
+                    &sources,
+                    &input.query,
+                    result,
+                    &sidecar,
+                ) else {
+                    continue;
+                };
+                documents.push(document);
+            }
+            used_hybrid_results = !documents.is_empty();
+        }
+        if documents.is_empty() {
+            let hits_result = match symdesk_core::query::parse(&input.query) {
+                Ok(plan) if plan.requires_sidecar() => sidecar
+                    .search_plan(&state.vault_root, &input.query)
+                    .map(|response| response.results),
+                Err(_) => sidecar
+                    .search_plan(&state.vault_root, &input.query)
+                    .map(|response| response.results),
+                _ => sidecar.search(&input.query),
             };
-            let Some((path, native_path)) = vault_relative_paths(&relative) else {
-                continue;
+            let hits = match hits_result {
+                Ok(hits) => hits,
+                Err(error) => {
+                    return json_error(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        &format!("retrieval failed: {error}"),
+                    );
+                }
             };
-            documents.push((path, native_path, hit.title, hit.snippet, 0.0));
+            for hit in hits {
+                let relative = match path_relative_to_root(&state.vault_root, &hit.path) {
+                    Some(relative) if !relative.as_os_str().is_empty() => relative,
+                    // A stale index row outside the vault must never become context.
+                    _ => continue,
+                };
+                let Some((path, native_path)) = vault_relative_paths(&relative) else {
+                    continue;
+                };
+                documents.push((path, native_path, hit.title, hit.snippet, 0.0));
+            }
+        }
+        if used_hybrid_results {
+            documents.truncate(5);
         }
     } else {
-        let mut notebook_path = input.notebook.clone();
-        if !notebook_path.ends_with(".md") {
-            notebook_path.push_str(".md");
-        }
-        if !notebook_path.starts_with("notebooks/") {
-            let Some(name) = Path::new(&notebook_path).file_name() else {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "retrieval failed: notebook not found",
-                );
-            };
-            notebook_path = format!("notebooks/{}", name.to_string_lossy());
-        }
-        let root_dir = match open_current_root(&state) {
-            Ok(root_dir) => root_dir,
+        let (results, in_scope) = match search_notebook_ask_sources(
+            &state.vault_root,
+            &input.notebook,
+            &input.query,
+            &sidecar,
+        ) {
+            Ok(results) => results,
             Err(error) => {
                 return json_error(
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -1275,93 +1489,15 @@ async fn handle_ai_ask(
                 );
             }
         };
-        if secure_path(&state.vault_root, &notebook_path).is_err() {
-            return json_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "retrieval failed: notebook not found",
-            );
-        }
-        let notebook_bytes = match read_root_file(&root_dir, Path::new(&notebook_path)) {
-            Ok(contents) => contents,
-            Err(_) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "retrieval failed: notebook not found",
-                );
-            }
-        };
-        let notebook = match parse_notebook(&notebook_path, &notebook_bytes) {
-            Ok(notebook) => notebook,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
-        };
-
-        let mut sources = Vec::with_capacity(notebook.sources.len());
-        let mut absolute_paths = Vec::with_capacity(notebook.sources.len());
-        for path in notebook.sources {
-            let Ok(absolute) = secure_path(&state.vault_root, &path) else {
-                continue;
-            };
-            let Ok(contents) = read_root_file(&root_dir, Path::new(&path)) else {
-                continue;
-            };
-            let Ok(document) = parse_bytes(&path, &contents) else {
-                continue;
-            };
-            let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
-                continue;
-            };
-            absolute_paths.push(absolute_path);
-            let Some((path, native_path)) = vault_relative_paths(Path::new(&path)) else {
-                continue;
-            };
-            sources.push((path, native_path, document.title, document.body));
-        }
-        let in_scope = sources
-            .iter()
-            .map(|(path, _, _, _)| path.clone())
-            .collect::<Vec<_>>();
-        let hits = match sidecar.search_scoped(&input.query, &absolute_paths) {
-            Ok(hits) => hits,
-            Err(error) => {
-                return json_error(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    &format!("retrieval failed: {error}"),
-                );
-            }
-        };
-        let mut matched = std::collections::HashSet::with_capacity(hits.len());
-        for hit in hits {
-            let Some(relative) = path_relative_to_root(&state.vault_root, &hit.path) else {
-                continue;
-            };
-            let Some((path, native_path)) = vault_relative_paths(&relative) else {
-                continue;
-            };
-            if sources.iter().any(|(source, _, _, _)| *source == path) {
-                // Go stores filepath.Rel's native spelling in `matched`, then
-                // compares it with notebook paths previously normalized by
-                // filepath.ToSlash. Preserve that Windows behavior: a nested
-                // source can also be emitted through the unmatched fallback.
-                matched.insert(native_path.clone());
-                documents.push((path, native_path, hit.title, hit.snippet, 1.0));
-            }
-        }
-        for (path, native_path, title, body) in sources {
-            if notebook_source_was_matched(&path, &matched) {
-                continue;
-            }
-            let excerpt = if body.len() > 1500 {
-                String::from_utf8_lossy(&body.as_bytes()[..1500]).into_owned()
-            } else {
-                body
-            };
-            documents.push((path, native_path, title, excerpt, 0.0));
-        }
+        documents.extend(results.into_iter().map(|result| {
+            (
+                result.path,
+                result.native_path,
+                result.title,
+                result.snippet,
+                result.score,
+            )
+        }));
         scoped_paths = Some(in_scope);
     }
 
@@ -1416,7 +1552,7 @@ async fn handle_ai_ask(
                 path: Some(path),
                 title: Some(title),
                 snippet: Some(snippet),
-                score: (*score != 0.0).then(|| serde_json::Number::from(1)),
+                score: (*score != 0.0).then_some(*score),
                 tool_name: None,
                 status: None,
                 citation_warnings: None,
@@ -1943,6 +2079,66 @@ fn is_ask_table_separator(line: &str) -> bool {
         })
 }
 
+fn hybrid_ask_document(
+    vault_root: &Path,
+    sources: &[symdesk_index::SearchSource],
+    query: &str,
+    result: symdesk_index::RetrievalHybridSearchResult,
+    sidecar: &Sidecar,
+) -> Option<(String, String, String, String, f64)> {
+    let raw_path = PathBuf::from(&result.chunk.document_path);
+    let resolved = if raw_path.is_absolute() {
+        raw_path.canonicalize().ok()?
+    } else {
+        vault_root.join(&raw_path).canonicalize().ok()?
+    };
+    if !resolved.is_file() {
+        return None;
+    }
+    let vault_root = vault_root.canonicalize().ok()?;
+    let mut allowed_roots = vec![(vault_root.clone(), false)];
+    for source in sources {
+        if let Ok(root) = PathBuf::from(&source.path).canonicalize()
+            && !allowed_roots.iter().any(|(existing, _)| *existing == root)
+        {
+            allowed_roots.push((root, true));
+        }
+    }
+    let (root, external) = allowed_roots
+        .iter()
+        .find(|(root, _)| resolved.starts_with(root))?;
+    let display_path = if *external {
+        resolved.to_string_lossy().into_owned()
+    } else {
+        let relative = resolved.strip_prefix(root).ok()?;
+        vault_relative_paths(relative)?.0
+    };
+    let native_path = if *external {
+        resolved.to_string_lossy().into_owned()
+    } else {
+        vault_relative_paths(resolved.strip_prefix(root).ok()?)?.1
+    };
+    let title = sidecar
+        .get_title(&raw_path.to_string_lossy())
+        .or_else(|_| sidecar.get_title(&resolved.to_string_lossy()))
+        .unwrap_or_else(|_| {
+            raw_path
+                .file_stem()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_owned()
+        });
+    let snippet =
+        symdesk_vault::strip_search_metadata(&go_search_snippet(&result.chunk.content, &[query]));
+    Some((
+        display_path,
+        native_path,
+        title,
+        snippet,
+        f64::from(result.rrf_score),
+    ))
+}
+
 fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {
     Path::new(path)
         .strip_prefix(root)
@@ -2010,31 +2206,6 @@ fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
         }
     }
     PathBuf::from(path)
-}
-
-fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
-    let vault = vault_root
-        .to_str()
-        .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
-    let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
-    let temp_root = std::env::temp_dir();
-    let vault_index =
-        symdesk_index::index_location_for_vault(vault, &environment, &cwd, &temp_root)
-            .map_err(|error| error.to_string())?;
-    let index_to_check = if vault_index.exists() {
-        vault_index
-    } else {
-        // Go seeds a missing per-vault index from this legacy shared store.
-        symdesk_index::index_location_for_vault("", &environment, &cwd, &temp_root)
-            .map_err(|error| error.to_string())?
-    };
-    if !index_to_check.exists() {
-        return Ok(true);
-    }
-    let database =
-        symdesk_index::RetrievalDb::open_at(index_to_check).map_err(|error| error.to_string())?;
-    Ok(database.count_chunks().map_err(|error| error.to_string())? == 0)
 }
 
 fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {

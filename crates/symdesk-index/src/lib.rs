@@ -30,6 +30,8 @@ mod history_sync;
 mod metadata;
 mod retrieval;
 mod retrieval_config;
+mod retrieval_markdown;
+mod search_plan;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -44,13 +46,19 @@ pub use metadata::{
 };
 pub use retrieval::{
     RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
+    RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
     RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
     RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
-    materialize_chunks,
+    go_simple_lowercase, local_hash_embedding, materialize_chunks,
 };
 pub use retrieval_config::{
-    index_location_for_vault, relocate_index_for_vault, symseek_config_path,
+    RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,
+    relocate_index_for_vault, retrieval_embedding_config, symseek_config_path,
 };
+pub use retrieval_markdown::{
+    MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,
+};
+pub use search_plan::SearchPlanResponse;
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_init", include_str!("../migrations/001_init.sql")),
@@ -1487,6 +1495,19 @@ impl Sidecar {
             .map_err(Into::into)
     }
 
+    /// Returns an indexed title for the exact stored path, matching Go's
+    /// `DB.GetTitle` lookup without enumerating the whole vault.
+    ///
+    /// # Errors
+    /// Returns an error when no row exists or SQLite cannot execute the query.
+    pub fn get_title(&self, path: &str) -> Result<String, SidecarError> {
+        self.connection
+            .query_row("SELECT title FROM files WHERE path = ?1", [path], |row| {
+                row.get(0)
+            })
+            .map_err(Into::into)
+    }
+
     ///
     /// # Errors
     /// Returns SQLite syntax/provider errors.
@@ -1527,6 +1548,11 @@ impl Sidecar {
         vault_root: &Path,
         query: &str,
     ) -> Result<Vec<SearchHit>, SidecarError> {
+        let roots = self.search_roots(vault_root)?;
+        self.search_in_roots(query, &roots)
+    }
+
+    fn search_roots(&self, vault_root: &Path) -> Result<Vec<String>, SidecarError> {
         let vault = fs::canonicalize(vault_root)?;
         let registry = SourceRegistry::open(&vault)?;
         let lexical_vault = absolute_non_verbatim(vault_root)?;
@@ -1535,7 +1561,38 @@ impl Sidecar {
             roots.push(vault.to_string_lossy().into_owned());
         }
         roots.extend(registry.list()?.into_iter().map(|source| source.path));
-        self.search_in_roots(query, &roots)
+        Ok(roots)
+    }
+
+    /// Executes the shared query language against the vault and registered
+    /// external roots. Unlike Go's unscoped `DB.SearchPlan`, results are
+    /// restricted to this vault's registry allowlist.
+    /// Invalid syntax follows Go's plain-text fallback and includes its hint.
+    ///
+    /// # Errors
+    /// Returns SQLite or filesystem errors from searching the sidecar.
+    pub fn search_plan(
+        &self,
+        vault_root: &Path,
+        query: &str,
+    ) -> Result<SearchPlanResponse, SidecarError> {
+        if query.trim().is_empty() {
+            return Ok(SearchPlanResponse {
+                results: Vec::new(),
+                hint: None,
+            });
+        }
+        let roots = self.search_roots(vault_root)?;
+        let plan = match symdesk_core::query::parse(query) {
+            Ok(plan) => plan,
+            Err(_) => {
+                return Ok(SearchPlanResponse {
+                    results: self.search_in_roots(query, &roots)?,
+                    hint: Some(search_plan::INVALID_SYNTAX_HINT),
+                });
+            }
+        };
+        search_plan::search_plan(&self.connection, &roots, &plan)
     }
 
     fn search_impl(
@@ -2303,9 +2360,10 @@ mod source_tests {
         let registered = temp_dir("registered");
         let unregistered = temp_dir("unregistered");
         let needle = "external-source-search-needle";
-        fs::write(vault.join("vault.md"), needle).expect("vault note");
-        fs::write(registered.join("registered.md"), needle).expect("registered note");
-        fs::write(unregistered.join("unregistered.md"), needle).expect("unregistered note");
+        let tagged = format!("---\ntags: [keep]\n---\n{needle}");
+        fs::write(vault.join("vault.md"), &tagged).expect("vault note");
+        fs::write(registered.join("registered.md"), &tagged).expect("registered note");
+        fs::write(unregistered.join("unregistered.md"), &tagged).expect("unregistered note");
         let registry = SourceRegistry::open(&vault).expect("registry");
         let source: SearchSource = registry.add(&registered).expect("register source");
         let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
@@ -2329,6 +2387,31 @@ mod source_tests {
         assert!(
             hits.iter()
                 .any(|hit| hit.path == vault.join("vault.md").to_string_lossy())
+        );
+        // Rust confines sidecar plan results to this vault's registry roots.
+        // Go's SearchPlan SQL has no root predicate, so this is intentionally
+        // stricter when unrelated rows happen to share the sidecar database.
+        let planned = sidecar
+            .search_plan(&vault, "tag:keep")
+            .expect("search plan within registered roots");
+        assert_eq!(planned.results.len(), 2);
+        assert!(planned.results.iter().any(|hit| {
+            hit.path
+                == PathBuf::from(&source.path)
+                    .join("registered.md")
+                    .to_string_lossy()
+        }));
+        assert!(
+            planned
+                .results
+                .iter()
+                .any(|hit| hit.path == vault.join("vault.md").to_string_lossy())
+        );
+        assert!(
+            !planned
+                .results
+                .iter()
+                .any(|hit| hit.path.contains("unregistered"))
         );
         fs::remove_file(PathBuf::from(&source.path).join("registered.md"))
             .expect("remove registered note");

@@ -286,6 +286,7 @@ func (c *Client) Index(source, body string) error {
 	// and heading anchors. Body indexing remains the compatibility fallback
 	// for URLs, stdin labels, and callers whose source is not a local file.
 	if info, err := os.Stat(source); err == nil && info.Mode().IsRegular() {
+		source = canonicalLocalSource(source)
 		if archivePath := archivePathFromMarkdown(source); archivePath != "" {
 			if archiveInfo, archiveErr := os.Stat(archivePath); archiveErr == nil && archiveInfo.Mode().IsRegular() {
 				_, err := engine.IndexFileWithSource(c.db, c.embedder, source, archivePath)
@@ -296,6 +297,21 @@ func (c *Client) Index(source, body string) error {
 		return err
 	}
 	return engine.IndexStdin(c.db, c.embedder, strings.NewReader(body), source)
+}
+
+// canonicalLocalSource keeps absolute local file identities aligned with
+// canonical search scopes. Relative and non-file labels retain their contract.
+func canonicalLocalSource(source string) string {
+	if filepath.IsAbs(source) {
+		if canonical, err := filepath.EvalSymlinks(source); err == nil {
+			return canonical
+		}
+		// A deleted file still needs the same identity when its parent exists.
+		if parent, err := filepath.EvalSymlinks(filepath.Dir(source)); err == nil {
+			return filepath.Join(parent, filepath.Base(source))
+		}
+	}
+	return source
 }
 
 func archivePathFromMarkdown(path string) string {
@@ -324,6 +340,7 @@ func archivePathFromMarkdown(path string) string {
 // file to update.
 func (c *Client) IndexWithMetadata(source, body string, metadata SearchMetadata) error {
 	if info, err := os.Stat(source); err == nil && info.Mode().IsRegular() {
+		source = canonicalLocalSource(source)
 		if archivePath := archivePathFromMarkdown(source); archivePath != "" {
 			if archiveInfo, archiveErr := os.Stat(archivePath); archiveErr == nil && archiveInfo.Mode().IsRegular() {
 				_, err := engine.IndexFileWithSourceAndMetadata(c.db, c.embedder, source, archivePath, metadata)
@@ -337,8 +354,10 @@ func (c *Client) IndexWithMetadata(source, body string, metadata SearchMetadata)
 }
 
 // IndexMarkdownWithMetadata indexes already-confined Markdown content without
-// reopening source.
+// reopening source. Resolve only its identity, keeping the supplied bytes as
+// the sole content input and leaving the caller's sidecar path unchanged.
 func (c *Client) IndexMarkdownWithMetadata(source, body string, metadata SearchMetadata) error {
+	source = canonicalLocalSource(source)
 	_, err := engine.IndexMarkdownWithMetadata(c.db, c.embedder, source, []byte(body), metadata)
 	return err
 }
@@ -349,6 +368,13 @@ func (c *Client) Delete(path string) error {
 	existing, err := c.db.GetDocument(path)
 	if err != nil {
 		return err
+	}
+	if existing == nil {
+		path = canonicalLocalSource(path)
+		existing, err = c.db.GetDocument(path)
+		if err != nil {
+			return err
+		}
 	}
 	if existing == nil {
 		return nil
@@ -416,10 +442,8 @@ func (c *Client) SearchInPaths(query string, paths []string, limit int) ([]Resul
 			return nil, fmt.Errorf("resolve search scope %q: %w", path, err)
 		}
 		absPath = filepath.Clean(absPath)
-		if linkInfo, lstatErr := os.Lstat(absPath); lstatErr == nil && linkInfo.Mode()&os.ModeSymlink != 0 {
-			if canonical, evalErr := filepath.EvalSymlinks(absPath); evalErr == nil {
-				absPath = filepath.Clean(canonical)
-			}
+		if canonical, evalErr := filepath.EvalSymlinks(absPath); evalErr == nil {
+			absPath = filepath.Clean(canonical)
 		}
 		hits, err := c.searchWithOptions(query, limit, engine.SearchOptions{
 			ExpandCfg:  c.expand,

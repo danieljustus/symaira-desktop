@@ -65,6 +65,12 @@ func TestGeneratorDigestIncludesMakefileAndCanReadImmutableRevision(t *testing.T
 
 func TestGeneratorDigestIncludesPackageLocalFixtureGenerators(t *testing.T) {
 	for _, relative := range []string{
+		"internal/mcp/ask_offline_port_test.go",
+		"internal/mcp/search_hybrid_port_test.go",
+		"internal/service/ask_offline_hybrid_port_test.go",
+		"internal/service/search_cli_hybrid_port_test.go",
+		"cmd/symdesk/test_helpers_test.go",
+		"internal/mcp/testdata/fixture.json",
 		"internal/service/port_dataset_contract_test.go",
 		"internal/service/port_retention_state_contract_test.go",
 		"internal/service/port_noteops_contract_test.go",

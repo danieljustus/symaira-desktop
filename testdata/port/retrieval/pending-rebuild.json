@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "document_hash": "cfc3004a23003a851b74753f6b5d673c898bf001baa0962c0f4eb0dee242cf49",
+  "pending_chunks": [
+    {
+      "uuid": "023c45df-d5d7-5ed5-9bd1-c7560a364cb3",
+      "document_path": "$DOC",
+      "chunk_index": 0,
+      "content": "# Pending rebuild",
+      "embedding": [],
+      "hash": "c2623e136ffeb340b51bf0fee9f4cdd1a5bcec106d5ddfb54cbfc93a859d8f71",
+      "dim": 0,
+      "embedding_model": "local-hash",
+      "char_start": 0,
+      "char_end": 17,
+      "anchor_kind": "text",
+      "anchor_value": "offset:0",
+      "embedding_pending": true
+    },
+    {
+      "uuid": "a04ce74b-7920-5d65-9492-f140baad7d2f",
+      "document_path": "$DOC",
+      "chunk_index": 1,
+      "content": "# Pending rebuild\n\nstaleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text staleonlymarker pending text ",
+      "embedding": [],
+      "hash": "8b174108fa4e890498f52921e98cc421763211e47e8628b245be9b5da026f904",
+      "dim": 0,
+      "embedding_model": "local-hash",
+      "char_start": 0,
+      "char_end": 1005,
+      "anchor_kind": "text",
+      "anchor_value": "offset:0",
+      "embedding_pending": true
+    }
+  ],
+  "resolved_chunks": [
+    {
+      "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+      "document_path": "$DOC",
+      "chunk_index": 0,
+      "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+      "embedding": [
+        0.3568202,
+        0.38181025,
+        0.35270792,
+        0.3843409,
+        0.35334054,
+        0.33341178,
+        0.33309543,
+        0.32835045
+      ],
+      "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "anchor_kind": "section",
+      "anchor_value": "metadata",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "023c45df-d5d7-5ed5-9bd1-c7560a364cb3",
+      "document_path": "$DOC",
+      "chunk_index": 1,
+      "content": "# Pending rebuild",
+      "embedding": [
+        0.41997,
+        0.11293311,
+        0.34232846,
+        0.3564451,
+        0.3670326,
+        0.3829138,
+        0.37056175,
+        0.3846784
+      ],
+      "hash": "c2623e136ffeb340b51bf0fee9f4cdd1a5bcec106d5ddfb54cbfc93a859d8f71",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "char_start": 0,
+      "char_end": 17,
+      "anchor_kind": "heading",
+      "anchor_value": "Pending rebuild",
+      "embedding_pending": false
+    },
+    {
+      "uuid": "a7d9736f-3996-5cbc-889f-c6227b19be51",
+      "document_path": "$DOC",
+      "chunk_index": 2,
+      "content": "# Pending rebuild\n\nfreshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text freshonlymarker rebuilt text",
+      "embedding": [
+        0.35589913,
+        0.35109973,
+        0.34978843,
+        0.35885674,
+        0.35416904,
+        0.3542808,
+        0.3559269,
+        0.34828165
+      ],
+      "hash": "3ccf2da8d4bde0d26fc6011c26bb5da5d148446c406c91f27e0538599a1a6c31",
+      "dim": 8,
+      "embedding_model": "fake-model",
+      "char_start": 0,
+      "char_end": 1004,
+      "anchor_kind": "heading",
+      "anchor_value": "Pending rebuild",
+      "embedding_pending": false
+    }
+  ],
+  "reembedded_documents": 1,
+  "generation": 3,
+  "remaining_extractions": 0,
+  "old_text_fts_hits": 0,
+  "new_text_fts_hits": 1
+}

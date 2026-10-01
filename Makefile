@@ -41,6 +41,16 @@
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
 .PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
+.PHONY: retrieval-pending-rebuild-fixtures-generate retrieval-pending-rebuild-differential
+.PHONY: retrieval-sections-fixtures-generate retrieval-sections-differential
+.PHONY: retrieval-embedding-http-fixtures-generate retrieval-embedding-http-differential
+.PHONY: retrieval-reembed-http-fixtures-generate retrieval-reembed-http-differential
+.PHONY: retrieval-local-hash-fixtures-generate retrieval-local-hash-differential
+.PHONY: retrieval-search-cli-fixtures-generate retrieval-search-cli-differential
+.PHONY: retrieval-search-mcp-fixtures-generate retrieval-search-mcp-differential
+.PHONY: retrieval-ask-offline-fixtures-generate retrieval-ask-offline-differential
+.PHONY: retrieval-ask-mcp-fixtures-generate retrieval-ask-mcp-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -485,6 +495,76 @@ retrieval-embedding-state-fixtures-generate:
 retrieval-embedding-state-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
+
+retrieval-hybrid-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+
+retrieval-hybrid-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_hybrid_contracts
+
+retrieval-pending-rebuild-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
+
+retrieval-pending-rebuild-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_pending_rebuild --test retrieval_embedding_state
+
+retrieval-sections-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
+
+retrieval-sections-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_sections --test retrieval_chunks
+
+retrieval-embedding-http-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+
+retrieval-embedding-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+	$(CARGO) test -p symdesk-protocol --locked --test retrieval_embedding
+
+retrieval-reembed-http-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
+
+retrieval-reembed-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
+	$(CARGO) test -p symdesk-cli --locked --test index_reembed_http
+
+retrieval-local-hash-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
+
+retrieval-local-hash-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
+	$(CARGO) test -p symdesk-index --locked local_hash_tests
+
+retrieval-search-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+
+retrieval-search-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+	$(CARGO) test -p symdesk-cli --locked --test search_hybrid
+
+retrieval-search-mcp-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
+
+retrieval-search-mcp-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
+	$(CARGO) test -p symdesk-cli --locked --test mcp_search_hybrid
+
+retrieval-ask-offline-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
+
+retrieval-ask-offline-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
+	$(CARGO) test -p symdesk-cli --locked --test ask_offline
+
+retrieval-ask-mcp-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
+
+retrieval-ask-mcp-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
+	$(CARGO) test -p symdesk-cli --locked --test mcp_ask_offline
 
 retrieval-vector-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'

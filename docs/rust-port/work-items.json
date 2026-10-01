@@ -181,6 +181,7 @@
       "id": "RUST-008",
       "title": "Port full sidecar and retrieval stack",
       "status": "blocked",
+      "note": "Integrated ce97dcf1 passes full immutable fixture generation/application, eight Go/Rust differentials and 204 CLI/index/protocol tests on Darwin/arm64 and Linux/arm64. Shared CLI/MCP local HyDE expansion preserves Go prompt, cache, dimensions and failure behavior; success bodies are bounded to 4 MiB. Integrated 3d4d8a56 additionally preserves the inert Go rerank flag in real CLI/MCP processes; complete immutable generation/application and the same native eight differentials/204 tests pass. Remaining facades/formats/quantization and other native targets stay open. Integrated a427ce7b additionally connects offline Ask CLI to shared hybrid retrieval and SearchPlan: seven Go cases, nine native differentials and 205 CLI/index/protocol tests pass on Darwin/arm64 and Linux/arm64; other facades and platforms remain open. Integrated bacaaff8 additionally preserves inert Go backend/quantization config through real CLI/MCP cases; immutable generation/application, nine differentials and 205 tests pass on both native ARM64 hosts. Current HTTP Ask candidate `7ae8ae34` (same production tree as immutable-fixture commit `e210b837`, Q=`368c2365`) adds shared hybrid retrieval for unscoped nonempty-index Ask while preserving notebook-scoped sidecar behavior; two source-bound Go cases passed with fake-loopback requests. Darwin/arm64 evidence: 16 CLI and 233 HTTP differentials, 210 CLI/index/protocol tests, strict Clippy/fmt, and validated immutable fixture application. Linux and other required native targets remain unverified for this slice; RUST-008 stays open.",
       "depends_on": [
         "RUST-006",
         "RUST-007"
@@ -199,9 +200,18 @@
         "make retrieval-bm25-differential",
         "make retrieval-embedding-state-differential",
         "make retrieval-vector-differential",
+        "make retrieval-hybrid-differential",
+        "make retrieval-pending-rebuild-differential",
+        "make retrieval-sections-differential",
+        "make retrieval-embedding-http-differential",
+        "make retrieval-reembed-http-differential",
+        "make retrieval-local-hash-differential",
+        "make retrieval-search-cli-differential",
+        "make retrieval-search-mcp-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
-        "make benchmark-large"
+        "make benchmark-large",
+        "make retrieval-ask-offline-differential"
       ]
     },
     {
@@ -287,8 +297,10 @@
       ],
       "acceptance": [
         "make ai-compose-differential",
-        "cargo nextest run -p symdesk-service"
-      ]
+        "cargo nextest run -p symdesk-service",
+        "make retrieval-ask-offline-differential"
+      ],
+      "note": "Integrated a427ce7b proves seven offline Ask CLI retrieval/event cases against Go on Darwin/arm64 and Linux/arm64. Integrated bd5fb252 adds bounded offline MCP Ask catalog/tag-search envelope proof (8 exact calls and 3 explicit divergence controls); immutable generation/application, ten native differentials and 206 tests pass on both ARM64 hosts. Integrated 2a00af4f closes raw argument/envelope ordering and measured hybrid MCP Ask with24 actual Go calls (22 exact and2 notebook controls), one captured embedding request and three citations. Full immutable generation/application, inventory/portgen tests, ten differentials and207 CLI/index/protocol tests pass on both ARM64 hosts. Integrated 4e120ef2 adds scoped Notebook Ask and canonical-root projection:30 exact Go envelopes, ten retrieval differentials,208 package tests and231 actual HTTP cases pass on native Darwin/Linux ARM64 after immutable generation/application. Configured provider execution, HTTP hybrid Ask and whole-item native acceptance remain open."
     },
     {
       "id": "RUST-013",

@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "batch-with-pinned-dimensions",
+      "model": "qwen3-embedding:0.6b",
+      "inputs": [
+        "first note",
+        "second 🧪 note"
+      ],
+      "dimensions": 3,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[0.25,-0.5,1]},{\"embedding\":[2,3.5,-4]}]}",
+      "expected_vectors": [
+        [
+          0.25,
+          -0.5,
+          1
+        ],
+        [
+          2,
+          3.5,
+          -4
+        ]
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "qwen3-embedding:0.6b",
+        "input": [
+          "first note",
+          "second 🧪 note"
+        ],
+        "dimensions": 3
+      }
+    },
+    {
+      "id": "single-with-provider-dimension",
+      "model": "nomic-embed-text",
+      "inputs": [
+        "one"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[0.125,0.875]}]}",
+      "expected_vectors": [
+        [
+          0.125,
+          0.875
+        ]
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "nomic-embed-text",
+        "input": [
+          "one"
+        ]
+      }
+    },
+    {
+      "id": "case-insensitive-response-fields",
+      "model": "case-model",
+      "inputs": [
+        "case"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"DaTa\":[{\"eMbEdDiNg\":[0.75,-0.25]}]}",
+      "expected_vectors": [
+        [
+          0.75,
+          -0.25
+        ]
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "case-model",
+        "input": [
+          "case"
+        ]
+      }
+    },
+    {
+      "id": "duplicate-case-variant-data-last-wins",
+      "model": "case-model",
+      "inputs": [
+        "case"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[0.25]}],\"DATA\":[{\"embedding\":[0.75]}]}",
+      "expected_vectors": [
+        [
+          0.75
+        ]
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "case-model",
+        "input": [
+          "case"
+        ]
+      }
+    },
+    {
+      "id": "duplicate-case-variant-embedding-last-wins",
+      "model": "case-model",
+      "inputs": [
+        "case"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[0.25],\"EMBEDDING\":[0.75]}]}",
+      "expected_vectors": [
+        [
+          0.75
+        ]
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "case-model",
+        "input": [
+          "case"
+        ]
+      }
+    },
+    {
+      "id": "null-vector-is-empty-vector",
+      "model": "null-model",
+      "inputs": [
+        "null"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":null}]}",
+      "expected_vectors": [
+        null
+      ],
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "null-model",
+        "input": [
+          "null"
+        ]
+      }
+    },
+    {
+      "id": "http-server-error",
+      "model": "test-model",
+      "inputs": [
+        "retry is caller policy"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 503,
+      "response_body": "{\"error\":\"local test failure\"}",
+      "expected_error_code": "provider_error",
+      "expected_error_status": 503,
+      "expected_error_body": "{\"error\":\"local test failure\"}",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": true,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "retry is caller policy"
+        ]
+      }
+    },
+    {
+      "id": "missing-model-is-not-retryable",
+      "model": "missing-model",
+      "inputs": [
+        "do not retry"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 404,
+      "response_body": "{\"error\":\"model not found\"}",
+      "expected_error_code": "model_not_found",
+      "expected_error_status": 404,
+      "expected_error_body": "{\"error\":\"model not found\"}",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "missing-model",
+        "input": [
+          "do not retry"
+        ]
+      }
+    },
+    {
+      "id": "unauthorized-is-auth-failure",
+      "model": "test-model",
+      "inputs": [
+        "bad credentials"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 401,
+      "response_body": "{\"error\":\"unauthorized\"}",
+      "expected_error_code": "auth_failure",
+      "expected_error_status": 401,
+      "expected_error_body": "{\"error\":\"unauthorized\"}",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "bad credentials"
+        ]
+      }
+    },
+    {
+      "id": "rate-limit-is-not-transport-retry",
+      "model": "test-model",
+      "inputs": [
+        "rate limited"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 429,
+      "response_body": "{\"error\":\"too many requests\"}",
+      "expected_error_code": "rate_limited",
+      "expected_error_status": 429,
+      "expected_error_body": "{\"error\":\"too many requests\"}",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "rate limited"
+        ]
+      }
+    },
+    {
+      "id": "context-overflow-marker",
+      "model": "test-model",
+      "inputs": [
+        "too long"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 400,
+      "response_body": "{\"error\":\"context_length_exceeded\"}",
+      "expected_error_code": "context_overflow",
+      "expected_error_status": 400,
+      "expected_error_body": "{\"error\":\"context_length_exceeded\"}",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "too long"
+        ]
+      }
+    },
+    {
+      "id": "context-overflow-marker-after-display-excerpt",
+      "model": "test-model",
+      "inputs": [
+        "too long"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 400,
+      "response_body": "{\"error\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx context_length_exceeded\"}",
+      "expected_error_code": "context_overflow",
+      "expected_error_status": 400,
+      "expected_error_body": "{\"error\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "expected_failure_kind": "http_status",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "too long"
+        ]
+      }
+    },
+    {
+      "id": "malformed-success-body",
+      "model": "test-model",
+      "inputs": [
+        "decode this"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[",
+      "expected_error_code": "provider_error",
+      "expected_failure_kind": "invalid_response",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "decode this"
+        ]
+      }
+    },
+    {
+      "id": "wrong-response-count",
+      "model": "test-model",
+      "inputs": [
+        "first",
+        "second"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[1,0]}]}",
+      "expected_error_code": "provider_error",
+      "expected_failure_kind": "embedding_count",
+      "expected_retryable": false,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "first",
+          "second"
+        ]
+      }
+    },
+    {
+      "id": "empty-inputs-rejected-before-request",
+      "model": "test-model",
+      "inputs": [],
+      "dimensions": 0,
+      "timeout_millis": 2000,
+      "response_status": 200,
+      "response_body": "{\"data\":[]}",
+      "expected_error_code": "input_validation",
+      "expected_failure_kind": "empty_inputs",
+      "expected_retryable": false
+    },
+    {
+      "id": "request-timeout",
+      "model": "test-model",
+      "inputs": [
+        "wait"
+      ],
+      "dimensions": 0,
+      "timeout_millis": 40,
+      "response_status": 200,
+      "response_body": "{\"data\":[{\"embedding\":[1]}]}",
+      "response_delay_millis": 250,
+      "expected_error_code": "transport_error",
+      "expected_failure_kind": "transport",
+      "expected_retryable": true,
+      "request_method": "POST",
+      "request_path": "/v1/embeddings",
+      "request_content_type": "application/json",
+      "request_accept": "application/json",
+      "request_body": {
+        "model": "test-model",
+        "input": [
+          "wait"
+        ]
+      }
+    }
+  ]
+}

@@ -108,6 +108,13 @@ func main() {
 	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
 	flag.Parse()
 
+	if *check {
+		oracle, err := inventory.ResolveCheckOracle(inventory.Oracle{Commit: *commit, Release: *release}, flag.CommandLine, *output)
+		if err != nil {
+			fatal("resolve replay oracle: %v", err)
+		}
+		*commit, *release = oracle.Commit, oracle.Release
+	}
 	value, err := buildDocument(inventory.Oracle{Commit: *commit, Release: *release})
 	if err != nil {
 		fatal("build fixture: %v", err)

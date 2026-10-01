@@ -9,6 +9,7 @@ mod index_cli;
 mod mcp;
 mod recipe;
 mod retention;
+mod search_cli;
 mod source_cli;
 
 use std::{
@@ -24,7 +25,7 @@ use serde::Serialize;
 use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
-use symdesk_index::{ListedDocument, SearchSource, SourceRegistry, open_for_vault};
+use symdesk_index::{ListedDocument, SourceRegistry, open_for_vault};
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
@@ -356,15 +357,28 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let Some(query) = parsed.query.as_deref() else {
                 return emit_error("search query is required".to_owned(), output_json);
             };
-            let hits = match sidecar.search_with_sources(&vault, query) {
-                Ok(hits) => hits,
-                Err(error) => return emit_error(error.to_string(), output_json),
-            };
             let sources = match SourceRegistry::open(&vault).and_then(|registry| registry.list()) {
                 Ok(sources) => sources,
                 Err(error) => return emit_error(error.to_string(), output_json),
             };
-            render_search(&vault, &hits, &sources, output_json)
+            let hits = match search_cli::hybrid_search(&vault, query, &sources, &sidecar) {
+                Ok(Some(hits)) => hits,
+                Ok(None) => match sidecar.search_plan(&vault, query) {
+                    Ok(response) => search_cli::lexical_hits(response.results, &sources)
+                        .into_iter()
+                        .map(|mut hit| {
+                            if hit.source_type.is_none() {
+                                hit.path = relative_path(&vault, &hit.path);
+                            }
+                            hit
+                        })
+                        .collect(),
+                    Err(error) => return emit_error(error.to_string(), output_json),
+                },
+                Err(error) => return emit_error(error, output_json),
+            };
+            let hint = search_cli::syntax_fallback_hint(query);
+            render_search(&hits, hint, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),
     }
@@ -500,7 +514,11 @@ struct SearchJsonHit {
     path: String,
     title: String,
     snippet: String,
-    score: i32,
+    score: serde_json::Number,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    anchor: Option<search_cli::CliSearchAnchor>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    metadata_matches: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     source_type: Option<&'static str>,
     #[serde(skip_serializing_if = "is_false")]
@@ -514,6 +532,8 @@ fn is_false(value: &bool) -> bool {
 #[derive(Serialize)]
 struct SearchJsonResponse {
     results: Vec<SearchJsonHit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hint: Option<&'static str>,
 }
 
 fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCode {
@@ -551,54 +571,59 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
 }
 
 fn render_search(
-    root: &Path,
-    hits: &[symdesk_index::SearchHit],
-    sources: &[SearchSource],
+    hits: &[search_cli::CliSearchHit],
+    hint: Option<&'static str>,
     json_output: bool,
 ) -> ExitCode {
-    let is_external = |path: &str| {
-        let path = Path::new(path);
-        sources.iter().any(|source| path.starts_with(&source.path))
-    };
     if json_output {
         let results = hits
             .iter()
             .map(|hit| SearchJsonHit {
-                path: if is_external(&hit.path) {
-                    hit.path.clone()
-                } else {
-                    relative_path(root, &hit.path)
-                },
+                path: hit.path.clone(),
                 title: hit.title.clone(),
                 snippet: hit.snippet.clone(),
-                score: 0,
-                source_type: is_external(&hit.path).then_some("external"),
-                read_only: is_external(&hit.path),
+                score: if hit.score == 0.0 {
+                    serde_json::Number::from(0)
+                } else {
+                    serde_json::Number::from_f64(hit.score)
+                        .unwrap_or_else(|| serde_json::Number::from(0))
+                },
+                anchor: hit.anchor.clone(),
+                metadata_matches: hit.metadata_matches.clone(),
+                source_type: hit.source_type,
+                read_only: hit.read_only,
             })
             .collect::<Vec<_>>();
         return write_stdout(format!(
             "{}\n",
-            serde_json::to_string(&SearchJsonResponse { results }).unwrap_or_default()
+            serde_json::to_string(&SearchJsonResponse { results, hint }).unwrap_or_default()
         ));
     }
     let results = hits
         .iter()
         .map(|hit| {
+            let anchor = hit.anchor.as_ref().map_or_else(
+                || "<nil>".to_owned(),
+                |anchor| format!("{{Kind:{} Value:{}}}", anchor.kind, anchor.value),
+            );
             format!(
-                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType:{} ReadOnly:{}}}",
-                if is_external(&hit.path) {
-                    hit.path.clone()
-                } else {
-                    relative_path(root, &hit.path)
-                },
+                "{{Path:{} Title:{} Snippet:{} Score:{} Anchor:{} MetadataMatches:[{}] SourceType:{} ReadOnly:{}}}",
+                hit.path,
                 hit.title,
                 hit.snippet,
-                if is_external(&hit.path) { "external" } else { "" },
-                is_external(&hit.path)
+                hit.score,
+                anchor,
+                hit.metadata_matches.join(" "),
+                hit.source_type.unwrap_or_default(),
+                hit.read_only
             )
         })
         .collect::<Vec<_>>();
-    write_stdout(format!("{{Results:[{}] Hint:}}\n", results.join(" ")))
+    write_stdout(format!(
+        "{{Results:[{}] Hint:{}}}\n",
+        results.join(" "),
+        hint.unwrap_or_default()
+    ))
 }
 
 fn write_go_json<T: Serialize>(value: &T) -> ExitCode {

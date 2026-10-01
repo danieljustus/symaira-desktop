@@ -347,7 +347,7 @@ func TestOllamaChatCompletion_EmbedURLRewrite(t *testing.T) {
 func TestOllamaChatCompletion_HTTPError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		if _, err := fmt.Fprintf(w, "model not found"); err != nil {
+		if _, err := fmt.Fprintf(w, "%sTAIL_MARKER", strings.Repeat("x", 512)); err != nil {
 			t.Errorf("write response: %v", err)
 		}
 	}))
@@ -357,8 +357,9 @@ func TestOllamaChatCompletion_HTTPError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error on HTTP 500")
 	}
-	if !strings.Contains(err.Error(), "HTTP 500") {
-		t.Errorf("expected HTTP 500 in error, got: %v", err)
+	want := "ollama returned HTTP 500: " + strings.Repeat("x", 512)
+	if err.Error() != want {
+		t.Errorf("HTTP error = %q, want first 512 bytes only", err)
 	}
 }
 

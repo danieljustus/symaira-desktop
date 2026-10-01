@@ -1,0 +1,694 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "unscoped-offline-search-plan",
+      "documents": [
+        {
+          "path": "notes/ask.md",
+          "body": "---\ntitle: Ask note\ntags: [askscope]\n---\n\nThis note is selected by the tag plan."
+        },
+        {
+          "path": "notebooks/notebook-fixture.md",
+          "body": "---\ntype: notebook\ntitle: Fixture notebook\nnotebook_id: notebook-fixture\nsources:\n  - notes/ask.md\n---\n\n# Fixture notebook\n"
+        }
+      ],
+      "expected_tool": {
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+        "inputSchema": {
+          "properties": {
+            "notebook": {
+              "description": "optional: notebook id or path to restrict retrieval and citations to",
+              "type": "string"
+            },
+            "query": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "type": "object"
+        },
+        "name": "desk_ask"
+      },
+      "calls": [
+        {
+          "id": "query-lowercase",
+          "arguments_json": "{\"query\":\"tag:askscope\"}",
+          "expected": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "query-uppercase",
+          "arguments_json": "{\"QUERY\":\"tag:askscope\"}",
+          "expected": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "query-title-case",
+          "arguments_json": "{\"Query\":\"tag:askscope\"}",
+          "expected": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "query-null",
+          "arguments_json": "{\"query\":null}",
+          "expected": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "query is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "query-null-keeps-prior-value",
+          "arguments_json": "{\"query\":\"tag:askscope\",\"QUERY\":null}",
+          "expected": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "arguments-null",
+          "arguments_json": "null",
+          "expected": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "query is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "arguments-missing",
+          "arguments_json": "",
+          "expected": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "unexpected end of JSON input",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "query-wrong-type",
+          "arguments_json": "{\"query\":42}",
+          "expected": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "json: cannot unmarshal number into Go struct field .query of type string",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "query-whitespace",
+          "arguments_json": "{\"query\":\"   \"}",
+          "expected": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "query-trailing-space",
+          "arguments_json": "{\"query\":\"tag:askscope\"}   ",
+          "expected": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "notebook-kelvin-case",
+          "arguments_json": "{\"query\":\"tag:askscope\",\"notebooK\":\"notebook-fixture\"}",
+          "expected": {
+            "id": 12,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "notebook-wrong-type",
+          "arguments_json": "{\"query\":\"tag:askscope\",\"notebook\":7}",
+          "expected": {
+            "id": 13,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "json: cannot unmarshal number into Go struct field .notebook of type string",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "duplicate-folded-query-last-valid",
+          "arguments_json": "{\"query\":\"\",\"QUERY\":\"tag:askscope\"}",
+          "expected": {
+            "id": 14,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "duplicate-folded-query-last-empty",
+          "arguments_json": "{\"QUERY\":\"tag:askscope\",\"query\":\"\"}",
+          "expected": {
+            "id": 15,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "query is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "duplicate-exact-query-last-valid",
+          "arguments_json": "{\"query\":\"\",\"query\":\"tag:askscope\"}",
+          "expected": {
+            "id": 16,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "duplicate-notebook-null-keeps-value",
+          "arguments_json": "{\"query\":\"tag:askscope\",\"notebook\":\"notebook-fixture\",\"NOTEBOOK\":null}",
+          "expected": {
+            "id": 17,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "query-first-type-error-in-wire-order",
+          "arguments_json": "{\"notebook\":7,\"query\":42}",
+          "expected": {
+            "id": 18,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "json: cannot unmarshal number into Go struct field .notebook of type string",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "duplicate-envelope-arguments-last-write",
+          "arguments_json": "",
+          "raw_params_json": "{\"name\":\"desk_ask\",\"arguments\":{\"query\":\"\"},\"arguments\":{\"query\":\"tag:askscope\"}}",
+          "expected": {
+            "id": 19,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "duplicate-top-level-params-last-write",
+          "arguments_json": "",
+          "raw_frame_json": "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"tools/call\",\"params\":{\"name\":\"desk_ask\",\"arguments\":{\"query\":\"\"}},\"params\":{\"name\":\"desk_ask\",\"arguments\":{\"query\":\"tag:askscope\"}}}",
+          "expected": {
+            "id": 20,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/ask.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "search-duplicate-folded-query-last-write",
+          "tool": "desk_search",
+          "arguments_json": "",
+          "raw_params_json": "{\"name\":\"desk_search\",\"arguments\":{\"query\":\"\",\"QUERY\":\"tag:askscope\"}}",
+          "expected": {
+            "id": 21,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"results\":[{\"path\":\"notes/ask.md\",\"title\":\"Ask note\",\"snippet\":\"\\nThis note is selected by the tag plan.\",\"score\":0}]}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "search-null-keeps-prior-query",
+          "tool": "desk_search",
+          "arguments_json": "",
+          "raw_params_json": "{\"name\":\"desk_search\",\"arguments\":{\"query\":\"tag:askscope\",\"QUERY\":null}}",
+          "expected": {
+            "id": 22,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"results\":[{\"path\":\"notes/ask.md\",\"title\":\"Ask note\",\"snippet\":\"\\nThis note is selected by the tag plan.\",\"score\":0}]}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "search-wrong-query-type",
+          "tool": "desk_search",
+          "arguments_json": "",
+          "raw_params_json": "{\"name\":\"desk_search\",\"arguments\":{\"query\":42}}",
+          "expected": {
+            "id": 23,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "json: cannot unmarshal number into Go struct field .query of type string",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "id": "search-missing-arguments",
+          "tool": "desk_search",
+          "arguments_json": "",
+          "raw_params_json": "{\"name\":\"desk_search\"}",
+          "expected": {
+            "id": 24,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "unexpected end of JSON input",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "notebook-scoped-offline-search",
+      "documents": [
+        {
+          "path": "notebooks/notebook-fixture.md",
+          "body": "---\ntype: notebook\ntitle: Fixture notebook\nnotebook_id: notebook-fixture\nsources:\n  - notes/unmatched.md\n  - notes/missing.md\n  - notes/matched.md\n---\n\n# Fixture notebook\n"
+        },
+        {
+          "path": "notebooks/empty.md",
+          "body": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: empty\nsources: []\n---\n\n# Empty notebook\n"
+        },
+        {
+          "path": "notes/matched.md",
+          "body": "---\ntitle: Matched source\n---\n\nThe needle is visible only inside this notebook source."
+        },
+        {
+          "path": "notes/unmatched.md",
+          "body": "---\ntitle: Fallback source\n---\n\nFallback-only passage for conceptual questions."
+        },
+        {
+          "path": "notes/outside.md",
+          "body": "---\ntitle: Outside source\n---\n\nThe needle outside the selected notebook must not appear."
+        }
+      ],
+      "expected_tool": {
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+        "inputSchema": {
+          "properties": {
+            "notebook": {
+              "description": "optional: notebook id or path to restrict retrieval and citations to",
+              "type": "string"
+            },
+            "query": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "type": "object"
+        },
+        "name": "desk_ask"
+      },
+      "calls": [
+        {
+          "id": "scoped-hit-plus-unmatched-fallback",
+          "arguments_json": "{\"query\":\"needle\",\"notebook\":\"notebook-fixture\"}",
+          "expected": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/matched.md]]\\n- [[notes/unmatched.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "scoped-conceptual-fallback",
+          "arguments_json": "{\"query\":\"summarize these sources\",\"notebook\":\"notebook-fixture\"}",
+          "expected": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/matched.md]]\\n- [[notes/unmatched.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "scoped-path-reference",
+          "arguments_json": "{\"query\":\"needle\",\"notebook\":\"notebooks/notebook-fixture.md\"}",
+          "expected": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/matched.md]]\\n- [[notes/unmatched.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "scoped-whitespace-query-fallback",
+          "arguments_json": "{\"query\":\"   \",\"notebook\":\"notebook-fixture\"}",
+          "expected": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[notes/matched.md]]\\n- [[notes/unmatched.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "empty-notebook-source-set",
+          "arguments_json": "{\"query\":\"needle\",\"notebook\":\"empty\"}",
+          "expected": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "id": "missing-notebook",
+          "arguments_json": "{\"query\":\"needle\",\"notebook\":\"does-not-exist\"}",
+          "expected": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "notebook not found",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hybrid-semantic-top-three-fallback",
+      "embedding_dim": 3,
+      "documents": [
+        {
+          "path": "semantic/top-1.md",
+          "body": "Semantic source marker one.",
+          "embedding_marker": "marker one",
+          "embedding": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "path": "semantic/top-2.md",
+          "body": "Semantic source marker two.",
+          "embedding_marker": "marker two",
+          "embedding": [
+            0.8,
+            0.6,
+            0
+          ]
+        },
+        {
+          "path": "semantic/top-3.md",
+          "body": "Semantic source marker three.",
+          "embedding_marker": "marker three",
+          "embedding": [
+            0.6,
+            0.8,
+            0
+          ]
+        },
+        {
+          "path": "semantic/not-top-3.md",
+          "body": "Semantic source marker four.",
+          "embedding_marker": "marker four",
+          "embedding": [
+            0,
+            1,
+            0
+          ]
+        }
+      ],
+      "expected_tool": {
+        "annotations": {
+          "readOnlyHint": true
+        },
+        "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+        "inputSchema": {
+          "properties": {
+            "notebook": {
+              "description": "optional: notebook id or path to restrict retrieval and citations to",
+              "type": "string"
+            },
+            "query": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "type": "object"
+        },
+        "name": "desk_ask"
+      },
+      "calls": [
+        {
+          "id": "semantic-query",
+          "arguments_json": "{\"query\":\"violet cosmic wavelength\"}",
+          "expected": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"answer\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n- [[semantic/top-1.md]]\\n- [[semantic/top-2.md]]\\n- [[semantic/top-3.md]]\\n\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "provider_requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "dimensions": 3,
+            "input": [
+              "violet cosmic wavelength"
+            ],
+            "model": "fixture-model"
+          }
+        }
+      ]
+    }
+  ]
+}

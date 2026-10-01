@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"gopkg.in/yaml.v3"
 	_ "modernc.org/sqlite"
 )
@@ -60,6 +61,8 @@ type httpCase struct {
 	PopulateShareAccess       bool              `json:"populate_share_access,omitempty"`
 	PopulateWorkerACL         bool              `json:"populate_worker_acl,omitempty"`
 	PopulateNamedUser         bool              `json:"populate_named_user,omitempty"`
+	PopulateHybridIndex       bool              `json:"populate_hybrid_index,omitempty"`
+	HybridQuery               bool              `json:"hybrid_query,omitempty"`
 	RemoveSymlinkEscapes      bool              `json:"remove_symlink_escapes,omitempty"`
 	ProviderOllama            bool              `json:"provider_ollama,omitempty"`
 	ProviderOpenAIFallback    bool              `json:"provider_openai_fallback,omitempty"`
@@ -205,6 +208,7 @@ func run() (runErr error) {
 		}
 	}()
 	leftETag, rightETag := "", ""
+	hybridIndexPrepared := false
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
 		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderAskOllama || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
@@ -212,6 +216,32 @@ func run() (runErr error) {
 		}
 	}
 	for _, tc := range suite.Cases {
+		if tc.PopulateHybridIndex && !hybridIndexPrepared {
+			if err := leftServer.stop(); err != nil {
+				fatal("stop Go server before hybrid fixture: %v", err)
+			}
+			if err := rightServer.stop(); err != nil {
+				fatal("stop Rust server before hybrid fixture: %v", err)
+			}
+			if err := populateHybridIndex(leftVault, *left, provider.url); err != nil {
+				fatal("populate Go hybrid fixture: %v", err)
+			}
+			if err := populateHybridIndex(rightVault, *right, provider.url); err != nil {
+				fatal("populate Rust hybrid fixture: %v", err)
+			}
+			leftServer = startServer(*left, leftVault)
+			rightServer = startServer(*right, rightVault)
+			if err := leftServer.ready(); err != nil {
+				fatal("Go hybrid fixture readiness: %v", err)
+			}
+			if err := rightServer.ready(); err != nil {
+				fatal("Rust hybrid fixture readiness: %v", err)
+			}
+			if err := provider.assertEmbeddingRequests(4, "Body"); err != nil {
+				fatal("hybrid fixture embedding requests: %v", err)
+			}
+			hybridIndexPrepared = true
+		}
 		if tc.RemoveSymlinkEscapes {
 			for _, vault := range []string{leftVault, rightVault} {
 				for _, name := range []string{"escape.md", "escape-dir"} {
@@ -333,6 +363,25 @@ func run() (runErr error) {
 		}
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
+		}
+		if tc.PopulateHybridIndex {
+			if err := provider.assertNoEmbeddingRequests(); err != nil {
+				fatal("%s unexpected scoped-query embedding: %v", tc.ID, err)
+			}
+			if err := provider.assertNoChatRequests(); err != nil {
+				fatal("%s unexpected scoped-query chat request: %v", tc.ID, err)
+			}
+		}
+		if tc.HybridQuery {
+			if err := provider.assertEmbeddingRequests(2, "Body"); err != nil {
+				fatal("%s hybrid-query embedding requests: %v", tc.ID, err)
+			}
+			if err := provider.assertNoEmbeddingRequests(); err != nil {
+				fatal("%s unexpected extra hybrid-query embedding: %v", tc.ID, err)
+			}
+			if err := provider.assertNoChatRequests(); err != nil {
+				fatal("%s unexpected hybrid-query chat request: %v", tc.ID, err)
+			}
 		}
 		if tc.ProviderOllama || tc.ProviderOpenAIFallback {
 			if err := provider.assertRequests(2, "short provider input"); err != nil {
@@ -860,6 +909,70 @@ func createFixtureVault(root string) string {
 		fatal("fixture internal symlink: %v", err)
 	}
 	return vault
+}
+
+func populateHybridIndex(vault, binary, providerURL string) error {
+	home := filepath.Join(vault, ".http-harness", filepath.Base(binary))
+	configDir := filepath.Join(home, ".config", "symseek")
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Join(home, "tmp"), 0o700); err != nil {
+		return err
+	}
+	config := fmt.Sprintf("ollama_url = %q\nmodel = \"fixture-model\"\nembedding_dim = 2\ntimeout_seconds = 2\nretry_count = 0\nretry_backoff_ms = 1\n", providerURL+"/api/embeddings")
+	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(config), 0o600); err != nil {
+		return err
+	}
+	previous := map[string]*string{}
+	defer func() {
+		for key, value := range previous {
+			if value == nil {
+				_ = os.Unsetenv(key)
+			} else {
+				_ = os.Setenv(key, *value)
+			}
+		}
+	}()
+	for key, value := range map[string]string{
+		"HOME": home, "USERPROFILE": home,
+		"XDG_CONFIG_HOME": filepath.Join(home, ".config"),
+		"XDG_DATA_HOME":   filepath.Join(home, ".local", "share"),
+		"XDG_CACHE_HOME":  filepath.Join(home, ".cache"),
+		"TMPDIR":          filepath.Join(home, "tmp"), "TMP": filepath.Join(home, "tmp"), "TEMP": filepath.Join(home, "tmp"),
+	} {
+		if current, ok := os.LookupEnv(key); ok {
+			copy := current
+			previous[key] = &copy
+		} else {
+			previous[key] = nil
+		}
+		if err := os.Setenv(key, value); err != nil {
+			return err
+		}
+	}
+	client, err := retrieval.OpenForVault(vault)
+	if err != nil {
+		return fmt.Errorf("open fixture retrieval index: %w", err)
+	}
+	vaultRoot, err := os.OpenRoot(vault)
+	if err != nil {
+		return fmt.Errorf("open fixture vault root: %w", err)
+	}
+	defer func() { _ = vaultRoot.Close() }()
+	for _, relative := range []string{"Hello.md", filepath.Join("nested", "Note.md")} {
+		path := filepath.Join(vault, relative)
+		body, err := vaultRoot.ReadFile(relative)
+		if err != nil {
+			_ = client.Close()
+			return err
+		}
+		if err := client.IndexMarkdownWithMetadata(path, string(body), retrieval.SearchMetadata{}); err != nil {
+			_ = client.Close()
+			return fmt.Errorf("index fixture note %q: %w", relative, err)
+		}
+	}
+	return client.Close()
 }
 
 func populateJobs(vault string) error {
@@ -1542,10 +1655,17 @@ type fakeOllamaRequest struct {
 	Stream bool   `json:"stream"`
 }
 
+type fakeEmbeddingRequest struct {
+	Model      string   `json:"model"`
+	Input      []string `json:"input"`
+	Dimensions int      `json:"dimensions"`
+}
+
 type fakeOllama struct {
 	server         *httptest.Server
 	url            string
 	requests       chan fakeOllamaRequest
+	embeddings     chan fakeEmbeddingRequest
 	cancellations  chan struct{}
 	continueStream chan struct{}
 }
@@ -1553,10 +1673,26 @@ type fakeOllama struct {
 func startFakeOllama() *fakeOllama {
 	fake := &fakeOllama{
 		requests:       make(chan fakeOllamaRequest, 8),
+		embeddings:     make(chan fakeEmbeddingRequest, 8),
 		cancellations:  make(chan struct{}, 8),
 		continueStream: make(chan struct{}, 2),
 	}
 	fake.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost && r.URL.Path == "/v1/embeddings" {
+			var request fakeEmbeddingRequest
+			if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&request); err != nil {
+				http.Error(w, "invalid embedding request", http.StatusBadRequest)
+				return
+			}
+			if request.Model != "fixture-model" || request.Dimensions != 2 || len(request.Input) != 1 {
+				http.Error(w, "unexpected embedding request", http.StatusBadRequest)
+				return
+			}
+			fake.embeddings <- request
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"embedding": []float32{0.25, -0.5}}}})
+			return
+		}
 		if r.Method != http.MethodPost || r.URL.Path != "/api/generate" {
 			http.Error(w, "unexpected provider route", http.StatusNotFound)
 			return
@@ -1634,6 +1770,38 @@ func (f *fakeOllama) assertRequests(count int, text string) error {
 		}
 	}
 	return nil
+}
+
+func (f *fakeOllama) assertEmbeddingRequests(count int, text string) error {
+	for index := range count {
+		select {
+		case request := <-f.embeddings:
+			if request.Model != "fixture-model" || request.Dimensions != 2 || len(request.Input) != 1 || !strings.Contains(request.Input[0], text) {
+				return fmt.Errorf("embedding request %d = %#v, want fixture-model, dimensions=2, one input containing %q", index+1, request, text)
+			}
+		case <-time.After(3 * time.Second):
+			return fmt.Errorf("received %d of %d expected embedding requests", index, count)
+		}
+	}
+	return nil
+}
+
+func (f *fakeOllama) assertNoEmbeddingRequests() error {
+	select {
+	case request := <-f.embeddings:
+		return fmt.Errorf("unexpected embedding request: %#v", request)
+	default:
+		return nil
+	}
+}
+
+func (f *fakeOllama) assertNoChatRequests() error {
+	select {
+	case request := <-f.requests:
+		return fmt.Errorf("unexpected chat request: %#v", request)
+	default:
+		return nil
+	}
 }
 
 func (f *fakeOllama) assertAskRequests(count int, query string, withSource, notebook bool) error {
@@ -2002,6 +2170,31 @@ func compare(id string, left, right transcript) error {
 			}
 			if count < 2 {
 				return fmt.Errorf("%s ranked ask citations = %d, want at least two", item.name, count)
+			}
+		}
+	}
+	if id == "ai-ask-unscoped-hybrid-index" {
+		for _, item := range []struct {
+			name     string
+			response transcript
+		}{{"Go", left}, {"Rust", right}} {
+			count := 0
+			nonzeroScore := false
+			for _, line := range bytes.Split(bytes.TrimSpace(item.response.Body), []byte{'\n'}) {
+				var event struct {
+					Type  string   `json:"type"`
+					Score *float64 `json:"score"`
+				}
+				if err := json.Unmarshal(line, &event); err != nil {
+					return fmt.Errorf("%s hybrid ask event: %w", item.name, err)
+				}
+				if event.Type == "citation" {
+					count++
+					nonzeroScore = nonzeroScore || (event.Score != nil && *event.Score > 0)
+				}
+			}
+			if count == 0 || !nonzeroScore {
+				return fmt.Errorf("%s hybrid ask citations = %d, nonzero score present = %t; want citation with retrieval score", item.name, count, nonzeroScore)
 			}
 		}
 	}

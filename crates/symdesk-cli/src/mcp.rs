@@ -1,14 +1,19 @@
 #![allow(clippy::module_name_repetitions)]
 
 use std::{
+    collections::BTreeMap,
     io::{self, BufRead, Write},
     path::PathBuf,
     sync::{Arc, Mutex},
     thread,
 };
 
-use serde::Serialize;
-use serde_json::{Value, json};
+use crate::search_cli::{self, CliSearchHit};
+use serde::{
+    Deserialize, Serialize,
+    de::{MapAccess, Visitor},
+};
+use serde_json::{Value, json, value::RawValue};
 use symdesk_index::{
     ListedDocument, SearchHit, SearchSource, Sidecar, SourceRegistry, open_for_vault,
 };
@@ -38,6 +43,40 @@ struct Request {
     has_id: bool,
     method: String,
     params: Value,
+    raw_arguments: Option<String>,
+}
+
+#[derive(Default)]
+struct OrderedFields(Vec<(String, Value)>);
+
+impl<'de> Deserialize<'de> for OrderedFields {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct OrderedFieldsVisitor;
+
+        impl<'de> Visitor<'de> for OrderedFieldsVisitor {
+            type Value = OrderedFields;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("an object of ordered string arguments")
+            }
+
+            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                let mut fields = Vec::new();
+                while let Some(key) = map.next_key::<String>()? {
+                    fields.push((key, map.next_value::<Value>()?));
+                }
+                Ok(OrderedFields(fields))
+            }
+        }
+
+        deserializer.deserialize_map(OrderedFieldsVisitor)
+    }
 }
 
 #[derive(Serialize)]
@@ -66,24 +105,10 @@ struct McpLsEntry {
 }
 
 #[derive(Serialize)]
-struct McpSearchEntry {
-    path: String,
-    title: String,
-    snippet: String,
-    score: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    source_type: Option<&'static str>,
-    #[serde(skip_serializing_if = "is_false")]
-    read_only: bool,
-}
-
-fn is_false(value: &bool) -> bool {
-    !value
-}
-
-#[derive(Serialize)]
 struct McpSearchResponse {
-    results: Vec<McpSearchEntry>,
+    results: Vec<CliSearchHit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    hint: Option<&'static str>,
 }
 
 #[derive(Debug)]
@@ -272,7 +297,7 @@ where
         .and_then(Value::as_str)
         .unwrap_or_default();
     let arguments = params.get("arguments").cloned().unwrap_or(Value::Null);
-    if !matches!(name, "desk_status" | "desk_ls" | "desk_search") {
+    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask") {
         return send_error(
             output,
             mode,
@@ -282,7 +307,7 @@ where
         );
     }
 
-    match call_tool(name, arguments, config) {
+    match call_tool(name, arguments, request.raw_arguments.as_deref(), config) {
         Ok(value) => send_tool_result(output, mode, request.id.clone(), value, false),
         Err(message) => send_tool_result(
             output,
@@ -294,7 +319,12 @@ where
     }
 }
 
-fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Value, String> {
+fn call_tool(
+    name: &str,
+    arguments: Value,
+    raw_arguments: Option<&str>,
+    config: &ServerConfig,
+) -> Result<Value, String> {
     match name {
         "desk_status" => Ok(json!({
             "version": config.version,
@@ -330,33 +360,136 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
             ))
         }
         "desk_search" => {
-            let args = object_arguments(arguments)?;
-            let query = args
-                .get("query")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
+            let (query, _) = go_string_arguments(raw_arguments, &arguments, false)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
             let (vault, sidecar) = open_sidecar(config)?;
-            let hits = sidecar
-                .search_with_sources(&vault, query)
-                .map_err(|error| error.to_string())?;
             let sources = SourceRegistry::open(&vault)
                 .and_then(|registry| registry.list())
                 .map_err(|error| error.to_string())?;
+            let response = if query.trim().is_empty() {
+                McpSearchResponse {
+                    results: Vec::new(),
+                    hint: None,
+                }
+            } else {
+                match search_cli::hybrid_search(&vault, &query, &sources, &sidecar)? {
+                    Some(results) => McpSearchResponse {
+                        results,
+                        hint: None,
+                    },
+                    None => {
+                        let response = sidecar
+                            .search_plan(&vault, &query)
+                            .map_err(|error| error.to_string())?;
+                        McpSearchResponse {
+                            results: response
+                                .results
+                                .iter()
+                                .map(|hit| search_entry(&vault, hit, &sources))
+                                .collect(),
+                            hint: response.hint,
+                        }
+                    }
+                }
+            };
             Ok(Value::String(
-                serde_json::to_string(&McpSearchResponse {
-                    results: hits
-                        .iter()
-                        .map(|hit| search_entry(&vault, hit, &sources))
-                        .collect(),
-                })
-                .map_err(|error| error.to_string())?,
+                serde_json::to_string(&response).map_err(|error| error.to_string())?,
             ))
+        }
+        "desk_ask" => {
+            let (query, notebook) = go_string_arguments(raw_arguments, &arguments, true)?;
+            if query.is_empty() {
+                return Err("query is required".to_owned());
+            }
+            crate::ai_cli::ensure_offline_ask_provider()?;
+            let (vault, sidecar) = open_sidecar(config)?;
+            let sources = if notebook.is_empty() {
+                SourceRegistry::open(&vault)
+                    .and_then(|registry| registry.list())
+                    .map_err(|error| error.to_string())?
+            } else {
+                Vec::new()
+            };
+            let hits = crate::ai_cli::search_for_ask(
+                &vault,
+                &query,
+                (!notebook.is_empty()).then_some(notebook.as_str()),
+                &sources,
+                &sidecar,
+            )?;
+            let paths = hits
+                .iter()
+                .map(|hit| crate::ai_cli::ask_display_path(&vault, &hit.path, &sources))
+                .collect::<Vec<_>>();
+            let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
+            Ok(json!({"answer": answer}))
         }
         _ => Err(format!("Unknown tool: {name}")),
     }
+}
+
+fn go_string_arguments(
+    raw_arguments: Option<&str>,
+    parsed_arguments: &Value,
+    include_notebook: bool,
+) -> Result<(String, String), String> {
+    let raw_arguments = raw_arguments.ok_or_else(|| "unexpected end of JSON input".to_owned())?;
+    if parsed_arguments.is_null() {
+        return Ok((String::new(), String::new()));
+    }
+    if !parsed_arguments.is_object() {
+        let go_type = match parsed_arguments {
+            Value::Bool(_) => "bool",
+            Value::Number(_) => "number",
+            Value::String(_) => "string",
+            Value::Array(_) => "array",
+            Value::Object(_) | Value::Null => unreachable!("handled above"),
+        };
+        let target = if include_notebook {
+            r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#
+        } else {
+            r#"struct { Query string "json:\"query\"" }"#
+        };
+        return Err(format!(
+            "json: cannot unmarshal {go_type} into Go value of type {target}"
+        ));
+    }
+    let fields: OrderedFields = serde_json::from_str(raw_arguments).map_err(|error| {
+        if error.is_eof() {
+            "unexpected end of JSON input".to_owned()
+        } else {
+            error.to_string()
+        }
+    })?;
+    let mut query = String::new();
+    let mut notebook = String::new();
+    for (key, value) in fields.0 {
+        let field = if symdesk_vault::dataset::go_equal_fold(&key, "query") {
+            Some((&mut query, "query"))
+        } else if include_notebook && symdesk_vault::dataset::go_equal_fold(&key, "notebook") {
+            Some((&mut notebook, "notebook"))
+        } else {
+            None
+        };
+        let Some((target, field_name)) = field else {
+            continue;
+        };
+        match value {
+            Value::Null => {}
+            Value::String(value) => *target = value,
+            Value::Bool(_) => return Err(go_string_field_type_error("bool", field_name)),
+            Value::Number(_) => return Err(go_string_field_type_error("number", field_name)),
+            Value::Array(_) => return Err(go_string_field_type_error("array", field_name)),
+            Value::Object(_) => return Err(go_string_field_type_error("object", field_name)),
+        }
+    }
+    Ok((query, notebook))
+}
+
+fn go_string_field_type_error(value_type: &str, field: &str) -> String {
+    format!("json: cannot unmarshal {value_type} into Go struct field .{field} of type string")
 }
 
 fn object_arguments(arguments: Value) -> Result<serde_json::Map<String, Value>, String> {
@@ -381,15 +514,11 @@ fn list_entry(root: &std::path::Path, file: &ListedDocument) -> McpLsEntry {
     }
 }
 
-fn search_entry(
-    root: &std::path::Path,
-    hit: &SearchHit,
-    sources: &[SearchSource],
-) -> McpSearchEntry {
+fn search_entry(root: &std::path::Path, hit: &SearchHit, sources: &[SearchSource]) -> CliSearchHit {
     let external = sources
         .iter()
         .any(|source| std::path::Path::new(&hit.path).starts_with(&source.path));
-    McpSearchEntry {
+    CliSearchHit {
         path: if external {
             hit.path.clone()
         } else {
@@ -397,7 +526,9 @@ fn search_entry(
         },
         title: hit.title.clone(),
         snippet: hit.snippet.clone(),
-        score: 0,
+        score: 0.0,
+        anchor: None,
+        metadata_matches: Vec::new(),
         source_type: external.then_some("external"),
         read_only: external,
     }
@@ -421,6 +552,12 @@ fn tool_definitions() -> Vec<Value> {
             "name": "desk_search",
             "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
             "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+            "annotations": {"readOnlyHint": true},
+        }),
+        json!({
+            "name": "desk_ask",
+            "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+            "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "notebook": {"type": "string", "description": "optional: notebook id or path to restrict retrieval and citations to"}}, "required": ["query"]},
             "annotations": {"readOnlyHint": true},
         }),
     ]
@@ -627,15 +764,24 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
         }
     };
     let id = object.get("id").cloned().unwrap_or(Value::Null);
+    let raw_arguments = raw_arguments_from_frame(data);
     Ok((
         Request {
             id,
             has_id: object.contains_key("id"),
             method,
             params: object.get("params").cloned().unwrap_or(Value::Null),
+            raw_arguments,
         },
         mode,
     ))
+}
+
+fn raw_arguments_from_frame(data: &[u8]) -> Option<String> {
+    let frame: BTreeMap<String, Box<RawValue>> = serde_json::from_slice(data).ok()?;
+    let params = frame.get("params")?;
+    let params: BTreeMap<String, Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
+    params.get("arguments").map(|raw| raw.get().to_owned())
 }
 
 fn read_non_empty_line<R: BufRead>(reader: &mut R) -> io::Result<Option<(Vec<u8>, bool)>> {
@@ -705,13 +851,13 @@ mod tests {
             json!({"name":"symdesk","version":super::super::VERSION})
         );
         let tools = responses[1]["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 3);
+        assert_eq!(tools.len(), 4);
         assert_eq!(
             tools
                 .iter()
                 .map(|tool| tool["name"].as_str().unwrap())
                 .collect::<Vec<_>>(),
-            ["desk_status", "desk_ls", "desk_search"]
+            ["desk_status", "desk_ls", "desk_search", "desk_ask"]
         );
         assert!(
             tools

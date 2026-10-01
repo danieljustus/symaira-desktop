@@ -38,11 +38,13 @@ jobs:
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
 
-      # The frontmatter/history source guards clone this checkout and verify a
-      # pinned Go source revision. Keep that object reachable through a local
-      # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
+      # The frontmatter/history source guards clone this checkout and verify
+      # their pinned Go source revisions. Keep both objects reachable through
+      # local branches: FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
-        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+        run: |
+          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -136,7 +138,9 @@ jobs:
       # The Windows contract runs the clone-based Go source guards below.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+        run: |
+          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -222,11 +226,13 @@ jobs:
           # history oracle checks immutable production Go blobs.
           fetch-depth: 0
 
-      # The source-guard tests clone this checkout, so retain the pinned Go
-      # source revision through a local branch rather than only FETCH_HEAD.
+      # The source-guard tests clone this checkout, so retain both pinned Go
+      # source revisions through local branches rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+        run: |
+          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -444,6 +450,46 @@ jobs:
       - name: Run native retrieval vector fallback differential
         shell: bash
         run: make retrieval-vector-differential
+
+      - name: Run native local hybrid retrieval differential
+        shell: bash
+        run: make retrieval-hybrid-differential
+
+      - name: Run native pending document rebuild differential
+        shell: bash
+        run: make retrieval-pending-rebuild-differential
+
+      - name: Run native Markdown retrieval section differential
+        shell: bash
+        run: make retrieval-sections-differential
+
+      - name: Run native retrieval embedding HTTP differential
+        shell: bash
+        run: make retrieval-embedding-http-differential
+
+      - name: Run native pending re-embed HTTP CLI differential
+        shell: bash
+        run: make retrieval-reembed-http-differential
+
+      - name: Run native local-hash embedding differential
+        shell: bash
+        run: make retrieval-local-hash-differential
+
+      - name: Run native hybrid search CLI differential
+        shell: bash
+        run: make retrieval-search-cli-differential
+
+      - name: Run native hybrid search MCP differential
+        shell: bash
+        run: make retrieval-search-mcp-differential
+
+      - name: Run native offline hybrid Ask CLI differential
+        shell: bash
+        run: make retrieval-ask-offline-differential
+
+      - name: Run native offline Ask MCP differential
+        shell: bash
+        run: make retrieval-ask-mcp-differential
 
       - name: Run native render JSON IR differential
         shell: bash

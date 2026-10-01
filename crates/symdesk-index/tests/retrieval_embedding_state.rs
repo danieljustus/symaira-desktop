@@ -131,3 +131,195 @@ fn matches_go_pending_counts_and_embedding_spaces() {
     drop(database);
     let _ = fs::remove_file(path);
 }
+
+#[test]
+fn replaces_one_document_and_rolls_back_failed_rebuild() {
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time after epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "symdesk-pending-replacement-{}-{nonce}.db",
+        std::process::id()
+    ));
+    let database = RetrievalDb::open_at(&path).expect("open isolated retrieval database");
+    let old = StoredRetrievalChunk {
+        id: 0,
+        uuid: "old-chunk".to_owned(),
+        document_path: "/vault/a.md".to_owned(),
+        chunk_index: 0,
+        content: "old pending content".to_owned(),
+        embedding: vec![],
+        hash: "old-hash".to_owned(),
+        norm: 0.0,
+        dim: 0,
+        model: "local-hash".to_owned(),
+        char_start: Some(0),
+        char_end: Some(19),
+        anchor_kind: "text".to_owned(),
+        anchor_value: "offset:0".to_owned(),
+        embedding_pending: true,
+    };
+    let unrelated = StoredRetrievalChunk {
+        uuid: "other-chunk".to_owned(),
+        document_path: "/vault/b.md".to_owned(),
+        content: "unrelated document marker".to_owned(),
+        ..old.clone()
+    };
+    database
+        .save_document(&RetrievalDocument {
+            path: "/vault/a.md".to_owned(),
+            hash: "old-doc-hash".to_owned(),
+            updated_at: "2026-09-01T00:00:00Z".to_owned(),
+        })
+        .expect("save original document");
+    database
+        .save_document(&RetrievalDocument {
+            path: "/vault/b.md".to_owned(),
+            hash: "other-doc-hash".to_owned(),
+            updated_at: "2026-09-01T00:00:00Z".to_owned(),
+        })
+        .expect("save unrelated document");
+    database
+        .save_chunks(&[old.clone(), unrelated.clone()])
+        .expect("save original chunks");
+    let raw = rusqlite::Connection::open(&path).expect("open extraction fixture view");
+    raw.execute(
+        "INSERT INTO extractions (document_path, class, value, evidence_text, created_at)
+         VALUES ('/vault/a.md', 'fact', 'old fact', 'old evidence', '2026-09-01T00:00:00Z')",
+        [],
+    )
+    .expect("insert document extraction");
+    drop(raw);
+
+    let replacement = StoredRetrievalChunk {
+        uuid: "resolved-chunk".to_owned(),
+        content: "rebuilt semantic content".to_owned(),
+        embedding: vec![0.25, 0.75],
+        hash: "new-hash".to_owned(),
+        norm: 0.0,
+        dim: 2,
+        model: "fixture-model".to_owned(),
+        char_end: Some(25),
+        embedding_pending: false,
+        ..old.clone()
+    };
+    let document = RetrievalDocument {
+        path: "/vault/a.md".to_owned(),
+        hash: "new-doc-hash".to_owned(),
+        updated_at: "2026-09-02T00:00:00Z".to_owned(),
+    };
+    database
+        .replace_document_chunks(&document, std::slice::from_ref(&replacement))
+        .expect("replace pending document chunks");
+    assert_eq!(
+        database
+            .get_chunks_for_document("/vault/a.md")
+            .expect("read replaced chunks"),
+        vec![StoredRetrievalChunk {
+            id: 3,
+            norm: 0.7905694,
+            ..replacement.clone()
+        }]
+    );
+    assert_eq!(
+        database
+            .get_chunks_for_document("/vault/b.md")
+            .expect("read unrelated chunks")[0]
+            .uuid,
+        unrelated.uuid
+    );
+    assert_eq!(database.count_pending_chunks().expect("pending count"), 1);
+    let raw = rusqlite::Connection::open(&path).expect("check Go-compatible rebuild effects");
+    let generation: i64 = raw
+        .query_row(
+            "SELECT value FROM index_meta WHERE key = 'generation'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("read generation");
+    assert_eq!(generation, 3, "save plus Go-equivalent delete/save bumps");
+    let extractions: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM extractions WHERE document_path = '/vault/a.md'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count removed extractions");
+    assert_eq!(extractions, 0, "Go rebuild deletes document extractions");
+    let old_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'pending'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search deleted chunk content");
+    let new_fts_hits: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'semantic'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("search replacement chunk content");
+    assert_eq!(old_fts_hits, 0, "deleted chunk text leaves FTS");
+    assert_eq!(new_fts_hits, 1, "replacement chunk text enters FTS");
+    raw.execute(
+        "INSERT INTO extractions (document_path, class, value, evidence_text, created_at)
+         VALUES ('/vault/a.md', 'fact', 'rollback fact', 'rollback evidence', '2026-09-02T00:00:00Z')",
+        [],
+    )
+    .expect("insert extraction for rollback check");
+    drop(raw);
+
+    let raw = rusqlite::Connection::open(&path).expect("open replacement failure trigger");
+    raw.execute_batch(
+        "CREATE TRIGGER reject_replacement BEFORE INSERT ON chunks
+         WHEN NEW.uuid = 'reject-chunk' BEGIN SELECT RAISE(ABORT, 'fixture failure'); END;",
+    )
+    .expect("install deterministic insert failure");
+    drop(raw);
+    let failed = StoredRetrievalChunk {
+        uuid: "reject-chunk".to_owned(),
+        ..replacement
+    };
+    assert!(
+        database
+            .replace_document_chunks(
+                &RetrievalDocument {
+                    hash: "should-rollback".to_owned(),
+                    ..document.clone()
+                },
+                &[failed]
+            )
+            .is_err()
+    );
+    let raw = rusqlite::Connection::open(&path).expect("verify extraction rollback");
+    let extraction_count: i64 = raw
+        .query_row(
+            "SELECT COUNT(*) FROM extractions WHERE document_path = '/vault/a.md'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count rolled-back extraction");
+    assert_eq!(extraction_count, 1);
+    drop(raw);
+    assert_eq!(
+        database
+            .get_chunks_for_document("/vault/a.md")
+            .expect("read rolled-back chunks")[0]
+            .uuid,
+        "resolved-chunk"
+    );
+    let raw = rusqlite::Connection::open(&path).expect("check rolled-back metadata");
+    let hash: String = raw
+        .query_row(
+            "SELECT hash FROM documents WHERE path = '/vault/a.md'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("read document hash");
+    assert_eq!(hash, "new-doc-hash");
+    drop(raw);
+    drop(database);
+    let _ = fs::remove_file(path);
+}

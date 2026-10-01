@@ -42,6 +42,8 @@ struct AskEvent {
     #[serde(skip_serializing_if = "Option::is_none")]
     snippet: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    score: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     tool_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     status: Option<String>,
@@ -55,18 +57,20 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: Some("search".to_owned()),
             status: Some(status.to_owned()),
         }
     }
 
-    fn citation(path: &str, title: &str, snippet: &str) -> Self {
+    fn citation(path: &str, title: &str, snippet: &str, score: f64) -> Self {
         Self {
             kind: "citation".to_owned(),
             text: None,
             path: Some(path.to_owned()),
             title: Some(title.to_owned()),
-            snippet: Some(snippet.to_owned()),
+            snippet: (!snippet.is_empty()).then(|| snippet.to_owned()),
+            score: (score != 0.0).then_some(score),
             tool_name: None,
             status: None,
         }
@@ -79,6 +83,7 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: None,
             status: None,
         }
@@ -91,6 +96,7 @@ impl AskEvent {
             path: None,
             title: None,
             snippet: None,
+            score: None,
             tool_name: None,
             status: None,
         }
@@ -110,34 +116,11 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         Ok(root) => root,
         Err(error) => return super::emit_error(error, output_json),
     };
-    let config = match load_config() {
-        Ok(config) => config,
-        Err(error) => return super::emit_error(error, output_json),
-    };
-    let provider = if config.llm_provider.is_empty() {
-        "ollama"
-    } else {
-        config.llm_provider.as_str()
-    };
-    if provider != "ollama" || !config.ollama_url.is_empty() {
-        return super::emit_error(
-            format!("Rust ask provider {provider:?} is not implemented"),
-            output_json,
-        );
+    if let Err(error) = ensure_offline_ask_provider() {
+        return super::emit_error(error, output_json);
     }
-    if retrieval_index_has_chunks(&root) {
-        return super::emit_error(
-            "Rust ask hybrid retrieval is not implemented for indexes containing chunks".to_owned(),
-            output_json,
-        );
-    }
-
     let sidecar = match open_for_vault(&root) {
         Ok(sidecar) => sidecar,
-        Err(error) => return super::emit_error(error.to_string(), output_json),
-    };
-    let hits = match sidecar.search_with_sources(&root, query) {
-        Ok(hits) => hits,
         Err(error) => return super::emit_error(error.to_string(), output_json),
     };
     let sources = match SourceRegistry::open(&root).and_then(|registry| registry.list()) {
@@ -145,23 +128,30 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         Err(error) => return super::emit_error(error.to_string(), output_json),
     };
 
+    let hits = match search_for_ask(&root, query, None, &sources, &sidecar) {
+        Ok(hits) => hits,
+        Err(error) => return super::emit_error(error, output_json),
+    };
+
     let mut events = vec![AskEvent::tool("running"), AskEvent::tool("done")];
     let paths = hits
         .iter()
-        .map(|hit| display_path(&root, &hit.path, &sources))
+        .map(|hit| ask_display_path(&root, &hit.path, &sources))
         .collect::<Vec<_>>();
     for (hit, path) in hits.iter().zip(&paths) {
-        events.push(AskEvent::citation(path, &hit.title, &hit.snippet));
+        events.push(AskEvent::citation(
+            path,
+            &hit.title,
+            &hit.snippet,
+            hit.score,
+        ));
     }
     events.push(AskEvent::tool("running"));
     if let Some(event) = events.last_mut() {
         event.tool_name = Some("llm".to_owned());
     }
-    events.push(AskEvent::answer(
-        "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
-    ));
-    for path in paths.iter().take(3) {
-        events.push(AskEvent::answer(&format!("- [[{path}]]\n")));
+    for chunk in offline_ask_chunks(&paths) {
+        events.push(AskEvent::answer(&chunk));
     }
     events.push(AskEvent::tool("done"));
     if let Some(event) = events.last_mut() {
@@ -171,29 +161,7 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
     emit_ask_events(&events, output_json)
 }
 
-fn retrieval_index_has_chunks(vault_root: &Path) -> bool {
-    let Some(vault_root) = vault_root.to_str() else {
-        return false;
-    };
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
-    let Ok(cwd) = std::env::current_dir() else {
-        return false;
-    };
-    let temp_root = std::env::temp_dir();
-    let Ok(path) =
-        symdesk_index::index_location_for_vault(vault_root, &environment, &cwd, &temp_root)
-    else {
-        return false;
-    };
-    if !path.exists() {
-        return false;
-    }
-    symdesk_index::RetrievalDb::open_at(path)
-        .and_then(|database| database.count_chunks())
-        .is_ok_and(|count| count > 0)
-}
-
-fn display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
+pub(crate) fn ask_display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
     if sources
         .iter()
         .any(|source| Path::new(path).starts_with(&source.path))
@@ -367,6 +335,63 @@ fn ollama_failure_message(error: &OllamaTransformError) -> String {
         OllamaTransformError::Client(error) => format!("⚠️ Request failed: {error}\n"),
         OllamaTransformError::Stream(error) => format!("⚠️ Request failed: ollama: {error}\n"),
     }
+}
+
+pub(crate) fn ensure_offline_ask_provider() -> Result<(), String> {
+    let config = load_config()?;
+    let provider = if config.llm_provider.is_empty() {
+        "ollama"
+    } else {
+        config.llm_provider.as_str()
+    };
+    if provider != "ollama" || !config.ollama_url.is_empty() {
+        return Err(format!("Rust ask provider {provider:?} is not implemented"));
+    }
+    Ok(())
+}
+
+pub(crate) fn search_for_ask(
+    vault: &std::path::Path,
+    query: &str,
+    notebook: Option<&str>,
+    sources: &[SearchSource],
+    sidecar: &symdesk_index::Sidecar,
+) -> Result<Vec<crate::search_cli::CliSearchHit>, String> {
+    if let Some(notebook) = notebook {
+        let (hits, _) =
+            symdesk_protocol::search_notebook_ask_sources(vault, notebook, query, sidecar)?;
+        return Ok(hits
+            .into_iter()
+            .map(|hit| crate::search_cli::CliSearchHit {
+                path: hit.path,
+                title: hit.title,
+                snippet: hit.snippet,
+                score: hit.score,
+                anchor: None,
+                metadata_matches: Vec::new(),
+                source_type: None,
+                read_only: false,
+            })
+            .collect());
+    }
+    if query.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+    match crate::search_cli::hybrid_search(vault, query, sources, sidecar) {
+        Ok(Some(hits)) => Ok(hits),
+        Ok(None) | Err(_) => sidecar
+            .search_plan(vault, query)
+            .map(|response| crate::search_cli::lexical_hits(response.results, sources))
+            .map_err(|error| error.to_string()),
+    }
+}
+
+pub(crate) fn offline_ask_chunks(paths: &[String]) -> Vec<String> {
+    let mut chunks = vec![
+        "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n".to_owned(),
+    ];
+    chunks.extend(paths.iter().take(3).map(|path| format!("- [[{path}]]\n")));
+    chunks
 }
 
 fn run_anthropic_transform(

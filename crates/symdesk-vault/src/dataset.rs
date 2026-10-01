@@ -429,7 +429,10 @@ fn has_header(headers: &[String], wanted: &str) -> bool {
     headers.iter().any(|header| go_equal_fold(header, wanted))
 }
 
-fn go_equal_fold(left: &str, right: &str) -> bool {
+/// Compares strings with the Go-compatible Unicode simple-fold behavior used
+/// by sidecar metadata filters.
+#[must_use]
+pub fn go_equal_fold(left: &str, right: &str) -> bool {
     let mut left = left.chars();
     let mut right = right.chars();
     loop {

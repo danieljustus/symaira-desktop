@@ -27,7 +27,8 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-const defaultOracleCommit = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
+const defaultOracleCommit = "69e0e149671611563e1fdf7ab636bbba09582844"
+const defaultOracleRelease = "post-issue-1122-atx-heading-tag-exclusion"
 
 type fixture struct {
 	SchemaVersion int               `json:"schema_version"`
@@ -77,7 +78,7 @@ func main() {
 	output := flag.String("output", "testdata/port/vault/frontmatter-write.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
 	commit := flag.String("oracle-commit", defaultOracleCommit, "Go oracle commit")
-	release := flag.String("oracle-release", "post-v0.13.0-dependency-refresh", "Go oracle release")
+	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
 	flag.Parse()
 
 	root, err := repoRoot()

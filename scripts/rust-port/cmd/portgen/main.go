@@ -86,6 +86,16 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/retrieval-bm25.json",
 	"testdata/port/retrieval/embedding-state.json",
 	"testdata/port/retrieval/retrieval-vector.json",
+	"testdata/port/retrieval/hybrid.json",
+	"testdata/port/retrieval/pending-rebuild.json",
+	"testdata/port/retrieval/retrieval-sections.json",
+	"testdata/port/retrieval/embedding-http.json",
+	"testdata/port/retrieval/reembed-http-cli.json",
+	"testdata/port/retrieval/local-hash.json",
+	"testdata/port/cli/search-hybrid.json",
+	"testdata/port/cli/ask-offline.json",
+	"testdata/port/mcp/search-hybrid.json",
+	"testdata/port/mcp/ask-offline.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",
 	"testdata/port/retrieval/index-relocate.json",
@@ -215,6 +225,18 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 }
 
 func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string) error {
+	// The configurable identity must describe the production bytes actually read.
+	fixtureSource, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, fixtureOracleCommit)
+	if err != nil {
+		return fmt.Errorf("compute core/vault oracle source digest: %w", err)
+	}
+	currentSource, err := inventory.ComputeProductionSourceDigest(repoRoot)
+	if err != nil {
+		return fmt.Errorf("compute core/vault generating source digest: %w", err)
+	}
+	if fixtureSource != currentSource {
+		return fmt.Errorf("core/vault production source does not match fixture oracle commit %s", fixtureOracleCommit)
+	}
 	// These generator commands are the former core-fixtures-generate and
 	// vault-fixtures-generate Make prerequisites. They run in the private
 	// worktree so the top-level flow has one write boundary.
@@ -227,6 +249,7 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
 		{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
 		{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen"}},
 		{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen"}},
 	}
 	for _, target := range commands {
@@ -268,10 +291,14 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		{"./internal/room/brainprofile", "^TestPortBrainProfileCLIContract$"},
 		{"./internal/room/index", "^TestPortSymRoomIndexOracle$"},
 		{"./internal/retrieval", "^TestIndex(Backup|Restore|Relocate|Location)PortFixture$"},
+		{"./internal/retrieval/internal/engine", "^TestRetrievalHybridFixture$"},
+		{"./internal/retrieval/internal/engine", "^TestPendingRebuildPortFixture$"},
+		{"./internal/retrieval/internal/engine", "^TestRetrievalSectionsFixture$"},
+		{"./internal/retrieval/internal/engine", "^TestEmbeddingHTTPPortFixture$"},
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
 		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
 		{"./internal/history", "^TestPortHistory(PurgeContract|PruneContract|SelectedTrashPurgeContract)$"},
-		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
+		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$|^TestPortNoteOperationContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
 		{"./internal/sidecar", "^TestPortSidecar(Contract|MetadataContract)$"},

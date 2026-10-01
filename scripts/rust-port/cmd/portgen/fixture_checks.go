@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,6 +49,16 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom doctor CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortDoctorCLIContract$"}, []string{"testdata/port/room/doctor-cli.json"}, false},
 	{"symroom checkpoint CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortCheckpointCLIContract$"}, []string{"testdata/port/room/checkpoint-cli.json"}, false},
 	{"symroom run approval CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortRunApprovalCLIContract$"}, []string{"testdata/port/room/run-approval-cli.json"}, false},
+	{"retrieval pending rebuild", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestPendingRebuildPortFixture$"}, []string{"testdata/port/retrieval/pending-rebuild.json"}, false},
+	{"retrieval Markdown sections", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalSectionsFixture$"}, []string{"testdata/port/retrieval/retrieval-sections.json"}, false},
+	{"retrieval embedding HTTP", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestEmbeddingHTTPPortFixture$"}, []string{"testdata/port/retrieval/embedding-http.json"}, false},
+	{"retrieval re-embed HTTP CLI", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestReembedHTTPPortFixture$"}, []string{"testdata/port/retrieval/reembed-http-cli.json"}, false},
+	{"retrieval local-hash embedding", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestLocalHashPortFixture$"}, []string{"testdata/port/retrieval/local-hash.json"}, false},
+	{"hybrid search CLI", []string{"test", "-count=1", "./internal/service", "-run", "^TestSearchCLIHybridOracle$"}, []string{"testdata/port/cli/search-hybrid.json"}, false},
+	{"offline hybrid Ask CLI", []string{"test", "-count=1", "./internal/service", "-run", "^TestAskHybridOfflineOracle$"}, []string{"testdata/port/cli/ask-offline.json"}, false},
+	{"offline Ask MCP", []string{"test", "-count=1", "./internal/mcp", "-run", "^TestAskOfflineMCPOracle$"}, []string{"testdata/port/mcp/ask-offline.json"}, false},
+	{"hybrid search MCP", []string{"test", "-count=1", "./internal/mcp", "-run", "^TestSearchHybridMCPOracle$"}, []string{"testdata/port/mcp/search-hybrid.json"}, false},
+	{"retrieval hybrid", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalHybridFixture$"}, []string{"testdata/port/retrieval/hybrid.json"}, false},
 	{"retrieval chunks", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalChunksFixture$"}, []string{"testdata/port/retrieval/retrieval-chunks.json"}, false},
 	{"retrieval BM25", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalBM25Fixture$"}, []string{"testdata/port/retrieval/retrieval-bm25.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},
@@ -110,8 +121,12 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {
+	args, err := fixtureReplayArgs(repoRoot, target)
+	if err != nil {
+		return fmt.Errorf("%s: %w", target.name, err)
+	}
 	//nolint:gosec // target args are static fixture controls declared above.
-	command := exec.Command(goTool, target.args...)
+	command := exec.Command(goTool, args...)
 	command.Dir = repoRoot
 	command.Env = environment
 	output, err := command.CombinedOutput()
@@ -119,6 +134,56 @@ var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, 
 		return fmt.Errorf("%s: %w\noutput: %s", target.name, err, string(output))
 	}
 	return nil
+}
+
+// Go-owned generators replay against the oracle identity recorded by each
+// output document, not the global sidecar identity or a historical default.
+// Full-document comparisons remain.
+func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, error) {
+	if len(target.args) < 2 || target.args[0] != "run" {
+		return target.args, nil
+	}
+	switch target.args[1] {
+	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
+	default:
+		return target.args, nil
+	}
+	fixtureRoot, err := os.OpenRoot(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("open fixture repository root: %w", err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	var oracle inventory.Oracle
+	for i, rel := range target.outputs {
+		if !filepath.IsLocal(rel) {
+			return nil, fmt.Errorf("replay oracle path is not local: %s", rel)
+		}
+		content, err := fixtureRoot.ReadFile(rel)
+		if err != nil {
+			return nil, fmt.Errorf("read replay oracle %s: %w", rel, err)
+		}
+		var document struct {
+			Oracle inventory.Oracle `json:"oracle"`
+		}
+		if err := json.Unmarshal(content, &document); err != nil {
+			return nil, fmt.Errorf("decode replay oracle %s: %w", rel, err)
+		}
+		if !fullGitCommit.MatchString(document.Oracle.Commit) || document.Oracle.Release == "" {
+			return nil, fmt.Errorf("invalid replay oracle in %s", rel)
+		}
+		if i == 0 {
+			oracle = document.Oracle
+		} else if document.Oracle != oracle {
+			return nil, fmt.Errorf("inconsistent replay oracle in %s", rel)
+		}
+	}
+	if len(target.outputs) == 0 {
+		return nil, fmt.Errorf("replay oracle target has no outputs")
+	}
+	if err := verifyProvenanceAncestry(repoRoot, oracle.Commit); err != nil {
+		return nil, fmt.Errorf("replay oracle ancestry: %w", err)
+	}
+	return append(append([]string(nil), target.args...), "--oracle-commit", oracle.Commit, "--oracle-release", oracle.Release), nil
 }
 
 var fixtureGenerationEnvironment = map[string]struct{}{

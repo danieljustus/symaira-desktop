@@ -31,10 +31,14 @@ STEPS = {
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
 }
-ORACLE_SOURCE_FILES = (
-    ROOT / "scripts/rust-port/cmd/historygen/main.go",
-    ROOT / "scripts/rust-port/cmd/vaultwritegen/main.go",
-)
+ORACLE_SOURCE_FILES = {
+    "history": ROOT / "scripts/rust-port/cmd/historygen/main.go",
+    "frontmatter": ROOT / "scripts/rust-port/cmd/vaultwritegen/main.go",
+}
+EXPECTED_SOURCE_GUARD_ORACLE_COMMITS = {
+    "history": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
+    "frontmatter": "69e0e149671611563e1fdf7ab636bbba09582844",
+}
 SOURCE_GUARD_JOBS = ("test", "port-contract", "rust-native")
 
 
@@ -80,17 +84,15 @@ def workflow_job_body(workflow, job):
     return job_match.group("body")
 
 
-def pinned_source_guard_oracle_commit():
-    commits = set()
+def pinned_source_guard_oracle_commits():
+    commits = {}
     pattern = re.compile(r'(?m)^\s*(?:const\s+)?defaultOracleCommit\s*=\s*"([0-9a-f]{40})"$')
-    for source in ORACLE_SOURCE_FILES:
+    for name, source in ORACLE_SOURCE_FILES.items():
         match = pattern.search(source.read_text())
         if match is None:
             raise AssertionError(f"expected pinned oracle commit in {source.relative_to(ROOT)}")
-        commits.add(match.group(1))
-    if len(commits) != 1:
-        raise AssertionError(f"source guards use different oracle commits: {sorted(commits)}")
-    return commits.pop()
+        commits[name] = match.group(1)
+    return commits
 
 
 class NativeStepControl:
@@ -307,18 +309,30 @@ class NativeCIContracts(unittest.TestCase):
 
     def test_clone_based_source_guards_materialize_pinned_oracle_branch(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
-        commit = pinned_source_guard_oracle_commit()
-        expected = (
-            "git fetch --no-tags origin "
-            f"+{commit}:refs/heads/rust-port-oracle-{commit}"
-        )
+        commits = pinned_source_guard_oracle_commits()
+        self.assertEqual(commits, EXPECTED_SOURCE_GUARD_ORACLE_COMMITS)
+        expected = [
+            (
+                "git fetch --no-tags origin "
+                f"+{commit}:refs/heads/rust-port-oracle-{commit}"
+            )
+            for commit in commits.values()
+        ]
         for job in SOURCE_GUARD_JOBS:
             with self.subTest(job=job):
-                runs = re.findall(
-                    rf"(?m)^        run: ({re.escape(expected)})$",
-                    workflow_job_body(workflow, job),
-                )
-                self.assertEqual(runs, [expected])
+                job_workflow = workflow_job_body(workflow, job)
+                for command in expected:
+                    with self.subTest(command=command):
+                        runs = re.findall(
+                            rf"(?m)^        run: ({re.escape(command)})$",
+                            job_workflow,
+                        )
+                        if not runs:
+                            runs = re.findall(
+                                rf"(?m)^          ({re.escape(command)})$",
+                                job_workflow,
+                            )
+                        self.assertEqual(runs, [command])
 
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():

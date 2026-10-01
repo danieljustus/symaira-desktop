@@ -114,6 +114,14 @@ func main() {
 	commit := flag.String("oracle-commit", "745c08e8144971c61133c5d0e5d61c7ce405aad2", "Go oracle commit")
 	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
 	flag.Parse()
+	if *check {
+		oracle, err := inventory.ResolveCheckOracle(inventory.Oracle{Commit: *commit, Release: *release}, flag.CommandLine,
+			filepath.Join(*outputDir, "simhash.json"), filepath.Join(*outputDir, "document-formats.json"), filepath.Join(*outputDir, "textnorm.json"), filepath.Join(*outputDir, "german-search.json"))
+		if err != nil {
+			fatal("resolve replay oracle: %v", err)
+		}
+		*commit, *release = oracle.Commit, oracle.Release
+	}
 	oracle := inventory.Oracle{Commit: *commit, Release: *release}
 
 	fixtures := map[string]any{

@@ -1,0 +1,690 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "hybrid-success-float-metadata",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "hybrid-provider-failure-local-hash",
+      "query": "offline needle",
+      "embedding_dim": 3,
+      "provider_status": 503,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "offline.md",
+          "body": "# Offline Note\n\nAn offline needle remains searchable through the lexical branch."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "offline needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"offline.md\",\"title\":\"offline\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\"]},{\"path\":\"offline.md\",\"title\":\"offline\",\"snippet\":\"# Offline Note\\n\\nAn offline needle remains searchable through the lexical branch.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "hybrid-registered-external-source",
+      "query": "registered external needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [],
+      "external_documents": [
+        {
+          "path": "registered.md",
+          "body": "# Registered Source\n\nA registered external needle."
+        }
+      ],
+      "unregistered_documents": [
+        {
+          "path": "unregistered.md",
+          "body": "# Unregistered Source\n\nAn unregistered external needle."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "registered external needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"$EXTERNAL/registered.md\",\"title\":\"registered\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\"],\"source_type\":\"external\",\"read_only\":true}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-tag-and-positive-term",
+      "query": "tag:retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "projects/tagged.md",
+          "body": "---\ntitle: Tagged Note\ntags: [retrieval]\n---\n\nA scoped needle finds this note."
+        },
+        {
+          "path": "archive/untagged.md",
+          "body": "---\ntitle: Untagged Note\ntags: [archive]\n---\n\nAn untagged needle must not match."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"projects/tagged.md\",\"title\":\"Tagged Note\",\"snippet\":\"\\nA scoped needle finds this note.\",\"score\":0}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-tag-only",
+      "query": "tag:retrieval",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "tagged.md",
+          "body": "---\ntitle: Tagged Note\ntags: [retrieval]\n---\n\nThis document matches the tag-only plan."
+        },
+        {
+          "path": "untagged.md",
+          "body": "---\ntitle: Untagged Note\ntags: [archive]\n---\n\nThis document must not match the tag-only plan."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"tagged.md\",\"title\":\"Tagged Note\",\"snippet\":\"\\nThis document matches the tag-only plan.\",\"score\":0}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-path-and-negative-term",
+      "query": "path:projects -private needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "projects/public.md",
+          "body": "# Public Note\n\nA public needle is available."
+        },
+        {
+          "path": "projects/private.md",
+          "body": "# Private Note\n\nA private needle is excluded."
+        },
+        {
+          "path": "archive/other.md",
+          "body": "# Other Note\n\nAn unrelated needle is outside the path."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"projects/public.md\",\"title\":\"public\",\"snippet\":\"# Public Note\\n\\nA public needle is available.\",\"score\":0}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-negated-singleton-filters-keep-matches",
+      "query": "-path:private -status:draft -type:pdf needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "public.md",
+          "body": "---\ntitle: Public Note\nstatus: open\ndocument_type: note\n---\n\nA public needle remains."
+        },
+        {
+          "path": "archive/other.md",
+          "body": "---\ntitle: Other Note\nstatus: open\ndocument_type: note\n---\n\nAnother retained needle."
+        },
+        {
+          "path": "private.md",
+          "body": "---\ntitle: Private Note\nstatus: draft\ndocument_type: pdf\n---\n\nA private needle is excluded."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"archive/other.md\",\"title\":\"Other Note\",\"snippet\":\"\\nAnother retained needle.\",\"score\":0},{\"path\":\"public.md\",\"title\":\"Public Note\",\"snippet\":\"\\nA public needle remains.\",\"score\":0}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "scoped-unicode-type-date",
+      "query": "tag:Μ type:note created:2026-09-29 needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "unicode.md",
+          "body": "---\ntitle: Unicode Tag\ntags: [µ]\ncreated: 2026-09-29\n---\n\nA date-scoped needle."
+        },
+        {
+          "path": "other.md",
+          "body": "---\ntitle: Other Tag\ntags: [other]\ncreated: 2026-09-29\n---\n\nA date-scoped needle without the tag."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "malformed-query-fallback-hint",
+      "query": "\"unterminated",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "syntax.md",
+          "body": "A malformed search query must still return plain full-text results."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[],\"hint\":\"Search syntax was invalid, so this was searched as plain full text.\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "whitespace-query-empty-results",
+      "query": "   ",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "documents": [
+        {
+          "path": "ignored.md",
+          "body": "Whitespace queries return no results."
+        }
+      ],
+      "requests": [],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "hyde-expansion-success",
+      "query": "orbital greenhouse",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expand_model": "fixture-chat-model",
+      "expanded_text": "A greenhouse in orbit grows food for a space station.",
+      "chat_response": "{\"meſſage\":{\"CONTENT\":\"discarded\"},\"message\":{\"content\":null,\"Content\":\"A greenhouse in orbit grows food for a space station.\"}} {\"trailing\":true}",
+      "documents": [
+        {
+          "path": "space.md",
+          "body": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "orbital greenhouse"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: orbital greenhouse",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-chat-model",
+            "stream": false
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "A greenhouse in orbit grows food for a space station."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"space.md\",\"title\":\"space\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"space.md\",\"title\":\"space\",\"snippet\":\"# Space agriculture\\n\\nA greenhouse in orbit grows food for a space station.\",\"score\":0.016129031777381897}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "hyde-chat-failure-keeps-query-vector",
+      "query": "orbital greenhouse",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expanded_text": "unused",
+      "chat_error_body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxTAIL_MARKER",
+      "chat_status": 503,
+      "documents": [
+        {
+          "path": "space.md",
+          "body": "# Space agriculture\n\nA greenhouse in orbit grows food for a space station."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "orbital greenhouse"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: orbital greenhouse",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-model",
+            "stream": false
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"space.md\",\"title\":\"space\",\"snippet\":\"\",\"score\":0.016393441706895828},{\"path\":\"space.md\",\"title\":\"space\",\"snippet\":\"# Space agriculture\\n\\nA greenhouse in orbit grows food for a space station.\",\"score\":0.016129031777381897}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "hyde-identical-passage-reuses-query-cache",
+      "query": "cached identical passage",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "expand_query": true,
+      "expand_model": "fixture-chat-model",
+      "expanded_text": "cached identical passage",
+      "documents": [
+        {
+          "path": "cache.md",
+          "body": "# Cache behavior\n\nA cached identical passage remains searchable."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "cached identical passage"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "body": {
+            "messages": [
+              {
+                "content": "Write a short, factual passage (2-4 sentences) that directly answers or describes the following topic. This passage will be used to improve document search relevance.\n\nTopic: cached identical passage",
+                "role": "user"
+              }
+            ],
+            "model": "fixture-chat-model",
+            "stream": false
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"cache.md\",\"title\":\"cache\",\"snippet\":\"# Cache behavior\\n\\nA cached identical passage remains searchable.\",\"score\":0.032522473484277725},{\"path\":\"cache.md\",\"title\":\"cache\",\"snippet\":\"\",\"score\":0.016393441706895828}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "rerank-config-flag-is-inert-in-mcp-search",
+      "query": "rerank flag needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "rerank_query": true,
+      "documents": [
+        {
+          "path": "rerank.md",
+          "body": "# Rerank Flag\n\nA rerank flag needle remains on ordinary hybrid search."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "rerank flag needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"rerank.md\",\"title\":\"rerank\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\"]},{\"path\":\"rerank.md\",\"title\":\"rerank\",\"snippet\":\"# Rerank Flag\\n\\nA rerank flag needle remains on ordinary hybrid search.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "turbo-prod-quantization-config-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "turbo-prod",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "raw-unknown-backend-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "alternate-fixture-backend",
+      "vector_quantization": "off",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "id": "raw-unknown-quantization-is-inert-in-mcp-search",
+      "query": "retrieval needle",
+      "embedding_dim": 3,
+      "provider_status": 200,
+      "provider_dimension": 3,
+      "vector_backend": "sqlite",
+      "vector_quantization": "unknown-fixture-mode",
+      "documents": [
+        {
+          "path": "vault.md",
+          "body": "---\ntitle: Vault Retrieval Note\ntags: [retrieval]\n---\n\n# Vault Heading\n\nA retrieval needle appears in this note."
+        }
+      ],
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "retrieval needle"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "expected": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"results\":[{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"\",\"score\":0.11639344692230225,\"metadata_matches\":[\"title\",\"tags\"]},{\"path\":\"vault.md\",\"title\":\"Vault Retrieval Note\",\"snippet\":\"# Vault Heading\\n\\nA retrieval needle appears in this note.\",\"score\":0.032522473484277725}]}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  ]
+}

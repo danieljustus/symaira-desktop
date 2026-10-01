@@ -9,6 +9,7 @@ use std::{
 
 use rusqlite::{Connection, params};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 #[cfg(windows)]
 use crate::strip_verbatim_prefix;
@@ -19,6 +20,184 @@ const CHUNK_OVERLAP: usize = 200;
 const CHUNK_NAMESPACE: [u8; 16] = [
     0x23, 0x40, 0xd1, 0x2a, 0x65, 0x6a, 0x5d, 0x01, 0x97, 0x1a, 0x40, 0x58, 0x6e, 0xe6, 0x13, 0xa6,
 ];
+
+const LOCAL_HASH_STOP_WORDS: &[&str] = &[
+    "and", "the", "a", "an", "of", "to", "in", "is", "it", "that", "und", "der", "die", "das",
+    "ein", "eine", "ist", "es", "dass", "von", "zu", "mit", "auf", "für", "den", "dem", "des",
+    "im", "am",
+];
+
+/// Reproduces Go retrieval's deterministic local-hash embedding fallback.
+/// The caller chooses the positive dimension, including Go's 768 default
+/// when no successful provider request has taught a dimension yet.
+///
+/// # Errors
+/// Returns a contract error when `dimensions` is zero.
+pub fn local_hash_embedding(text: &str, dimensions: usize) -> Result<Vec<f32>, SidecarError> {
+    if dimensions == 0 {
+        return Err(SidecarError::Contract(
+            "local hash embedding dimension must be greater than zero".to_owned(),
+        ));
+    }
+
+    let mut vector = vec![0.0_f32; dimensions];
+    let mut cleaned = go_simple_lowercase(text);
+    for punctuation in [
+        '.', ',', '!', '?', ';', ':', '-', '_', '(', ')', '[', ']', '{', '}',
+    ] {
+        cleaned = cleaned.replace(punctuation, " ");
+    }
+    let words = cleaned.split_whitespace().collect::<Vec<_>>();
+    if words.is_empty() {
+        vector[0] = 1.0;
+        return Ok(vector);
+    }
+
+    let text_hash = Sha256::digest(text.as_bytes());
+    for (position, word) in words.iter().enumerate() {
+        if LOCAL_HASH_STOP_WORDS.contains(word) {
+            continue;
+        }
+        let hash = word
+            .as_bytes()
+            .iter()
+            .fold(2_166_136_261_u32, |hash, byte| {
+                (hash ^ u32::from(*byte)).wrapping_mul(16_777_619)
+            });
+        let index = (hash as usize) % dimensions;
+        let mut weight = 1.0_f32;
+        if position < text_hash.len() {
+            weight += f32::from(text_hash[position]) / 255.0_f32;
+        }
+        vector[index] += weight;
+    }
+
+    let sum_squares = vector
+        .iter()
+        .map(|value| f64::from(*value * *value))
+        .sum::<f64>();
+    if sum_squares > 0.0 {
+        let norm = sum_squares.sqrt() as f32;
+        for value in &mut vector {
+            *value /= norm;
+        }
+    } else {
+        vector[0] = 1.0;
+    }
+    Ok(vector)
+}
+
+/// Applies Go 1.26.6's Unicode 15 simple lowercase mapping.
+///
+/// This is shared with CLI snippet matching so search and embedding use the
+/// same pinned Go behavior.
+pub fn go_simple_lowercase(text: &str) -> String {
+    text.chars().map(go_simple_lowercase_char).collect()
+}
+
+fn go_simple_lowercase_char(character: char) -> char {
+    // The pinned Go 1.26.6 oracle uses Unicode 15.0; the Rust standard
+    // library has newer simple-case mappings for these later-assigned letters.
+    // Keep their Go-15 identity mapping before using Rust's one-scalar result.
+    if matches!(
+        character as u32,
+        0x1C89
+            | 0xA7CB
+            | 0xA7CC
+            | 0xA7CE
+            | 0xA7D2
+            | 0xA7D4
+            | 0xA7DA
+            | 0xA7DC
+            | 0x10D50..=0x10D65
+            | 0x16EA0..=0x16EB8
+    ) {
+        return character;
+    }
+    // Taking the first scalar mirrors Go's one-to-one unicode.ToLower mapping
+    // for expanding full-lowercase mappings such as U+0130.
+    character.to_lowercase().next().unwrap_or(character)
+}
+
+#[cfg(test)]
+mod local_hash_tests {
+    use std::{fs, path::Path};
+
+    use serde::Deserialize;
+    use sha2::{Digest, Sha256};
+
+    use super::{go_simple_lowercase_char, local_hash_embedding};
+
+    #[derive(Deserialize)]
+    struct Fixture {
+        schema_version: u32,
+        simple_lower_mapping_sha256: String,
+        cases: Vec<FixtureCase>,
+    }
+
+    #[derive(Deserialize)]
+    struct FixtureCase {
+        id: String,
+        text: String,
+        dimensions: usize,
+        vector: Vec<f32>,
+    }
+
+    fn fixture() -> Fixture {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../testdata/port/retrieval/local-hash.json");
+        serde_json::from_slice(&fs::read(path).expect("read Go local-hash oracle"))
+            .expect("decode Go local-hash oracle")
+    }
+
+    #[test]
+    fn local_hash_matches_go_generated_float32_vectors_bit_for_bit() {
+        let fixture = fixture();
+        assert_eq!(fixture.schema_version, 1);
+        assert_eq!(fixture.cases.len(), 10);
+        for case in fixture.cases {
+            let actual = local_hash_embedding(&case.text, case.dimensions)
+                .unwrap_or_else(|error| panic!("{}: {error}", case.id));
+            assert_eq!(
+                actual
+                    .iter()
+                    .map(|value| value.to_bits())
+                    .collect::<Vec<_>>(),
+                case.vector
+                    .iter()
+                    .map(|value| value.to_bits())
+                    .collect::<Vec<_>>(),
+                "Go local-hash vector mismatch for {}",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn simple_lowercase_mapping_matches_go_for_every_unicode_scalar() {
+        let fixture = fixture();
+        let mut digest = Sha256::new();
+        for value in 0..=0x10_FFFF_u32 {
+            let Some(character) = char::from_u32(value) else {
+                continue;
+            };
+            digest.update(value.to_be_bytes());
+            digest.update((go_simple_lowercase_char(character) as u32).to_be_bytes());
+        }
+        let actual = format!("{:x}", digest.finalize());
+        assert_eq!(actual, fixture.simple_lower_mapping_sha256);
+    }
+
+    #[test]
+    fn local_hash_rejects_zero_dimension_instead_of_panicking() {
+        let error = local_hash_embedding("query", 0).expect_err("zero dimension is invalid");
+        assert!(
+            error
+                .to_string()
+                .contains("dimension must be greater than zero")
+        );
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -103,6 +282,48 @@ pub struct RetrievalVectorSearchChunk {
     pub content: String,
     pub embedding: Option<Vec<f32>>,
     pub hash: String,
+}
+
+/// One result from local hybrid search, combining BM25 and vector ranks with
+/// the same reciprocal-rank and metadata scoring used by the Go engine.
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchResult {
+    pub chunk: RetrievalHybridSearchChunk,
+    pub bm25_rank: usize,
+    pub vector_rank: usize,
+    pub rrf_score: f32,
+    pub cosine_score: f32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata_matches: Vec<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub vector_mode: String,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchChunk {
+    pub id: i64,
+    pub uuid: String,
+    pub document_path: String,
+    pub chunk_index: i64,
+    pub content: String,
+    pub hash: String,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalHybridSearchResponse {
+    pub results: Vec<RetrievalHybridSearchResult>,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+struct HybridAccumulator {
+    chunk: RetrievalHybridSearchChunk,
+    bm25_rank: usize,
+    vector_rank: usize,
+    cosine_score: f32,
 }
 
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -438,39 +659,53 @@ impl RetrievalDb {
 
     pub fn save_chunks(&self, chunks: &[StoredRetrievalChunk]) -> Result<(), SidecarError> {
         let transaction = self.connection.unchecked_transaction()?;
-        {
-            let mut statement = transaction.prepare(
-                "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
-                 binary_signature, embedding_dim, embedding_model, char_start, char_end,
-                 embedding_pending, anchor_kind, anchor_value, content_norm)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
-            )?;
-            for chunk in chunks {
-                let embedding = encode_embedding(&chunk.embedding);
-                statement.execute(params![
-                    chunk.uuid,
-                    chunk.document_path,
-                    chunk.chunk_index,
-                    chunk.content,
-                    embedding,
-                    chunk.hash,
-                    embedding_norm(&chunk.embedding),
-                    chunk.dim,
-                    chunk.model,
-                    chunk.char_start,
-                    chunk.char_end,
-                    i64::from(chunk.embedding_pending),
-                    chunk.anchor_kind,
-                    chunk.anchor_value,
-                    symdesk_core::german::normalized_text(&chunk.content),
-                ])?;
-            }
-        }
+        insert_chunks(&transaction, chunks)?;
         transaction.commit()?;
         let _ = self.connection.execute(
             "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
             [],
         );
+        Ok(())
+    }
+
+    /// Replaces one document and all of its chunks atomically in the Rust DB.
+    /// Go's current commitIndex performs delete, document save, and chunk save
+    /// as separate operations; this helper guarantees rollback only for this
+    /// Rust operation and does not claim Go transaction parity.
+    pub fn replace_document_chunks(
+        &self,
+        document: &RetrievalDocument,
+        chunks: &[StoredRetrievalChunk],
+    ) -> Result<(), SidecarError> {
+        if chunks
+            .iter()
+            .any(|chunk| chunk.document_path != document.path)
+        {
+            return Err(SidecarError::Contract(
+                "replacement chunks must belong to the replacement document".to_owned(),
+            ));
+        }
+        let transaction = self.connection.unchecked_transaction()?;
+        transaction.execute(
+            "DELETE FROM extractions WHERE document_path = ?1",
+            [&document.path],
+        )?;
+        transaction.execute(
+            "DELETE FROM chunks WHERE document_path = ?1",
+            [&document.path],
+        )?;
+        transaction.execute("DELETE FROM documents WHERE path = ?1", [&document.path])?;
+        transaction.execute(
+            "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)
+             ",
+            params![document.path, document.hash, document.updated_at],
+        )?;
+        insert_chunks(&transaction, chunks)?;
+        transaction.execute(
+            "UPDATE index_meta SET value = value + 2 WHERE key = 'generation'",
+            [],
+        )?;
+        transaction.commit()?;
         Ok(())
     }
 
@@ -484,6 +719,28 @@ impl RetrievalDb {
              anchor_kind, anchor_value FROM chunks WHERE document_path = ?1 ORDER BY chunk_index ASC",
         )?;
         let rows = statement.query_map([document_path], read_stored_chunk)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Returns documents with at least one pending embedding, in the same
+    /// newest-first order as Go's ListDocuments followed by pending counts.
+    pub fn list_pending_documents(&self) -> Result<Vec<RetrievalDocument>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT d.path, d.hash, d.updated_at
+             FROM documents d
+             WHERE EXISTS (
+                 SELECT 1 FROM chunks c
+                 WHERE c.document_path = d.path AND c.embedding_pending = 1
+             )
+             ORDER BY d.updated_at DESC",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(RetrievalDocument {
+                path: row.get(0)?,
+                hash: row.get(1)?,
+                updated_at: row.get(2)?,
+            })
+        })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
@@ -684,6 +941,158 @@ impl RetrievalDb {
         }
         Ok(results)
     }
+
+    /// Combines the existing local BM25 and full-scan vector searches using
+    /// the Go engine's fetch window, metadata boost, and float32 RRF scores.
+    /// The caller supplies an already-produced query vector and model name;
+    /// this method never contacts an embedding or reranking provider.
+    pub fn search_hybrid_with_path(
+        &self,
+        query: &str,
+        query_embedding: &[f32],
+        query_model: &str,
+        path_prefix: &str,
+        limit: i64,
+    ) -> Result<RetrievalHybridSearchResponse, SidecarError> {
+        if query.is_empty() {
+            return Ok(RetrievalHybridSearchResponse {
+                results: Vec::new(),
+                warnings: Vec::new(),
+            });
+        }
+
+        let spaces = self.detect_mixed_embedding_spaces()?;
+        if spaces.len() > 1 {
+            let examples = spaces
+                .iter()
+                .map(|entry| format!("{} ({} chunks)", entry.space, entry.count))
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(SidecarError::Contract(format!(
+                "index contains mixed embedding spaces ({examples}); re-index with a single model before searching"
+            )));
+        }
+
+        let mut warnings = Vec::new();
+        let mut vector_mode = String::new();
+        if query_model == "local-hash" {
+            let index_has_ollama = spaces.iter().any(|entry| {
+                entry
+                    .space
+                    .split_once('/')
+                    .is_some_and(|(_, model)| model != "local-hash")
+            });
+            let index_has_fallback = spaces.iter().any(|entry| {
+                entry
+                    .space
+                    .split_once('/')
+                    .is_some_and(|(_, model)| model == "local-hash")
+            });
+            if index_has_ollama && !index_has_fallback {
+                warnings.push("warning: query embedding fell back to local hash while the index uses an Ollama model; semantic scores may be unreliable".to_owned());
+                vector_mode = "fallback".to_owned();
+            }
+        }
+
+        let fetch_limit = limit.saturating_mul(3).clamp(50, 200);
+        let (bm25_results, warnings) =
+            match self.search_bm25_with_path(query, path_prefix, fetch_limit) {
+                Ok(results) => (results, warnings),
+                Err(error) => {
+                    warnings.push(format!(
+                        "warning: BM25 search failed, falling back to vector-only: {error}"
+                    ));
+                    (Vec::new(), warnings)
+                }
+            };
+        let vector_results =
+            self.search_vector_with_path(query_embedding, path_prefix, fetch_limit)?;
+
+        let mut merged = std::collections::HashMap::<String, HybridAccumulator>::new();
+        for result in bm25_results {
+            let uuid = result.chunk.uuid.clone();
+            merged.insert(
+                uuid,
+                HybridAccumulator {
+                    chunk: RetrievalHybridSearchChunk {
+                        id: result.chunk.id,
+                        uuid: result.chunk.uuid,
+                        document_path: result.chunk.document_path,
+                        chunk_index: result.chunk.chunk_index,
+                        content: result.chunk.content,
+                        hash: result.chunk.hash,
+                    },
+                    bm25_rank: result.bm25_rank,
+                    vector_rank: 0,
+                    cosine_score: 0.0,
+                },
+            );
+        }
+        for result in vector_results {
+            let uuid = result.chunk.uuid.clone();
+            let entry = merged.entry(uuid).or_insert_with(|| HybridAccumulator {
+                chunk: RetrievalHybridSearchChunk {
+                    id: result.chunk.id,
+                    uuid: result.chunk.uuid.clone(),
+                    document_path: result.chunk.document_path.clone(),
+                    chunk_index: result.chunk.chunk_index,
+                    content: result.chunk.content.clone(),
+                    hash: result.chunk.hash.clone(),
+                },
+                bm25_rank: 0,
+                vector_rank: 0,
+                cosine_score: 0.0,
+            });
+            entry.vector_rank = result.vector_rank;
+            entry.cosine_score = result.cosine_score;
+        }
+
+        let mut results = merged
+            .into_values()
+            .map(|entry| {
+                let metadata_matches = symdesk_vault::metadata_matches(query, &entry.chunk.content);
+                let mut rrf_score = 0.0_f32;
+                if entry.bm25_rank > 0 {
+                    rrf_score += 1.0_f32 / (60.0_f32 + entry.bm25_rank as f32);
+                }
+                if entry.vector_rank > 0 {
+                    rrf_score += 1.0_f32 / (60.0_f32 + entry.vector_rank as f32);
+                }
+                rrf_score += retrieval_metadata_boost(&metadata_matches);
+                RetrievalHybridSearchResult {
+                    chunk: entry.chunk,
+                    bm25_rank: entry.bm25_rank,
+                    vector_rank: entry.vector_rank,
+                    rrf_score,
+                    cosine_score: entry.cosine_score,
+                    metadata_matches,
+                    vector_mode: vector_mode.clone(),
+                }
+            })
+            .collect::<Vec<_>>();
+        results.sort_by(|left, right| {
+            right
+                .rrf_score
+                .partial_cmp(&left.rrf_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(limit.max(0) as usize);
+
+        Ok(RetrievalHybridSearchResponse { results, warnings })
+    }
+}
+
+fn retrieval_metadata_boost(fields: &[String]) -> f32 {
+    if fields
+        .iter()
+        .any(|field| field == "title" || field == "tags")
+    {
+        0.1_f32
+    } else if fields.is_empty() {
+        0.0_f32
+    } else {
+        0.02_f32
+    }
 }
 
 fn create_database_file(path: &Path) -> Result<(), SidecarError> {
@@ -748,6 +1157,39 @@ fn backfill_content_norm(connection: &Connection) -> Result<(), SidecarError> {
         )?;
     }
     transaction.commit()?;
+    Ok(())
+}
+
+fn insert_chunks(
+    transaction: &rusqlite::Transaction<'_>,
+    chunks: &[StoredRetrievalChunk],
+) -> Result<(), SidecarError> {
+    let mut statement = transaction.prepare(
+        "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
+         binary_signature, embedding_dim, embedding_model, char_start, char_end,
+         embedding_pending, anchor_kind, anchor_value, content_norm)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+    )?;
+    for chunk in chunks {
+        let embedding = encode_embedding(&chunk.embedding);
+        statement.execute(params![
+            chunk.uuid,
+            chunk.document_path,
+            chunk.chunk_index,
+            chunk.content,
+            embedding,
+            chunk.hash,
+            embedding_norm(&chunk.embedding),
+            chunk.dim,
+            chunk.model,
+            chunk.char_start,
+            chunk.char_end,
+            i64::from(chunk.embedding_pending),
+            chunk.anchor_kind,
+            chunk.anchor_value,
+            symdesk_core::german::normalized_text(&chunk.content),
+        ])?;
+    }
     Ok(())
 }
 

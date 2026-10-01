@@ -1,0 +1,887 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "provider-resolves-pending-markdown",
+      "document_path": "doc.md",
+      "document_body": "# Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "df10aafd-2064-5569-81a1-ccad3568a26d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "anchor_kind": "section",
+          "anchor_value": "metadata",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "6d38bdfd-e8bd-5648-a36c-e8780e5a7ad7",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "# Re-embed oracle",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "c1b8fc20afd25054a6c010d69197cb4f2b945fcd49a0de74fa5b282f99cf347e",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "5f8837a8-24c3-5eed-8fad-0eee3a3b7f90",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 19,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "c6d4abc3-d1c5-5e84-b825-634ee383bcde",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 814,
+          "char_end": 1813,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "4d6101d6-1505-52db-a320-4e0c5649ef16",
+          "document_path": "$DOC",
+          "chunk_index": 4,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "985831d274429dfb25fc8d5021d021b9c70e62a50c162da1c30db72f4e916eb0",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 1613,
+          "char_end": 1878,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "c4f5a2438e21eb14eeefab204faea5078d66faf23f8c646b8c0132960c255d2d",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-retries-transient-batch",
+      "document_path": "doc.md",
+      "document_body": "# Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "transient_once": true,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "df10aafd-2064-5569-81a1-ccad3568a26d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "anchor_kind": "section",
+          "anchor_value": "metadata",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "6d38bdfd-e8bd-5648-a36c-e8780e5a7ad7",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "# Re-embed oracle",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "c1b8fc20afd25054a6c010d69197cb4f2b945fcd49a0de74fa5b282f99cf347e",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "5f8837a8-24c3-5eed-8fad-0eee3a3b7f90",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 19,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "c6d4abc3-d1c5-5e84-b825-634ee383bcde",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 814,
+          "char_end": 1813,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "4d6101d6-1505-52db-a320-4e0c5649ef16",
+          "document_path": "$DOC",
+          "chunk_index": 4,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "985831d274429dfb25fc8d5021d021b9c70e62a50c162da1c30db72f4e916eb0",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 1613,
+          "char_end": 1878,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "c4f5a2438e21eb14eeefab204faea5078d66faf23f8c646b8c0132960c255d2d",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-404-keeps-pending-markdown",
+      "document_path": "doc.md",
+      "document_body": "# Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 404,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "# Re-embed oracle"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "df10aafd-2064-5569-81a1-ccad3568a26d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [],
+          "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "anchor_kind": "section",
+          "anchor_value": "metadata",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "6d38bdfd-e8bd-5648-a36c-e8780e5a7ad7",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "# Re-embed oracle",
+          "embedding": [],
+          "hash": "c1b8fc20afd25054a6c010d69197cb4f2b945fcd49a0de74fa5b282f99cf347e",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "5f8837a8-24c3-5eed-8fad-0eee3a3b7f90",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 19,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "c6d4abc3-d1c5-5e84-b825-634ee383bcde",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 814,
+          "char_end": 1813,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "4d6101d6-1505-52db-a320-4e0c5649ef16",
+          "document_path": "$DOC",
+          "chunk_index": 4,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text",
+          "embedding": [],
+          "hash": "985831d274429dfb25fc8d5021d021b9c70e62a50c162da1c30db72f4e916eb0",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 1613,
+          "char_end": 1878,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        }
+      ],
+      "document_hash": "c4f5a2438e21eb14eeefab204faea5078d66faf23f8c646b8c0132960c255d2d",
+      "reembedded_documents": 1,
+      "remaining_pending": 5,
+      "generation": 3
+    },
+    {
+      "id": "provider-auto-detects-response-dimension",
+      "document_path": "doc.md",
+      "document_body": "# Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 200,
+      "embedding_dim": 0,
+      "response_dimension": 3,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ]
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "df10aafd-2064-5569-81a1-ccad3568a26d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "anchor_kind": "section",
+          "anchor_value": "metadata",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "6d38bdfd-e8bd-5648-a36c-e8780e5a7ad7",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "# Re-embed oracle",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "c1b8fc20afd25054a6c010d69197cb4f2b945fcd49a0de74fa5b282f99cf347e",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "5f8837a8-24c3-5eed-8fad-0eee3a3b7f90",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 19,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "c6d4abc3-d1c5-5e84-b825-634ee383bcde",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 814,
+          "char_end": 1813,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "4d6101d6-1505-52db-a320-4e0c5649ef16",
+          "document_path": "$DOC",
+          "chunk_index": 4,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "985831d274429dfb25fc8d5021d021b9c70e62a50c162da1c30db72f4e916eb0",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 1613,
+          "char_end": 1878,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "c4f5a2438e21eb14eeefab204faea5078d66faf23f8c646b8c0132960c255d2d",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-dimension-mismatch-keeps-pending-markdown",
+      "document_path": "doc.md",
+      "document_body": "# Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 2,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "df10aafd-2064-5569-81a1-ccad3568a26d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "d44776df-7303-53b1-bf50-e4aa77e42f57",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: doc\ntitle: doc\ntitle: doc\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+          "embedding": [],
+          "hash": "f45539ec32d1ef4c14ed59bfed8e2984ca9e30fb7fa135816a65b053f8aeafb8",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "anchor_kind": "section",
+          "anchor_value": "metadata",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "6d38bdfd-e8bd-5648-a36c-e8780e5a7ad7",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "# Re-embed oracle",
+          "embedding": [],
+          "hash": "c1b8fc20afd25054a6c010d69197cb4f2b945fcd49a0de74fa5b282f99cf347e",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "5f8837a8-24c3-5eed-8fad-0eee3a3b7f90",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 19,
+          "char_end": 1014,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "c6d4abc3-d1c5-5e84-b825-634ee383bcde",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 814,
+          "char_end": 1813,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        },
+        {
+          "uuid": "4d6101d6-1505-52db-a320-4e0c5649ef16",
+          "document_path": "$DOC",
+          "chunk_index": 4,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text",
+          "embedding": [],
+          "hash": "985831d274429dfb25fc8d5021d021b9c70e62a50c162da1c30db72f4e916eb0",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 1613,
+          "char_end": 1878,
+          "anchor_kind": "heading",
+          "anchor_value": "Re-embed oracle",
+          "embedding_pending": true
+        }
+      ],
+      "document_hash": "c4f5a2438e21eb14eeefab204faea5078d66faf23f8c646b8c0132960c255d2d",
+      "reembedded_documents": 1,
+      "remaining_pending": 5,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-pending-plain-text",
+      "document_path": "doc.txt",
+      "document_body": "Re-embed oracle\n\nlocal embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Re-embed oracle",
+              "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+              " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+              "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text "
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "57ec5461-b425-5153-acdd-da69ce85433b",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "d7c3e0c7f0e25bf3c8148c39668bf14b3c44205acd791441e5eaf22facd56d07",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 30,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "fef9aca8-6650-5c0b-912b-6c9070fa544b",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Re-embed oracle",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "0d219b1e014e59f43b17da041fe00eb21a99aa6997ad42c3380636c04135a880",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 15,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "ae4e56d4-5515-5abd-b3ca-ced9c8f0c6d3",
+          "document_path": "$DOC",
+          "chunk_index": 1,
+          "content": "local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "96515eac89072ba1b2c82a370d27d7976cd2f844c22d59244995cad7a3801696",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 17,
+          "char_end": 1012,
+          "anchor_kind": "text",
+          "anchor_value": "offset:17",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "9d65983b-e59c-5fc8-9509-e73123255b62",
+          "document_path": "$DOC",
+          "chunk_index": 2,
+          "content": " contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "f68d05821dbc11e434b0990455fba7a670c151e64d4a5b60148c71695d57d750",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 812,
+          "char_end": 1811,
+          "anchor_kind": "text",
+          "anchor_value": "offset:812",
+          "embedding_pending": false
+        },
+        {
+          "uuid": "ef3f49ea-667a-54d2-bc61-0dfafdef88e9",
+          "document_path": "$DOC",
+          "chunk_index": 3,
+          "content": "l embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text local embedding contract text ",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "1f4878df0a5742f18d6f4b18db9b0c6535c7e303b83424e555040bbdced071c6",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 1611,
+          "char_end": 1877,
+          "anchor_kind": "text",
+          "anchor_value": "offset:1611",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "8b03245ccc9594d924e07c8c0f0c6643fdf5d2007212e854c37b0a15f569570e",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    }
+  ]
+}

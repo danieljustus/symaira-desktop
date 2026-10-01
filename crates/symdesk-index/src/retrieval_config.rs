@@ -8,7 +8,7 @@ use std::{
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
-use crate::{SidecarError, relocate_database};
+use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
 /// Resolves the standalone symseek config file, which intentionally ignores
 /// `XDG_CONFIG_HOME` just like the Go config package.
@@ -19,6 +19,82 @@ pub fn symseek_config_path(environment: &BTreeMap<String, String>, cwd: &Path) -
         .map(|home| home.join(".config/symseek/config.toml"))
         .unwrap_or_else(|| PathBuf::from(".config/symseek/config.toml"));
     absolute_clean(&path, cwd)
+}
+
+/// The provider settings used by the explicit pending-embedding repair path.
+/// This is a projection of the existing symseek config, not a second config
+/// format or loader.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetrievalEmbeddingConfig {
+    pub ollama_url: String,
+    pub model: String,
+    /// `None` preserves Go's zero-dimension behavior: omit the request field
+    /// and learn the expected dimension from the first successful response.
+    pub embedding_dim: Option<usize>,
+    pub timeout_seconds: u64,
+    pub retry_count: usize,
+    pub retry_backoff_ms: u64,
+    /// Optional Go search transformations. The command path may opt into the
+    /// supported HyDE subset; the production Go CLI/MCP path currently ignores
+    /// `rerank_query`, so Rust preserves that behavior until a Go caller uses it.
+    pub expand_query: bool,
+    pub expand_model: String,
+    pub expand_timeout_seconds: u64,
+    pub rerank_query: bool,
+    pub vector_backend: String,
+    pub vector_quantization: String,
+}
+
+/// Loads the effective embedding settings from the existing standalone
+/// symseek config path and applies the same defaults as Go's OllamaConfig.
+pub fn retrieval_embedding_config(
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<RetrievalEmbeddingConfig, SidecarError> {
+    let path = symseek_config_path(environment, cwd);
+    let config = load_config(&path)?;
+    let model = if config.model.is_empty() {
+        "qwen3-embedding:0.6b".to_owned()
+    } else {
+        config.model.clone()
+    };
+    let expand_model = if config.expand_model.is_empty() {
+        model.clone()
+    } else {
+        config.expand_model.clone()
+    };
+    Ok(RetrievalEmbeddingConfig {
+        ollama_url: if config.ollama_url.is_empty() {
+            "http://localhost:11434/api/embeddings".to_owned()
+        } else {
+            config.ollama_url
+        },
+        model,
+        embedding_dim: usize::try_from(config.embedding_dim)
+            .ok()
+            .filter(|value| *value > 0),
+        timeout_seconds: u64::try_from(config.timeout_seconds)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(120),
+        retry_count: usize::try_from(config.retry_count)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(2),
+        retry_backoff_ms: u64::try_from(config.retry_backoff_ms)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(500),
+        expand_query: config.expand_query,
+        expand_model,
+        expand_timeout_seconds: u64::try_from(config.expand_timeout_seconds)
+            .ok()
+            .filter(|value| *value > 0)
+            .unwrap_or(120),
+        rerank_query: config.rerank_query,
+        vector_backend: config.vector_backend,
+        vector_quantization: config.vector_quantization,
+    })
 }
 
 /// Resolves the Go retrieval index path without opening or creating the DB.
@@ -38,6 +114,117 @@ pub fn index_location_for_vault(
         return vault_retrieval_path(vault_root, environment, cwd, temp_root);
     }
     standalone_retrieval_path(environment, cwd)
+}
+
+/// Opens the effective retrieval database for a vault, seeding a missing
+/// per-vault database from the existing standalone index on first open.
+///
+/// A configured global `index_path` remains an explicit override and bypasses
+/// migration. Existing per-vault databases are always preserved. The legacy
+/// pre-absorption index is removed only after a WAL-consistent snapshot has
+/// been opened and validated successfully.
+pub fn open_retrieval_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<RetrievalDb, SidecarError> {
+    let config_path = symseek_config_path(environment, cwd);
+    let config = load_config(&config_path)?;
+    let explicit_override = !config.index_path.trim().is_empty();
+    let index_path = if explicit_override {
+        absolute_clean(Path::new(&config.index_path), cwd)
+    } else if vault_root.trim().is_empty() {
+        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)
+    } else {
+        absolute_clean(
+            &vault_retrieval_path(vault_root, environment, cwd, temp_root)?,
+            cwd,
+        )
+    };
+
+    if explicit_override || vault_root.trim().is_empty() {
+        return RetrievalDb::open_at(index_path);
+    }
+
+    migrate_legacy_retrieval_index(&index_path, environment, cwd).map_err(|error| {
+        SidecarError::Contract(format!("migrate legacy retrieval index: {error}"))
+    })?;
+    RetrievalDb::open_at(index_path)
+}
+
+fn migrate_legacy_retrieval_index(
+    destination: &Path,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<(), SidecarError> {
+    match fs::metadata(destination) {
+        Ok(_) => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => return Ok(()),
+    }
+
+    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd);
+    if source == *destination {
+        return Ok(());
+    }
+    let source_info = match fs::metadata(&source) {
+        Ok(info) => info,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    if !source_info.is_file() {
+        return Err(SidecarError::Contract(format!(
+            "legacy retrieval index is not a regular file: {}",
+            source.display()
+        )));
+    }
+
+    let connection = Connection::open(&source)?;
+    connection.execute_batch(
+        "PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
+    )?;
+    backup_database(&connection, destination)?;
+    drop(connection);
+
+    let validated = match RetrievalDb::open_at(destination) {
+        Ok(database) => database,
+        Err(error) => {
+            let _ = remove_retrieval_database_artifacts(destination);
+            return Err(error);
+        }
+    };
+
+    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd);
+    if source == legacy {
+        drop(validated);
+        remove_retrieval_database_artifacts(&source).map_err(|error| {
+            SidecarError::Contract(format!("remove migrated legacy retrieval index: {error}"))
+        })?;
+    }
+    Ok(())
+}
+
+fn legacy_retrieval_path(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
+    let home = user_home(environment).ok_or_else(|| {
+        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
+    })?;
+    Ok(PathBuf::from(home).join(".local/share/symaira-seek/symseek.db"))
+}
+
+fn remove_retrieval_database_artifacts(path: &Path) -> std::io::Result<()> {
+    let mut wal = path.as_os_str().to_os_string();
+    wal.push("-wal");
+    let mut shm = path.as_os_str().to_os_string();
+    shm.push("-shm");
+    for candidate in [path.to_path_buf(), PathBuf::from(wal), PathBuf::from(shm)] {
+        match fs::remove_file(candidate) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(())
 }
 
 /// Snapshots the effective standalone retrieval index and persists its new
@@ -354,10 +541,76 @@ fn lexical_clean(path: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::BTreeMap, fs, path::Path};
+
+    use super::retrieval_embedding_config;
+
+    #[test]
+    fn embedding_projection_uses_existing_config_and_go_defaults() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("symseek-config-projection-{nonce}"));
+        let config_dir = root.join(".config/symseek");
+        fs::create_dir_all(&config_dir).expect("create config directory");
+        fs::write(
+            config_dir.join("config.toml"),
+            "ollama_url = \"\"\nmodel = \"\"\nembedding_dim = 0\ntimeout_seconds = 0\nretry_count = 0\nretry_backoff_ms = 0\n",
+        )
+        .expect("write existing config format");
+        let environment =
+            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
+        assert_eq!(config.ollama_url, "http://localhost:11434/api/embeddings");
+        assert_eq!(config.model, "qwen3-embedding:0.6b");
+        assert_eq!(config.embedding_dim, None);
+        assert_eq!(config.timeout_seconds, 120);
+        assert_eq!(config.retry_count, 2);
+        assert_eq!(config.retry_backoff_ms, 500);
+        assert_eq!(config.expand_model, "qwen3-embedding:0.6b");
+        assert_eq!(config.expand_timeout_seconds, 120);
+        fs::remove_file(config_dir.join("config.toml")).expect("remove override");
+        let defaults = retrieval_embedding_config(&environment, Path::new("/")).expect("defaults");
+        assert_eq!(defaults.embedding_dim, Some(768));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn expansion_projection_uses_model_fallback_and_timeout_defaults() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("symseek-expansion-config-{nonce}"));
+        let config_dir = root.join(".config/symseek");
+        fs::create_dir_all(&config_dir).expect("create config directory");
+        fs::write(
+            config_dir.join("config.toml"),
+            "model = \"embedding-model\"\nexpand_query = true\nexpand_timeout_seconds = 0\n",
+        )
+        .expect("write existing config format");
+        let environment =
+            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
+        assert!(config.expand_query);
+        assert_eq!(config.expand_model, "embedding-model");
+        assert_eq!(config.expand_timeout_seconds, 120);
+        fs::write(
+            config_dir.join("config.toml"),
+            "model = \"embedding-model\"\nexpand_query = true\nexpand_model = \"chat-model\"\nexpand_timeout_seconds = 7\n",
+        )
+        .expect("write explicit expansion config");
+        let config = retrieval_embedding_config(&environment, Path::new("/")).expect("reload");
+        assert_eq!(config.expand_model, "chat-model");
+        assert_eq!(config.expand_timeout_seconds, 7);
+        let _ = fs::remove_dir_all(root);
+    }
+
     #[cfg(unix)]
     use super::lexical_clean;
     #[cfg(unix)]
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     #[cfg(unix)]
     #[test]

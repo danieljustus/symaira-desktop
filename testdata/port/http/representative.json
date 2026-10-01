@@ -592,6 +592,22 @@
       "auth": "valid"
     },
     {
+      "id": "ai-ask-notebook-nonempty-hybrid-index",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\",\"notebook\":\"research\"}",
+      "populate_hybrid_index": true
+    },
+    {
+      "id": "ai-ask-unscoped-hybrid-index",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}",
+      "hybrid_query": true
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

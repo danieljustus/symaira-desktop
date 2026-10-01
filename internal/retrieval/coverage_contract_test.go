@@ -49,6 +49,10 @@ func TestPackageFacadeRoundTripUsesConfiguredIndex(t *testing.T) {
 	if err := os.WriteFile(metadataPath, []byte("# Metadata\n\nordinary body"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	canonicalMetadataPath, err := filepath.EvalSymlinks(metadataPath)
+	if err != nil {
+		t.Fatalf("resolve metadata identity: %v", err)
+	}
 
 	if err := IndexDirectory(sourceDir); err != nil {
 		t.Fatalf("IndexDirectory: %v", err)
@@ -60,7 +64,7 @@ func TestPackageFacadeRoundTripUsesConfiguredIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SearchInPaths: %v", err)
 	}
-	if len(results) == 0 || results[0].Path != metadataPath {
+	if len(results) == 0 || results[0].Path != canonicalMetadataPath {
 		t.Fatalf("SearchInPaths results = %#v, want metadata document ranked first", results)
 	}
 	if len(results[0].MetadataMatches) != 1 || results[0].MetadataMatches[0] != "title" {

@@ -1,3 +1,16 @@
+# Historical handoff record (2026-09-30; superseded)
+
+This document preserves the continuation draft and verification evidence written on 2026-09-30. Its instructions describe the state at that time; use the current integration status below for the present branch state.
+
+## Current integration status (2026-10-01)
+
+- Desktop #1130 and #1131 are merged to main and were normally integrated into the isolated #1129 preparation worktree (`db2fd74e`, `81b3c6ea`).
+- The reviewed #1123 candidate `4c31af691bfeb5b645442d59b71157019ed5f6f5` was fetched and normally merged into that worktree as `b85c803835383481bbb3e49721a9d237bef0ebe9`. Its CI and merge to main are still pending.
+- The #1129 functional candidate has not been pushed or merged. The temporary Q fixture-generation proof is blocked by the existing `vaultwritegen --check` drift: current `internal/vault/tags.go` differs from its pinned historical Go blob after #1122. No fixture or provenance metadata was changed by that attempt.
+- Required checks for the final combined candidate and final integration with the squashed #1123 main commit remain pending. This status is not an acceptance or release claim.
+
+## Original continuation draft (preserved)
+
 # Code continuation: symaira-desktop
 
 ## Goal and immutable starting point

@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 mod ai_cli;
+mod ai_secrets;
 mod dataset;
 mod history;
 mod http;

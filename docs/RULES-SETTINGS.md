@@ -1,18 +1,18 @@
 # Rules & Settings contract
 
-SymDesk delegates classification and mail-ingest configuration to the installed `symingest` binary. The desktop client validates `schema_version: 1` and reports missing or incompatible binaries without breaking the rest of the app.
+SymDesk exposes classification and mail-ingest configuration through `symdesk rules` and `symdesk mail rules`. The desktop client uses its resolved local or remote transport and validates `schema_version: 1`; no standalone `symingest` binary is required.
 
 ## Classification rules
 
-Flags must precede the subcommand because `symingest` uses Go's standard flag parser:
+The Cobra CLI accepts the shared flags after the subcommand. Put `--` before positional values so patterns or text starting with a dash are not parsed as flags:
 
 ```text
-symingest rules --json [--vault <path>] list
-symingest rules --json [--vault <path>] add <pattern> <kind> <value>
-symingest rules --json [--vault <path>] update <id> <pattern> <kind> <value>
-symingest rules --json [--vault <path>] test <text>
-symingest rules --json [--vault <path>] dry-run <pattern> <kind> <value>
-symingest rules --json [--vault <path>] delete <id>
+symdesk rules list --json [--vault <path>]
+symdesk rules add --json [--vault <path>] -- <pattern> <kind> <value>
+symdesk rules update --json [--vault <path>] -- <id> <pattern> <kind> <value>
+symdesk rules test --json [--vault <path>] -- <text>
+symdesk rules dry-run --json [--vault <path>] -- <pattern> <kind> <value>
+symdesk rules delete --json [--vault <path>] -- <id>
 ```
 
 Every successful response includes `schema_version: 1`:
@@ -30,14 +30,13 @@ The dry-run scans existing indexed documents and returns safe metadata only: doc
 Mail configuration is available through a separate versioned JSON contract:
 
 ```text
-symingest mail --json --config ~/.config/symingest/config.toml list
-symingest mail --json --config ~/.config/symingest/config.toml validate
-symingest mail --json --config ~/.config/symingest/config.toml --input account.json create
-symingest mail --json --config ~/.config/symingest/config.toml --input account.json --id <account-id> update
-symingest mail --json --config ~/.config/symingest/config.toml --id <account-id> delete
+symdesk mail rules list --json [--config <config-path>]
+symdesk mail rules create --json [--config <config-path>] < account.json
+symdesk mail rules update <account-id> --json [--config <config-path>] < account.json
+symdesk mail rules delete <account-id> --json [--config <config-path>]
 ```
 
-Supported operations are `list`, `validate`, `create`, `update`, `delete`, and `replace`. Writes preserve unrelated TOML content and are atomic. Responses include `reload_required: true` and explicit next-watch-restart semantics; an already-running watcher is not hot-reloaded.
+Supported CLI operations are `list`, `create`, `update`, and `delete`. Create and update read one account's JSON from stdin. Without `--config`, the CLI resolves the local mail configuration or the global configuration; mail accounts are not vault-scoped. Writes preserve unrelated TOML content and are atomic. Write responses include `reload_required: true`; an already-running watcher is not hot-reloaded.
 
 Password safety rules:
 

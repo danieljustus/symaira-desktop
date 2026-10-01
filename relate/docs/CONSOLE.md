@@ -1,5 +1,7 @@
 # Local web console
 
+> Historical standalone SymRelate documentation. The CLI and console entry points were removed during Desktop consolidation; the referenced standalone architecture document was not archived here.
+
 `symrelate console` runs a localhost-only, authenticated web UI for
 everyday contact management — for regular use without CLI or MCP
 fluency. It is a thin HTTP layer over the exact same `internal/app.App`
@@ -48,8 +50,8 @@ call reuses it.
 ## What it does
 
 A single-page vanilla HTML/CSS/JS UI (`internal/console/static/`, no
-build step, no external CDN, no telemetry — see
-[ARCHITECTURE.md](../ARCHITECTURE.md)'s standalone-first rule) against a
+build step, no external CDN, no telemetry, following the historical
+standalone-first rule) against a
 JSON API under `/api/v1/*`:
 
 | Area | Capability |

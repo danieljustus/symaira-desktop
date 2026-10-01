@@ -1,5 +1,7 @@
 # Privacy and data-handling policy
 
+> Historical standalone SymRelate documentation, not a current Desktop-wide privacy policy. The referenced standalone architecture document was not archived here.
+
 `symrelate` is the authoritative local store for direct contact
 identifiers — names, email addresses, phone numbers, postal addresses —
 and the relationships and interaction history built on top of them. This
@@ -19,8 +21,8 @@ abstraction; `DefaultKeyProviders` tries, in order:
    prompt or SymVault for sensitive passphrases.
 2. The `SYMRELATE_BACKUP_PASSPHRASE` environment variable.
 3. A local SymVault installation, detected at runtime via a `PATH` lookup
-   for a `symvault` binary — never a compile-time dependency (see
-   [ARCHITECTURE.md](../ARCHITECTURE.md)'s standalone-first rule). When
+   for a `symvault` binary — never a compile-time dependency (the historical
+   standalone-first rule). When
    SymVault is not installed, this step is skipped immediately.
 4. An interactive terminal prompt (no-echo via `golang.org/x/term`),
    which is the final fallback when stdin is a TTY. On backup create the

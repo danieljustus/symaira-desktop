@@ -1,5 +1,7 @@
 # Troubleshooting
 
+> Historical standalone SymRelate documentation, not current `symdesk` CLI guidance. The referenced standalone architecture document was not archived here.
+
 Start with `symrelate doctor` — it never prints contact data (only paths
 and connectivity, see [PRIVACY.md](PRIVACY.md)), so its output is always
 safe to paste into a bug report.
@@ -17,8 +19,8 @@ database path before the failure. Check:
   `$XDG_DATA_HOME/symrelate` / `~/.local/share/symrelate` by default) is
   writable.
 - No other process holds an exclusive lock on `symrelate.db` — SQLite
-  uses WAL mode with a single writer connection
-  (see [ARCHITECTURE.md](../ARCHITECTURE.md)), so concurrent `symrelate`
+  uses WAL mode with a single writer connection,
+  so concurrent `symrelate`
   invocations from the same profile should not normally conflict, but a
   crashed process holding a stale lock can. Restarting resolves this in
   virtually all cases.
@@ -50,8 +52,8 @@ route any wrapper diagnostics to stderr instead.
 ## `memory status` / `meeting status` report unavailable
 
 Both SymMemory and SymMeet are optional — `symrelate` is fully functional
-without either installed (see [ARCHITECTURE.md](../ARCHITECTURE.md)'s
-standalone-first rule). "unavailable" means the respective binary was not
+without either installed (the historical standalone-first rule).
+"unavailable" means the respective binary was not
 found on `PATH`, didn't respond within the bounded timeout, or returned
 something `symrelate` could not parse as a compatible version. Installing
 or upgrading the sibling tool and re-running `status` is the fix; no

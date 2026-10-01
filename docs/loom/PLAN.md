@@ -1,7 +1,7 @@
 # Symaira Loom — Produkt-, Architektur- und Validierungsplanung
 
 **Stand: 2026-07-27** · Status: **Produktplanung abgeschlossen, Umsetzung an Gates gebunden.**
-Technische Tiefe der Raumschicht: [`../../symaira-room/docs/PLAN.md`](../../symaira-room/docs/PLAN.md).
+Technische Tiefe der Raumschicht: historisch `symaira-room/docs/PLAN.md`, nicht in diesem Repository archiviert.
 Arbeitsauftrag, aus dem dieses Dokument hervorgeht: `../../docs/TODO.md` §7.
 
 ---

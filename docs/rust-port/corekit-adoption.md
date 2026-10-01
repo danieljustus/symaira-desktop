@@ -331,3 +331,47 @@ Public logs are accessible via the GitHub Actions job URLs above. Central local
 evidence artifacts are recorded in `consumers-night-desktop-native-<jobid>.log`
 and `consumers-night-desktop-sqlite-patch-20260914T220549.373289Z/run.json`
 (referenced without personal absolute paths).
+
+## Anthropic transform transport slice
+
+The staged Rust `symdesk transform` command delegates only the Anthropic
+streaming transport to `symaira-core-llm`, pinned to CoreKit revision
+`04d1411adb57aa602b992509121011aa7666ff1a` (`0.0.0`, private upstream). The
+consumer keeps its Go-compatible intent prompt, language rule, configured
+model/max-token values, five-minute timeout, secret resolution order, chunk
+output format, and visible credential/configuration errors. Provider base URL
+overrides continue to use the existing `SYMDESK_ANTHROPIC_URL` setting. CoreKit
+owns the Anthropic request and SSE parsing; the CLI writes each delta and
+flushes it as it arrives. API keys are redacted from provider error bodies.
+
+An empty configured model falls back to Desktop's established
+`claude-sonnet-5`, rather than CoreKit's different descriptor default. Client
+construction errors retain the unwrapped prefix, while errors after streaming
+starts retain Go's `anthropic:` prefix. A failed output write cancels the
+cancellable CoreKit stream, including the otherwise-infallible max-token
+finish callback.
+
+This is CLI `transform` coverage only. It does not add Anthropic support to the
+HTTP AI route or change the Ollama/Hermes paths. The Go implementation remains
+the production oracle. The CoreKit pin raises the shared Tokio pin to `1.53.1`
+so Cargo resolves one Tokio version for both Desktop and CoreKit.
+
+Focused local checks:
+
+```sh
+cargo fmt --all --check
+cargo test -p symdesk-cli --bin symdesk ai_cli::tests --locked
+umask 0022 && cargo test -p symdesk-core -p symdesk-cli -p symdesk-protocol --locked
+cargo clippy -p symdesk-core -p symdesk-cli -p symdesk-protocol --all-targets --locked -- -D warnings
+```
+
+At the adoption worktree, the focused CoreKit transport tests, the selected Go
+`internal/ai` transform tests, and the full Rust `symdesk-core`, `symdesk-cli`,
+and `symdesk-protocol` test suites passed on Linux. A separate local process
+smoke used an isolated HOME/XDG tree and a chunked loopback Anthropic provider;
+it checked prompts, model, endpoint path, JSON escaping, plain `{chunk}` lines,
+the truncation marker, empty stderr, exit status, and delivery of the first
+chunk before the provider released the rest of its response. This local smoke
+is not native cross-platform or release evidence. The protocol test suite in
+this environment requires umask `0022`; the session default `0077` masks the
+existing upload file mode expectation from `0640` to `0600`.

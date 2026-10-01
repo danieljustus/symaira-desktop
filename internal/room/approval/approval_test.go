@@ -27,7 +27,6 @@ func TestApproveAndDenyWithScopeAndTTL(t *testing.T) {
 	if _, err := room.Init(tempDir, "Test Room", ownerID); err != nil {
 		t.Fatalf("Init room failed: %v", err)
 	}
-
 	// 1. Request a run
 	evReq, err := run.Request(tempDir, "Deploy Service", "deploy.md", "shell", ownerID)
 	if err != nil {
@@ -65,6 +64,10 @@ func TestAgentApprovalForbidden(t *testing.T) {
 	if _, err := room.Init(tempDir, "Test Room", ownerID); err != nil {
 		t.Fatalf("Init room failed: %v", err)
 	}
+	roomCfg, err := room.ReadRoomConfig(tempDir)
+	if err != nil {
+		t.Fatalf("read room config: %v", err)
+	}
 
 	agentID, _ := identity.Generate("bot_worker")
 
@@ -79,7 +82,7 @@ func TestAgentApprovalForbidden(t *testing.T) {
 	evAdd := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_add_agent",
-		Room:   "rm_test",
+		Room:   roomCfg.ID,
 		Author: ownerID.MemberID,
 		Kind:   event.KindMemberAdded,
 		Body:   json.RawMessage(agentBody),
@@ -103,7 +106,7 @@ func TestAgentApprovalForbidden(t *testing.T) {
 	}
 
 	// Agent attempts to approve -> refused
-	_, err := Approve(tempDir, bBot.RunID, "all", 10*time.Minute, agentID)
+	_, err = Approve(tempDir, bBot.RunID, "all", 10*time.Minute, agentID)
 	if err == nil {
 		t.Fatalf("expected ErrAgentApprovalForbidden, got nil")
 	}
@@ -152,10 +155,14 @@ func addMember(t *testing.T, roomDir string, ownerID, memberID *identity.Identit
 		t.Fatalf("marshal member body: %v", err)
 	}
 	j := journal.New(filepath.Join(roomDir, "journal"))
+	roomCfg, err := room.ReadRoomConfig(roomDir)
+	if err != nil {
+		t.Fatalf("read room config: %v", err)
+	}
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_add_" + memberID.MemberID,
-		Room:   "rm_test",
+		Room:   roomCfg.ID,
 		Author: ownerID.MemberID,
 		Kind:   event.KindMemberAdded,
 		Body:   json.RawMessage(body),

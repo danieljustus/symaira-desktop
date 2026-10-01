@@ -6,7 +6,7 @@
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
-    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
+    "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
     "internal/room/room/journal_append.go": "83055869dfa95128d1eb5a01061b77f9424249abcacecf6b0b1c98365b1cbfa3"
   },
   "identity_key": "3298295110e2565f962967cbf2edc8a46b280ff76d5a599f1221aceba2dca376",

@@ -447,10 +447,11 @@ fn mutate_checkpoint(
         .map_err(|error| error.to_string())?,
     )
     .map_err(|error| error.to_string())?;
+    let room_id = symroom_core::runs::read_room_id(room_dir).map_err(|error| error.to_string())?;
     append_signed(
         room_dir,
         identity,
-        "rm_test".to_owned(),
+        room_id,
         format!("ev_{}", &checkpoint_id[4..]),
         "checkpoint.requested",
         body,

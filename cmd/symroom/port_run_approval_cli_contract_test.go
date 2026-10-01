@@ -20,6 +20,7 @@ import (
 )
 
 const runApprovalCLIContractPath = "testdata/port/room/run-approval-cli.json"
+const approvalFixtureRoomID = "rm_approval_fixture"
 
 type runApprovalCLIFile struct {
 	Name    string `json:"name"`
@@ -44,6 +45,8 @@ type runApprovalCLICase struct {
 type runApprovalCLIContract struct {
 	SchemaVersion  int                  `json:"schema_version"`
 	OracleRevision string               `json:"oracle_revision"`
+	RootEvent      string               `json:"root_event"`
+	RootPubkey     string               `json:"root_pubkey"`
 	Normalization  string               `json:"normalization"`
 	SourceHashes   map[string]string    `json:"source_hashes"`
 	IdentityKeys   map[string]string    `json:"identity_keys"`
@@ -110,6 +113,8 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 	fixture := runApprovalCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "558cac10528b2a03e344640190327a662d5a60e8",
+		RootEvent:      "approval-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(keys["owner"].PublicKey),
 		Normalization:  "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",
 		IdentityKeys:   make(map[string]string, len(keys)),
 		SourceHashes:   make(map[string]string),
@@ -169,6 +174,10 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		roomDir := filepath.Join(caseDir, "room")
 		journalDir := filepath.Join(roomDir, "journal")
 		if err := os.MkdirAll(journalDir, 0o700); err != nil {
+			return fixture, err
+		}
+		roomConfig := "id = \"" + approvalFixtureRoomID + "\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 			return fixture, err
 		}
 		for _, file := range initial {
@@ -242,7 +251,7 @@ func runApprovalCLIInitialJournal(keys map[string]*identity.Identity) ([]runAppr
 		Name      string `json:"name"`
 		PublicKey string `json:"public_key"`
 	}{"Approval fixture", hex.EncodeToString(owner.PublicKey)})
-	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-room-created", Room: "rm_test", Author: owner.MemberID, Kind: event.KindRoomCreated, Body: roomBody, TS: "2026-09-01T00:00:00.000Z"})
+	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-room-created", Room: approvalFixtureRoomID, Author: owner.MemberID, Kind: event.KindRoomCreated, Body: roomBody, TS: "2026-09-01T00:00:00.000Z"})
 	for _, entry := range []struct {
 		name string
 		role members.Role
@@ -261,11 +270,11 @@ func runApprovalCLIInitialJournal(keys map[string]*identity.Identity) ([]runAppr
 			Role      members.Role       `json:"role"`
 			Kind      members.MemberKind `json:"kind"`
 		}{identity.MemberID, entry.name, hex.EncodeToString(identity.PublicKey), entry.role, entry.kind})
-		events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-add-" + entry.name, Room: "rm_test", Author: owner.MemberID, Kind: event.KindMemberAdded, Body: body, TS: fmt.Sprintf("2026-09-01T00:00:%02d.000Z", len(events))})
+		events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-add-" + entry.name, Room: approvalFixtureRoomID, Author: owner.MemberID, Kind: event.KindMemberAdded, Body: body, TS: fmt.Sprintf("2026-09-01T00:00:%02d.000Z", len(events))})
 	}
 	for _, runID := range []string{"approval-pending", "approval-approved", "approval-denied"} {
 		body, _ := json.Marshal(map[string]string{"adapter": "", "plan_file": "", "run_id": runID, "title": runID})
-		events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-request-" + runID, Room: "rm_test", Author: owner.MemberID, Kind: event.KindRunRequested, Body: body, TS: fmt.Sprintf("2026-09-01T00:01:%02d.000Z", len(events))})
+		events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-request-" + runID, Room: approvalFixtureRoomID, Author: owner.MemberID, Kind: event.KindRunRequested, Body: body, TS: fmt.Sprintf("2026-09-01T00:01:%02d.000Z", len(events))})
 	}
 	approvedBody, _ := json.Marshal(struct {
 		RunID      string `json:"run_id"`
@@ -273,12 +282,12 @@ func runApprovalCLIInitialJournal(keys map[string]*identity.Identity) ([]runAppr
 		Scope      string `json:"scope"`
 		ExpiresAt  string `json:"expires_at"`
 	}{"approval-approved", "app_seeded", "all", "2099-01-01T00:00:00Z"})
-	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-approved-event", Room: "rm_test", Author: owner.MemberID, Kind: event.KindRunApproved, Body: approvedBody, TS: "2026-09-01T00:02:00.000Z"})
+	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-approved-event", Room: approvalFixtureRoomID, Author: owner.MemberID, Kind: event.KindRunApproved, Body: approvedBody, TS: "2026-09-01T00:02:00.000Z"})
 	deniedBody, _ := json.Marshal(struct {
 		RunID  string `json:"run_id"`
 		Reason string `json:"reason"`
 	}{"approval-denied", "seeded"})
-	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-denied-event", Room: "rm_test", Author: owner.MemberID, Kind: event.KindRunDenied, Body: deniedBody, TS: "2026-09-01T00:03:00.000Z"})
+	events = append(events, &event.Event{V: event.CurrentVersion, ID: "approval-denied-event", Room: approvalFixtureRoomID, Author: owner.MemberID, Kind: event.KindRunDenied, Body: deniedBody, TS: "2026-09-01T00:03:00.000Z"})
 	var content []byte
 	prev := "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 	for index, ev := range events {

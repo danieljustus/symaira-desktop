@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_on": "darwin",
+  "generated_on": "linux",
   "oracle": {
     "commit": "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a",
     "release": "v0.1.0"

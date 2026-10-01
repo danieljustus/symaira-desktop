@@ -8,6 +8,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/internal/room/room"
 )
 
 func TestRunLifecycleAndStateTransitions(t *testing.T) {
@@ -16,6 +17,7 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate identity: %v", err)
 	}
+	initRunTestRoom(t, tempDir, ownerID)
 
 	// 1. Request run
 	evReq, err := Request(tempDir, "Test Task", "plan.md", "shell", ownerID)
@@ -30,6 +32,10 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 		t.Fatalf("unmarshal request body: %v", err)
 	}
 	runID := b.RunID
+	roomCfg, err := room.ReadRoomConfig(tempDir)
+	if err != nil {
+		t.Fatalf("read room config: %v", err)
+	}
 
 	r, err := Get(tempDir, runID)
 	if err != nil {
@@ -51,7 +57,7 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 	evApp := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_app1",
-		Room:   "rm_test",
+		Room:   roomCfg.ID,
 		Author: ownerID.MemberID,
 		Kind:   event.KindRunApproved,
 		Body:   json.RawMessage(appBody),
@@ -95,9 +101,17 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 	}
 }
 
+func initRunTestRoom(t *testing.T, dir string, owner *identity.Identity) {
+	t.Helper()
+	if _, err := room.Init(dir, "Run Test Room", owner); err != nil {
+		t.Fatalf("initialize room: %v", err)
+	}
+}
+
 func TestPendingRunsList(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initRunTestRoom(t, tempDir, ownerID)
 
 	ev1, _ := Request(tempDir, "Pending 1", "", "", ownerID)
 	var b1 struct {
@@ -122,6 +136,7 @@ func TestCancelRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate identity: %v", err)
 	}
+	initRunTestRoom(t, tempDir, ownerID)
 
 	ev, err := Request(tempDir, "Cancel me", "", "", ownerID)
 	if err != nil {

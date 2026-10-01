@@ -12,6 +12,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 	"github.com/danieljustus/symaira-desktop/internal/room/members"
+	roomconfig "github.com/danieljustus/symaira-desktop/internal/room/room"
 	"github.com/danieljustus/symaira-desktop/internal/room/run"
 )
 
@@ -20,6 +21,10 @@ var (
 )
 
 func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Identity) (*event.Event, error) {
+	cfg, err := roomconfig.ReadRoomConfig(roomDir)
+	if err != nil {
+		return nil, err
+	}
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	merged, err := j.MergeAll()
 	if err != nil {
@@ -27,8 +32,11 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 	}
 	state := members.NewState()
 	for _, e := range merged {
-		if err := state.ApplyEvent(e); err != nil {
-			return nil, err
+		switch e.Kind {
+		case event.KindRoomCreated, event.KindMemberAdded, event.KindMemberRemoved, event.KindMemberRoleChanged:
+			if e.Room == cfg.ID {
+				_ = state.ApplySignedEventWithRoot(e, cfg.RootEvent, cfg.RootPubkey)
+			}
 		}
 	}
 	m, exists := state.Members[id.MemberID]
@@ -84,7 +92,7 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + appID[4:],
-		Room:   "rm_test",
+		Room:   cfg.ID,
 		Author: id.MemberID,
 		Kind:   event.KindRunApproved,
 		Body:   json.RawMessage(bodyBytes),
@@ -104,6 +112,10 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 }
 
 func Deny(roomDir, runID, reason string, id *identity.Identity) (*event.Event, error) {
+	cfg, err := roomconfig.ReadRoomConfig(roomDir)
+	if err != nil {
+		return nil, err
+	}
 	r, err := run.Get(roomDir, runID)
 	if err != nil {
 		return nil, err
@@ -128,7 +140,7 @@ func Deny(roomDir, runID, reason string, id *identity.Identity) (*event.Event, e
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + appID[4:],
-		Room:   "rm_test",
+		Room:   cfg.ID,
 		Author: id.MemberID,
 		Kind:   event.KindRunDenied,
 		Body:   json.RawMessage(bodyBytes),

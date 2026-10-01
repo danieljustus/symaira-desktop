@@ -21,7 +21,6 @@ func TestCheckpointLifecycle(t *testing.T) {
 	if _, err := room.Init(tempDir, "Test Room", ownerID); err != nil {
 		t.Fatalf("Init room failed: %v", err)
 	}
-
 	evReq, _ := Request(tempDir, "Checkpoint Task", "", "", ownerID)
 	var bReq struct {
 		RunID string `json:"run_id"`
@@ -82,6 +81,10 @@ func TestAgentCannotResolveCheckpoint(t *testing.T) {
 	if _, err := room.Init(tempDir, "Test Room", ownerID); err != nil {
 		t.Fatalf("Init room failed: %v", err)
 	}
+	roomCfg, err := room.ReadRoomConfig(tempDir)
+	if err != nil {
+		t.Fatalf("read room config: %v", err)
+	}
 
 	agentID, _ := identity.Generate("bot_worker")
 
@@ -96,7 +99,7 @@ func TestAgentCannotResolveCheckpoint(t *testing.T) {
 	evAdd := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_add_agent_chk",
-		Room:   "rm_test",
+		Room:   roomCfg.ID,
 		Author: ownerID.MemberID,
 		Kind:   event.KindMemberAdded,
 		Body:   json.RawMessage(agentBody),
@@ -128,7 +131,7 @@ func TestAgentCannotResolveCheckpoint(t *testing.T) {
 	}
 
 	// Agent tries to resolve -> forbidden
-	_, err := ResolveCheckpoint(tempDir, bChk.CheckpointID, "Self approved", agentID)
+	_, err = ResolveCheckpoint(tempDir, bChk.CheckpointID, "Self approved", agentID)
 	if err == nil {
 		t.Fatalf("expected ErrAgentCheckpointResolveForbidden, got nil")
 	}

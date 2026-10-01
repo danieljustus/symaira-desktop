@@ -31,6 +31,10 @@ type Checkpoint struct {
 }
 
 func RequestCheckpoint(roomDir, runID, question string, id *identity.Identity) (*event.Event, error) {
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 	chkID := "chk_" + journal.ComputeLineHash([]byte(runID + question + time.Now().String()))[7:23]
 	bodyMap := map[string]string{
 		"checkpoint_id": chkID,
@@ -43,7 +47,7 @@ func RequestCheckpoint(roomDir, runID, question string, id *identity.Identity) (
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + chkID[4:],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindCheckpointReq,
 		Body:   json.RawMessage(bodyBytes),
@@ -63,6 +67,10 @@ func RequestCheckpoint(roomDir, runID, question string, id *identity.Identity) (
 }
 
 func ResolveCheckpoint(roomDir, chkID, answer string, id *identity.Identity) (*event.Event, error) {
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	merged, err := j.MergeAll()
 	if err != nil {
@@ -98,7 +106,7 @@ func ResolveCheckpoint(roomDir, chkID, answer string, id *identity.Identity) (*e
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + journal.ComputeLineHash([]byte(chkID + answer))[7:23],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindCheckpointResolved,
 		Body:   json.RawMessage(bodyBytes),

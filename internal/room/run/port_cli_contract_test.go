@@ -22,6 +22,8 @@ const runCLIContractFixture = "testdata/port/room/run-cli.json"
 type runCLIContract struct {
 	SchemaVersion  int               `json:"schema_version"`
 	OracleRevision string            `json:"oracle_revision"`
+	RootEvent      string            `json:"root_event"`
+	RootPubkey     string            `json:"root_pubkey"`
 	SourceHashes   map[string]string `json:"source_hashes"`
 	JournalFiles   []runJournalFile  `json:"journal_files"`
 	Cases          []runCLICase      `json:"cases"`
@@ -75,6 +77,8 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	beta := runProjectionIdentity("cli-beta")
 	identities := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
 	events := []*event.Event{
+		projectionEvent("cli-room-created", event.KindRoomCreated, `{"name":"Alpha","public_key":"`+hex.EncodeToString(alpha.PublicKey)+`"}`, alpha.MemberID, "2026-03-01T09:59:58.000Z"),
+		projectionEvent("cli-member-added", event.KindMemberAdded, `{"id":"`+beta.MemberID+`","name":"Beta","public_key":"`+hex.EncodeToString(beta.PublicKey)+`","role":"member","kind":"human"}`, alpha.MemberID, "2026-03-01T09:59:59.000Z"),
 		projectionEvent("cli-request-finished", event.KindRunRequested, `{"run_id":"cli-finished","title":"CLI <Finished>&","plan_file":"plans/final.md","adapter":"local"}`, alpha.MemberID, "2026-03-01T10:00:00.000Z"),
 		projectionEvent("cli-finish", event.KindRunFinished, `{"run_id":"cli-finished","summary":"done"}`, beta.MemberID, "2026-03-01T10:01:00.000Z"),
 		projectionEvent("cli-checkpoint-request", event.KindCheckpointReq, `{"checkpoint_id":"cli-checkpoint","run_id":"cli-finished","question":"Review output?"}`, alpha.MemberID, "2026-03-01T10:02:00.000Z"),
@@ -105,12 +109,15 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	}
 
 	fixture := runCLIContract{
-		SchemaVersion: 1, OracleRevision: "97280a946316682fc3ce3d7650597655ff0e46ae",
+		SchemaVersion: 1, OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		RootEvent: "cli-room-created", RootPubkey: "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
+			"internal/room/run/checkpoint.go":  runCLIFileHash(t, root, "internal/room/run/checkpoint.go"),
 			"internal/room/run/run.go":         runCLIFileHash(t, root, "internal/room/run/run.go"),
 			"internal/room/journal/journal.go": runCLIFileHash(t, root, "internal/room/journal/journal.go"),
+			"internal/room/members/members.go": runCLIFileHash(t, root, "internal/room/members/members.go"),
 		},
 	}
 	for author, content := range contents {
@@ -126,12 +133,23 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
 		return runCLIContract{}, err
 	}
+	roomConfig := "id = \"room-test\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+	if err := os.WriteFile(filepath.Join(mainRoom, "room.toml"), []byte(roomConfig), 0o600); err != nil {
+		return runCLIContract{}, err
+	}
+	emptyRoom := filepath.Join(temp, "empty")
+	if err := os.MkdirAll(emptyRoom, 0o700); err != nil {
+		return runCLIContract{}, err
+	}
+	if err := os.WriteFile(filepath.Join(emptyRoom, "room.toml"), []byte(roomConfig), 0o600); err != nil {
+		return runCLIContract{}, err
+	}
 	for _, file := range fixture.JournalFiles {
 		if err := os.WriteFile(filepath.Join(journalDir, file.Name), file.bytes(), 0o600); err != nil {
 			return runCLIContract{}, err
 		}
 	}
-	rooms := map[string]string{"main": mainRoom, "empty": filepath.Join(temp, "empty")}
+	rooms := map[string]string{"main": mainRoom, "empty": emptyRoom}
 	for _, vector := range []struct {
 		name string
 		room string

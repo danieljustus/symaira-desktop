@@ -11,7 +11,7 @@
     "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
     "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
-    "internal/room/run/run.go": "296fc5fec6f66adef8390e3884e8ce5b8a68f6a20bdc38c7df7702b5f20bae7b"
+    "internal/room/run/run.go": "6559b3c23ce07a16dc1e024aa8ffc8759fe7646224a633621b95b05da071c8a5"
   },
   "identity_key": "86844617fe7a693c201686ae766219533d3805db5388f9cb627c40df53ea787b",
   "identity_member": "mem_a0aa170cbb83e221",

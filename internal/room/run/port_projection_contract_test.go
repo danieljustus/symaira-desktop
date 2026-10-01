@@ -206,6 +206,12 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	projected := ProjectRunsInConfiguredRoom(events, &roomconfig.RoomConfig{
 		ID: "room-test", RootEvent: "projection-room-created", RootPubkey: "ed25519:" + hex.EncodeToString(owner.PublicKey),
 	})
+	emptyAnchorProjection := ProjectRunsInConfiguredRoom(events, &roomconfig.RoomConfig{
+		ID: "room-test", RootPubkey: "ed25519:" + hex.EncodeToString(takeover.PublicKey),
+	})
+	if got := emptyAnchorProjection["run-room-takeover"].State; got != StateRequested {
+		t.Fatalf("an empty configured root anchor must reject a self-signed root and approval, got %q", got)
+	}
 	ids := make([]string, 0, len(projected))
 	for id := range projected {
 		ids = append(ids, id)

@@ -8,7 +8,7 @@
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
     "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
-    "internal/room/run/run.go": "296fc5fec6f66adef8390e3884e8ce5b8a68f6a20bdc38c7df7702b5f20bae7b",
+    "internal/room/run/run.go": "6559b3c23ce07a16dc1e024aa8ffc8759fe7646224a633621b95b05da071c8a5",
     "internal/room/run/wait.go": "a3296dd538d35dd0cd2e2809ac2a084663fd35d9cbc23c18846697178c4c44d7"
   },
   "journal_files": [

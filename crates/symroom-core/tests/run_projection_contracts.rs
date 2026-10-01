@@ -202,6 +202,12 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         &fixture.root_event,
         &fixture.root_pubkey,
     );
+    let empty_anchor_projection =
+        runs::project_runs_in_configured_room(&events, "room-test", "", &fixture.root_pubkey);
+    assert_eq!(
+        empty_anchor_projection["run-room-takeover"].state, "requested",
+        "empty configured root anchor must reject a self-signed root and approval"
+    );
     let actual_records = projected
         .values()
         .map(|run| serde_json::to_string(run).expect("run serializes"))

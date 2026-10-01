@@ -271,10 +271,10 @@ func Fail(roomDir, runID, errMsg string, id *identity.Identity) (*event.Event, e
 // ProjectRunsInConfiguredRoom so both the room ID and root identity are bound
 // to room.toml.
 func ProjectRuns(events []*event.Event) map[string]*Run {
-	return projectRuns(events, "", "")
+	return projectRuns(events, "", "", false)
 }
 
-func projectRuns(events []*event.Event, rootEvent, rootPubkey string) map[string]*Run {
+func projectRuns(events []*event.Event, rootEvent, rootPubkey string, anchored bool) map[string]*Run {
 	runs := make(map[string]*Run)
 	membership := members.NewState()
 
@@ -284,7 +284,7 @@ func projectRuns(events []*event.Event, rootEvent, rootPubkey string) map[string
 			// Membership changes also need the current signer's signature. Without
 			// this check, a forged member.added event with Author set to an owner
 			// could inject a key that later signs a projected approval.
-			if rootEvent != "" {
+			if anchored {
 				_ = membership.ApplySignedEventWithRoot(ev, rootEvent, rootPubkey)
 			} else {
 				_ = applySignedMembershipEvent(membership, ev)
@@ -433,7 +433,7 @@ func ProjectRunsInConfiguredRoom(events []*event.Event, cfg *roomconfig.RoomConf
 			roomEvents = append(roomEvents, ev)
 		}
 	}
-	return projectRuns(roomEvents, cfg.RootEvent, cfg.RootPubkey)
+	return projectRuns(roomEvents, cfg.RootEvent, cfg.RootPubkey, true)
 }
 
 func List(roomDir string, pendingOnly bool) ([]*Run, error) {

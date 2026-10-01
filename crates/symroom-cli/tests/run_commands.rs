@@ -13,13 +13,15 @@ use std::{
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
-const ORACLE_REVISION: &str = "97280a946316682fc3ce3d7650597655ff0e46ae";
-const MUTATION_ORACLE_REVISION: &str = "a9f42980e4695e20b2c948d7f17fe67734eff901";
+const ORACLE_REVISION: &str = "6f1c04e38e283e0e722661725bd5baec9f3f5fe5";
+const MUTATION_ORACLE_REVISION: &str = "6f1c04e38e283e0e722661725bd5baec9f3f5fe5";
 
 #[derive(Deserialize)]
 struct Fixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     journal_files: Vec<JournalFile>,
     cases: Vec<Case>,
@@ -45,6 +47,8 @@ struct Case {
 struct WaitFixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     journal_files: Vec<JournalFile>,
     cases: Vec<Case>,
@@ -54,6 +58,8 @@ struct WaitFixture {
 struct MutationFixture {
     schema_version: u32,
     oracle_revision: String,
+    root_event: String,
+    root_pubkey: String,
     source_hashes: std::collections::BTreeMap<String, String>,
     identity_key: String,
     identity_member: String,
@@ -83,7 +89,7 @@ fn run_list_and_show_match_go_process_contract() {
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse Go-generated fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 4);
+    assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(!fixture.cases.is_empty());
     assert!(fixture.cases.iter().any(|case| case.exit_code == 5));
@@ -93,12 +99,18 @@ fn run_list_and_show_match_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create fixture journal");
+    let room_config = format!(
+        "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+        fixture.root_event, fixture.root_pubkey
+    );
+    fs::write(main_room.join("room.toml"), &room_config).expect("write fixture room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed fixture journal segment");
     }
     let empty_room = temp.path.join("empty");
     fs::create_dir(&empty_room).expect("create empty room");
+    fs::write(empty_room.join("room.toml"), &room_config).expect("write empty room config");
 
     for case in &fixture.cases {
         let room = match case.room.as_str() {
@@ -143,7 +155,7 @@ fn run_wait_matches_go_process_contract() {
     let fixture: WaitFixture = serde_json::from_slice(&data).expect("parse Go wait fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 5);
+    assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 4));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 10));
@@ -152,6 +164,11 @@ fn run_wait_matches_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create wait fixture journal");
+    let room_config = format!(
+        "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+        fixture.root_event, fixture.root_pubkey
+    );
+    fs::write(main_room.join("room.toml"), room_config).expect("write wait room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed wait fixture segment");
@@ -204,7 +221,7 @@ fn run_request_start_cancel_match_go_process_contract() {
         serde_json::from_slice(&data).expect("parse Go mutation fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, MUTATION_ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 7);
+    assert_eq!(fixture.source_hashes.len(), 8);
     for (path, expected) in &fixture.source_hashes {
         let source = fs::read(
             Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -223,6 +240,11 @@ fn run_request_start_cancel_match_go_process_contract() {
         let room = temp.path.join(format!("room-{}", case.name));
         let journal = room.join("journal");
         fs::create_dir_all(&journal).expect("create mutation fixture journal");
+        let room_config = format!(
+            "id = \"room-test\"\nroot_event = \"{}\"\nroot_pubkey = \"{}\"\n",
+            fixture.root_event, fixture.root_pubkey
+        );
+        fs::write(room.join("room.toml"), room_config).expect("write mutation room config");
         for file in &fixture.journal_files {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go-signed mutation fixture segment");

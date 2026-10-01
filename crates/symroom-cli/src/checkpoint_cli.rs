@@ -272,6 +272,7 @@ fn append_signed_event(
     kind: &str,
     body: String,
 ) -> Result<Event, String> {
+    let room_id = runs::read_room_id(room).map_err(|error| error.to_string())?;
     let stats = journal::read_journal_stats(room).map_err(|error| error.to_string())?;
     let author =
         journal::author_stats(room, &signer.member_id).map_err(|error| error.to_string())?;
@@ -279,7 +280,7 @@ fn append_signed_event(
     let mut event = Event {
         v: event::CURRENT_VERSION,
         id,
-        room: "rm_test".to_owned(),
+        room: room_id,
         author: signer.member_id.clone(),
         seq: author.seq.saturating_add(1),
         prev: author.prev,

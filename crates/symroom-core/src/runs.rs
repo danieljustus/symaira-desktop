@@ -7,7 +7,7 @@ use std::{
 };
 
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
-use serde::{Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
@@ -114,11 +114,33 @@ pub fn project_checkpoints(events: &[Event]) -> BTreeMap<String, Checkpoint> {
     checkpoints
 }
 
-/// Applies only the seven `run.*` event kinds; checkpoint projection stays in
-/// its separate ROOM slice, as it does not affect the records here.
+/// Projects a trusted single-room event stream. For room directories and
+/// mixed or untrusted journals, use [`project_runs_in_configured_room`] to
+/// bind both the room ID and its root identity.
+/// Checkpoint projection stays in its separate ROOM slice, as it does not
+/// affect the records here.
 pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
+    project_runs_with_root(events, None)
+}
+
+fn project_runs_with_root(events: &[Event], root: Option<(&str, &str)>) -> BTreeMap<String, Run> {
     let mut runs = BTreeMap::new();
+    let mut membership = crate::members::State::default();
     for event in events {
+        if matches!(
+            event.kind.as_str(),
+            "room.created" | "member.added" | "member.removed" | "member.role_changed"
+        ) {
+            // Project only membership state backed by the current signer's
+            // signature; an unsigned forged member.added could otherwise
+            // authorize a later approval from an injected key.
+            if let Some((root_event, root_pubkey)) = root {
+                let _ = membership.apply_signed_event_with_root(event, root_event, root_pubkey);
+            } else {
+                let _ = membership.apply_signed_event(event);
+            }
+            continue;
+        }
         let kind = match event.kind.as_str() {
             "run.requested" | "run.approved" | "run.denied" | "run.started" | "run.finished"
             | "run.failed" | "run.cancelled" => event.kind.as_str(),
@@ -162,6 +184,18 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
                 );
             }
             "run.approved" => {
+                let Some(member) = membership.members.get(&event.author) else {
+                    continue;
+                };
+                let Ok(public_key) = hex::decode(&member.public_key) else {
+                    continue;
+                };
+                if !member.can_perform("approve")
+                    || event.verify_signature(&public_key).is_err()
+                    || membership.apply_event(event).is_err()
+                {
+                    continue;
+                }
                 let Some(run_id) = string_field(&body, "run_id") else {
                     continue;
                 };
@@ -253,13 +287,47 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
     runs
 }
 
+/// Project only records bound to the room being queried. Signatures use
+/// identity keys that may be shared by several rooms, so room IDs are also
+/// required to prevent valid events from another room crossing this boundary.
+pub fn project_runs_in_room(events: &[Event], room_id: &str) -> BTreeMap<String, Run> {
+    let room_events = events
+        .iter()
+        .filter(|event| event.room == room_id)
+        .cloned()
+        .collect::<Vec<_>>();
+    project_runs(&room_events)
+}
+
+/// Project a room directory's events against its configured room and root
+/// identity. This is the recommended API for mixed or untrusted journals.
+pub fn project_runs_in_configured_room(
+    events: &[Event],
+    room_id: &str,
+    root_event: &str,
+    root_pubkey: &str,
+) -> BTreeMap<String, Run> {
+    let room_events = events
+        .iter()
+        .filter(|event| event.room == room_id)
+        .cloned()
+        .collect::<Vec<_>>();
+    project_runs_with_root(&room_events, Some((root_event, root_pubkey)))
+}
+
 /// Go: `run.List`, including `journal.MergeAll` and the creation-time ordering.
 pub fn list(room_dir: &std::path::Path, pending_only: bool) -> Result<Vec<Run>, RunQueryError> {
     let events = journal::merge_all(room_dir)?;
-    let mut runs: Vec<_> = project_runs(&events)
-        .into_values()
-        .filter(|run| !pending_only || matches!(run.state.as_str(), "requested" | "approved"))
-        .collect();
+    let config = read_room_config(room_dir)?;
+    let mut runs: Vec<_> = project_runs_in_configured_room(
+        &events,
+        &config.id,
+        &config.root_event,
+        &config.root_pubkey,
+    )
+    .into_values()
+    .filter(|run| !pending_only || matches!(run.state.as_str(), "requested" | "approved"))
+    .collect();
     runs.sort_by(|left, right| left.created_at.cmp(&right.created_at));
     Ok(runs)
 }
@@ -267,7 +335,8 @@ pub fn list(room_dir: &std::path::Path, pending_only: bool) -> Result<Vec<Run>, 
 /// Go: `run.Get`, including `journal.MergeAll`.
 pub fn get(room_dir: &std::path::Path, run_id: &str) -> Result<Run, RunQueryError> {
     let events = journal::merge_all(room_dir)?;
-    project_runs(&events)
+    let config = read_room_config(room_dir)?;
+    project_runs_in_configured_room(&events, &config.id, &config.root_event, &config.root_pubkey)
         .remove(run_id)
         .ok_or(RunQueryError::NotFound)
 }
@@ -385,6 +454,7 @@ fn append_run_event(
     kind: &str,
     body: String,
 ) -> Result<Event, RunMutationError> {
+    let room_id = read_room_id(room_dir)?;
     let stats = journal::read_journal_stats(room_dir)?;
     let author = journal::author_stats(room_dir, &identity.member_id)?;
     let body = RawValue::from_string(body)
@@ -392,7 +462,7 @@ fn append_run_event(
     let mut event = Event {
         v: event::CURRENT_VERSION,
         id,
-        room: "rm_test".to_owned(),
+        room: room_id,
         author: identity.member_id.clone(),
         seq: author.seq.saturating_add(1),
         prev: author.prev,
@@ -447,8 +517,30 @@ pub enum RunWaitError {
 pub enum RunQueryError {
     #[error(transparent)]
     Journal(#[from] journal::ReadSegmentsError),
+    #[error("room config: {0}")]
+    RoomConfig(String),
     #[error("run not found")]
     NotFound,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct RunRoomConfig {
+    pub id: String,
+    #[serde(default)]
+    pub root_event: String,
+    #[serde(default)]
+    pub root_pubkey: String,
+}
+
+pub(crate) fn read_room_config(room_dir: &std::path::Path) -> Result<RunRoomConfig, RunQueryError> {
+    let config = std::fs::read_to_string(room_dir.join("room.toml"))
+        .map_err(|error| RunQueryError::RoomConfig(format!("read room.toml: {error}")))?;
+    toml::from_str(&config)
+        .map_err(|error| RunQueryError::RoomConfig(format!("parse room.toml: {error}")))
+}
+
+pub fn read_room_id(room_dir: &std::path::Path) -> Result<String, RunQueryError> {
+    Ok(read_room_config(room_dir)?.id)
 }
 
 struct BodyFieldsSeed<'a>(&'a str);

@@ -2,6 +2,8 @@ package run
 
 import (
 	"bytes"
+	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
@@ -19,6 +22,8 @@ const runWaitCLIContractFixture = "testdata/port/room/run-wait-cli.json"
 type runWaitCLIContract struct {
 	SchemaVersion  int               `json:"schema_version"`
 	OracleRevision string            `json:"oracle_revision"`
+	RootEvent      string            `json:"root_event"`
+	RootPubkey     string            `json:"root_pubkey"`
 	SourceHashes   map[string]string `json:"source_hashes"`
 	JournalFiles   []runJournalFile  `json:"journal_files"`
 	Cases          []runWaitCLICase  `json:"cases"`
@@ -72,6 +77,8 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 	beta := runProjectionIdentity("wait-beta")
 	identities := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
 	events := []*event.Event{
+		projectionEvent("wait-room-created", event.KindRoomCreated, `{"name":"Alpha","public_key":"`+hex.EncodeToString(alpha.PublicKey)+`"}`, alpha.MemberID, "2026-04-01T09:59:58.000Z"),
+		projectionEvent("wait-member-added", event.KindMemberAdded, `{"id":"`+beta.MemberID+`","name":"Beta","public_key":"`+hex.EncodeToString(beta.PublicKey)+`","role":"member","kind":"human"}`, alpha.MemberID, "2026-04-01T09:59:59.000Z"),
 		projectionEvent("wait-request-approved", event.KindRunRequested, `{"run_id":"wait-approved","title":"Wait approved"}`, alpha.MemberID, "2026-04-01T10:00:00.000Z"),
 		projectionEvent("wait-approve", event.KindRunApproved, `{"run_id":"wait-approved","approval_id":"wait-approval","scope":"room","expires_at":"2026-04-02T10:00:00Z"}`, beta.MemberID, "2026-04-01T10:00:01.000Z"),
 		projectionEvent("wait-request-denied", event.KindRunRequested, `{"run_id":"wait-denied","title":"Wait denied"}`, alpha.MemberID, "2026-04-01T10:01:00.000Z"),
@@ -104,13 +111,16 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 
 	fixture := runWaitCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "97280a946316682fc3ce3d7650597655ff0e46ae",
+		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		RootEvent:      "wait-room-created",
+		RootPubkey:     "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
 			"internal/room/run/run.go":         runCLIFileHash(t, root, "internal/room/run/run.go"),
 			"internal/room/run/wait.go":        runCLIFileHash(t, root, "internal/room/run/wait.go"),
 			"internal/room/journal/journal.go": runCLIFileHash(t, root, "internal/room/journal/journal.go"),
+			"internal/room/members/members.go": runCLIFileHash(t, root, "internal/room/members/members.go"),
 		},
 	}
 	for author, content := range contents {
@@ -122,6 +132,10 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 	mainRoom := filepath.Join(temp, "main")
 	journalDir := filepath.Join(mainRoom, "journal")
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
+		return runWaitCLIContract{}, err
+	}
+	roomConfig := "id = \"room-test\"\nroot_event = \"" + fixture.RootEvent + "\"\nroot_pubkey = \"" + fixture.RootPubkey + "\"\n"
+	if err := os.WriteFile(filepath.Join(mainRoom, "room.toml"), []byte(roomConfig), 0o600); err != nil {
 		return runWaitCLIContract{}, err
 	}
 	for _, file := range fixture.JournalFiles {
@@ -163,7 +177,8 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 		{"wait-help", "main", []string{"run", "wait", "-h"}},
 		{"unknown-flag", "main", []string{"run", "wait", "--unknown"}},
 	} {
-		cmd := exec.Command(executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cmd := exec.CommandContext(ctx, executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		caseEnv := filepath.Join(temp, "env-"+vector.name)
 		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
 		cmd.Env = []string{
@@ -173,6 +188,11 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
 		stdout, err := cmd.Output()
+		timedOut := ctx.Err() != nil
+		cancel()
+		if timedOut {
+			return runWaitCLIContract{}, fmt.Errorf("Go oracle case %s exceeded 5s", vector.name)
+		}
 		code := 0
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {

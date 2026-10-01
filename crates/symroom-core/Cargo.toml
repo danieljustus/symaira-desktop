@@ -17,4 +17,5 @@ sha2.workspace = true
 hex.workspace = true
 thiserror.workspace = true
 rusqlite.workspace = true
+toml.workspace = true
 symaira-core-sqlite.workspace = true

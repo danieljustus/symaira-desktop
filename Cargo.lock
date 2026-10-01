@@ -2108,6 +2108,7 @@ dependencies = [
  "symaira-core-sqlite",
  "thiserror",
  "time",
+ "toml",
 ]
 
 [[package]]

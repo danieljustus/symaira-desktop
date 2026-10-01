@@ -38,6 +38,7 @@ impl Member {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct State {
     pub members: BTreeMap<String, Member>,
+    room_created: bool,
 }
 
 #[derive(Default)]
@@ -116,6 +117,9 @@ impl State {
     pub fn apply_event(&mut self, event: &Event) -> Result<(), String> {
         match event.kind.as_str() {
             "room.created" => {
+                if self.room_created {
+                    return Err("room.created must be the first membership event".into());
+                }
                 let body = parse_body(&event.body, "room.created")?;
                 let public_key = decode_key(&body.public_key, "root")?;
                 self.members.insert(
@@ -128,6 +132,7 @@ impl State {
                         kind: "human".into(),
                     },
                 );
+                self.room_created = true;
             }
             "member.added" | "member.removed" | "member.role_changed" => {
                 if self
@@ -178,6 +183,60 @@ impl State {
             _ => {}
         }
         Ok(())
+    }
+
+    /// Verify a membership journal event with the current member key before
+    /// applying it. `room.created` carries its own initial public key; every
+    /// later membership mutation must be signed by a currently known member.
+    pub fn apply_signed_event(&mut self, event: &Event) -> Result<(), String> {
+        let public_key = if event.kind == "room.created" {
+            if self.room_created {
+                return Err("room.created must be the first membership event".into());
+            }
+            let body = parse_body(&event.body, &event.kind)?;
+            let public_key = hex::decode(decode_key(&body.public_key, "root")?)
+                .map_err(|error| error.to_string())?;
+            if crate::identity::compute_member_id(&public_key) != event.author {
+                return Err("room.created author does not match its public key".into());
+            }
+            public_key
+        } else {
+            let member = self
+                .members
+                .get(&event.author)
+                .ok_or_else(|| "member not found".to_owned())?;
+            hex::decode(&member.public_key).map_err(|error| error.to_string())?
+        };
+        event
+            .verify_signature(&public_key)
+            .map_err(|error| error.to_string())?;
+        self.apply_event(event)
+    }
+
+    /// Authenticate a membership event while binding the initial room root to
+    /// the event ID and public key persisted in room.toml.
+    pub fn apply_signed_event_with_root(
+        &mut self,
+        event: &Event,
+        root_event: &str,
+        root_pubkey: &str,
+    ) -> Result<(), String> {
+        if event.kind == "room.created" {
+            if event.id != root_event {
+                return Err("room.created does not match configured root event".into());
+            }
+            let body = parse_body(&event.body, &event.kind)?;
+            let configured_key = root_pubkey.strip_prefix("ed25519:").unwrap_or(root_pubkey);
+            let configured_key = hex::decode(configured_key)
+                .map_err(|_| "invalid configured root pubkey".to_owned())?;
+            let event_key = hex::decode(&body.public_key).map_err(|error| error.to_string())?;
+            if configured_key.len() != ed25519_dalek::PUBLIC_KEY_LENGTH
+                || configured_key != event_key
+            {
+                return Err("room.created public key does not match configured root pubkey".into());
+            }
+        }
+        self.apply_signed_event(event)
     }
 }
 

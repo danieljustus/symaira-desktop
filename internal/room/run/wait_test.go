@@ -11,11 +11,13 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/internal/room/room"
 )
 
 func TestWaitApprovedPromptly(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initRunTestRoom(t, tempDir, ownerID)
 
 	evReq, _ := Request(tempDir, "Wait Test", "", "", ownerID)
 	var bReq struct {
@@ -25,6 +27,10 @@ func TestWaitApprovedPromptly(t *testing.T) {
 		t.Fatalf("unmarshal request body: %v", err)
 	}
 	runID := bReq.RunID
+	roomCfg, err := room.ReadRoomConfig(tempDir)
+	if err != nil {
+		t.Fatalf("read room config: %v", err)
+	}
 
 	// Approve run asynchronously after 50ms
 	go func() {
@@ -33,7 +39,7 @@ func TestWaitApprovedPromptly(t *testing.T) {
 		evApp := &event.Event{
 			V:      event.CurrentVersion,
 			ID:     "ev_app_wait",
-			Room:   "rm_test",
+			Room:   roomCfg.ID,
 			Author: ownerID.MemberID,
 			Kind:   event.KindRunApproved,
 			Body:   []byte(`{"run_id":"` + runID + `"}`),
@@ -68,6 +74,7 @@ func TestWaitApprovedPromptly(t *testing.T) {
 func TestWaitTimeout(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initRunTestRoom(t, tempDir, ownerID)
 
 	evReq, _ := Request(tempDir, "Timeout Test", "", "", ownerID)
 	var bTimeout struct {

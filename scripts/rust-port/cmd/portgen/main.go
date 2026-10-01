@@ -249,6 +249,7 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
 		{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
 		{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen"}},
 		{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen"}},
 	}
 	for _, target := range commands {

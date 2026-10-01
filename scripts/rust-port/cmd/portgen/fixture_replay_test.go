@@ -25,7 +25,7 @@ func TestFixtureReplayOracleArguments(t *testing.T) {
 		writePortgenTestFile(t, root, rel, string(content)+"\n")
 	}
 	for _, target := range fixtureGeneratorTargets {
-		selected := len(target.args) > 1 && (target.args[1] == "./scripts/rust-port/cmd/configgen" || target.args[1] == "./scripts/rust-port/cmd/coregen" || target.args[1] == "./scripts/rust-port/cmd/querygen" || target.args[1] == "./scripts/rust-port/cmd/vaultgen" || target.args[1] == "./scripts/rust-port/cmd/vaultfsgen")
+		selected := len(target.args) > 1 && (target.args[1] == "./scripts/rust-port/cmd/configgen" || target.args[1] == "./scripts/rust-port/cmd/coregen" || target.args[1] == "./scripts/rust-port/cmd/querygen" || target.args[1] == "./scripts/rust-port/cmd/vaultgen" || target.args[1] == "./scripts/rust-port/cmd/vaultfsgen" || target.args[1] == "./scripts/rust-port/cmd/vaultwritegen")
 		if !selected {
 			got, err := fixtureReplayArgs(root, target)
 			if err != nil || !reflect.DeepEqual(got, target.args) {

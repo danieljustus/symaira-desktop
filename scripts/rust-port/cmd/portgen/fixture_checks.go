@@ -136,15 +136,15 @@ var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, 
 	return nil
 }
 
-// These five generators accept a selected core/vault oracle during generation.
-// Replay uses their immutable, checksummed document identity, not the global
-// sidecar identity or historical defaults. Full-document comparisons remain.
+// Go-owned generators replay against the oracle identity recorded by each
+// output document, not the global sidecar identity or a historical default.
+// Full-document comparisons remain.
 func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, error) {
 	if len(target.args) < 2 || target.args[0] != "run" {
 		return target.args, nil
 	}
 	switch target.args[1] {
-	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen":
+	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
 	default:
 		return target.args, nil
 	}

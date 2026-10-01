@@ -77,7 +77,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 	roomOwner := runProjectionIdentity("mutations-room")
 	fixture := runMutationCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "a9f42980e4695e20b2c948d7f17fe67734eff901",
+		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
 		IdentityKey:    hex.EncodeToString(signer.PrivateKey[:ed25519.SeedSize]),
 		IdentityMember: signer.MemberID,
 		SourceHashes: map[string]string{
@@ -88,6 +88,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 			"internal/room/journal/journal.go":   runCLIFileHash(t, root, "internal/room/journal/journal.go"),
 			"internal/room/event/event.go":       runCLIFileHash(t, root, "internal/room/event/event.go"),
 			"internal/room/identity/identity.go": runCLIFileHash(t, root, "internal/room/identity/identity.go"),
+			"internal/room/members/members.go":   runCLIFileHash(t, root, "internal/room/members/members.go"),
 		},
 	}
 	initial, err := runMutationJournal(t, roomOwner)
@@ -177,6 +178,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 func runMutationJournal(t *testing.T, owner *identity.Identity) ([]runJournalFile, error) {
 	t.Helper()
 	events := []*event.Event{
+		projectionEvent("mut-room-created", event.KindRoomCreated, `{"name":"Owner","public_key":"`+hex.EncodeToString(owner.PublicKey)+`"}`, owner.MemberID, "2026-03-01T09:59:59.000Z"),
 		projectionEvent("mut-request-approved", event.KindRunRequested, `{"run_id":"mut-approved","title":"Approved"}`, owner.MemberID, "2026-03-01T10:00:00.000Z"),
 		projectionEvent("mut-approve", event.KindRunApproved, `{"run_id":"mut-approved","approval_id":"ap-1","scope":"room","expires_at":"2099-01-01T00:00:00Z"}`, owner.MemberID, "2026-03-01T10:01:00.000Z"),
 		projectionEvent("mut-request-pending", event.KindRunRequested, `{"run_id":"mut-pending","title":"Pending"}`, owner.MemberID, "2026-03-01T10:02:00.000Z"),

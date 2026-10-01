@@ -16,6 +16,7 @@ import (
 func TestWaitApprovedPromptly(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initRunTestRoom(t, tempDir, ownerID)
 
 	evReq, _ := Request(tempDir, "Wait Test", "", "", ownerID)
 	var bReq struct {
@@ -68,6 +69,7 @@ func TestWaitApprovedPromptly(t *testing.T) {
 func TestWaitTimeout(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initRunTestRoom(t, tempDir, ownerID)
 
 	evReq, _ := Request(tempDir, "Timeout Test", "", "", ownerID)
 	var bTimeout struct {

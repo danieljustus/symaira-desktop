@@ -179,6 +179,34 @@ impl State {
         }
         Ok(())
     }
+
+    /// Verify a membership journal event with the current member key before
+    /// applying it. `room.created` carries its own initial public key; every
+    /// later membership mutation must be signed by a currently known member.
+    pub fn apply_signed_event(&mut self, event: &Event) -> Result<(), String> {
+        let public_key = if event.kind == "room.created" {
+            if !self.members.is_empty() {
+                return Err("room.created must be the first membership event".into());
+            }
+            let body = parse_body(&event.body, &event.kind)?;
+            let public_key = hex::decode(decode_key(&body.public_key, "root")?)
+                .map_err(|error| error.to_string())?;
+            if crate::identity::compute_member_id(&public_key) != event.author {
+                return Err("room.created author does not match its public key".into());
+            }
+            public_key
+        } else {
+            let member = self
+                .members
+                .get(&event.author)
+                .ok_or_else(|| "member not found".to_owned())?;
+            hex::decode(&member.public_key).map_err(|error| error.to_string())?
+        };
+        event
+            .verify_signature(&public_key)
+            .map_err(|error| error.to_string())?;
+        self.apply_event(event)
+    }
 }
 
 fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {

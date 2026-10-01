@@ -95,10 +95,10 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle_revision,
-        "a80da93e3ec02801c73aa5b2318dc06de3efd3fa"
+        "6f1c04e38e283e0e722661725bd5baec9f3f5fe5"
     );
-    assert_eq!(fixture.records.len(), 8, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 32, "fixture exercises all edge paths");
+    assert_eq!(fixture.records.len(), 15, "nonzero projected records");
+    assert_eq!(fixture.events.len(), 55, "fixture exercises all edge paths");
     assert_eq!(fixture.checkpoint_records.len(), 2);
     for source in [
         "internal/room/run/run.go",
@@ -106,6 +106,7 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         "internal/room/event/event.go",
         "internal/room/journal/journal.go",
         "internal/room/journal/merge.go",
+        "internal/room/members/members.go",
     ] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
@@ -143,6 +144,23 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
     }
     for id in [
         "malformed",
+        "projection-room-created",
+        "projection-forged-room-created",
+        "projection-reviewer-added",
+        "projection-agent-added",
+        "projection-agent-room-recreated",
+        "projection-observer-added",
+        "projection-forged-member-added",
+        "approve-a",
+        "agent-approval",
+        "observer-approval",
+        "forged-approval",
+        "tampered-approval",
+        "projection-reviewer-key-rotated",
+        "old-key-approval",
+        "current-key-approval",
+        "projection-reviewer-demoted",
+        "demoted-approval",
         "empty-request",
         "unknown",
         "unmatched",
@@ -169,7 +187,12 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
             "fixture is missing edge case {id}"
         );
     }
-    assert!(matches_go_records(&events, &fixture.records));
+    let projected: BTreeMap<String, Run> = runs::project_runs(&events);
+    let actual_records = projected
+        .values()
+        .map(|run| serde_json::to_string(run).expect("run serializes"))
+        .collect::<Vec<_>>();
+    assert_eq!(actual_records, fixture.records, "Go/Rust run records");
     let checkpoints = runs::project_checkpoints(&events);
     let actual_checkpoints = checkpoints
         .values()

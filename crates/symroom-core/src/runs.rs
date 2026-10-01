@@ -118,7 +118,18 @@ pub fn project_checkpoints(events: &[Event]) -> BTreeMap<String, Checkpoint> {
 /// its separate ROOM slice, as it does not affect the records here.
 pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
     let mut runs = BTreeMap::new();
+    let mut membership = crate::members::State::default();
     for event in events {
+        if matches!(
+            event.kind.as_str(),
+            "room.created" | "member.added" | "member.removed" | "member.role_changed"
+        ) {
+            // Project only membership state backed by the current signer's
+            // signature; an unsigned forged member.added could otherwise
+            // authorize a later approval from an injected key.
+            let _ = membership.apply_signed_event(event);
+            continue;
+        }
         let kind = match event.kind.as_str() {
             "run.requested" | "run.approved" | "run.denied" | "run.started" | "run.finished"
             | "run.failed" | "run.cancelled" => event.kind.as_str(),
@@ -162,6 +173,18 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
                 );
             }
             "run.approved" => {
+                let Some(member) = membership.members.get(&event.author) else {
+                    continue;
+                };
+                let Ok(public_key) = hex::decode(&member.public_key) else {
+                    continue;
+                };
+                if !member.can_perform("approve")
+                    || event.verify_signature(&public_key).is_err()
+                    || membership.apply_event(event).is_err()
+                {
+                    continue;
+                }
                 let Some(run_id) = string_field(&body, "run_id") else {
                     continue;
                 };

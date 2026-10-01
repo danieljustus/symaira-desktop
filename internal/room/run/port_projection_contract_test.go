@@ -111,9 +111,28 @@ func TestPortRunProjectionContract(t *testing.T) {
 
 func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	t.Helper()
+	owner := runProjectionIdentity("projection-owner")
+	reviewer := runProjectionIdentity("projection-reviewer")
+	agent := runProjectionIdentity("projection-agent")
+	observer := runProjectionIdentity("projection-observer")
+	forged := runProjectionIdentity("projection-forged")
+	rotated := runProjectionIdentity("projection-reviewer-rotated-key")
 	events := []*event.Event{
+		signedProjectionEvent(t, "projection-room-created", event.KindRoomCreated, `{"name":"Owner","public_key":"`+hex.EncodeToString(owner.PublicKey)+`"}`, owner, "2026-01-02T03:00:00.000Z"),
+		// A valid signature from a different key is not a room root when the key
+		// does not hash to the event author/member ID.
+		signedProjectionEventAs(t, "projection-forged-room-created", event.KindRoomCreated, `{"name":"Forged owner","public_key":"`+hex.EncodeToString(forged.PublicKey)+`"}`, owner.MemberID, forged, "2026-01-02T03:00:00.500Z"),
+		signedProjectionEvent(t, "projection-reviewer-added", event.KindMemberAdded, `{"id":"`+reviewer.MemberID+`","name":"Reviewer","public_key":"`+hex.EncodeToString(reviewer.PublicKey)+`","role":"member","kind":"human"}`, owner, "2026-01-02T03:00:01.000Z"),
+		signedProjectionEvent(t, "projection-agent-added", event.KindMemberAdded, `{"id":"`+agent.MemberID+`","name":"Agent","public_key":"`+hex.EncodeToString(agent.PublicKey)+`","role":"agent","kind":"agent"}`, owner, "2026-01-02T03:00:02.000Z"),
+		// A later room.created signed by a legitimate non-owner must not reset
+		// that member's role to owner.
+		signedProjectionEvent(t, "projection-agent-room-recreated", event.KindRoomCreated, `{"name":"Agent","public_key":"`+hex.EncodeToString(agent.PublicKey)+`"}`, agent, "2026-01-02T03:00:02.500Z"),
+		signedProjectionEvent(t, "projection-observer-added", event.KindMemberAdded, `{"id":"`+observer.MemberID+`","name":"Observer","public_key":"`+hex.EncodeToString(observer.PublicKey)+`","role":"observer","kind":"human"}`, owner, "2026-01-02T03:00:03.000Z"),
+		// This forged owner-signed membership claim must not make its key eligible
+		// to authorize a later run.approved event.
+		signedProjectionEventAs(t, "projection-forged-member-added", event.KindMemberAdded, `{"id":"`+forged.MemberID+`","name":"Forged","public_key":"`+hex.EncodeToString(forged.PublicKey)+`","role":"member","kind":"human"}`, owner.MemberID, forged, "2026-01-02T03:00:04.000Z"),
 		projectionEvent("request-a", event.KindRunRequested, `{"run_id":"run-a","title":"Alpha","plan_file":"plans/a.md","adapter":"local"}`, "author-a", "2026-01-02T03:04:05.000Z"),
-		projectionEvent("approve-a", event.KindRunApproved, `{"run_id":"run-a","approval_id":"approval-a","scope":"workspace","expires_at":"2026-01-03T00:00:00Z"}`, "reviewer", "2026-01-02T03:05:00.000Z"),
+		signedProjectionEvent(t, "approve-a", event.KindRunApproved, `{"run_id":"run-a","approval_id":"approval-a","scope":"workspace","expires_at":"2026-01-03T00:00:00Z"}`, reviewer, "2026-01-02T03:05:00.000Z"),
 		projectionEvent("start-a", event.KindRunStarted, `{"run_id":"run-a"}`, "worker-a", "2026-01-02T03:06:00.000Z"),
 		projectionEvent("finish-a", event.KindRunFinished, `{"run_id":"run-a","summary":"done","artifacts":["out/a.txt","out/b.txt"]}`, "worker-a", "2026-01-02T03:07:00.000Z"),
 		projectionEvent("request-b", event.KindRunRequested, `{"run_id":"run-b","title":"Beta"}`, "author-b", "2026-01-02T04:00:00.000Z"),
@@ -123,7 +142,7 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		projectionEvent("fail-c", event.KindRunFailed, `{"run_id":"run-c","error":"worker exited 7"}`, "worker-c", "2026-01-02T05:02:00.000Z"),
 		projectionEvent("request-d", event.KindRunRequested, `{"run_id":"run-d","title":"Delta"}`, "author-d", "2026-01-02T06:00:00.000Z"),
 		projectionEvent("cancel-d", event.KindRunCancelled, `{"run_id":"run-d","reason":"superseded"}`, "author-d", "2026-01-02T06:01:00.000Z"),
-		projectionEvent("malformed", event.KindRunApproved, `[]`, "reviewer", "2026-01-02T07:00:00.000Z"),
+		signedProjectionEvent(t, "malformed", event.KindRunApproved, `[]`, reviewer, "2026-01-02T07:00:00.000Z"),
 		projectionEvent("empty-request", event.KindRunRequested, `{"run_id":"","title":"ignored"}`, "author", "2026-01-02T07:01:00.000Z"),
 		projectionEvent("unknown", "run.retried", `{"run_id":"run-a"}`, "worker-a", "2026-01-02T07:02:00.000Z"),
 		projectionEvent("unmatched", event.KindRunStarted, `{"run_id":"missing-run"}`, "worker-x", "2026-01-02T07:03:00.000Z"),
@@ -145,6 +164,26 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		projectionEvent("checkpoint-bad-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-main","answer":7}`, "reviewer", "2026-01-02T09:09:00.000Z"),
 		projectionEvent("checkpoint-empty-request", event.KindCheckpointReq, `{"checkpoint_id":"","run_id":"run-a","question":"ignored"}`, "author", "2026-01-02T09:10:00.000Z"),
 	}
+	tamperedApproval := signedProjectionEvent(t, "tampered-approval", event.KindRunApproved, `{"run_id":"run-tampered-approval","approval_id":"tampered-approval","scope":"room"}`, reviewer, "2026-01-02T10:07:00.000Z")
+	tamperedApproval.Body = json.RawMessage(`{"run_id":"run-tampered-approval","approval_id":"tampered-approval","scope":"forged"}`)
+	events = append(events,
+		projectionEvent("request-agent-approval", event.KindRunRequested, `{"run_id":"run-agent-approval","title":"Agent approval"}`, "author", "2026-01-02T10:00:00.000Z"),
+		signedProjectionEvent(t, "agent-approval", event.KindRunApproved, `{"run_id":"run-agent-approval","approval_id":"agent-approval","scope":"room"}`, agent, "2026-01-02T10:01:00.000Z"),
+		projectionEvent("request-observer-approval", event.KindRunRequested, `{"run_id":"run-observer-approval","title":"Observer approval"}`, "author", "2026-01-02T10:02:00.000Z"),
+		signedProjectionEvent(t, "observer-approval", event.KindRunApproved, `{"run_id":"run-observer-approval","approval_id":"observer-approval","scope":"room"}`, observer, "2026-01-02T10:03:00.000Z"),
+		projectionEvent("request-forged-approval", event.KindRunRequested, `{"run_id":"run-forged-approval","title":"Forged approval"}`, "author", "2026-01-02T10:04:00.000Z"),
+		signedProjectionEvent(t, "forged-approval", event.KindRunApproved, `{"run_id":"run-forged-approval","approval_id":"forged-approval","scope":"room"}`, forged, "2026-01-02T10:05:00.000Z"),
+		projectionEvent("request-tampered-approval", event.KindRunRequested, `{"run_id":"run-tampered-approval","title":"Tampered approval"}`, "author", "2026-01-02T10:06:00.000Z"),
+		tamperedApproval,
+		signedProjectionEvent(t, "projection-reviewer-key-rotated", event.KindMemberAdded, `{"id":"`+reviewer.MemberID+`","name":"Reviewer","public_key":"`+hex.EncodeToString(rotated.PublicKey)+`","role":"member","kind":"human"}`, owner, "2026-01-02T10:08:00.000Z"),
+		projectionEvent("request-old-key-approval", event.KindRunRequested, `{"run_id":"run-old-key-approval","title":"Old key approval"}`, "author", "2026-01-02T10:09:00.000Z"),
+		signedProjectionEvent(t, "old-key-approval", event.KindRunApproved, `{"run_id":"run-old-key-approval","approval_id":"old-key-approval","scope":"room"}`, reviewer, "2026-01-02T10:10:00.000Z"),
+		projectionEvent("request-current-key-approval", event.KindRunRequested, `{"run_id":"run-current-key-approval","title":"Current key approval"}`, "author", "2026-01-02T10:11:00.000Z"),
+		signedProjectionEventAs(t, "current-key-approval", event.KindRunApproved, `{"run_id":"run-current-key-approval","approval_id":"current-key-approval","scope":"room"}`, reviewer.MemberID, rotated, "2026-01-02T10:12:00.000Z"),
+		signedProjectionEvent(t, "projection-reviewer-demoted", event.KindMemberRoleChanged, `{"id":"`+reviewer.MemberID+`","role":"observer"}`, owner, "2026-01-02T10:13:00.000Z"),
+		projectionEvent("request-demoted-approval", event.KindRunRequested, `{"run_id":"run-demoted-approval","title":"Demoted approval"}`, "author", "2026-01-02T10:14:00.000Z"),
+		signedProjectionEventAs(t, "demoted-approval", event.KindRunApproved, `{"run_id":"run-demoted-approval","approval_id":"demoted-approval","scope":"room"}`, reviewer.MemberID, rotated, "2026-01-02T10:15:00.000Z"),
+	)
 	projected := ProjectRuns(events)
 	ids := make([]string, 0, len(projected))
 	for id := range projected {
@@ -175,13 +214,14 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	}
 	return runProjectionFixtureData{
 		SchemaVersion:  1,
-		OracleRevision: "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
+		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
 		SourceHashes: map[string]string{
 			"internal/room/run/run.go":         fileSHA256(t, "internal/room/run/run.go"),
 			"internal/room/run/checkpoint.go":  fileSHA256(t, "internal/room/run/checkpoint.go"),
 			"internal/room/event/event.go":     fileSHA256(t, "internal/room/event/event.go"),
 			"internal/room/journal/journal.go": fileSHA256(t, "internal/room/journal/journal.go"),
 			"internal/room/journal/merge.go":   fileSHA256(t, "internal/room/journal/merge.go"),
+			"internal/room/members/members.go": fileSHA256(t, "internal/room/members/members.go"),
 		},
 		Events:            events,
 		Records:           records,
@@ -194,11 +234,30 @@ func projectionEvent(id, kind, body, author, ts string) *event.Event {
 	return &event.Event{V: event.CurrentVersion, ID: id, Room: "room-test", Author: author, TS: ts, Kind: kind, Body: json.RawMessage(body)}
 }
 
+func signedProjectionEvent(t *testing.T, id, kind, body string, signer *identity.Identity, ts string) *event.Event {
+	t.Helper()
+	return signedProjectionEventAs(t, id, kind, body, signer.MemberID, signer, ts)
+}
+
+func signedProjectionEventAs(t *testing.T, id, kind, body, author string, signer *identity.Identity, ts string) *event.Event {
+	t.Helper()
+	ev := projectionEvent(id, kind, body, author, ts)
+	ev.Seq = 1
+	ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+	ev.Lamport = 1
+	if err := ev.Sign(signer); err != nil {
+		t.Fatalf("sign projection event %s: %v", id, err)
+	}
+	return ev
+}
+
 func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 	t.Helper()
 	alpha := runProjectionIdentity("alpha")
 	beta := runProjectionIdentity("beta")
 	events := []*event.Event{
+		projectionEvent("query-room-created", event.KindRoomCreated, `{"name":"Alpha","public_key":"`+hex.EncodeToString(alpha.PublicKey)+`"}`, alpha.MemberID, "2026-02-01T09:59:58.000Z"),
+		projectionEvent("query-member-added", event.KindMemberAdded, `{"id":"`+beta.MemberID+`","name":"Beta","public_key":"`+hex.EncodeToString(beta.PublicKey)+`","role":"member","kind":"human"}`, alpha.MemberID, "2026-02-01T09:59:59.000Z"),
 		projectionEvent("query-request-a", event.KindRunRequested, `{"run_id":"query-a","title":"Query Alpha"}`, alpha.MemberID, "2026-02-01T10:00:00.000Z"),
 		projectionEvent("query-request-b", event.KindRunRequested, `{"run_id":"query-b","title":"Query Beta"}`, beta.MemberID, "2026-02-01T10:01:00.000Z"),
 		projectionEvent("query-approve-b", event.KindRunApproved, `{"run_id":"query-b","approval_id":"approval-qb","scope":"room"}`, alpha.MemberID, "2026-02-01T10:02:00.000Z"),

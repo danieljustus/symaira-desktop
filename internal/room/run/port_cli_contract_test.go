@@ -75,6 +75,8 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	beta := runProjectionIdentity("cli-beta")
 	identities := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
 	events := []*event.Event{
+		projectionEvent("cli-room-created", event.KindRoomCreated, `{"name":"Alpha","public_key":"`+hex.EncodeToString(alpha.PublicKey)+`"}`, alpha.MemberID, "2026-03-01T09:59:58.000Z"),
+		projectionEvent("cli-member-added", event.KindMemberAdded, `{"id":"`+beta.MemberID+`","name":"Beta","public_key":"`+hex.EncodeToString(beta.PublicKey)+`","role":"member","kind":"human"}`, alpha.MemberID, "2026-03-01T09:59:59.000Z"),
 		projectionEvent("cli-request-finished", event.KindRunRequested, `{"run_id":"cli-finished","title":"CLI <Finished>&","plan_file":"plans/final.md","adapter":"local"}`, alpha.MemberID, "2026-03-01T10:00:00.000Z"),
 		projectionEvent("cli-finish", event.KindRunFinished, `{"run_id":"cli-finished","summary":"done"}`, beta.MemberID, "2026-03-01T10:01:00.000Z"),
 		projectionEvent("cli-checkpoint-request", event.KindCheckpointReq, `{"checkpoint_id":"cli-checkpoint","run_id":"cli-finished","question":"Review output?"}`, alpha.MemberID, "2026-03-01T10:02:00.000Z"),
@@ -105,12 +107,13 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	}
 
 	fixture := runCLIContract{
-		SchemaVersion: 1, OracleRevision: "97280a946316682fc3ce3d7650597655ff0e46ae",
+		SchemaVersion: 1, OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
 			"internal/room/run/run.go":         runCLIFileHash(t, root, "internal/room/run/run.go"),
 			"internal/room/journal/journal.go": runCLIFileHash(t, root, "internal/room/journal/journal.go"),
+			"internal/room/members/members.go": runCLIFileHash(t, root, "internal/room/members/members.go"),
 		},
 	}
 	for author, content := range contents {

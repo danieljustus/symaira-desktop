@@ -8,6 +8,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/internal/room/room"
 )
 
 func TestRunLifecycleAndStateTransitions(t *testing.T) {
@@ -16,6 +17,7 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate identity: %v", err)
 	}
+	initRunTestRoom(t, tempDir, ownerID)
 
 	// 1. Request run
 	evReq, err := Request(tempDir, "Test Task", "plan.md", "shell", ownerID)
@@ -92,6 +94,13 @@ func TestRunLifecycleAndStateTransitions(t *testing.T) {
 	}
 	if rFinished.Summary != "Task completed successfully" {
 		t.Errorf("unexpected summary: %s", rFinished.Summary)
+	}
+}
+
+func initRunTestRoom(t *testing.T, dir string, owner *identity.Identity) {
+	t.Helper()
+	if _, err := room.Init(dir, "Run Test Room", owner); err != nil {
+		t.Fatalf("initialize room: %v", err)
 	}
 }
 

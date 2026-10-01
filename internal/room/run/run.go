@@ -1,6 +1,8 @@
 package run
 
 import (
+	"crypto/ed25519"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -252,9 +254,10 @@ func ProjectRuns(events []*event.Event) map[string]*Run {
 	for _, ev := range events {
 		switch ev.Kind {
 		case event.KindRoomCreated, event.KindMemberAdded, event.KindMemberRemoved, event.KindMemberRoleChanged:
-			// Replay membership in journal order; ApplyEvent rejects
-			// unauthorized changes before mutating state.
-			_ = membership.ApplyEvent(ev)
+			// Membership changes also need the current signer's signature. Without
+			// this check, a forged member.added event with Author set to an owner
+			// could inject a key that later signs a projected approval.
+			_ = applySignedMembershipEvent(membership, ev)
 
 		case event.KindRunRequested:
 			var b struct {
@@ -416,7 +419,40 @@ func Get(roomDir, runID string) (*Run, error) {
 
 func approvalAuthorized(membership *members.State, ev *event.Event) bool {
 	author, ok := membership.Members[ev.Author]
-	if !ok || ev.VerifySignature(author.PublicKey) != nil {
+	if !ok || !author.CanPerform(members.ActionApprove) || ev.VerifySignature(author.PublicKey) != nil {
+		return false
+	}
+	return membership.ApplyEvent(ev) == nil
+}
+
+func applySignedMembershipEvent(membership *members.State, ev *event.Event) bool {
+	var publicKey ed25519.PublicKey
+	if ev.Kind == event.KindRoomCreated {
+		if len(membership.Members) != 0 {
+			return false
+		}
+		var body struct {
+			PublicKey string `json:"public_key"`
+		}
+		if json.Unmarshal(ev.Body, &body) != nil {
+			return false
+		}
+		decoded, err := hex.DecodeString(body.PublicKey)
+		if err != nil || len(decoded) != ed25519.PublicKeySize {
+			return false
+		}
+		if identity.ComputeMemberID(ed25519.PublicKey(decoded)) != ev.Author {
+			return false
+		}
+		publicKey = ed25519.PublicKey(decoded)
+	} else {
+		author, ok := membership.Members[ev.Author]
+		if !ok {
+			return false
+		}
+		publicKey = author.PublicKey
+	}
+	if ev.VerifySignature(publicKey) != nil {
 		return false
 	}
 	return membership.ApplyEvent(ev) == nil

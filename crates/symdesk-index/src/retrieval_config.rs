@@ -8,7 +8,7 @@ use std::{
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
-use crate::{SidecarError, relocate_database};
+use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
 /// Resolves the standalone symseek config file, which intentionally ignores
 /// `XDG_CONFIG_HOME` just like the Go config package.
@@ -114,6 +114,117 @@ pub fn index_location_for_vault(
         return vault_retrieval_path(vault_root, environment, cwd, temp_root);
     }
     standalone_retrieval_path(environment, cwd)
+}
+
+/// Opens the effective retrieval database for a vault, seeding a missing
+/// per-vault database from the existing standalone index on first open.
+///
+/// A configured global `index_path` remains an explicit override and bypasses
+/// migration. Existing per-vault databases are always preserved. The legacy
+/// pre-absorption index is removed only after a WAL-consistent snapshot has
+/// been opened and validated successfully.
+pub fn open_retrieval_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<RetrievalDb, SidecarError> {
+    let config_path = symseek_config_path(environment, cwd);
+    let config = load_config(&config_path)?;
+    let explicit_override = !config.index_path.trim().is_empty();
+    let index_path = if explicit_override {
+        absolute_clean(Path::new(&config.index_path), cwd)
+    } else if vault_root.trim().is_empty() {
+        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)
+    } else {
+        absolute_clean(
+            &vault_retrieval_path(vault_root, environment, cwd, temp_root)?,
+            cwd,
+        )
+    };
+
+    if explicit_override || vault_root.trim().is_empty() {
+        return RetrievalDb::open_at(index_path);
+    }
+
+    migrate_legacy_retrieval_index(&index_path, environment, cwd).map_err(|error| {
+        SidecarError::Contract(format!("migrate legacy retrieval index: {error}"))
+    })?;
+    RetrievalDb::open_at(index_path)
+}
+
+fn migrate_legacy_retrieval_index(
+    destination: &Path,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<(), SidecarError> {
+    match fs::metadata(destination) {
+        Ok(_) => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => return Ok(()),
+    }
+
+    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd);
+    if source == *destination {
+        return Ok(());
+    }
+    let source_info = match fs::metadata(&source) {
+        Ok(info) => info,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    if !source_info.is_file() {
+        return Err(SidecarError::Contract(format!(
+            "legacy retrieval index is not a regular file: {}",
+            source.display()
+        )));
+    }
+
+    let connection = Connection::open(&source)?;
+    connection.execute_batch(
+        "PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;",
+    )?;
+    backup_database(&connection, destination)?;
+    drop(connection);
+
+    let validated = match RetrievalDb::open_at(destination) {
+        Ok(database) => database,
+        Err(error) => {
+            let _ = remove_retrieval_database_artifacts(destination);
+            return Err(error);
+        }
+    };
+
+    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd);
+    if source == legacy {
+        drop(validated);
+        remove_retrieval_database_artifacts(&source).map_err(|error| {
+            SidecarError::Contract(format!("remove migrated legacy retrieval index: {error}"))
+        })?;
+    }
+    Ok(())
+}
+
+fn legacy_retrieval_path(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
+    let home = user_home(environment).ok_or_else(|| {
+        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
+    })?;
+    Ok(PathBuf::from(home).join(".local/share/symaira-seek/symseek.db"))
+}
+
+fn remove_retrieval_database_artifacts(path: &Path) -> std::io::Result<()> {
+    let mut wal = path.as_os_str().to_os_string();
+    wal.push("-wal");
+    let mut shm = path.as_os_str().to_os_string();
+    shm.push("-shm");
+    for candidate in [path.to_path_buf(), PathBuf::from(wal), PathBuf::from(shm)] {
+        match fs::remove_file(candidate) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(())
 }
 
 /// Snapshots the effective standalone retrieval index and persists its new

@@ -138,7 +138,7 @@ func TestAskOfflineMCPOracle(t *testing.T) {
 			t.Fatal(err)
 		}
 		encoded = append(encoded, '\n')
-		if err := os.WriteFile(askOfflineMCPFixturePath, encoded, 0o644); err != nil {
+		if err := os.WriteFile(askOfflineMCPFixturePath, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
@@ -367,8 +367,13 @@ func observeAskOfflineMCPCase(t *testing.T, input askOfflineMCPFixtureCase) askO
 	for _, name := range []string{"SYMDESK_OLLAMA_URL", "SYMDESK_LLM_PROVIDER", "SYMDESK_LLM_MODEL", "SYMDESK_LLM_API_KEY", "OLLAMA_HOST"} {
 		t.Setenv(name, "")
 	}
-	for _, name := range []string{"XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "TMPDIR"} {
-		if err := os.MkdirAll(os.Getenv(name), 0o700); err != nil {
+	for _, path := range []string{
+		filepath.Join(home, "config"),
+		filepath.Join(home, "cache"),
+		filepath.Join(home, "data"),
+		filepath.Join(home, "tmp"),
+	} {
+		if err := os.MkdirAll(path, 0o700); err != nil {
 			t.Fatal(err)
 		}
 	}

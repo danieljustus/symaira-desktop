@@ -6,7 +6,7 @@ use std::{
 
 use symdesk_index::{
     RetrievalDb, RetrievalEmbeddingConfig, RetrievalHybridSearchResult, go_simple_lowercase,
-    index_location_for_vault, local_hash_embedding, retrieval_embedding_config,
+    local_hash_embedding, open_retrieval_for_vault, retrieval_embedding_config,
 };
 
 use crate::{embed_local_ollama, expand_local_ollama_query, local_ollama_embeddings_endpoint};
@@ -22,15 +22,80 @@ pub fn hybrid_search_results(
     sources: &[symdesk_index::SearchSource],
     per_root_limit: i64,
 ) -> Result<Option<Vec<RetrievalHybridSearchResult>>, String> {
-    let plan = symdesk_core::query::parse(query);
-    if query.trim().is_empty() || !matches!(plan, Ok(ref parsed) if !parsed.requires_sidecar()) {
+    if !hybrid_query_is_eligible(query) {
         return Ok(None);
     }
-
     let environment = std::env::vars().collect::<BTreeMap<_, _>>();
     let cwd =
         std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
-    let config = retrieval_embedding_config(&environment, &cwd)
+    let index = open_retrieval_for_vault(
+        &vault.to_string_lossy(),
+        &environment,
+        &cwd,
+        &std::env::temp_dir(),
+    )
+    .map_err(|error| format!("open retrieval index: {error}"))?;
+    hybrid_search_results_with_index(
+        vault,
+        query,
+        sources,
+        per_root_limit,
+        &index,
+        &environment,
+        &cwd,
+    )
+}
+
+pub(crate) fn hybrid_search_results_if_populated(
+    vault: &Path,
+    query: &str,
+    sources: &[symdesk_index::SearchSource],
+    per_root_limit: i64,
+) -> Result<Option<Vec<RetrievalHybridSearchResult>>, String> {
+    if !hybrid_query_is_eligible(query) {
+        return Ok(None);
+    }
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let cwd =
+        std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
+    let index = open_retrieval_for_vault(
+        &vault.to_string_lossy(),
+        &environment,
+        &cwd,
+        &std::env::temp_dir(),
+    )
+    .map_err(|error| format!("open retrieval index: {error}"))?;
+    if index
+        .count_chunks()
+        .map_err(|error| format!("count retrieval chunks: {error}"))?
+        == 0
+    {
+        return Ok(None);
+    }
+    hybrid_search_results_with_index(
+        vault,
+        query,
+        sources,
+        per_root_limit,
+        &index,
+        &environment,
+        &cwd,
+    )
+}
+
+pub(crate) fn hybrid_search_results_with_index(
+    vault: &Path,
+    query: &str,
+    sources: &[symdesk_index::SearchSource],
+    per_root_limit: i64,
+    index: &RetrievalDb,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<Option<Vec<RetrievalHybridSearchResult>>, String> {
+    if !hybrid_query_is_eligible(query) {
+        return Ok(None);
+    }
+    let config = retrieval_embedding_config(environment, cwd)
         .map_err(|error| format!("load retrieval configuration: {error}"))?;
     // The Go Client used by the real CLI/MCP search path currently ignores
     // rerank_query, vector_backend, and vector_quantization. Preserve that runtime behavior
@@ -41,13 +106,6 @@ pub fn hybrid_search_results(
             config.ollama_url
         ));
     }
-
-    let temp_root = std::env::temp_dir();
-    let index_path =
-        index_location_for_vault(&vault.to_string_lossy(), &environment, &cwd, &temp_root)
-            .map_err(|error| format!("resolve retrieval index: {error}"))?;
-    let index = RetrievalDb::open_at(index_path)
-        .map_err(|error| format!("open retrieval index: {error}"))?;
 
     // Go checks mixed spaces before it asks the embedding backend. A mixed
     // index takes the existing lexical fallback path without a provider call.
@@ -89,9 +147,13 @@ pub fn hybrid_search_results(
             .map_err(|error| format!("resolve vault root: {error}"))?,
     ];
     for source in sources {
-        let path = PathBuf::from(&source.path)
+        // Go's source search tolerates a source that disappeared after it was
+        // registered. The stored index uses its absolute path, so retain a
+        // normalized lexical path when canonicalization is no longer possible.
+        let source_path = PathBuf::from(&source.path);
+        let path = source_path
             .canonicalize()
-            .map_err(|error| format!("resolve registered source {:?}: {error}", source.path))?;
+            .unwrap_or_else(|_| absolute_clean_path(&source_path, cwd));
         if !roots.contains(&path) {
             roots.push(path);
         }
@@ -136,6 +198,30 @@ pub fn hybrid_search_results(
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     Ok(Some(results))
+}
+
+fn hybrid_query_is_eligible(query: &str) -> bool {
+    let plan = symdesk_core::query::parse(query);
+    !query.trim().is_empty() && matches!(plan, Ok(ref parsed) if !parsed.requires_sidecar())
+}
+
+fn absolute_clean_path(path: &Path, cwd: &Path) -> PathBuf {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        cwd.join(path)
+    };
+    let mut cleaned = PathBuf::new();
+    for component in absolute.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                cleaned.pop();
+            }
+            component => cleaned.push(component.as_os_str()),
+        }
+    }
+    cleaned
 }
 
 /// Builds the query-centered snippet used by Go retrieval search results.

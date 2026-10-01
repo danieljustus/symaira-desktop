@@ -253,7 +253,7 @@ func hybridObserveCase(t *testing.T, input hybridFixtureCase) hybridFixtureCase 
 		vectorStore = hybridVectorFailure{VectorStore: database}
 	}
 	embedder := hybridEmbedder{vector: input.Embedding, model: input.QueryModel}
-	results, err, stderr := hybridCaptureStderr(func() ([]*db.SearchResult, error) {
+	results, stderr, err := hybridCaptureStderr(func() ([]*db.SearchResult, error) {
 		return SearchHybridWithOptions(store, vectorStore, embedder, input.Query, input.Limit, SearchOptions{PathFilter: input.PathPrefix})
 	})
 	input.Warnings = hybridLines(stderr)
@@ -287,11 +287,11 @@ func hybridObserveCase(t *testing.T, input hybridFixtureCase) hybridFixtureCase 
 	return input
 }
 
-func hybridCaptureStderr(run func() ([]*db.SearchResult, error)) ([]*db.SearchResult, error, string) {
+func hybridCaptureStderr(run func() ([]*db.SearchResult, error)) ([]*db.SearchResult, string, error) {
 	old := os.Stderr
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		return nil, err, ""
+		return nil, "", err
 	}
 	os.Stderr = writer
 	results, runErr := run()
@@ -302,7 +302,7 @@ func hybridCaptureStderr(run func() ([]*db.SearchResult, error)) ([]*db.SearchRe
 	if readErr != nil && runErr == nil {
 		runErr = readErr
 	}
-	return results, runErr, string(output)
+	return results, string(output), runErr
 }
 
 func hybridLines(output string) []string {
@@ -392,7 +392,11 @@ func hybridSourceHashes(t *testing.T, root string) map[string]string {
 
 func hybridVerifyPinnedSources(root string, hashes map[string]string) error {
 	for _, rel := range hybridSourcePaths {
-		cmd := exec.Command("git", "show", hybridOracleCommit+":"+rel)
+		if !filepath.IsLocal(rel) {
+			return fmt.Errorf("Go oracle source path is not local: %s", rel)
+		}
+		//nolint:gosec // fixed Git subcommand, pinned commit, and allowlisted test sources.
+		cmd := exec.Command("git", "show", hybridOracleCommit+":"+filepath.ToSlash(rel))
 		cmd.Dir = root
 		data, err := cmd.Output()
 		if err != nil {

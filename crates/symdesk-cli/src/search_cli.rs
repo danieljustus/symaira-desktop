@@ -71,9 +71,11 @@ pub fn hybrid_search(
             .map_err(|error| format!("resolve vault root: {error}"))?,
     ];
     for source in sources {
-        let path = PathBuf::from(&source.path)
-            .canonicalize()
-            .map_err(|error| format!("resolve registered source {:?}: {error}", source.path))?;
+        // Missing registered roots cannot contribute projectable files. Keep
+        // search results from the vault usable when an external root vanished.
+        let Ok(path) = PathBuf::from(&source.path).canonicalize() else {
+            continue;
+        };
         if !roots.contains(&path) {
             roots.push(path);
         }

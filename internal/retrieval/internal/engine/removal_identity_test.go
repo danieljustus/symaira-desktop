@@ -96,8 +96,16 @@ func TestRemoveDirectoryAliasIdentities(t *testing.T) {
 			if removal == "missing" {
 				file = filepath.Join(root+"-retained", "note.md")
 			}
-			if content, err := os.ReadFile(file); err != nil || string(content) != "source survives" {
-				t.Fatalf("source changed: %q, %v", content, err)
+			fileRoot, err := os.OpenRoot(filepath.Dir(file))
+			if err != nil {
+				t.Fatal(err)
+			}
+			content, readErr := fileRoot.ReadFile(filepath.Base(file))
+			if err := fileRoot.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if readErr != nil || string(content) != "source survives" {
+				t.Fatalf("source changed: %q, %v", content, readErr)
 			}
 			if removed, err := RemoveDirectory(database, removeRoot); err != nil || removed != 0 {
 				t.Fatalf("repeat removal=%d, %v", removed, err)

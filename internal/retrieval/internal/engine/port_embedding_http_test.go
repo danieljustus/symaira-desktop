@@ -272,6 +272,7 @@ func TestEmbeddingHTTPPortFixture(t *testing.T) {
 		}
 		return
 	}
+	//nolint:gosec // path is fixed from this test file to its committed fixture.
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

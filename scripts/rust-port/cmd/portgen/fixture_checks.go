@@ -148,9 +148,17 @@ func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, er
 	default:
 		return target.args, nil
 	}
+	fixtureRoot, err := os.OpenRoot(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("open fixture repository root: %w", err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
 	var oracle inventory.Oracle
 	for i, rel := range target.outputs {
-		content, err := os.ReadFile(filepath.Join(repoRoot, rel))
+		if !filepath.IsLocal(rel) {
+			return nil, fmt.Errorf("replay oracle path is not local: %s", rel)
+		}
+		content, err := fixtureRoot.ReadFile(rel)
 		if err != nil {
 			return nil, fmt.Errorf("read replay oracle %s: %w", rel, err)
 		}

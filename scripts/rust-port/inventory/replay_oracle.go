@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -19,9 +20,22 @@ func ResolveCheckOracle(oracle Oracle, flags *flag.FlagSet, paths ...string) (Or
 	}
 	var recorded Oracle
 	for i, path := range paths {
-		content, err := os.ReadFile(path)
+		clean := filepath.Clean(path)
+		name := filepath.Base(clean)
+		if name == "." || name == string(filepath.Separator) || !filepath.IsLocal(name) {
+			return Oracle{}, fmt.Errorf("replay corpus path has no local filename: %s", path)
+		}
+		root, err := os.OpenRoot(filepath.Dir(clean))
 		if err != nil {
 			return Oracle{}, err
+		}
+		content, err := root.ReadFile(name)
+		closeErr := root.Close()
+		if err != nil {
+			return Oracle{}, err
+		}
+		if closeErr != nil {
+			return Oracle{}, closeErr
 		}
 		var document struct {
 			Oracle Oracle `json:"oracle"`

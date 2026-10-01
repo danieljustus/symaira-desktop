@@ -52,8 +52,8 @@ pub use retrieval::{
     go_simple_lowercase, local_hash_embedding, materialize_chunks,
 };
 pub use retrieval_config::{
-    RetrievalEmbeddingConfig, index_location_for_vault, relocate_index_for_vault,
-    retrieval_embedding_config, symseek_config_path,
+    RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,
+    relocate_index_for_vault, retrieval_embedding_config, symseek_config_path,
 };
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,

@@ -21,6 +21,7 @@ pub use retrieval_embedding::{
     LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
 };
 pub use retrieval_query_expansion::expand_local_ollama_query;
+pub(crate) use retrieval_search::hybrid_search_results_if_populated;
 pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
@@ -1411,23 +1412,17 @@ async fn handle_ai_ask(
         let sources = SourceRegistry::open(&state.vault_root)
             .and_then(|registry| registry.list())
             .unwrap_or_default();
-        let hybrid_index_populated = matches!(
-            ai_ask_retrieval_index_is_empty(&state.vault_root),
-            Ok(false)
-        );
-        let hybrid_results = if hybrid_index_populated {
+        let hybrid_results = {
             let vault_root = state.vault_root.clone();
             let query = input.query.clone();
             let sources = sources.clone();
             tokio::task::spawn_blocking(move || {
-                hybrid_search_results(&vault_root, &query, &sources, 5)
+                hybrid_search_results_if_populated(&vault_root, &query, &sources, 5)
             })
             .await
             .ok()
             .and_then(Result::ok)
             .flatten()
-        } else {
-            None
         };
         let mut used_hybrid_results = false;
         if let Some(results) = hybrid_results {
@@ -2211,31 +2206,6 @@ fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
         }
     }
     PathBuf::from(path)
-}
-
-fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
-    let vault = vault_root
-        .to_str()
-        .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
-    let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
-    let temp_root = std::env::temp_dir();
-    let vault_index =
-        symdesk_index::index_location_for_vault(vault, &environment, &cwd, &temp_root)
-            .map_err(|error| error.to_string())?;
-    let index_to_check = if vault_index.exists() {
-        vault_index
-    } else {
-        // Go seeds a missing per-vault index from this legacy shared store.
-        symdesk_index::index_location_for_vault("", &environment, &cwd, &temp_root)
-            .map_err(|error| error.to_string())?
-    };
-    if !index_to_check.exists() {
-        return Ok(true);
-    }
-    let database =
-        symdesk_index::RetrievalDb::open_at(index_to_check).map_err(|error| error.to_string())?;
-    Ok(database.count_chunks().map_err(|error| error.to_string())? == 0)
 }
 
 fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {

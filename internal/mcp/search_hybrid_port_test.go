@@ -83,7 +83,7 @@ func TestSearchHybridMCPOracle(t *testing.T) {
 			t.Fatal(err)
 		}
 		encoded = append(encoded, '\n')
-		if err := os.WriteFile(searchHybridMCPFixturePath, encoded, 0o644); err != nil {
+		if err := os.WriteFile(searchHybridMCPFixturePath, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return

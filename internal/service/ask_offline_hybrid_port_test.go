@@ -68,7 +68,7 @@ func TestAskHybridOfflineOracle(t *testing.T) {
 			t.Fatal(err)
 		}
 		encoded = append(encoded, '\n')
-		if err := os.WriteFile(askOfflineFixturePath, encoded, 0o644); err != nil {
+		if err := os.WriteFile(askOfflineFixturePath, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
@@ -147,8 +147,13 @@ func observeAskOfflineCase(t *testing.T, input askOfflineFixtureCase) askOffline
 	for _, name := range []string{"SYMDESK_LLM_PROVIDER", "SYMDESK_LLM_MODEL", "SYMDESK_LLM_API_KEY", "OLLAMA_HOST"} {
 		t.Setenv(name, "")
 	}
-	for _, name := range []string{"XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "TMPDIR"} {
-		if err := os.MkdirAll(os.Getenv(name), 0o700); err != nil {
+	for _, path := range []string{
+		filepath.Join(home, "config"),
+		filepath.Join(home, "cache"),
+		filepath.Join(home, "data"),
+		filepath.Join(home, "tmp"),
+	} {
+		if err := os.MkdirAll(path, 0o700); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -288,9 +293,10 @@ func observeAskOfflineCase(t *testing.T, input askOfflineFixtureCase) askOffline
 		if !ok {
 			t.Fatalf("Ask emitted %T, want ai.AIEvent", event)
 		}
-		if actual.Type == ai.AIEventCitation {
+		switch actual.Type {
+		case ai.AIEventCitation:
 			actual.Path = normalizeAskPath(actual.Path, vaultRoot, sourcePaths)
-		} else if actual.Type == ai.AIEventAnswer {
+		case ai.AIEventAnswer:
 			for source, sourcePath := range sourcePaths {
 				prefix, err := filepath.Rel(".", sourcePath)
 				if err == nil {

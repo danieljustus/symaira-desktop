@@ -271,17 +271,29 @@ func TestNoteOperationSourceProvenance(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, ".git"), []byte("gitdir: "+strings.TrimSpace(string(gitDir))+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	fixtureRoot, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	sourceRoot, err := os.OpenRoot(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = sourceRoot.Close() }()
 	paths := []string{"internal/service/service.go", "internal/service/history.go", "internal/history/trash.go"}
 	for _, rel := range paths {
-		data, err := os.ReadFile(filepath.Join("../..", rel))
+		if !filepath.IsLocal(rel) {
+			t.Fatalf("source fixture path is not local: %s", rel)
+		}
+		data, err := sourceRoot.ReadFile(rel)
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := filepath.Join(root, rel)
-		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		if err := fixtureRoot.MkdirAll(filepath.Dir(rel), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o600); err != nil {
+		if err := fixtureRoot.WriteFile(rel, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -295,19 +307,18 @@ func TestNoteOperationSourceProvenance(t *testing.T) {
 		t.Fatalf("matching pinned sources rejected: %v\n%s", err, output)
 	}
 	for _, rel := range paths {
-		path := filepath.Join(root, rel)
-		data, err := os.ReadFile(path)
+		data, err := fixtureRoot.ReadFile(rel)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, append(append([]byte(nil), data...), '\n'), 0o600); err != nil {
+		if err := fixtureRoot.WriteFile(rel, append(append([]byte(nil), data...), '\n'), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		output, err := run()
 		if err == nil || !strings.Contains(string(output), "note oracle source "+rel+" differs from pinned commit "+noteOperationOracleCommit) {
 			t.Fatalf("changed source %s was not rejected: %v\n%s", rel, err, output)
 		}
-		if err := os.WriteFile(path, data, 0o600); err != nil {
+		if err := fixtureRoot.WriteFile(rel, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}

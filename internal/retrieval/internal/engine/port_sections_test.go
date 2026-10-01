@@ -113,7 +113,12 @@ func TestRetrievalSectionsFixture(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	fixtureRoot, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	current, err := fixtureRoot.ReadFile(filepath.Base(path))
 	if err != nil {
 		t.Fatal(err)
 	}

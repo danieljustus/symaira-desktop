@@ -38,12 +38,13 @@ func TestLocalFileAliasIdentityAndScope(t *testing.T) {
 		if err := os.WriteFile(aliasPath, []byte("# Heading\n\ncoordinate needle"), 0600); err != nil {
 			t.Fatal(err)
 		}
-		if mode == "confined" {
+		switch mode {
+		case "confined":
 			// Deliberately different from disk: byte ingestion must not reopen.
 			err = client.IndexMarkdownWithMetadata(aliasPath, "# Heading\n\ncoordinate needle confined payload", SearchMetadata{})
-		} else if mode == "metadata" {
+		case "metadata":
 			err = client.IndexWithMetadata(aliasPath, "", SearchMetadata{})
-		} else {
+		default:
 			err = client.Index(aliasPath, "")
 		}
 		if err != nil {

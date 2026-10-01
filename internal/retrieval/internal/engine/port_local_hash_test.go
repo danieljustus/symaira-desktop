@@ -45,14 +45,19 @@ func TestLocalHashPortFixture(t *testing.T) {
 		}
 		encoded = append(encoded, '\n')
 		path := filepath.Join(root, "testdata/port/retrieval/local-hash.json")
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
 
 	path := filepath.Join(root, "testdata/port/retrieval/local-hash.json")
-	data, err := os.ReadFile(path)
+	fixtureRoot, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	data, err := fixtureRoot.ReadFile(filepath.Base(path))
 	if err != nil {
 		t.Fatalf("read Go-generated local-hash fixture (generate with PORT_GENERATE=1): %v", err)
 	}
@@ -109,16 +114,29 @@ func goSimpleLowerMappingSHA256() string {
 		if 0xD800 <= value && value <= 0xDFFF {
 			continue
 		}
-		binary.BigEndian.PutUint32(encoded[:4], uint32(value))
-		binary.BigEndian.PutUint32(encoded[4:], uint32(unicode.ToLower(value)))
+		binary.BigEndian.PutUint32(encoded[:4], runeAsUint32(value))
+		binary.BigEndian.PutUint32(encoded[4:], runeAsUint32(unicode.ToLower(value)))
 		_, _ = hash.Write(encoded[:])
 	}
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+// runeAsUint32 is used only for the Unicode scalar range, bounded by the loop
+// above to [0, unicode.MaxRune] and excluding surrogate code points.
+//
+//nolint:gosec // G115: callers bound values to Unicode scalar range before conversion.
+func runeAsUint32(value rune) uint32 {
+	return uint32(value)
+}
+
 func localHashFileSHA256(t *testing.T, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(path)
+	fixtureRoot, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = fixtureRoot.Close() }()
+	data, err := fixtureRoot.ReadFile(filepath.Base(path))
 	if err != nil {
 		t.Fatal(err)
 	}

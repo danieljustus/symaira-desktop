@@ -955,9 +955,14 @@ func populateHybridIndex(vault, binary, providerURL string) error {
 	if err != nil {
 		return fmt.Errorf("open fixture retrieval index: %w", err)
 	}
+	vaultRoot, err := os.OpenRoot(vault)
+	if err != nil {
+		return fmt.Errorf("open fixture vault root: %w", err)
+	}
+	defer func() { _ = vaultRoot.Close() }()
 	for _, relative := range []string{"Hello.md", filepath.Join("nested", "Note.md")} {
 		path := filepath.Join(vault, relative)
-		body, err := os.ReadFile(path)
+		body, err := vaultRoot.ReadFile(relative)
 		if err != nil {
 			_ = client.Close()
 			return err

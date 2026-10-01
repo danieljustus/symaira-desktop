@@ -375,3 +375,40 @@ chunk before the provider released the rest of its response. This local smoke
 is not native cross-platform or release evidence. The protocol test suite in
 this environment requires umask `0022`; the session default `0077` masks the
 existing upload file mode expectation from `0640` to `0600`.
+
+## Ollama transform transport slice
+
+The Rust `symdesk transform` command now delegates Ollama's native generation
+transport to the same pinned `symaira-core-llm` revision. CoreKit owns the
+`/api/generate` request and NDJSON decoding; the consumer preserves the Go
+transform prompt and chunk output, uses the configured Ollama URL (including
+the existing `SYMDESK_OLLAMA_URL` config override), strips any endpoint path
+before native requests, and keeps the five-minute timeout. A non-empty
+`SYMDESK_OLLAMA_MODEL` wins; otherwise transform uses Go's `llama3.2` default,
+independently of the configured Anthropic model. Empty responses are ignored,
+while non-empty responses are emitted as received even when the response marks
+`done`.
+
+Provider selection retains the Go fallback: empty, `ollama`, and unknown
+provider values use Ollama; `anthropic` uses the preceding adapter; Hermes
+remains explicitly unsupported by this Rust transform path. Client-construction
+errors remain unprefixed, and request/stream errors keep Go's `ollama:` prefix.
+A failed stdout write is passed back through CoreKit's generator callback to
+stop generation. The pinned native `generate` API is synchronous and exposes
+no cancellation token, so this early stop cannot guarantee that an in-flight
+HTTP operation is interrupted; the five-minute timeout remains the bound.
+
+Focused transport tests cover the native endpoint and request body, URL-root
+stripping, default and explicit model selection, empty and final chunks,
+callback failure, provider error rendering, and Go-compatible chunk bytes.
+An isolated HOME/XDG CLI-process smoke also passed three chunked HTTP/1.1
+cases: configured, empty and unknown provider selection, environment URL/model
+priority, native root path, trimmed input and language prompt, JSON/plain chunk
+bytes, delivery before EOF, and continued records after `done`. Each process
+exited successfully with empty stderr. This is Linux evidence only.
+The transport test uses complete valid Ollama response
+objects. CoreKit's `GenerateResponse` requires its response fields during
+deserialization, while Go's JSON decoder can leave omitted fields at zero
+values; incomplete or null-field provider lines may therefore fail in Rust
+where Go would continue. This slice does not claim complete parser parity for
+malformed provider streams.

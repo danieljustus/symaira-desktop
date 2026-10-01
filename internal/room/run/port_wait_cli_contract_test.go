@@ -130,6 +130,9 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
 		return runWaitCLIContract{}, err
 	}
+	if err := os.WriteFile(filepath.Join(mainRoom, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		return runWaitCLIContract{}, err
+	}
 	for _, file := range fixture.JournalFiles {
 		if err := os.WriteFile(filepath.Join(journalDir, file.Name), file.bytes(), 0o600); err != nil {
 			return runWaitCLIContract{}, err

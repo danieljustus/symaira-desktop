@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
+	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 )
 
 type Role string
@@ -167,4 +168,43 @@ func (s *State) ApplyEvent(e *event.Event) error {
 		}
 	}
 	return nil
+}
+
+// ApplySignedEvent authenticates membership changes against the current
+// membership key before applying them. The first room.created event is
+// self-authenticating only when its author matches the public key's member ID.
+func (s *State) ApplySignedEvent(e *event.Event) error {
+	var publicKey ed25519.PublicKey
+	if e.Kind == event.KindRoomCreated {
+		if len(s.Members) != 0 {
+			return errors.New("room.created must be the first membership event")
+		}
+		var body struct {
+			PublicKey string `json:"public_key"`
+		}
+		if err := json.Unmarshal(e.Body, &body); err != nil {
+			return fmt.Errorf("unmarshal room.created body: %w", err)
+		}
+		decoded, err := hex.DecodeString(body.PublicKey)
+		if err != nil {
+			return fmt.Errorf("invalid root pubkey: %w", err)
+		}
+		if len(decoded) != ed25519.PublicKeySize {
+			return errors.New("invalid root pubkey: wrong size")
+		}
+		publicKey = ed25519.PublicKey(decoded)
+		if identity.ComputeMemberID(publicKey) != e.Author {
+			return errors.New("room.created author does not match its public key")
+		}
+	} else {
+		author, exists := s.Members[e.Author]
+		if !exists {
+			return ErrMemberNotFound
+		}
+		publicKey = author.PublicKey
+	}
+	if err := e.VerifySignature(publicKey); err != nil {
+		return err
+	}
+	return s.ApplyEvent(e)
 }

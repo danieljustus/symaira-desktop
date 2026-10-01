@@ -111,6 +111,7 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
+			"internal/room/run/checkpoint.go":  runCLIFileHash(t, root, "internal/room/run/checkpoint.go"),
 			"internal/room/run/run.go":         runCLIFileHash(t, root, "internal/room/run/run.go"),
 			"internal/room/journal/journal.go": runCLIFileHash(t, root, "internal/room/journal/journal.go"),
 			"internal/room/members/members.go": runCLIFileHash(t, root, "internal/room/members/members.go"),
@@ -129,12 +130,22 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
 		return runCLIContract{}, err
 	}
+	if err := os.WriteFile(filepath.Join(mainRoom, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		return runCLIContract{}, err
+	}
+	emptyRoom := filepath.Join(temp, "empty")
+	if err := os.MkdirAll(emptyRoom, 0o700); err != nil {
+		return runCLIContract{}, err
+	}
+	if err := os.WriteFile(filepath.Join(emptyRoom, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		return runCLIContract{}, err
+	}
 	for _, file := range fixture.JournalFiles {
 		if err := os.WriteFile(filepath.Join(journalDir, file.Name), file.bytes(), 0o600); err != nil {
 			return runCLIContract{}, err
 		}
 	}
-	rooms := map[string]string{"main": mainRoom, "empty": filepath.Join(temp, "empty")}
+	rooms := map[string]string{"main": mainRoom, "empty": emptyRoom}
 	for _, vector := range []struct {
 		name string
 		room string

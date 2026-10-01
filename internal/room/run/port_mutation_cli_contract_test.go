@@ -129,6 +129,9 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 		if err := os.MkdirAll(journalDir, 0o700); err != nil {
 			return runMutationCLIContract{}, err
 		}
+		if err := os.WriteFile(filepath.Join(caseRoom, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+			return runMutationCLIContract{}, err
+		}
 		for _, file := range initial {
 			if err := os.WriteFile(filepath.Join(journalDir, file.Name), file.bytes(), 0o600); err != nil {
 				return runMutationCLIContract{}, err

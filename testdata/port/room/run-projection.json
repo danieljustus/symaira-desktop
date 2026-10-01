@@ -5,9 +5,9 @@
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
     "internal/room/journal/merge.go": "3cf6d92103419c8893d13ad36ec42b190d7059dc39620b8ff73607faea8cc5f2",
-    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
-    "internal/room/run/checkpoint.go": "d47456dbab94f5adfff66a8d02685a235b5d88a49c147669902fdf7af92c9d41",
-    "internal/room/run/run.go": "1964998a348b7f4e61987bb8daf81051865b4af2958208ad024b7bf3b6490310"
+    "internal/room/members/members.go": "12a08d20ab8b2476b3a8b7d32626abeeb967cfe6dfb1603966b5b53f10de6f7c",
+    "internal/room/run/checkpoint.go": "08005ebfa18c292dfca58e120721b0e215435cd0bf4ae97b10923f33bde53fdc",
+    "internal/room/run/run.go": "dd6d0d9d645ecf4fdadf96b9ab08ab254b0e213035998f6b8b090d81dca86773"
   },
   "events": [
     {
@@ -114,6 +114,57 @@
         "kind": "human"
       },
       "sig": "ed25519:1BeEzRXbjHwAToV9f9pr+Ue1ftbMdgp2840mlVPrKWq4wFExPyreYZrIwcbishFs4dXN8u4t4mOaRAFg08CIBg=="
+    },
+    {
+      "v": 1,
+      "id": "request-cross-room-approval",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T03:00:03.500Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-cross-room-approval",
+        "title": "Cross-room approval"
+      }
+    },
+    {
+      "v": 1,
+      "id": "cross-room-member-added",
+      "room": "rm_foreign",
+      "author": "mem_0db64de0534dd6ef",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 1,
+      "ts": "2026-01-02T03:00:03.750Z",
+      "kind": "member.added",
+      "body": {
+        "id": "mem_80fcc3c8c2a0aec5",
+        "name": "Foreign reviewer",
+        "public_key": "29995dcc1f6c02fb99f132a4155e452e4061c9c452f03e77de6d477a2cbc0b24",
+        "role": "member",
+        "kind": "human"
+      },
+      "sig": "ed25519:TLnKjexox6GvSh63+4boA0JEcYmlDIXbaCXgkWdXFqiuBZ9B0wEAemVtLRrr5/EQEWhMbPiCCc82E2hR14wNBA=="
+    },
+    {
+      "v": 1,
+      "id": "cross-room-approval",
+      "room": "rm_foreign",
+      "author": "mem_80fcc3c8c2a0aec5",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lamport": 1,
+      "ts": "2026-01-02T03:00:03.875Z",
+      "kind": "run.approved",
+      "body": {
+        "run_id": "run-cross-room-approval",
+        "approval_id": "foreign-approval",
+        "scope": "room"
+      },
+      "sig": "ed25519:N5t+Lo2k1OVjFFjB7haUg/+rZ3n9Q28OExvlATW4HRBEeXQrCcT4U1FGLVdPQN2gYbYl2vR2xwGLArUFYUd9Bw=="
     },
     {
       "v": 1,
@@ -1154,6 +1205,7 @@
     "{\"id\":\"run-agent-approval\",\"title\":\"Agent approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:00:00.000Z\",\"updated_at\":\"2026-01-02T10:00:00.000Z\"}",
     "{\"id\":\"run-b\",\"title\":\"Beta\",\"state\":\"denied\",\"author\":\"author-b\",\"created_at\":\"2026-01-02T04:00:00.000Z\",\"updated_at\":\"2026-01-02T04:01:00.000Z\",\"error\":\"outside scope\",\"checkpoints\":[{\"id\":\"chk-main\",\"run_id\":\"run-b\",\"question\":\"replacement\",\"answer\":\"final answer\",\"state\":\"resolved\",\"author\":\"author-second\",\"created_at\":\"2026-01-02T09:03:00.000Z\",\"updated_at\":\"2026-01-02T09:04:00.000Z\"}]}",
     "{\"id\":\"run-c\",\"title\":\"interleaved duplicates\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:02:00.000Z\",\"updated_at\":\"2026-01-02T08:02:00.000Z\",\"checkpoints\":[{\"id\":\"chk-null\",\"run_id\":\"run-c\",\"question\":\"keep question\",\"answer\":\"keep answer\",\"state\":\"resolved\",\"author\":\"author-null\",\"created_at\":\"2026-01-02T09:05:00.000Z\",\"updated_at\":\"2026-01-02T09:06:00.000Z\"}]}",
+    "{\"id\":\"run-cross-room-approval\",\"title\":\"Cross-room approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T03:00:03.500Z\",\"updated_at\":\"2026-01-02T03:00:03.500Z\"}",
     "{\"id\":\"run-current-key-approval\",\"title\":\"Current key approval\",\"state\":\"approved\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:11:00.000Z\",\"updated_at\":\"2026-01-02T10:12:00.000Z\",\"approval_id\":\"current-key-approval\",\"scope\":\"room\"}",
     "{\"id\":\"run-d\",\"title\":\"Delta\",\"state\":\"cancelled\",\"author\":\"author-d\",\"created_at\":\"2026-01-02T06:00:00.000Z\",\"updated_at\":\"2026-01-02T06:01:00.000Z\",\"error\":\"superseded\"}",
     "{\"id\":\"run-demoted-approval\",\"title\":\"Demoted approval\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T10:14:00.000Z\",\"updated_at\":\"2026-01-02T10:14:00.000Z\"}",

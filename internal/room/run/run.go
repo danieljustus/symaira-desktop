@@ -1,8 +1,6 @@
 package run
 
 import (
-	"crypto/ed25519"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +12,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 	"github.com/danieljustus/symaira-desktop/internal/room/members"
+	roomconfig "github.com/danieljustus/symaira-desktop/internal/room/room"
 )
 
 var (
@@ -53,6 +52,10 @@ type Run struct {
 }
 
 func Request(roomDir, title, planFile, adapter string, id *identity.Identity) (*event.Event, error) {
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	// compute unique run_id
 	seq := 1
@@ -72,7 +75,7 @@ func Request(roomDir, title, planFile, adapter string, id *identity.Identity) (*
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + runID[4:],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindRunRequested,
 		Body:   json.RawMessage(bodyBytes),
@@ -108,12 +111,16 @@ func Start(roomDir, runID string, id *identity.Identity) (*event.Event, error) {
 		"run_id": runID,
 	}
 	bodyBytes, _ := json.Marshal(bodyMap)
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + journal.ComputeLineHash([]byte(runID + "start"))[7:23],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindRunStarted,
 		Body:   json.RawMessage(bodyBytes),
@@ -145,12 +152,16 @@ func Cancel(roomDir, runID, reason string, id *identity.Identity) (*event.Event,
 		"reason": reason,
 	}
 	bodyBytes, _ := json.Marshal(bodyMap)
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + journal.ComputeLineHash([]byte(runID + "cancel"))[7:23],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindRunCancelled,
 		Body:   json.RawMessage(bodyBytes),
@@ -187,12 +198,16 @@ func Finish(roomDir, runID, summary string, artifacts []string, id *identity.Ide
 		Artifacts: artifacts,
 	}
 	bodyBytes, _ := json.Marshal(bodyStruct)
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + journal.ComputeLineHash([]byte(runID + "finish"))[7:23],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindRunFinished,
 		Body:   json.RawMessage(bodyBytes),
@@ -224,12 +239,16 @@ func Fail(roomDir, runID, errMsg string, id *identity.Identity) (*event.Event, e
 		"error":  errMsg,
 	}
 	bodyBytes, _ := json.Marshal(bodyMap)
+	roomID, err := readRoomID(roomDir)
+	if err != nil {
+		return nil, err
+	}
 
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	ev := &event.Event{
 		V:      event.CurrentVersion,
 		ID:     "ev_" + journal.ComputeLineHash([]byte(runID + "fail"))[7:23],
-		Room:   "rm_test",
+		Room:   roomID,
 		Author: id.MemberID,
 		Kind:   event.KindRunFailed,
 		Body:   json.RawMessage(bodyBytes),
@@ -247,6 +266,9 @@ func Fail(roomDir, runID, errMsg string, id *identity.Identity) (*event.Event, e
 	return ev, nil
 }
 
+// ProjectRuns projects a trusted single-room event stream. For mixed or
+// untrusted journals, callers should use ProjectRunsInRoom with the room ID
+// loaded from that room's config.
 func ProjectRuns(events []*event.Event) map[string]*Run {
 	runs := make(map[string]*Run)
 	membership := members.NewState()
@@ -379,6 +401,19 @@ func ProjectRuns(events []*event.Event) map[string]*Run {
 	return runs
 }
 
+// ProjectRunsInRoom excludes journal records whose signed room field does not
+// belong to the room directory being queried. Identity keys can be reused
+// across rooms, so signature verification alone is not a room boundary.
+func ProjectRunsInRoom(events []*event.Event, roomID string) map[string]*Run {
+	roomEvents := make([]*event.Event, 0, len(events))
+	for _, ev := range events {
+		if ev.Room == roomID {
+			roomEvents = append(roomEvents, ev)
+		}
+	}
+	return ProjectRuns(roomEvents)
+}
+
 func List(roomDir string, pendingOnly bool) ([]*Run, error) {
 	j := journal.New(filepath.Join(roomDir, "journal"))
 	merged, err := j.MergeAll()
@@ -386,7 +421,11 @@ func List(roomDir string, pendingOnly bool) ([]*Run, error) {
 		return nil, err
 	}
 
-	runsMap := ProjectRuns(merged)
+	cfg, err := roomconfig.ReadRoomConfig(roomDir)
+	if err != nil {
+		return nil, err
+	}
+	runsMap := ProjectRunsInRoom(merged, cfg.ID)
 	var list []*Run
 	for _, r := range runsMap {
 		if pendingOnly && r.State != StateRequested && r.State != StateApproved {
@@ -409,12 +448,24 @@ func Get(roomDir, runID string) (*Run, error) {
 		return nil, err
 	}
 
-	runsMap := ProjectRuns(merged)
+	cfg, err := roomconfig.ReadRoomConfig(roomDir)
+	if err != nil {
+		return nil, err
+	}
+	runsMap := ProjectRunsInRoom(merged, cfg.ID)
 	r, exists := runsMap[runID]
 	if !exists {
 		return nil, ErrRunNotFound
 	}
 	return r, nil
+}
+
+func readRoomID(roomDir string) (string, error) {
+	cfg, err := roomconfig.ReadRoomConfig(roomDir)
+	if err != nil {
+		return "", err
+	}
+	return cfg.ID, nil
 }
 
 func approvalAuthorized(membership *members.State, ev *event.Event) bool {
@@ -426,34 +477,5 @@ func approvalAuthorized(membership *members.State, ev *event.Event) bool {
 }
 
 func applySignedMembershipEvent(membership *members.State, ev *event.Event) bool {
-	var publicKey ed25519.PublicKey
-	if ev.Kind == event.KindRoomCreated {
-		if len(membership.Members) != 0 {
-			return false
-		}
-		var body struct {
-			PublicKey string `json:"public_key"`
-		}
-		if json.Unmarshal(ev.Body, &body) != nil {
-			return false
-		}
-		decoded, err := hex.DecodeString(body.PublicKey)
-		if err != nil || len(decoded) != ed25519.PublicKeySize {
-			return false
-		}
-		if identity.ComputeMemberID(ed25519.PublicKey(decoded)) != ev.Author {
-			return false
-		}
-		publicKey = ed25519.PublicKey(decoded)
-	} else {
-		author, ok := membership.Members[ev.Author]
-		if !ok {
-			return false
-		}
-		publicKey = author.PublicKey
-	}
-	if ev.VerifySignature(publicKey) != nil {
-		return false
-	}
-	return membership.ApplyEvent(ev) == nil
+	return membership.ApplySignedEvent(ev) == nil
 }

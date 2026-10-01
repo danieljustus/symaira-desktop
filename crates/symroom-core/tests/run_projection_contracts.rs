@@ -97,8 +97,8 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
         fixture.oracle_revision,
         "6f1c04e38e283e0e722661725bd5baec9f3f5fe5"
     );
-    assert_eq!(fixture.records.len(), 15, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 55, "fixture exercises all edge paths");
+    assert_eq!(fixture.records.len(), 16, "nonzero projected records");
+    assert_eq!(fixture.events.len(), 58, "fixture exercises all edge paths");
     assert_eq!(fixture.checkpoint_records.len(), 2);
     for source in [
         "internal/room/run/run.go",
@@ -187,7 +187,7 @@ fn go_run_projection_and_journal_queries_match_byte_for_byte() {
             "fixture is missing edge case {id}"
         );
     }
-    let projected: BTreeMap<String, Run> = runs::project_runs(&events);
+    let projected: BTreeMap<String, Run> = runs::project_runs_in_room(&events, "room-test");
     let actual_records = projected
         .values()
         .map(|run| serde_json::to_string(run).expect("run serializes"))
@@ -237,6 +237,7 @@ fn replay_journal_queries(fixture: &JournalQueries) {
     ));
     let journal_dir = root.join("journal");
     fs::create_dir_all(&journal_dir).expect("create fixture journal");
+    fs::write(root.join("room.toml"), "id = \"room-test\"\n").expect("write Go room config");
     for file in &fixture.journal_files {
         fs::write(journal_dir.join(&file.name), file.content.as_bytes())
             .expect("write Go-produced journal segment");
@@ -339,6 +340,7 @@ fn replay_equal_created_at_list(fixture: &EqualCreatedAtFixture) {
     ));
     let journal_dir = root.join("journal");
     fs::create_dir_all(&journal_dir).expect("create equal-created-at journal");
+    fs::write(root.join("room.toml"), "id = \"room-test\"\n").expect("write Go room config");
     for file in &fixture.journal_files {
         fs::write(journal_dir.join(&file.name), file.content.as_bytes())
             .expect("write equal-created-at segment");
@@ -389,6 +391,8 @@ fn replay_read_error(fixture: &ReadErrorFixture) {
         std::process::id(),
         fixture.name
     ));
+    fs::create_dir_all(&root).expect("create room for read-error case");
+    fs::write(root.join("room.toml"), "id = \"room-test\"\n").expect("write Go room config");
     if fixture.journal_is_file {
         fs::create_dir_all(&root).expect("create room for not-directory case");
         fs::write(root.join("journal"), b"not a directory")
@@ -498,7 +502,7 @@ fn encode_run(run: &Run, normalize_checkpoints: bool) -> String {
 }
 
 fn matches_go_records(events: &[Event], records: &[String]) -> bool {
-    let projected: BTreeMap<String, Run> = runs::project_runs(events);
+    let projected: BTreeMap<String, Run> = runs::project_runs_in_room(events, "room-test");
     if projected.len() != records.len() {
         return false;
     }

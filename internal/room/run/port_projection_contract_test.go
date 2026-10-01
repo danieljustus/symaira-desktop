@@ -128,6 +128,9 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		// that member's role to owner.
 		signedProjectionEvent(t, "projection-agent-room-recreated", event.KindRoomCreated, `{"name":"Agent","public_key":"`+hex.EncodeToString(agent.PublicKey)+`"}`, agent, "2026-01-02T03:00:02.500Z"),
 		signedProjectionEvent(t, "projection-observer-added", event.KindMemberAdded, `{"id":"`+observer.MemberID+`","name":"Observer","public_key":"`+hex.EncodeToString(observer.PublicKey)+`","role":"observer","kind":"human"}`, owner, "2026-01-02T03:00:03.000Z"),
+		projectionEvent("request-cross-room-approval", event.KindRunRequested, `{"run_id":"run-cross-room-approval","title":"Cross-room approval"}`, "author", "2026-01-02T03:00:03.500Z"),
+		signedProjectionEventInRoom(t, "cross-room-member-added", event.KindMemberAdded, `{"id":"`+forged.MemberID+`","name":"Foreign reviewer","public_key":"`+hex.EncodeToString(forged.PublicKey)+`","role":"member","kind":"human"}`, owner, "2026-01-02T03:00:03.750Z", "rm_foreign"),
+		signedProjectionEventInRoom(t, "cross-room-approval", event.KindRunApproved, `{"run_id":"run-cross-room-approval","approval_id":"foreign-approval","scope":"room"}`, forged, "2026-01-02T03:00:03.875Z", "rm_foreign"),
 		// This forged owner-signed membership claim must not make its key eligible
 		// to authorize a later run.approved event.
 		signedProjectionEventAs(t, "projection-forged-member-added", event.KindMemberAdded, `{"id":"`+forged.MemberID+`","name":"Forged","public_key":"`+hex.EncodeToString(forged.PublicKey)+`","role":"member","kind":"human"}`, owner.MemberID, forged, "2026-01-02T03:00:04.000Z"),
@@ -184,7 +187,7 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		projectionEvent("request-demoted-approval", event.KindRunRequested, `{"run_id":"run-demoted-approval","title":"Demoted approval"}`, "author", "2026-01-02T10:14:00.000Z"),
 		signedProjectionEventAs(t, "demoted-approval", event.KindRunApproved, `{"run_id":"run-demoted-approval","approval_id":"demoted-approval","scope":"room"}`, reviewer.MemberID, rotated, "2026-01-02T10:15:00.000Z"),
 	)
-	projected := ProjectRuns(events)
+	projected := ProjectRunsInRoom(events, "room-test")
 	ids := make([]string, 0, len(projected))
 	for id := range projected {
 		ids = append(ids, id)
@@ -247,6 +250,19 @@ func signedProjectionEventAs(t *testing.T, id, kind, body, author string, signer
 	ev.Lamport = 1
 	if err := ev.Sign(signer); err != nil {
 		t.Fatalf("sign projection event %s: %v", id, err)
+	}
+	return ev
+}
+
+func signedProjectionEventInRoom(t *testing.T, id, kind, body string, signer *identity.Identity, ts, roomID string) *event.Event {
+	t.Helper()
+	ev := projectionEvent(id, kind, body, signer.MemberID, ts)
+	ev.Room = roomID
+	ev.Seq = 1
+	ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+	ev.Lamport = 1
+	if err := ev.Sign(signer); err != nil {
+		t.Fatalf("sign cross-room projection event %s: %v", id, err)
 	}
 	return ev
 }
@@ -319,6 +335,9 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 	}
 
 	roomDir := filepath.Dir(journalDir)
+	if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	merged, err := journal.New(journalDir).MergeAll()
 	if err != nil {
 		t.Fatal(err)
@@ -412,6 +431,9 @@ func makeEqualCreatedAtListFixture(t *testing.T) runEqualCreatedAtFixture {
 	}
 
 	roomDir := filepath.Dir(journalDir)
+	if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	orders := make(map[string]struct{})
 	var multiset []string
 	for range 64 {
@@ -450,6 +472,9 @@ func makeRunReadErrorFixtures(t *testing.T) []runReadErrorFixture {
 	t.Helper()
 	const malformedAuthor = "malformed-segment"
 	malformedRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(malformedRoot, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	malformedDir := filepath.Join(malformedRoot, "journal")
 	if err := os.MkdirAll(malformedDir, 0o700); err != nil {
 		t.Fatal(err)
@@ -476,6 +501,9 @@ func makeRunReadErrorFixtures(t *testing.T) []runReadErrorFixture {
 	}
 
 	notDirectoryRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(notDirectoryRoot, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(notDirectoryRoot, "journal"), []byte("not a directory"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -522,6 +550,9 @@ func makeScannerOverflowFixture(t *testing.T) runReadErrorFixture {
 		RepeatSuffix: "x", RepeatCount: 70 * 1024, RepeatNewline: true,
 	}
 	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "room.toml"), []byte("id = \"room-test\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	journalDir := filepath.Join(root, "journal")
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
 		t.Fatal(err)

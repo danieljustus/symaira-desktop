@@ -83,7 +83,7 @@ fn run_list_and_show_match_go_process_contract() {
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse Go-generated fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 5);
+    assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(!fixture.cases.is_empty());
     assert!(fixture.cases.iter().any(|case| case.exit_code == 5));
@@ -93,12 +93,16 @@ fn run_list_and_show_match_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create fixture journal");
+    fs::write(main_room.join("room.toml"), "id = \"room-test\"\n")
+        .expect("write fixture room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed fixture journal segment");
     }
     let empty_room = temp.path.join("empty");
     fs::create_dir(&empty_room).expect("create empty room");
+    fs::write(empty_room.join("room.toml"), "id = \"room-test\"\n")
+        .expect("write empty room config");
 
     for case in &fixture.cases {
         let room = match case.room.as_str() {
@@ -152,6 +156,7 @@ fn run_wait_matches_go_process_contract() {
     let main_room = temp.path.join("main");
     let journal = main_room.join("journal");
     fs::create_dir_all(&journal).expect("create wait fixture journal");
+    fs::write(main_room.join("room.toml"), "id = \"room-test\"\n").expect("write wait room config");
     for file in &fixture.journal_files {
         fs::write(journal.join(&file.name), file.content.as_bytes())
             .expect("write Go-signed wait fixture segment");
@@ -223,6 +228,8 @@ fn run_request_start_cancel_match_go_process_contract() {
         let room = temp.path.join(format!("room-{}", case.name));
         let journal = room.join("journal");
         fs::create_dir_all(&journal).expect("create mutation fixture journal");
+        fs::write(room.join("room.toml"), "id = \"room-test\"\n")
+            .expect("write mutation room config");
         for file in &fixture.journal_files {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go-signed mutation fixture segment");

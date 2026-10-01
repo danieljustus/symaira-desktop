@@ -73,7 +73,7 @@
         "result": {
           "content": [
             {
-              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_20c8360ec381070a\",\"title\":\"Fixture run\"},\"id\":\"ev_20c8360ec381070a\",\"kind\":\"run.requested\",\"lamport\":3,\"room\":\"rm_test\",\"seq\":3,\"v\":1}",
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_20c8360ec381070a\",\"title\":\"Fixture run\"},\"id\":\"ev_20c8360ec381070a\",\"kind\":\"run.requested\",\"lamport\":3,\"room\":\"rm_fixture\",\"seq\":3,\"v\":1}",
               "type": "text"
             }
           ],
@@ -100,7 +100,7 @@
         "result": {
           "content": [
             {
-              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\\u003cgenerated\\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"room\":\"rm_test\",\"seq\":4,\"v\":1}",
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\\u003cgenerated\\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"room\":\"rm_fixture\",\"seq\":4,\"v\":1}",
               "type": "text"
             }
           ],

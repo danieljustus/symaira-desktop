@@ -20,13 +20,19 @@ pub fn approve(
     ttl: time::Duration,
     signer: &Identity,
 ) -> Result<Event, ApprovalError> {
+    let room_id = runs::read_room_id(room_dir)?;
     let events = journal::merge_all(room_dir)
         .map_err(|error| ApprovalError::ReadJournal(error.to_string()))?;
     let mut state = members::State::default();
     for event in &events {
-        state
-            .apply_event(event)
-            .map_err(ApprovalError::MembershipState)?;
+        if event.room == room_id
+            && matches!(
+                event.kind.as_str(),
+                "room.created" | "member.added" | "member.removed" | "member.role_changed"
+            )
+        {
+            let _ = state.apply_signed_event(event);
+        }
     }
     let member = state
         .members
@@ -119,6 +125,7 @@ fn append_approval_event(
     kind: &str,
     body: &impl Serialize,
 ) -> Result<Event, ApprovalError> {
+    let room_id = runs::read_room_id(room_dir)?;
     let stats = journal::read_journal_stats(room_dir).map_err(ApprovalError::WriteJournal)?;
     let author =
         journal::author_stats(room_dir, &signer.member_id).map_err(ApprovalError::WriteJournal)?;
@@ -134,7 +141,7 @@ fn append_approval_event(
     let mut event = Event {
         v: event::CURRENT_VERSION,
         id,
-        room: "rm_test".to_owned(),
+        room: room_id,
         author: signer.member_id.clone(),
         seq: author.seq.saturating_add(1).max(1),
         prev: author.prev,

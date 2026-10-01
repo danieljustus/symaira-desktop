@@ -166,6 +166,9 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 				return fixture, err
 			}
 		}
+		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("id = \"rm_checkpoint_fixture\"\n"), 0o600); err != nil {
+			return fixture, err
+		}
 		var initial []checkpointCLIFile
 		if vector.initial != "" {
 			var err error

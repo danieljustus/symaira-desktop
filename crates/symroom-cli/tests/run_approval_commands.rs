@@ -74,6 +74,8 @@ fn run_approval_and_denial_match_go_process_and_signed_journal() {
         for directory in [&journal, &home, &data_home, &tmp] {
             fs::create_dir_all(directory).expect("create isolated fixture directory");
         }
+        fs::write(room.join("room.toml"), "id = \"rm_approval_fixture\"\n")
+            .expect("write configured room ID");
         for file in &fixture.initial_journal {
             fs::write(journal.join(&file.name), file.content.as_bytes())
                 .expect("write Go-signed initial journal");

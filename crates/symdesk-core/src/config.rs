@@ -85,6 +85,14 @@ impl Config {
         self.llm_api_key.is_configured()
     }
 
+    /// Returns the configured API key or secret reference for resolution by a consumer.
+    ///
+    /// The value remains wrapped internally so derived `Debug` output stays redacted.
+    #[must_use]
+    pub fn api_key_reference(&self) -> &str {
+        &self.llm_api_key.0
+    }
+
     /// Applies the manual Go environment allowlist, including every
     /// documented `SYMDESK_*` configuration override.
     pub fn apply_environment(&mut self, environment: &BTreeMap<String, String>) {
@@ -497,5 +505,39 @@ fn join(left: &str, right: &str) -> String {
             left.trim_end_matches(['/', '\\']),
             right.trim_start_matches(['/', '\\'])
         )
+    }
+}
+
+#[cfg(test)]
+mod secret_reference_tests {
+    use super::{Config, load, render_toml};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn api_key_reference_survives_toml_and_environment_loading() {
+        let from_toml = load(Some("llm_api_key = \"toml-ref\"\n"), &BTreeMap::new())
+            .expect("load TOML secret reference");
+        assert_eq!(from_toml.api_key_reference(), "toml-ref");
+        let serialized = render_toml(&from_toml).expect("serialize config");
+        let roundtrip = load(Some(&serialized), &BTreeMap::new()).expect("reload config");
+        assert_eq!(roundtrip.api_key_reference(), "toml-ref");
+
+        let environment = BTreeMap::from([("SYMDESK_LLM_API_KEY".into(), "env-ref".into())]);
+        let from_environment = load(None, &environment).expect("load environment secret");
+        assert_eq!(from_environment.api_key_reference(), "env-ref");
+        assert_eq!(Config::default().api_key_reference(), "");
+    }
+
+    #[test]
+    fn config_debug_output_keeps_api_key_redacted() {
+        let config = load(
+            Some("llm_api_key = \"secret-that-must-not-appear\"\n"),
+            &BTreeMap::new(),
+        )
+        .expect("load secret config");
+        let debug = format!("{config:?}");
+        assert!(debug.contains("SecretValue(***)"));
+        assert!(!debug.contains("secret-that-must-not-appear"));
+        assert_eq!(config.api_key_reference(), "secret-that-must-not-appear");
     }
 }

@@ -11,7 +11,9 @@ use std::{
 use clap::{Arg, Command};
 use serde::Serialize;
 use symaira_core_exit::ExitCode as CoreExitCode;
-use symaira_core_llm::{CancellationToken, ChatOptions, ClientBuilder, Message, lookup};
+use symaira_core_llm::{
+    CancellationToken, ChatOptions, ClientBuilder, GenerateOption, Message, lookup,
+};
 use symdesk_index::{SearchSource, SourceRegistry, open_for_vault};
 
 const DEFAULT_ANTHROPIC_MODEL: &str = "claude-sonnet-5";
@@ -223,17 +225,116 @@ pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode 
         );
     }
 
-    // Ollama and Hermes keep their existing visible fallback behavior in this slice.
-    let message = match config.llm_provider.as_str() {
-        "ollama" if config.ollama_url.is_empty() => {
-            "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n"
-                .to_owned()
+    if config.llm_provider != "hermes" {
+        let Some(base_url) = ollama_endpoint(&config) else {
+            return emit_chunk(
+                "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n",
+                output_json,
+            );
+        };
+        let model_environment = std::env::var("SYMDESK_OLLAMA_MODEL").ok();
+        let model = ollama_model(model_environment.as_deref());
+        let intent = command
+            .get_one::<String>("intent")
+            .map(String::as_str)
+            .unwrap_or_default();
+        return run_ollama_transform(
+            &base_url,
+            model,
+            &build_transform_prompt(&config, text.trim(), intent),
+            output_json,
+        );
+    }
+
+    emit_chunk(
+        "⚠️ Request failed: Rust transform provider \"hermes\" is not implemented.\n",
+        output_json,
+    )
+}
+
+fn ollama_endpoint(config: &symdesk_core::config::Config) -> Option<String> {
+    let endpoint = config.ollama_url.trim_end_matches('/');
+    if endpoint.is_empty() {
+        return None;
+    }
+    Some(ollama_root(endpoint).to_owned())
+}
+
+fn ollama_root(raw: &str) -> &str {
+    raw.match_indices('/')
+        .find_map(|(index, _)| (index > "http://".len()).then_some(&raw[..index]))
+        .unwrap_or(raw)
+}
+
+fn ollama_model(environment_value: Option<&str>) -> &str {
+    environment_value
+        .filter(|value| !value.is_empty())
+        .unwrap_or("llama3.2")
+}
+
+fn run_ollama_transform(base_url: &str, model: &str, prompt: &str, output_json: bool) -> ExitCode {
+    let writer = RefCell::new(io::stdout());
+    let mut output_failed = false;
+    let result = stream_ollama_transform(base_url, model, prompt, |chunk| {
+        if !output_failed
+            && emit_transform_chunk(&mut *writer.borrow_mut(), chunk, output_json).is_err()
+        {
+            output_failed = true;
         }
-        provider => {
-            format!("⚠️ Request failed: Rust transform provider {provider:?} is not implemented.\n")
+        if output_failed {
+            Err(symaira_core_llm::Error {
+                code: symaira_core_llm::ErrorCode::TransportError,
+                status_code: 0,
+                body: String::new(),
+                retry_after: String::new(),
+                detail: "transform output write failed".to_owned(),
+            })
+        } else {
+            Ok(())
         }
-    };
-    emit_chunk(&message, output_json)
+    });
+    if output_failed {
+        return super::process_exit(CoreExitCode::Generic);
+    }
+    match result {
+        Ok(()) => super::process_exit(CoreExitCode::Ok),
+        Err(error) => emit_chunk(&ollama_failure_message(&error), output_json),
+    }
+}
+
+fn stream_ollama_transform(
+    base_url: &str,
+    model: &str,
+    prompt: &str,
+    mut on_chunk: impl FnMut(&str) -> symaira_core_llm::Result<()>,
+) -> Result<(), OllamaTransformError> {
+    let descriptor = lookup("ollama").expect("CoreKit embeds the Ollama descriptor");
+    let client = ClientBuilder::new(descriptor.clone(), "")
+        .base_url(ollama_root(base_url))
+        .timeout(Duration::from_secs(5 * 60))
+        .build()
+        .map_err(OllamaTransformError::Client)?;
+    client
+        .generate(model, prompt, &GenerateOption::default(), |chunk| {
+            if chunk.response.is_empty() {
+                return Ok(());
+            }
+            on_chunk(&chunk.response)
+        })
+        .map_err(OllamaTransformError::Stream)
+}
+
+#[derive(Debug)]
+enum OllamaTransformError {
+    Client(symaira_core_llm::Error),
+    Stream(symaira_core_llm::Error),
+}
+
+fn ollama_failure_message(error: &OllamaTransformError) -> String {
+    match error {
+        OllamaTransformError::Client(error) => format!("⚠️ Request failed: {error}\n"),
+        OllamaTransformError::Stream(error) => format!("⚠️ Request failed: ollama: {error}\n"),
+    }
 }
 
 pub(crate) fn ensure_offline_ask_provider() -> Result<(), String> {
@@ -490,8 +591,10 @@ fn emit_transform_chunk(writer: &mut impl Write, chunk: &str, output_json: bool)
 #[cfg(test)]
 mod tests {
     use super::{
-        AnthropicTransformError, DEFAULT_ANTHROPIC_MODEL, anthropic_model, build_transform_prompt,
-        emit_transform_chunk, stream_anthropic_transform, transform_failure_message,
+        AnthropicTransformError, DEFAULT_ANTHROPIC_MODEL, OllamaTransformError, anthropic_model,
+        build_transform_prompt, emit_transform_chunk, ollama_endpoint, ollama_failure_message,
+        ollama_model, ollama_root, stream_anthropic_transform, stream_ollama_transform,
+        transform_failure_message,
     };
     use std::{
         io::{Read, Write},
@@ -533,6 +636,156 @@ mod tests {
         emit_transform_chunk(&mut plain, "first", false).expect("write plain chunk");
         emit_transform_chunk(&mut plain, "second", false).expect("write second plain chunk");
         assert_eq!(plain, b"{first}\n{second}\n");
+    }
+
+    #[test]
+    fn ollama_url_and_model_selection_match_go_fallback_rules() {
+        let mut config = symdesk_core::config::Config::default();
+        assert_eq!(ollama_endpoint(&config), None);
+        config.ollama_url = "http://127.0.0.1:11434/v1///".to_owned();
+        assert_eq!(
+            ollama_endpoint(&config).as_deref(),
+            Some("http://127.0.0.1:11434")
+        );
+        assert_eq!(
+            ollama_root("https://ollama.example:11434/v1"),
+            "https://ollama.example:11434"
+        );
+        assert_eq!(
+            ollama_root("http://localhost:11434"),
+            "http://localhost:11434"
+        );
+        assert_eq!(ollama_model(None), "llama3.2");
+        assert_eq!(ollama_model(Some("")), "llama3.2");
+        assert_eq!(ollama_model(Some("custom-model")), "custom-model");
+        config.llm_model = "anthropic-model-must-not-leak-to-ollama".to_owned();
+        assert_eq!(ollama_model(None), "llama3.2");
+    }
+
+    #[test]
+    fn ollama_generate_uses_native_endpoint_and_only_emits_nonempty_responses() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local Ollama");
+        let address = listener.local_addr().expect("read Ollama address");
+        let provider = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept Ollama request");
+            let request = read_http_request(&mut stream);
+            assert!(request.starts_with("POST /api/generate HTTP/1.1\r\n"));
+            let body = request.split_once("\r\n\r\n").expect("HTTP body").1;
+            let body: serde_json::Value = serde_json::from_str(body).expect("generate JSON");
+            assert_eq!(body["model"], "env-selected-model");
+            assert_eq!(body["prompt"], "go-compatible prompt");
+            assert_eq!(body["stream"], true);
+            let response = concat!(
+                "{\"model\":\"env-selected-model\",\"response\":\"\",\"done\":false}\n",
+                "{\"model\":\"env-selected-model\",\"response\":\"first\",\"done\":false}\n",
+                "{\"model\":\"env-selected-model\",\"response\":\"second\",\"done\":true}\n"
+            );
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                response.len(),
+                response
+            )
+            .expect("write NDJSON response");
+        });
+
+        let mut config = symdesk_core::config::Config::default();
+        config.llm_model = "must-not-be-used".to_owned();
+        let mut chunks = Vec::new();
+        stream_ollama_transform(
+            &format!("http://{address}/v1///"),
+            "env-selected-model",
+            "go-compatible prompt",
+            |chunk| {
+                chunks.push(chunk.to_owned());
+                Ok(())
+            },
+        )
+        .expect("CoreKit streams native Ollama generate response");
+        provider.join().expect("provider assertions pass");
+        assert_eq!(chunks, ["first", "second"]);
+    }
+
+    #[test]
+    fn ollama_builder_and_stream_errors_keep_go_prefix_difference() {
+        // CoreKit's unauthenticated Ollama builder accepts arbitrary endpoint
+        // strings, so exercise the Go-compatible builder-error rendering
+        // directly; endpoint failures surface from Generate as stream errors.
+        let message =
+            ollama_failure_message(&OllamaTransformError::Client(symaira_core_llm::Error {
+                code: symaira_core_llm::ErrorCode::ProviderError,
+                status_code: 0,
+                body: String::new(),
+                retry_after: String::new(),
+                detail: "invalid descriptor".to_owned(),
+            }));
+        assert!(message.starts_with("⚠️ Request failed: "));
+        assert!(!message.contains("ollama:"));
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local Ollama");
+        let address = listener.local_addr().expect("read Ollama address");
+        let provider = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept Ollama request");
+            let _request = read_http_request(&mut stream);
+            let response = r#"{"error":"model not found"}"#;
+            write!(
+                stream,
+                "HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                response.len(),
+                response
+            )
+            .expect("write provider error");
+        });
+        let stream_error =
+            stream_ollama_transform(&format!("http://{address}"), "llama3.2", "prompt", |_| {
+                panic!("HTTP error has no response chunks")
+            })
+            .expect_err("provider error is a generate error");
+        provider.join().expect("provider request completed");
+        let OllamaTransformError::Stream(error) = stream_error else {
+            panic!("provider failures happen after client construction");
+        };
+        assert!(error.to_string().contains("status 404"));
+        let message = ollama_failure_message(&OllamaTransformError::Stream(error));
+        assert!(message.starts_with("⚠️ Request failed: ollama: "));
+    }
+
+    #[test]
+    fn ollama_callback_failure_stops_after_the_failed_chunk() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local Ollama");
+        let address = listener.local_addr().expect("read Ollama address");
+        let provider = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept Ollama request");
+            let _request = read_http_request(&mut stream);
+            let response = concat!(
+                "{\"model\":\"llama3.2\",\"response\":\"first\",\"done\":false}\n",
+                "{\"model\":\"llama3.2\",\"response\":\"second\",\"done\":true}\n"
+            );
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                response.len(),
+                response
+            )
+            .expect("write NDJSON response");
+        });
+
+        let mut callback_count = 0;
+        let error =
+            stream_ollama_transform(&format!("http://{address}"), "llama3.2", "prompt", |_| {
+                callback_count += 1;
+                Err(symaira_core_llm::Error {
+                    code: symaira_core_llm::ErrorCode::TransportError,
+                    status_code: 0,
+                    body: String::new(),
+                    retry_after: String::new(),
+                    detail: "output closed".to_owned(),
+                })
+            })
+            .expect_err("callback failure ends the generator");
+        provider.join().expect("provider request completed");
+        assert!(matches!(error, OllamaTransformError::Stream(_)));
+        assert_eq!(callback_count, 1);
     }
 
     #[test]

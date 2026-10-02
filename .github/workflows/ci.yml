@@ -38,13 +38,15 @@ jobs:
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
 
-      # The frontmatter/history source guards clone this checkout and verify
-      # their pinned Go source revisions. Keep both objects reachable through
-      # local branches: FETCH_HEAD alone is not transferred by git clone --no-local.
+      # Source-provenance tests read several pinned Go revisions with `git show`.
+      # Keep every pinned oracle reachable through local branches because
+      # FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
         run: |
           git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
           git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
+          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
+          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -135,12 +137,14 @@ jobs:
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
 
-      # The Windows contract runs the clone-based Go source guards below.
+      # Windows runs clone-based Go source-provenance checks in the contracts.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
         run: |
           git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
           git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
+          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
+          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -222,17 +226,18 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # The pinned frontmatter oracle is validated from Git history; the live
-          # history oracle checks immutable production Go blobs.
+          # The pinned Go source oracles are validated from Git history.
           fetch-depth: 0
 
-      # The source-guard tests clone this checkout, so retain both pinned Go
-      # source revisions through local branches rather than only FETCH_HEAD.
+      # The source-guard tests clone this checkout, so retain every pinned Go
+      # source revision through local branches rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
         run: |
           git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
           git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
+          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
+          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

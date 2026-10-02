@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "fd57c5f1144fc4f6eceebbcf01e30a0b817307b7",
+    "commit": "d0efab2017b60082d5adcc12f0d8286e0dc2eecd",
     "release": "post-v0.12.2-security-880"
   },
   "cases": [
@@ -536,9 +536,6 @@
         "sha256": "eb4ece65789372b2ff1cd47db3a081bbb041204facba30ac1cca12fdc580e193",
         "title": "Tasks",
         "created": "",
-        "tags": [
-          "project/tasks"
-        ],
         "aliases": [
           "Task DB",
           "Aufgaben"
@@ -913,7 +910,6 @@
         "tags": [
           "Front",
           "front",
-          "heading-tag",
           "valid/tag",
           "trail"
         ],

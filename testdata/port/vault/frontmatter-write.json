@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
-    "release": "post-v0.13.0-dependency-refresh"
+    "commit": "69e0e149671611563e1fdf7ab636bbba09582844",
+    "release": "post-issue-1122-atx-heading-tag-exclusion"
   },
   "source_hashes": {
     "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
@@ -15,7 +15,7 @@
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
     "internal/vault/root_open_unix.go": "8e86c3d2d29e701dab7e84fee106d3d7251ea21e7a7dc0e87864d2309ada56ed",
     "internal/vault/root_open_windows.go": "aafda818b9c0afdcb6b2c3e7aa8f009a2a14bd90492642f14296a2c96c75fd5d",
-    "internal/vault/tags.go": "c533b3a9f254551dea6a079749afbdf41052231f7e2b7ffa002811431169f1d0",
+    "internal/vault/tags.go": "602802a016345866516db820f132efc592c4d954fa975fa113b41d1ec6c232d0",
     "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
   },
   "cases": [

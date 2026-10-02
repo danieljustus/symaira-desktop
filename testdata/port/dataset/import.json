@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "generated_on": "darwin/arm64",
+  "generated_on": "linux/amd64",
   "oracle": {
     "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
     "toolchain": "go1.26.6",
-    "goos": "darwin",
-    "goarch": "arm64"
+    "goos": "linux",
+    "goarch": "amd64"
   },
   "generator_sha256": "336b1db481da825fe04479d86d98864274a2418e03a7c27621659d7a81487f2d",
   "source_sha256": {

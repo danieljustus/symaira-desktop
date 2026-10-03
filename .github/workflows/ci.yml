@@ -16,4 +16,4 @@ jobs:
           go-version: '1.26.6'
       - name: Replay actual Go Search and Ask oracles
         shell: bash
-        run: go test -count=1 ./internal/mcp ./internal/service -run '^Test(AskOfflineMCPOracle|SearchHybridMCPOracle|AskHybridOfflineOracle|SearchCLIHybridOracle)$'
+        run: go test -count=3 ./internal/mcp ./internal/service ./internal/sidecar -run '^Test(AskOfflineMCPOracle|SearchHybridMCPOracle|AskHybridOfflineOracle|SearchCLIHybridOracle|MetadataReplacementWaitsForWindowsReader|MetadataReplacementPreservesRecordOnWindowsTimeout)$'

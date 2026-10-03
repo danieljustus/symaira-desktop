@@ -190,7 +190,7 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   Go packages passed the full local race run, and this repaired package passes
   its race rerun. PDF missing-tool controls use an empty test-owned PATH.
 - #864: `baseline-20260906.json` now explicitly records the historical index
-  benchmark's actual 10,015 documents and retains its original 10,000 claim
+  and graph benchmarks' actual 10,015 documents and retains their original 10,000 claims
   as `reported_documents`; the timing is unchanged. The independent
   `testdata/port/sidecar/large-corpus.json` supplies exactly 10,000 documents,
   fixed mtimes, a logical-state hash (volatile database timestamps excluded)

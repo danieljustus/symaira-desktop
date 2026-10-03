@@ -169,12 +169,24 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   offline Ask fixture projection recognizes native Windows source paths, and
   exact-version ISC and CDLA-Permissive-2.0 exceptions cover the existing
   Rustls crypto dependencies and Mozilla CA bundles.
+  Native CI additionally exposed a Go notebook match/fallback identity bug on
+  Windows: matched relative paths now use the same slash notation as notebook
+  source references, preventing duplicate fallback citations. The existing
+  service regression now requires exactly one result per notebook source.
+  The isolated Rust Search/Ask processes preserve Windows `SYSTEMROOT`, as the
+  MCP Search harness already does, so the native socket runtime can initialize.
+  The MCP negated-path corpus now targets `private.md`, rather than the broad
+  substring `private` that also excludes macOS's canonical `/private/var` temp
+  root. Go generation under a temp path containing `private` confirms that
+  only the query input changes; its expected results and requests are preserved.
+  These reviewed input/source changes require a fresh P/Q record. Squash merge
+  requires the subsequent Q refresh to anchor the actual merged P commit.
   Linux/amd64: source registry/search and recursive watch differentials, the
   race-enabled Go offline Ask oracle, strict workspace Clippy and the native
   sidecar round-trip pass. Other native runner results are required separately.
 - #1127: the existing CLI alias-root regression is now complemented by real
   MCP Search and offline Ask process replays through symlinked vault roots.
-  Both canonical and alias cases use the unchanged Go-owned expected envelopes
+  Both canonical and alias cases use the Go-owned expected envelopes
   and provider request traces; no fixture expectations are normalized away.
   These four MCP process tests pass on Linux/amd64. The full Rust workspace
   passes locally with the fixture-generating `umask 022`; the managed cloud
@@ -186,9 +198,10 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   XDG data roots. SQLite's no-symlink storage checks are preserved.
   The Go race suite's Linux timeout negative control now distinguishes an
   already-exited zombie from a live descendant when container PID 1 does not
-  reap orphans; the process-group kill requirement remains enforced. All other
-  Go packages passed the full local race run, and this repaired package passes
-  its race rerun. PDF missing-tool controls use an empty test-owned PATH.
+  reap orphans; the process-group kill requirement remains enforced. The full
+  local Go race run passes at `8cb31b23`; the subsequent Windows notebook fix
+  passes the affected service tests locally. PDF missing-tool controls use an
+  empty test-owned PATH. Exact integrated native acceptance is still pending.
 - #864: `baseline-20260906.json` now explicitly records the historical index
   and graph benchmarks' actual 10,015 documents and retains their original 10,000 claims
   as `reported_documents`; the timing is unchanged. The independent

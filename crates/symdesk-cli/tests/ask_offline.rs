@@ -323,7 +323,7 @@ fn normalize_events(
             .get_mut("path")
             .and_then(|value| value.as_str())
             .map(str::to_owned)
-            && path.starts_with('/')
+            && PathBuf::from(&path).is_absolute()
         {
             if let Some((source, root)) = sources
                 .iter()
@@ -349,6 +349,10 @@ fn normalize_events(
         {
             let mut normalized = text;
             for (source, root) in sources {
+                normalized = normalized.replace(
+                    &format!("{}{}", root.to_string_lossy(), std::path::MAIN_SEPARATOR),
+                    &format!("@source/{source}/"),
+                );
                 normalized = normalized.replace(
                     &root.to_string_lossy().to_string(),
                     &format!("@source/{source}"),

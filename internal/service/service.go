@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -38,6 +39,10 @@ type Service struct {
 	History        *history.Store
 	Config         *config.Config
 
+	// Keep ownership separate from the public History field: callers may
+	// replace it with a borrowed Store without transferring its ownership.
+	ownedHistory *history.Store
+
 	// retrievalClient is owned by this service instance when it is lazily
 	// opened by New. Server-owned pools and explicitly injected clients are
 	// borrowed and are never closed here.
@@ -54,8 +59,8 @@ type Service struct {
 	closeError         error
 }
 
-// New creates a new Service instance with a lazily opened, service-owned
-// retrieval client.
+// New creates a Service with its own history Store and a lazily opened,
+// service-owned retrieval client.
 func New(vaultRoot string, db *sidecar.DB) *Service {
 	return newService(vaultRoot, db, nil, nil)
 }
@@ -81,12 +86,14 @@ func newService(vaultRoot string, db *sidecar.DB, client *retrieval.Client, pool
 	if err != nil {
 		cfg = config.DefaultConfig()
 	}
+	ownedHistory := history.NewStore(canonical)
 	svc := &Service{
 		VaultRoot:       canonical,
 		vaultInputRoot:  vaultRoot,
 		DB:              db,
 		ViewsMgr:        dbviews.NewManager(canonical),
-		History:         history.NewStore(canonical),
+		History:         ownedHistory,
+		ownedHistory:    ownedHistory,
 		Config:          cfg,
 		retrievalClient: client,
 		retrievalPool:   pool,
@@ -99,8 +106,9 @@ func newService(vaultRoot string, db *sidecar.DB, client *retrieval.Client, pool
 	return svc
 }
 
-// Close releases only a retrieval client opened by this Service. Borrowed
-// clients and the sidecar database remain owned by their caller.
+// Close releases this Service's history Store and its owned retrieval client.
+// Borrowed Stores, clients, pools and the sidecar remain owned by their caller.
+// Callers must finish history-backed operations before closing the Service.
 func (s *Service) Close() error {
 	if s == nil {
 		return nil
@@ -119,6 +127,13 @@ func (s *Service) Close() error {
 		s.retrievalMu.Unlock()
 		if owned && client != nil {
 			s.closeError = client.Close()
+		}
+		if err := s.ownedHistory.Close(); err != nil {
+			if s.closeError == nil {
+				s.closeError = err
+			} else {
+				s.closeError = errors.Join(s.closeError, err)
+			}
 		}
 	})
 	return s.closeError

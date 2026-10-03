@@ -11,9 +11,13 @@ import (
 
 func serviceRetrievalTestSetup(t *testing.T) (string, *sidecar.DB) {
 	t.Helper()
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("XDG_DATA_HOME", t.TempDir())
-	vaultRoot := t.TempDir()
+	home := canonicalOracleTempDir(t)
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, "cache"))
+	vaultRoot := canonicalOracleTempDir(t)
 	db, err := sidecar.Open(filepath.Join(vaultRoot, "sidecar.db"))
 	if err != nil {
 		t.Fatal(err)

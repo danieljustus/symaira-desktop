@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "36b30c48a31e0a2246cc4103033ac69ec63b6ebe",
+    "commit": "c58856a486158e30a9d9f2edd411c79c00362cc1",
     "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
     "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89",
     "internal/service/history.go": "67a37a56fa117e170025183043f340ecae6a0d51f64fb906233b238a1357b6fe",
-    "internal/service/service.go": "c66b45d1d17a269ec9e2f20ced7316b592e3387b28d8edfd4a5d88ae86187dfd"
+    "internal/service/service.go": "32c46d38772f12dcf835b69aa1df9817a7627804b0a92de44f0d73f6d0470632"
   },
   "cases": [
     {

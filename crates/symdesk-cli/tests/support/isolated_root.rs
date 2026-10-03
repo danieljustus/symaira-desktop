@@ -9,18 +9,18 @@ use std::{
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
 pub fn create(prefix: &str) -> PathBuf {
-    let nonce = SystemTime::now()
+    let clock_tick = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system clock")
         .as_nanos();
-    create_with_nonce(&std::env::temp_dir(), prefix, nonce)
+    create_with_clock_tick(&std::env::temp_dir(), prefix, clock_tick)
 }
 
-fn create_with_nonce(parent: &Path, prefix: &str, nonce: u128) -> PathBuf {
+fn create_with_clock_tick(parent: &Path, prefix: &str, clock_tick: u128) -> PathBuf {
     loop {
         let sequence = NEXT_ROOT.fetch_add(1, Ordering::Relaxed);
         let root = parent.join(format!(
-            "{prefix}-{}-{nonce}-{sequence}",
+            "{prefix}-{}-{clock_tick}-{sequence}",
             std::process::id()
         ));
         // Claim the root before creating children. A clock tick is not a
@@ -37,8 +37,8 @@ fn create_with_nonce(parent: &Path, prefix: &str, nonce: u128) -> PathBuf {
 #[test]
 fn identical_clock_ticks_keep_replay_state_and_cleanup_separate() {
     let parent = std::env::temp_dir();
-    let first = create_with_nonce(&parent, "symdesk-mcp-clock-control", 0);
-    let second = create_with_nonce(&parent, "symdesk-mcp-clock-control", 0);
+    let first = create_with_clock_tick(&parent, "symdesk-mcp-clock-control", 0);
+    let second = create_with_clock_tick(&parent, "symdesk-mcp-clock-control", 0);
     assert_ne!(first, second);
     fs::write(first.join("sidecar.db"), b"first replay").expect("first state");
     fs::write(second.join("sidecar.db"), b"second replay").expect("second state");

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "63a8d06a5ed679fa631e1f3d40b71a0e5be0181a",
+    "commit": "5678d577745b079666257d2972281bb534afd91b",
     "release": "post-v0.12.2-security-880"
   },
   "tree": [

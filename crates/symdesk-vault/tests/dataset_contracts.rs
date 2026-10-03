@@ -248,15 +248,6 @@ fn corrupted_fixture_is_rejected_by_rust_replay() {
     );
 }
 
-/// The five generic DatasetImport rejections are ledger evidence only. The two
-/// nonfinite cases above replay the parser/projection helper error but still do
-/// not implement or certify `Service.DatasetSync` or DatasetImport filesystem
-/// writes.
-#[test]
-fn service_level_rejections_are_recorded_not_replayed() {
-    let root = fixture();
-    let cases = root["error_cases"]
-        .as_array()
-        .expect("fixture must carry an error_cases array");
-    assert_eq!(cases.len(), 5);
-}
+// The five generic DatasetImport rejections are executed by the real index
+// service in dataset_import_contracts, against a fresh native Go error oracle.
+// This parser/projection suite does not certify production DatasetSync writes.

@@ -11,6 +11,8 @@
 //! Rust YAML parser and belongs to the CLI slice, and `DocMetaFromDocument`,
 //! which needs the vault document model and belongs to the document slice.
 
+use crate::go_path_error;
+
 mod json_decoder;
 
 use std::path::{Path, PathBuf};
@@ -709,46 +711,6 @@ fn create_dir_all_mode(path: &Path, mode: u32) -> Result<(), RetentionError> {
     builder
         .create(path)
         .map_err(|error| RetentionError::Message(go_path_error("mkdir", path, &error)))
-}
-
-fn go_path_error(operation: &str, path: &Path, error: &std::io::Error) -> String {
-    format!("{operation} {}: {}", path.display(), go_io_error(error))
-}
-
-fn go_io_error(error: &std::io::Error) -> String {
-    match error.kind() {
-        std::io::ErrorKind::NotFound => {
-            if cfg!(windows) {
-                if error.raw_os_error() == Some(3) {
-                    "The system cannot find the path specified.".to_owned()
-                } else {
-                    "The system cannot find the file specified.".to_owned()
-                }
-            } else {
-                "no such file or directory".to_owned()
-            }
-        }
-        std::io::ErrorKind::PermissionDenied => {
-            if cfg!(windows) {
-                "Access is denied.".to_owned()
-            } else {
-                "permission denied".to_owned()
-            }
-        }
-        _ => {
-            let mut message = error.to_string();
-            if let Some(index) = message.rfind(" (os error ") {
-                message.truncate(index);
-            }
-            if !cfg!(windows) {
-                let mut chars = message.chars();
-                if let Some(first) = chars.next() {
-                    message = first.to_lowercase().collect::<String>() + chars.as_str();
-                }
-            }
-            message
-        }
-    }
 }
 
 /// Go: `retention.writeFileAtomic` — a complete file beside its target, synced

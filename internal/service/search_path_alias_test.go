@@ -11,9 +11,12 @@ import (
 )
 
 func TestSearchAliasRootSidecarContainment(t *testing.T) {
-	home := t.TempDir()
+	home := canonicalOracleTempDir(t)
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, "cache"))
 	actual := filepath.Join(t.TempDir(), "vault")
 	if err := os.MkdirAll(actual, 0700); err != nil {
 		t.Fatal(err)
@@ -88,9 +91,12 @@ func TestSearchAliasRootSidecarContainment(t *testing.T) {
 }
 
 func TestSearchAliasRootRefreshPreservesStorageAndRelativeResults(t *testing.T) {
-	home := t.TempDir()
+	home := canonicalOracleTempDir(t)
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, "cache"))
 	actual := filepath.Join(t.TempDir(), "vault")
 	if err := os.MkdirAll(actual, 0700); err != nil {
 		t.Fatal(err)

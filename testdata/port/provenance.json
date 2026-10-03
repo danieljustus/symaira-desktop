@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "66173dbedc3861eb2aba79b2aae40315611ac43c2bd70a5642fe6fd7d70537aa",
-  "generator_source_digest": "090fe3e0945b2371e8d15d1b868fbd8812cb4b82b357c16986fbe762c8a409d1",
+  "generator_source_digest": "7fff27d536d16e1cc2f5807791c024b245bf89ab767eb2e99db74c71b80ad05a",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,

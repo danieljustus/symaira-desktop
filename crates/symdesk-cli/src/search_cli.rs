@@ -149,7 +149,7 @@ fn project_hit(
         path.strip_prefix(roots.first()?)
             .ok()?
             .to_string_lossy()
-            .into_owned()
+            .replace(std::path::MAIN_SEPARATOR, "/")
     };
     let title = sidecar
         .get_title(&raw_path.to_string_lossy())

@@ -14,9 +14,10 @@ import threading
 import time
 
 
-# Reviewed merged source after canonical identity/removal fixes in #1129.
+# Reviewed functional source with #1129 canonical identity and native vault
+# reference repairs. Refresh this anchor to the actual merged P after squash.
 # Keep the source guard: the live differential below must certify this revision.
-GO_ORACLE = "d0efab2017b60082d5adcc12f0d8286e0dc2eecd"
+GO_ORACLE = "a395e390d5ef5494983a010e4d15158553eb6274"
 GO_SOURCES = (
     "cmd/symdesk/sources.go",
     "internal/retrieval/sources.go",

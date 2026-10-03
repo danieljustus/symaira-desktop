@@ -138,7 +138,9 @@ type noteTrash struct {
 }
 
 const (
-	noteOperationOracleCommit  = "9b0bf8bda0e1b56eaf5e2766b00850b466d8021e"
+	// The reviewed Windows vault-reference fix changes service.go; retain the
+	// exact source guard against that functional revision until the merge refresh.
+	noteOperationOracleCommit  = "a395e390d5ef5494983a010e4d15158553eb6274"
 	noteOperationOracleRelease = "post-v0.12.2-security-880"
 	createdPlaceholder         = "{{CREATED}}"
 	deletedAtPlaceholder       = "{{DELETED_AT}}"

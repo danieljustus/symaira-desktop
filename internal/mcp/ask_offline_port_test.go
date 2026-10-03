@@ -233,7 +233,7 @@ func assertAskOfflineMCPOracleBehavior(t *testing.T, fixture askOfflineMCPFixtur
 	}
 	for _, id := range []string{"query-lowercase", "query-uppercase", "query-title-case", "query-null-keeps-prior-value", "query-trailing-space", "duplicate-folded-query-last-valid", "duplicate-exact-query-last-valid", "duplicate-envelope-arguments-last-write"} {
 		if !sameAskMCPResult(t, byID["query-lowercase"].Expected, byID[id].Expected) {
-			t.Fatalf("Go Query field matching differs for %s", id)
+			t.Fatalf("Go Query field matching differs for %s:\ncontrol: %s\nactual: %s", id, byID["query-lowercase"].Expected, byID[id].Expected)
 		}
 	}
 	for _, id := range []string{"query-null", "arguments-null", "duplicate-folded-query-last-empty"} {
@@ -476,7 +476,13 @@ func observeAskOfflineMCPCase(t *testing.T, input askOfflineMCPFixtureCase) askO
 		if err != nil {
 			return nil, nil, err
 		}
-		return service.New(vaultRoot, opened), opened, nil
+		svc := service.New(vaultRoot, opened)
+		t.Cleanup(func() {
+			if err := svc.Close(); err != nil {
+				t.Errorf("close Ask oracle retrieval client: %v", err)
+			}
+		})
+		return svc, opened, nil
 	}
 	entry, ok := tools.NewRegistry(tools.RegistryOptions{
 		Config: &config.Config{Vault: vaultRoot}, GetService: factory, AllowWrite: false,

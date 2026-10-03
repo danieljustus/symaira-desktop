@@ -2164,8 +2164,8 @@ fn safe_vault_relative_path(path: PathBuf) -> Option<PathBuf> {
     .then_some(path)
 }
 
-// Preserve a normalized logical key for internal scope checks and the native
-// relative spelling Go emits through filepath.Rel for citations and prompts.
+// Go emits slash-form vault references for scope checks, citations and prompts
+// on every platform. Keep both projection keys in that same notation.
 // Callers must first prove that `path` is relative to the vault root.
 fn vault_relative_paths(path: &Path) -> Option<(String, String)> {
     let parts = path
@@ -2176,13 +2176,12 @@ fn vault_relative_paths(path: &Path) -> Option<(String, String)> {
         })
         .collect::<Option<Vec<_>>>()
         .filter(|parts| !parts.is_empty())?;
-    let native = path.to_string_lossy().into_owned();
-    (!native.is_empty()).then(|| (parts.join("/"), native))
+    let reference = parts.join("/");
+    Some((reference.clone(), reference))
 }
 
-// Go compares notebook's filepath.ToSlash source path directly against the
-// filepath.Rel key it stored for a search hit. Keep the comparison raw so
-// Windows' native backslash key does not suppress the slash-form fallback.
+// Both Go notebook source references and matched search keys use slash paths.
+// A matched source must not be appended again as a fallback citation.
 fn notebook_source_was_matched(
     source_path: &str,
     matched_native_paths: &std::collections::HashSet<String>,
@@ -5551,14 +5550,11 @@ mod tests {
     }
 
     #[test]
-    fn ask_paths_keep_logical_and_native_spellings_separate() {
+    fn ask_paths_use_vault_reference_spelling_for_scope_and_citations() {
         let relative = Path::new("nested").join("Note.md");
         assert_eq!(
             vault_relative_paths(&relative),
-            Some((
-                "nested/Note.md".to_owned(),
-                relative.to_string_lossy().into_owned()
-            ))
+            Some(("nested/Note.md".to_owned(), "nested/Note.md".to_owned()))
         );
         assert_eq!(
             vault_relative_paths(Path::new("nested/../outside.md")),
@@ -6756,10 +6752,12 @@ mod tests {
     }
 
     #[test]
-    fn windows_notebook_hit_keeps_go_slash_fallback_semantics() {
-        let matched = std::collections::HashSet::from([String::from(r"nested\Note.md")]);
-        assert!(!notebook_source_was_matched("nested/Note.md", &matched));
-        assert!(notebook_source_was_matched(r"nested\Note.md", &matched));
+    fn notebook_hit_suppresses_fallback_with_vault_reference_spelling() {
+        let relative = Path::new("nested").join("Note.md");
+        let (_, citation_path) = vault_relative_paths(&relative).expect("vault source path");
+        let matched = std::collections::HashSet::from([citation_path]);
+        assert!(notebook_source_was_matched("nested/Note.md", &matched));
+        assert!(!notebook_source_was_matched("nested/Other.md", &matched));
     }
 
     #[test]

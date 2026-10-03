@@ -342,3 +342,61 @@ fn recorded_instants_round_trip_through_the_go_layout() {
     }
     let _ = SystemTime::now();
 }
+
+#[cfg(windows)]
+#[test]
+fn replacement_waits_for_windows_reader() {
+    use std::{os::windows::fs::OpenOptionsExt, sync::mpsc};
+    use symdesk_index::record_sidecar_metadata;
+
+    let root = scratch_root("sharing-retry");
+    record_sidecar_metadata(&root, Path::new("before"), SystemTime::now())
+        .expect("initial metadata");
+    let reader = fs::OpenOptions::new()
+        .read(true)
+        .share_mode(3) // FILE_SHARE_READ | FILE_SHARE_WRITE, deliberately no DELETE.
+        .open(root.join(METADATA_FILE_NAME))
+        .expect("reader denying replacement");
+    let target = root.clone();
+    let (sender, receiver) = mpsc::channel();
+    let writer = std::thread::spawn(move || {
+        let result = record_sidecar_metadata(&target, Path::new("after"), SystemTime::now());
+        sender.send(result).expect("send replacement result");
+    });
+    assert!(matches!(
+        receiver.recv_timeout(Duration::from_millis(25)),
+        Err(mpsc::RecvTimeoutError::Timeout)
+    ));
+    drop(reader);
+    receiver
+        .recv()
+        .expect("replacement result")
+        .expect("replacement after reader closed");
+    writer.join().expect("writer terminated");
+    assert_eq!(read_metadata(&root).vault_path, "after");
+    assert_eq!(temp_leftovers(&root), 0);
+    fs::remove_dir_all(root).expect("clean scratch directory");
+}
+
+#[cfg(windows)]
+#[test]
+fn replacement_timeout_preserves_windows_record() {
+    use std::os::windows::fs::OpenOptionsExt;
+    use symdesk_index::record_sidecar_metadata;
+
+    let root = scratch_root("sharing-timeout");
+    record_sidecar_metadata(&root, Path::new("before"), SystemTime::now())
+        .expect("initial metadata");
+    let path = root.join(METADATA_FILE_NAME);
+    let before = fs::read(&path).expect("initial record bytes");
+    let reader = fs::OpenOptions::new()
+        .read(true)
+        .share_mode(3)
+        .open(&path)
+        .expect("reader denying replacement");
+    assert!(record_sidecar_metadata(&root, Path::new("after"), SystemTime::now()).is_err());
+    assert_eq!(fs::read(&path).expect("preserved record"), before);
+    assert_eq!(temp_leftovers(&root), 0);
+    drop(reader);
+    fs::remove_dir_all(root).expect("clean scratch directory");
+}

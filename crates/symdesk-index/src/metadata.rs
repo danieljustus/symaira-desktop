@@ -76,11 +76,30 @@ pub fn record_sidecar_metadata(
     create_private_dir(directory)?;
     let temporary = directory.join(format!(".metadata-{}.tmp", temporary_suffix(last_used)));
     write_private_file(&temporary, payload.as_bytes())?;
-    if let Err(error) = fs::rename(&temporary, directory.join(METADATA_FILE_NAME)) {
+    if let Err(error) = replace_metadata_file(&temporary, &directory.join(METADATA_FILE_NAME)) {
         let _ = fs::remove_file(&temporary);
         return Err(SidecarError::Io(error));
     }
     Ok(())
+}
+
+#[cfg(not(windows))]
+fn replace_metadata_file(source: &Path, target: &Path) -> std::io::Result<()> {
+    fs::rename(source, target)
+}
+
+#[cfg(windows)]
+fn replace_metadata_file(source: &Path, target: &Path) -> std::io::Result<()> {
+    // Match Go's bounded retry for transient Windows sharing conflicts.
+    for attempt in 0..10 {
+        match fs::rename(source, target) {
+            Err(error) if attempt < 9 && matches!(error.raw_os_error(), Some(5 | 32 | 33)) => {
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+            result => return result,
+        }
+    }
+    unreachable!("the final attempt returns its result")
 }
 
 fn temporary_suffix(last_used: SystemTime) -> u128 {

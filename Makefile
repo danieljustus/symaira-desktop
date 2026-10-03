@@ -905,6 +905,16 @@ rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run room_event -- -runs=$(FUZZ_RUNS) -max_len=65536
 
+# Current-build native evidence, independent of the historical version corpus.
+.PHONY: native-record
+native-record:
+	@test -n "$(SYMDESK_NATIVE_RECORD)" || { echo "set SYMDESK_NATIVE_RECORD to a fresh evidence directory" >&2; exit 2; }
+	@test -n "$(NATIVE_RECORD_TEMP_ROOT)" || { echo "set NATIVE_RECORD_TEMP_ROOT outside /private/tmp" >&2; exit 2; }
+	@python3 scripts/rust-port/test-native-record.py
+	@SYMDESK_VERSION="$(if $(VERSION),$(VERSION),(devel))" $(CARGO) build --release -p symdesk-cli --locked
+	@python3 scripts/rust-port/native-record.py --binary "$(RUST_TARGET_DIR)/release/symdesk" \
+		--expected-version "$(if $(VERSION),$(VERSION),(devel))" --temp-root "$(NATIVE_RECORD_TEMP_ROOT)"
+
 rust-gates: rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract
 
 clean:

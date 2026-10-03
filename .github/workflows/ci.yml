@@ -650,6 +650,22 @@ jobs:
         if: ${{ contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
         run: make rust-version-contract
 
+      - name: Record three fresh current-build macOS version samples
+        if: ${{ contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
+        env:
+          SYMDESK_NATIVE_RECORD: ${{ runner.temp }}/symdesk-native-record
+          NATIVE_RECORD_TEMP_ROOT: ${{ runner.temp }}
+        run: make native-record
+
+      - name: Retain current-build native version evidence
+        if: ${{ always() && contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: native-record-${{ matrix.os }}
+          path: ${{ runner.temp }}/symdesk-native-record
+          retention-days: 14
+          if-no-files-found: warn
+
       - name: Run native Windows version differential
         if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash

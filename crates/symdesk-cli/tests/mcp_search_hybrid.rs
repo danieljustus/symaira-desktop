@@ -9,8 +9,11 @@ use std::{
     process::{Command, Stdio},
     sync::{Arc, Mutex, mpsc},
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::Duration,
 };
+
+#[path = "support/isolated_root.rs"]
+mod isolated_root;
 
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -82,14 +85,7 @@ type RunningEmbeddingServer = (
 
 impl TestRoot {
     fn new() -> Self {
-        let root = std::env::temp_dir().join(format!(
-            "symdesk-mcp-search-{}-{}",
-            std::process::id(),
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("system clock")
-                .as_nanos()
-        ));
+        let root = isolated_root::create("symdesk-mcp-search");
         for name in [
             "home",
             "home/config",

@@ -13,7 +13,10 @@ func TestSecurePathPreservesUnixLiteralVolumeLikeNames(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, input := range []string{`C:\outside\note.md`, `C:outside.md`, `\\server\share\note.md`} {
+	for _, input := range []string{
+		`C:\outside\note.md`, `C:outside.md`, `1:outside.md`, `::outside.md`,
+		`\\server\share\note.md`, `\\server`, `\??\C:\outside.md`, `\??`,
+	} {
 		resolved, err := SecurePath(root, input)
 		if err != nil || resolved != filepath.Join(canonical, input) {
 			t.Errorf("literal %q: resolved=%q err=%v", input, resolved, err)

@@ -33,7 +33,11 @@ func TestSecurePathWindowsDriveAndUNCInputsStayConfined(t *testing.T) {
 
 func TestSecurePathWindowsRejectsVolumePrefixes(t *testing.T) {
 	root := t.TempDir()
-	for _, input := range []string{`C:\outside\note.md`, `C:outside.md`, `\\server\share\note.md`} {
+	for _, input := range []string{
+		`C:\outside\note.md`, `C:outside.md`, `1:outside.md`, `::outside.md`,
+		`\\server\share\note.md`, `\\server`, `\??\C:\outside.md`, `\??`,
+		`//server/share/note.md`, `/??/C:/outside.md`, `\/server/share/note.md`,
+	} {
 		resolved, err := SecurePath(root, input)
 		want := "path traversal denied: " + input + " is outside vault"
 		if err == nil || err.Error() != want || resolved != "" {

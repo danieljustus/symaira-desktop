@@ -266,7 +266,7 @@ func assertAskOfflineMCPOracleBehavior(t *testing.T, fixture askOfflineMCPFixtur
 	}
 	if !sameAskMCPResult(t, byID["query-lowercase"].Expected, byID["notebook-kelvin-case"].Expected) ||
 		!sameAskMCPResult(t, byID["notebook-kelvin-case"].Expected, byID["duplicate-notebook-null-keeps-value"].Expected) {
-		t.Fatalf("Go null duplicate did not preserve the earlier Notebook value")
+		t.Fatalf("Go null duplicate did not preserve the earlier Notebook value:\nunscoped: %s\nnotebook: %s\nnull duplicate: %s", byID["query-lowercase"].Expected, byID["notebook-kelvin-case"].Expected, byID["duplicate-notebook-null-keeps-value"].Expected)
 	}
 	if got := askMCPText(t, byID["query-whitespace"].Expected); !strings.HasSuffix(got, "Here are the most relevant search results from your vault:\\n\\n\"}") {
 		t.Fatalf("Go whitespace query should succeed with an empty-result fallback, got %q", got)

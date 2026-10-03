@@ -13,7 +13,7 @@ import (
 func newDocsCmd() *cobra.Command {
 	docsCmd := &cobra.Command{
 		Use:   "docs",
-		Short: "Manage document metadata (contract v2)",
+		Short: "Manage document metadata (contract v6)",
 	}
 
 	// Fold doc's mutation subcommands (status, due, type, correspondent,

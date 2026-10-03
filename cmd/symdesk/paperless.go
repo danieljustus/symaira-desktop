@@ -20,7 +20,7 @@ func newPaperlessCmd() *cobra.Command {
 		Use:   "import <export-dir>",
 		Short: "Import documents from a Paperless-ngx export into the vault",
 		Long: `Read a Paperless-ngx export directory (manifest.json + document files) and
-create or update contract-v2 notes in the vault. The import is idempotent:
+create or update contract-v6-compatible notes in the vault. The import is idempotent:
 re-running against the same export will update existing notes rather than
 creating duplicates, keyed on the Paperless document ID and checksum.
 

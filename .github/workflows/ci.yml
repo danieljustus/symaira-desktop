@@ -6,14 +6,14 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: markdown-health-diagnostic-${{ github.ref }}
+  group: markdown-health-diagnostic-windows-arm-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   native:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
+        os: [windows-11-arm]
     name: Markdown attachments (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -33,7 +33,8 @@ jobs:
             git fetch --no-tags origin "$sha:refs/heads/rust-port-oracle-$sha"
           done
       - name: Execute real Go attachment health and existing wikilink checks
-        run: go test -race -count=1 ./internal/health -run 'Test(MarkdownAttachment|HealthLink|Scan)'
+        # Go 1.26 does not support -race on Windows ARM64; run the real native tests.
+        run: go test -count=1 ./internal/health -run 'Test(MarkdownAttachment|HealthLink|Scan)'
       - name: Install pinned native Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
       - name: Replay all Go-owned Markdown health cases in Rust

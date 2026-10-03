@@ -6,7 +6,7 @@
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
     "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",
     "internal/room/members/members.go": "506087008a9d28e08820c583ee6f92a6fcf508b5995813ac162d57313bf1b727",
-    "internal/room/room/members.go": "f9123f6c6989c9d41a0f24d44c822d8a89d8d53ff75bb0957197f91e13cb0e05"
+    "internal/room/room/members.go": "06d9fdc5fe75aa4a3783ba5c62a001876804ad175029e2a81f5543cca019483f"
   },
   "owner_key": "c491591d4827f34aa9319ec13266d6b7d4ca99cf5dd162edfbdeb701770dc86c",
   "stranger_key": "e051c88ecf7942b361829bde7786f971a1b07bc58b6609a874638d4f4bd776f9",

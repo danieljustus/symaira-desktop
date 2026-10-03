@@ -157,6 +157,9 @@ func (s *Service) scopedSearchResults(nb *notebook.Notebook, query string) ([]Se
 			if relErr != nil {
 				relPath = d.Path
 			}
+			// Notebook source references use vault-relative slash paths on every
+			// platform. Match that identity before checking for fallback sources.
+			relPath = filepath.ToSlash(relPath)
 			results = append(results, SearchResult{Path: relPath, Title: d.Title, Snippet: d.Body, Score: 1.0})
 			matched[relPath] = true
 		}

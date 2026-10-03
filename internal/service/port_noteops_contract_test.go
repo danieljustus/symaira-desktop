@@ -139,7 +139,7 @@ type noteTrash struct {
 
 const (
 	// Keep the exact source guard against the actual merged functional P.
-	noteOperationOracleCommit  = "c58856a486158e30a9d9f2edd411c79c00362cc1"
+	noteOperationOracleCommit  = "012e350bfc7b5def92e7b87b2f15c71fe5431b6b"
 	noteOperationOracleRelease = "post-v0.12.2-security-880"
 	createdPlaceholder         = "{{CREATED}}"
 	deletedAtPlaceholder       = "{{DELETED_AT}}"

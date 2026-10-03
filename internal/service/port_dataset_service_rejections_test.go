@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 )
@@ -42,7 +43,17 @@ func TestPortDatasetImportServiceRejections(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o600); err != nil {
+		// The replay owns this directory; restrict the write to one fixed child
+		// through os.Root rather than accepting an arbitrary destination file.
+		if !filepath.IsAbs(path) || filepath.Base(path) != "native-service-errors.json" {
+			t.Fatal("native service error fixture requires an absolute path with the fixed filename")
+		}
+		root, err := os.OpenRoot(filepath.Dir(path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = root.Close() }()
+		if err := root.WriteFile("native-service-errors.json", data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}

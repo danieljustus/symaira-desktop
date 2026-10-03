@@ -9,8 +9,10 @@ use std::{
     sync::{Arc, Mutex, mpsc},
     thread,
     time::Duration,
-    time::{SystemTime, UNIX_EPOCH},
 };
+
+#[path = "support/isolated_root.rs"]
+mod isolated_root;
 
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -87,14 +89,7 @@ struct TestRoot(PathBuf);
 
 impl TestRoot {
     fn new(id: &str) -> Self {
-        let nonce = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock")
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!(
-            "symdesk-mcp-ask-{id}-{}-{nonce}",
-            std::process::id()
-        ));
+        let root = isolated_root::create(&format!("symdesk-mcp-ask-{id}"));
         for child in ["home/config", "home/cache", "data", "tmp", "cwd", "vault"] {
             fs::create_dir_all(root.join(child)).expect("create isolated test directory");
         }

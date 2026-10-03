@@ -224,7 +224,9 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 			},
 		},
 		{
-			ID: "scoped-negated-singleton-filters-keep-matches", Query: "-path:private -status:draft -type:pdf needle",
+			// Go applies path filters to absolute indexed paths. Target the file
+			// name so macOS's canonical /private/var temp root is not excluded.
+			ID: "scoped-negated-singleton-filters-keep-matches", Query: "-path:private.md -status:draft -type:pdf needle",
 			EmbeddingDim: 3, ProviderStatus: http.StatusOK, ProviderDimension: 3,
 			Documents: []searchHybridMCPDocument{
 				{Path: "public.md", Body: "---\ntitle: Public Note\nstatus: open\ndocument_type: note\n---\n\nA public needle remains."},

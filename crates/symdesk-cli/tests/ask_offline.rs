@@ -223,6 +223,10 @@ fn replay_case(case: &FixtureCase) {
     let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .env_clear()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
         .args([
             "--vault",
             vault.to_str().expect("UTF-8 vault"),
@@ -271,9 +275,11 @@ fn replay_case(case: &FixtureCase) {
         })
         .collect::<Vec<_>>();
     assert_eq!(
-        actual_requests, expected_requests,
-        "{} local embedding requests",
-        case.id
+        actual_requests,
+        expected_requests,
+        "{} local embedding requests; stderr: {}",
+        case.id,
+        String::from_utf8_lossy(&output.stderr)
     );
     if case.index_documents {
         assert!(

@@ -279,6 +279,10 @@ fn run_mcp(
         .arg("mcp")
         .env_clear()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
         .env("HOME", root.path("home"))
         .env("USERPROFILE", root.path("home"))
         .env("XDG_CONFIG_HOME", root.path("home/config"))

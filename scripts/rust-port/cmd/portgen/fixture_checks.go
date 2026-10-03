@@ -193,6 +193,7 @@ var fixtureGenerationEnvironment = map[string]struct{}{
 	"PORT_GENERATE":               {},
 	"SYMDESK_PORT_GENERATE":       {},
 	"PORT_DATASET_IMPORT_FIXTURE": {},
+	"PORT_DATASET_ERROR_FIXTURE":  {},
 }
 
 func sanitizedCheckEnvironment(environment []string, configPath string) []string {

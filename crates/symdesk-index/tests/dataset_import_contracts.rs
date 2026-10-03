@@ -2,6 +2,7 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
+    process::Command,
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -92,6 +93,103 @@ impl Drop for Sandbox {
 
 fn fixture() -> Value {
     serde_json::from_str(FIXTURE).expect("parse Go-owned dataset import fixture")
+}
+
+#[test]
+fn every_recorded_service_rejection_executes_against_the_native_go_oracle() {
+    let mut sandbox = Sandbox::new();
+    let oracle_path = sandbox.parent.join("native-service-errors.json");
+    let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let output = Command::new("go")
+        .current_dir(repository)
+        .args([
+            "test",
+            "-count=1",
+            "./internal/service",
+            "-run",
+            "^TestPortDatasetImportServiceRejections$",
+        ])
+        .env("PORT_DATASET_ERROR_FIXTURE", &oracle_path)
+        .env_remove("PORT_GENERATE")
+        .output()
+        .expect("run the current Go DatasetImport service oracle");
+    assert!(
+        output.status.success(),
+        "Go service oracle failed: stdout={} stderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let native: Value =
+        serde_json::from_slice(&fs::read(&oracle_path).expect("fresh native errors"))
+            .expect("decode native error fixture");
+    let recorded: Value =
+        serde_json::from_str(include_str!("../../../testdata/port/dataset/sync.json"))
+            .expect("recorded import-helper ledger");
+    let cases = native.as_array().expect("native error cases");
+    assert_eq!(cases.len(), 5);
+    assert_eq!(
+        recorded["error_cases"].as_array().expect("ledger").len(),
+        cases.len()
+    );
+
+    let source = sandbox.parent.join("source.csv");
+    fs::write(&source, b"id,a\n1,2\n").expect("CSV input");
+    let text_source = sandbox.parent.join("source.txt");
+    fs::write(&text_source, b"id,a\n1,2\n").expect("non-CSV input");
+    for (index, case) in cases.iter().enumerate() {
+        assert_eq!(case["name"], recorded["error_cases"][index]["name"]);
+        let name = case["name"].as_str().expect("case name");
+        let options = DatasetImportOptions {
+            title: "Orders".to_owned(),
+            identity_field: "id".to_owned(),
+            slug: if name == "slug-not-filesystem-safe" {
+                "../escape".to_owned()
+            } else {
+                String::new()
+            },
+            ..DatasetImportOptions::default()
+        };
+        let input = match name {
+            "non-csv-source" => text_source.clone(),
+            "missing-source-file" => sandbox.parent.join("absent.csv"),
+            _ => source.clone(),
+        };
+        let mut service = match name {
+            "missing-vault" => DatasetSyncService::from_parts(None, Some(&mut sandbox.sidecar)),
+            "missing-sidecar" => DatasetSyncService::from_parts(Some(&sandbox.root), None),
+            "non-csv-source" | "slug-not-filesystem-safe" | "missing-source-file" => {
+                DatasetSyncService::new(&sandbox.root, &mut sandbox.sidecar)
+            }
+            _ => panic!("unreplayed Go rejection {name}"),
+        };
+        let actual = service
+            .import_csv(&input, options)
+            .expect_err("Go rejected this import")
+            .to_string()
+            .replace(
+                sandbox.parent.to_str().expect("fixture-owned root"),
+                "<tmp>",
+            );
+        assert_eq!(
+            actual,
+            case["error"].as_str().expect("Go error"),
+            "case {name}"
+        );
+        assert_eq!(
+            fs::read_dir(&sandbox.root)
+                .expect("vault remains readable")
+                .count(),
+            0,
+            "case {name} wrote an authoritative vault file"
+        );
+        assert!(
+            sandbox
+                .sidecar
+                .dataset_rows("orders")
+                .expect("sidecar rows")
+                .is_empty()
+        );
+    }
 }
 
 fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {

@@ -74,6 +74,7 @@ func Adopt(opts AdoptOptions) (*AdoptReport, error) {
 		histStore = opts.History
 	} else if !opts.DryRun {
 		histStore = history.NewStore(vaultRoot)
+		defer func() { _ = histStore.Close() }()
 	}
 
 	var filePaths []string

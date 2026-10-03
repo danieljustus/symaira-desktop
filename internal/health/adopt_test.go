@@ -253,6 +253,11 @@ func TestAdoptHistorySafety(t *testing.T) {
 	writeNote(t, root, "history_note.md", originalContent)
 
 	histStore := history.NewStore(root)
+	t.Cleanup(func() {
+		if err := histStore.Close(); err != nil {
+			t.Errorf("close borrowed history: %v", err)
+		}
+	})
 
 	_, err := Adopt(AdoptOptions{
 		VaultRoot: root,

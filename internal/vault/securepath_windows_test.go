@@ -10,6 +10,10 @@ import (
 
 func TestSecurePathWindowsDriveAndUNCInputsStayConfined(t *testing.T) {
 	root := t.TempDir()
+	canonicalRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, input := range []string{
 		`C:\outside\note.md`,
 		`D:\other\..\note.md`,
@@ -20,7 +24,7 @@ func TestSecurePathWindowsDriveAndUNCInputsStayConfined(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		rel, relErr := filepath.Rel(root, resolved)
+		rel, relErr := filepath.Rel(canonicalRoot, resolved)
 		if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
 			t.Fatalf("input %q resolved outside root: %q (rel %q, err %v)", input, resolved, rel, relErr)
 		}

@@ -164,7 +164,7 @@ func TestPurgePathsRejectsCorruptHistoryAndCheckpoint(t *testing.T) {
 }
 
 func TestPurgePathsRejectsInvalidAndTraversalPaths(t *testing.T) {
-	store := NewStore(t.TempDir())
+	store := newTestStore(t, t.TempDir())
 	for _, path := range []string{"", ".", "..", "../outside.md", "/absolute.md"} {
 		if err := store.PurgePaths(path); err == nil {
 			t.Errorf("expected PurgePaths(%q) to reject invalid path", path)
@@ -235,7 +235,7 @@ func TestPurgeTrashPathsSelectsExactTargets(t *testing.T) {
 }
 
 func TestPurgeTrashPathsRejectsInvalidAndTraversalPaths(t *testing.T) {
-	store := NewStore(t.TempDir())
+	store := newTestStore(t, t.TempDir())
 	for _, path := range []string{"", ".", "..", "../outside.md", "/absolute.md"} {
 		if removed, err := store.PurgeTrashPaths(path); err == nil || removed != 0 {
 			t.Errorf("expected PurgeTrashPaths(%q) to reject invalid path, removed=%d err=%v", path, removed, err)

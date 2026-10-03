@@ -23,3 +23,10 @@ jobs:
       - name: Replay complete native Rust workspace
         shell: bash
         run: cargo +1.98.0 test --workspace --all-features --locked
+      - name: Diagnose representative native Windows CLI bytes
+        shell: bash
+        run: |
+          mkdir -p bin/port
+          go build -ldflags "-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
+          SYMDESK_VERSION=0.12.2 cargo +1.98.0 build -p symdesk-cli --locked
+          go run ./scripts/rust-port/cmd/diffharness --show-mismatch-output --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative

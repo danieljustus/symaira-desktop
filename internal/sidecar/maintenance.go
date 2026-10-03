@@ -50,7 +50,7 @@ func recordSidecarMetadata(dir, vaultPath string) error {
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("close sidecar metadata: %w", err)
 	}
-	if err := os.Rename(tmpName, filepath.Join(dir, metadataFileName)); err != nil {
+	if err := replaceMetadataFile(tmpName, filepath.Join(dir, metadataFileName)); err != nil {
 		return fmt.Errorf("install sidecar metadata: %w", err)
 	}
 	return nil

@@ -68,10 +68,12 @@ func TestBuildManifestCapturesUnixModesAndTypes(t *testing.T) {
 
 func TestRunTimeoutKillsDescendantProcessGroup(t *testing.T) {
 	caseSpec := Case{
-		ID:        "timeout-child",
-		Args:      []string{"-test.run=TestRunAndCompareIdenticalHelper"},
-		Env:       map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "child"},
-		TimeoutMS: 100,
+		ID:   "timeout-child",
+		Args: []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		Env:  map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "child"},
+		// Allow a race-instrumented helper to start under parallel builds. This
+		// tests descendant termination, not a 100 ms process-startup budget.
+		TimeoutMS: 1000,
 	}
 	result, err := Run(os.Args[0], caseSpec)
 	if err != nil {

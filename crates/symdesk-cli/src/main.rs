@@ -475,7 +475,7 @@ fn relative_path(root: &Path, path: &str) -> String {
             value
                 .to_string_lossy()
                 .trim_start_matches(['/', '\\'])
-                .to_owned()
+                .replace(std::path::MAIN_SEPARATOR, "/")
         });
     relative
         .filter(|value| !value.is_empty())

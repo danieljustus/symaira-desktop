@@ -451,7 +451,7 @@ func (s *Service) searchVaultPath(path string) (string, bool) {
 	if _, err := vault.SecurePath(s.VaultRoot, rel); err != nil {
 		return "", false
 	}
-	return rel, true
+	return filepath.ToSlash(rel), true
 }
 
 // searchPlain keeps the pre-query-language search behaviour while adding the
@@ -510,7 +510,7 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 				if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 					continue
 				}
-				relPath = rel
+				relPath = filepath.ToSlash(rel)
 			}
 		}
 		resolved := candidate

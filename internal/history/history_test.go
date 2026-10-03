@@ -13,7 +13,18 @@ import (
 func newVault(t *testing.T) (string, *Store) {
 	t.Helper()
 	root := t.TempDir()
-	return root, NewStore(root)
+	return root, newTestStore(t, root)
+}
+
+func newTestStore(t *testing.T, root string) *Store {
+	t.Helper()
+	store := NewStore(root)
+	t.Cleanup(func() {
+		if err := store.Close(); err != nil {
+			t.Errorf("close history: %v", err)
+		}
+	})
+	return store
 }
 
 func write(t *testing.T, root, rel, content string) {

@@ -17,11 +17,11 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
+        "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
     ),
     (
         "go.sum",
-        "f71b1874c73f3b8472d1a9abe153bf2f140f031fd25700985fdf26f4a5a48807",
+        "54d6151b45cee2b0a71c057cf7423da7751149dd39447aea434bf1837a75d315",
     ),
     (
         "internal/history/checkpoint.go",
@@ -29,7 +29,7 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     ),
     (
         "internal/history/history.go",
-        "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2",
+        "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",
     ),
     (
         "internal/history/trash.go",
@@ -38,8 +38,8 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d";
-const EXPECTED_ORACLE_RELEASE: &str = "post-v0.13.0-dependency-refresh";
+const EXPECTED_ORACLE_COMMIT: &str = "3a8b461ade6fe3682a9d983bae697ad02c411b31";
+const EXPECTED_ORACLE_RELEASE: &str = "post-issue-1127-history-root-lifetime";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where

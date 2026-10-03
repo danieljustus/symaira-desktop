@@ -49,15 +49,33 @@ type RetentionPolicy struct {
 type Store struct {
 	vaultRoot string
 
-	rootOnce sync.Once
-	root     *os.Root
-	rootErr  error
+	rootOnce  sync.Once
+	root      *os.Root
+	rootErr   error
+	closeOnce sync.Once
+	closeErr  error
 }
 
 // NewStore creates a Store rooted at vaultRoot. No directories are created
 // until the first snapshot or trash operation.
 func NewStore(vaultRoot string) *Store {
 	return &Store{vaultRoot: vaultRoot}
+}
+
+// Close releases the confined vault handle. It is safe to call repeatedly,
+// including before the first operation. A closed Store cannot reopen its root.
+// Callers must finish their operations before closing their owned Store.
+func (s *Store) Close() error {
+	if s == nil {
+		return nil
+	}
+	s.closeOnce.Do(func() {
+		s.rootOnce.Do(func() { s.rootErr = os.ErrClosed })
+		if s.root != nil {
+			s.closeErr = s.root.Close()
+		}
+	})
+	return s.closeErr
 }
 
 // openRoot lazily opens (and caches) an *os.Root confined to vaultRoot.
@@ -109,7 +127,7 @@ func (s *Store) objectsDir() string {
 // cleanRel normalizes a vault-relative path and rejects traversal.
 func cleanRel(relPath string) (string, error) {
 	rel := filepath.ToSlash(filepath.Clean(relPath))
-	if rel == "." || rel == "" || strings.HasPrefix(rel, "../") || rel == ".." || filepath.IsAbs(relPath) {
+	if rel == "." || rel == "" || strings.HasPrefix(rel, "../") || strings.HasPrefix(rel, "/") || rel == ".." || filepath.IsAbs(relPath) || filepath.VolumeName(relPath) != "" {
 		return "", fmt.Errorf("invalid vault-relative path: %q", relPath)
 	}
 	return filepath.FromSlash(rel), nil

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "e0364e835c03672178db936a2263fba1fb1ec2ab",
-    "release": "post-v0.12.2-security-880"
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
+    "release": "post-issue-1127-history-root-lifetime"
   },
   "source_hashes": {
-    "internal/history/history.go": "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2",
+    "internal/history/history.go": "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",
     "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89"
   },
   "cases": [

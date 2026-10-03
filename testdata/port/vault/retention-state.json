@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "generated_on": "darwin",
+  "generated_on": "linux",
   "oracle": {
-    "commit": "4c0c246bbab80d105987caf21ca16cbbdda59c89",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "release": "RUST-007-authoritative-retention-state"
   },
   "source_hashes": {
@@ -10,13 +10,13 @@
     "internal/retention/fingerprint.go": "d07bc03938544087e0a62ae5e9b1c6ad803cffb6132ea2f845f0fccf7d0bfa74",
     "internal/retention/retention.go": "de194d5d7b2dbad167459f8f176614d48025ea705bf750e48d03586a0b43a97c",
     "internal/service/dataset_retention.go": "ca86878cdbed89df1665fcf6c67804c86f964d5f92833a6f613ea8db880278a0",
-    "internal/service/port_retention_state_contract_test.go": "0eed1181b93362f92de361a74cb210723882d5f6c36946b1439430389651133e",
+    "internal/service/port_retention_state_contract_test.go": "6488cec2bb7e30023f385169066be4ca31acd447e425c1f4e29511e93a22393e",
     "internal/service/port_retention_state_unix_test.go": "722e434cac74c4e9a8530658719db27e66d170525667f602b354a5bea39f8876",
     "internal/service/port_retention_state_windows_test.go": "1e5628f35ebbf310bf54403fff42d26302338c44cca7a031050a7e908d4c364d",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
     "internal/vault/root_open_unix.go": "8e86c3d2d29e701dab7e84fee106d3d7251ea21e7a7dc0e87864d2309ada56ed",
     "internal/vault/root_open_windows.go": "aafda818b9c0afdcb6b2c3e7aa8f009a2a14bd90492642f14296a2c96c75fd5d",
-    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+    "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"
   },
   "cases": [
     {

@@ -375,6 +375,11 @@ func containsTagCaseInsensitive(tags []string, tag string) bool {
 // SecurePath resolves a relative path against the vault root and ensures it does not traverse outside.
 // It canonicalizes symlinks to prevent escapes via symlinked directories.
 func SecurePath(vaultRoot, relPath string) (string, error) {
+	// Windows drive and UNC prefixes are not vault-relative coordinates.
+	// VolumeName is empty on Unix, preserving literal colon/backslash names.
+	if filepath.VolumeName(relPath) != "" {
+		return "", fmt.Errorf("path traversal denied: %s is outside vault", relPath)
+	}
 	absVault, err := filepath.Abs(vaultRoot)
 	if err != nil {
 		return "", err

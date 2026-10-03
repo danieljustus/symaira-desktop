@@ -15,8 +15,8 @@ import (
 const (
 	retentionRulesFixturePath = "testdata/port/vault/retention-rules.json"
 	schemaVersion             = 1
-	sourceOracleCommit        = "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a"
-	sourceOracleRelease       = "v0.1.0"
+	sourceOracleCommit        = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
+	sourceOracleRelease       = "post-native-Windows-path-repair"
 )
 
 type RetentionOracle struct {

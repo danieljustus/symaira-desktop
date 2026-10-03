@@ -103,9 +103,12 @@ fn go_history_prune_contracts_replay() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
+        "3a8b461ade6fe3682a9d983bae697ad02c411b31"
     );
-    assert_eq!(fixture.oracle.release, "post-v0.13.0-dependency-refresh");
+    assert_eq!(
+        fixture.oracle.release,
+        "post-issue-1127-history-root-lifetime"
+    );
     assert!(
         fixture
             .source_hashes

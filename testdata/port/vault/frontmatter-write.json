@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "09245b243154f484d8e14afdc9056b9999dd530d",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "release": "post-issue-857-markdown-attachment-health"
   },
   "source_hashes": {
@@ -16,7 +16,7 @@
     "internal/vault/root_open_unix.go": "8e86c3d2d29e701dab7e84fee106d3d7251ea21e7a7dc0e87864d2309ada56ed",
     "internal/vault/root_open_windows.go": "aafda818b9c0afdcb6b2c3e7aa8f009a2a14bd90492642f14296a2c96c75fd5d",
     "internal/vault/tags.go": "602802a016345866516db820f132efc592c4d954fa975fa113b41d1ec6c232d0",
-    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+    "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"
   },
   "cases": [
     {

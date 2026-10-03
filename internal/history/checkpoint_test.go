@@ -34,7 +34,7 @@ func readVaultFile(t *testing.T, root, rel string) string {
 // are deleted.
 func TestCheckpointUndoRestoresAsUnit(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 
 	writeVaultFile(t, root, "notes/a.md", "before-a")
 	writeVaultFile(t, root, "notes/b.md", "before-b")
@@ -86,7 +86,7 @@ func TestCheckpointUndoRestoresAsUnit(t *testing.T) {
 // exist when the checkpoint was taken) are deleted by undo.
 func TestCheckpointUndoDeletesNewFiles(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 
 	cp, err := store.CheckpointFile("task-new", "fresh.md")
 	if err != nil {
@@ -114,7 +114,7 @@ func TestCheckpointUndoDeletesNewFiles(t *testing.T) {
 // the first call and never overwritten by later calls in the same task.
 func TestCheckpointFileIsLazyAndIdempotent(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 	writeVaultFile(t, root, "n.md", "v1")
 
 	if _, err := store.CheckpointFile("t", "n.md"); err != nil {
@@ -142,7 +142,7 @@ func TestCheckpointFileIsLazyAndIdempotent(t *testing.T) {
 // the caller is told the checkpoint is incomplete instead of assuming it.
 func TestCheckpointReportsPartialOnSnapshotFailure(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 	// A directory cannot be snapshotted as a file → skipped.
 	dirPath := filepath.Join(root, "blocked")
 	if err := os.MkdirAll(dirPath, 0o750); err != nil {
@@ -161,7 +161,7 @@ func TestCheckpointReportsPartialOnSnapshotFailure(t *testing.T) {
 // ListCheckpoints returns all tasks newest first, and empty when none.
 func TestCheckpointListAndEmpty(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 
 	list, err := store.ListCheckpoints()
 	if err != nil {
@@ -193,7 +193,7 @@ func TestCheckpointListAndEmpty(t *testing.T) {
 
 // Undo of an unknown task must fail cleanly; invalid task ids are rejected.
 func TestCheckpointValidation(t *testing.T) {
-	store := NewStore(t.TempDir())
+	store := newTestStore(t, t.TempDir())
 	for _, bad := range []string{"", "../escape", "a/b", ".hidden", "a:b"} {
 		if _, err := store.BeginCheckpoint(bad); err == nil {
 			t.Errorf("task id %q must be rejected", bad)
@@ -208,7 +208,7 @@ func TestCheckpointValidation(t *testing.T) {
 // references are the same content-addressed objects as normal snapshots.
 func TestCheckpointReusesBlobStore(t *testing.T) {
 	root := t.TempDir()
-	store := NewStore(root)
+	store := newTestStore(t, root)
 	writeVaultFile(t, root, "n.md", "shared-content")
 
 	cp, err := store.CheckpointFile("t", "n.md")

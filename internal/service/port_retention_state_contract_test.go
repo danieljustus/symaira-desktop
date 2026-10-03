@@ -23,7 +23,7 @@ import (
 const (
 	retentionStateFixtureRel     = "testdata/port/vault/retention-state.json"
 	retentionStateFixtureSchema  = 1
-	retentionStateOracleCommit   = "4c0c246bbab80d105987caf21ca16cbbdda59c89"
+	retentionStateOracleCommit   = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
 	retentionStateOracleRelease  = "RUST-007-authoritative-retention-state"
 	retentionStateGenerateEnv    = "PORT_GENERATE"
 	retentionStateFixturePathEnv = "PORT_FIXTURE_PATH"

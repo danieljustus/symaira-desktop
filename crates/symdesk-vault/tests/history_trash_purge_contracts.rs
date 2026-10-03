@@ -72,9 +72,12 @@ fn go_selected_trash_purge_contracts_replay() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "e0364e835c03672178db936a2263fba1fb1ec2ab"
+        "3a8b461ade6fe3682a9d983bae697ad02c411b31"
     );
-    assert_eq!(fixture.oracle.release, "post-v0.12.2-security-880");
+    assert_eq!(
+        fixture.oracle.release,
+        "post-issue-1127-history-root-lifetime"
+    );
     assert!(
         fixture
             .source_hashes

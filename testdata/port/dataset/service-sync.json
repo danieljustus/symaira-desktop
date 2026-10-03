@@ -2,14 +2,14 @@
   "schema_version": 1,
   "generated_on": "linux/amd64",
   "oracle": {
-    "commit": "09245b243154f484d8e14afdc9056b9999dd530d",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "release": "DATA-001-service-dataset-sync-prerequisite",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
     "goos": "linux",
     "goarch": "amd64"
   },
-  "generator_sha256": "2267a39be1dc5d210176fa0afabae2a862ea6a8b441aca5e64fbba1e4d680551",
+  "generator_sha256": "0869f1da9ee2f6f14f9e6b7acee8d131d65a0dace8065ca79e7e702b3d53fa49",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
@@ -24,7 +24,7 @@
     "internal/tools/dataset_tools.go": "57a64499db04504ef3e78a4bfe1310420904a9124426ed01664601817aaa0b7a",
     "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
-    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+    "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"
   },
   "cases": [
     {

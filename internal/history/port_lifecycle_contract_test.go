@@ -65,8 +65,8 @@ const historyLifecycleFixtureRel = "../../testdata/port/vault/history-lifecycle.
 const historyLifecycleCaseCount = 18
 
 const (
-	historyOracleCommit  = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
-	historyOracleRelease = "post-v0.13.0-dependency-refresh"
+	historyOracleCommit  = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
+	historyOracleRelease = "post-issue-1127-history-root-lifetime"
 )
 
 type historyLifecycleFixture struct {
@@ -252,19 +252,12 @@ type scenario struct {
 
 func newScenario(t *testing.T, files []historyFileSpec) *scenario {
 	t.Helper()
-	// A self-managed directory instead of t.TempDir(): the history Store caches
-	// an os.Root, which Go does not close, so on Windows the directory handle is
-	// still open when t.TempDir's cleanup runs and the removal would fail the
-	// test after every assertion passed (see #964).
-	root, err := os.MkdirTemp("", "symdesk-port-history-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(root) })
+	root := t.TempDir()
 	for _, spec := range files {
 		writeScenarioFile(t, root, spec, 0o644)
 	}
-	return &scenario{root: root, store: NewStore(root)}
+	store := newTestStore(t, root)
+	return &scenario{root: root, store: store}
 }
 
 func writeScenarioFile(t *testing.T, root string, spec historyFileSpec, fallback os.FileMode) {

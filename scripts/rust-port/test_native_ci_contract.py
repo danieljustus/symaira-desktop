@@ -37,7 +37,7 @@ ORACLE_SOURCE_FILES = {
 }
 EXPECTED_SOURCE_GUARD_ORACLE_COMMITS = {
     "history": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
-    "frontmatter": "69e0e149671611563e1fdf7ab636bbba09582844",
+    "frontmatter": "e077104b1be0c2c82ddfc64109a46aaeb4a114cf",
 }
 SOURCE_GUARD_JOBS = ("test", "port-contract", "rust-native")
 

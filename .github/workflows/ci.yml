@@ -55,6 +55,11 @@ jobs:
       - name: Execute every ledger acceptance command and preserve frozen fixtures
         run: |
           umask 022
+          native_bash="$BASH"
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            native_bash="$(cygpath -w "$BASH")"
+          fi
+          export RUST007_NATIVE_BASH="$native_bash"
           python3 - <<'ACCEPTANCE'
           from pathlib import Path
           import datetime, hashlib, json, os, subprocess, time
@@ -81,7 +86,7 @@ jobs:
           for index,command in enumerate(commands,1):
               print(f'::group::Acceptance {index}/{len(commands)}: {command}',flush=True)
               start=time.monotonic()
-              result=subprocess.run(['bash','-c','umask 022; '+command])
+              result=subprocess.run([os.environ['RUST007_NATIVE_BASH'],'-c','umask 022; '+command])
               results.append({'command':command,'exit_code':result.returncode,'seconds':time.monotonic()-start})
               print(f'::endgroup::',flush=True)
               print(json.dumps(results[-1]),flush=True)

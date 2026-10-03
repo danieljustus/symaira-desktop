@@ -303,6 +303,7 @@ func observeAskOfflineCase(t *testing.T, input askOfflineFixtureCase) askOffline
 					actual.Text = strings.ReplaceAll(actual.Text, "[["+filepath.ToSlash(prefix)+"/", "[[@source/"+source+"/")
 				}
 				actual.Text = strings.ReplaceAll(actual.Text, "[["+filepath.ToSlash(sourcePath)+"/", "[[@source/"+source+"/")
+				actual.Text = strings.ReplaceAll(actual.Text, "[["+sourcePath+string(filepath.Separator), "[[@source/"+source+"/")
 			}
 			prefix, err := filepath.Rel(".", vaultRoot)
 			if err == nil {

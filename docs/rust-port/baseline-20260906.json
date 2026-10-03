@@ -135,7 +135,9 @@
   "representative_benchmarks": {
     "large_vault_index_and_search": {
       "command": "go test -run '^$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo",
-      "documents": 10000,
+      "reported_documents": 10000,
+      "documents": 10015,
+      "document_count_correction": "#864: demo.InitLarge adds 10 fixed demo documents and 5 knowledge notes to the 10,000 generated documents; timing remains the historical 10,015-document measurement.",
       "samples": 1,
       "nanoseconds_per_operation": 4142191000
     },
@@ -153,6 +155,7 @@
     "RSS values are one /usr/bin/time -l sample per binary and are not a distribution.",
     "Startup profiles are 120 subprocess samples after 20 warmups on an otherwise interactive development host.",
     "The two large-vault benchmark values are one benchtime=1x sample and are baselines, not statistical claims.",
+    "The historical large_vault_index_and_search count was corrected in #864; reported_documents preserves the original claim. It must not be used as an exact 10,000-document comparison. The separate testdata/port/sidecar/large-corpus.json freezes exactly 10,000 documents, deterministic mtimes, logical-state SHA-256 and ordered search expectations for Go/Rust sidecar round-trip validation.",
     "Final value-gate comparisons require paired Go/Rust release artifacts, identical fixtures, at least 100 samples for latency/RSS workloads, and the same host state."
   ],
   "value_gate": {

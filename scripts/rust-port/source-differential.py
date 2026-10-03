@@ -14,7 +14,9 @@ import threading
 import time
 
 
-GO_ORACLE = "67ac6e97ca5f613e26412255dee93c35faf38b3c"
+# Reviewed merged source after canonical identity/removal fixes in #1129.
+# Keep the source guard: the live differential below must certify this revision.
+GO_ORACLE = "d0efab2017b60082d5adcc12f0d8286e0dc2eecd"
 GO_SOURCES = (
     "cmd/symdesk/sources.go",
     "internal/retrieval/sources.go",

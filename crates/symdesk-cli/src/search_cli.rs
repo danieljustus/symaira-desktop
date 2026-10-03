@@ -199,7 +199,9 @@ mod tests {
     use symdesk_index::{SearchHit, SearchSource};
     use symdesk_protocol::go_search_snippet;
 
-    use super::{CliSearchHit, RetrievalHybridSearchResult, lexical_hits, project_hit};
+    use super::{CliSearchHit, lexical_hits};
+    #[cfg(unix)]
+    use super::{RetrievalHybridSearchResult, project_hit};
 
     #[test]
     fn search_score_matches_go_zero_number_format_without_erasing_negative_zero() {

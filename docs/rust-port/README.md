@@ -162,6 +162,23 @@ The historical `value001-latest.json` remains `passed: false`; the exact
 
 ## Implementation progress
 
+- 2026-10-03: repair the migration CI failures seen at `e817394e` without
+  advancing migration acceptance. The external-source live differential keeps
+  its immutable source guard and now anchors the reviewed merged Go behavior
+  at `d0efab20` (#1129). Unix-only search-test imports are also Unix-gated,
+  offline Ask fixture projection recognizes native Windows source paths, and
+  exact-version ISC exceptions cover the existing Rustls crypto dependencies.
+  Linux/amd64: source registry/search and recursive watch differentials, the
+  race-enabled Go offline Ask oracle, strict workspace Clippy and the native
+  sidecar round-trip pass. Other native runner results are required separately.
+- #864: `baseline-20260906.json` now explicitly records the historical index
+  benchmark's actual 10,015 documents and retains its original 10,000 claim
+  as `reported_documents`; the timing is unchanged. The independent
+  `testdata/port/sidecar/large-corpus.json` supplies exactly 10,000 documents,
+  fixed mtimes, a logical-state hash (volatile database timestamps excluded)
+  and ordered search expectations. `make sidecar-roundtrip` verifies counts,
+  hashes, searches and bidirectional Go/Rust reopen on Linux/amd64.
+
 - `RUST-007` is in progress. The vault-crate half is now covered: `retention.LoadRules`
   and `retention.DocMetaFromDocument` are ported and replayed against the Go-owned
   `testdata/port/vault/retention-rules.json` (15 rules-file cases and 10

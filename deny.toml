@@ -30,6 +30,24 @@ name = "inotify-sys"
 version = "=0.1.8"
 allow = ["ISC"]
 
+# Reviewed ISC code in the pinned Rustls crypto providers (LICENSE files in
+# these crate releases). Keep this scoped to the exact resolved packages;
+# Apache-2.0/MIT/BSD-3-Clause alternatives are already allowed above.
+[[licenses.exceptions]]
+name = "aws-lc-rs"
+version = "=1.18.1"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "aws-lc-sys"
+version = "=0.45.0"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "ring"
+version = "=0.17.14"
+allow = ["ISC"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"

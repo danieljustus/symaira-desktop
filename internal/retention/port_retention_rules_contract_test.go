@@ -15,7 +15,7 @@ import (
 const (
 	retentionRulesFixturePath = "testdata/port/vault/retention-rules.json"
 	schemaVersion             = 1
-	sourceOracleCommit        = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
+	sourceOracleCommit        = "68095b7eabff2de0e901c90931432b125df7ebc4"
 	sourceOracleRelease       = "post-native-Windows-path-repair"
 )
 

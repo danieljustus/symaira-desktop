@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_on": "linux/amd64",
   "oracle": {
-    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
+    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
     "toolchain": "go1.26.6",
     "goos": "linux",
     "goarch": "amd64"
   },
-  "generator_sha256": "0bcf4ca430def3457755059c7999ee18ac5fb2f8f817b92fa483f05d53e1e0d8",
+  "generator_sha256": "0f05a2616f388ce1bb148ca2abef4e960707307b2af2f02eee19f27181170f7a",
   "source_sha256": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",

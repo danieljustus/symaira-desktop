@@ -38,7 +38,7 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "3a8b461ade6fe3682a9d983bae697ad02c411b31";
+const EXPECTED_ORACLE_COMMIT: &str = "68095b7eabff2de0e901c90931432b125df7ebc4";
 const EXPECTED_ORACLE_RELEASE: &str = "post-issue-1127-history-root-lifetime";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
+    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
     "release": "post-issue-1127-history-root-lifetime"
   },
   "source_hashes": {

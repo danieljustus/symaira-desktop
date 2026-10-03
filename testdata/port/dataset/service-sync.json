@@ -2,14 +2,14 @@
   "schema_version": 1,
   "generated_on": "linux/amd64",
   "oracle": {
-    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
+    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
     "release": "DATA-001-service-dataset-sync-prerequisite",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
     "goos": "linux",
     "goarch": "amd64"
   },
-  "generator_sha256": "0869f1da9ee2f6f14f9e6b7acee8d131d65a0dace8065ca79e7e702b3d53fa49",
+  "generator_sha256": "aa5573765cf9a9b355d91879171975575e074817b3e5014a0d8b4185688009c9",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",

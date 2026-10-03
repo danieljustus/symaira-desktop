@@ -164,8 +164,8 @@ The historical `value001-latest.json` remains `passed: false`; the exact
 
 - 2026-10-03: repair the migration CI failures seen at `e817394e` without
   advancing migration acceptance. The external-source live differential keeps
-  its immutable source guard and now anchors the reviewed merged Go behavior
-  at `d0efab20` (#1129). Unix-only search-test imports are also Unix-gated,
+  its immutable source guard and anchors the reviewed functional Go source
+  recorded by P/Q (including #1129). Unix-only search-test imports are Unix-gated,
   offline Ask fixture projection recognizes native Windows source paths, and
   exact-version ISC and CDLA-Permissive-2.0 exceptions cover the existing
   Rustls crypto dependencies and Mozilla CA bundles.
@@ -173,6 +173,13 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   Windows: matched relative paths now use the same slash notation as notebook
   source references, preventing duplicate fallback citations. The existing
   service regression now requires exactly one result per notebook source.
+  Unscoped Go and Rust searches now emit slash-form vault-relative references
+  too, keeping nested citations identical to notebook references on Windows.
+  Rust's previous deliberate native-path fallback duplication is updated with
+  the Go fix. Native Windows CI confirmed the remaining backslash citation
+  mismatch at `65a331c8`; the paired repair passes affected Go service tests and
+  all 79 protocol tests on Linux. MCP Search projects decoded path fields before
+  JSON encoding, preserving result field order and non-path values.
   The isolated Rust Search/Ask processes preserve Windows `SYSTEMROOT`, as the
   MCP Search harness already does, so the native socket runtime can initialize.
   The MCP negated-path corpus now targets `private.md`, rather than the broad

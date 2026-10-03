@@ -535,9 +535,34 @@ func normalizeSearchHybridMCPFrame(t *testing.T, frame []byte, vaultRoot, regist
 	if err := json.Unmarshal(result["content"], &content); err != nil || len(content) != 1 || content[0].Type != "text" {
 		t.Fatalf("Go MCP result is not one text block: %v: %s", err, response["result"])
 	}
-	content[0].Text = strings.ReplaceAll(content[0].Text, vaultRoot, "$VAULT")
-	content[0].Text = strings.ReplaceAll(content[0].Text, registeredRoot, "$EXTERNAL")
-	content[0].Text = strings.ReplaceAll(content[0].Text, unregisteredRoot, "$UNREGISTERED")
+	var fields map[string]json.RawMessage
+	if json.Unmarshal([]byte(content[0].Text), &fields) == nil && fields["results"] != nil {
+		// Decode the inner tool payload before projecting native Windows paths;
+		// its JSON-escaped backslashes do not match an unescaped temporary root.
+		// Keep the Go result field order and every non-path value unchanged.
+		var payload service.SearchResponse
+		if err := json.Unmarshal([]byte(content[0].Text), &payload); err != nil {
+			t.Fatal(err)
+		}
+		for i := range payload.Results {
+			path := filepath.ToSlash(payload.Results[i].Path)
+			for _, projection := range []struct{ root, marker string }{
+				{vaultRoot, "$VAULT"}, {registeredRoot, "$EXTERNAL"}, {unregisteredRoot, "$UNREGISTERED"},
+			} {
+				root := filepath.ToSlash(projection.root)
+				if path == root || strings.HasPrefix(path, root+"/") {
+					path = projection.marker + strings.TrimPrefix(path, root)
+					break
+				}
+			}
+			payload.Results[i].Path = path
+		}
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		content[0].Text = string(encoded)
+	}
 	result["content"], _ = json.Marshal(content)
 	response["result"], _ = json.Marshal(result)
 	normalized, err := json.Marshal(response)

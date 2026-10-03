@@ -184,6 +184,11 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   an explicitly symlinked `TMPDIR`: their test-owned storage roots are resolved
   before database construction and the Search harnesses use isolated canonical
   XDG data roots. SQLite's no-symlink storage checks are preserved.
+  The Go race suite's Linux timeout negative control now distinguishes an
+  already-exited zombie from a live descendant when container PID 1 does not
+  reap orphans; the process-group kill requirement remains enforced. All other
+  Go packages passed the full local race run, and this repaired package passes
+  its race rerun. PDF missing-tool controls use an empty test-owned PATH.
 - #864: `baseline-20260906.json` now explicitly records the historical index
   benchmark's actual 10,015 documents and retains its original 10,000 claim
   as `reported_documents`; the timing is unchanged. The independent

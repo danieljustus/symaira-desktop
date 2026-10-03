@@ -30,6 +30,46 @@ name = "inotify-sys"
 version = "=0.1.8"
 allow = ["ISC"]
 
+# Reviewed ISC code in the pinned Rustls crypto providers (LICENSE files in
+# these crate releases). Keep this scoped to the exact resolved packages;
+# Apache-2.0/MIT/BSD-3-Clause alternatives are already allowed above.
+[[licenses.exceptions]]
+name = "aws-lc-rs"
+version = "=1.18.1"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "aws-lc-sys"
+version = "=0.45.0"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "ring"
+version = "=0.17.14"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "rustls-webpki"
+version = "=0.103.15"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "untrusted"
+version = "=0.9.0"
+allow = ["ISC"]
+
+# Mozilla CA certificate data is redistributed under CDLA-Permissive-2.0;
+# these pinned root bundles retain the upstream license notice.
+[[licenses.exceptions]]
+name = "webpki-roots"
+version = "=1.0.9"
+allow = ["CDLA-Permissive-2.0"]
+
+[[licenses.exceptions]]
+name = "webpki-root-certs"
+version = "=1.0.9"
+allow = ["CDLA-Permissive-2.0"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"

@@ -223,6 +223,10 @@ fn replay_case(case: &FixtureCase) {
     let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .env_clear()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
         .args([
             "--vault",
             vault.to_str().expect("UTF-8 vault"),
@@ -271,9 +275,11 @@ fn replay_case(case: &FixtureCase) {
         })
         .collect::<Vec<_>>();
     assert_eq!(
-        actual_requests, expected_requests,
-        "{} local embedding requests",
-        case.id
+        actual_requests,
+        expected_requests,
+        "{} local embedding requests; stderr: {}",
+        case.id,
+        String::from_utf8_lossy(&output.stderr)
     );
     if case.index_documents {
         assert!(
@@ -317,7 +323,7 @@ fn normalize_events(
             .get_mut("path")
             .and_then(|value| value.as_str())
             .map(str::to_owned)
-            && path.starts_with('/')
+            && PathBuf::from(&path).is_absolute()
         {
             if let Some((source, root)) = sources
                 .iter()
@@ -343,6 +349,10 @@ fn normalize_events(
         {
             let mut normalized = text;
             for (source, root) in sources {
+                normalized = normalized.replace(
+                    &format!("{}{}", root.to_string_lossy(), std::path::MAIN_SEPARATOR),
+                    &format!("@source/{source}/"),
+                );
                 normalized = normalized.replace(
                     &root.to_string_lossy().to_string(),
                     &format!("@source/{source}"),

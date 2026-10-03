@@ -559,8 +559,13 @@ mod tests {
             "ollama_url = \"\"\nmodel = \"\"\nembedding_dim = 0\ntimeout_seconds = 0\nretry_count = 0\nretry_backoff_ms = 0\n",
         )
         .expect("write existing config format");
-        let environment =
-            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let environment = BTreeMap::from([
+            ("HOME".to_owned(), root.to_string_lossy().into_owned()),
+            (
+                "USERPROFILE".to_owned(),
+                root.to_string_lossy().into_owned(),
+            ),
+        ]);
         let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
         assert_eq!(config.ollama_url, "http://localhost:11434/api/embeddings");
         assert_eq!(config.model, "qwen3-embedding:0.6b");
@@ -590,8 +595,13 @@ mod tests {
             "model = \"embedding-model\"\nexpand_query = true\nexpand_timeout_seconds = 0\n",
         )
         .expect("write existing config format");
-        let environment =
-            BTreeMap::from([("HOME".to_owned(), root.to_string_lossy().into_owned())]);
+        let environment = BTreeMap::from([
+            ("HOME".to_owned(), root.to_string_lossy().into_owned()),
+            (
+                "USERPROFILE".to_owned(),
+                root.to_string_lossy().into_owned(),
+            ),
+        ]);
         let config = retrieval_embedding_config(&environment, Path::new("/")).expect("load");
         assert!(config.expand_query);
         assert_eq!(config.expand_model, "embedding-model");

@@ -283,6 +283,10 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     command
         .env_clear()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
         .args([
             "--vault",
             vault.to_str().expect("UTF-8 vault"),

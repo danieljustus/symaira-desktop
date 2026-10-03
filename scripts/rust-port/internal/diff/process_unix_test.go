@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -67,10 +68,12 @@ func TestBuildManifestCapturesUnixModesAndTypes(t *testing.T) {
 
 func TestRunTimeoutKillsDescendantProcessGroup(t *testing.T) {
 	caseSpec := Case{
-		ID:        "timeout-child",
-		Args:      []string{"-test.run=TestRunAndCompareIdenticalHelper"},
-		Env:       map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "child"},
-		TimeoutMS: 100,
+		ID:   "timeout-child",
+		Args: []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		Env:  map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "child"},
+		// Allow a race-instrumented helper to start under parallel builds. This
+		// tests descendant termination, not a 100 ms process-startup budget.
+		TimeoutMS: 1000,
 	}
 	result, err := Run(os.Args[0], caseSpec)
 	if err != nil {
@@ -91,6 +94,16 @@ func TestRunTimeoutKillsDescendantProcessGroup(t *testing.T) {
 		err = syscall.Kill(pid, 0)
 		if errors.Is(err, syscall.ESRCH) {
 			return
+		}
+		// Container PID 1 may leave a killed orphan unreaped. A zombie has
+		// already exited; kill(pid, 0) alone cannot distinguish it from a
+		// surviving descendant. Keep the live-process check on other systems.
+		if runtime.GOOS == "linux" {
+			if status, readErr := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/stat"); readErr == nil {
+				if end := strings.LastIndexByte(string(status), ')'); end >= 0 && strings.HasPrefix(string(status[end+1:]), " Z ") {
+					return
+				}
+			}
 		}
 		if time.Now().After(deadline) {
 			t.Fatalf("descendant process %d survived group termination: %v", pid, err)

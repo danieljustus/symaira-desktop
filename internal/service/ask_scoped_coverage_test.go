@@ -50,8 +50,14 @@ func TestScopedSearchResultsReturnsOnlyNotebookSources(t *testing.T) {
 	if len(scopedPathSet) != 2 || !scopedPathSet[matchedPath] || !scopedPathSet[fallbackPath] {
 		t.Fatalf("scoped paths = %v, want [%s %s]", scopedPaths, matchedPath, fallbackPath)
 	}
+	if len(results) != 2 {
+		t.Fatalf("results = %+v, want each notebook source exactly once", results)
+	}
 	byPath := make(map[string]SearchResult, len(results))
 	for _, result := range results {
+		if result.Path != filepath.ToSlash(result.Path) {
+			t.Fatalf("notebook result path must use vault slash notation: %q", result.Path)
+		}
 		byPath[result.Path] = result
 		if result.Path == outsidePath {
 			t.Fatalf("out-of-scope note appeared in search results: %+v", result)

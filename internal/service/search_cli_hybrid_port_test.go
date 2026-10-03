@@ -234,16 +234,28 @@ func searchCLIHybridCases() []searchCLIHybridFixtureCase {
 	}
 }
 
+// Resolve the test-owned root before constructing database paths. SQLite's
+// no-symlink storage boundary must not depend on the spelling of TMPDIR.
+func canonicalOracleTempDir(t *testing.T) string {
+	t.Helper()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
 func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) searchCLIHybridFixtureCase {
 	t.Helper()
-	home := t.TempDir()
+	home := canonicalOracleTempDir(t)
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	vaultRoot := filepath.Join(t.TempDir(), "vault")
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	vaultRoot := filepath.Join(canonicalOracleTempDir(t), "vault")
 	if err := os.MkdirAll(vaultRoot, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	indexPath := filepath.Join(t.TempDir(), "retrieval.db")
+	indexPath := filepath.Join(canonicalOracleTempDir(t), "retrieval.db")
 	var requestMu sync.Mutex
 	requests := []capturedSearchEmbedding{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -333,7 +345,7 @@ func observeSearchCLIHybridCase(t *testing.T, input searchCLIHybridFixtureCase) 
 	documentPaths := make([]string, 0, len(input.Documents))
 	sourcePaths := map[string]string{}
 	for _, source := range input.Sources {
-		root := filepath.Join(t.TempDir(), filepath.FromSlash(source))
+		root := filepath.Join(canonicalOracleTempDir(t), filepath.FromSlash(source))
 		if parent, nested, ok := strings.Cut(source, "/"); ok && sourcePaths[parent] != "" {
 			root = filepath.Join(sourcePaths[parent], filepath.FromSlash(nested))
 		}

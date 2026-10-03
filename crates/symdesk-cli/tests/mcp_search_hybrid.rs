@@ -120,6 +120,16 @@ impl Drop for TestRoot {
 
 #[test]
 fn real_mcp_search_replays_go_handler_envelope() {
+    replay_fixture(false);
+}
+
+#[cfg(unix)]
+#[test]
+fn real_mcp_search_replays_go_envelope_through_symlinked_vault_root() {
+    replay_fixture(true);
+}
+
+fn replay_fixture(alias_vault: bool) {
     let path =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/mcp/search-hybrid.json");
     let fixture: Fixture =
@@ -128,13 +138,23 @@ fn real_mcp_search_replays_go_handler_envelope() {
     assert_eq!(fixture.schema_version, 1);
     assert!(fixture.cases.len() >= 6);
     for case in fixture.cases {
-        replay_case(&case);
+        replay_case(&case, alias_vault);
     }
 }
 
-fn replay_case(case: &FixtureCase) {
+fn replay_case(case: &FixtureCase, alias_vault: bool) {
     let root = TestRoot::new();
     let vault = root.path("vault");
+    #[cfg(unix)]
+    let vault = if alias_vault {
+        let alias = root.path("vault-alias");
+        std::os::unix::fs::symlink(&vault, &alias).expect("create vault root alias");
+        alias
+    } else {
+        vault
+    };
+    #[cfg(not(unix))]
+    let _ = alias_vault;
     let home = root.path("home");
     let index_path = root.path("data/retrieval.db");
     let sidecar_path = root.path("data/sidecar.db");
@@ -381,14 +401,14 @@ fn replay_case(case: &FixtureCase) {
             String::from_utf8_lossy(&output.stdout)
         )
     });
-    let actual = replace_root(actual, &external_root, "$EXTERNAL");
-    let actual = replace_root(actual, &unregistered_root, "$UNREGISTERED");
-    let expected = replace_vault(case.expected.clone(), &vault);
-    let expected = replace_root(expected, &external_root, "$EXTERNAL");
-    let expected = replace_root(expected, &unregistered_root, "$UNREGISTERED");
+    let roots = [
+        (vault.as_path(), "$VAULT"),
+        (external_root.as_path(), "$EXTERNAL"),
+        (unregistered_root.as_path(), "$UNREGISTERED"),
+    ];
     assert_eq!(
-        normalize_response(actual),
-        normalize_response(expected),
+        normalize_response(actual, &roots),
+        normalize_response(case.expected.clone(), &roots),
         "{} Go MCP response",
         case.id
     );
@@ -568,29 +588,24 @@ fn read_request(stream: &mut TcpStream) -> Option<(String, String, Value)> {
     Some((method, path, body))
 }
 
-fn replace_vault(value: Value, vault: &Path) -> Value {
-    replace_root(value, vault, "$VAULT")
-}
-
-fn replace_root(value: Value, root: &Path, token: &str) -> Value {
-    match value {
-        Value::String(text) => {
-            Value::String(text.replace(&root.to_string_lossy().to_string(), token))
+fn fixture_path(path: &str, roots: &[(&Path, &str)]) -> String {
+    for (root, token) in roots {
+        // Windows canonical roots carry a verbatim prefix. Compare both real
+        // path representations after decoding the nested MCP payload, using
+        // component boundaries rather than replacing escaped JSON text.
+        let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+        for candidate in [*root, canonical.as_path()] {
+            if let Ok(relative) = Path::new(path).strip_prefix(candidate) {
+                return format!(
+                    "{token}/{}",
+                    relative
+                        .to_string_lossy()
+                        .replace(std::path::MAIN_SEPARATOR, "/")
+                );
+            }
         }
-        Value::Array(items) => Value::Array(
-            items
-                .into_iter()
-                .map(|item| replace_root(item, root, token))
-                .collect(),
-        ),
-        Value::Object(items) => Value::Object(
-            items
-                .into_iter()
-                .map(|(key, item)| (key, replace_root(item, root, token)))
-                .collect(),
-        ),
-        other => other,
     }
+    path.to_owned()
 }
 
 fn canonicalize(value: Value) -> Value {
@@ -606,7 +621,7 @@ fn canonicalize(value: Value) -> Value {
     }
 }
 
-fn normalize_response(mut response: Value) -> Value {
+fn normalize_response(mut response: Value, roots: &[(&Path, &str)]) -> Value {
     let Some(content) = response.pointer_mut("/result/content/0/text") else {
         return canonicalize(response);
     };
@@ -618,6 +633,9 @@ fn normalize_response(mut response: Value) -> Value {
     };
     if let Some(items) = result.get_mut("results").and_then(Value::as_array_mut) {
         for item in items {
+            if let Some(path) = item.get("path").and_then(Value::as_str) {
+                item["path"] = Value::String(fixture_path(path, roots));
+            }
             if let Some(score) = item.get("score").and_then(Value::as_f64)
                 && let Some(number) = serde_json::Number::from_f64(score)
             {
@@ -628,4 +646,40 @@ fn normalize_response(mut response: Value) -> Value {
     *content =
         Value::String(serde_json::to_string(&canonicalize(result)).expect("serialize MCP payload"));
     canonicalize(response)
+}
+
+#[test]
+fn projects_decoded_native_paths_without_rewriting_other_fields() {
+    let root = TestRoot::new();
+    let external = root.path("external");
+    fs::create_dir(&external).expect("create external fixture root");
+    let native = external
+        .canonicalize()
+        .expect("canonical external root")
+        .join("nested/registered.md");
+    let sibling = root.path("external-sibling/keep.md");
+    let title = native.to_string_lossy().into_owned();
+    let text = serde_json::to_string(&json!({"results":[
+        {"path":native,"title":title,"score":0.25},
+        {"path":sibling,"title":"outside","score":0.125}
+    ]}))
+    .expect("encode nested native paths");
+    let frame = json!({"id":1,"result":{"content":[{"type":"text","text":text}],"isError":false}});
+    let normalized = normalize_response(frame, &[(external.as_path(), "$EXTERNAL")]);
+    let payload: Value = serde_json::from_str(
+        normalized["result"]["content"][0]["text"]
+            .as_str()
+            .expect("MCP payload"),
+    )
+    .expect("decode projected payload");
+    assert_eq!(
+        payload["results"][0]["path"],
+        "$EXTERNAL/nested/registered.md"
+    );
+    assert_eq!(payload["results"][0]["title"], title);
+    assert_eq!(payload["results"][0]["score"], 0.25);
+    assert_eq!(
+        payload["results"][1]["path"],
+        sibling.to_string_lossy().as_ref()
+    );
 }

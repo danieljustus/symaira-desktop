@@ -224,7 +224,7 @@
     },
     {
       "id": "scoped-negated-singleton-filters-keep-matches",
-      "query": "-path:private -status:draft -type:pdf needle",
+      "query": "-path:private.md -status:draft -type:pdf needle",
       "embedding_dim": 3,
       "provider_status": 200,
       "provider_dimension": 3,

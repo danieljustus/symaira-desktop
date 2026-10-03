@@ -114,6 +114,16 @@ impl Drop for TestRoot {
 
 #[test]
 fn real_mcp_ask_replays_go_handler_envelope() {
+    replay_fixture(false);
+}
+
+#[cfg(unix)]
+#[test]
+fn real_mcp_ask_replays_go_envelope_through_symlinked_vault_root() {
+    replay_fixture(true);
+}
+
+fn replay_fixture(alias_vault: bool) {
     let fixture_path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/mcp/ask-offline.json");
     let fixture: Fixture = serde_json::from_slice(
@@ -123,13 +133,23 @@ fn real_mcp_ask_replays_go_handler_envelope() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 3);
     for case in &fixture.cases {
-        replay_case(case);
+        replay_case(case, alias_vault);
     }
 }
 
-fn replay_case(case: &FixtureCase) {
+fn replay_case(case: &FixtureCase, alias_vault: bool) {
     let root = TestRoot::new(&case.id);
     let vault = root.path("vault").canonicalize().expect("canonical vault");
+    #[cfg(unix)]
+    let vault = if alias_vault {
+        let alias = root.path("vault-alias");
+        std::os::unix::fs::symlink(&vault, &alias).expect("create vault root alias");
+        alias
+    } else {
+        vault
+    };
+    #[cfg(not(unix))]
+    let _ = alias_vault;
     for document in &case.documents {
         let path = vault.join(&document.path);
         fs::create_dir_all(path.parent().expect("document parent"))
@@ -259,6 +279,10 @@ fn run_mcp(
         .arg("mcp")
         .env_clear()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
         .env("HOME", root.path("home"))
         .env("USERPROFILE", root.path("home"))
         .env("XDG_CONFIG_HOME", root.path("home/config"))

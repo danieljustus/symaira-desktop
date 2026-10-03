@@ -182,7 +182,7 @@ func TestScanPDFForBarcodes(t *testing.T) {
 		{"no barcode found", "2", "", "", "", false, mockDir + ":/bin:/usr/bin", nil, ""},
 		{"multiple barcodes", "4", "1 3", "2", "4", false, mockDir + ":/bin:/usr/bin", []int{1, 3}, ""},
 		{"reader failure", "1", "", "", "", true, mockDir + ":/bin:/usr/bin", nil, "pdftoppm failed"},
-		{"missing tool", "1", "", "", "", false, "/usr/bin:/bin", nil, "pdftoppm not found"},
+		{"missing tool", "1", "", "", "", false, t.TempDir(), nil, "pdftoppm not found"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -280,7 +280,7 @@ func TestIngestPDFWithSplit_ScanError(t *testing.T) {
 		t.Fatal(err)
 	}
 	// No pdftoppm / qpdf on PATH: scanning fails up front.
-	t.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("PATH", t.TempDir())
 	t.Setenv("HOME", t.TempDir())
 
 	notes, err := ingestPDFWithSplit(vaultRoot, pdfPath, DefaultBarcodeConfig())

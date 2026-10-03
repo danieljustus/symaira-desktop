@@ -162,6 +162,61 @@ The historical `value001-latest.json` remains `passed: false`; the exact
 
 ## Implementation progress
 
+- 2026-10-03: repair the migration CI failures seen at `e817394e` without
+  advancing migration acceptance. The external-source live differential keeps
+  its immutable source guard and anchors the reviewed functional Go source
+  recorded by P/Q (including #1129). Unix-only search-test imports are Unix-gated,
+  offline Ask fixture projection recognizes native Windows source paths, and
+  exact-version ISC and CDLA-Permissive-2.0 exceptions cover the existing
+  Rustls crypto dependencies and Mozilla CA bundles.
+  Native CI additionally exposed a Go notebook match/fallback identity bug on
+  Windows: matched relative paths now use the same slash notation as notebook
+  source references, preventing duplicate fallback citations. The existing
+  service regression now requires exactly one result per notebook source.
+  Unscoped Go and Rust searches now emit slash-form vault-relative references
+  too, keeping nested citations identical to notebook references on Windows.
+  Rust's previous deliberate native-path fallback duplication is updated with
+  the Go fix. Native Windows CI confirmed the remaining backslash citation
+  mismatch at `65a331c8`; the paired repair passes affected Go service tests and
+  all 79 protocol tests on Linux. MCP Search projects decoded path fields before
+  JSON encoding, preserving result field order and non-path values.
+  The isolated Rust Search/Ask processes preserve Windows `SYSTEMROOT`, as the
+  MCP Search harness already does, so the native socket runtime can initialize.
+  The MCP negated-path corpus now targets `private.md`, rather than the broad
+  substring `private` that also excludes macOS's canonical `/private/var` temp
+  root. Go generation under a temp path containing `private` confirms that
+  only the query input changes; its expected results and requests are preserved.
+  These reviewed input/source changes require a fresh P/Q record. Squash merge
+  requires the subsequent Q refresh to anchor the actual merged P commit.
+  Linux/amd64: source registry/search and recursive watch differentials, the
+  race-enabled Go offline Ask oracle, strict workspace Clippy and the native
+  sidecar round-trip pass. Other native runner results are required separately.
+- #1127: the existing CLI alias-root regression is now complemented by real
+  MCP Search and offline Ask process replays through symlinked vault roots.
+  Both canonical and alias cases use the Go-owned expected envelopes
+  and provider request traces; no fixture expectations are normalized away.
+  These four MCP process tests pass on Linux/amd64. The full Rust workspace
+  passes locally with the fixture-generating `umask 022`; the managed cloud
+  default `077` produces different expected directory permissions, so it is
+  not interchangeable with the recorded POSIX-mode fixture environment.
+  Go's CLI Search, MCP Search, MCP Ask and service Ask oracles also pass with
+  an explicitly symlinked `TMPDIR`: their test-owned storage roots are resolved
+  before database construction and the Search harnesses use isolated canonical
+  XDG data roots. SQLite's no-symlink storage checks are preserved.
+  The Go race suite's Linux timeout negative control now distinguishes an
+  already-exited zombie from a live descendant when container PID 1 does not
+  reap orphans; the process-group kill requirement remains enforced. The full
+  local Go race run passes at `8cb31b23`; the subsequent Windows notebook fix
+  passes the affected service tests locally. PDF missing-tool controls use an
+  empty test-owned PATH. Exact integrated native acceptance is still pending.
+- #864: `baseline-20260906.json` now explicitly records the historical index
+  and graph benchmarks' actual 10,015 documents and retains their original 10,000 claims
+  as `reported_documents`; the timing is unchanged. The independent
+  `testdata/port/sidecar/large-corpus.json` supplies exactly 10,000 documents,
+  fixed mtimes, a logical-state hash (volatile database timestamps excluded)
+  and ordered search expectations. `make sidecar-roundtrip` verifies counts,
+  hashes, searches and bidirectional Go/Rust reopen on Linux/amd64.
+
 - `RUST-007` is in progress. The vault-crate half is now covered: `retention.LoadRules`
   and `retention.DocMetaFromDocument` are ported and replayed against the Go-owned
   `testdata/port/vault/retention-rules.json` (15 rules-file cases and 10

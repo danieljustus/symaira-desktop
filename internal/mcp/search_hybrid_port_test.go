@@ -470,7 +470,13 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 		if err != nil {
 			return nil, nil, err
 		}
-		return service.New(vaultRoot, db), db, nil
+		svc := service.New(vaultRoot, db)
+		t.Cleanup(func() {
+			if err := svc.Close(); err != nil {
+				t.Errorf("close Search oracle retrieval client: %v", err)
+			}
+		})
+		return svc, db, nil
 	}
 	mcp := mcpserver.New("symdesk", "test-version")
 	mcp.RegisterTool(newSearchTool(factory))

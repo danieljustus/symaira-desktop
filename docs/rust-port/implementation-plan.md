@@ -339,7 +339,7 @@ external-process dependencies.
 
 ### RUST-004: Read-only Markdown vault
 
-- Generate full/minimal contract-v1–v6 fixtures through Go loaders, including unknown-field preservation, iOS v2-compatible minimal writes, v5 scalar/list aliases and bases, v6 datasets and hybrid metadata, plus malformed, Unicode, wikilink, attachment, notebook, and view cases.
+- Generate full/minimal contract-v1–v6 fixtures through Go loaders, including unknown-field preservation, iOS v6-compatible minimal frontmatter, v5 scalar/list aliases and bases, v6 datasets and hybrid metadata, plus malformed, Unicode, wikilink, attachment, notebook, and view cases.
 - Port read-only walking/parsing/resolution into `symdesk-vault`.
 - Add hidden-directory, symlink, traversal, case, size, and malformed-input tests.
 - Do not add Rust write paths yet.

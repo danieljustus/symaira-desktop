@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/room/authorization"
 	"github.com/danieljustus/symaira-desktop/internal/room/config"
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
@@ -21,6 +22,25 @@ var (
 )
 
 func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Identity) (*event.Event, error) {
+	return approve(roomDir, runID, scopeStr, ttl, id, nil)
+}
+
+// afterAuthorization is a per-call barrier seam used by concurrency tests;
+// public callers always pass nil. The callback runs with the room lock held.
+func approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Identity, afterAuthorization func()) (*event.Event, error) {
+	if _, err := roomconfig.ReadRoomConfig(roomDir); err != nil {
+		return nil, err
+	}
+	var approved *event.Event
+	err := authorization.WithRoom(roomDir, func() error {
+		var err error
+		approved, err = approveLocked(roomDir, runID, scopeStr, ttl, id, afterAuthorization)
+		return err
+	})
+	return approved, err
+}
+
+func approveLocked(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Identity, afterAuthorization func()) (*event.Event, error) {
 	cfg, err := roomconfig.ReadRoomConfig(roomDir)
 	if err != nil {
 		return nil, err
@@ -51,6 +71,10 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 			return nil, members.ErrObserverForbidden
 		}
 		return nil, members.ErrInvalidRole
+	}
+
+	if afterAuthorization != nil {
+		afterAuthorization()
 	}
 
 	r, err := run.Get(roomDir, runID)

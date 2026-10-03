@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/room/authorization"
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/members"
@@ -42,29 +43,24 @@ func AddMember(roomDir, name, pubKeyHex string, role members.Role, kind members.
 		return nil, fmt.Errorf("marshal member.added body: %w", err)
 	}
 
-	stats, err := requireOwner(roomDir, id)
-	if err != nil {
-		return nil, err
-	}
-	return appendSignedMemberEvent(roomDir, event.KindMemberAdded, bodyBytes, stats, id)
+	return withOwnerTransaction(roomDir, id, func(stats *JournalStats) (*event.Event, error) {
+		return appendSignedMemberEvent(roomDir, event.KindMemberAdded, bodyBytes, stats, id)
+	})
 }
 
 // RemoveMember appends a signed member.removed event to the room journal.
 // Only the room owner may remove members.
 func RemoveMember(roomDir, memberID string, id *identity.Identity) (*event.Event, error) {
-	stats, err := requireOwner(roomDir, id)
-	if err != nil {
-		return nil, err
-	}
-	if _, exists := stats.MemberState.Members[memberID]; !exists {
-		return nil, members.ErrMemberNotFound
-	}
-
-	bodyBytes, err := json.Marshal(map[string]string{"id": memberID})
-	if err != nil {
-		return nil, fmt.Errorf("marshal member.removed body: %w", err)
-	}
-	return appendSignedMemberEvent(roomDir, event.KindMemberRemoved, bodyBytes, stats, id)
+	return withOwnerTransaction(roomDir, id, func(stats *JournalStats) (*event.Event, error) {
+		if _, exists := stats.MemberState.Members[memberID]; !exists {
+			return nil, members.ErrMemberNotFound
+		}
+		bodyBytes, err := json.Marshal(map[string]string{"id": memberID})
+		if err != nil {
+			return nil, fmt.Errorf("marshal member.removed body: %w", err)
+		}
+		return appendSignedMemberEvent(roomDir, event.KindMemberRemoved, bodyBytes, stats, id)
+	})
 }
 
 // SetMemberRole appends a signed member.role_changed event to the room
@@ -74,19 +70,16 @@ func SetMemberRole(roomDir, memberID string, role members.Role, id *identity.Ide
 		return nil, members.ErrInvalidRole
 	}
 
-	stats, err := requireOwner(roomDir, id)
-	if err != nil {
-		return nil, err
-	}
-	if _, exists := stats.MemberState.Members[memberID]; !exists {
-		return nil, members.ErrMemberNotFound
-	}
-
-	bodyBytes, err := json.Marshal(map[string]string{"id": memberID, "role": string(role)})
-	if err != nil {
-		return nil, fmt.Errorf("marshal member.role_changed body: %w", err)
-	}
-	return appendSignedMemberEvent(roomDir, event.KindMemberRoleChanged, bodyBytes, stats, id)
+	return withOwnerTransaction(roomDir, id, func(stats *JournalStats) (*event.Event, error) {
+		if _, exists := stats.MemberState.Members[memberID]; !exists {
+			return nil, members.ErrMemberNotFound
+		}
+		bodyBytes, err := json.Marshal(map[string]string{"id": memberID, "role": string(role)})
+		if err != nil {
+			return nil, fmt.Errorf("marshal member.role_changed body: %w", err)
+		}
+		return appendSignedMemberEvent(roomDir, event.KindMemberRoleChanged, bodyBytes, stats, id)
+	})
 }
 
 // ListMembers returns the materialized member view (id, name, public key,
@@ -162,4 +155,22 @@ func validKind(kind members.MemberKind) bool {
 		return true
 	}
 	return false
+}
+
+// Keep ordinary owner-denial errors before attempting a write lock, then
+// re-read and authorize under the shared transaction before signing/appending.
+func withOwnerTransaction(roomDir string, id *identity.Identity, operation func(*JournalStats) (*event.Event, error)) (*event.Event, error) {
+	if _, err := requireOwner(roomDir, id); err != nil {
+		return nil, err
+	}
+	var appended *event.Event
+	err := authorization.WithRoom(roomDir, func() error {
+		stats, err := requireOwner(roomDir, id)
+		if err != nil {
+			return err
+		}
+		appended, err = operation(stats)
+		return err
+	})
+	return appended, err
 }

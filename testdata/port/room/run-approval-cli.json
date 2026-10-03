@@ -7,7 +7,7 @@
   "source_hashes": {
     "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
-    "internal/room/approval/approval.go": "eb630c0fa925471457baca56b9e58763141aef1e917c8597bab34c41514f38de",
+    "internal/room/approval/approval.go": "27661c7d5644ae3002b1eec77345bbd417e4bdaa8154117d8dd70cb0df0c666b",
     "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",

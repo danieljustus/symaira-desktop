@@ -27,7 +27,9 @@ fn create_with_clock_tick(parent: &Path, prefix: &str, clock_tick: u128) -> Path
         // uniqueness guarantee for parallel replays, and stale roots must
         // never be reused or removed by another test's cleanup.
         match fs::create_dir(&root) {
-            Ok(()) => return root,
+            // SQLite retains its no-symlink storage policy. Resolve only this
+            // harness-owned root, including an aliased TMPDIR supplied by CI.
+            Ok(()) => return fs::canonicalize(&root).expect("canonical isolated test root"),
             Err(error) if error.kind() == ErrorKind::AlreadyExists => continue,
             Err(error) => panic!("create isolated test root: {error}"),
         }

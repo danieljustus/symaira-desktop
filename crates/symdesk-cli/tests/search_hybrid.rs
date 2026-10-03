@@ -7,8 +7,11 @@ use std::{
     process::Command,
     sync::{Arc, Mutex, mpsc},
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::Duration,
 };
+
+#[path = "support/isolated_root.rs"]
+mod isolated_root;
 
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -92,14 +95,7 @@ struct TempRoot(PathBuf);
 
 impl TempRoot {
     fn new() -> Self {
-        let nonce = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock")
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!(
-            "symdesk-search-hybrid-{}-{nonce}",
-            std::process::id()
-        ));
+        let root = isolated_root::create("symdesk-search-hybrid");
         for name in [
             "home",
             "home/config",

@@ -48,6 +48,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	titles := make(map[string]struct{})
 	aliases := make(map[string]struct{})
 	attachments := make(map[string]struct{})
+	markdownFiles := make(map[string][]string)
 
 	err := vault.WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
 		rel, relErr := filepath.Rel(vaultRoot, path)
@@ -55,6 +56,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 			return relErr
 		}
 		rel = filepath.ToSlash(rel)
+		addMarkdownFile(markdownFiles, rel)
 
 		if filepath.Ext(d.Name()) == ".md" {
 			report.FilesScanned++
@@ -117,6 +119,14 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 						fmt.Sprintf("derived artifact %q is older than its source %q", relSlash, doc.DerivedFrom),
 						"regenerate-derived", "Source document was modified after artifact generation")
 				}
+			}
+		}
+
+		for _, destination := range vault.ExtractMarkdownLinks(doc.Body) {
+			if target, checked := markdownLinkTarget(destination); checked && !markdownLinkExists(vaultRoot, target, markdownFiles) {
+				report.addFinding("broken_markdown_link", "warning", relSlash,
+					fmt.Sprintf("Markdown target %q does not resolve to a vault file", target),
+					"review-link", "Choose an existing target or remove the stale link")
 			}
 		}
 

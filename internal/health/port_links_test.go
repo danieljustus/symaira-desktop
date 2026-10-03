@@ -28,6 +28,7 @@ type portHealthLinkCase struct {
 type portHealthLinkFixture struct {
 	SchemaVersion int                  `json:"schema_version"`
 	Cases         []portHealthLinkCase `json:"cases"`
+	MarkdownCases []portMarkdownCase   `json:"markdown_cases"`
 }
 
 func TestHealthLinkResolutionInventory(t *testing.T) {
@@ -74,6 +75,8 @@ func TestHealthLinkResolutionInventory(t *testing.T) {
 			Normalized: normalized, Checked: checked, Exists: exists,
 		})
 	}
+
+	fixture.MarkdownCases = runMarkdownHealthCases(t)
 
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {

@@ -577,5 +577,768 @@
       "checked": false,
       "exists": false
     }
+  ],
+  "markdown_cases": [
+    {
+      "name": "link-and-image",
+      "body": "[file](docs/manual.pdf) ![image](assets/photo.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/manual.pdf",
+          "target": "docs/manual.pdf",
+          "checked": true,
+          "exists": true
+        },
+        {
+          "destination": "assets/photo.png",
+          "target": "assets/photo.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "missing-attachments",
+      "body": "[file](docs/absent.pdf) ![image](assets/absent.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/absent.pdf",
+          "target": "docs/absent.pdf",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "assets/absent.png",
+          "target": "assets/absent.png",
+          "checked": true,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "titles",
+      "body": "[file](docs/manual.pdf \"Quarterly report\") ![image](assets/photo.png 'Photo')",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/manual.pdf",
+          "target": "docs/manual.pdf",
+          "checked": true,
+          "exists": true
+        },
+        {
+          "destination": "assets/photo.png",
+          "target": "assets/photo.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "escaped-parentheses",
+      "body": "![image](assets/a\\(b\\).png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/a(b).png",
+          "target": "assets/a(b).png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "nested-parentheses",
+      "body": "![image](assets/a(b).png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/a(b).png",
+          "target": "assets/a(b).png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "angle-space",
+      "body": "![image](\u003cassets/a b.png\u003e)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/a b.png",
+          "target": "assets/a b.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "encoded-space-and-fragment",
+      "body": "![image](assets/a%20b.png#caption)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/a%20b.png#caption",
+          "target": "assets/a b.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "encoded-literal-fragment",
+      "body": "![image](assets/literal%23name.png#caption)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/literal%23name.png#caption",
+          "target": "assets/literal#name.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "unicode-case",
+      "body": "![image](assets/ÜBERBLICK_日本.PNG)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/ÜBERBLICK_日本.PNG",
+          "target": "assets/ÜBERBLICK_日本.PNG",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "entity",
+      "body": "![image](assets/a\u0026amp;b.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/a\u0026b.png",
+          "target": "assets/a\u0026b.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "reference",
+      "body": "[file][report]\n![picture][photo]\n\n[report]: docs/manual.pdf \"Report\"\n[photo]: assets/photo.png",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/manual.pdf",
+          "target": "docs/manual.pdf",
+          "checked": true,
+          "exists": true
+        },
+        {
+          "destination": "assets/photo.png",
+          "target": "assets/photo.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "shortcut-reference",
+      "body": "[report]\n\n[report]: docs/manual.pdf",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/manual.pdf",
+          "target": "docs/manual.pdf",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "remote-schemes",
+      "body": "[web](https://example.test/missing.pdf) ![cdn](//cdn.example.test/image.png) [mail](mailto:a@example.test) [data](data:image/png;base64,abc) [ftp](FTP://example.test/file.pdf)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "https://example.test/missing.pdf",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "//cdn.example.test/image.png",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "mailto:a@example.test",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "data:image/png;base64,abc",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "FTP://example.test/file.pdf",
+          "target": "",
+          "checked": false,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "same-document",
+      "body": "[heading](#Heading) [query](?view=1)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "#Heading",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "?view=1",
+          "target": "",
+          "checked": false,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "query",
+      "body": "[file](docs/manual.pdf?download=1#page=2)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "docs/manual.pdf?download=1#page=2",
+          "target": "docs/manual.pdf",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "basename",
+      "body": "![image](PHOTO.PNG)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "PHOTO.PNG",
+          "target": "PHOTO.PNG",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "wrong-folder",
+      "body": "![image](wrong/photo.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "wrong/photo.png",
+          "target": "wrong/photo.png",
+          "checked": true,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "relative-clean",
+      "body": "![image](./assets/../assets/photo.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "./assets/../assets/photo.png",
+          "target": "./assets/../assets/photo.png",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "traversal",
+      "body": "[file](../docs/manual.pdf) [encoded](%2e%2e/docs/manual.pdf) [absolute](/docs/manual.pdf) [backslash](..%5cmanual.pdf)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "../docs/manual.pdf",
+          "target": "../docs/manual.pdf",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "%2e%2e/docs/manual.pdf",
+          "target": "../docs/manual.pdf",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "/docs/manual.pdf",
+          "target": "/docs/manual.pdf",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "..%5cmanual.pdf",
+          "target": "..\\manual.pdf",
+          "checked": true,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "ignored-files",
+      "body": "![hidden](.hidden.png) [trash](.trash/gone.pdf) [dependency](node_modules/ignored.pdf)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": ".hidden.png",
+          "target": ".hidden.png",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": ".trash/gone.pdf",
+          "target": ".trash/gone.pdf",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "node_modules/ignored.pdf",
+          "target": "node_modules/ignored.pdf",
+          "checked": true,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "code-and-escaped-syntax",
+      "body": "`[inline](absent.pdf)`\n\n```md\n![fenced](absent.png)\n```\n\n    [indented](absent.pdf)\n\n\\[escaped](absent.pdf)\n",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": []
+    },
+    {
+      "name": "raw-html",
+      "body": "\u003ca href=\"absent.pdf\"\u003efile\u003c/a\u003e\u003cimg src=\"absent.png\"\u003e",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": []
+    },
+    {
+      "name": "unresolved-reference",
+      "body": "[file][undefined]",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": []
+    },
+    {
+      "name": "document",
+      "body": "[note](folder/note.md#Heading)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "folder/note.md#Heading",
+          "target": "folder/note.md",
+          "checked": true,
+          "exists": true
+        }
+      ]
+    },
+    {
+      "name": "malformed-percent",
+      "body": "[malformed](assets/%zz.png) [invalid](assets/%FF.png)",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "assets/%zz.png",
+          "target": "assets/%zz.png",
+          "checked": true,
+          "exists": false
+        },
+        {
+          "destination": "assets/%FF.png",
+          "target": "assets/%FF.png",
+          "checked": true,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "autolinks",
+      "body": "\u003chttps://example.test/absent.pdf\u003e \u003ca@example.test\u003e",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": [
+        {
+          "destination": "https://example.test/absent.pdf",
+          "target": "",
+          "checked": false,
+          "exists": false
+        },
+        {
+          "destination": "mailto:a@example.test",
+          "target": "",
+          "checked": false,
+          "exists": false
+        }
+      ]
+    },
+    {
+      "name": "tilde-fence-and-html-block",
+      "body": "~~~md\n[code](absent.pdf)\n~~~\n\n\u003c!--\n![hidden](absent.png)\n--\u003e\n",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": []
+    },
+    {
+      "name": "legacy-wiki",
+      "body": "![[assets/photo.png]] [[missing.md]]",
+      "files": [
+        "assets/photo.png",
+        "docs/manual.pdf",
+        "assets/a(b).png",
+        "assets/a b.png",
+        "assets/literal#name.png",
+        "assets/überblick_日本.png",
+        "assets/a\u0026b.png",
+        "folder/note.md",
+        ".hidden.png",
+        ".trash/gone.pdf",
+        "node_modules/ignored.pdf"
+      ],
+      "targets": []
+    }
   ]
 }

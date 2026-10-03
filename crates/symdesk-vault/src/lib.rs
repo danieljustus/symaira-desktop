@@ -10,6 +10,7 @@ mod go_string;
 mod health_links;
 pub mod history;
 mod links;
+mod markdown_links;
 mod metadata;
 mod mutations;
 mod notebook_write;
@@ -46,6 +47,7 @@ pub use history::{
     HistoryEntry, HistoryError, HistoryStore, TRASH_META_SUFFIX, TrashEntry, trash_rel_dir,
 };
 pub use links::extract_wikilinks;
+pub use markdown_links::{MarkdownLinkResolver, extract_markdown_links, markdown_link_target};
 pub use metadata::{
     SearchMetadata, SearchMetadataField, format_search_metadata, metadata_matches,
     search_metadata_from_document, strip_search_metadata,

@@ -1,12 +1,12 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "69e0e149671611563e1fdf7ab636bbba09582844",
-    "release": "post-issue-1122-atx-heading-tag-exclusion"
+    "commit": "e077104b1be0c2c82ddfc64109a46aaeb4a114cf",
+    "release": "post-issue-857-markdown-attachment-health"
   },
   "source_hashes": {
-    "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
-    "go.sum": "f71b1874c73f3b8472d1a9abe153bf2f140f031fd25700985fdf26f4a5a48807",
+    "go.mod": "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
+    "go.sum": "54d6151b45cee2b0a71c057cf7423da7751149dd39447aea434bf1837a75d315",
     "internal/vault/adopt.go": "bca6c7451d706eb9f3d72c62ff1042d4b0f78acf44b769ee31e50236d00bb96f",
     "internal/vault/asn.go": "3724de55e70b001a29e770719d8bcc7919bc9f52005019170c1f8bd64c524334",
     "internal/vault/asn_lock_unix.go": "7219874019353d841785ef18577a9decdf28ac3668c8f5f7f93f0e0e6bc4f2ad",

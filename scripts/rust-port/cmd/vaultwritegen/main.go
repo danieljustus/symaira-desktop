@@ -27,8 +27,8 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-const defaultOracleCommit = "69e0e149671611563e1fdf7ab636bbba09582844"
-const defaultOracleRelease = "post-issue-1122-atx-heading-tag-exclusion"
+const defaultOracleCommit = "e077104b1be0c2c82ddfc64109a46aaeb4a114cf"
+const defaultOracleRelease = "post-issue-857-markdown-attachment-health"
 
 type fixture struct {
 	SchemaVersion int               `json:"schema_version"`

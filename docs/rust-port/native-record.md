@@ -16,8 +16,8 @@ Each sample must exit successfully, emit one valid JSON document with the
 current build version and schema version 1, and leave stderr empty. The harness
 retains stdout/stderr verbatim, plus a JSON record of platform, architecture,
 UTC time, binary SHA-256 and all three parsed documents. It verifies that the
-binary did not change during sampling. Harness stdout is JSON; failures go to
-stderr. Failed samples retain diagnostic files without a success record.
+binary did not change during sampling. Harness and `make native-record` stdout contain only the JSON record; build
+and test diagnostics, including failures, go to stderr. Failed samples retain diagnostic files without a success record.
 
 ```sh
 SYMDESK_NATIVE_RECORD="$PWD/native-evidence-new" \

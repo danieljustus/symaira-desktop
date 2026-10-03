@@ -445,10 +445,9 @@ fn lexical_clean(path: &Path) -> PathBuf {
     output
 }
 
-fn relative_path(root: &Path, path: &str) -> String {
+fn vault_relative_path(root: &Path, path: &str) -> Option<PathBuf> {
     let path = Path::new(path);
-    let relative = path
-        .strip_prefix(root)
+    path.strip_prefix(root)
         .ok()
         .map(Path::to_path_buf)
         .or_else(|| {
@@ -472,15 +471,25 @@ fn relative_path(root: &Path, path: &str) -> String {
                 .ok()
                 .map(Path::to_path_buf)
         })
+        .filter(|value| !value.as_os_str().is_empty())
+}
+
+fn relative_path(root: &Path, path: &str) -> String {
+    vault_relative_path(root, path)
         .map(|value| {
             value
                 .to_string_lossy()
-                .trim_start_matches(['/', '\\'])
                 .replace(std::path::MAIN_SEPARATOR, "/")
-        });
-    relative
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| path.to_string_lossy().into_owned())
+        })
+        .unwrap_or_else(|| path.to_owned())
+}
+
+fn native_relative_path(root: &Path, path: &str) -> String {
+    // Go's Ls output uses filepath.Rel directly. Search citations use slash
+    // references, but a native listing must retain the oracle's separators.
+    vault_relative_path(root, path)
+        .map(|value| value.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.to_owned())
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -545,7 +554,7 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
         let entries = files
             .iter()
             .map(|file| LsJsonEntry {
-                path: relative_path(root, &file.path),
+                path: native_relative_path(root, &file.path),
                 title: file.title.clone(),
                 document_type: file.document_type.clone(),
                 modified: file.modified_at.clone(),
@@ -561,7 +570,7 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
         .map(|file| {
             format!(
                 "{{Path:{} Title:{} Type:{} Modified:{}}}",
-                relative_path(root, &file.path),
+                native_relative_path(root, &file.path),
                 file.title,
                 file.document_type,
                 file.modified_at
@@ -673,6 +682,34 @@ fn write_stderr(value: &str, code: CoreExitCode) -> ExitCode {
 #[cfg(test)]
 mod exit_code_tests {
     use super::CoreExitCode;
+
+    #[test]
+    fn nested_listing_preserves_native_separators_and_search_uses_references() {
+        use super::{native_relative_path, relative_path};
+        let root = std::env::temp_dir().join("symdesk-path-contract");
+        let file = root.join("nested").join("beta.md");
+        assert_eq!(
+            native_relative_path(&root, &file.to_string_lossy()),
+            std::path::Path::new("nested")
+                .join("beta.md")
+                .to_string_lossy()
+        );
+        assert_eq!(
+            relative_path(&root, &file.to_string_lossy()),
+            "nested/beta.md"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn literal_backslash_filename_is_preserved_in_listing_and_citation() {
+        use super::{native_relative_path, relative_path};
+        let root = std::path::Path::new("/vault");
+        let file = std::path::Path::new(r"/vault/\literal.md");
+        for project in [native_relative_path, relative_path] {
+            assert_eq!(project(root, &file.to_string_lossy()), r"\literal.md");
+        }
+    }
 
     #[test]
     fn corekit_exit_code_taxonomy_is_pinned() {

@@ -167,10 +167,19 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   its immutable source guard and now anchors the reviewed merged Go behavior
   at `d0efab20` (#1129). Unix-only search-test imports are also Unix-gated,
   offline Ask fixture projection recognizes native Windows source paths, and
-  exact-version ISC exceptions cover the existing Rustls crypto dependencies.
+  exact-version ISC and CDLA-Permissive-2.0 exceptions cover the existing
+  Rustls crypto dependencies and Mozilla CA bundles.
   Linux/amd64: source registry/search and recursive watch differentials, the
   race-enabled Go offline Ask oracle, strict workspace Clippy and the native
   sidecar round-trip pass. Other native runner results are required separately.
+- #1127: the existing CLI alias-root regression is now complemented by real
+  MCP Search and offline Ask process replays through symlinked vault roots.
+  Both canonical and alias cases use the unchanged Go-owned expected envelopes
+  and provider request traces; no fixture expectations are normalized away.
+  These four MCP process tests pass on Linux/amd64. The full Rust workspace
+  passes locally with the fixture-generating `umask 022`; the managed cloud
+  default `077` produces different expected directory permissions, so it is
+  not interchangeable with the recorded POSIX-mode fixture environment.
 - #864: `baseline-20260906.json` now explicitly records the historical index
   benchmark's actual 10,015 documents and retains its original 10,000 claim
   as `reported_documents`; the timing is unchanged. The independent

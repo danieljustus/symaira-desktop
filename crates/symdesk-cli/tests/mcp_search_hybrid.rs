@@ -120,6 +120,16 @@ impl Drop for TestRoot {
 
 #[test]
 fn real_mcp_search_replays_go_handler_envelope() {
+    replay_fixture(false);
+}
+
+#[cfg(unix)]
+#[test]
+fn real_mcp_search_replays_go_envelope_through_symlinked_vault_root() {
+    replay_fixture(true);
+}
+
+fn replay_fixture(alias_vault: bool) {
     let path =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/mcp/search-hybrid.json");
     let fixture: Fixture =
@@ -128,13 +138,23 @@ fn real_mcp_search_replays_go_handler_envelope() {
     assert_eq!(fixture.schema_version, 1);
     assert!(fixture.cases.len() >= 6);
     for case in fixture.cases {
-        replay_case(&case);
+        replay_case(&case, alias_vault);
     }
 }
 
-fn replay_case(case: &FixtureCase) {
+fn replay_case(case: &FixtureCase, alias_vault: bool) {
     let root = TestRoot::new();
     let vault = root.path("vault");
+    #[cfg(unix)]
+    let vault = if alias_vault {
+        let alias = root.path("vault-alias");
+        std::os::unix::fs::symlink(&vault, &alias).expect("create vault root alias");
+        alias
+    } else {
+        vault
+    };
+    #[cfg(not(unix))]
+    let _ = alias_vault;
     let home = root.path("home");
     let index_path = root.path("data/retrieval.db");
     let sidecar_path = root.path("data/sidecar.db");

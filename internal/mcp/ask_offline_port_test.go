@@ -351,7 +351,7 @@ func askMCPIsError(t *testing.T, frame json.RawMessage) bool {
 
 func observeAskOfflineMCPCase(t *testing.T, input askOfflineMCPFixtureCase) askOfflineMCPFixtureCase {
 	t.Helper()
-	home := t.TempDir()
+	home := canonicalOracleTempDir(t)
 	vaultRoot := filepath.Join(home, "vault")
 	if err := os.MkdirAll(vaultRoot, 0o700); err != nil {
 		t.Fatal(err)

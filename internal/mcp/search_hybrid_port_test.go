@@ -23,6 +23,17 @@ import (
 
 const searchHybridMCPFixturePath = "../../testdata/port/mcp/search-hybrid.json"
 
+// Resolve test-owned storage roots before passing them to SQLite's no-symlink
+// boundary, including when macOS or a test runner supplies an aliased TMPDIR.
+func canonicalOracleTempDir(t *testing.T) string {
+	t.Helper()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
 type searchHybridMCPFixture struct {
 	SchemaVersion int                          `json:"schema_version"`
 	Cases         []searchHybridMCPFixtureCase `json:"cases"`
@@ -289,15 +300,16 @@ func searchHybridMCPCases() []searchHybridMCPFixtureCase {
 
 func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) searchHybridMCPFixtureCase {
 	t.Helper()
-	home := t.TempDir()
-	vaultRoot := filepath.Join(t.TempDir(), "vault")
-	registeredRoot := filepath.Join(t.TempDir(), "registered-source")
-	unregisteredRoot := filepath.Join(t.TempDir(), "unregistered-source")
+	home := canonicalOracleTempDir(t)
+	vaultRoot := filepath.Join(canonicalOracleTempDir(t), "vault")
+	registeredRoot := filepath.Join(canonicalOracleTempDir(t), "registered-source")
+	unregisteredRoot := filepath.Join(canonicalOracleTempDir(t), "unregistered-source")
 	if err := os.MkdirAll(vaultRoot, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
 
 	var requestMu sync.Mutex
 	requests := []capturedSearchEmbeddingRequest{}
@@ -369,7 +381,7 @@ func observeSearchHybridMCPCase(t *testing.T, input searchHybridMCPFixtureCase) 
 	}))
 	defer server.Close()
 
-	indexPath := filepath.Join(t.TempDir(), "retrieval.db")
+	indexPath := filepath.Join(canonicalOracleTempDir(t), "retrieval.db")
 	configDir := filepath.Join(home, ".config", "symseek")
 	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatal(err)

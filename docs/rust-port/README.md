@@ -180,6 +180,10 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   passes locally with the fixture-generating `umask 022`; the managed cloud
   default `077` produces different expected directory permissions, so it is
   not interchangeable with the recorded POSIX-mode fixture environment.
+  Go's CLI Search, MCP Search, MCP Ask and service Ask oracles also pass with
+  an explicitly symlinked `TMPDIR`: their test-owned storage roots are resolved
+  before database construction and the Search harnesses use isolated canonical
+  XDG data roots. SQLite's no-symlink storage checks are preserved.
 - #864: `baseline-20260906.json` now explicitly records the historical index
   benchmark's actual 10,015 documents and retains its original 10,000 claim
   as `reported_documents`; the timing is unchanged. The independent

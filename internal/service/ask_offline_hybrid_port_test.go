@@ -134,7 +134,7 @@ func askOfflineCases() []askOfflineFixtureCase {
 
 func observeAskOfflineCase(t *testing.T, input askOfflineFixtureCase) askOfflineFixtureCase {
 	t.Helper()
-	home := t.TempDir()
+	home := canonicalOracleTempDir(t)
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, "config"))

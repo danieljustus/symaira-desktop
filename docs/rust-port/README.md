@@ -7,6 +7,18 @@
 
 ## Local handoff — 2026-09-24
 
+The native portability repairs were subsequently squash-merged as functional
+P `36b30c48` in [#1157](https://github.com/danieljustus/symaira-desktop/pull/1157).
+The source/watch and note-operation guards now name that actual main revision;
+the P/Q refresh regenerates their evidence and the full fixture provenance from
+P rather than preserving side-branch identities. Local Go race, Rust workspace,
+strict Clippy and immutable fixture replay passed before merge. Actual Windows
+Go Search/Ask and metadata-sharing controls passed three times each, followed
+by the complete all-feature Rust workspace in
+[run 37118990189](https://github.com/danieljustus/symaira-desktop/actions/runs/37118990189).
+The six-platform native workflow remains pending; this does not promote any
+migration work item or certify the outstanding macOS alias-root acceptance.
+
 - Integration source and Go-owned fixtures: `bb47a830` on
   `codex/rust-migration-integration`. `history tasks` now replays six Go process
   cases, including empty JSON `null`, ordering, text output and partial status.

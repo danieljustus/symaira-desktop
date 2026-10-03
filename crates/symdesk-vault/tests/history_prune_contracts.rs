@@ -103,7 +103,7 @@ fn go_history_prune_contracts_replay() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "3a8b461ade6fe3682a9d983bae697ad02c411b31"
+        "68095b7eabff2de0e901c90931432b125df7ebc4"
     );
     assert_eq!(
         fixture.oracle.release,

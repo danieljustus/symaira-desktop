@@ -283,6 +283,7 @@ fn run_http_server(
 
 fn cli() -> Command {
     Command::new("symdesk")
+        .about("Markdown vault workspace (contract v6)")
         .disable_version_flag(true)
         .arg(
             Arg::new("json")

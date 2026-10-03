@@ -90,7 +90,7 @@ func runMarkdownHealthCases(t *testing.T) []portMarkdownCase {
 			t.Fatal(err)
 		}
 		actual := []portMarkdownTarget{}
-		for _, destination := range vault.ExtractMarkdownLinks(item.Body) {
+		for _, destination := range extractMarkdownLinks(item.Body) {
 			target, checked := markdownLinkTarget(destination)
 			actual = append(actual, portMarkdownTarget{Destination: destination, Target: target, Checked: checked, Exists: checked && markdownLinkExists(root, target, inventory)})
 		}

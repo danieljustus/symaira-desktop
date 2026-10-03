@@ -122,7 +122,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 			}
 		}
 
-		for _, destination := range vault.ExtractMarkdownLinks(doc.Body) {
+		for _, destination := range extractMarkdownLinks(doc.Body) {
 			if target, checked := markdownLinkTarget(destination); checked && !markdownLinkExists(vaultRoot, target, markdownFiles) {
 				report.addFinding("broken_markdown_link", "warning", relSlash,
 					fmt.Sprintf("Markdown target %q does not resolve to a vault file", target),

@@ -1,4 +1,4 @@
-package vault
+package health
 
 import (
 	"github.com/yuin/goldmark"
@@ -7,10 +7,10 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-// ExtractMarkdownLinks reads CommonMark link and image destinations, including
+// extractMarkdownLinks reads CommonMark link and image destinations, including
 // references, without treating code or raw HTML as Markdown links. Wikilinks
 // remain in Document.Links and retain their existing graph semantics.
-func ExtractMarkdownLinks(body string) []string {
+func extractMarkdownLinks(body string) []string {
 	source := []byte(body)
 	document := goldmark.DefaultParser().Parse(text.NewReader(source))
 	links := []string{}

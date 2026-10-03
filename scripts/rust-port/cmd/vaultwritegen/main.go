@@ -27,7 +27,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-const defaultOracleCommit = "e077104b1be0c2c82ddfc64109a46aaeb4a114cf"
+const defaultOracleCommit = "09245b243154f484d8e14afdc9056b9999dd530d"
 const defaultOracleRelease = "post-issue-857-markdown-attachment-health"
 
 type fixture struct {

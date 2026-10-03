@@ -6,7 +6,7 @@ permissions:
 jobs:
   windows-oracles:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -17,3 +17,9 @@ jobs:
       - name: Replay actual Go Search and Ask oracles
         shell: bash
         run: go test -count=3 ./internal/mcp ./internal/service ./internal/sidecar -run '^Test(AskOfflineMCPOracle|SearchHybridMCPOracle|AskHybridOfflineOracle|SearchCLIHybridOracle|MetadataReplacementWaitsForWindowsReader|MetadataReplacementPreservesRecordOnWindowsTimeout)$'
+      - name: Install pinned native Rust toolchain
+        shell: bash
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Replay complete native Rust workspace
+        shell: bash
+        run: cargo +1.98.0 test --workspace --all-features --locked

@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_on": "linux/amd64",
   "oracle": {
-    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "toolchain": "go1.26.6",
     "goos": "linux",
     "goarch": "amd64"
   },
-  "generator_sha256": "336b1db481da825fe04479d86d98864274a2418e03a7c27621659d7a81487f2d",
+  "generator_sha256": "0bcf4ca430def3457755059c7999ee18ac5fb2f8f817b92fa483f05d53e1e0d8",
   "source_sha256": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",
@@ -17,7 +17,7 @@
     "internal/sidecar/db.go": "aaa740a6d3c42e2724b2ce76495b5841bce6641e947028d0aa12647d182ba11d",
     "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
-    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+    "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"
   },
   "cases": [
     {

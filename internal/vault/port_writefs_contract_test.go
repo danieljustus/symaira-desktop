@@ -199,7 +199,7 @@ func normalizeUnixModes(item *writeFilesystem) {
 }
 
 const (
-	writeFilesystemOracleCommit  = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
+	writeFilesystemOracleCommit  = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
 	writeFilesystemOracleRelease = "post-v0.12.2-security-880"
 	tempNamePrefix               = ".symdesk-frontmatter-"
 	tempNameSuffix               = ".tmp"

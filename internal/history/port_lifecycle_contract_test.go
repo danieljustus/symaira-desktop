@@ -65,7 +65,7 @@ const historyLifecycleFixtureRel = "../../testdata/port/vault/history-lifecycle.
 const historyLifecycleCaseCount = 18
 
 const (
-	historyOracleCommit  = "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2"
+	historyOracleCommit  = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
 	historyOracleRelease = "post-issue-1127-history-root-lifetime"
 )
 

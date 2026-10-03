@@ -36,8 +36,8 @@ ORACLE_SOURCE_FILES = {
     "frontmatter": ROOT / "scripts/rust-port/cmd/vaultwritegen/main.go",
 }
 EXPECTED_SOURCE_GUARD_ORACLE_COMMITS = {
-    "history": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
-    "frontmatter": "e077104b1be0c2c82ddfc64109a46aaeb4a114cf",
+    "history": "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2",
+    "frontmatter": "09245b243154f484d8e14afdc9056b9999dd530d",
 }
 SOURCE_GUARD_JOBS = ("test", "port-contract", "rust-native")
 

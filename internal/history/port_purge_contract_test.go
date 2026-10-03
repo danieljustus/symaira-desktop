@@ -238,7 +238,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 	}
 	return historyPurgeFixture{
 		SchemaVersion: 1,
-		Oracle:        historyOracleBlock{Commit: "d78e40d4083eefbda54aee53b771d5da6136c905", Release: "post-v0.12.2-security-880"},
+		Oracle:        historyOracleBlock{Commit: historyOracleCommit, Release: historyOracleRelease},
 		SourceHashes:  hashes,
 		Cases:         cases,
 	}

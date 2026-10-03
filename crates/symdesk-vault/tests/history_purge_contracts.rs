@@ -83,9 +83,12 @@ fn go_history_purge_contracts_replay() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "d78e40d4083eefbda54aee53b771d5da6136c905"
+        "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2"
     );
-    assert_eq!(fixture.oracle.release, "post-v0.12.2-security-880");
+    assert_eq!(
+        fixture.oracle.release,
+        "post-issue-1127-history-root-lifetime"
+    );
     assert!(
         fixture
             .source_hashes

@@ -226,7 +226,7 @@ func buildSelectedTrashPurgeFixture(t *testing.T) selectedTrashPurgeFixture {
 	}
 	return selectedTrashPurgeFixture{
 		SchemaVersion: 1,
-		Oracle:        historyOracleBlock{Commit: "e0364e835c03672178db936a2263fba1fb1ec2ab", Release: "post-v0.12.2-security-880"},
+		Oracle:        historyOracleBlock{Commit: historyOracleCommit, Release: historyOracleRelease},
 		SourceHashes:  hashes,
 		Cases:         cases,
 	}

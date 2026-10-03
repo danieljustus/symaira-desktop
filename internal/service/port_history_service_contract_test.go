@@ -38,7 +38,7 @@ type historyState struct {
 func TestPortHistoryServiceContract(t *testing.T) {
 	fixture := historyServiceContract{
 		SchemaVersion: 1,
-		Oracle:        "0dea61627cb9746633c2c7b669f7684d395f29f7",
+		Oracle:        "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2",
 		SourceHashes: map[string]string{
 			"internal/service/history.go":    historySourceHash(t, "history.go"),
 			"internal/history/history.go":    historySourceHash(t, "../history/history.go"),

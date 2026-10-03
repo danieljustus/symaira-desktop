@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
-	defaultOracleRelease = "post-v0.13.0-dependency-refresh"
+	defaultOracleCommit  = "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2"
+	defaultOracleRelease = "post-issue-1127-history-root-lifetime"
 )
 
 type Document struct {
@@ -367,6 +367,7 @@ func runOracle(oracle Oracle, sourceHashes map[string]string) (Document, error) 
 	}
 
 	store := history.NewStore(vaultRoot)
+	defer func() { _ = store.Close() }()
 	var records []OperationRecord
 	step := 0
 

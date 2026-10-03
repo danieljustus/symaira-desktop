@@ -13,8 +13,8 @@ use cap_std::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use symdesk_vault::{
-    Coverage, DatasetHandle, PropertyConfig, Provenance, dataset, go_lowercase, go_quote,
-    parse_bytes, parse_dataset_handle,
+    Coverage, DatasetHandle, PropertyConfig, Provenance, dataset, go_lowercase, go_path_error,
+    go_quote, parse_bytes, parse_dataset_handle,
 };
 use thiserror::Error;
 use time::{OffsetDateTime, UtcOffset, format_description::well_known::Rfc3339};
@@ -145,8 +145,19 @@ impl<'a> DatasetSyncService<'a> {
             options.sensitivity.as_str(),
             options.retention_rule.as_str(),
         )?;
-        let metadata = fs::metadata(source)
-            .map_err(|error| DatasetSyncError::Contract(format!("stat dataset source: {error}")))?;
+        let metadata = fs::metadata(source).map_err(|error| {
+            let detail = if error.kind() == io::ErrorKind::NotFound {
+                let operation = if cfg!(windows) {
+                    "GetFileAttributesEx"
+                } else {
+                    "stat"
+                };
+                go_path_error(operation, source, &error)
+            } else {
+                error.to_string()
+            };
+            DatasetSyncError::Contract(format!("stat dataset source: {detail}"))
+        })?;
         let extension = source
             .extension()
             .and_then(|value| value.to_str())

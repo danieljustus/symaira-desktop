@@ -6,6 +6,7 @@ pub mod activity_journal;
 mod base_write;
 pub mod conflict;
 pub mod dataset;
+mod go_io;
 mod go_string;
 mod health_links;
 pub mod history;
@@ -40,6 +41,7 @@ pub use base_write::{
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
+pub use go_io::path_error as go_path_error;
 pub use go_string::{lowercase as go_lowercase, quote as go_quote};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
 pub use history::{

@@ -37,6 +37,11 @@ jobs:
           go test "${race_args[@]}" -count=3 ./internal/health ./internal/history ./internal/vault
       - name: Install pinned native Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Execute native Rust vault and volume-prefix regressions
+        env:
+          CARGO_INCREMENTAL: '0'
+          CARGO_PROFILE_TEST_DEBUG: '0'
+        run: cargo +1.98.0 test -p symdesk-vault --locked --lib
       - name: Replay all frozen Go history contracts in Rust
         env:
           CARGO_INCREMENTAL: '0'

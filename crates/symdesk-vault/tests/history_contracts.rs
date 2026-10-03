@@ -29,7 +29,7 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     ),
     (
         "internal/history/history.go",
-        "38e335f51467e066ae6b349201df2c1dbe127645f29f20d7a00fda31180ffa66",
+        "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",
     ),
     (
         "internal/history/trash.go",
@@ -38,7 +38,7 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2";
+const EXPECTED_ORACLE_COMMIT: &str = "3a8b461ade6fe3682a9d983bae697ad02c411b31";
 const EXPECTED_ORACLE_RELEASE: &str = "post-issue-1127-history-root-lifetime";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>

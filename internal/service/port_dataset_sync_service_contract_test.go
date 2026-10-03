@@ -26,7 +26,7 @@ import (
 const (
 	portDatasetSyncServiceFixtureRel     = "testdata/port/dataset/service-sync.json"
 	portDatasetSyncServiceFixtureSchema  = 1
-	portDatasetSyncServiceOracleCommit   = "09245b243154f484d8e14afdc9056b9999dd530d"
+	portDatasetSyncServiceOracleCommit   = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
 	portDatasetSyncServiceOracleRelease  = "DATA-001-service-dataset-sync-prerequisite"
 	portDatasetSyncServiceGoVersion      = "go1.26.6"
 	portDatasetSyncServiceModuleGo       = "1.26.6"

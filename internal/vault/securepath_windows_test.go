@@ -30,3 +30,14 @@ func TestSecurePathWindowsDriveAndUNCInputsStayConfined(t *testing.T) {
 		}
 	}
 }
+
+func TestSecurePathWindowsRejectsVolumePrefixes(t *testing.T) {
+	root := t.TempDir()
+	for _, input := range []string{`C:\outside\note.md`, `C:outside.md`, `\\server\share\note.md`} {
+		resolved, err := SecurePath(root, input)
+		want := "path traversal denied: " + input + " is outside vault"
+		if err == nil || err.Error() != want || resolved != "" {
+			t.Errorf("volume %q: resolved=%q err=%v, want %q", input, resolved, err, want)
+		}
+	}
+}

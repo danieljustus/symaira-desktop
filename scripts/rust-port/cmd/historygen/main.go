@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2"
+	defaultOracleCommit  = "3a8b461ade6fe3682a9d983bae697ad02c411b31"
 	defaultOracleRelease = "post-issue-1127-history-root-lifetime"
 )
 

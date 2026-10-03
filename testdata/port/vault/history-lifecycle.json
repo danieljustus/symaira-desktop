@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "7035aab79df453f7e9d5c1a5084ac46e9a39b2a2",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "release": "post-issue-1127-history-root-lifetime"
   },
   "source_hashes": {
     "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
-    "internal/history/history.go": "38e335f51467e066ae6b349201df2c1dbe127645f29f20d7a00fda31180ffa66",
+    "internal/history/history.go": "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",
     "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89"
   },
   "cases": [

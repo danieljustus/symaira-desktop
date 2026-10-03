@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "commit": "3a8b461ade6fe3682a9d983bae697ad02c411b31",
     "release": "post-v0.12.2-security-880"
   },
   "temp_file_pattern": {
@@ -10,7 +10,7 @@
   },
   "source_hashes": {
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
-    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+    "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"
   },
   "cases": [
     {

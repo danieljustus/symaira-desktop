@@ -127,7 +127,7 @@ func (s *Store) objectsDir() string {
 // cleanRel normalizes a vault-relative path and rejects traversal.
 func cleanRel(relPath string) (string, error) {
 	rel := filepath.ToSlash(filepath.Clean(relPath))
-	if rel == "." || rel == "" || strings.HasPrefix(rel, "../") || rel == ".." || filepath.IsAbs(relPath) {
+	if rel == "." || rel == "" || strings.HasPrefix(rel, "../") || strings.HasPrefix(rel, "/") || rel == ".." || filepath.IsAbs(relPath) || filepath.VolumeName(relPath) != "" {
 		return "", fmt.Errorf("invalid vault-relative path: %q", relPath)
 	}
 	return filepath.FromSlash(rel), nil

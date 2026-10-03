@@ -29,12 +29,18 @@ pub enum SecurePathError {
 ///
 /// Rejects lexical traversal and canonical symlink escape.
 pub fn secure_path(vault_root: &Path, requested: &str) -> Result<PathBuf, SecurePathError> {
+    if Path::new(requested)
+        .components()
+        .any(|component| matches!(component, Component::Prefix(_)))
+    {
+        return Err(SecurePathError::Traversal(requested.to_owned()));
+    }
     let absolute_vault = absolute(vault_root).map_err(SecurePathError::Absolute)?;
     // Go filepath.Join(root, "/etc/passwd") keeps the root on the pinned
-    // Unix oracle. Strip root/prefix components before joining to preserve it.
+    // Unix oracle. Strip root components before joining to preserve it.
     let relative_request: PathBuf = Path::new(requested)
         .components()
-        .filter(|component| !matches!(component, Component::RootDir | Component::Prefix(_)))
+        .filter(|component| !matches!(component, Component::RootDir))
         .collect();
     let absolute_target = lexical_clean(&absolute_vault.join(relative_request));
     if !under(&absolute_target, &absolute_vault) {
@@ -91,4 +97,48 @@ fn lexical_clean(path: &Path) -> PathBuf {
         }
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestRoot(PathBuf);
+    impl Drop for TestRoot {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn native_volume_coordinates_follow_go_confinement() {
+        let root = TestRoot(std::env::temp_dir().join(format!(
+            "symdesk-native-volume-paths-{}-{}",
+            std::process::id(),
+            getrandom::u64().unwrap()
+        )));
+        fs::create_dir(&root.0).unwrap();
+        for requested in [
+            r"C:\outside\note.md",
+            r"C:outside.md",
+            r"\\server\share\note.md",
+        ] {
+            let result = secure_path(&root.0, requested);
+            #[cfg(windows)]
+            {
+                let error = result.unwrap_err();
+                assert!(matches!(error, SecurePathError::Traversal(_)));
+                assert_eq!(
+                    error.to_string(),
+                    format!("path traversal denied: {requested} is outside vault")
+                );
+            }
+            #[cfg(unix)]
+            assert_eq!(
+                result.unwrap(),
+                fs::canonicalize(&root.0).unwrap().join(requested)
+            );
+        }
+        fs::remove_dir_all(&root.0).unwrap();
+    }
 }

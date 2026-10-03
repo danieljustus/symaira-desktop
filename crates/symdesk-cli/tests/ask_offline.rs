@@ -7,8 +7,11 @@ use std::{
     process::Command,
     sync::{Arc, Mutex, mpsc},
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::Duration,
 };
+
+#[path = "support/isolated_root.rs"]
+mod isolated_root;
 
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -77,14 +80,7 @@ struct TempRoot(PathBuf);
 
 impl TempRoot {
     fn new() -> Self {
-        let nonce = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock")
-            .as_nanos();
-        let root = std::env::temp_dir().join(format!(
-            "symdesk-ask-offline-{}-{nonce}",
-            std::process::id()
-        ));
+        let root = isolated_root::create("symdesk-ask-offline");
         for child in [
             "home",
             "home/config",
@@ -113,6 +109,16 @@ impl Drop for TempRoot {
 
 #[test]
 fn real_ask_cli_replays_go_service_oracle() {
+    replay_fixture(false);
+}
+
+#[cfg(unix)]
+#[test]
+fn real_ask_cli_replays_go_service_oracle_through_symlinked_vault_root() {
+    replay_fixture(true);
+}
+
+fn replay_fixture(alias_vault: bool) {
     let path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/cli/ask-offline.json");
     let fixture: Fixture =
@@ -121,16 +127,26 @@ fn real_ask_cli_replays_go_service_oracle() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 7);
     for case in &fixture.cases {
-        replay_case(case);
+        replay_case(case, alias_vault);
     }
 }
 
-fn replay_case(case: &FixtureCase) {
+fn replay_case(case: &FixtureCase, alias_vault: bool) {
     let root = TempRoot::new();
     let vault = root
         .path("vault")
         .canonicalize()
         .expect("canonical test vault");
+    #[cfg(unix)]
+    let vault = if alias_vault {
+        let alias = root.path("vault-alias");
+        std::os::unix::fs::symlink(&vault, &alias).expect("create vault-root alias");
+        alias
+    } else {
+        vault
+    };
+    #[cfg(not(unix))]
+    let _ = alias_vault;
     let home = root.path("home");
     let cwd = root.path("cwd");
     let index_path = root.path("data/retrieval.db");

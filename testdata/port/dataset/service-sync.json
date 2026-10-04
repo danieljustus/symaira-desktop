@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generated_on": "linux/amd64",
+  "generated_on": "darwin/arm64",
   "oracle": {
     "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
     "release": "DATA-001-service-dataset-sync-prerequisite",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
-    "goos": "linux",
-    "goarch": "amd64"
+    "goos": "darwin",
+    "goarch": "arm64"
   },
   "generator_sha256": "aa5573765cf9a9b355d91879171975575e074817b3e5014a0d8b4185688009c9",
   "source_sha256": {

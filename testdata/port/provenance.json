@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "71651c7e0474101dc98031a5ca5f9f1448a3665349c5e56dcfd932e86c651e40",
-  "generator_source_digest": "c979b60e251bdaf664331f30bae59438f27858bd8ae9927d8e85f7f67a6cb39f",
+  "generator_source_digest": "7cbf7d096590f6200381b7145d86b59eeece29c00633346e2f77d55a72924631",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -24,6 +24,7 @@
     "testdata/port/cli/search-hybrid.json": "06a26de996ab59096db1169ef8b0edf2ca9170e605f071022b6a5d6a1d807178",
     "testdata/port/cli/symdesk-command-tree.json": "b1993c0936c85311f7bd8aae79e5c6fe8f15fde4a64f1e29e73332f8b826ba84",
     "testdata/port/cli/symroom-parser-grammar.json": "41ab739e975e9f9ccadd9a916c85b9641be3ec947192aeed1873c5ee67b8eadb",
+    "testdata/port/config/windows-verbatim-paths.json": "aec29439feb33875804e44b05faadf0c42ab22b2e8eb56db629edc81e9e55a34",
     "testdata/port/core/config-precedence.json": "70259ab69d2614d55810f9826f43c6e334d8ba3a353bbba8c027b3937aa1dc50",
     "testdata/port/core/config.json": "e0588a464e70842146936f66116c84673338ebc250ef83043edd5594adc32d9e",
     "testdata/port/core/document-formats.json": "94b9035854a571bda30c2efa506da297cd36013915b4411718cb254cbd0aa640",
@@ -32,11 +33,11 @@
     "testdata/port/core/simhash.json": "0793db3cdab0dffe50729a9eeaa64874204756f72dc78ace454bdd488005c6da",
     "testdata/port/core/textnorm.json": "87c5eb7c8c73dcfd37044cb230621a431dbbb56222748a42c2dbbea6b0047b63",
     "testdata/port/dataset/cli.json": "dff5d7f12b4f3d508a6c678abfe1b977f31a2c0036bf4b3ee7d42429400c5975",
-    "testdata/port/dataset/import.json": "18efb9f25019942d04c1b023599431e5e3bf4e3164ccc9858a9785950d11af4d",
+    "testdata/port/dataset/import.json": "b2e771da6a811094b185ea69e14dc1050795328dfe0134f4cb2b401e1564de1f",
     "testdata/port/dataset/purge-windows.json": "da816e5c5c445e6615ff37ff4dc91e1c01b9ad37685b517878a74cc8c9b551c6",
     "testdata/port/dataset/purge.json": "957ef56a8f7e3fc33dae9b7fdefcb2261da8fc391bc770624fc7f4881ad40c43",
     "testdata/port/dataset/query-aggregate.json": "9b52fdb6632d1f90b523fead850f4f495be96f4b714bcaf428f2326810788932",
-    "testdata/port/dataset/service-sync.json": "005b8bbf0dde66e29223a91722c9825d3719b2ecb4d74d5e6f7f65b279b85560",
+    "testdata/port/dataset/service-sync.json": "ba74d4e64872f38ecc059141b14e3c054daea3e06f81e0d9b23c3143ff253b3a",
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
     "testdata/port/http/representative.json": "c4180e97cce29f99a6f4dc441632db157092409ee4d56ef39c48524af81a2f7c",
     "testdata/port/http/routes.json": "43c706ede035052e9eb6392eeec84ed67abc48ab108a0c01a3aefd00cef0ecd1",
@@ -111,8 +112,8 @@
     "testdata/port/vault/notebook.json": "0b609b187fe3d5e243367c3fc02045863c65fa10bd9a72e5e82c3dbb7cb316a5",
     "testdata/port/vault/parse.json": "b9b162fbddbf7cbaee59020170827c02742bdb1ea492e31ec68a6a4f9fc7ccd7",
     "testdata/port/vault/resolution.json": "b0565ec79b0e4c793a408cccf89a3dc4d387e3d1b2f7e1fb3b11ea2048f9d2b4",
-    "testdata/port/vault/retention-rules.json": "2ca550dbb7bec51b5b8f5e12f1e38c27f9ff8fb8a5dfbe2f932cbf630310ef79",
-    "testdata/port/vault/retention-state.json": "c75ba4f407f468629073eeb1d68a1aa382b864a42c5b44cd8c9280e0d5812c9b",
+    "testdata/port/vault/retention-rules.json": "a2f9883cbffd5c012e798a7a7180325f06e28c28ec9ac1e6f72d21f966a903a0",
+    "testdata/port/vault/retention-state.json": "96e13f7783351ef2c8ba5c753a888aeff418f53354719a04c9f6805f3fafeb75",
     "testdata/port/vault/retention.json": "f81bafe1c8e3785f574154d9cbcb37b731e51b1ca5f6c5ccdd1d390131e45b1e",
     "testdata/port/vault/typed.json": "fa9c11745004dca649590fe760db7cb7ba8d432b7be1b79df25e11344a35651b"
   }

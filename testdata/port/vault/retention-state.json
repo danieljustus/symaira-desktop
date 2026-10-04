@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_on": "linux",
+  "generated_on": "darwin",
   "oracle": {
     "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
     "release": "RUST-007-authoritative-retention-state"

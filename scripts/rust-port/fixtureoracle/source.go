@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
@@ -21,39 +22,57 @@ const (
 
 var fullCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
-var current, currentError = compiledSource()
+var current = sync.OnceValues(compiledSource())
 
-func compiledSource() (inventory.Oracle, error) {
+func compiledSource() func() (inventory.Oracle, error) {
 	// Helpers re-execute the test image from synthetic directories, and tests
 	// deliberately change PATH/cwd. Bind the source to the compiled harness
 	// before those changes, rather than treating a helper's cwd as the source.
 	if _, file, _, ok := runtime.Caller(0); ok && filepath.IsAbs(file) {
 		if root, err := FindRepositoryRoot(filepath.Dir(file)); err == nil {
-			return Source(root)
+			return captureSource(root)
 		}
 	}
 	// Trimmed source paths are not filesystem locators; ordinary package runs
 	// can still resolve the generating checkout from their initial cwd.
 	cwd, err := os.Getwd()
 	if err != nil {
-		return inventory.Oracle{}, err
+		return func() (inventory.Oracle, error) { return inventory.Oracle{}, err }
 	}
 	root, err := FindRepositoryRoot(cwd)
 	if err != nil {
-		return inventory.Oracle{}, err
+		return func() (inventory.Oracle, error) { return inventory.Oracle{}, err }
 	}
-	return Source(root)
+	return captureSource(root)
 }
 
-// Current returns the source validated before test-local environment changes.
+func captureSource(root string) func() (inventory.Oracle, error) {
+	oracle, err := selected(root, os.LookupEnv)
+	if err != nil {
+		return func() (inventory.Oracle, error) { return inventory.Oracle{}, err }
+	}
+	verify, err := inventory.NewProductionSourceVerifier(root)
+	return func() (inventory.Oracle, error) {
+		if err != nil {
+			return inventory.Oracle{}, err
+		}
+		if err := verify(oracle.Commit); err != nil {
+			return inventory.Oracle{}, err
+		}
+		return oracle, nil
+	}
+}
+
+// Current validates the source captured before test-local environment changes.
 // Defer errors until a fixture writer requests it: isolated helper processes
 // that never record source identities must still run without Git/source access.
 // Production mutation controls use uncached Source on their own input roots.
 func Current() inventory.Oracle {
-	if currentError != nil {
-		panic(currentError)
+	oracle, err := current()
+	if err != nil {
+		panic(err)
 	}
-	return current
+	return oracle
 }
 
 // Source reads P from the central provenance document. A generation process
@@ -130,18 +149,11 @@ func ValidateSource(repoRoot string, oracle inventory.Oracle) error {
 	if !fullCommit.MatchString(oracle.Commit) || strings.TrimSpace(oracle.Release) == "" {
 		return fmt.Errorf("invalid selected fixture source identity")
 	}
-	actual, err := inventory.ComputeProductionSourceDigest(repoRoot)
+	verify, err := inventory.NewProductionSourceVerifier(repoRoot)
 	if err != nil {
 		return err
 	}
-	pinned, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, oracle.Commit)
-	if err != nil {
-		return err
-	}
-	if actual != pinned {
-		return fmt.Errorf("fixture production source differs from selected P %s: actual=%s pinned=%s", oracle.Commit, actual, pinned)
-	}
-	return nil
+	return verify(oracle.Commit)
 }
 
 // GenerationEnvironment binds package-local writers to the same reviewed P

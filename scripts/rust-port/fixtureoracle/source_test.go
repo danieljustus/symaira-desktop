@@ -125,3 +125,16 @@ func TestCurrentUsesCompiledSourceBeforeTestLocalEnvironmentChanges(t *testing.T
 		t.Fatalf("compiled source identity lost after isolated cwd/PATH changes: %#v", oracle)
 	}
 }
+
+func TestCapturedSourceValidatesWhenAWriterFirstRequestsIt(t *testing.T) {
+	root, _, _ := sourceRepository(t)
+	read := captureSource(root)
+	if err := os.WriteFile(filepath.Join(root, "internal/example/value.go"), []byte("package example\nconst Value = 3\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(t.TempDir())
+	t.Setenv("PATH", t.TempDir())
+	if _, err := read(); err == nil || !strings.Contains(err.Error(), "differs from selected P") {
+		t.Fatalf("first writer did not validate changed production bytes through captured Git: %v", err)
+	}
+}

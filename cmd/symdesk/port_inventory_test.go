@@ -20,10 +20,7 @@ const symdeskTreeFixtureRel = "../../testdata/port/cli/symdesk-command-tree.json
 
 func TestSymdeskCobraInventory(t *testing.T) {
 	root := newRootCmd()
-	oracle := inventory.Oracle{
-		Commit:  fixtureoracle.Current().Commit,
-		Release: "post-v0.12.2-security-880",
-	}
+	oracle := fixtureoracle.Current()
 	doc := buildCobraDocument(root, oracle)
 
 	nonRootCount := 0

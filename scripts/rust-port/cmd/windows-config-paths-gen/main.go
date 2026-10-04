@@ -55,6 +55,8 @@ func main() {
 		{ID: "unc-mixed-separators", Input: `\\?\UNC\server\share/root`},
 		{ID: "unc-parent", Input: `\\?\UNC\server\share\root\..\leaf`},
 		{ID: "unc-parent-at-share", Input: `\\?\UNC\server\share\..\leaf`},
+		{ID: "drive-slash-namespace", Input: `//?/C:/root`},
+		{ID: "unc-slash-namespace", Input: `//?/UNC/server/share/root`},
 	}
 	for i := range cases {
 		if err := os.Setenv("XDG_CONFIG_HOME", cases[i].Input); err != nil {

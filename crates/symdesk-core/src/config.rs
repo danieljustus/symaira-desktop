@@ -502,10 +502,18 @@ fn join(left: &str, right: &str) -> String {
         return format!("./{right}");
     }
     #[cfg(windows)]
-    if left.starts_with(r"\\?\") {
+    if is_windows_verbatim(left) {
         return join_windows_verbatim(left, right);
     }
     format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
+}
+
+#[cfg(any(windows, test))]
+fn is_windows_verbatim(value: &str) -> bool {
+    matches!(
+        value.as_bytes(),
+        [b'\\' | b'/', b'\\' | b'/', b'?', b'\\' | b'/', ..]
+    )
 }
 
 // Go 1.26 treats the first component after `\\?\` as the device volume,
@@ -536,7 +544,26 @@ fn join_windows_verbatim(left: &str, right: &str) -> String {
 
 #[cfg(test)]
 mod windows_verbatim_join_tests {
-    use super::join_windows_verbatim;
+    use super::{is_windows_verbatim, join_windows_verbatim};
+
+    #[test]
+    fn separator_variants_dispatch_to_verbatim_cleaner() {
+        for base in [r"\\?\C:\root", r"\\?\UNC\server\share\root"] {
+            let canonical = join_windows_verbatim(base, "symdesk");
+            for first in ['\\', '/'] {
+                for second in ['\\', '/'] {
+                    for last in ['\\', '/'] {
+                        let variant = format!("{first}{second}?{last}{}", &base[4..]);
+                        assert!(is_windows_verbatim(&variant), "{variant}");
+                        assert_eq!(join_windows_verbatim(&variant, "symdesk"), canonical);
+                    }
+                }
+            }
+        }
+        for ordinary in ["", "/", "//?", "//x/", r"\?\", "é/root", r"C:\root"] {
+            assert!(!is_windows_verbatim(ordinary), "{ordinary}");
+        }
+    }
 
     #[test]
     fn captured_native_go_verbatim_paths_match_on_every_host() {
@@ -552,7 +579,7 @@ mod windows_verbatim_join_tests {
         for case in cases {
             assert!(ids.insert(case["id"].as_str().expect("case ID")));
             let base = case["input"].as_str().expect("captured input");
-            assert!(base.starts_with(r"\\?\"));
+            assert!(is_windows_verbatim(base));
             let actual =
                 join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
             assert_eq!(actual, case["expected"], "{}", case["id"]);

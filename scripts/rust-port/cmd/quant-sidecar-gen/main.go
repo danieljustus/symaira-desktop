@@ -10,13 +10,15 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/danieljustus/symaira-corekit/vectorkit/turboquant"
 )
 
 const (
-	corekitModule = "github.com/danieljustus/symaira-corekit/v0.17.0"
-	corekitSum    = "h1:pDtkMy0Pel1PWglNupMiLYpxo0WxUQ3CkjlR2LaUAZ4="
+	corekitPath    = "github.com/danieljustus/symaira-corekit"
+	corekitVersion = "v0.17.0"
+	corekitSum     = "h1:pDtkMy0Pel1PWglNupMiLYpxo0WxUQ3CkjlR2LaUAZ4="
 )
 
 type fixture struct {
@@ -86,6 +88,20 @@ func main() {
 }
 
 func generate() ([]byte, error) {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return nil, fmt.Errorf("missing Go build identity")
+	}
+	var corekit *debug.Module
+	for _, dependency := range info.Deps {
+		if dependency.Path == corekitPath {
+			corekit = dependency
+			break
+		}
+	}
+	if corekit == nil || corekit.Version != corekitVersion || corekit.Sum != corekitSum || corekit.Replace != nil {
+		return nil, fmt.Errorf("CoreKit runtime module identity differs from pinned v0.17.0 source")
+	}
 	cases := make([]wireCase, 0, 16)
 	inputs := []codecInput{
 		{
@@ -150,9 +166,9 @@ func generate() ([]byte, error) {
 		SchemaVersion: 1,
 		Oracle: oracleSource{
 			GoVersion:  runtime.Version(),
-			Corekit:    corekitModule,
-			CorekitSum: corekitSum,
-			Scope:      "Only wire framing and opaque payload are asserted; generation invokes production Go EncodeSidecar. NaN/infinity interpretation, decoded-vector accuracy, rotation/RNG parity, scoring, and performance are outside this bounded port.",
+			Corekit:    corekit.Path + "/" + corekit.Version,
+			CorekitSum: corekit.Sum,
+			Scope:      "Only persisted wire framing and opaque payload are asserted; generation invokes production Go EncodeSidecar. Intentional Rust API difference: read_blob owns a snapshot; Go UnpackSidecarBlob aliases mutable caller bytes. In-memory aliasing, NaN/infinity interpretation, decoded-vector accuracy, rotation/RNG parity, scoring, and performance are outside this bounded port.",
 		},
 		Cases: cases,
 	}

@@ -174,6 +174,18 @@ fn pinned_go_fixture_replays_all_wire_cases() {
     );
     assert_eq!(fixture.oracle.corekit_sum, COREKIT_SUM);
     assert!(fixture.oracle.scope.contains("NaN/infinity interpretation"));
+    assert!(
+        fixture
+            .oracle
+            .scope
+            .contains("Intentional Rust API difference")
+    );
+    assert!(
+        fixture
+            .oracle
+            .scope
+            .contains("Go UnpackSidecarBlob aliases mutable caller bytes")
+    );
     assert_eq!(fixture.cases.len(), 16, "all captured cases must execute");
 
     let mut encoded = 0;
@@ -256,7 +268,7 @@ fn signed_zero_header_bits_survive_read_and_write() {
 }
 
 #[test]
-fn packed_payload_is_copied_and_retains_exact_length_and_bytes() {
+fn owned_snapshot_is_an_intentional_difference_from_go_aliasing() {
     let case = fixture()
         .cases
         .into_iter()
@@ -264,21 +276,29 @@ fn packed_payload_is_copied_and_retains_exact_length_and_bytes() {
         .expect("opaque-payload case is required");
     let mut source = decode_hex(&case.blob_hex).expect("fixture hex parses");
     let original = source.clone();
-    let decoded = RetrievalQuantSidecar::read_blob(&source).expect("valid header parses");
+    let mut decoded = RetrievalQuantSidecar::read_blob(&source).expect("valid header parses");
     assert_eq!(decoded.packed.len(), case.packed_len);
     assert_eq!(
         decoded.packed,
         decode_hex(&case.packed_hex).expect("payload hex parses")
     );
 
+    // This is Rust's explicit owned-value API contract, not Go parity:
+    // Go's UnpackSidecarBlob returns Bytes: blob[8:] and aliases mutations.
     source[RETRIEVAL_QUANT_SIDECAR_HEADER_BYTES] ^= 0xff;
     assert_ne!(source, original);
     assert_eq!(
         decoded.to_blob(),
         original,
-        "read payload must own its bytes"
+        "intentional owned snapshot must not alias the source"
     );
     assert_eq!(decoded.to_blob().len(), case.blob_len);
+    let source_after_mutation = source.clone();
+    decoded.packed[0] ^= 0x01;
+    assert_eq!(
+        source, source_after_mutation,
+        "payload mutation must stay local"
+    );
 }
 
 #[test]

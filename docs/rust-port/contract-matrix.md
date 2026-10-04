@@ -106,6 +106,29 @@ behavior oracle is commit `745c08e8144971c61133c5d0e5d61c7ce405aad2` / release r
 - Fixtures use synthetic vaults, generated identities/tokens, fake servers, local remotes, and isolated HOME/XDG roots. They never copy Daniel's live data.
 - Go bugs are not silently preserved or fixed. Record a versioned contract decision and test both implementations.
 
+### TurboQuant persisted-wire ownership decision
+
+The bounded #1137 foundation compares only the eight-byte little-endian
+`f32` min/max header, opaque packed bytes, and short-header error semantics.
+`crates/symdesk-index/src/retrieval_quant_sidecar.rs::read_blob` deliberately
+returns an owned snapshot. Pinned Go CoreKit v0.17.0
+`vectorkit/turboquant.UnpackSidecarBlob` instead returns `Bytes: blob[8:]`, a
+mutable alias of the caller's buffer. **This is an intentional Rust API
+difference, not Go ownership parity.** Mutations do not propagate in either
+direction in the Rust owned-value API; the named snapshot regression checks
+that difference separately from the Go-derived wire comparator.
+
+The persisted representation is unchanged. No existing Rust production
+caller uses this new helper, and no codec, DB, CLI, scoring, or performance
+claim depends on shared storage. A future caller that needs zero-copy views
+must add a borrowed API with its own lifetime/mutation contract and tests;
+the owned snapshot must not silently become an alias.
+
+The generator records actual Go `EncodeSidecar`/`UnpackSidecarBlob` output
+and verifies runtime module version, checksum, and absence of replacement
+before generation or checking. Global provenance, native platform evidence,
+the full codec, benchmarks, and INDEX-005/#1137 acceptance remain pending.
+
 ### Local retrieval additions (2026-09-29)
 
 The pending-document replacement primitive and UTF-8 Markdown section parser

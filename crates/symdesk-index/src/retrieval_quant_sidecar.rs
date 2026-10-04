@@ -3,6 +3,11 @@
 //! The Go wire shape is two little-endian `f32` bit patterns followed by
 //! opaque packed bytes. This module does not decode the packed code or assign
 //! semantics to its contents.
+//!
+//! Intentional API difference: `read_blob` returns an owned snapshot, whereas
+//! Go `UnpackSidecarBlob` returns a mutable alias of the caller's `blob[8:]`.
+//! Only persisted bytes and header/error semantics are interoperability
+//! contracts here; Go's in-memory aliasing is not implemented or asserted.
 
 use thiserror::Error;
 
@@ -34,6 +39,9 @@ impl RetrievalQuantSidecar {
     /// Exactly eight bytes is valid and represents an empty packed payload.
     /// No constraints are imposed on min/max ordering, finiteness, or payload
     /// length because the Go `UnpackSidecarBlob` helper imposes none.
+    ///
+    /// The payload intentionally owns its bytes, unlike Go's mutable slice
+    /// alias. Mutating either the source or this value cannot change the other.
     pub fn read_blob(blob: &[u8]) -> Result<Self, RetrievalQuantSidecarError> {
         if blob.len() < RETRIEVAL_QUANT_SIDECAR_HEADER_BYTES {
             return Err(RetrievalQuantSidecarError::HeaderTooShort { actual: blob.len() });
@@ -45,6 +53,8 @@ impl RetrievalQuantSidecar {
         Ok(Self {
             min,
             max,
+            // ponytail: persisted-wire-only API owns a snapshot. Add a borrowed
+            // view if a future codec caller requires zero-copy alias semantics.
             packed: blob[RETRIEVAL_QUANT_SIDECAR_HEADER_BYTES..].to_vec(),
         })
     }

@@ -385,6 +385,7 @@
       "id": "RUST-016",
       "title": "Port SymRoom core CLI MCP and signed journal",
       "status": "in_progress",
+      "note": "The doctor process-contract harness now compiles its integration stubs with Rust on every platform, removing the Windows-only Go helper build and Unix shell stubs. The eight frozen Go doctor cases pass on Linux AMD64 with go absent from PATH, including exact diagnostic streams, tool invocation traces and read-only state. Native Windows replay is pending. This is a bounded prerequisite for #1153; the complete Go-independent aggregate and RUST-016 acceptance remain open.",
       "depends_on": [
         "RUST-006"
       ],

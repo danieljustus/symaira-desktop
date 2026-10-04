@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "305ba383f3b5143f7fa5698c8684554fc94b74c6",
+    "go_version": "go1.26.6",
+    "source": "internal/export/export.go",
+    "source_sha256": "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
+  },
+  "cases": [
+    {
+      "id": "empty",
+      "markdown": "",
+      "markdown_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "4e161e3952a85a53246ac5ae48a56672d4429349f44714af1bec903ba2b697df"
+    },
+    {
+      "id": "trailing-newline",
+      "markdown": "# Tail\n",
+      "markdown_sha256": "870651e5312ac117897e656b67d14f176b8020e4e4e25d2aaae28ecca1775157",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eTail\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "906a01ef0a5b172af1c16114808eb76662931347eca6a2a7c2b0ae6a752ee28f"
+    },
+    {
+      "id": "all-five-html-entities",
+      "markdown": "\u0026 \u003c \u003e \" '",
+      "markdown_sha256": "b174535d731bebbc0ff7d3c3a1059f88b73ddfad968fc5c995c55f2e250d82f9",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003cp\u003e\u0026amp; \u0026lt; \u0026gt; \u0026#34; \u0026#39;\u003c/p\u003e\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "bb633c9e076eeaa00ccf580269b310c1d90f45327f0a951b6eeadf4d4cae414e"
+    },
+    {
+      "id": "go-unicode-trim",
+      "markdown": " ## Titre \n\u2028paragraph with separators\u2028",
+      "markdown_sha256": "e7a3dc89d2cd790c4f62f3b8749c30e7d1dff94722cff04411e64848ed107549",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch2\u003eTitre\u003c/h2\u003e\n\u003cp\u003eparagraph with separators\u003c/p\u003e\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "59fdf4fdcf94a9bfeb6e5b0c2ab47c2f9d3cfd8b05f13a4871ca1fea272217b3"
+    },
+    {
+      "id": "crlf",
+      "markdown": "  # CRLF\r\n- first\r\n\r\nbody\r\n",
+      "markdown_sha256": "4e59b1cb3f121f3859ca43138e181032973de6eccae320059eb0c78650ed9d4c",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eCRLF\u003c/h1\u003e\n\u003cul\u003e\n\u003cli\u003efirst\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003ebody\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "c63f9d14ed4fefb8cb7b63ceb83516e0d13bb9398549b83f2c7e9e5482eebd53"
+    },
+    {
+      "id": "headings-lists-transitions",
+      "markdown": "# One\n## Two\n### Three\n- first\n## heading does not close list\n* second\nplain closes list\n- opens again\n#### literal paragraph closes list\n",
+      "markdown_sha256": "19636df0c7706862eff27aaac4917101def4f8db59cefd9b147fd4fb417f00cb",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOne\u003c/h1\u003e\n\u003ch2\u003eTwo\u003c/h2\u003e\n\u003ch3\u003eThree\u003c/h3\u003e\n\u003cul\u003e\n\u003cli\u003efirst\u003c/li\u003e\n\u003ch2\u003eheading does not close list\u003c/h2\u003e\n\u003cli\u003esecond\u003c/li\u003e\n\u003c/ul\u003e\n\u003cp\u003eplain closes list\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003eopens again\u003c/li\u003e\n\u003c/ul\u003e\n\u003cp\u003e#### literal paragraph closes list\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "db77dd8529b470be62fa8fd2a65e48eef5a0f791099df564ce0eb726193f080b"
+    },
+    {
+      "id": "nested-list-prefix-trim",
+      "markdown": "- * both prefixes\n* - retain dash\n",
+      "markdown_sha256": "438964dc0f6a6133fa904e89d20dbe0c4512467f34bf94364fa188a6d6167c54",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003cul\u003e\n\u003cli\u003eboth prefixes\u003c/li\u003e\n\u003cli\u003e- retain dash\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "5cace32133e38cc57d4271a8bf9862a4ce36fca789f13050961fd0a9e94d0a52"
+    },
+    {
+      "id": "plain-wikilinks",
+      "markdown": "See [[Other Note|label]] and [[Other#Part]].",
+      "markdown_sha256": "3be823d80a03e56f67693a20a044f18c28909ac96eeadb0971ffb21dda4df469",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003cp\u003eSee [[Other Note|label]] and [[Other#Part]].\u003c/p\u003e\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "ac862291d608113e7f13d0c2d1a9ec50c09f364a5858300e71222fc4c1109849"
+    },
+    {
+      "id": "multiple-blank-lines",
+      "markdown": "\n  \n\t\n",
+      "markdown_sha256": "0bb0a6d70f29b78051ccd92a8f3de39b48daafaff97ab68bbbc6b4832d723daf",
+      "html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\n\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+      "html_sha256": "e357441495917bf8cc21d78d559581036aa5bc9f88b7db085010b1cc29e3f2e4"
+    }
+  ]
+}

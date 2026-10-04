@@ -385,6 +385,7 @@
       "id": "RUST-016",
       "title": "Port SymRoom core CLI MCP and signed journal",
       "status": "in_progress",
+      "note": "The doctor process-contract harness now compiles its integration stubs with Rust on every platform, removing the Windows-only Go helper build and Unix shell stubs. The eight frozen Go doctor cases pass locally on Darwin ARM64 with go absent from PATH, including exact diagnostic streams, tool invocation traces and read-only state. Native Windows AMD64 and ARM64 replay and strict SymRoom Clippy passed in run 37199922867 at 2a228634a2b6d28c382ca894f479e51852796b37. That diagnostic candidate differs from PR #1177's f806665c7dc2e750f01e81fdd1f1609e4de3489d only in .github/workflows/ci.yml; the test, helper and fixture bytes are identical. This is supplemental source-equivalent evidence, not an exact-PR-head status check. The Linux claim has no independently retained native receipt here. This is a bounded prerequisite for #1153; the complete Go-independent aggregate and RUST-016 acceptance remain open.",
       "depends_on": [
         "RUST-006"
       ],

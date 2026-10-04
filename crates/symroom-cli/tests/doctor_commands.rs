@@ -83,6 +83,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
     let owner = identity::identity_from_private_key("oracle", &seed).expect("oracle identity");
     assert_eq!(owner.member_id, fixture.identity_member);
     let scratch = TempDir::new();
+    let tool_helper = build_tool_helper(&scratch.path);
     for case in &fixture.cases {
         let work = scratch.path.join(&case.name);
         let home = work.join("home");
@@ -111,7 +112,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
             fs::create_dir_all(&room).expect("create empty room");
         }
         if case.tools {
-            install_tools(&tools_dir, &work);
+            install_tools(&tools_dir, &tool_helper);
         }
         let before = room_snapshot(&room);
         let identities_before = room_snapshot(&data_home);
@@ -250,69 +251,30 @@ fn make_valid_room(room: &Path, owner: &identity::Identity, index: &str) {
     }
 }
 
-fn install_tools(dir: &Path, work: &Path) {
-    #[cfg(windows)]
-    let helper = build_windows_tool_helper(work);
-    #[cfg(not(windows))]
-    let _ = work;
+fn install_tools(dir: &Path, helper: &Path) {
     for name in ["symdesk", "symbrain", "symvault"] {
-        #[cfg(windows)]
-        {
-            let path = dir.join(format!("{name}.exe"));
-            fs::copy(&helper, &path).expect("copy Windows integration executable");
-        }
-        #[cfg(not(windows))]
-        {
-            let script = format!(
-                "#!/bin/sh\ncase \"$1\" in\n  get) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' \"$DOCTOR_IDENTITY_KEY\" ;;\n  version) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' '{{\"version\":\"{name}-1.2.3\"}}' ;;\nesac\n"
-            );
-            let path = dir.join(name);
-            fs::write(&path, script).expect("write integration stub");
-            set_mode(&path, "0755");
-        }
+        let path = dir.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+        fs::copy(helper, path).expect("copy integration executable");
     }
 }
 
-#[cfg(windows)]
-fn build_windows_tool_helper(work: &Path) -> PathBuf {
-    let source = work.join("doctor-tool-helper.go");
-    let output = work.join("doctor-tool-helper.exe");
-    fs::write(
-        &source,
-        r#"package main
-
-import (
-    "fmt"
-    "os"
-    "path/filepath"
-    "strings"
-)
-
-func main() {
-    name := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
-    if len(os.Args) < 2 { return }
-    args := strings.Join(os.Args[1:], " ")
-    if os.Getenv("DOCTOR_TOOL_LOG") != "" {
-        f, err := os.OpenFile(os.Getenv("DOCTOR_TOOL_LOG"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-        if err == nil { _, _ = fmt.Fprintf(f, "%s %s\n", name, args); _ = f.Close() }
-    }
-    switch os.Args[1] {
-    case "get": fmt.Println(os.Getenv("DOCTOR_IDENTITY_KEY"))
-    case "version": fmt.Printf("{\"version\":\"%s-1.2.3\"}\n", name)
-    }
-}
-"#,
-    )
-    .expect("write Go Windows tool helper");
-    let output_result = Command::new("go")
-        .args(["build", "-o"])
+fn build_tool_helper(work: &Path) -> PathBuf {
+    let source = work.join("doctor-tool-helper.rs");
+    let output = work.join(format!(
+        "doctor-tool-helper{}",
+        std::env::consts::EXE_SUFFIX
+    ));
+    fs::write(&source, include_str!("support/doctor_tool_helper.rs"))
+        .expect("write Rust tool helper");
+    let output_result = Command::new("rustc")
+        .args(["--edition=2024", "-o"])
         .arg(&output)
         .arg(&source)
         .output()
-        .expect("run Go to build Windows tool helper");
+        .expect("run Rust to build tool helper");
     assert!(
         output_result.status.success(),
-        "Go Windows tool helper build failed: {}",
+        "Rust tool helper build failed: {}",
         String::from_utf8_lossy(&output_result.stderr)
     );
     output

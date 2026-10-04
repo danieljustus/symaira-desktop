@@ -311,6 +311,7 @@ func TestSaveBadDirPermission(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for unwritable path")
 	}
+	//nolint:gosec // parent is the fixed test-owned file under t.TempDir, not caller input.
 	if contents, readErr := os.ReadFile(parent); readErr != nil || string(contents) != "unchanged" {
 		t.Fatalf("invalid parent changed: %q, error %v", contents, readErr)
 	}

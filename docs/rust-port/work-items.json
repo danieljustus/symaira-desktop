@@ -146,7 +146,7 @@
     {
       "id": "RUST-007",
       "title": "Port vault writes history trash conflicts and retention",
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": [
         "RUST-006"
       ],
@@ -175,12 +175,13 @@
         "make dataset-cli-differential",
         "make dataset-purge-differential",
         "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD"
-      ]
+      ],
+      "note": "All 17 unchanged acceptance commands passed at native candidate 02ef9b35ffa509268c71a1a8355ea4082e0af047 on Linux/macOS/Windows, AMD64 and ARM64 (run 37188397430). Its sole diagnostic workflow change is excluded from main. Actual main2294dd453fae9f6aff31e9302305ed31b135ba09 has the exact source tree of reviewed candidate c50e2d39ea09168d84cae6f8ada22a791bd1107d. Every native log confirms all 17 zero exits, all22 actual-Go import cases and strict Vault/Index Clippy. See rust007-native-acceptance.md and results/rust007-native-37188397430.json. This is the write/history/retention/dataset slice, not full Rust production cutover."
     },
     {
       "id": "RUST-008",
       "title": "Port full sidecar and retrieval stack",
-      "status": "blocked",
+      "status": "ready",
       "note": "Integrated ce97dcf1 passes full immutable fixture generation/application, eight Go/Rust differentials and 204 CLI/index/protocol tests on Darwin/arm64 and Linux/arm64. Shared CLI/MCP local HyDE expansion preserves Go prompt, cache, dimensions and failure behavior; success bodies are bounded to 4 MiB. Integrated 3d4d8a56 additionally preserves the inert Go rerank flag in real CLI/MCP processes; complete immutable generation/application and the same native eight differentials/204 tests pass. Remaining facades/formats/quantization and other native targets stay open. Integrated a427ce7b additionally connects offline Ask CLI to shared hybrid retrieval and SearchPlan: seven Go cases, nine native differentials and 205 CLI/index/protocol tests pass on Darwin/arm64 and Linux/arm64; other facades and platforms remain open. Integrated bacaaff8 additionally preserves inert Go backend/quantization config through real CLI/MCP cases; immutable generation/application, nine differentials and 205 tests pass on both native ARM64 hosts. Current HTTP Ask candidate `7ae8ae34` (same production tree as immutable-fixture commit `e210b837`, Q=`368c2365`) adds shared hybrid retrieval for unscoped nonempty-index Ask while preserving notebook-scoped sidecar behavior; two source-bound Go cases passed with fake-loopback requests. Darwin/arm64 evidence: 16 CLI and 233 HTTP differentials, 210 CLI/index/protocol tests, strict Clippy/fmt, and validated immutable fixture application. Linux and other required native targets remain unverified for this slice; RUST-008 stays open.",
       "depends_on": [
         "RUST-006",
@@ -263,7 +264,7 @@
     {
       "id": "RUST-011",
       "title": "Port PDF archive draw and export",
-      "status": "blocked",
+      "status": "ready",
       "depends_on": [
         "RUST-007"
       ],

@@ -1,0 +1,631 @@
+{
+  "schema_version": 1,
+  "contract": "RUST-007",
+  "result": "PASS",
+  "run": 37188397430,
+  "run_url": "https://github.com/danieljustus/symaira-desktop/actions/runs/37188397430",
+  "native_candidate": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+  "reviewed_source": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+  "integrated_main": "2294dd453fae9f6aff31e9302305ed31b135ba09",
+  "source_tree": "691441dba60036f46f73dbf0f72eec6095ca648f",
+  "fixture_source_P": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+  "diagnostic_only_paths": [
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_commands": [
+    "make vault-write-differential",
+    "make notebook-write-differential",
+    "make base-view-write-differential",
+    "make vault-history-differential",
+    "make history-purge-differential",
+    "make history-prune-differential",
+    "make history-trash-purge-differential",
+    "make vault-retention-differential",
+    "make retention-rules-differential",
+    "make retention-state-differential",
+    "cargo nextest run -p symdesk-vault",
+    "make config-save-differential",
+    "make retention-cli-differential",
+    "make dataset-sync-differential",
+    "make dataset-cli-differential",
+    "make dataset-purge-differential",
+    "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD"
+  ],
+  "native_jobs": [
+    {
+      "run": 37188397430,
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "job": 111395214619,
+      "name": "Raw CSV combined acceptance (ubuntu-24.04-arm)",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 20.20396184799995
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 0.7522016950000534
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 0.9705656470000577
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 1.1361263649999955
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 0.8640749900000628
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 0.8896359350000012
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 0.8140822450000087
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 1.0789119139999457
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 0.7029322189999903
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 1.257253379999952
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 4.872371296999972
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 5.163941023000007
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 48.84763765499997
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 13.82613675999994
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 1.3498981819999472
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.7365541670000084
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 145.930085641
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    },
+    {
+      "run": 37188397430,
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "job": 111395214727,
+      "name": "Raw CSV combined acceptance (macos-latest)",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 67.89024445900003
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 3.859224958000027
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 1.7717985410000097
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 2.2028611670000373
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.5893917089999832
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 1.5356117499999868
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.2714068750000251
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 1.7054454579999856
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 1.195163999999977
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 6.035841667
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 12.584354292
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 11.061787874999993
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 115.78889470899998
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 18.751263042000005
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 3.107646958000032
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 3.260221374999901
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 306.30274375
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    },
+    {
+      "run": 37188397430,
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "job": 111395214735,
+      "name": "Raw CSV combined acceptance (windows-latest)",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 36.5
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 1.2810000000008586
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 1.6719999999986612
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 3.625
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.7810000000008586
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 1.8279999999995198
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.625
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 1.7970000000004802
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 1.25
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 2.375
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 17.28099999999904
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 9.281000000000859
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 104.51599999999962
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 27.875
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 6.20299999999952
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 3.860000000000582
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 308.5460000000003
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    },
+    {
+      "run": 37188397430,
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "job": 111395214753,
+      "name": "Raw CSV combined acceptance (windows-11-arm)",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 50.568582100000015
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 1.763788599999998
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 2.353165400000023
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 3.4275442
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 2.320691400000044
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 2.3897154
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 2.305366300000003
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 2.4181370000000015
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 1.65178659999998
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 2.7661962000000244
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 21.1579021
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 12.67239950000004
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 116.07238830000006
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 32.808626300000014
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 6.624061100000063
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 4.556770799999981
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 308.969147
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    },
+    {
+      "run": 37188397430,
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "job": 111395214836,
+      "name": "Raw CSV combined acceptance (ubuntu-latest)",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 28.059359245000003
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 0.5663656839999902
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 0.7647225120000058
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 1.0195014459999925
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 0.6687296699999905
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 0.68195944
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 0.6289779669999973
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 0.9022100079999973
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 0.5172308509999937
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 1.082009319000008
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 4.481891691000001
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 6.1286443580000025
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 58.210850402000005
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 14.125861980000025
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 1.3771544040000094
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 1.3367567749999978
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 195.32228888
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    },
+    {
+      "run": 37188397430,
+      "job": 111395214847,
+      "platform": "macOS Intel",
+      "native_head": "02ef9b35ffa509268c71a1a8355ea4082e0af047",
+      "source_head": "c50e2d39ea09168d84cae6f8ada22a791bd1107d",
+      "records": [
+        {
+          "command": "make vault-write-differential",
+          "exit_code": 0,
+          "seconds": 74.1056375
+        },
+        {
+          "command": "make notebook-write-differential",
+          "exit_code": 0,
+          "seconds": 2.7111379520000014
+        },
+        {
+          "command": "make base-view-write-differential",
+          "exit_code": 0,
+          "seconds": 3.8586896650000426
+        },
+        {
+          "command": "make vault-history-differential",
+          "exit_code": 0,
+          "seconds": 5.344199057999958
+        },
+        {
+          "command": "make history-purge-differential",
+          "exit_code": 0,
+          "seconds": 3.746052883999994
+        },
+        {
+          "command": "make history-prune-differential",
+          "exit_code": 0,
+          "seconds": 3.7718835190000277
+        },
+        {
+          "command": "make history-trash-purge-differential",
+          "exit_code": 0,
+          "seconds": 5.020331343999999
+        },
+        {
+          "command": "make vault-retention-differential",
+          "exit_code": 0,
+          "seconds": 6.15511294800001
+        },
+        {
+          "command": "make retention-rules-differential",
+          "exit_code": 0,
+          "seconds": 1.8457535170000483
+        },
+        {
+          "command": "make retention-state-differential",
+          "exit_code": 0,
+          "seconds": 3.258542071000022
+        },
+        {
+          "command": "cargo nextest run -p symdesk-vault",
+          "exit_code": 0,
+          "seconds": 22.550386315000026
+        },
+        {
+          "command": "make config-save-differential",
+          "exit_code": 0,
+          "seconds": 30.69019366599997
+        },
+        {
+          "command": "make retention-cli-differential",
+          "exit_code": 0,
+          "seconds": 191.27709907099995
+        },
+        {
+          "command": "make dataset-sync-differential",
+          "exit_code": 0,
+          "seconds": 41.454889396
+        },
+        {
+          "command": "make dataset-cli-differential",
+          "exit_code": 0,
+          "seconds": 5.176194573000089
+        },
+        {
+          "command": "make dataset-purge-differential",
+          "exit_code": 0,
+          "seconds": 4.063756387000012
+        },
+        {
+          "command": "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
+          "exit_code": 0,
+          "seconds": 627.691585667
+        }
+      ],
+      "exact17": true,
+      "allZero": true,
+      "corpus22": true,
+      "importPassed": true,
+      "clippySuccess": true
+    }
+  ],
+  "scope": "Vault writes/history/trash/retention and dataset helper/production-sync differential slice only. No full Go replacement or release cutover."
+}

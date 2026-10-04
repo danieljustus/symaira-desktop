@@ -198,7 +198,10 @@ struct DatasetFrontmatter {
     dataset_id: String,
     #[serde(default)]
     source: String,
-    #[serde(default)]
+    #[serde(
+        default,
+        deserialize_with = "crate::dataset::bytes::deserialize_schema"
+    )]
     schema: BTreeMap<String, PropertyConfig>,
     #[serde(default)]
     coverage: Coverage,

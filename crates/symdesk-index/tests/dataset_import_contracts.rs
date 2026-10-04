@@ -6,6 +6,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde_json::{Value, json};
 use symdesk_index::{DatasetImportOptions, DatasetSyncService, Sidecar};
 use symdesk_vault::{PropertyConfig, parse_dataset_handle};
@@ -212,13 +213,18 @@ fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {
                 visit(root, &path, output);
             } else {
                 let bytes = fs::read(&path).expect("read vault file");
-                output.push(json!({
+                let mut entry = json!({
                     "path": relative,
                     "kind": "file",
                     "size": bytes.len(),
                     "sha256": symdesk_vault::sha256_hex(&bytes),
-                    "content": String::from_utf8(bytes).expect("UTF-8 fixture vault file"),
-                }));
+                });
+                if let Ok(text) = std::str::from_utf8(&bytes) {
+                    entry["content"] = json!(text);
+                } else {
+                    entry["content_base64"] = json!(BASE64.encode(&bytes));
+                }
+                output.push(entry);
             }
         }
     }
@@ -226,22 +232,12 @@ fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {
     let mut vault = Vec::new();
     visit(&sandbox.root, &sandbox.root, &mut vault);
     vault.sort_by_key(|entry| entry["path"].as_str().unwrap_or_default().to_owned());
-    let rows = sandbox
-        .sidecar
-        .dataset_rows(slug)
-        .expect("read dataset sidecar rows")
-        .into_iter()
-        .map(|row| {
-            json!({
-                "dataset_slug": row.dataset_slug,
-                "row_key": row.row_key,
-                "identity": row.identity,
-                "values_json": row.values_json,
-                "source_path": row.source_path,
-                "row_number": row.row_number,
-            })
-        })
-        .collect::<Vec<_>>();
+    let rows = sandbox.sidecar.dataset_rows_bytes(slug).expect("read raw dataset sidecar rows").into_iter().map(|row| {
+        let mut encoded = json!({"dataset_slug": row.dataset_slug, "row_key": symdesk_vault::dataset::bytes::text(&row.row_key), "identity": symdesk_vault::dataset::bytes::text(&row.identity), "values_json": row.values_json, "source_path": row.source_path, "row_number": row.row_number});
+        if std::str::from_utf8(&row.row_key).is_err() { encoded["row_key_base64"] = json!(BASE64.encode(&row.row_key)); }
+        if std::str::from_utf8(&row.identity).is_err() { encoded["identity_base64"] = json!(BASE64.encode(&row.identity)); }
+        encoded
+    }).collect::<Vec<_>>();
     let mut state = json!({"label": label, "vault": vault, "rows": rows});
     let handle_path = format!("datasets/{slug}.md");
     match fs::read(sandbox.root.join(&handle_path)) {
@@ -260,6 +256,8 @@ fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {
 fn source_import_cases_match_go_oracle() {
     let fixture = fixture();
     let cases = fixture["cases"].as_array().expect("cases");
+    assert_eq!(cases.len(), 22, "complete Go import case inventory");
+    let mut mismatches = Vec::new();
     for case in cases {
         let calls = case["calls"].as_array().expect("calls");
         let states = case["states"].as_array().expect("states");
@@ -278,39 +276,40 @@ fn source_import_cases_match_go_oracle() {
             let source = sandbox
                 .parent
                 .join(input["source_name"].as_str().expect("source name"));
-            fs::write(
-                &source,
-                input["csv"].as_str().expect("CSV input").as_bytes(),
-            )
-            .expect("write selected source CSV");
-            let result = sandbox.import(&source, &input["options"]);
-            if let Some(expected_result) = calls[index].get("result") {
-                assert_eq!(
-                    result,
-                    Ok(expected_result.clone()),
-                    "{} call {index}",
-                    case["id"]
-                );
+            let csv = if let Some(raw) = input["csv_base64"].as_str() {
+                assert_eq!(input["csv"].as_str(), Some(""), "ambiguous CSV input");
+                BASE64.decode(raw).expect("Go-owned raw CSV bytes")
             } else {
-                assert_eq!(
-                    result,
-                    Err(calls[index]["error"].as_str().expect("Go error").to_owned()),
-                    "{} call {index}",
+                input["csv"]
+                    .as_str()
+                    .expect("CSV input")
+                    .as_bytes()
+                    .to_vec()
+            };
+            fs::write(&source, csv).expect("write selected source CSV");
+            let result = sandbox.import(&source, &input["options"]);
+            let expected = if let Some(expected_result) = calls[index].get("result") {
+                Ok(expected_result.clone())
+            } else {
+                Err(calls[index]["error"].as_str().expect("Go error").to_owned())
+            };
+            if result != expected {
+                mismatches.push(format!(
+                    "{} call {index}: expected {expected:?}, got {result:?}",
                     case["id"]
-                );
+                ));
             }
-            assert_eq!(
-                actual_state(
-                    &sandbox,
-                    expected_state["label"].as_str().unwrap(),
-                    input["options"]["slug"].as_str().unwrap(),
-                ),
-                *expected_state,
-                "{} persisted state after import {index}",
-                case["id"]
+            let state = actual_state(
+                &sandbox,
+                expected_state["label"].as_str().unwrap(),
+                input["options"]["slug"].as_str().unwrap(),
             );
+            if state != *expected_state {
+                mismatches.push(format!("{} persisted state after import {index}: expected {expected_state}, got {state}",case["id"]));
+            }
         }
     }
+    assert!(mismatches.is_empty(), "{}", mismatches.join("\n"));
 }
 
 #[test]

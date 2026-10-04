@@ -2022,6 +2022,7 @@ dependencies = [
 name = "symdesk-index"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "cap-fs-ext",
  "cap-std",
  "notify",
@@ -2077,6 +2078,7 @@ dependencies = [
 name = "symdesk-vault"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "cap-std",
  "getrandom 0.4.3",
  "libc",

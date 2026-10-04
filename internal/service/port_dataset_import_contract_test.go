@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
@@ -53,6 +55,7 @@ type portDatasetImportCase struct {
 type portDatasetImportInput struct {
 	SourceName string                   `json:"source_name"`
 	CSV        string                   `json:"csv"`
+	CSVBase64  string                   `json:"csv_base64,omitempty"`
 	Options    portDatasetImportOptions `json:"options"`
 }
 
@@ -74,18 +77,25 @@ type portDatasetImportCall struct {
 }
 
 type portDatasetImportState struct {
-	Label  string                      `json:"label"`
-	Vault  []portDatasetImportEntry    `json:"vault"`
-	Rows   []portDatasetSyncServiceRow `json:"rows"`
-	Handle *dataset.Handle             `json:"handle,omitempty"`
+	Label  string                   `json:"label"`
+	Vault  []portDatasetImportEntry `json:"vault"`
+	Rows   []portDatasetImportRow   `json:"rows"`
+	Handle *dataset.Handle          `json:"handle,omitempty"`
+}
+
+type portDatasetImportRow struct {
+	portDatasetSyncServiceRow
+	RowKeyBase64   string `json:"row_key_base64,omitempty"`
+	IdentityBase64 string `json:"identity_base64,omitempty"`
 }
 
 type portDatasetImportEntry struct {
-	Path    string `json:"path"`
-	Kind    string `json:"kind"`
-	Size    int64  `json:"size,omitempty"`
-	SHA256  string `json:"sha256,omitempty"`
-	Content string `json:"content,omitempty"`
+	Path          string `json:"path"`
+	Kind          string `json:"kind"`
+	Size          int64  `json:"size,omitempty"`
+	SHA256        string `json:"sha256,omitempty"`
+	Content       string `json:"content,omitempty"`
+	ContentBase64 string `json:"content_base64,omitempty"`
 }
 
 func TestPortDatasetImportContract(t *testing.T) {
@@ -207,7 +217,7 @@ func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 	if first.Result == nil || second.Result == nil || first.Result.RawPath != "datasets/ledger/2026-02-03.csv" || second.Result.RawPath != "datasets/ledger/2026-02-03-2.csv" {
 		t.Fatalf("unexpected StoreRaw collision paths: %#v %#v", first, second)
 	}
-	return portDatasetImportFixture{
+	fixture := portDatasetImportFixture{
 		SchemaVersion:   1,
 		GeneratedOn:     runtime.GOOS + "/" + runtime.GOARCH,
 		Oracle:          portDatasetImportOracle{Commit: portDatasetImportOracleCommit, Toolchain: runtime.Version(), GOOS: runtime.GOOS, GOARCH: runtime.GOARCH},
@@ -270,6 +280,36 @@ func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 			}}),
 		},
 	}
+	for _, input := range []struct {
+		id, csv, identity, kind string
+	}{
+		{"raw-text-bytes", "id,text\na,\xff\xe2\x82\n", "id", ""},
+		{"raw-identity-bytes", "id,text\n\xff,plain\n", "id", ""},
+		{"raw-header-bytes", "\xff,text\na,plain\n", "", ""},
+		{"raw-header-long-binary", strings.Repeat("\xff", 60) + ",text\na,plain\n", "", ""},
+		{"raw-header-natural-order", "\xff,a10,a2\nx,ten,two\n", "", ""},
+		{"raw-header-folded-duplicate", "\xff,\xfe\na,b\n", "", ""},
+		{"raw-header-and-literal-replacement-duplicate", "\xff,\ufffd\na,b\n", "", ""},
+		{"raw-invalid-number", "value\n\xe2\x82\n", "", "number"},
+		{"raw-invalid-boolean", "value\n\xe2\x82\n", "", "checkbox"},
+		{"raw-invalid-date", "value\n2026-01-\xff\n", "", "date"},
+		{"raw-bare-quote-byte-column", "value\nx\xff\"\n", "", ""},
+		{"raw-quoted-multiline-text", "value\n\"\xff\r\n\xe2\x82\"\n", "", ""},
+		{"raw-hash-preserves-byte-length", "value\n\xe2\x82\n", "", ""},
+		{"literal-replacement-json-control", "value\n\ufffd\n", "", "text"},
+	} {
+		options := portDatasetImportOptions{
+			Title: "Raw byte oracle", Slug: input.id, IdentityField: input.identity,
+			Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339),
+		}
+		if input.kind != "" {
+			options.Schema = map[string]dbviews.PropertyConfig{"value": {Type: input.kind}}
+		}
+		fixture.Cases = append(fixture.Cases, portDatasetImportBuildCase(t, base, input.id, []portDatasetImportInput{{
+			SourceName: input.id + ".csv", CSVBase64: base64.StdEncoding.EncodeToString([]byte(input.csv)), Options: options,
+		}}))
+	}
+	return fixture
 }
 
 func (options portDatasetImportOptions) toServiceOptions() DatasetImportOptions {
@@ -292,7 +332,18 @@ func portDatasetImportBuildCase(t *testing.T, base, id string, inputs []portData
 	result := portDatasetImportCase{ID: id, Inputs: inputs}
 	for index, input := range inputs {
 		source := filepath.Join(sourceDir, input.SourceName)
-		if err := os.WriteFile(source, []byte(input.CSV), 0o600); err != nil {
+		csv := []byte(input.CSV)
+		if input.CSVBase64 != "" {
+			if input.CSV != "" {
+				t.Fatal("dataset input cannot combine text and raw-byte CSV")
+			}
+			var err error
+			csv, err = base64.StdEncoding.DecodeString(input.CSVBase64)
+			if err != nil {
+				t.Fatalf("decode raw-byte CSV: %v", err)
+			}
+		}
+		if err := os.WriteFile(source, csv, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		label := fmt.Sprintf("%s-%d", id, index+1)
@@ -313,7 +364,7 @@ func portDatasetImportInvoke(label string, svc *Service, source string, options 
 
 func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbox, label, slug string) portDatasetImportState {
 	t.Helper()
-	state := portDatasetImportState{Label: label, Vault: []portDatasetImportEntry{}, Rows: []portDatasetSyncServiceRow{}}
+	state := portDatasetImportState{Label: label, Vault: []portDatasetImportEntry{}, Rows: []portDatasetImportRow{}}
 	err := filepath.WalkDir(sandbox.Root, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -340,7 +391,11 @@ func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbo
 			item.Size = int64(len(data))
 			sum := sha256.Sum256(data)
 			item.SHA256 = hex.EncodeToString(sum[:])
-			item.Content = string(data)
+			if utf8.Valid(data) {
+				item.Content = string(data)
+			} else {
+				item.ContentBase64 = base64.StdEncoding.EncodeToString(data)
+			}
 		}
 		_ = info
 		state.Vault = append(state.Vault, item)
@@ -355,7 +410,14 @@ func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbo
 		t.Fatal(err)
 	}
 	for _, row := range rows {
-		state.Rows = append(state.Rows, portDatasetSyncServiceRow{DatasetSlug: row.DatasetSlug, RowKey: row.RowKey, Identity: row.Identity, ValuesJSON: row.ValuesJSON, SourcePath: filepath.ToSlash(row.SourcePath), RowNumber: row.RowNumber})
+		projected := portDatasetImportRow{portDatasetSyncServiceRow: portDatasetSyncServiceRow{DatasetSlug: row.DatasetSlug, RowKey: row.RowKey, Identity: row.Identity, ValuesJSON: row.ValuesJSON, SourcePath: filepath.ToSlash(row.SourcePath), RowNumber: row.RowNumber}}
+		if !utf8.ValidString(row.RowKey) {
+			projected.RowKeyBase64 = base64.StdEncoding.EncodeToString([]byte(row.RowKey))
+		}
+		if !utf8.ValidString(row.Identity) {
+			projected.IdentityBase64 = base64.StdEncoding.EncodeToString([]byte(row.Identity))
+		}
+		state.Rows = append(state.Rows, projected)
 	}
 	handle, err := readDatasetHandle(sandbox.Root, filepath.ToSlash(filepath.Join(dataset.RawDir, slug+".md")))
 	if err == nil {

@@ -497,15 +497,16 @@ fn portable_absolute(value: &str) -> bool {
 }
 
 fn join(left: &str, right: &str) -> String {
+    let right = right.trim_start_matches(['/', '\\']);
     if left.is_empty() || left == "." {
-        format!("./{}", right.trim_start_matches(['/', '\\']))
-    } else {
-        format!(
-            "{}/{}",
-            left.trim_end_matches(['/', '\\']),
-            right.trim_start_matches(['/', '\\'])
-        )
+        return format!("./{right}");
     }
+    #[cfg(windows)]
+    if left.starts_with(r"\\?\") {
+        // `/` is not a separator within a Windows verbatim path.
+        return Path::new(left).join(right).to_string_lossy().into_owned();
+    }
+    format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
 }
 
 #[cfg(test)]

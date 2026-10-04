@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -65,10 +68,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
     )
     .expect("parse doctor fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle_revision,
-        "7d9d60bab2742e10f238ead245f967cce1adc4ea"
-    );
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 5);
     for (path, expected) in &fixture.source_hashes {
         let source = fs::read(root.join(path)).expect("read Go oracle source");

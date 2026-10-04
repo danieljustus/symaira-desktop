@@ -19,6 +19,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 	roomconfig "github.com/danieljustus/symaira-desktop/internal/room/room"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const runProjectionFixture = "testdata/port/room/run-projection.json"
@@ -241,7 +242,7 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 	}
 	return runProjectionFixtureData{
 		SchemaVersion:  1,
-		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "projection-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(owner.PublicKey),
 		SourceHashes: map[string]string{

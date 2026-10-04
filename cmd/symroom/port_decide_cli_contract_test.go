@@ -14,6 +14,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const decideCLIContractPath = "testdata/port/room/decide-cli.json"
@@ -86,7 +87,7 @@ func makeDecideCLIContract(t *testing.T, root string) (decideCLIContract, error)
 	}
 	fixture := decideCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "b68f7bccb1e636a0b2c1e1093e5473c3709683b3",
+		OracleRevision: fixtureoracle.Current().Commit,
 		IdentityKey:    hex.EncodeToString(seed[:]),
 		IdentityMember: signer.MemberID,
 		RoomTOML:       "id = \"rm_decide_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",

@@ -2,8 +2,8 @@
   "schema_version": 1,
   "generated_on": "linux",
   "oracle": {
-    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
-    "release": "post-native-Windows-path-repair"
+    "commit": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+    "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
     "internal/retention/retention.go": "de194d5d7b2dbad167459f8f176614d48025ea705bf750e48d03586a0b43a97c",

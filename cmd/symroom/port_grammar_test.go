@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/mcp"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -27,7 +28,7 @@ const (
 )
 
 var symroomOracle = inventory.Oracle{
-	Commit:  "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+	Commit:  fixtureoracle.Current().Commit,
 	Release: "post-v0.12.2-security-880",
 }
 

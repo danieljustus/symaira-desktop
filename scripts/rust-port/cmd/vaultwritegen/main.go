@@ -25,10 +25,13 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
-const defaultOracleCommit = "68095b7eabff2de0e901c90931432b125df7ebc4"
-const defaultOracleRelease = "post-issue-857-markdown-attachment-health"
+var (
+	defaultOracleCommit = fixtureoracle.Defaults().Commit
+)
 
 type fixture struct {
 	SchemaVersion int               `json:"schema_version"`
@@ -77,9 +80,16 @@ type operation struct {
 func main() {
 	output := flag.String("output", "testdata/port/vault/frontmatter-write.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", defaultOracleCommit, "Go oracle commit")
-	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
+	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
+	if identityErr != nil {
+		fatal("resolve fixture source: %v", identityErr)
+	}
+	if identityErr := fixtureoracle.ValidateSource(identityRoot, inventory.Oracle{Commit: *commit, Release: *release}); identityErr != nil {
+		fatal("verify selected fixture source: %v", identityErr)
+	}
 
 	root, err := repoRoot()
 	if err != nil {

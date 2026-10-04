@@ -21,17 +21,22 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
-	portDatasetSyncServiceFixtureRel     = "testdata/port/dataset/service-sync.json"
-	portDatasetSyncServiceFixtureSchema  = 1
-	portDatasetSyncServiceOracleCommit   = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	portDatasetSyncServiceOracleRelease  = "DATA-001-service-dataset-sync-prerequisite"
+	portDatasetSyncServiceFixtureRel    = "testdata/port/dataset/service-sync.json"
+	portDatasetSyncServiceFixtureSchema = 1
+
 	portDatasetSyncServiceGoVersion      = "go1.26.6"
 	portDatasetSyncServiceModuleGo       = "1.26.6"
 	portDatasetSyncServiceGenerateEnv    = "PORT_GENERATE"
 	portDatasetSyncServiceFixturePathEnv = "PORT_FIXTURE_PATH"
+)
+
+var (
+	portDatasetSyncServiceOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	portDatasetSyncServiceOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type portDatasetSyncServiceFixture struct {
@@ -181,7 +186,7 @@ func TestPortDatasetSyncServiceContractCaseInventory(t *testing.T) {
 			t.Fatalf("fixture case %d = %#v, want id %q with calls", index, fixture.Cases[index], id)
 		}
 	}
-	if fixture.Oracle.Commit != portDatasetSyncServiceOracleCommit || fixture.Oracle.Toolchain != portDatasetSyncServiceGoVersion {
+	if fixture.Oracle.Commit != portDatasetSyncServiceOracleCommit() || fixture.Oracle.Toolchain != portDatasetSyncServiceGoVersion {
 		t.Fatalf("fixture oracle identity = %#v", fixture.Oracle)
 	}
 	if fixture.GeneratorSHA256 != portDatasetSyncServiceSourceHash(t, "internal/service/port_dataset_sync_service_contract_test.go") {
@@ -338,8 +343,8 @@ func portDatasetSyncServiceBuildFixture(t *testing.T) portDatasetSyncServiceFixt
 		SchemaVersion: portDatasetSyncServiceFixtureSchema,
 		GeneratedOn:   runtime.GOOS + "/" + runtime.GOARCH,
 		Oracle: portDatasetSyncServiceOracle{
-			Commit:    portDatasetSyncServiceOracleCommit,
-			Release:   portDatasetSyncServiceOracleRelease,
+			Commit:    portDatasetSyncServiceOracleCommit(),
+			Release:   portDatasetSyncServiceOracleRelease(),
 			ModuleGo:  portDatasetSyncServiceModuleGo,
 			Toolchain: runtime.Version(),
 			GOOS:      runtime.GOOS,
@@ -899,14 +904,14 @@ func portDatasetSyncServiceSourceHash(t *testing.T, relative string) string {
 	if relative != "internal/service/port_dataset_sync_service_contract_test.go" {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		cmd := exec.CommandContext(ctx, "git", "-C", portDatasetSyncServiceRepoRoot(t), "show", portDatasetSyncServiceOracleCommit+":"+relative) //nolint:gosec // fixed git command reads the pinned oracle source
+		cmd := exec.CommandContext(ctx, "git", "-C", portDatasetSyncServiceRepoRoot(t), "show", portDatasetSyncServiceOracleCommit()+":"+relative) //nolint:gosec // fixed git command reads the pinned oracle source
 		cmd.WaitDelay = time.Second
 		pinned, err := cmd.Output()
 		if err != nil {
 			t.Fatalf("read pinned oracle source %s: %v", relative, err)
 		}
 		if !bytes.Equal(data, pinned) {
-			t.Fatalf("oracle source %s differs from pinned commit %s", relative, portDatasetSyncServiceOracleCommit)
+			t.Fatalf("oracle source %s differs from pinned commit %s", relative, portDatasetSyncServiceOracleCommit())
 		}
 	}
 	return hex.EncodeToString(sum[:])

@@ -17,6 +17,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const checkpointCLIContractPath = "testdata/port/room/checkpoint-cli.json"
@@ -113,7 +114,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 	agent := checkpointCLIIdentity("agent", agentSeed[:])
 	fixture := checkpointCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "def48b15ff6a9392ce4de3a824a0eec530557e8a",
+		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "event-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(owner.PublicKey),
 		Normalization:  "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event",

@@ -1,3 +1,6 @@
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -56,6 +59,8 @@ impl Drop for Sandbox {
 
 fn fixture() -> Value {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("parse Go oracle fixture");
+    oracle_identity::validate_live_document("testdata/port/dataset/service-sync.json", &fixture)
+        .expect("canonical live source identity");
     #[cfg(not(unix))]
     {
         let mut fixture = fixture;

@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -12,7 +15,6 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use symroom_core::{event::Event, identity};
 
-const ORACLE_REVISION: &str = "8e11384470ea86b15d1d60f21442a3e0c7287d53";
 const ROOM_ID: &str = "rm_0123456789abcdef";
 const EVENT_ID: &str = "ev_0123456789abcdef0123";
 const CREATED: &str = "2026-01-02T03:04:05.006Z";
@@ -65,7 +67,7 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
     let data = fs::read(fixture_path).expect("read Go-generated init CLI fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse init CLI fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 4);
     for (path, expected) in &fixture.source_hashes {
         let digest = Sha256::digest(fs::read(root.join(path)).expect("read Go oracle source"));

@@ -11,12 +11,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 const (
-	defaultOracleRelease = "post-v0.12.2-security-880"
-	provenanceFixture    = "testdata/port/provenance.json"
+	provenanceFixture = "testdata/port/provenance.json"
 )
 
 var fixturePaths = []string{
@@ -26,6 +26,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
 	"testdata/port/core/config-precedence.json",
+	"testdata/port/config/config-save.json",
 	"testdata/port/core/document-formats.json",
 	"testdata/port/core/german-search.json",
 	"testdata/port/core/search-query.json",
@@ -58,6 +59,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/retention-rules.json",
 	"testdata/port/vault/retention-state.json",
 	"testdata/port/room/run-projection.json",
+	"testdata/port/room/identity-events.json",
 	"testdata/port/room/run-cli.json",
 	"testdata/port/room/run-wait-cli.json",
 	"testdata/port/room/run-mutations-cli.json",
@@ -124,8 +126,8 @@ var fixturePaths = []string{
 
 func main() {
 	check := flag.Bool("check", false, "fail if any fixture or oracle provenance has drifted")
-	commit := flag.String("oracle-commit", "", "Go oracle commit (defaults to current HEAD during generation)")
-	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "canonical live Go source P (defaults to central provenance)")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "canonical live Go source release")
 	fixtureOracleCommit := flag.String("fixture-oracle-commit", "", "oracle commit for core and vault fixture corpora (defaults to --oracle-commit)")
 	applyArtifact := flag.String("apply-artifact", "", "validate and apply a generated patch in a disposable worktree, then print its commit")
 	flag.Parse()
@@ -166,6 +168,9 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 	fixtureOracleCommit, err = resolveGenerationOracleCommit(repoRoot, fixtureOracleCommit)
 	if err != nil {
 		return fmt.Errorf("resolve core/vault fixture oracle: %w", err)
+	}
+	if fixtureOracleCommit != commit {
+		return fmt.Errorf("all live fixtures must use one source P: oracle=%s fixture=%s", commit, fixtureOracleCommit)
 	}
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		return fmt.Errorf("generation requires a clean worktree: %w", err)
@@ -225,6 +230,7 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 }
 
 func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string) error {
+	generationEnv = generationEnvWithActivation(fixtureoracle.GenerationEnvironment(generationEnv, oracle))
 	// The configurable identity must describe the production bytes actually read.
 	fixtureSource, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, fixtureOracleCommit)
 	if err != nil {
@@ -237,93 +243,25 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 	if fixtureSource != currentSource {
 		return fmt.Errorf("core/vault production source does not match fixture oracle commit %s", fixtureOracleCommit)
 	}
-	// These generator commands are the former core-fixtures-generate and
-	// vault-fixtures-generate Make prerequisites. They run in the private
-	// worktree so the top-level flow has one write boundary.
-	commands := []struct {
-		name string
-		args []string
-	}{
-		{"configuration corpus", []string{"run", "./scripts/rust-port/cmd/configgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
-		{"core corpus", []string{"run", "./scripts/rust-port/cmd/coregen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
-		{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
-		{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
-		{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
-		{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen"}},
-		{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen"}},
-	}
-	for _, target := range commands {
-		if err := runGeneratorCommand(goTool, repoRoot, generationEnv, target.name, target.args...); err != nil {
+	// Generation and immutable replay share one complete registry. A separate
+	// hand-maintained generation list silently omitted aggregate/render/embedding
+	// and representative writers even while claiming complete regeneration.
+	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
+	for _, target := range targets {
+		if target.sidecarOracle || target.name == "sidecar oracle metadata" {
+			// Lifecycle has a separate explicit oracle environment below; metadata
+			// verification runs after its records and central provenance are refreshed.
+			continue
+		}
+		args := make([]string, 0, len(target.args))
+		for _, arg := range target.args {
+			if arg != "--check" {
+				args = append(args, arg)
+			}
+		}
+		if err := runGeneratorCommand(goTool, repoRoot, generationEnv, target.name, args...); err != nil {
 			return err
 		}
-	}
-	vaultTargets := []struct {
-		pkg string
-		run string
-	}{
-		{"./internal/service", "^TestVaultResolutionInventory$"},
-		{"./internal/health", "^TestHealthLinkResolutionInventory$"},
-		{"./internal/notebook", "^TestNotebookParseInventory$"},
-		{"./internal/retrieval/internal/engine", "^TestSearchMetadataInventory$"},
-		{"./internal/vault", "^TestMobileWriterFixture$"},
-	}
-	for _, target := range vaultTargets {
-		if err := runGeneratorCommand(goTool, repoRoot, generationEnvWithActivation(generationEnv), target.pkg+" "+target.run, "test", "-count=1", target.pkg, "-run", target.run); err != nil {
-			return err
-		}
-	}
-
-	// 1. Run package-local generators
-	packages := []struct {
-		pkg string
-		run string
-	}{
-		{"./internal/config", "^TestPortConfigPrecedenceContract$"},
-		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$|^TestPort(VaultSelection|RecipeValidate|HistoryTasks)CLIContract$"},
-		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
-		{"./internal/room/journal", "^TestPortRoomLogContract$"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},
-		{"./cmd/symroom", "^TestPortRunApprovalCLIContract$"},
-		{"./internal/room/run", "^TestPortRunProjectionContract$"},
-		{"./internal/room/room", "^TestPortRoomInitContract$"},
-		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},
-		{"./internal/room/desk", "^TestPortWatchStreamContract$"},
-		{"./internal/room/brainprofile", "^TestPortBrainProfileCLIContract$"},
-		{"./internal/room/index", "^TestPortSymRoomIndexOracle$"},
-		{"./internal/retrieval", "^TestIndex(Backup|Restore|Relocate|Location)PortFixture$"},
-		{"./internal/retrieval/internal/engine", "^TestRetrievalHybridFixture$"},
-		{"./internal/retrieval/internal/engine", "^TestPendingRebuildPortFixture$"},
-		{"./internal/retrieval/internal/engine", "^TestRetrievalSectionsFixture$"},
-		{"./internal/retrieval/internal/engine", "^TestEmbeddingHTTPPortFixture$"},
-		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
-		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
-		{"./internal/history", "^TestPortHistory(LifecycleContract|PurgeContract|PruneContract|SelectedTrashPurgeContract)$"},
-		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$|^TestPortNoteOperationContract$"},
-		{"./internal/vault", "^TestPortVaultWriteFilesystemContract$"},
-		{"./internal/retention", "^TestPortRetentionRulesContract$"},
-		{"./internal/service", "^TestPortRetentionStateContract$"},
-		{"./internal/tools", "TestSymdeskMCPInventory"},
-		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
-		{"./internal/sidecar", "^TestPortSidecar(Contract|MetadataContract)$"},
-	}
-
-	for _, target := range packages {
-		//nolint:gosec // fixed generator targets, never derived from fixture output
-		if err := runGeneratorCommand(goTool, repoRoot, generationEnvWithActivation(generationEnv), target.pkg+" "+target.run, "test", "-count=1", target.pkg, "-run", target.run); err != nil {
-			return err
-		}
-	}
-	// Keep this independent Go process fixture in the same P/Q generation as
-	// the package-produced MCP and CLI fixtures.
-	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
-	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "MCP initialize fixture", "run", "./scripts/rust-port/cmd/mcpgen"); err != nil {
-		return err
-	}
-	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "notebook write fixture", "run", "./scripts/rust-port/cmd/notebookwritegen"); err != nil {
-		return err
-	}
-	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "base/view write fixture", "run", "./scripts/rust-port/cmd/baseviewwritegen"); err != nil {
-		return err
 	}
 
 	commit, release := oracle.Commit, oracle.Release

@@ -16,6 +16,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -86,7 +87,7 @@ func TestSymRoomMCPRepresentativeOracle(t *testing.T) {
 		Oracle        inventory.Oracle `json:"oracle"`
 		JournalLines  []string         `json:"journal_lines"`
 		Cases         []map[string]any `json:"cases"`
-	}{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"}}
+	}{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}}
 	journalBytes, err := os.ReadFile(filepath.Join(journalDir, id.MemberID+".jsonl")) //nolint:gosec // deterministic identity under t.TempDir
 	if err != nil {
 		t.Fatal(err)

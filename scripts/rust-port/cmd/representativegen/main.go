@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const fixturePath = "testdata/port/representative/cases.json"
@@ -126,7 +128,7 @@ func generated() suite {
 	prepare := []string{"ls", "--vault", vault, "--json"}
 	return suite{
 		SchemaVersion: 1,
-		Oracle:        oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"},
+		Oracle:        oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release},
 		Cases: []caseDef{
 			{ID: "version-positional-ls-not-command", Args: []string{"version", "ls"}},
 			{ID: "version-positional-search-not-command", Args: []string{"version", "search"}},

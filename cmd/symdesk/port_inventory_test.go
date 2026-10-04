@@ -10,10 +10,10 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
-	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 const symdeskTreeFixtureRel = "../../testdata/port/cli/symdesk-command-tree.json"
@@ -21,7 +21,7 @@ const symdeskTreeFixtureRel = "../../testdata/port/cli/symdesk-command-tree.json
 func TestSymdeskCobraInventory(t *testing.T) {
 	root := newRootCmd()
 	oracle := inventory.Oracle{
-		Commit:  "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+		Commit:  fixtureoracle.Current().Commit,
 		Release: "post-v0.12.2-security-880",
 	}
 	doc := buildCobraDocument(root, oracle)

@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -25,6 +26,8 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"configuration save", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigSaveContract$"}, []string{"testdata/port/config/config-save.json"}, false},
+	{"room identity events", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomIdentityEventContract$"}, []string{"testdata/port/room/identity-events.json"}, false},
 	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},
 	{"config vault selection", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortVaultSelectionCLIContract$"}, []string{"testdata/port/cli/config-vault-selection.json"}, false},
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},
@@ -137,7 +140,7 @@ var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, 
 }
 
 // Go-owned generators replay against the oracle identity recorded by each
-// output document, not the global sidecar identity or a historical default.
+// output document, after the immutable identity gate requires canonical P.
 // Full-document comparisons remain.
 func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, error) {
 	if len(target.args) < 2 || target.args[0] != "run" {
@@ -208,7 +211,7 @@ func sanitizedCheckEnvironment(environment []string, configPath string) []string
 		case "USERPROFILE":
 			profile = value
 		}
-		if isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || (strings.HasPrefix(upper, "GO") && upper != "GOCACHE") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
+		if upper == fixtureoracle.CommitEnvironment || upper == fixtureoracle.ReleaseEnvironment || isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || (strings.HasPrefix(upper, "GO") && upper != "GOCACHE") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
 			continue
 		}
 		result = append(result, item)

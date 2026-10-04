@@ -13,6 +13,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/textnorm"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -111,8 +112,8 @@ type germanCase struct {
 func main() {
 	outputDir := flag.String("output-dir", "testdata/port/core", "fixture directory")
 	check := flag.Bool("check", false, "fail if generated fixtures differ")
-	commit := flag.String("oracle-commit", "745c08e8144971c61133c5d0e5d61c7ce405aad2", "Go oracle commit")
-	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
 	if *check {
 		oracle, err := inventory.ResolveCheckOracle(inventory.Oracle{Commit: *commit, Release: *release}, flag.CommandLine,
@@ -122,6 +123,14 @@ func main() {
 		}
 		*commit, *release = oracle.Commit, oracle.Release
 	}
+	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
+	if identityErr != nil {
+		fatal("resolve fixture source: %v", identityErr)
+	}
+	if identityErr := fixtureoracle.ValidateSource(identityRoot, inventory.Oracle{Commit: *commit, Release: *release}); identityErr != nil {
+		fatal("verify selected fixture source: %v", identityErr)
+	}
+
 	oracle := inventory.Oracle{Commit: *commit, Release: *release}
 
 	fixtures := map[string]any{

@@ -26,6 +26,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
 	"testdata/port/core/config-precedence.json",
+	"testdata/port/config/windows-verbatim-paths.json",
 	"testdata/port/core/document-formats.json",
 	"testdata/port/core/german-search.json",
 	"testdata/port/core/search-query.json",

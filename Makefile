@@ -165,6 +165,17 @@ core-fixtures-check:
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
 
+.PHONY: config-verbatim-fixtures-check config-verbatim-differential
+# Native Windows only: retain the recorded AMD64 bytes and compare fresh Go
+# observations on either architecture. Foreign hosts must not imply native PASS.
+config-verbatim-fixtures-check:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/windows-config-paths-gen -check testdata/port/config/windows-verbatim-paths.json
+
+config-verbatim-differential: config-verbatim-fixtures-check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config
+	$(CARGO) test -p symdesk-core --all-features --locked
+	$(CARGO) test -p symdesk-cli --test ask_offline --locked
+
 # CFG-004 config filesystem writes: the Go-owned fixture records the exact
 # MkdirAll/OpenFile side effects — every created ancestor and its mode, an
 # existing file's truncation, the created file's mode, the resulting file set

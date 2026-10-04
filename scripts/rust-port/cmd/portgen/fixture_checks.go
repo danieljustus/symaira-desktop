@@ -103,6 +103,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 }
 
 var fixtureGeneratorTargets = []fixtureCheckTarget{
+	{"native Windows config paths", []string{"run", "./scripts/rust-port/cmd/windows-config-paths-gen", "-check", "testdata/port/config/windows-verbatim-paths.json"}, []string{"testdata/port/config/windows-verbatim-paths.json"}, false},
 	{"configuration corpus", []string{"run", "./scripts/rust-port/cmd/configgen", "--check"}, []string{"testdata/port/core/config.json"}, false},
 	{"core corpus", []string{"run", "./scripts/rust-port/cmd/coregen", "--check"}, []string{"testdata/port/core/document-formats.json", "testdata/port/core/german-search.json", "testdata/port/core/simhash.json", "testdata/port/core/textnorm.json"}, false},
 	{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--check"}, []string{"testdata/port/core/search-query.json"}, false},
@@ -371,6 +372,12 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	environment := sanitizedCheckEnvironment(os.Environ(), configPath)
 	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
 	for _, target := range targets {
+		// Keep the original native capture byte-for-byte on other hosts. Its
+		// checksum is always checked; fresh Go parity runs on both Windows jobs.
+		if len(target.args) > 1 && target.args[1] == "./scripts/rust-port/cmd/windows-config-paths-gen" && runtime.GOOS != "windows" {
+			fmt.Fprintln(os.Stderr, "SKIP native Windows config paths: frozen checksum checked; fresh Go replay requires Windows")
+			continue
+		}
 		targetEnvironment := environment
 		if target.sidecarOracle {
 			targetEnvironment = sidecarOracleEnvironment(os.Environ(), sidecarOracle, configPath)

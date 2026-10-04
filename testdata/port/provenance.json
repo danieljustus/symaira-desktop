@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "71651c7e0474101dc98031a5ca5f9f1448a3665349c5e56dcfd932e86c651e40",
-  "generator_source_digest": "b919842f9c4990cddcaa000e2a7f260f8a1551ae432e1f68226ad862d0a3c788",
+  "generator_source_digest": "2c5df0276238254b41c2b43d9681efb9d9b962c1ce4b4d26470a9ccb2770eb79",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -82,6 +82,7 @@
     "testdata/port/room/member-cli.json": "e4ae389027d155cfb2dbfd1a63501d7e70fa5f878b9022495c0dd3e393cf29db",
     "testdata/port/room/merge-read.json": "df592ce62348b6a4995724eab99938a9f64a008acf1a775f7ef6f1a801fdf478",
     "testdata/port/room/note-cli.json": "fa6da6f06918c0c7913b31ac56141708abddeda452fd49d13d2c0eba5fa96586",
+    "testdata/port/room/outer-surrogate.json": "e51e5e89c98873969a8b73a16636946269df4364333dee28960f42d0955748e5",
     "testdata/port/room/run-approval-cli.json": "e681d0d0faabf87101c720cb693152ad53bd7a40caff1fe58b2c9dd872ac407c",
     "testdata/port/room/run-cli.json": "80a066ee5b3d88135b9e6f7cf48a1bc633275f957063442a1dd4fb6ff3d7bac3",
     "testdata/port/room/run-mutations-cli.json": "807e2d79468c1d8dc1ce77c4843a70ba314ef12e32ed3c92e423bcb74317c68a",

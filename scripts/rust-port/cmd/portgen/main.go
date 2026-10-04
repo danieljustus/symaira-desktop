@@ -60,6 +60,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/retention-state.json",
 	"testdata/port/room/run-projection.json",
 	"testdata/port/room/identity-events.json",
+	"testdata/port/room/outer-surrogate.json",
 	"testdata/port/room/run-cli.json",
 	"testdata/port/room/run-wait-cli.json",
 	"testdata/port/room/run-mutations-cli.json",

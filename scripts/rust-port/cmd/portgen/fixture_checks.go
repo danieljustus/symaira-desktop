@@ -26,6 +26,7 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"room outer surrogates", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomOuterSurrogateContract$"}, []string{"testdata/port/room/outer-surrogate.json"}, false},
 	{"configuration save", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigSaveContract$"}, []string{"testdata/port/config/config-save.json"}, false},
 	{"room identity events", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomIdentityEventContract$"}, []string{"testdata/port/room/identity-events.json"}, false},
 	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},

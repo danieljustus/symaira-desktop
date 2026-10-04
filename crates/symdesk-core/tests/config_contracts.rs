@@ -289,6 +289,27 @@ fn canonical_verbatim_config_path_supports_file_io() {
     let _ = fs::remove_dir_all(&root);
 }
 
+#[cfg(windows)]
+#[test]
+fn verbatim_global_paths_match_native_go_observations() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../testdata/port/config/windows-verbatim-paths.json"
+    ))
+    .expect("actual Windows Go capture");
+    let cases = capture["cases"].as_array().expect("captured cases");
+    assert_eq!(cases.len(), 9);
+    for case in cases {
+        let root = case["input"].as_str().expect("captured input");
+        let environment = BTreeMap::from([("XDG_CONFIG_HOME".to_owned(), root.to_owned())]);
+        assert_eq!(
+            config::global_path(&environment),
+            case["expected"],
+            "{}",
+            case["id"]
+        );
+    }
+}
+
 #[test]
 fn base_and_global_paths_match_go_contract() {
     for case in fixture().cases.paths {

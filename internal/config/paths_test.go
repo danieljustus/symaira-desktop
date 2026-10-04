@@ -9,6 +9,7 @@ import (
 
 func TestPaths_FreshInstallUnderXDG(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("USERPROFILE", os.Getenv("HOME"))
 	dataHome := t.TempDir()
 	configHome := t.TempDir()
 	cacheHome := t.TempDir()
@@ -72,6 +73,7 @@ func TestPaths_FreshInstallUnderXDG(t *testing.T) {
 func TestPaths_DefaultHomeFallback(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("XDG_DATA_HOME", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("XDG_CACHE_HOME", "")
@@ -93,6 +95,7 @@ func TestPaths_DefaultHomeFallback(t *testing.T) {
 func TestSidecarVaultDirDistinguishesTemporaryAndPersistentVaults(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("XDG_DATA_HOME", "")
 
 	volumeRoot := filepath.VolumeName(os.TempDir()) + string(filepath.Separator)
@@ -219,6 +222,7 @@ func TestPaths_LegacyRetrievalFallback(t *testing.T) {
 	home := t.TempDir()
 	dataHome := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("XDG_DATA_HOME", dataHome)
 
 	legacyDir := filepath.Join(home, ".local", "share", "symaira-seek")
@@ -271,6 +275,7 @@ func TestPaths_LegacyRetrievalFallback(t *testing.T) {
 
 func TestResolveStorePaths(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("USERPROFILE", os.Getenv("HOME"))
 	dataHome := t.TempDir()
 	configHome := t.TempDir()
 	cacheHome := t.TempDir()

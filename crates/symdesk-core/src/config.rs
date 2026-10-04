@@ -503,10 +503,61 @@ fn join(left: &str, right: &str) -> String {
     }
     #[cfg(windows)]
     if left.starts_with(r"\\?\") {
-        // `/` is not a separator within a Windows verbatim path.
-        return Path::new(left).join(right).to_string_lossy().into_owned();
+        return join_windows_verbatim(left, right);
     }
     format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
+}
+
+// Go 1.26 treats the first component after `\\?\` as the device volume,
+// including `UNC`, not Rust's indivisible UNC host/share prefix. Clean the
+// remaining rooted components without stripping the verbatim I/O prefix.
+#[cfg(any(windows, test))]
+fn join_windows_verbatim(left: &str, right: &str) -> String {
+    let joined = format!(r"{}\{}", left.trim_end_matches(['/', '\\']), right).replace('/', r"\");
+    let volume_end = joined[4..]
+        .find('\\')
+        .map_or(joined.len(), |index| index + 4);
+    let (volume, tail) = joined.split_at(volume_end);
+    if tail.is_empty() {
+        return joined;
+    }
+    let mut components = Vec::new();
+    for component in tail.split('\\') {
+        match component {
+            "" | "." => (),
+            ".." => {
+                components.pop();
+            }
+            _ => components.push(component),
+        }
+    }
+    format!(r"{}\{}", volume, components.join(r"\"))
+}
+
+#[cfg(test)]
+mod windows_verbatim_join_tests {
+    use super::join_windows_verbatim;
+
+    #[test]
+    fn captured_native_go_verbatim_paths_match_on_every_host() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../testdata/port/config/windows-verbatim-paths.json"
+        ))
+        .expect("actual native Windows Go capture");
+        assert_eq!(fixture["goos"], "windows");
+        assert_eq!(fixture["go_version"], "go1.26.6");
+        let cases = fixture["cases"].as_array().expect("captured cases");
+        assert_eq!(cases.len(), 9);
+        let mut ids = std::collections::BTreeSet::new();
+        for case in cases {
+            assert!(ids.insert(case["id"].as_str().expect("case ID")));
+            let base = case["input"].as_str().expect("captured input");
+            assert!(base.starts_with(r"\\?\"));
+            let actual =
+                join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
+            assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
+    }
 }
 
 #[cfg(test)]

@@ -574,7 +574,7 @@ mod windows_verbatim_join_tests {
         assert_eq!(fixture["goos"], "windows");
         assert_eq!(fixture["go_version"], "go1.26.6");
         let cases = fixture["cases"].as_array().expect("captured cases");
-        assert_eq!(cases.len(), 9);
+        assert_eq!(cases.len(), 11);
         let mut ids = std::collections::BTreeSet::new();
         for case in cases {
             assert!(ids.insert(case["id"].as_str().expect("case ID")));

@@ -297,7 +297,7 @@ fn verbatim_global_paths_match_native_go_observations() {
     ))
     .expect("actual Windows Go capture");
     let cases = capture["cases"].as_array().expect("captured cases");
-    assert_eq!(cases.len(), 9);
+    assert_eq!(cases.len(), 11);
     for case in cases {
         let root = case["input"].as_str().expect("captured input");
         let environment = BTreeMap::from([("XDG_CONFIG_HOME".to_owned(), root.to_owned())]);

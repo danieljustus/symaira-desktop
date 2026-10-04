@@ -21,5 +21,33 @@ import error's Go wrapper and OS text.
 This replay currently requires Go in the native test environment, consistent
 with the migration's live differential phase. The Go-free corpus work in
 #1153/#934 must replace that dependency with accepted immutable platform
-evidence before removing Go. This change does not promote dataset sync,
-malformed-UTF-8 parity, resource bounds, or migration acceptance.
+evidence before removing Go.
+
+## Raw CSV bytes
+
+`testdata/port/dataset/import.json` adds fourteen actual-Go cases to the original
+eight source-import cases. They cover malformed text, identity and header bytes,
+duplicate headers after Go rune folding, typed conversion failures, byte-column
+quote diagnostics, quoted CRLF, raw-byte hash lengths, a valid replacement-rune
+control, long binary YAML keys and natural YAML key ordering. Go generated these
+cases before the Rust repair. The old Rust importer failed the raw-byte cases
+at its whole-file UTF-8 conversion; the repaired importer executes all 22 cases.
+
+The shared CSV lexer preserves field bytes. The import-specific representation
+retains raw headers, labels, values and identities until each output boundary:
+hashes use original byte lengths and ordering, YAML uses Go's binary scalar
+encoding, and SQLite keys and identities remain TEXT with their original bytes.
+The replay reads SQLite TEXT bytes directly and compares base64 identities when
+the Go-owned state records malformed strings. It also compares every CSV and
+Markdown byte, file size/hash, import result and projected JSON string. JSON
+replaces each invalid byte separately; a literal valid U+FFFD remains distinct.
+
+Projection remains fallible. The existing nonfinite-number case still writes
+the raw CSV and Markdown handle before JSON projection fails, leaving the
+sidecar rows unchanged. Parser and typed conversion rejections write nothing.
+
+This is the `DatasetImport` helper scope. Production `DatasetSync`, native
+CLI/MCP exposure, storage/resource-bound decisions and migration acceptance
+remain separate. Dedicated current-revision native acceptance is required on
+both architectures of Linux, macOS and Windows before closing #1026; a local
+Linux pass or an older native run does not certify this repair.

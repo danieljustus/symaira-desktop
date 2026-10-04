@@ -7,7 +7,7 @@
     "goos": "linux",
     "goarch": "amd64"
   },
-  "generator_sha256": "0f05a2616f388ce1bb148ca2abef4e960707307b2af2f02eee19f27181170f7a",
+  "generator_sha256": "2345eddabd6a23a27f19b9ce2b91d36c5c97b7ea8b5b7c7a73f6a876c321502d",
   "source_sha256": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",
@@ -714,6 +714,1072 @@
           "label": "after-missing-identity-field-error-is-rejected-before-persistence-1",
           "vault": [],
           "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-text-bytes",
+      "inputs": [
+        {
+          "source_name": "raw-text-bytes.csv",
+          "csv": "",
+          "csv_base64": "aWQsdGV4dAphLP/iggo=",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-text-bytes",
+            "identity_field": "id",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-text-bytes-1",
+          "result": {
+            "handle_path": "datasets/raw-text-bytes.md",
+            "raw_path": "datasets/raw-text-bytes/2026-02-03.csv",
+            "slug": "raw-text-bytes",
+            "rows": 1,
+            "columns": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "text": {
+                "type": "text",
+                "label": "text"
+              }
+            },
+            "source_sha256": "f6863f7fd7ce61036dd843f568e33cf78a3231f5e52f428896e7bbbec88ca263",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-text-bytes-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-text-bytes",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-text-bytes.md",
+              "kind": "file",
+              "size": 594,
+              "sha256": "a7d67e68f9358ea7e3b0d088a774af2c9fc5b7d4ea8df0357c4d3315e5b2e50a",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-text-bytes\nidentity_field: id\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-text-bytes.csv\n    source_sha256: f6863f7fd7ce61036dd843f568e33cf78a3231f5e52f428896e7bbbec88ca263\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    text:\n        type: text\n        label: text\nsensitivity: restricted\nsource: datasets/raw-text-bytes/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-text-bytes/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-text-bytes/2026-02-03.csv",
+              "kind": "file",
+              "size": 14,
+              "sha256": "f6863f7fd7ce61036dd843f568e33cf78a3231f5e52f428896e7bbbec88ca263",
+              "content_base64": "aWQsdGV4dAphLP/iggo="
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-text-bytes",
+              "row_key": "identity:a",
+              "identity": "a",
+              "values_json": "{\"id\":\"a\",\"text\":\"\\ufffd\\ufffd\\ufffd\"}",
+              "source_path": "datasets/raw-text-bytes/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-text-bytes.md",
+            "slug": "raw-text-bytes",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-text-bytes/2026-02-03.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "text": {
+                "type": "text",
+                "label": "text"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-text-bytes.csv",
+              "source_sha256": "f6863f7fd7ce61036dd843f568e33cf78a3231f5e52f428896e7bbbec88ca263"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-identity-bytes",
+      "inputs": [
+        {
+          "source_name": "raw-identity-bytes.csv",
+          "csv": "",
+          "csv_base64": "aWQsdGV4dAr/LHBsYWluCg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-identity-bytes",
+            "identity_field": "id",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-identity-bytes-1",
+          "result": {
+            "handle_path": "datasets/raw-identity-bytes.md",
+            "raw_path": "datasets/raw-identity-bytes/2026-02-03.csv",
+            "slug": "raw-identity-bytes",
+            "rows": 1,
+            "columns": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "text": {
+                "type": "text",
+                "label": "text"
+              }
+            },
+            "source_sha256": "5f53a6f7cbea69369c78b1b152f3349fdbf813101e7add8ac665a652d295eaa5",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-identity-bytes-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-identity-bytes",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-identity-bytes.md",
+              "kind": "file",
+              "size": 610,
+              "sha256": "c6d168f1e5ddb23c2f57cb999d677f7e0c1e67bea3cba78fdc2c2263d5f8e56d",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-identity-bytes\nidentity_field: id\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-identity-bytes.csv\n    source_sha256: 5f53a6f7cbea69369c78b1b152f3349fdbf813101e7add8ac665a652d295eaa5\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    text:\n        type: text\n        label: text\nsensitivity: restricted\nsource: datasets/raw-identity-bytes/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-identity-bytes/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-identity-bytes/2026-02-03.csv",
+              "kind": "file",
+              "size": 16,
+              "sha256": "5f53a6f7cbea69369c78b1b152f3349fdbf813101e7add8ac665a652d295eaa5",
+              "content_base64": "aWQsdGV4dAr/LHBsYWluCg=="
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-identity-bytes",
+              "row_key": "identity:\ufffd",
+              "identity": "\ufffd",
+              "values_json": "{\"id\":\"\\ufffd\",\"text\":\"plain\"}",
+              "source_path": "datasets/raw-identity-bytes/2026-02-03.csv",
+              "row_number": 2,
+              "row_key_base64": "aWRlbnRpdHk6/w==",
+              "identity_base64": "/w=="
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-identity-bytes.md",
+            "slug": "raw-identity-bytes",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-identity-bytes/2026-02-03.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "text": {
+                "type": "text",
+                "label": "text"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-identity-bytes.csv",
+              "source_sha256": "5f53a6f7cbea69369c78b1b152f3349fdbf813101e7add8ac665a652d295eaa5"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-header-bytes",
+      "inputs": [
+        {
+          "source_name": "raw-header-bytes.csv",
+          "csv": "",
+          "csv_base64": "/yx0ZXh0CmEscGxhaW4K",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-header-bytes",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-header-bytes-1",
+          "result": {
+            "handle_path": "datasets/raw-header-bytes.md",
+            "raw_path": "datasets/raw-header-bytes/2026-02-03.csv",
+            "slug": "raw-header-bytes",
+            "rows": 1,
+            "columns": {
+              "text": {
+                "type": "text",
+                "label": "text"
+              },
+              "\ufffd": {
+                "type": "text",
+                "label": "\ufffd"
+              }
+            },
+            "source_sha256": "f30e8889303c338652091e8a0a3a5ef5c17cd40a96ce758b7df54ada2fb9fc51",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-header-bytes-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-bytes",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-bytes.md",
+              "kind": "file",
+              "size": 605,
+              "sha256": "bf8f35cd0d19d7c69f62064ef22d4d892a0f8e8373f33556592e6ef27339fa55",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-header-bytes\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-header-bytes.csv\n    source_sha256: f30e8889303c338652091e8a0a3a5ef5c17cd40a96ce758b7df54ada2fb9fc51\nretention_rule: default\nschema:\n    !!binary /w==:\n        type: text\n        label: !!binary /w==\n    text:\n        type: text\n        label: text\nsensitivity: restricted\nsource: datasets/raw-header-bytes/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-header-bytes/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-header-bytes/2026-02-03.csv",
+              "kind": "file",
+              "size": 15,
+              "sha256": "f30e8889303c338652091e8a0a3a5ef5c17cd40a96ce758b7df54ada2fb9fc51",
+              "content_base64": "/yx0ZXh0CmEscGxhaW4K"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-header-bytes",
+              "row_key": "hash:a50ea1c32da017ac431cf03d3aacc2621d81c807b98ebce738257b9103811dd0",
+              "identity": "",
+              "values_json": "{\"text\":\"plain\",\"\\ufffd\":\"a\"}",
+              "source_path": "datasets/raw-header-bytes/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-header-bytes.md",
+            "slug": "raw-header-bytes",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-header-bytes/2026-02-03.csv",
+            "schema": {
+              "text": {
+                "type": "text",
+                "label": "text"
+              },
+              "\ufffd": {
+                "type": "text",
+                "label": "\ufffd"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-header-bytes.csv",
+              "source_sha256": "f30e8889303c338652091e8a0a3a5ef5c17cd40a96ce758b7df54ada2fb9fc51"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-header-long-binary",
+      "inputs": [
+        {
+          "source_name": "raw-header-long-binary.csv",
+          "csv": "",
+          "csv_base64": "////////////////////////////////////////////////////////////////////////////////LHRleHQKYSxwbGFpbgo=",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-header-long-binary",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-header-long-binary-1",
+          "result": {
+            "handle_path": "datasets/raw-header-long-binary.md",
+            "raw_path": "datasets/raw-header-long-binary/2026-02-03.csv",
+            "slug": "raw-header-long-binary",
+            "rows": 1,
+            "columns": {
+              "text": {
+                "type": "text",
+                "label": "text"
+              },
+              "\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd": {
+                "type": "text",
+                "label": "\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd"
+              }
+            },
+            "source_sha256": "e53f6d7a0d187c6f5acfd1508419f21b6d301a7be7d51c3bbba4b7e376f723e6",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-header-long-binary-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-long-binary",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-long-binary.md",
+              "kind": "file",
+              "size": 828,
+              "sha256": "82467682bdd306ca2d3641945922bf37318c2cacc312d0ad9891dd0addedc9d0",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-header-long-binary\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-header-long-binary.csv\n    source_sha256: e53f6d7a0d187c6f5acfd1508419f21b6d301a7be7d51c3bbba4b7e376f723e6\nretention_rule: default\nschema:\n    ? !!binary |\n        //////////////////////////////////////////////////////////////////////\n        //////////\n    :   type: text\n        label: !!binary |\n            //////////////////////////////////////////////////////////////////////\n            //////////\n    text:\n        type: text\n        label: text\nsensitivity: restricted\nsource: datasets/raw-header-long-binary/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-header-long-binary/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-header-long-binary/2026-02-03.csv",
+              "kind": "file",
+              "size": 74,
+              "sha256": "e53f6d7a0d187c6f5acfd1508419f21b6d301a7be7d51c3bbba4b7e376f723e6",
+              "content_base64": "////////////////////////////////////////////////////////////////////////////////LHRleHQKYSxwbGFpbgo="
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-header-long-binary",
+              "row_key": "hash:b1dacf26c1a058b757f0ccdeb1e648a27602cda636ddb555b853e76305b0871a",
+              "identity": "",
+              "values_json": "{\"text\":\"plain\",\"\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\\ufffd\":\"a\"}",
+              "source_path": "datasets/raw-header-long-binary/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-header-long-binary.md",
+            "slug": "raw-header-long-binary",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-header-long-binary/2026-02-03.csv",
+            "schema": {
+              "text": {
+                "type": "text",
+                "label": "text"
+              },
+              "\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd": {
+                "type": "text",
+                "label": "\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-header-long-binary.csv",
+              "source_sha256": "e53f6d7a0d187c6f5acfd1508419f21b6d301a7be7d51c3bbba4b7e376f723e6"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-header-natural-order",
+      "inputs": [
+        {
+          "source_name": "raw-header-natural-order.csv",
+          "csv": "",
+          "csv_base64": "/yxhMTAsYTIKeCx0ZW4sdHdvCg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-header-natural-order",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-header-natural-order-1",
+          "result": {
+            "handle_path": "datasets/raw-header-natural-order.md",
+            "raw_path": "datasets/raw-header-natural-order/2026-02-03.csv",
+            "slug": "raw-header-natural-order",
+            "rows": 1,
+            "columns": {
+              "a10": {
+                "type": "text",
+                "label": "a10"
+              },
+              "a2": {
+                "type": "text",
+                "label": "a2"
+              },
+              "\ufffd": {
+                "type": "text",
+                "label": "\ufffd"
+              }
+            },
+            "source_sha256": "623ab0afeb4c05e106267dc2f312a029d0eb4f073e36e84f17a6259e9e9fe263",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-header-natural-order-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-natural-order",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-header-natural-order.md",
+              "kind": "file",
+              "size": 680,
+              "sha256": "d31f4418be864496178ffd3f0261738df9f765bad0230fda3cbbcab6eb1e3282",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-header-natural-order\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-header-natural-order.csv\n    source_sha256: 623ab0afeb4c05e106267dc2f312a029d0eb4f073e36e84f17a6259e9e9fe263\nretention_rule: default\nschema:\n    !!binary /w==:\n        type: text\n        label: !!binary /w==\n    a2:\n        type: text\n        label: a2\n    a10:\n        type: text\n        label: a10\nsensitivity: restricted\nsource: datasets/raw-header-natural-order/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-header-natural-order/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-header-natural-order/2026-02-03.csv",
+              "kind": "file",
+              "size": 19,
+              "sha256": "623ab0afeb4c05e106267dc2f312a029d0eb4f073e36e84f17a6259e9e9fe263",
+              "content_base64": "/yxhMTAsYTIKeCx0ZW4sdHdvCg=="
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-header-natural-order",
+              "row_key": "hash:ee112fa816f24e8b3ad4770cb25c59061832c2a59f1b2d7efa31cf831aa700f2",
+              "identity": "",
+              "values_json": "{\"a10\":\"ten\",\"a2\":\"two\",\"\\ufffd\":\"x\"}",
+              "source_path": "datasets/raw-header-natural-order/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-header-natural-order.md",
+            "slug": "raw-header-natural-order",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-header-natural-order/2026-02-03.csv",
+            "schema": {
+              "a10": {
+                "type": "text",
+                "label": "a10"
+              },
+              "a2": {
+                "type": "text",
+                "label": "a2"
+              },
+              "\ufffd": {
+                "type": "text",
+                "label": "\ufffd"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-header-natural-order.csv",
+              "source_sha256": "623ab0afeb4c05e106267dc2f312a029d0eb4f073e36e84f17a6259e9e9fe263"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-header-folded-duplicate",
+      "inputs": [
+        {
+          "source_name": "raw-header-folded-duplicate.csv",
+          "csv": "",
+          "csv_base64": "/yz+CmEsYgo=",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-header-folded-duplicate",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-header-folded-duplicate-1",
+          "error": "csv has duplicate column \"\\xfe\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-header-folded-duplicate-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-header-and-literal-replacement-duplicate",
+      "inputs": [
+        {
+          "source_name": "raw-header-and-literal-replacement-duplicate.csv",
+          "csv": "",
+          "csv_base64": "/yzvv70KYSxiCg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-header-and-literal-replacement-duplicate",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-header-and-literal-replacement-duplicate-1",
+          "error": "csv has duplicate column \"�\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-header-and-literal-replacement-duplicate-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-invalid-number",
+      "inputs": [
+        {
+          "source_name": "raw-invalid-number.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUK4oIK",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-invalid-number",
+            "identity_field": "",
+            "schema": {
+              "value": {
+                "type": "number"
+              }
+            },
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-invalid-number-1",
+          "error": "row 2 column \"value\": invalid number \"\\xe2\\x82\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-invalid-number-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-invalid-boolean",
+      "inputs": [
+        {
+          "source_name": "raw-invalid-boolean.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUK4oIK",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-invalid-boolean",
+            "identity_field": "",
+            "schema": {
+              "value": {
+                "type": "checkbox"
+              }
+            },
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-invalid-boolean-1",
+          "error": "row 2 column \"value\": invalid boolean \"\\xe2\\x82\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-invalid-boolean-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-invalid-date",
+      "inputs": [
+        {
+          "source_name": "raw-invalid-date.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUKMjAyNi0wMS3/Cg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-invalid-date",
+            "identity_field": "",
+            "schema": {
+              "value": {
+                "type": "date"
+              }
+            },
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-invalid-date-1",
+          "error": "row 2 column \"value\": invalid date \"2026-01-\\xff\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-invalid-date-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-bare-quote-byte-column",
+      "inputs": [
+        {
+          "source_name": "raw-bare-quote-byte-column.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUKeP8iCg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-bare-quote-byte-column",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-bare-quote-byte-column-1",
+          "error": "read csv: parse error on line 2, column 3: bare \" in non-quoted-field"
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-bare-quote-byte-column-1",
+          "vault": [],
+          "rows": []
+        }
+      ]
+    },
+    {
+      "id": "raw-quoted-multiline-text",
+      "inputs": [
+        {
+          "source_name": "raw-quoted-multiline-text.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUKIv8NCuKCIgo=",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-quoted-multiline-text",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-quoted-multiline-text-1",
+          "result": {
+            "handle_path": "datasets/raw-quoted-multiline-text.md",
+            "raw_path": "datasets/raw-quoted-multiline-text/2026-02-03.csv",
+            "slug": "raw-quoted-multiline-text",
+            "rows": 1,
+            "columns": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "source_sha256": "e090a2607570ebd6ea3b8027ed5cc93e2b25611f64a4e725f2fa61ebb4491b4f",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-quoted-multiline-text-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-quoted-multiline-text",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-quoted-multiline-text.md",
+              "kind": "file",
+              "size": 576,
+              "sha256": "5fd2dbfc99f8da45f64ed54190271a1d9adb03ce64aa536d0dcaefa8185bcc96",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-quoted-multiline-text\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-quoted-multiline-text.csv\n    source_sha256: e090a2607570ebd6ea3b8027ed5cc93e2b25611f64a4e725f2fa61ebb4491b4f\nretention_rule: default\nschema:\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/raw-quoted-multiline-text/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-quoted-multiline-text/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-quoted-multiline-text/2026-02-03.csv",
+              "kind": "file",
+              "size": 14,
+              "sha256": "e090a2607570ebd6ea3b8027ed5cc93e2b25611f64a4e725f2fa61ebb4491b4f",
+              "content_base64": "dmFsdWUKIv8NCuKCIgo="
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-quoted-multiline-text",
+              "row_key": "hash:2730cb882c19a0b7a9fb6e04803ea1b31ee6d482443c47660af1a248d5736d21",
+              "identity": "",
+              "values_json": "{\"value\":\"\\ufffd\\n\\ufffd\\ufffd\"}",
+              "source_path": "datasets/raw-quoted-multiline-text/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-quoted-multiline-text.md",
+            "slug": "raw-quoted-multiline-text",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-quoted-multiline-text/2026-02-03.csv",
+            "schema": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-quoted-multiline-text.csv",
+              "source_sha256": "e090a2607570ebd6ea3b8027ed5cc93e2b25611f64a4e725f2fa61ebb4491b4f"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-hash-preserves-byte-length",
+      "inputs": [
+        {
+          "source_name": "raw-hash-preserves-byte-length.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUK4oIK",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "raw-hash-preserves-byte-length",
+            "identity_field": "",
+            "schema": null,
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "raw-hash-preserves-byte-length-1",
+          "result": {
+            "handle_path": "datasets/raw-hash-preserves-byte-length.md",
+            "raw_path": "datasets/raw-hash-preserves-byte-length/2026-02-03.csv",
+            "slug": "raw-hash-preserves-byte-length",
+            "rows": 1,
+            "columns": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "source_sha256": "c44ac04394f3fc1a0786302a9d391cb97f5fdf574d25be2d53080cb48356ff7a",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-raw-hash-preserves-byte-length-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-hash-preserves-byte-length",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/raw-hash-preserves-byte-length.md",
+              "kind": "file",
+              "size": 596,
+              "sha256": "6fbbdfc1d90657bc9d9ffc4c5243268715fd6a88162a22935bdc0d63b7c7b1ba",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: raw-hash-preserves-byte-length\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: raw-hash-preserves-byte-length.csv\n    source_sha256: c44ac04394f3fc1a0786302a9d391cb97f5fdf574d25be2d53080cb48356ff7a\nretention_rule: default\nschema:\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/raw-hash-preserves-byte-length/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/raw-hash-preserves-byte-length/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/raw-hash-preserves-byte-length/2026-02-03.csv",
+              "kind": "file",
+              "size": 9,
+              "sha256": "c44ac04394f3fc1a0786302a9d391cb97f5fdf574d25be2d53080cb48356ff7a",
+              "content_base64": "dmFsdWUK4oIK"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "raw-hash-preserves-byte-length",
+              "row_key": "hash:30cf8e97a892dfc822bba44f9c12d352138bd5b99b1cf3deaaab918823b579fc",
+              "identity": "",
+              "values_json": "{\"value\":\"\\ufffd\\ufffd\"}",
+              "source_path": "datasets/raw-hash-preserves-byte-length/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/raw-hash-preserves-byte-length.md",
+            "slug": "raw-hash-preserves-byte-length",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/raw-hash-preserves-byte-length/2026-02-03.csv",
+            "schema": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "raw-hash-preserves-byte-length.csv",
+              "source_sha256": "c44ac04394f3fc1a0786302a9d391cb97f5fdf574d25be2d53080cb48356ff7a"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "literal-replacement-json-control",
+      "inputs": [
+        {
+          "source_name": "literal-replacement-json-control.csv",
+          "csv": "",
+          "csv_base64": "dmFsdWUK77+9Cg==",
+          "options": {
+            "title": "Raw byte oracle",
+            "slug": "literal-replacement-json-control",
+            "identity_field": "",
+            "schema": {
+              "value": {
+                "type": "text"
+              }
+            },
+            "refresh_command": "",
+            "sensitivity": "restricted",
+            "retention_rule": "default",
+            "now": "2026-02-03T04:05:06Z"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "label": "literal-replacement-json-control-1",
+          "result": {
+            "handle_path": "datasets/literal-replacement-json-control.md",
+            "raw_path": "datasets/literal-replacement-json-control/2026-02-03.csv",
+            "slug": "literal-replacement-json-control",
+            "rows": 1,
+            "columns": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "source_sha256": "51728699ea1a7caa5b0ef19b345ba7b2b371dc5f8529a20ecb8cbdd79ee87b1e",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-literal-replacement-json-control-1",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/literal-replacement-json-control",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/literal-replacement-json-control.md",
+              "kind": "file",
+              "size": 604,
+              "sha256": "4afc46d21803346c07e8f8c3771afea3154e4e786eb1f8c5c15a79be27d2bf40",
+              "content": "---\ncoverage: {}\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: literal-replacement-json-control\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: literal-replacement-json-control.csv\n    source_sha256: 51728699ea1a7caa5b0ef19b345ba7b2b371dc5f8529a20ecb8cbdd79ee87b1e\nretention_rule: default\nschema:\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/literal-replacement-json-control/2026-02-03.csv\ntags:\n    - dataset\ntitle: Raw byte oracle\ntype: dataset\n---\n\n# Raw byte oracle\n\nSource: `datasets/literal-replacement-json-control/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/literal-replacement-json-control/2026-02-03.csv",
+              "kind": "file",
+              "size": 10,
+              "sha256": "51728699ea1a7caa5b0ef19b345ba7b2b371dc5f8529a20ecb8cbdd79ee87b1e",
+              "content": "value\n�\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "literal-replacement-json-control",
+              "row_key": "hash:8ef42acbe865849db31bd76dd6a413103042dc1ce79da9bf7178f513c3504aed",
+              "identity": "",
+              "values_json": "{\"value\":\"�\"}",
+              "source_path": "datasets/literal-replacement-json-control/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/literal-replacement-json-control.md",
+            "slug": "literal-replacement-json-control",
+            "title": "Raw byte oracle",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/literal-replacement-json-control/2026-02-03.csv",
+            "schema": {
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "literal-replacement-json-control.csv",
+              "source_sha256": "51728699ea1a7caa5b0ef19b345ba7b2b371dc5f8529a20ecb8cbdd79ee87b1e"
+            },
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
         }
       ]
     }

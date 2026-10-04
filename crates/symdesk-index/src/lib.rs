@@ -599,6 +599,29 @@ impl Sidecar {
         dataset_slug: &str,
         rows: &[DatasetRow],
     ) -> Result<(), SidecarError> {
+        let rows = rows
+            .iter()
+            .map(|row| symdesk_vault::dataset::bytes::SidecarRow {
+                dataset_slug: row.dataset_slug.clone(),
+                row_key: row.row_key.as_bytes().to_vec(),
+                identity: row.identity.as_bytes().to_vec(),
+                values_json: row.values_json.clone(),
+                source_path: row.source_path.clone(),
+                row_number: row.row_number,
+            })
+            .collect::<Vec<_>>();
+        self.replace_dataset_rows_bytes(dataset_slug, &rows)
+    }
+
+    /// Replaces derived import rows, preserving Go string bytes as SQLite TEXT.
+    ///
+    /// # Errors
+    /// Returns validation or SQLite errors and rolls back the transaction.
+    pub fn replace_dataset_rows_bytes(
+        &mut self,
+        dataset_slug: &str,
+        rows: &[symdesk_vault::dataset::bytes::SidecarRow],
+    ) -> Result<(), SidecarError> {
         if self.closed {
             return Err(SidecarError::Closed);
         }
@@ -626,7 +649,7 @@ impl Sidecar {
             if serde_json::from_str::<serde_json::Value>(&row.values_json).is_err() {
                 return Err(SidecarError::Contract(format!(
                     "dataset row {:?} has invalid values JSON",
-                    row.row_key
+                    symdesk_vault::dataset::bytes::text(&row.row_key)
                 )));
             }
             let row_number = i64::try_from(row.row_number).map_err(|_| {
@@ -636,8 +659,8 @@ impl Sidecar {
                 "INSERT INTO dataset_rows(dataset_slug,row_key,identity,values_json,source_path,row_number) VALUES (?,?,?,?,?,?)",
                 params![
                     row_slug,
-                    row.row_key,
-                    (!row.identity.is_empty()).then_some(row.identity.as_str()),
+                    rusqlite::types::ToSqlOutput::Borrowed(rusqlite::types::ValueRef::Text(&row.row_key)),
+                    (!row.identity.is_empty()).then_some(rusqlite::types::ToSqlOutput::Borrowed(rusqlite::types::ValueRef::Text(&row.identity))),
                     row.values_json,
                     row.source_path,
                     row_number
@@ -668,6 +691,56 @@ impl Sidecar {
                 values_json: row.get(3)?,
                 source_path: row.get(4)?,
                 row_number: usize::try_from(row_number).map_err(|error| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        5,
+                        rusqlite::types::Type::Integer,
+                        Box::new(error),
+                    )
+                })?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Reads raw import keys and identities without lossy decoding or BLOB casts.
+    ///
+    /// # Errors
+    /// Returns the closed-database diagnostic or SQLite query/type errors.
+    pub fn dataset_rows_bytes(
+        &self,
+        dataset_slug: &str,
+    ) -> Result<Vec<symdesk_vault::dataset::bytes::SidecarRow>, SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        let mut statement = self.connection.prepare("SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key")?;
+        let rows = statement.query_map([dataset_slug], |row| {
+            let number: i64 = row.get(5)?;
+            Ok(symdesk_vault::dataset::bytes::SidecarRow {
+                dataset_slug: row.get(0)?,
+                row_key: match row.get_ref(1)? {
+                    rusqlite::types::ValueRef::Text(bytes) => bytes.to_vec(),
+                    other => {
+                        return Err(rusqlite::Error::InvalidColumnType(
+                            1,
+                            "row_key".to_owned(),
+                            other.data_type(),
+                        ));
+                    }
+                },
+                identity: match row.get_ref(2)? {
+                    rusqlite::types::ValueRef::Text(bytes) => bytes.to_vec(),
+                    other => {
+                        return Err(rusqlite::Error::InvalidColumnType(
+                            2,
+                            "identity".to_owned(),
+                            other.data_type(),
+                        ));
+                    }
+                },
+                values_json: row.get(3)?,
+                source_path: row.get(4)?,
+                row_number: usize::try_from(number).map_err(|error| {
                     rusqlite::Error::FromSqlConversionFailure(
                         5,
                         rusqlite::types::Type::Integer,

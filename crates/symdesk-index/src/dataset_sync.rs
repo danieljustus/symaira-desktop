@@ -169,32 +169,10 @@ impl<'a> DatasetSyncService<'a> {
         }
         let bytes = fs::read(source)
             .map_err(|error| DatasetSyncError::Contract(format!("read dataset source: {error}")))?;
-        let text = String::from_utf8(bytes.clone())
-            .map_err(|error| DatasetSyncError::Contract(format!("read csv: {error}")))?;
-        let declared = options
-            .schema
-            .iter()
-            .map(|(column, property)| {
-                (
-                    column.clone(),
-                    dataset::PropertyConfig {
-                        label: property.label.clone(),
-                        kind: property.r#type.clone(),
-                    },
-                )
-            })
-            .collect();
+        let declared = dataset::bytes::declared(&options.schema);
         let (rows, inferred) =
-            dataset::parse_csv(&text, &declared, options.identity_field.as_str())?;
-        let schema = inferred
-            .iter()
-            .map(|(column, parsed)| {
-                let mut property = options.schema.get(column).cloned().unwrap_or_default();
-                property.r#type.clone_from(&parsed.kind);
-                property.label.clone_from(&parsed.label);
-                (column.clone(), property)
-            })
-            .collect::<BTreeMap<_, _>>();
+            dataset::bytes::parse_csv(&bytes, &declared, options.identity_field.as_str())?;
+        let schema = dataset::bytes::projected_schema(&inferred);
         let now = options.now.unwrap_or_else(OffsetDateTime::now_utc);
         let source_name = source
             .file_name()
@@ -240,7 +218,7 @@ impl<'a> DatasetSyncService<'a> {
             created,
             source: raw_path.clone(),
             schema,
-            coverage: coverage_for_rows(&rows, &inferred),
+            coverage: dataset::bytes::coverage(&rows, &inferred),
             provenance: Provenance {
                 imported_at: format_rfc3339(now),
                 source_name: source_name.to_owned(),
@@ -251,7 +229,7 @@ impl<'a> DatasetSyncService<'a> {
             sensitivity: sensitivity.clone(),
             retention_rule: retention_rule.clone(),
         };
-        let handle_bytes = dataset::render_handle(&handle)?;
+        let handle_bytes = dataset::render_handle_bytes(&handle, &inferred)?;
         create_dir_all_0755(&root, Path::new(RAW_DIR)).map_err(|error| {
             DatasetSyncError::Contract(format!("create dataset handle directory: {error}"))
         })?;
@@ -260,14 +238,14 @@ impl<'a> DatasetSyncService<'a> {
             DatasetSyncError::Contract(format!("write dataset handle: {error}"))
         })?;
 
-        let materialized = read_raw_files(&root, &slug, &handle.schema, &handle.identity_field)
+        let materialized = read_raw_files_bytes(&root, &slug, &inferred, &handle.identity_field)
             .map_err(|error| {
                 DatasetSyncError::Contract(format!("rebuild dataset rows: {error}"))
             })?;
-        let projected = dataset::project_rows(&slug, &materialized, "")
+        let projected = dataset::bytes::project_rows(&slug, &materialized)
             .map_err(|error| DatasetSyncError::Contract(format!("store dataset rows: {error}")))?;
         sidecar
-            .replace_dataset_rows(&slug, &projected)
+            .replace_dataset_rows_bytes(&slug, &projected)
             .map_err(|error| DatasetSyncError::Contract(format!("store dataset rows: {error}")))?;
         let document = parse_bytes(&handle_path, &handle_bytes).map_err(|error| {
             DatasetSyncError::Contract(format!("parse dataset handle: {error}"))
@@ -448,37 +426,6 @@ fn format_rfc3339(value: OffsetDateTime) -> String {
     value
         .format(&Rfc3339)
         .expect("valid timestamp formats as RFC3339")
-}
-
-fn coverage_for_rows(
-    rows: &[dataset::Row],
-    schema: &BTreeMap<String, dataset::PropertyConfig>,
-) -> Coverage {
-    let mut date_columns = schema
-        .iter()
-        .filter(|(_, property)| property.kind == "date")
-        .map(|(column, _)| column.as_str())
-        .collect::<Vec<_>>();
-    date_columns.sort_unstable();
-    let mut dates = rows
-        .iter()
-        .filter_map(|row| {
-            date_columns
-                .iter()
-                .find_map(|column| match row.values.get(*column) {
-                    Some(dataset::GoValue::Text(value)) if !value.is_empty() => Some(value.clone()),
-                    _ => None,
-                })
-        })
-        .collect::<Vec<_>>();
-    dates.sort();
-    match (dates.first(), dates.last()) {
-        (Some(from), Some(to)) => Coverage {
-            from: from.clone(),
-            to: to.clone(),
-        },
-        _ => Coverage::default(),
-    }
 }
 
 fn parse_imported_at(value: &str) -> Result<String, DatasetSyncError> {
@@ -962,16 +909,14 @@ fn read_handle(root: &Dir, relative: &str) -> Result<DatasetHandle, DatasetSyncE
         .map_err(|error| DatasetSyncError::Contract(error.to_string()))
 }
 
-fn read_raw_files(
+fn raw_csv_directory(
     root: &Dir,
     slug: &str,
-    schema: &BTreeMap<String, PropertyConfig>,
-    identity_field: &str,
-) -> Result<Vec<dataset::Row>, DatasetSyncError> {
+) -> Result<Option<(Dir, Vec<String>)>, DatasetSyncError> {
     let directory_path = PathBuf::from(RAW_DIR).join(slug);
     let directory = match root.open_dir(&directory_path) {
         Ok(directory) => directory,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(error.into()),
     };
     let mut names = Vec::new();
@@ -992,6 +937,41 @@ fn read_raw_files(
         }
     }
     names.sort();
+    Ok(Some((directory, names)))
+}
+
+fn read_raw_files_bytes(
+    root: &Dir,
+    slug: &str,
+    schema: &dataset::bytes::Schema,
+    identity_field: &str,
+) -> Result<Vec<dataset::bytes::Row>, DatasetSyncError> {
+    let mut all = Vec::new();
+    let Some((directory, names)) = raw_csv_directory(root, slug)? else {
+        return Ok(all);
+    };
+    for name in names {
+        let bytes = read_regular_file(&directory, &name)?;
+        let (mut rows, _) = dataset::bytes::parse_csv(&bytes, schema, identity_field)
+            .map_err(|error| DatasetSyncError::Contract(format!("parse {name}: {error}")))?;
+        let source_path = format!("{RAW_DIR}/{slug}/{name}");
+        for row in &mut rows {
+            row.source_path.clone_from(&source_path);
+        }
+        all.extend(rows);
+    }
+    Ok(all)
+}
+
+fn read_raw_files(
+    root: &Dir,
+    slug: &str,
+    schema: &BTreeMap<String, PropertyConfig>,
+    identity_field: &str,
+) -> Result<Vec<dataset::Row>, DatasetSyncError> {
+    let Some((directory, names)) = raw_csv_directory(root, slug)? else {
+        return Ok(Vec::new());
+    };
     let declared = schema
         .iter()
         .map(|(column, property)| {

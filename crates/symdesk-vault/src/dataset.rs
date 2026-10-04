@@ -23,6 +23,9 @@ use time::{
 
 use crate::go_string::{lowercase as go_lowercase, quote as go_quote, rejects_case_edge};
 
+#[path = "dataset_bytes.rs"]
+pub mod bytes;
+
 const DATE_TIME_SECONDS: &[time::format_description::FormatItem<'static>] =
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
 const DATE_TIME_MINUTES: &[time::format_description::FormatItem<'static>] =
@@ -133,7 +136,25 @@ pub enum GoValue {
 
 /// Reads CSV with Go's default `encoding/csv.Reader` behavior.
 pub fn read_all_csv(input: &str) -> Result<Vec<Vec<String>>, DatasetError> {
-    let mut reader = CsvLineReader::new(input.as_bytes());
+    read_all_csv_bytes(input.as_bytes()).map(|records| {
+        records
+            .into_iter()
+            .map(|record| {
+                record
+                    .into_iter()
+                    .map(|field| String::from_utf8(field).expect("a UTF-8 CSV has UTF-8 fields"))
+                    .collect()
+            })
+            .collect()
+    })
+}
+
+/// The original bytes of every field in one CSV record.
+pub type CsvRecord = Vec<Vec<u8>>;
+
+/// Reads Go CSV fields without changing their original bytes.
+pub fn read_all_csv_bytes(input: &[u8]) -> Result<Vec<CsvRecord>, DatasetError> {
+    let mut reader = CsvLineReader::new(input);
     let mut records = Vec::new();
     let mut fields_per_record = None;
     while let Some((record_line, record)) = read_csv_record(&mut reader)? {
@@ -193,7 +214,7 @@ impl<'a> CsvLineReader<'a> {
 
 fn read_csv_record(
     reader: &mut CsvLineReader<'_>,
-) -> Result<Option<(usize, Vec<String>)>, DatasetError> {
+) -> Result<Option<(usize, CsvRecord)>, DatasetError> {
     let mut line = loop {
         let Some(line) = reader.read_line() else {
             return Ok(None);
@@ -224,11 +245,7 @@ fn read_csv_record(
                     "bare \" in non-quoted-field",
                 ));
             }
-            fields.push(
-                std::str::from_utf8(field)
-                    .expect("CSV input is valid UTF-8")
-                    .to_owned(),
-            );
+            fields.push(field.to_vec());
             if let Some(comma) = comma {
                 offset += comma + 1;
                 position_column += comma + 1;
@@ -256,11 +273,11 @@ fn read_csv_record(
                     Some(b',') => {
                         offset += 1;
                         position_column += 1;
-                        fields.push(String::from_utf8(field).expect("CSV input is valid UTF-8"));
+                        fields.push(field);
                         break;
                     }
                     _ if after_quote.len() == csv_newline_len(after_quote) => {
-                        fields.push(String::from_utf8(field).expect("CSV input is valid UTF-8"));
+                        fields.push(field);
                         return Ok(Some((record_line, fields)));
                     }
                     _ => {
@@ -945,6 +962,14 @@ pub fn normalize_policy(
 /// # Errors
 /// Returns a validation or YAML-scalar rendering error.
 pub fn render_handle(handle: &crate::DatasetHandle) -> Result<Vec<u8>, DatasetError> {
+    render_handle_bytes(handle, &bytes::declared(&handle.schema))
+}
+
+/// Renders an import handle while retaining binary CSV column names and labels.
+pub fn render_handle_bytes(
+    handle: &crate::DatasetHandle,
+    schema: &bytes::Schema,
+) -> Result<Vec<u8>, DatasetError> {
     if handle.title.is_empty() || handle.slug.is_empty() || handle.source.is_empty() {
         return Err(DatasetError::HandleRender(
             "dataset handle requires title, slug, and source".to_owned(),
@@ -1031,17 +1056,30 @@ pub fn render_handle(handle: &crate::DatasetHandle) -> Result<Vec<u8>, DatasetEr
         push_scalar(&mut lines, 0, "refresh_command", &handle.refresh_command)?;
     }
     push_scalar(&mut lines, 0, "retention_rule", &handle.retention_rule)?;
-    if handle.schema.is_empty() {
+    if schema.is_empty() {
         lines.push("schema: {}".to_owned());
     } else {
         lines.push("schema:".to_owned());
-        for (column, property) in &handle.schema {
-            lines.push(format!("    {}:", key(column, 4)?));
+        let mut columns = schema.iter().collect::<Vec<_>>();
+        columns.sort_by(|(left, _), (right, _)| bytes::yaml_key_order(left, right));
+        for (column, raw_property) in columns {
+            let property = &raw_property.config;
+            let rendered_key = bytes::yaml_scalar(column, 8, true)?;
+            let complex_key = std::str::from_utf8(column).is_err() && rendered_key.contains('\n');
+            if complex_key {
+                lines.push(format!("    ? {rendered_key}"));
+            } else {
+                lines.push(format!("    {rendered_key}:"));
+            }
+            let first_value = lines.len();
             if !property.r#type.is_empty() {
                 push_scalar(&mut lines, 8, "type", &property.r#type)?;
             }
-            if !property.label.is_empty() {
-                push_scalar(&mut lines, 8, "label", &property.label)?;
+            if !raw_property.label.is_empty() {
+                lines.push(format!(
+                    "        label: {}",
+                    bytes::yaml_scalar(&raw_property.label, 12, false)?
+                ));
             }
             if !property.options.is_empty() {
                 lines.push("        options:".to_owned());
@@ -1054,6 +1092,18 @@ pub fn render_handle(handle: &crate::DatasetHandle) -> Result<Vec<u8>, DatasetEr
             }
             if !property.default.is_empty() {
                 push_scalar(&mut lines, 8, "default", &property.default)?;
+            }
+            if complex_key {
+                if let Some(value) = lines.get_mut(first_value) {
+                    *value = format!(
+                        "    :   {}",
+                        value
+                            .strip_prefix("        ")
+                            .expect("schema property indentation")
+                    );
+                } else {
+                    lines.push("    : {}".to_owned());
+                }
             }
         }
     }

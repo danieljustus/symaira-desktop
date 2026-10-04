@@ -31,6 +31,7 @@ mod metadata;
 mod retrieval;
 mod retrieval_config;
 mod retrieval_markdown;
+pub mod retrieval_quant_sidecar;
 mod search_plan;
 
 pub use backup::{backup_database, relocate_database, restore_database};

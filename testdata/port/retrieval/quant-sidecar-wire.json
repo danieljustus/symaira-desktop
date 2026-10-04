@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "go_version": "go1.26.6",
+    "corekit_module": "github.com/danieljustus/symaira-corekit/v0.17.0",
+    "corekit_sum": "h1:pDtkMy0Pel1PWglNupMiLYpxo0WxUQ3CkjlR2LaUAZ4=",
+    "scope": "Only wire framing and opaque payload are asserted; generation invokes production Go EncodeSidecar. NaN/infinity interpretation, decoded-vector accuracy, rotation/RNG parity, scoring, and performance are outside this bounded port."
+  },
+  "cases": [
+    {
+      "id": "encode_bw2_dim5",
+      "operation": "encode_sidecar_then_unpack",
+      "blob_hex": "425540bf4255403fb874",
+      "blob_len": 10,
+      "min_f32_bits": 3208664386,
+      "max_f32_bits": 1061180738,
+      "min_f64_bits": 13828314373585633280,
+      "max_f64_bits": 4604942336730857472,
+      "packed_hex": "b874",
+      "packed_len": 2,
+      "codec": {
+        "dimension": 5,
+        "bit_width": 2,
+        "seed": 17,
+        "block_size": 0,
+        "vector_f32_bits": [
+          0,
+          2147483648,
+          1065353216,
+          3212836864,
+          1040187392
+        ]
+      }
+    },
+    {
+      "id": "encode_bw3_dim5",
+      "operation": "encode_sidecar_then_unpack",
+      "blob_hex": "acacdbc00330f440d8877d",
+      "blob_len": 11,
+      "min_f32_bits": 3235622060,
+      "max_f32_bits": 1089744899,
+      "min_f64_bits": 13842787164611411968,
+      "max_f64_bits": 4620277603897442304,
+      "packed_hex": "d8877d",
+      "packed_len": 3,
+      "codec": {
+        "dimension": 5,
+        "bit_width": 3,
+        "seed": 81,
+        "block_size": 0,
+        "vector_f32_bits": [
+          1051372203,
+          3208642560,
+          1092616192,
+          3240099840,
+          1056964608
+        ]
+      }
+    },
+    {
+      "id": "encode_bw4_dim4",
+      "operation": "encode_sidecar_then_unpack",
+      "blob_hex": "000008c00000f03f70f7",
+      "blob_len": 10,
+      "min_f32_bits": 3221749760,
+      "max_f32_bits": 1072693248,
+      "min_f64_bits": 13835339530258874368,
+      "max_f64_bits": 4611123068473966592,
+      "packed_hex": "70f7",
+      "packed_len": 2,
+      "codec": {
+        "dimension": 4,
+        "bit_width": 4,
+        "seed": 99,
+        "block_size": 2,
+        "vector_f32_bits": [
+          1056964608,
+          1073741824,
+          3221225472,
+          1048576000
+        ]
+      }
+    },
+    {
+      "id": "encode_bw25_dim3",
+      "operation": "encode_sidecar_then_unpack",
+      "blob_hex": "0000403e0000503ff300",
+      "blob_len": 10,
+      "min_f32_bits": 1044381696,
+      "max_f32_bits": 1062207488,
+      "min_f64_bits": 4595923419731591168,
+      "max_f64_bits": 4605493568939753472,
+      "packed_hex": "f300",
+      "packed_len": 2,
+      "codec": {
+        "dimension": 3,
+        "bit_width": 25,
+        "seed": -5,
+        "block_size": 0,
+        "vector_f32_bits": [
+          1065353216,
+          3204448256,
+          1040187392
+        ]
+      }
+    },
+    {
+      "id": "unpack_short_0",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "",
+      "blob_len": 0,
+      "error": "turboquant: code bytes too short: blob 0 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_1",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "00",
+      "blob_len": 1,
+      "error": "turboquant: code bytes too short: blob 1 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_2",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "0000",
+      "blob_len": 2,
+      "error": "turboquant: code bytes too short: blob 2 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_3",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "000000",
+      "blob_len": 3,
+      "error": "turboquant: code bytes too short: blob 3 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_4",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "00000000",
+      "blob_len": 4,
+      "error": "turboquant: code bytes too short: blob 4 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_5",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "0000000000",
+      "blob_len": 5,
+      "error": "turboquant: code bytes too short: blob 5 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_6",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "000000000000",
+      "blob_len": 6,
+      "error": "turboquant: code bytes too short: blob 6 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_short_7",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "00000000000000",
+      "blob_len": 7,
+      "error": "turboquant: code bytes too short: blob 7 bytes, need \u003e= 8"
+    },
+    {
+      "id": "unpack_empty_payload",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "0000000000000000",
+      "blob_len": 8,
+      "min_f32_bits": 0,
+      "max_f32_bits": 0,
+      "min_f64_bits": 0,
+      "max_f64_bits": 0
+    },
+    {
+      "id": "unpack_opaque_payload",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "000020c00000803f0080ff7e0102",
+      "blob_len": 14,
+      "min_f32_bits": 3223322624,
+      "max_f32_bits": 1065353216,
+      "min_f64_bits": 13836183955189006336,
+      "max_f64_bits": 4607182418800017408,
+      "packed_hex": "0080ff7e0102",
+      "packed_len": 6
+    },
+    {
+      "id": "unpack_min_negative_zero",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "0000008000000000a5",
+      "blob_len": 9,
+      "min_f32_bits": 2147483648,
+      "max_f32_bits": 0,
+      "min_f64_bits": 9223372036854775808,
+      "max_f64_bits": 0,
+      "packed_hex": "a5",
+      "packed_len": 1
+    },
+    {
+      "id": "unpack_max_negative_zero",
+      "operation": "unpack_sidecar_blob",
+      "blob_hex": "00000000000000805a00",
+      "blob_len": 10,
+      "min_f32_bits": 0,
+      "max_f32_bits": 2147483648,
+      "min_f64_bits": 0,
+      "max_f64_bits": 9223372036854775808,
+      "packed_hex": "5a00",
+      "packed_len": 2
+    }
+  ]
+}

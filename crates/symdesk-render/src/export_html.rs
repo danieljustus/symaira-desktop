@@ -4,6 +4,8 @@
 ///
 /// This intentionally implements only the shipped `noteToHTML` line rules; it
 /// is not a general Markdown parser and does not resolve transclusions/files.
+/// The demonstrated parity domain is valid UTF-8 Markdown. Go byte strings
+/// containing invalid UTF-8 are outside this `&str` API's contract.
 pub fn render_note_html(markdown: &str) -> String {
     let mut html = String::new();
     html.push_str("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n");
@@ -62,8 +64,8 @@ fn trim_go_space(value: &str) -> &str {
     value.trim_matches(is_go_space)
 }
 
-// Go strings.TrimSpace uses unicode.IsSpace, whose White_Space set includes
-// U+0085 (NEXT LINE). Rust str::trim does not use the exact same set.
+// Go 1.26.6 strings.TrimSpace and Rust 1.98 str::trim share these 25 scalars.
+// Keep the explicit Go set frozen across future Unicode-table changes.
 fn is_go_space(character: char) -> bool {
     matches!(
         character,
@@ -159,6 +161,9 @@ mod tests {
         let actual_ids: Vec<&str> = fixture.cases.iter().map(|case| case.id.as_str()).collect();
         assert_eq!(actual_ids, CASE_IDS);
         for case in fixture.cases {
+            // These assertions validate digest syntax, not digest values.
+            // `make render-html-differential` requires the production Go
+            // fixture-integrity check before this byte-parity comparator.
             assert_eq!(case.markdown_sha256.len(), 64, "{}", case.id);
             assert!(
                 case.markdown_sha256

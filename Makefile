@@ -52,6 +52,7 @@
 .PHONY: retrieval-ask-offline-fixtures-generate retrieval-ask-offline-differential
 .PHONY: retrieval-ask-mcp-fixtures-generate retrieval-ask-mcp-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
+.PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
@@ -88,6 +89,7 @@ override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXT
 # Check mode must read the committed fixture, not a caller-selected substitute.
 override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_DATASET_IMPORT_FIXTURE -u port_dataset_import_fixture -u PORT_DATASET_ERROR_FIXTURE -u port_dataset_error_fixture
 override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixture_source_commit -u PORTGEN_FIXTURE_SOURCE_RELEASE -u portgen_fixture_source_release
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -589,6 +591,17 @@ render-ir-fixtures-generate:
 
 render-ir-differential:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen --check
+	$(CARGO) test -p symdesk-render --locked
+
+# Pure noteToHTML parity is paired with the pinned production Go integrity
+# gate. Cargo alone compares HTML bytes and digest syntax, not digest values.
+render-html-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_HTML_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$'
+
+render-html-fixtures-check:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$' -v
+
+render-html-differential: render-html-fixtures-check
 	$(CARGO) test -p symdesk-render --locked
 
 dataset-aggregate-fixtures-generate:

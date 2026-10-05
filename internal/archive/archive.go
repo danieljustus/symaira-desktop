@@ -9,6 +9,7 @@
 package archive
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -59,7 +60,7 @@ func addTextLayerToPDF(srcPath, dstPath, ocrText string) error {
 			continue
 		}
 
-		wm, err := api.TextWatermark(pageText, "", false, false, types.POINTS)
+		wm, err := api.TextWatermark(context.Background(), pageText, "", false, false, types.POINTS, nil)
 		if err != nil {
 			return fmt.Errorf("create watermark for page %d: %w", i+1, err)
 		}
@@ -68,7 +69,7 @@ func addTextLayerToPDF(srcPath, dstPath, ocrText string) error {
 		wm.OnTop = false
 
 		selectedPages := []string{fmt.Sprintf("%d", i+1)}
-		if err := api.AddWatermarksFile(dstPath, dstPath, selectedPages, wm, nil); err != nil {
+		if err := api.AddWatermarksFile(context.Background(), dstPath, dstPath, selectedPages, wm, nil); err != nil {
 			return fmt.Errorf("add watermark to page %d: %w", i+1, err)
 		}
 	}
@@ -80,7 +81,7 @@ func addTextLayerToPDF(srcPath, dstPath, ocrText string) error {
 // OCR text as an invisible selectable layer.
 func wrapImageWithText(imgPath, dstPath, ocrText string) error {
 	// Import the image as a PDF page
-	if err := api.ImportImagesFile([]string{imgPath}, dstPath, nil, nil); err != nil {
+	if err := api.ImportImagesFile(context.Background(), []string{imgPath}, dstPath, nil, nil); err != nil {
 		return fmt.Errorf("import image to PDF: %w", err)
 	}
 

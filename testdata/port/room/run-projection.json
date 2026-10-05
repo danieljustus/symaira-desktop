@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+  "oracle_revision": "e04fe5af531070a79b585b4e945e322078201f0d",
   "root_event": "projection-room-created",
   "root_pubkey": "ed25519:1c20211dd4a0c66b03c1963be852f35c186943957da8934afb6f4ef14298d210",
   "source_hashes": {

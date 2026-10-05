@@ -69,12 +69,11 @@ EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
 ifneq ($(origin CARGO_TARGET_DIR),undefined)
 export CARGO_TARGET_DIR
 endif
-PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
-PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
-# The sidecar lifecycle fixture is P-bound provenance evidence, distinct from
-# the historical fixture oracle above. portgen resolves and enforces this same
-# pair during generation and immutable checks.
-PORTGEN_SIDECAR_ORACLE_COMMIT ?= $(shell git rev-parse HEAD)
+PORT_ORACLE_COMMIT ?= $(shell python3 -c "import json; print(json.load(open('testdata/port/provenance.json'))['oracle']['commit'])")
+PORT_ORACLE_RELEASE ?= $(shell python3 -c "import json; print(json.load(open('testdata/port/provenance.json'))['oracle']['release'])")
+# The sidecar lifecycle fixture uses the same live source P and release.
+# portgen enforces this pair during generation and immutable checks.
+PORTGEN_SIDECAR_ORACLE_COMMIT ?= $(PORT_ORACLE_COMMIT)
 PORTGEN_SIDECAR_ORACLE_RELEASE ?= $(PORT_ORACLE_RELEASE)
 PORT_CASES ?= testdata/port/cli/cases.json
 RUST_NIGHTLY ?= nightly-2026-09-03
@@ -88,6 +87,7 @@ override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXT
 
 # Check mode must read the committed fixture, not a caller-selected substitute.
 override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_DATASET_IMPORT_FIXTURE -u port_dataset_import_fixture -u PORT_DATASET_ERROR_FIXTURE -u port_dataset_error_fixture
+override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixture_source_commit -u PORTGEN_FIXTURE_SOURCE_RELEASE -u portgen_fixture_source_release
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -144,7 +144,7 @@ benchmark-large:
 docker-build:
 	docker build -t symaira-desktop:dev .
 
-override PORTGEN_GENERATE_GO_ENV := env GOWORK=off GOENV=off GOFLAGS=-mod=readonly
+override PORTGEN_GENERATE_GO_ENV = env GOWORK=off GOENV=off GOFLAGS=-mod=readonly PORT_GENERATE=1 PORTGEN_FIXTURE_SOURCE_COMMIT=$(PORT_ORACLE_COMMIT) PORTGEN_FIXTURE_SOURCE_RELEASE=$(PORT_ORACLE_RELEASE)
 
 core-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/configgen \
@@ -736,6 +736,7 @@ sidecar-roundtrip:
 
 port-fixtures-generate:
 	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
+		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE) \
 		--fixture-oracle-commit $(PORT_ORACLE_COMMIT)
 

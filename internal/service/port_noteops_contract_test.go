@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 // TestPortNoteOperationContract is the Go-owned service-level harness for the
@@ -139,10 +140,14 @@ type noteTrash struct {
 
 const (
 	// Keep the exact source guard against the actual merged functional P.
-	noteOperationOracleCommit  = "012e350bfc7b5def92e7b87b2f15c71fe5431b6b"
-	noteOperationOracleRelease = "post-v0.12.2-security-880"
-	createdPlaceholder         = "{{CREATED}}"
-	deletedAtPlaceholder       = "{{DELETED_AT}}"
+
+	createdPlaceholder   = "{{CREATED}}"
+	deletedAtPlaceholder = "{{DELETED_AT}}"
+)
+
+var (
+	noteOperationOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	noteOperationOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 func buildNoteOperationFixture(t *testing.T) noteOperationFixture {
@@ -231,7 +236,7 @@ func buildNoteOperationFixture(t *testing.T) noteOperationFixture {
 	}
 	return noteOperationFixture{
 		SchemaVersion: 1,
-		Oracle:        noteOracle{Commit: noteOperationOracleCommit, Release: noteOperationOracleRelease},
+		Oracle:        noteOracle{Commit: noteOperationOracleCommit(), Release: noteOperationOracleRelease()},
 		SourceHashes:  noteOperationSourceHashes(t),
 		Cases:         cases,
 	}
@@ -246,12 +251,12 @@ func noteOperationSourceHashes(t *testing.T) map[string]string {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pinned, err := exec.Command("git", "-C", "../..", "show", noteOperationOracleCommit+":"+rel).Output() //nolint:gosec // fixed command and pinned repository source paths
+		pinned, err := exec.Command("git", "-C", "../..", "show", noteOperationOracleCommit()+":"+rel).Output() //nolint:gosec // fixed command and pinned repository source paths
 		if err != nil {
 			t.Fatalf("read pinned note oracle source %s: %v", rel, err)
 		}
 		if !bytes.Equal(data, pinned) {
-			t.Fatalf("note oracle source %s differs from pinned commit %s", rel, noteOperationOracleCommit)
+			t.Fatalf("note oracle source %s differs from pinned commit %s", rel, noteOperationOracleCommit())
 		}
 		sum := sha256.Sum256(data)
 		hashes[rel] = hex.EncodeToString(sum[:])
@@ -316,7 +321,7 @@ func TestNoteOperationSourceProvenance(t *testing.T) {
 			t.Fatal(err)
 		}
 		output, err := run()
-		if err == nil || !strings.Contains(string(output), "note oracle source "+rel+" differs from pinned commit "+noteOperationOracleCommit) {
+		if err == nil || !strings.Contains(string(output), "note oracle source "+rel+" differs from pinned commit "+noteOperationOracleCommit()) {
 			t.Fatalf("changed source %s was not rejected: %v\n%s", rel, err, output)
 		}
 		if err := fixtureRoot.WriteFile(rel, data, 0o600); err != nil {

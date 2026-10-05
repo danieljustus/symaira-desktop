@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_on": "darwin",
+  "generated_on": "linux",
   "oracle": {
-    "commit": "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a",
-    "release": "v0.1.0"
+    "commit": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+    "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
     "internal/retention/retention.go": "de194d5d7b2dbad167459f8f176614d48025ea705bf750e48d03586a0b43a97c"

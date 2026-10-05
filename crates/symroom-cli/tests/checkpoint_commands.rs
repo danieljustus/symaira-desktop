@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -16,7 +19,6 @@ use serde::Deserialize;
 use sha2::Digest;
 use symroom_core::{event::Event, identity};
 
-const ORACLE_REVISION: &str = "def48b15ff6a9392ce4de3a824a0eec530557e8a";
 const NORMALIZATION: &str = "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event";
 
 #[derive(Deserialize)]
@@ -81,7 +83,7 @@ fn checkpoint_cli_matches_go_process_stream_journal_and_authorization() {
         .expect("read Go-generated checkpoint fixture");
     let fixture: Fixture = serde_json::from_slice(&fixture_bytes).expect("parse fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.normalization, NORMALIZATION);
     assert_eq!(fixture.source_hashes.len(), 7);
     for source in [

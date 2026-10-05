@@ -15,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 // TestPortVaultWriteFilesystemContract is the Go-owned filesystem harness for
@@ -199,11 +201,14 @@ func normalizeUnixModes(item *writeFilesystem) {
 }
 
 const (
-	writeFilesystemOracleCommit  = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	writeFilesystemOracleRelease = "post-v0.12.2-security-880"
-	tempNamePrefix               = ".symdesk-frontmatter-"
-	tempNameSuffix               = ".tmp"
-	interruptTrials              = 12
+	tempNamePrefix  = ".symdesk-frontmatter-"
+	tempNameSuffix  = ".tmp"
+	interruptTrials = 12
+)
+
+var (
+	writeFilesystemOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	writeFilesystemOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 func buildWriteFilesystemFixture(t *testing.T) writeFilesystemFixture {
@@ -287,8 +292,8 @@ func buildWriteFilesystemFixture(t *testing.T) writeFilesystemFixture {
 	return writeFilesystemFixture{
 		SchemaVersion: 1,
 		Oracle: writeFilesystemAide{
-			Commit:  writeFilesystemOracleCommit,
-			Release: writeFilesystemOracleRelease,
+			Commit:  writeFilesystemOracleCommit(),
+			Release: writeFilesystemOracleRelease(),
 		},
 		TempPattern:  tempNamePattern{Prefix: tempNamePrefix, Suffix: tempNameSuffix},
 		SourceHashes: writeFilesystemSourceHashes(t),

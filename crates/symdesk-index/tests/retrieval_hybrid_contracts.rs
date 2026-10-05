@@ -1,3 +1,6 @@
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{collections::BTreeMap, fs, path::Path};
 
 use serde::Deserialize;
@@ -71,10 +74,7 @@ fn fixture() -> Fixture {
 fn replays_go_hybrid_retrieval_contracts() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle_commit,
-        "3c1ef32f7de92420a972d34f6067a9b5f2de63c9"
-    );
+    assert_eq!(fixture.oracle_commit, oracle_identity::commit());
     assert!(!fixture.normalizations.is_empty());
     assert!(
         fixture

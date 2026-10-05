@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/mcp"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -26,13 +27,8 @@ const (
 	symroomToolsFixtureRel   = "../../testdata/port/mcp/symroom-tools.json"
 )
 
-var symroomOracle = inventory.Oracle{
-	Commit:  "745c08e8144971c61133c5d0e5d61c7ce405aad2",
-	Release: "post-v0.12.2-security-880",
-}
-
 func TestSymRoomParserGrammar(t *testing.T) {
-	doc, err := buildSymRoomGrammar(symroomOracle)
+	doc, err := buildSymRoomGrammar(fixtureoracle.Current())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +41,7 @@ func TestSymRoomParserGrammar(t *testing.T) {
 }
 
 func TestSymRoomMCPInventory(t *testing.T) {
-	doc, err := buildSymRoomMCPDocument(symroomOracle)
+	doc, err := buildSymRoomMCPDocument(fixtureoracle.Current())
 	if err != nil {
 		t.Fatalf("build symroom mcp doc: %v", err)
 	}

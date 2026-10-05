@@ -10,6 +10,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -93,7 +94,7 @@ func TestVaultResolutionInventory(t *testing.T) {
 		}
 		return graph.Edges[i].Source < graph.Edges[j].Source
 	})
-	fixture := resolutionFixture{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"}, Documents: documents, Nodes: graph.Nodes, Edges: graph.Edges}
+	fixture := resolutionFixture{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}, Documents: documents, Nodes: graph.Nodes, Edges: graph.Edges}
 	content, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
 		t.Fatal(err)

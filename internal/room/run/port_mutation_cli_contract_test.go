@@ -13,6 +13,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const runMutationCLIContractFixture = "testdata/port/room/run-mutations-cli.json"
@@ -79,7 +80,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 	roomOwner := runProjectionIdentity("mutations-room")
 	fixture := runMutationCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "mut-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(roomOwner.PublicKey),
 		IdentityKey:    hex.EncodeToString(signer.PrivateKey[:ed25519.SeedSize]),

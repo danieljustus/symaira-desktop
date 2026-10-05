@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
@@ -97,10 +100,7 @@ struct GetVector {
 fn go_run_projection_and_journal_queries_match_byte_for_byte() {
     let fixture: Fixture = serde_json::from_str(FIXTURE).expect("Go-generated fixture parses");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle_revision,
-        "6f1c04e38e283e0e722661725bd5baec9f3f5fe5"
-    );
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.records.len(), 17, "nonzero projected records");
     assert_eq!(fixture.events.len(), 63, "fixture exercises all edge paths");
     assert_eq!(fixture.checkpoint_records.len(), 2);

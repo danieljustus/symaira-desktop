@@ -8,13 +8,16 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
 	cfgPrecedenceFixturePath = "testdata/port/core/config-precedence.json"
 	cfgPrecedenceSchema      = 1
-	cfgPrecedenceCommit      = "e023816a9db2b3d71514049195886fe1b9766a5a"
 )
+
+var cfgPrecedenceCommit = func() string { return fixtureoracle.Current().Commit }
 
 var cfgPrecedenceEnvKeys = []string{
 	"SYMDESK_OLLAMA_URL",
@@ -123,7 +126,7 @@ func TestPortConfigPrecedenceContract(t *testing.T) {
 	cases := cfgPrecedenceCases()
 	fixture := cfgPrecedenceFixture{
 		SchemaVersion: cfgPrecedenceSchema,
-		OracleCommit:  cfgPrecedenceCommit,
+		OracleCommit:  cfgPrecedenceCommit(),
 		SourceHashes:  map[string]string{"internal/config/config.go": cfgPrecedenceHash(t, root, "internal/config/config.go")},
 		Cases:         cases,
 	}
@@ -151,7 +154,7 @@ func TestPortConfigPrecedenceContract(t *testing.T) {
 	if err := json.Unmarshal(data, &fixture); err != nil {
 		t.Fatalf("decode fixture: %v", err)
 	}
-	if fixture.SchemaVersion != cfgPrecedenceSchema || fixture.OracleCommit != cfgPrecedenceCommit {
+	if fixture.SchemaVersion != cfgPrecedenceSchema || fixture.OracleCommit != cfgPrecedenceCommit() {
 		t.Fatalf("unexpected fixture schema/oracle: %d/%s", fixture.SchemaVersion, fixture.OracleCommit)
 	}
 	if want := cfgPrecedenceHash(t, root, "internal/config/config.go"); fixture.SourceHashes["internal/config/config.go"] != want {

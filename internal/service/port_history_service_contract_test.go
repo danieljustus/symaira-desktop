@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const historyServiceFixture = "../../testdata/port/vault/history-service.json"
@@ -38,7 +39,7 @@ type historyState struct {
 func TestPortHistoryServiceContract(t *testing.T) {
 	fixture := historyServiceContract{
 		SchemaVersion: 1,
-		Oracle:        "68095b7eabff2de0e901c90931432b125df7ebc4",
+		Oracle:        fixtureoracle.Current().Commit,
 		SourceHashes: map[string]string{
 			"internal/service/history.go":    historySourceHash(t, "history.go"),
 			"internal/history/history.go":    historySourceHash(t, "../history/history.go"),

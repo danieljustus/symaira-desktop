@@ -10,6 +10,9 @@
 //! all of it; wall-clock stamps are compared as placeholders, so the replay is
 //! deterministic and does not need a live oracle process.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -571,7 +574,7 @@ fn generated_go_history_lifecycle_matches_rust_bytes_and_side_effects() {
         );
     }
     assert!(
-        fixture.oracle.commit.len() == 40,
+        fixture.oracle.commit == oracle_identity::commit(),
         "oracle commit must be pinned"
     );
     assert!(
@@ -581,7 +584,7 @@ fn generated_go_history_lifecycle_matches_rust_bytes_and_side_effects() {
         "fixture must hash the ported Go sources"
     );
     assert!(
-        !fixture.oracle.release.is_empty(),
+        fixture.oracle.release == oracle_identity::release(),
         "oracle block must pin the Go release"
     );
     for case in &fixture.cases {

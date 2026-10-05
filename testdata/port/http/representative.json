@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "8fc4b67fcd84468f91ede73774ca6adf3e1fec99",
-    "release": "post-v0.12.2-security-880+share-token-8fc4b67f"
+    "commit": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+    "release": "post-v0.12.2-security-880"
   },
   "cases": [
     {

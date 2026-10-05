@@ -19,10 +19,13 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/room"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const initCLIFixturePath = "testdata/port/room/init-cli.json"
-const initCLIOracleRevision = "8e11384470ea86b15d1d60f21442a3e0c7287d53"
+
+var initCLIOracleRevision = func() string { return fixtureoracle.Current().Commit }
+
 const initCLINormalizedRoomID = "rm_0123456789abcdef"
 const initCLINormalizedEventID = "ev_0123456789abcdef0123"
 const initCLINormalizedTime = "2026-01-02T03:04:05.006Z"
@@ -179,7 +182,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 	}
 	fixture := initCLIContract{
 		SchemaVersion:    1,
-		OracleRevision:   initCLIOracleRevision,
+		OracleRevision:   initCLIOracleRevision(),
 		IdentityKey:      hex.EncodeToString(seed[:]),
 		IdentityMember:   owner.MemberID,
 		IdentityFileName: "oracle.json",

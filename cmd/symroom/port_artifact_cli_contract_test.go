@@ -16,6 +16,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/artifact"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const artifactCLIContractPath = "testdata/port/room/artifact-cli.json"
@@ -96,7 +97,7 @@ func makeArtifactCLIContract(t *testing.T, root string) (artifactCLIContract, er
 	owner := &identity.Identity{Name: "owner", MemberID: identity.ComputeMemberID(private.Public().(ed25519.PublicKey)), PublicKey: private.Public().(ed25519.PublicKey), PrivateKey: private}
 	fixture := artifactCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "32a4f9739fedb8aadbe282f59f5e7d4d60956b92",
+		OracleRevision: fixtureoracle.Current().Commit,
 		IdentityKey:    hex.EncodeToString(seed[:]),
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":                artifactCLIFileHash(t, root, "cmd/symroom/main.go"),

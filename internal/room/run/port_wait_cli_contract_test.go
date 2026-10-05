@@ -15,6 +15,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const runWaitCLIContractFixture = "testdata/port/room/run-wait-cli.json"
@@ -111,7 +112,7 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 
 	fixture := runWaitCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "wait-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		SourceHashes: map[string]string{

@@ -16,6 +16,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const memberCLIContractPath = "testdata/port/room/member-cli.json"
@@ -130,7 +131,7 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 	}
 	fixture := memberCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "b96219bcd39ce85e017626feade557979aefd7c6",
+		OracleRevision: fixtureoracle.Current().Commit,
 		OwnerKey:       hex.EncodeToString(ownerSeed[:]),
 		StrangerKey:    hex.EncodeToString(strangerSeed[:]),
 		IdentityFiles:  []memberCLIFile{{Name: "owner.json", Content: ownerIdentityFile}, {Name: "stranger.json", Content: strangerIdentityFile}},

@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -104,8 +107,8 @@ fn generated_go_frontmatter_writes_match_exact_bytes_and_side_effects() {
     ))
     .expect("decode frontmatter write fixture");
     assert_eq!(fixture.schema_version, 2);
-    assert!(!fixture.oracle.commit.is_empty());
-    assert!(!fixture.oracle.release.is_empty());
+    assert_eq!(fixture.oracle.commit, oracle_identity::commit());
+    assert_eq!(fixture.oracle.release, oracle_identity::release());
     assert!(!fixture.source_hashes.is_empty());
     assert_eq!(fixture.cases.len(), 70);
     assert!(!fixture.cases.is_empty());

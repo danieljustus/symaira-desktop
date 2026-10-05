@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const httpFixturePath = "testdata/port/http/representative.json"
 
 func generatedHTTP() httpSuite {
-	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: "8fc4b67fcd84468f91ede73774ca6adf3e1fec99", Release: "post-v0.12.2-security-880+share-token-8fc4b67f"}, Cases: []httpCase{
+	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}, Cases: []httpCase{
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "healthz-slow-header", Method: "GET", Path: "/healthz", HeaderDelayMS: 6000},
 		{ID: "healthz-large-header", Method: "GET", Path: "/healthz", HeaderPaddingBytes: 512 << 10},

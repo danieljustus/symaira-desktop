@@ -161,7 +161,7 @@ func buildHistoryPruneFixture(t *testing.T) historyPruneFixture {
 
 	return historyPruneFixture{
 		SchemaVersion: 1,
-		Oracle:        historyOracleBlock{Commit: historyOracleCommit, Release: historyOracleRelease},
+		Oracle:        historyOracleBlock{Commit: historyOracleCommit(), Release: historyOracleRelease()},
 		SourceHashes:  hashes,
 		Cases:         cases,
 	}

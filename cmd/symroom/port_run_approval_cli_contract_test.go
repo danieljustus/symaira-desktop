@@ -17,6 +17,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 	"github.com/danieljustus/symaira-desktop/internal/room/members"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const runApprovalCLIContractPath = "testdata/port/room/run-approval-cli.json"
@@ -112,7 +113,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 	}
 	fixture := runApprovalCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "558cac10528b2a03e344640190327a662d5a60e8",
+		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "approval-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(keys["owner"].PublicKey),
 		Normalization:  "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",

@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -12,9 +15,6 @@ use std::{
 
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
-
-const ORACLE_REVISION: &str = "6f1c04e38e283e0e722661725bd5baec9f3f5fe5";
-const MUTATION_ORACLE_REVISION: &str = "6f1c04e38e283e0e722661725bd5baec9f3f5fe5";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -88,7 +88,7 @@ fn run_list_and_show_match_go_process_contract() {
     let data = fs::read(&fixture_path).expect("read Go-generated CLI fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse Go-generated fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(!fixture.cases.is_empty());
@@ -154,7 +154,7 @@ fn run_wait_matches_go_process_contract() {
     let data = fs::read(&fixture_path).expect("read Go-generated run wait fixture");
     let fixture: WaitFixture = serde_json::from_slice(&data).expect("parse Go wait fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 4));
@@ -220,7 +220,7 @@ fn run_request_start_cancel_match_go_process_contract() {
     let fixture: MutationFixture =
         serde_json::from_slice(&data).expect("parse Go mutation fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, MUTATION_ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 8);
     for (path, expected) in &fixture.source_hashes {
         let source = fs::read(

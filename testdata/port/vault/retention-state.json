@@ -2,15 +2,15 @@
   "schema_version": 1,
   "generated_on": "darwin",
   "oracle": {
-    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
-    "release": "RUST-007-authoritative-retention-state"
+    "commit": "012e350bfc7b5def92e7b87b2f15c71fe5431b6b",
+    "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/retention/fingerprint.go": "d07bc03938544087e0a62ae5e9b1c6ad803cffb6132ea2f845f0fccf7d0bfa74",
     "internal/retention/retention.go": "de194d5d7b2dbad167459f8f176614d48025ea705bf750e48d03586a0b43a97c",
     "internal/service/dataset_retention.go": "ca86878cdbed89df1665fcf6c67804c86f964d5f92833a6f613ea8db880278a0",
-    "internal/service/port_retention_state_contract_test.go": "7c034c8285b5ac8544578e66cc75dedef8b4ef36bb857349bd12c18d596e94af",
+    "internal/service/port_retention_state_contract_test.go": "cb47a3fbe540062e85ed12f2c6cbc256f4a1005c318dfb7ed61b65b7200f1f6d",
     "internal/service/port_retention_state_unix_test.go": "722e434cac74c4e9a8530658719db27e66d170525667f602b354a5bea39f8876",
     "internal/service/port_retention_state_windows_test.go": "1e5628f35ebbf310bf54403fff42d26302338c44cca7a031050a7e908d4c364d",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",

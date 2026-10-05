@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,10 +30,6 @@ import (
 const (
 	roomFixturePath   = "testdata/port/room/identity-events.json"
 	roomFixtureSchema = 1
-
-	// The oracle is pinned in docs/rust-port/architecture.md.
-	roomOracleCommit  = "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a"
-	roomOracleRelease = "v0.1.0"
 )
 
 type roomIdentityVector struct {
@@ -166,11 +163,15 @@ func TestPortRoomIdentityEventContract(t *testing.T) {
 
 func buildRoomFixture(t *testing.T) roomIdentityEventFixture {
 	t.Helper()
+	source, err := fixtureoracle.Source(roomRepoRoot(t))
+	if err != nil {
+		t.Fatal(err)
+	}
 	identities := roomIdentities(t)
 	return roomIdentityEventFixture{
 		SchemaVersion: roomFixtureSchema,
 		GeneratedOn:   runtime.GOOS,
-		Oracle:        roomOracle{Commit: roomOracleCommit, Release: roomOracleRelease},
+		Oracle:        roomOracle{Commit: source.Commit, Release: source.Release},
 		SourceHashes: map[string]string{
 			"internal/room/identity/identity.go": roomFileSHA256(t, "internal/room/identity/identity.go"),
 			"internal/room/event/event.go":       roomFileSHA256(t, "internal/room/event/event.go"),

@@ -109,16 +109,21 @@ impl Drop for TestRoot {
 
 #[test]
 fn real_mcp_ask_replays_go_handler_envelope() {
-    replay_fixture(false);
+    replay_fixture(false, false);
+}
+
+#[test]
+fn real_mcp_ask_replays_go_envelope_with_live_sidecar_anchor() {
+    replay_fixture(false, true);
 }
 
 #[cfg(unix)]
 #[test]
 fn real_mcp_ask_replays_go_envelope_through_symlinked_vault_root() {
-    replay_fixture(true);
+    replay_fixture(true, false);
 }
 
-fn replay_fixture(alias_vault: bool) {
+fn replay_fixture(alias_vault: bool, keep_sidecar_open: bool) {
     let fixture_path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/mcp/ask-offline.json");
     let fixture: Fixture = serde_json::from_slice(
@@ -128,11 +133,11 @@ fn replay_fixture(alias_vault: bool) {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 3);
     for case in &fixture.cases {
-        replay_case(case, alias_vault);
+        replay_case(case, alias_vault, keep_sidecar_open);
     }
 }
 
-fn replay_case(case: &FixtureCase, alias_vault: bool) {
+fn replay_case(case: &FixtureCase, alias_vault: bool, keep_sidecar_open: bool) {
     let root = TestRoot::new(&case.id);
     let vault = root.path("vault").canonicalize().expect("canonical vault");
     #[cfg(unix)]
@@ -157,7 +162,9 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     sidecar
         .refresh_index_for_cli(&vault)
         .expect("index test vault for scoped FTS");
-    drop(sidecar);
+    // The default replay still closes the seed connection before MCP starts.
+    // The control changes only whether that connection stays open.
+    let _sidecar_anchor = keep_sidecar_open.then_some(sidecar);
 
     let embedding_server = if case.embedding_dim > 0 {
         let server = start_ask_embedding_server(case);

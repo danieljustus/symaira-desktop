@@ -20,11 +20,11 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
+        "4ddb297d4dde70096e12c7111d96fc97242d10ee6bf0e0ebc821ee8f58534aa5",
     ),
     (
         "go.sum",
-        "54d6151b45cee2b0a71c057cf7423da7751149dd39447aea434bf1837a75d315",
+        "3d460b0ff4ea0a87c6d837a79b7b66dc43b19d9c94934980f5ad703bf8e1a441",
     ),
     (
         "internal/history/checkpoint.go",
@@ -1057,6 +1057,29 @@ fn test_harness_mkdir_and_temp_vault_guard_collision() {
 
     // Clean up foreign test dir
     let _ = fs::remove_dir_all(&foreign_dir);
+}
+
+#[test]
+fn test_pinned_source_hashes_match_canonical_git_blobs() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for &(path, expected_hash) in PINNED_SOURCE_HASHES {
+        let object = format!("{}:{path}", oracle_identity::commit());
+        let output = std::process::Command::new("git")
+            .current_dir(&root)
+            .args(["show", &object])
+            .output()
+            .expect("read canonical history source blob");
+        assert!(
+            output.status.success(),
+            "read {object}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            symdesk_vault::sha256_hex(&output.stdout),
+            expected_hash,
+            "history source hash must match canonical Git blob for {path}"
+        );
+    }
 }
 
 #[test]

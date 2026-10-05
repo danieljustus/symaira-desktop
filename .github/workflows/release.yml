@@ -480,7 +480,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload build to TestFlight
-        uses: Apple-Actions/upload-testflight-build@1fc69ca369a60b813eaaa2d936eda22794b52e17 # v5.4.0
+        uses: Apple-Actions/upload-testflight-build@14df18fee5a4ff3b76971dd382f033494a0194e9 # v5.5.0
         with:
           app-path: ${{ env.IOS_IPA_PATH }}
           app-type: ios

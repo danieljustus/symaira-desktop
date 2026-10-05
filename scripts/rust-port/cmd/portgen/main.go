@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
@@ -250,6 +251,12 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 	// and representative writers even while claiming complete regeneration.
 	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
 	for _, target := range targets {
+		// Preserve the recorded native capture on foreign generation hosts,
+		// exactly as immutable replay does. Windows CI still observes it live.
+		if len(target.args) > 1 && target.args[1] == "./scripts/rust-port/cmd/windows-config-paths-gen" && runtime.GOOS != "windows" {
+			fmt.Fprintln(os.Stderr, "SKIP native Windows config paths: frozen bytes retained; fresh Go replay requires Windows")
+			continue
+		}
 		if target.sidecarOracle || target.name == "sidecar oracle metadata" {
 			// Lifecycle has a separate explicit oracle environment below; metadata
 			// verification runs after its records and central provenance are refreshed.

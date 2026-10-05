@@ -16,6 +16,9 @@ import sys
 import tempfile
 import unittest
 
+# Dynamic harness imports must not leave untracked generator inputs behind.
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_FILES = [
     "go.mod", "go.sum", ".goreleaser.yml", "Dockerfile", "VAULT.md",

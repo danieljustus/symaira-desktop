@@ -66,7 +66,7 @@ func TestPortRenderHTMLFixture(t *testing.T) {
 	t.Log("PASS mutation controls: output hash, case ID, and rehashed wrong output rejected")
 
 	path := noteHTMLFixturePathFromTest(t)
-	if os.Getenv("PORT_RENDER_HTML_GENERATE") == "1" {
+	if os.Getenv("PORT_RENDER_HTML_GENERATE") == "1" || os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { //nolint:gosec // test fixture directory
 			t.Fatalf("create fixture directory: %v", err)
 		}

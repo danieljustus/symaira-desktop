@@ -103,7 +103,6 @@ mod tests {
     use super::render_note_html;
     use serde::Deserialize;
 
-    const GO_ORACLE_COMMIT: &str = "e04fe5af531070a79b585b4e945e322078201f0d";
     const GO_ORACLE_SOURCE_SHA256: &str =
         "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861";
     const CASE_IDS: [&str; 9] = [
@@ -152,7 +151,18 @@ mod tests {
                 .expect("decode Go-generated note HTML fixture");
 
         assert_eq!(fixture.schema_version, 1);
-        assert_eq!(fixture.oracle.commit, GO_ORACLE_COMMIT);
+        // The commit is the canonical P that `make port-fixtures-generate`
+        // refreshes; the source digest below keeps the fixture bound to the
+        // exact Go renderer bytes.
+        let provenance: serde_json::Value =
+            serde_json::from_str(include_str!("../../../testdata/port/provenance.json"))
+                .expect("decode central port provenance");
+        assert_eq!(
+            fixture.oracle.commit,
+            provenance["oracle"]["commit"]
+                .as_str()
+                .expect("central oracle commit")
+        );
         assert_eq!(fixture.oracle.go_version, "go1.26.6");
         assert_eq!(fixture.oracle.source, "internal/export/export.go");
         assert_eq!(fixture.oracle.source_sha256, GO_ORACLE_SOURCE_SHA256);

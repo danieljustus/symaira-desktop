@@ -61,7 +61,8 @@ type wireCase struct {
 }
 
 func main() {
-	checkPath := flag.String("check", "", "compare generated fixture bytes with this file; never rewrite it")
+	output := flag.String("output", "testdata/port/retrieval/quant-sidecar-wire.json", "fixture path")
+	check := flag.Bool("check", false, "compare generated fixture bytes with the fixture path; never rewrite it")
 	flag.Parse()
 	if flag.NArg() != 0 {
 		fatalf("unexpected positional arguments")
@@ -74,18 +75,18 @@ func main() {
 	if err != nil {
 		fatalf("generate fixture: %v", err)
 	}
-	if *checkPath != "" {
-		committed, err := os.ReadFile(*checkPath)
+	if *check {
+		committed, err := os.ReadFile(*output)
 		if err != nil {
 			fatalf("read fixture: %v", err)
 		}
 		if !bytes.Equal(generated, committed) {
 			fatalf("fixture differs from pinned Go output")
 		}
-		fmt.Fprintf(os.Stderr, "Go oracle fixture check passed: %s (%d bytes)\n", *checkPath, len(generated))
+		fmt.Fprintf(os.Stderr, "Go oracle fixture check passed: %s (%d bytes)\n", *output, len(generated))
 		return
 	}
-	if _, err := os.Stdout.Write(generated); err != nil {
+	if err := os.WriteFile(*output, generated, 0o644); err != nil { //nolint:gosec // committed fixture
 		fatalf("write fixture: %v", err)
 	}
 }

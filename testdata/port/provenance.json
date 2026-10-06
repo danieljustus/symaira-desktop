@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "79d2b685af8c711c604abc3d629f19f3239180d43387acb97aeedc9263c87802",
-  "generator_source_digest": "c16c31cfbf041259415b7c9fad7aefb958422c75ca259813c84316e157c05283",
+  "generator_source_digest": "21608530f1846d3baae27ef3282a3550e24e5e3834e9c8b69508e2c8eb25152e",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -59,6 +59,7 @@
     "testdata/port/retrieval/index-restore.json": "a773d3ea7d584b7b70b8977033f03a48995acb3dc2404c41a16dabe6fa56c6a2",
     "testdata/port/retrieval/local-hash.json": "8826522fe8f00757aeca3f4250eec042985c3eac2feca7740981bd2656aeb2d1",
     "testdata/port/retrieval/pending-rebuild.json": "dd56bc8a175da9cf324cf3437a94d4ada631f7411bb35626abca0df021c197ac",
+    "testdata/port/retrieval/quant-sidecar-wire.json": "407cdefd36a9486ef4f78d982b8efd152dcdc032d9b25f32ede4750fac109d7f",
     "testdata/port/retrieval/reembed-http-cli.json": "af0dbbb1dc24ffa4d99127ba869b2ed587599c7ddbfe2a2cfde511ec1c5a3915",
     "testdata/port/retrieval/retrieval-bm25.json": "a36d55696b59a2cc415d880e3b15b8aad8388c28b8f2f388901de0f4aaa43850",
     "testdata/port/retrieval/retrieval-chunks.json": "3f2c88931efd0b532cacc737f9b1aa30d8f5234e477396312e5601ec3e6b3917",

@@ -62,13 +62,13 @@ func TestPortRenderHTMLFixture(t *testing.T) {
 
 	path := noteHTMLFixturePathFromTest(t)
 	if os.Getenv("PORT_RENDER_HTML_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { //nolint:gosec // test fixture directory
 			t.Fatalf("create fixture directory: %v", err)
 		}
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // test fixture file
 			t.Fatalf("write fixture: %v", err)
 		}
-		current, err := os.ReadFile(path)
+		current, err := os.ReadFile(path) //nolint:gosec // read back test fixture file
 		if err != nil {
 			t.Fatalf("read generated fixture: %v", err)
 		}
@@ -79,7 +79,7 @@ func TestPortRenderHTMLFixture(t *testing.T) {
 		return
 	}
 
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // fixed repository-relative fixture path
 	if err != nil {
 		t.Fatalf("read fixture %s (regenerate deliberately with PORT_RENDER_HTML_GENERATE=1): %v", path, err)
 	}
@@ -98,7 +98,7 @@ func buildNoteHTMLFixture(t *testing.T) noteHTMLFixture {
 		t.Fatalf("HTML fixture oracle requires Go %s, running %s", noteHTMLOracleGoVersion, runtime.Version())
 	}
 	sourcePath := filepath.Join(filepath.Dir(noteHTMLFixtureSourcePath(t)), "export.go")
-	source, err := os.ReadFile(sourcePath)
+	source, err := os.ReadFile(sourcePath) //nolint:gosec // pinned source file
 	if err != nil {
 		t.Fatalf("read pinned Go HTML oracle source: %v", err)
 	}

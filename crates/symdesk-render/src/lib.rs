@@ -1,3 +1,5 @@
+pub mod export_html;
+
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 

@@ -150,3 +150,62 @@ func TestNoteMarkdownKeepsHeading(t *testing.T) {
 		t.Errorf("markdown export must keep the title heading, got:\n%s", out)
 	}
 }
+
+func TestProfileList(t *testing.T) {
+	profiles := ProfileList()
+	if len(profiles) == 0 {
+		t.Fatal("expected non-empty profile list")
+	}
+}
+
+func TestViewEmptyRows(t *testing.T) {
+	root := t.TempDir()
+	view := &dbviews.View{Name: "EmptyView"}
+	out, err := View(root, view, nil, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(out), "No matching notes.") {
+		t.Fatalf("expected empty message, got:\n%s", out)
+	}
+}
+
+func TestViewHTML(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "row.md"), []byte("# Row Note\n\nRow body.\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	view := &dbviews.View{Name: "HTMLView", Columns: []string{"title"}}
+	rows := []map[string]string{
+		{"title": "Row 1", "path": "row.md"},
+	}
+	out, err := View(root, view, rows, Options{Format: "html"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(out), "<h1>HTMLView</h1>") || !strings.Contains(string(out), "Row body.") {
+		t.Fatalf("expected html title and row content, got:\n%s", out)
+	}
+}
+
+func TestNoteTransclusionNotFound(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "doc.md"), []byte("# Doc\n\n![[nonexistent.md]]\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	out, err := Note(root, "doc.md", Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(out), "*embed not found: nonexistent.md*") {
+		t.Fatalf("expected embed not found message, got:\n%s", out)
+	}
+}
+
+func TestNoteInvalidPath(t *testing.T) {
+	root := t.TempDir()
+	_, err := Note(root, "../outside.md", Options{})
+	if err == nil {
+		t.Fatal("expected error for path traversing outside root")
+	}
+}

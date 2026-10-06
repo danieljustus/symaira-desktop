@@ -13,15 +13,20 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
-	noteHTMLOracleCommit       = "305ba383f3b5143f7fa5698c8684554fc94b74c6"
 	noteHTMLOracleGoVersion    = "go1.26.6"
 	noteHTMLOracleSource       = "internal/export/export.go"
 	noteHTMLOracleSourceSHA256 = "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
 	noteHTMLFixturePath        = "testdata/port/render/html-note.json"
 )
+
+var noteHTMLOracleCommit = func() string {
+	return fixtureoracle.Current().Commit
+}
 
 type noteHTMLFixture struct {
 	SchemaVersion int            `json:"schema_version"`
@@ -114,7 +119,7 @@ func buildNoteHTMLFixture(t *testing.T) noteHTMLFixture {
 	fixture := noteHTMLFixture{
 		SchemaVersion: 1,
 		Oracle: noteHTMLOracle{
-			Commit:       noteHTMLOracleCommit,
+			Commit:       noteHTMLOracleCommit(),
 			GoVersion:    runtime.Version(),
 			Source:       noteHTMLOracleSource,
 			SourceSHA256: sourceHash,

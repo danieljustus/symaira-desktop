@@ -103,7 +103,7 @@ mod tests {
     use super::render_note_html;
     use serde::Deserialize;
 
-    const GO_ORACLE_COMMIT: &str = "305ba383f3b5143f7fa5698c8684554fc94b74c6";
+    const GO_ORACLE_COMMIT: &str = "e04fe5af531070a79b585b4e945e322078201f0d";
     const GO_ORACLE_SOURCE_SHA256: &str =
         "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861";
     const CASE_IDS: [&str; 9] = [

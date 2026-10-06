@@ -13,6 +13,7 @@ import (
 	"runtime/debug"
 
 	"github.com/danieljustus/symaira-corekit/vectorkit/turboquant"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
@@ -28,6 +29,8 @@ type fixture struct {
 }
 
 type oracleSource struct {
+	Commit     string `json:"commit"`
+	Release    string `json:"release"`
 	GoVersion  string `json:"go_version"`
 	Corekit    string `json:"corekit_module"`
 	CorekitSum string `json:"corekit_sum"`
@@ -165,6 +168,8 @@ func generate() ([]byte, error) {
 	result := fixture{
 		SchemaVersion: 1,
 		Oracle: oracleSource{
+			Commit:     fixtureoracle.Current().Commit,
+			Release:    fixtureoracle.Current().Release,
 			GoVersion:  runtime.Version(),
 			Corekit:    corekit.Path + "/" + corekit.Version,
 			CorekitSum: corekit.Sum,

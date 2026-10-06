@@ -189,8 +189,10 @@ fn checkpoint_cli_matches_go_process_stream_journal_and_authorization() {
             assert_eq!(
                 resolver.status.code(),
                 Some(case.resolver_exit_code),
-                "resolver exit code {}",
-                case.name
+                "resolver exit code {}\nstdout: {}\nstderr: {}",
+                case.name,
+                String::from_utf8_lossy(&resolver.stdout),
+                String::from_utf8_lossy(&resolver.stderr)
             );
             assert_eq!(
                 normalize_event_output(&resolver.stdout),
@@ -212,8 +214,10 @@ fn checkpoint_cli_matches_go_process_stream_journal_and_authorization() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code {}",
-            case.name
+            "exit code {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         let stdout = if case.name.starts_with("resolve-success") {
             normalize_event_output(&output.stdout)

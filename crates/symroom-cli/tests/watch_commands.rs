@@ -159,8 +159,10 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code case {}",
-            case.name
+            "exit code case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             output.stdout,

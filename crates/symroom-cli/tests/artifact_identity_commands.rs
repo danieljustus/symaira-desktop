@@ -153,8 +153,10 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code {}",
-            case.name
+            "exit code {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         let stdout = normalize_stdout(&output.stdout, case.dynamic_event);
         assert_eq!(stdout, case.stdout.as_bytes(), "stdout {}", case.name);

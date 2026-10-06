@@ -59,8 +59,10 @@ fn recipe_validate_matches_go_process_contract() {
         assert_eq!(
             result.status.code().unwrap_or(-1),
             case.exit_code,
-            "{} exit",
-            case.name
+            "{} exit\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&result.stdout),
+            String::from_utf8_lossy(&result.stderr)
         );
         assert_eq!(
             String::from_utf8_lossy(&result.stdout),

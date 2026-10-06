@@ -153,8 +153,10 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
         assert_eq!(
             output.status.code(),
             Some(expected_exit),
-            "{} exit",
-            case.name
+            "{} exit\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             normalize(

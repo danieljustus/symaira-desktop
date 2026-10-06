@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
+    "commit": "e04fe5af531070a79b585b4e945e322078201f0d",
+    "release": "post-v0.12.2-security-880",
     "go_version": "go1.26.6",
     "corekit_module": "github.com/danieljustus/symaira-corekit/v0.17.0",
     "corekit_sum": "h1:pDtkMy0Pel1PWglNupMiLYpxo0WxUQ3CkjlR2LaUAZ4=",

@@ -18,10 +18,12 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const doctorCLIFixturePath = "testdata/port/room/doctor-cli.json"
-const doctorCLIOracleRevision = "7d9d60bab2742e10f238ead245f967cce1adc4ea"
+
+var doctorCLIOracleRevision = func() string { return fixtureoracle.Current().Commit }
 
 type doctorCLIContract struct {
 	SchemaVersion  int               `json:"schema_version"`
@@ -95,7 +97,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 		PublicKey: public, PrivateKey: private,
 	}
 	fixture := doctorCLIContract{
-		SchemaVersion: 1, OracleRevision: doctorCLIOracleRevision,
+		SchemaVersion: 1, OracleRevision: doctorCLIOracleRevision(),
 		IdentityKey: hex.EncodeToString(seed[:]), IdentityMember: owner.MemberID,
 		SourceHashes: map[string]string{
 			"cmd/symroom/cmd_doctor.go":          noteCLIFileHash(t, root, "cmd/symroom/cmd_doctor.go"),

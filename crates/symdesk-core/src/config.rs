@@ -497,14 +497,93 @@ fn portable_absolute(value: &str) -> bool {
 }
 
 fn join(left: &str, right: &str) -> String {
+    let right = right.trim_start_matches(['/', '\\']);
     if left.is_empty() || left == "." {
-        format!("./{}", right.trim_start_matches(['/', '\\']))
-    } else {
-        format!(
-            "{}/{}",
-            left.trim_end_matches(['/', '\\']),
-            right.trim_start_matches(['/', '\\'])
-        )
+        return format!("./{right}");
+    }
+    #[cfg(windows)]
+    if is_windows_verbatim(left) {
+        return join_windows_verbatim(left, right);
+    }
+    format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
+}
+
+#[cfg(any(windows, test))]
+fn is_windows_verbatim(value: &str) -> bool {
+    matches!(
+        value.as_bytes(),
+        [b'\\' | b'/', b'\\' | b'/', b'?', b'\\' | b'/', ..]
+    )
+}
+
+// Go 1.26 treats the first component after `\\?\` as the device volume,
+// including `UNC`, not Rust's indivisible UNC host/share prefix. Clean the
+// remaining rooted components without stripping the verbatim I/O prefix.
+#[cfg(any(windows, test))]
+fn join_windows_verbatim(left: &str, right: &str) -> String {
+    let joined = format!(r"{}\{}", left.trim_end_matches(['/', '\\']), right).replace('/', r"\");
+    let volume_end = joined[4..]
+        .find('\\')
+        .map_or(joined.len(), |index| index + 4);
+    let (volume, tail) = joined.split_at(volume_end);
+    if tail.is_empty() {
+        return joined;
+    }
+    let mut components = Vec::new();
+    for component in tail.split('\\') {
+        match component {
+            "" | "." => (),
+            ".." => {
+                components.pop();
+            }
+            _ => components.push(component),
+        }
+    }
+    format!(r"{}\{}", volume, components.join(r"\"))
+}
+
+#[cfg(test)]
+mod windows_verbatim_join_tests {
+    use super::{is_windows_verbatim, join_windows_verbatim};
+
+    #[test]
+    fn separator_variants_dispatch_to_verbatim_cleaner() {
+        for base in [r"\\?\C:\root", r"\\?\UNC\server\share\root"] {
+            let canonical = join_windows_verbatim(base, "symdesk");
+            for first in ['\\', '/'] {
+                for second in ['\\', '/'] {
+                    for last in ['\\', '/'] {
+                        let variant = format!("{first}{second}?{last}{}", &base[4..]);
+                        assert!(is_windows_verbatim(&variant), "{variant}");
+                        assert_eq!(join_windows_verbatim(&variant, "symdesk"), canonical);
+                    }
+                }
+            }
+        }
+        for ordinary in ["", "/", "//?", "//x/", r"\?\", "é/root", r"C:\root"] {
+            assert!(!is_windows_verbatim(ordinary), "{ordinary}");
+        }
+    }
+
+    #[test]
+    fn captured_native_go_verbatim_paths_match_on_every_host() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../testdata/port/config/windows-verbatim-paths.json"
+        ))
+        .expect("actual native Windows Go capture");
+        assert_eq!(fixture["goos"], "windows");
+        assert_eq!(fixture["go_version"], "go1.26.6");
+        let cases = fixture["cases"].as_array().expect("captured cases");
+        assert_eq!(cases.len(), 11);
+        let mut ids = std::collections::BTreeSet::new();
+        for case in cases {
+            assert!(ids.insert(case["id"].as_str().expect("case ID")));
+            let base = case["input"].as_str().expect("captured input");
+            assert!(is_windows_verbatim(base));
+            let actual =
+                join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
+            assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
     }
 }
 

@@ -8,6 +8,9 @@
 //! sizes, content hashes and normalized bytes), the trash entry a delete
 //! produces, and the Go error wrapper/class each verb must reproduce.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -114,8 +117,8 @@ fn generated_go_note_verbs_match_bytes_modes_paths_and_trash_entries() {
     ))
     .expect("decode note operation fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert!(!fixture.oracle.commit.is_empty());
-    assert!(!fixture.oracle.release.is_empty());
+    assert_eq!(fixture.oracle.commit, oracle_identity::commit());
+    assert_eq!(fixture.oracle.release, oracle_identity::release());
     assert!(!fixture.source_hashes.is_empty());
     assert_eq!(fixture.cases.len(), 16, "fixture lost cases");
 

@@ -65,6 +65,7 @@ func TestMailConfigPathFallsBackToHomeConfig(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", "")
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 
 	got, err := MailConfigPath("")
 	if err != nil {
@@ -300,11 +301,19 @@ func TestLoadFromPathEnvOverrideLanguageAndMaxTokens(t *testing.T) {
 }
 
 func TestSaveBadDirPermission(t *testing.T) {
-	// Save to a path where the parent cannot be created (read-only root)
-	badPath := "/nonexistent_parent_dir_12345/config.toml"
+	// An existing file cannot be a parent directory on any supported OS.
+	parent := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(parent, []byte("unchanged"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	badPath := filepath.Join(parent, "config.toml")
 	err := Save(badPath, DefaultConfig())
 	if err == nil {
 		t.Error("expected error for unwritable path")
+	}
+	//nolint:gosec // parent is the fixed test-owned file under t.TempDir, not caller input.
+	if contents, readErr := os.ReadFile(parent); readErr != nil || string(contents) != "unchanged" {
+		t.Fatalf("invalid parent changed: %q, error %v", contents, readErr)
 	}
 }
 

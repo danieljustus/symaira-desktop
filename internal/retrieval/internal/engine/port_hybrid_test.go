@@ -19,9 +19,10 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
-const hybridOracleCommit = "3c1ef32f7de92420a972d34f6067a9b5f2de63c9"
+var hybridOracleCommit = func() string { return fixtureoracle.Current().Commit }
 
 type hybridFixture struct {
 	SchemaVersion  int                 `json:"schema_version"`
@@ -122,7 +123,7 @@ func TestRetrievalHybridFixture(t *testing.T) {
 	root := hybridRepoRoot(t)
 	fixture := hybridFixture{
 		SchemaVersion: 1,
-		OracleCommit:  hybridOracleCommit,
+		OracleCommit:  hybridOracleCommit(),
 		SourceHashes:  hybridSourceHashes(t, root),
 		Normalizations: []string{
 			"results with equal final float32 rrf_score are compared by uuid only within the contiguous tie group because Go merges a map and does not define that order",
@@ -155,7 +156,7 @@ func TestRetrievalHybridFixture(t *testing.T) {
 	if err := json.Unmarshal(data, &fixture); err != nil {
 		t.Fatalf("decode fixture: %v", err)
 	}
-	if fixture.SchemaVersion != 1 || fixture.OracleCommit != hybridOracleCommit {
+	if fixture.SchemaVersion != 1 || fixture.OracleCommit != hybridOracleCommit() {
 		t.Fatalf("unexpected fixture schema/oracle %d/%q", fixture.SchemaVersion, fixture.OracleCommit)
 	}
 	if !reflect.DeepEqual(fixture.SourceHashes, hybridSourceHashes(t, root)) {
@@ -396,7 +397,7 @@ func hybridVerifyPinnedSources(root string, hashes map[string]string) error {
 			return fmt.Errorf("Go oracle source path is not local: %s", rel)
 		}
 		//nolint:gosec // fixed Git subcommand, pinned commit, and allowlisted test sources.
-		cmd := exec.Command("git", "show", hybridOracleCommit+":"+filepath.ToSlash(rel))
+		cmd := exec.Command("git", "show", hybridOracleCommit()+":"+filepath.ToSlash(rel))
 		cmd.Dir = root
 		data, err := cmd.Output()
 		if err != nil {
@@ -404,7 +405,7 @@ func hybridVerifyPinnedSources(root string, hashes map[string]string) error {
 		}
 		sum := sha256.Sum256(data)
 		if got := hex.EncodeToString(sum[:]); got != hashes[rel] {
-			return fmt.Errorf("Go oracle source %s differs from %s: pinned %s, current %s", rel, hybridOracleCommit, got, hashes[rel])
+			return fmt.Errorf("Go oracle source %s differs from %s: pinned %s, current %s", rel, hybridOracleCommit(), got, hashes[rel])
 		}
 	}
 	return nil

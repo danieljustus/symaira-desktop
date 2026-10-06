@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -14,8 +17,6 @@ use std::{
 use serde::Deserialize;
 use sha2::Digest;
 use symroom_core::{event::Event, identity};
-
-const ORACLE_REVISION: &str = "32a4f9739fedb8aadbe282f59f5e7d4d60956b92";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -55,7 +56,7 @@ fn artifact_cli_matches_go_process_journal_and_filesystem_contract() {
         .expect("read Go-generated artifact fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse artifact fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 3);
     for source in [
         "cmd/symroom/main.go",

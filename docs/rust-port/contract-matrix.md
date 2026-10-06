@@ -2,8 +2,11 @@
 
 `TODO` means the contract is identified but lacks both a language-neutral
 fixture and Rust parity test. `PASS` requires executable CI evidence; prose,
-compilation, or a green unit test in only one language is not parity. The Go
-behavior oracle is commit `745c08e8144971c61133c5d0e5d61c7ce405aad2` / release reference `post-v0.12.2-security-880`; the immutable VALUE baseline remains `ae863319` / `v0.12.2`.
+compilation, or a green unit test in only one language is not parity. Live Go
+fixture identities use the source P/release in `testdata/port/provenance.json`,
+under the [fixture identity model](fixture-identity.md). Explicit historical
+input/probe roles retain their own verified H identities. The immutable VALUE
+baseline remains `ae863319` / `v0.12.2`.
 
 | ID | Seam | Fixture / input | Go oracle | Expected contract | Rust evidence | Platforms | Compare | Status |
 |---|---|---|---|---|---|---|---|---|

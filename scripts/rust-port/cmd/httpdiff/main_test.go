@@ -305,3 +305,25 @@ func TestNormalizeCreatedShareChecksAndReplacesDynamicFields(t *testing.T) {
 		t.Fatal("parseCreatedShareFor accepted the wrong shared path")
 	}
 }
+
+func TestAskProviderPromptUsesLogicalCitationPaths(t *testing.T) {
+	const prompt = "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[nested/Note.md]] (Note) ---\nnested Body Body\n\n--- Note [[Hello.md]] (Hello) ---\nBody\n\n--- Note [[internal.md]] (Hello) ---\nBody\n\nQuestion: Body\n"
+	for _, tc := range []struct {
+		name    string
+		request fakeOllamaRequest
+		wantErr bool
+	}{
+		{"canonical citation", fakeOllamaRequest{Model: "fixture-model", Prompt: prompt, Stream: true}, false},
+		{"filesystem citation", fakeOllamaRequest{Model: "fixture-model", Prompt: strings.Replace(prompt, "nested/Note.md", `nested\Note.md`, 1), Stream: true}, true},
+		{"wrong model", fakeOllamaRequest{Model: "wrong-model", Prompt: prompt, Stream: true}, true},
+		{"not streaming", fakeOllamaRequest{Model: "fixture-model", Prompt: prompt, Stream: false}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			provider := &fakeOllama{requests: make(chan fakeOllamaRequest, 1)}
+			provider.requests <- tc.request
+			if err := provider.assertAskRequests(1, "Body", true, false); (err != nil) != tc.wantErr {
+				t.Fatalf("assertAskRequests() = %v, want error=%v", err, tc.wantErr)
+			}
+		})
+	}
+}

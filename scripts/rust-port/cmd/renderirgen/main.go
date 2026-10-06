@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/draw/parse"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 type fixture struct {
@@ -37,9 +39,16 @@ type testCase struct {
 func main() {
 	output := flag.String("output", "testdata/port/render/json-ir.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "38891d35eb8ceb6c348eca9a78b3fb2873677e3d", "Go oracle commit")
-	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
+	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
+	if identityErr != nil {
+		fatal("resolve fixture source: %v", identityErr)
+	}
+	if identityErr := fixtureoracle.ValidateSource(identityRoot, inventory.Oracle{Commit: *commit, Release: *release}); identityErr != nil {
+		fatal("verify selected fixture source: %v", identityErr)
+	}
 
 	result := fixture{SchemaVersion: 1, Oracle: oracle{Commit: *commit, Release: *release}}
 	for _, item := range corpus() {

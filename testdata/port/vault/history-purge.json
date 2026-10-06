@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
-    "release": "post-issue-1127-history-root-lifetime"
+    "commit": "e04fe5af531070a79b585b4e945e322078201f0d",
+    "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
     "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",

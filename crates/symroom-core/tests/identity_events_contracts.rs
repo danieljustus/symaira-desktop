@@ -9,6 +9,9 @@
 //! one language is not parity, so nothing here is compared structurally except
 //! the fixture document itself.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -120,7 +123,8 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     };
     let modes_observable = fixture.generated_on == goos;
     assert!(
-        fixture.oracle.commit.len() >= 40 && !fixture.oracle.release.is_empty(),
+        fixture.oracle.commit == oracle_identity::commit()
+            && fixture.oracle.release == oracle_identity::release(),
         "fixture must name the pinned oracle"
     );
     for source in [

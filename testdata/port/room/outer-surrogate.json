@@ -4,7 +4,7 @@
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
-    "internal/room/room/port_identity_event_contract_test.go": "b8eb1f9500fc79819517f64c20fe128bbe049b3f65bb4baa47daa5f0f0e73efb",
+    "internal/room/room/port_identity_event_contract_test.go": "5d8534dcfb39911cdd2955ef2dceff49d75dfd468f813d06c45466225653a2f9",
     "internal/room/room/port_outer_surrogate_contract_test.go": "ea5a07eab1aa941a7a9365e0bdc9ed13014ad224c98fa8663fc79d93bd2eb0e2"
   },
   "public_key": "fa0385aa84b36f4a6dfc83ef156cf6a6ffc6b641cf86914e424703660e16dcdc",

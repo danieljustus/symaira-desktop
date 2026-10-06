@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,10 +25,6 @@ import (
 const (
 	retentionFixturePath   = "testdata/port/vault/retention.json"
 	retentionFixtureSchema = 1
-
-	// The oracle is pinned in docs/rust-port/architecture.md.
-	retentionOracleCommit  = "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a"
-	retentionOracleRelease = "v0.1.0"
 )
 
 type retentionRuleVector struct {
@@ -151,10 +148,14 @@ func TestPortRetentionContract(t *testing.T) {
 
 func buildRetentionFixture(t *testing.T) retentionFixture {
 	t.Helper()
+	source, err := fixtureoracle.Source(portRepoRoot(t))
+	if err != nil {
+		t.Fatal(err)
+	}
 	return retentionFixture{
 		SchemaVersion: retentionFixtureSchema,
 		GeneratedOn:   runtime.GOOS,
-		Oracle:        retentionOracle{Commit: retentionOracleCommit, Release: retentionOracleRelease},
+		Oracle:        retentionOracle{Commit: source.Commit, Release: source.Release},
 		SourceHashes: map[string]string{
 			"internal/retention/retention.go": retentionFileSHA256(t, "internal/retention/retention.go"),
 		},

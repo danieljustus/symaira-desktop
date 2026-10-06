@@ -21,13 +21,16 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
-	portDatasetImportFixtureRel   = "testdata/port/dataset/import.json"
-	portDatasetImportOracleCommit = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	portDatasetImportGoVersion    = "go1.26.6"
+	portDatasetImportFixtureRel = "testdata/port/dataset/import.json"
+
+	portDatasetImportGoVersion = "go1.26.6"
 )
+
+var portDatasetImportOracleCommit = func() string { return fixtureoracle.Current().Commit }
 
 type portDatasetImportFixture struct {
 	SchemaVersion   int                     `json:"schema_version"`
@@ -220,7 +223,7 @@ func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 	fixture := portDatasetImportFixture{
 		SchemaVersion:   1,
 		GeneratedOn:     runtime.GOOS + "/" + runtime.GOARCH,
-		Oracle:          portDatasetImportOracle{Commit: portDatasetImportOracleCommit, Toolchain: runtime.Version(), GOOS: runtime.GOOS, GOARCH: runtime.GOARCH},
+		Oracle:          portDatasetImportOracle{Commit: portDatasetImportOracleCommit(), Toolchain: runtime.Version(), GOOS: runtime.GOOS, GOARCH: runtime.GOARCH},
 		GeneratorSHA256: portDatasetImportHash(t, "internal/service/port_dataset_import_contract_test.go"),
 		SourceSHA256: map[string]string{
 			"internal/dataset/dataset.go":        portDatasetImportHash(t, "internal/dataset/dataset.go"),
@@ -461,12 +464,12 @@ func portDatasetImportHash(t *testing.T, relative string) string {
 	}
 	sum := sha256.Sum256(data)
 	if relative != "internal/service/port_dataset_import_contract_test.go" {
-		pinned, err := exec.Command("git", "-C", root, "show", portDatasetImportOracleCommit+":"+relative).Output() //nolint:gosec // test-only command uses a fixed helper and controlled arguments
+		pinned, err := exec.Command("git", "-C", root, "show", portDatasetImportOracleCommit()+":"+relative).Output() //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		if err != nil {
 			t.Fatalf("read pinned oracle source %s: %v", relative, err)
 		}
 		if !bytes.Equal(data, pinned) {
-			t.Fatalf("oracle source %s differs from pinned commit %s", relative, portDatasetImportOracleCommit)
+			t.Fatalf("oracle source %s differs from pinned commit %s", relative, portDatasetImportOracleCommit())
 		}
 	}
 	return hex.EncodeToString(sum[:])

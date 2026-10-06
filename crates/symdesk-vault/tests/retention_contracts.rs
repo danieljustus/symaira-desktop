@@ -9,6 +9,9 @@
 //! for failures whose wording is language-specific (JSON decoder text, OS errno
 //! text) the vectors carry a class instead of a message.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -154,7 +157,8 @@ fn retention_vectors_match_the_go_oracle() {
     let fixture = load_fixture();
     assert_eq!(fixture.schema_version, 1, "fixture schema version");
     assert!(
-        fixture.oracle.commit.len() >= 40 && !fixture.oracle.release.is_empty(),
+        fixture.oracle.commit == oracle_identity::commit()
+            && fixture.oracle.release == oracle_identity::release(),
         "fixture must name the pinned oracle"
     );
     assert!(

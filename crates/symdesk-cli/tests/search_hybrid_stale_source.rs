@@ -200,6 +200,9 @@ fn start_embedding_server() -> (String, mpsc::Sender<()>, thread::JoinHandle<()>
 }
 
 fn respond_embedding_request(stream: TcpStream) {
+    stream
+        .set_nonblocking(false)
+        .expect("make accepted test stream blocking");
     let mut reader = BufReader::new(stream.try_clone().expect("clone HTTP stream"));
     let mut request_line = String::new();
     reader

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const mcpMutationFixture = "../../../testdata/port/room/mcp-mutations.json"
@@ -66,7 +67,7 @@ func TestSymRoomMCPMutationOracle(t *testing.T) {
 		}
 		responses = append(responses, decoded[0])
 	}
-	doc := map[string]any{"schema_version": 1, "oracle": map[string]any{"commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2", "release": "post-v0.12.2-security-880"}}
+	doc := map[string]any{"schema_version": 1, "oracle": map[string]any{"commit": fixtureoracle.Current().Commit, "release": fixtureoracle.Current().Release}}
 	cases := make([]map[string]any, 0, len(requests))
 	for i := range fixtureRequests {
 		response := responses[i].(map[string]any)

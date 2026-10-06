@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 // TestPortHistoryLifecycleContract records the Go history lifecycle — task
@@ -64,9 +66,9 @@ const historyLifecycleFixtureRel = "../../testdata/port/vault/history-lifecycle.
 
 const historyLifecycleCaseCount = 18
 
-const (
-	historyOracleCommit  = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	historyOracleRelease = "post-issue-1127-history-root-lifetime"
+var (
+	historyOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	historyOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type historyLifecycleFixture struct {
@@ -181,8 +183,8 @@ func buildHistoryLifecycleFixture(t *testing.T) historyLifecycleFixture {
 	return historyLifecycleFixture{
 		SchemaVersion: 1,
 		Oracle: historyOracleBlock{
-			Commit:  historyOracleCommit,
-			Release: historyOracleRelease,
+			Commit:  historyOracleCommit(),
+			Release: historyOracleRelease(),
 		},
 		SourceHashes: hashes,
 		Cases:        gated,

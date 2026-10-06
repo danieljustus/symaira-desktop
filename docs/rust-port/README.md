@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-006` passed; `RUST-007` and `RUST-016` are in progress. VALUE-001 passed for the exact candidate `5c5e98c5`; later commits need their own integrated verification.
-> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the revision whose production source the fixtures were generated from, which must be the checked revision or one of its ancestors. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** the canonical live source P and release are recorded in [provenance.json](../../testdata/port/provenance.json). Every live fixture uses this same identity, backed by the complete production-source digest and immutable ancestry checks. Explicit historical input/probe roles are documented in [fixture-identity.md](fixture-identity.md). VALUE baselines remain pinned to `ae863319` / `v0.12.2`.
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -396,13 +396,13 @@ release contract, or the fixture generators:
 
 1. Merge the functional change as **P**; `main` is briefly red on the port
    contract until step 4 lands.
-2. On the updated `main`, run `make port-fixtures-generate > q.patch` from a
+2. On the updated `main`, run `make port-fixtures-generate PORT_ORACLE_COMMIT=$(git rev-parse HEAD) > q.patch` from a
    clean worktree (no untracked or ignored Go inputs under `cmd`, `internal`,
    `scripts/rust-port` or `vendor`). Generation runs in a disposable worktree,
-   resolves the oracle to `HEAD` by default, and writes a
+   uses the central provenance P by default (the command above selects the newly merged P), and writes a
    `# SYMAIRA PORT FIXTURE PATCH V1` artifact to stdout; it never touches the
    caller's worktree. The `--oracle-commit` flag accepts an explicit revision
-   only when it is `HEAD` or one of its ancestors.
+   only when it is `HEAD` or one of its ancestors and its full production bytes match the generating tree. The compatibility `--fixture-oracle-commit` flag must select that same P.
 3. Inspect the artifact, which is limited to the allowlisted derived fixture
    paths and `testdata/port/provenance.json`. Either validate it with
    `make port-fixtures-apply PORT_FIXTURES_ARTIFACT=q.patch` (builds and checks

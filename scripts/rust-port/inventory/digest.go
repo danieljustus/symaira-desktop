@@ -17,9 +17,15 @@ import (
 // and the release/data contracts. Harness, test, documentation, and future Rust
 // files deliberately do not affect this digest.
 func ComputeProductionSourceDigest(repoRoot string) (string, error) {
+	return computeProductionSourceDigest(repoRoot, func(args ...string) ([]byte, error) {
+		return inventoryGitOutput(repoRoot, args...)
+	})
+}
+
+func computeProductionSourceDigest(repoRoot string, gitOutput func(...string) ([]byte, error)) (string, error) {
 	args := []string{"ls-files", "--cached", "--others", "--exclude-standard", "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	output, err := inventoryGitOutput(repoRoot, args...)
+	output, err := gitOutput(args...)
 	if err != nil {
 		return "", fmt.Errorf("list working-tree production inputs: %w", err)
 	}
@@ -49,9 +55,15 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 // directly from a Git revision. Fixture generation uses this to prove that an
 // operator cannot label arbitrary working-tree bytes with a trusted oracle SHA.
 func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string, error) {
+	return computeGitRevisionProductionSourceDigest(repoRoot, revision, func(args ...string) ([]byte, error) {
+		return inventoryGitOutput(repoRoot, args...)
+	})
+}
+
+func computeGitRevisionProductionSourceDigest(repoRoot, revision string, gitOutput func(...string) ([]byte, error)) (string, error) {
 	args := []string{"ls-tree", "-r", "--name-only", revision, "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	output, err := inventoryGitOutput(repoRoot, args...)
+	output, err := gitOutput(args...)
 	if err != nil {
 		return "", fmt.Errorf("list production inputs at %s: %w", revision, err)
 	}
@@ -66,13 +78,48 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	hasher := sha256.New()
 	for _, rel := range files {
 		_, _ = io.WriteString(hasher, rel+"\n")
-		content, showErr := inventoryGitOutput(repoRoot, "show", revision+":"+rel)
+		content, showErr := gitOutput("show", revision+":"+rel)
 		if showErr != nil {
 			return "", fmt.Errorf("read %s at %s: %w", rel, revision, showErr)
 		}
 		_, _ = hasher.Write(content)
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// NewProductionSourceVerifier captures the source root and Git executable without
+// spawning processes. Its returned function validates complete source bytes on
+// demand, even after a test isolates PATH or its working directory.
+func NewProductionSourceVerifier(repoRoot string) (func(string) error, error) {
+	root, err := filepath.Abs(repoRoot)
+	if err != nil {
+		return nil, err
+	}
+	git, err := exec.LookPath("git")
+	if err != nil {
+		return nil, err
+	}
+	git, err = filepath.Abs(git)
+	if err != nil {
+		return nil, err
+	}
+	output := func(args ...string) ([]byte, error) {
+		return inventoryGitOutputWithExecutable(root, git, args...)
+	}
+	return func(revision string) error {
+		actual, err := computeProductionSourceDigest(root, output)
+		if err != nil {
+			return err
+		}
+		pinned, err := computeGitRevisionProductionSourceDigest(root, revision, output)
+		if err != nil {
+			return err
+		}
+		if actual != pinned {
+			return fmt.Errorf("fixture production source differs from selected P %s: actual=%s pinned=%s", revision, actual, pinned)
+		}
+		return nil
+	}, nil
 }
 
 // ComputeGeneratorSourceDigest fingerprints the live code that derives and
@@ -117,6 +164,9 @@ func generatorSourcePaths() []string {
 		"go.sum",
 		"Makefile",
 		".gitattributes",
+		"testdata/port/cli/cases.json",
+		"testdata/port/cli/retention-cases.json",
+		"crates/symdesk-index/tests/data/dataset_sync_time",
 		"scripts/rust-port",
 		"cmd",
 		"internal",
@@ -180,13 +230,17 @@ func hashGeneratorDigestInputs(files []string, read func(string) ([]byte, error)
 }
 
 func inventoryGitOutput(repoRoot string, args ...string) ([]byte, error) {
+	return inventoryGitOutputWithExecutable(repoRoot, "git", args...)
+}
+
+func inventoryGitOutputWithExecutable(repoRoot, git string, args ...string) ([]byte, error) {
 	configPath, cleanup, err := PrivateGitConfig()
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
 	//nolint:gosec // callers use fixed Git subcommands and repository-derived revision/path inputs.
-	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
+	command := exec.Command(git, append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
 	command.Dir = repoRoot
 	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
 	output, err := command.CombinedOutput()

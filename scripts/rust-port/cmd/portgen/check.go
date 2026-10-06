@@ -82,6 +82,10 @@ func runProvenanceCheck(repoRoot string) error {
 		}
 	}
 
+	if err := verifyFixtureIdentities(repoRoot, head, prov.Oracle); err != nil {
+		return fmt.Errorf("verify canonical fixture identity model: %w", err)
+	}
+
 	snapshot, cleanup, err := createImmutableSourceSnapshot(repoRoot, head)
 	if err != nil {
 		return err

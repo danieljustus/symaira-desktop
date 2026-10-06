@@ -1,3 +1,6 @@
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     fs,
     path::PathBuf,
@@ -14,11 +17,8 @@ const FIXTURE: &str = include_str!("../../../testdata/port/dataset/query-aggrega
 fn grouped_count_projection_matches_go_service_fixture() {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("parse Go aggregate fixture");
     assert_eq!(fixture["schema_version"], 1);
-    assert_eq!(
-        fixture["oracle"]["commit"],
-        "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
-    );
-    assert_eq!(fixture["oracle"]["release"], "post-v0.12.2-security-880");
+    assert_eq!(fixture["oracle"]["commit"], oracle_identity::commit());
+    assert_eq!(fixture["oracle"]["release"], oracle_identity::release());
     let dataset = fixture["dataset"].as_str().expect("dataset");
     let query = &fixture["query"];
     let group_by = query["group_by"].as_str().expect("group_by");

@@ -21,11 +21,13 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/history"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
-const (
-	defaultOracleCommit  = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	defaultOracleRelease = "post-issue-1127-history-root-lifetime"
+var (
+	defaultOracleCommit  = fixtureoracle.Defaults().Commit
+	defaultOracleRelease = fixtureoracle.Defaults().Release
 )
 
 type Document struct {
@@ -96,9 +98,16 @@ type FsEntry struct {
 
 func main() {
 	output := flag.String("output", "", "oracle fixture report output path")
-	commit := flag.String("oracle-commit", defaultOracleCommit, "Go oracle commit")
-	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
+	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
+	if identityErr != nil {
+		fatal("resolve fixture source: %v", identityErr)
+	}
+	if identityErr := fixtureoracle.ValidateSource(identityRoot, inventory.Oracle{Commit: *commit, Release: *release}); identityErr != nil {
+		fatal("verify selected fixture source: %v", identityErr)
+	}
 
 	if *output == "" {
 		fatal("output path is required (specify --output)")

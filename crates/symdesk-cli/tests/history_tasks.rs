@@ -69,8 +69,10 @@ fn history_tasks_matches_go_process_contract() {
         assert_eq!(
             output.status.code().unwrap_or(-1),
             case.exit_code,
-            "{} exit",
-            case.name
+            "{} exit\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         #[cfg(windows)]
         let mut stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");

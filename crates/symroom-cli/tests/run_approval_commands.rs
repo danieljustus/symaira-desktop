@@ -110,8 +110,10 @@ fn run_approval_and_denial_match_go_process_and_signed_journal() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit {}",
-            case.name
+            "exit {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         let stdout = if case.dynamic_event {
             "<dynamic-event-id>\n".as_bytes().to_vec()

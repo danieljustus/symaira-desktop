@@ -129,8 +129,10 @@ fn run_list_and_show_match_go_process_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "case {}",
-            case.name
+            "case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             output.stdout,
@@ -194,8 +196,10 @@ fn run_wait_matches_go_process_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "case {}",
-            case.name
+            "case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             output.stdout,
@@ -275,8 +279,10 @@ fn run_request_start_cancel_match_go_process_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "case {}",
-            case.name
+            "case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             output.stdout,

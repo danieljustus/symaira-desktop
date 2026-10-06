@@ -121,8 +121,10 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code case {}",
-            case.name
+            "exit code case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             normalize_home(&output.stdout, &home),

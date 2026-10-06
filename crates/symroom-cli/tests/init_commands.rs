@@ -144,8 +144,10 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code {}",
-            case.name
+            "exit code {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             normalize_stdout(&output.stdout),

@@ -88,8 +88,10 @@ fn identity_cli_matches_go_process_and_key_file_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "exit code case {}",
-            case.name
+            "exit code case {}\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             normalize_stdout(&output.stdout, case.dynamic_keys),

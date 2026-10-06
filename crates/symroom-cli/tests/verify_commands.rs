@@ -85,8 +85,10 @@ fn verify_cli_matches_go_process_contract() {
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
-            "{} exit",
-            case.name
+            "{} exit\nstdout: {}\nstderr: {}",
+            case.name,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
         );
         assert_eq!(
             output.stdout,

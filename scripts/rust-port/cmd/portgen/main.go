@@ -108,6 +108,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/index-maintenance-process.json",
 	"testdata/port/cli/index-build-process.json",
 	"testdata/port/ai/recipe-validate.json",
+	"testdata/port/render/html-note.json",
 	"testdata/port/render/json-ir.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",

@@ -1568,16 +1568,19 @@ impl Sidecar {
             .map_err(Into::into)
     }
 
-    /// Returns an indexed title for the exact stored path, matching Go's
-    /// `DB.GetTitle` lookup without enumerating the whole vault.
+    /// Returns an indexed title, preferring the exact stored path and falling
+    /// back to the unprefixed key for a canonical Windows path.
     ///
     /// # Errors
     /// Returns an error when no row exists or SQLite cannot execute the query.
     pub fn get_title(&self, path: &str) -> Result<String, SidecarError> {
+        let storage_key = strip_verbatim_prefix(path);
         self.connection
-            .query_row("SELECT title FROM files WHERE path = ?1", [path], |row| {
-                row.get(0)
-            })
+            .query_row(
+                "SELECT title FROM files WHERE path IN (?1, ?2) ORDER BY (path = ?1) DESC LIMIT 1",
+                [path, storage_key.as_str()],
+                |row| row.get(0),
+            )
             .map_err(Into::into)
     }
 
@@ -2234,6 +2237,37 @@ mod source_tests {
         ));
         fs::create_dir_all(&path).expect("create temp dir");
         path
+    }
+
+    #[test]
+    fn indexed_title_accepts_native_canonical_and_storage_key_paths() {
+        let root = temp_dir("indexed-canonical-title");
+        let source = root.join("external");
+        fs::create_dir(&source).expect("external source");
+        let note = source.join("guide.md");
+        fs::write(
+            &note,
+            "---\ntitle: Indexed external title\n---\nSearch body.\n",
+        )
+        .expect("source note");
+        let canonical = fs::canonicalize(&note).expect("canonical source note");
+        let storage_key = absolute_non_verbatim(&canonical).expect("ordinary storage key");
+        let mut sidecar = Sidecar::open(&root.join("sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source)
+            .expect("index external note");
+
+        for path in [&canonical, &storage_key] {
+            assert_eq!(
+                sidecar
+                    .get_title(path.to_str().expect("UTF-8 fixture path"))
+                    .expect("indexed title for either native path spelling"),
+                "Indexed external title"
+            );
+        }
+
+        drop(sidecar);
+        fs::remove_dir_all(root).expect("remove temporary source");
     }
 
     #[test]

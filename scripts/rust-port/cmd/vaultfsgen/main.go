@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
@@ -74,8 +75,8 @@ var symlinkCaseIDs = map[string]bool{
 func main() {
 	output := flag.String("output", "testdata/port/vault/filesystem.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "745c08e8144971c61133c5d0e5d61c7ce405aad2", "Go oracle commit")
-	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
+	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
+	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
 
 	if *check {
@@ -85,6 +86,14 @@ func main() {
 		}
 		*commit, *release = oracle.Commit, oracle.Release
 	}
+	identityRoot, identityErr := fixtureoracle.FindRepositoryRoot(".")
+	if identityErr != nil {
+		fatal("resolve fixture source: %v", identityErr)
+	}
+	if identityErr := fixtureoracle.ValidateSource(identityRoot, inventory.Oracle{Commit: *commit, Release: *release}); identityErr != nil {
+		fatal("verify selected fixture source: %v", identityErr)
+	}
+
 	value, err := build(inventory.Oracle{Commit: *commit, Release: *release})
 	if err != nil {
 		fatal("build fixture: %v", err)

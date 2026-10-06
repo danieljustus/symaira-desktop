@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -83,10 +86,7 @@ fn vault(root: &TempRoot, alias: &str) -> PathBuf {
 fn cli_vault_precedence_matches_go_process_fixture() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle_commit,
-        "e023816a9db2b3d71514049195886fe1b9766a5a"
-    );
+    assert_eq!(fixture.oracle_commit, oracle_identity::commit());
     assert_eq!(fixture.cases.len(), 4);
 
     for case in fixture.cases {

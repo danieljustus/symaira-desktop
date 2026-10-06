@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
+    "commit": "e04fe5af531070a79b585b4e945e322078201f0d",
     "release": "post-v0.12.2-security-880",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6"

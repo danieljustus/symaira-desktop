@@ -16,6 +16,9 @@ import sys
 import tempfile
 import unittest
 
+# Dynamic harness imports must not leave untracked generator inputs behind.
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_FILES = [
     "go.mod", "go.sum", ".goreleaser.yml", "Dockerfile", "VAULT.md",
@@ -35,11 +38,7 @@ ORACLE_SOURCE_FILES = {
     "history": ROOT / "scripts/rust-port/cmd/historygen/main.go",
     "frontmatter": ROOT / "scripts/rust-port/cmd/vaultwritegen/main.go",
 }
-EXPECTED_SOURCE_GUARD_ORACLE_COMMITS = {
-    "history": "68095b7eabff2de0e901c90931432b125df7ebc4",
-    "frontmatter": "68095b7eabff2de0e901c90931432b125df7ebc4",
-}
-SOURCE_GUARD_JOBS = ("test", "port-contract", "rust-native")
+
 
 
 
@@ -85,13 +84,16 @@ def workflow_job_body(workflow, job):
 
 
 def pinned_source_guard_oracle_commits():
+    canonical = json.loads((ROOT / "testdata/port/provenance.json").read_text())["oracle"]["commit"]
+    if re.fullmatch(r"[0-9a-f]{40}", canonical) is None:
+        raise AssertionError("canonical oracle must be a full lowercase commit")
     commits = {}
-    pattern = re.compile(r'(?m)^\s*(?:const\s+)?defaultOracleCommit\s*=\s*"([0-9a-f]{40})"$')
+    pattern = re.compile(r"(?m)^\s*defaultOracleCommit\s*=\s*fixtureoracle\.Defaults\(\)\.Commit$")
     for name, source in ORACLE_SOURCE_FILES.items():
         match = pattern.search(source.read_text())
         if match is None:
-            raise AssertionError(f"expected pinned oracle commit in {source.relative_to(ROOT)}")
-        commits[name] = match.group(1)
+            raise AssertionError(f"expected canonical oracle binding in {source.relative_to(ROOT)}")
+        commits[name] = canonical
     return commits
 
 
@@ -307,32 +309,25 @@ class NativeCIContracts(unittest.TestCase):
                     ["fetch-depth: 0"],
                 )
 
-    def test_clone_based_source_guards_materialize_pinned_oracle_branch(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    def test_clone_based_source_guards_use_reachable_canonical_oracle(self):
         commits = pinned_source_guard_oracle_commits()
-        self.assertEqual(commits, EXPECTED_SOURCE_GUARD_ORACLE_COMMITS)
-        expected = [
-            (
-                "git fetch --no-tags origin "
-                f"+{commit}:refs/heads/rust-port-oracle-{commit}"
+        self.assertEqual(set(commits), set(ORACLE_SOURCE_FILES))
+        self.assertEqual(len(set(commits.values())), 1)
+        # Canonical P is an ancestor of the checkout, not an arbitrary legacy
+        # branch alias. Full-history CI checkouts are checked separately above.
+        # Prove a real no-local clone transfers the selected Git source object.
+        with tempfile.TemporaryDirectory(prefix="canonical-oracle-clone-") as temp:
+            clone = Path(temp) / "clone"
+            result = subprocess.run(
+                ["git", "clone", "--no-local", "--no-checkout", str(ROOT), str(clone)],
+                capture_output=True, timeout=60,
             )
-            for commit in commits.values()
-        ]
-        for job in SOURCE_GUARD_JOBS:
-            with self.subTest(job=job):
-                job_workflow = workflow_job_body(workflow, job)
-                for command in expected:
-                    with self.subTest(command=command):
-                        runs = re.findall(
-                            rf"(?m)^        run: ({re.escape(command)})$",
-                            job_workflow,
-                        )
-                        if not runs:
-                            runs = re.findall(
-                                rf"(?m)^          ({re.escape(command)})$",
-                                job_workflow,
-                            )
-                        self.assertEqual(runs, [command])
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+            for commit in set(commits.values()):
+                subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"], cwd=ROOT, check=True)
+                original = subprocess.check_output(["git", "show", commit + ":go.mod"], cwd=ROOT)
+                copied = subprocess.check_output(["git", "show", commit + ":go.mod"], cwd=clone)
+                self.assertEqual(copied, original)
 
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():

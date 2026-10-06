@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const identityCLIContractPath = "testdata/port/room/identity-cli.json"
@@ -90,7 +91,7 @@ func makeIdentityCLIContract(t *testing.T, root string) (identityCLIContract, er
 	t.Helper()
 	fixture := identityCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "439d04347bb2881495bff3acc52a43dc7bff6d39",
+		OracleRevision: fixtureoracle.Current().Commit,
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":                identityCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_identity.go":        identityCLIFileHash(t, root, "cmd/symroom/cmd_identity.go"),

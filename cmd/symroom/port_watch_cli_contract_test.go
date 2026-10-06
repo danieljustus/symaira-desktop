@@ -20,6 +20,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/artifact"
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const watchCLIContractPath = "testdata/port/room/watch-cli.json"
@@ -122,7 +123,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 	}
 	fixture := watchCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "138746d3ac4df97dd230ecd0fd67f762dd55f499",
+		OracleRevision: fixtureoracle.Current().Commit,
 		IdentityKey:    hex.EncodeToString(seed[:]),
 		SourceHashes:   map[string]string{},
 	}

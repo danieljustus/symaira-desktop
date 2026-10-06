@@ -1,12 +1,12 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "68095b7eabff2de0e901c90931432b125df7ebc4",
-    "release": "post-issue-857-markdown-attachment-health"
+    "commit": "e04fe5af531070a79b585b4e945e322078201f0d",
+    "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
-    "go.mod": "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
-    "go.sum": "54d6151b45cee2b0a71c057cf7423da7751149dd39447aea434bf1837a75d315",
+    "go.mod": "4ddb297d4dde70096e12c7111d96fc97242d10ee6bf0e0ebc821ee8f58534aa5",
+    "go.sum": "3d460b0ff4ea0a87c6d837a79b7b66dc43b19d9c94934980f5ad703bf8e1a441",
     "internal/vault/adopt.go": "bca6c7451d706eb9f3d72c62ff1042d4b0f78acf44b769ee31e50236d00bb96f",
     "internal/vault/asn.go": "3724de55e70b001a29e770719d8bcc7919bc9f52005019170c1f8bd64c524334",
     "internal/vault/asn_lock_unix.go": "7219874019353d841785ef18577a9decdf28ac3668c8f5f7f93f0e0e6bc4f2ad",

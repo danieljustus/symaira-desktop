@@ -8,11 +8,13 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
-const (
-	retrievalStateOracleCommit  = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
-	retrievalStateOracleRelease = "post-v0.13.0-dependency-refresh"
+var (
+	retrievalStateOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	retrievalStateOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type retrievalEmbeddingStateFixture struct {
@@ -131,7 +133,7 @@ func makeRetrievalEmbeddingStateFixture(t *testing.T) (*retrievalEmbeddingStateF
 	fixture := &retrievalEmbeddingStateFixture{
 		SchemaVersion: 1,
 		Oracle: retrievalStateOracle{
-			Commit: retrievalStateOracleCommit, Release: retrievalStateOracleRelease,
+			Commit: retrievalStateOracleCommit(), Release: retrievalStateOracleRelease(),
 		},
 		Documents:       documents,
 		Chunks:          chunks,

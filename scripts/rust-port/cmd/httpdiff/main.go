@@ -1809,7 +1809,7 @@ func (f *fakeOllama) assertAskRequests(count int, query string, withSource, note
 	if notebook && withSource {
 		wantPrompt = "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[Hello.md]] (Hello) ---\nBody\n\nQuestion: " + query + "\n"
 	} else if withSource {
-		nestedPath := filepath.Join("nested", "Note.md")
+		nestedPath := filepath.ToSlash(filepath.Join("nested", "Note.md"))
 		wantPrompt = fmt.Sprintf("You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[%s]] (Note) ---\nnested Body Body\n\n--- Note [[Hello.md]] (Hello) ---\nBody\n\n--- Note [[internal.md]] (Hello) ---\nBody\n\nQuestion: %s\n", nestedPath, query)
 	}
 	for index := range count {

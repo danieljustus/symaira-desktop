@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -11,7 +14,6 @@ use serde::Deserialize;
 use serde_json::Value;
 use symroom_core::{event::Event, identity};
 
-const ORACLE_REVISION: &str = "558cac10528b2a03e344640190327a662d5a60e8";
 const NORMALIZATION: &str = "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized";
 
 #[derive(Deserialize)]
@@ -59,7 +61,7 @@ fn run_approval_and_denial_match_go_process_and_signed_journal() {
         .expect("read Go-generated approval CLI fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse approval fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.normalization, NORMALIZATION);
     assert_eq!(fixture.source_hashes.len(), 9);
     assert_eq!(fixture.identity_keys.len(), 6);

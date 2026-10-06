@@ -16,6 +16,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const brainProfileCLIFixture = "testdata/port/room/brain-profile-cli.json"
@@ -153,7 +154,7 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 	memberID := identity.ComputeMemberID(publicKey)
 	fixture := brainProfileCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "07eb8d9fefcc9e150302558ea0613d49e6dfc201",
+		OracleRevision: fixtureoracle.Current().Commit,
 		MemberID:       memberID,
 		RoomTOML:       "id = \"rm_brain_profile_fixture\"\ncreated = \"2026-09-23T00:00:00.000Z\"\n",
 		SourceHashes:   map[string]string{},

@@ -10,16 +10,23 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
-	cfgSaveFixturePath  = "testdata/port/config/config-save.json"
-	cfgSaveSchema       = 1
-	cfgSaveOracleCommit = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
-	cfgSaveOracleRel    = "post-v0.12.2-security-880"
+	cfgSaveFixturePath = "testdata/port/config/config-save.json"
+	cfgSaveSchema      = 1
 )
 
+var
+
 // cfgSavePrefixes maps an error stage to the exact Go wrapper prefix.
+(
+	cfgSaveOracleCommit = func() string { return fixtureoracle.Current().Commit }
+	cfgSaveOracleRel    = func() string { return fixtureoracle.Current().Release }
+)
+
 var cfgSavePrefixes = map[string]string{
 	"create_directory": "failed to create config directory:",
 	"create_file":      "failed to create config file:",
@@ -319,7 +326,7 @@ func TestPortConfigSaveContract(t *testing.T) {
 	if os.Getenv("PORT_GENERATE") == "1" {
 		fixture := cfgSaveFixture{
 			SchemaVersion: cfgSaveSchema,
-			Oracle:        cfgSaveOracle{Commit: cfgSaveOracleCommit, Release: cfgSaveOracleRel},
+			Oracle:        cfgSaveOracle{Commit: cfgSaveOracleCommit(), Release: cfgSaveOracleRel()},
 			SourceHashes: map[string]string{
 				"internal/config/config.go": cfgSaveHash(t, root, "internal/config/config.go"),
 			},

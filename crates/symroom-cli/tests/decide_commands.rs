@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -12,8 +15,6 @@ use std::{
 };
 
 use serde::Deserialize;
-
-const ORACLE_REVISION: &str = "b68f7bccb1e636a0b2c1e1093e5473c3709683b3";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -57,7 +58,7 @@ fn decide_cli_matches_go_process_and_journal_contract() {
     let data = fs::read(fixture_path).expect("read Go-generated decide fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse decide fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 6);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert!(fixture.cases.iter().any(|case| case.mutates));

@@ -10,13 +10,17 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
 	retentionRulesFixturePath = "testdata/port/vault/retention-rules.json"
 	schemaVersion             = 1
-	sourceOracleCommit        = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	sourceOracleRelease       = "post-native-Windows-path-repair"
+)
+
+var (
+	sourceOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	sourceOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type RetentionOracle struct {
@@ -95,7 +99,7 @@ func buildRetentionRulesFixture(t *testing.T) retentionRulesFixture {
 	return retentionRulesFixture{
 		SchemaVersion: schemaVersion,
 		GeneratedOn:   runtime.GOOS,
-		Oracle:        RetentionOracle{Commit: sourceOracleCommit, Release: sourceOracleRelease},
+		Oracle:        RetentionOracle{Commit: sourceOracleCommit(), Release: sourceOracleRelease()},
 		SourceHashes: map[string]string{
 			"internal/retention/retention.go": retentionFileSHA256(t, "internal/retention/retention.go"),
 			"internal/vault/vault.go":         retentionFileSHA256(t, "internal/vault/vault.go"),

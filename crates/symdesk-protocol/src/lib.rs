@@ -1272,7 +1272,9 @@ pub fn search_notebook_ask_sources(
         let Ok(document) = parse_bytes(&source_path, &contents) else {
             continue;
         };
-        let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
+        // Canonical Windows paths are for I/O; exact FTS scope uses Go's storage keys.
+        let lookup_path = strip_windows_verbatim_prefix(&absolute);
+        let Some(absolute_path) = lookup_path.to_str().map(str::to_owned) else {
             continue;
         };
         absolute_paths.push(absolute_path);
@@ -6758,6 +6760,71 @@ mod tests {
         let matched = std::collections::HashSet::from([citation_path]);
         assert!(notebook_source_was_matched("nested/Note.md", &matched));
         assert!(!notebook_source_was_matched("nested/Other.md", &matched));
+    }
+
+    #[test]
+    fn notebook_ask_preserves_indexed_score_and_exact_source_scope() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-notebook-score-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(root.join("notebooks")).unwrap();
+        fs::write(root.join("Hello.md"), b"---\ntitle: Hello\n---\nBody").unwrap();
+        fs::write(root.join("Outside.md"), b"Body outsidefixturetoken").unwrap();
+        fs::write(
+            root.join("notebooks/research.md"),
+            b"---\ntype: notebook\nsources:\n  - Hello.md\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("notebooks/empty.md"),
+            b"---\ntype: notebook\nsources: []\n---\n",
+        )
+        .unwrap();
+        let root = root.canonicalize().unwrap();
+        let mut sidecar = Sidecar::open(&root.join("sidecar.db")).unwrap();
+        sidecar.refresh_index(&root).unwrap();
+        assert_eq!(sidecar.search("outsidefixturetoken").unwrap().len(), 1);
+
+        let key = symdesk_index::vault_document_path(&root, Path::new("Hello.md")).unwrap();
+        assert_eq!(
+            sidecar
+                .search_scoped("Body", &[key.to_str().unwrap().to_owned()])
+                .unwrap()
+                .len(),
+            1
+        );
+        #[cfg(windows)]
+        {
+            let io_path = secure_path(&root, "Hello.md").unwrap();
+            assert_ne!(io_path, key);
+            assert!(
+                sidecar
+                    .search_scoped("Body", &[io_path.to_str().unwrap().to_owned()])
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+
+        let (hits, scope) =
+            search_notebook_ask_sources(&root, "research", "Body", &sidecar).unwrap();
+        assert_eq!(scope, vec!["Hello.md".to_owned()]);
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].path, "Hello.md");
+        assert_eq!(hits[0].score, 1.0);
+
+        let (fallback, _) =
+            search_notebook_ask_sources(&root, "research", "outsidefixturetoken", &sidecar)
+                .unwrap();
+        assert_eq!(fallback.len(), 1);
+        assert_eq!(fallback[0].path, "Hello.md");
+        assert_eq!(fallback[0].score, 0.0);
+        let (hits, scope) = search_notebook_ask_sources(&root, "empty", "Body", &sidecar).unwrap();
+        assert!(hits.is_empty() && scope.is_empty());
     }
 
     #[test]

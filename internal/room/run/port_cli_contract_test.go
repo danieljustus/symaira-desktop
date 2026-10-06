@@ -15,6 +15,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const runCLIContractFixture = "testdata/port/room/run-cli.json"
@@ -109,7 +110,7 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	}
 
 	fixture := runCLIContract{
-		SchemaVersion: 1, OracleRevision: "6f1c04e38e283e0e722661725bd5baec9f3f5fe5",
+		SchemaVersion: 1, OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent: "cli-room-created", RootPubkey: "ed25519:" + hex.EncodeToString(alpha.PublicKey),
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),

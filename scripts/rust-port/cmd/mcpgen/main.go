@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 type fixture struct {
@@ -65,7 +67,7 @@ func main() {
 func generated() fixture {
 	return fixture{
 		SchemaVersion: 1,
-		Oracle:        oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"},
+		Oracle:        oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release},
 		Cases: []mcpCase{
 			// StartServer leaves corekit instructions at its empty default, which Go omits from initialize.
 			{ID: "mcp001-initialize-string-id", Request: `{"jsonrpc":"2.0","id":"init","method":"initialize"}`, InstructionsAbsent: true},

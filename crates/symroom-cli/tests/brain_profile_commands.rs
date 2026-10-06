@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -11,8 +14,6 @@ use std::{
 };
 
 use serde::Deserialize;
-
-const ORACLE_REVISION: &str = "07eb8d9fefcc9e150302558ea0613d49e6dfc201";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -61,7 +62,7 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
     let data = fs::read(fixture_path).expect("read Go-generated brain-profile fixture");
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse brain-profile fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.oracle_revision, oracle_identity::commit());
     assert_eq!(fixture.source_hashes.len(), 3);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
     assert_eq!(fixture.journal_files.len(), 1);

@@ -10,13 +10,14 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const portDatasetQueryAggregateFixture = "../../testdata/port/dataset/query-aggregate.json"
 
-const (
-	portDatasetQueryAggregateOracleCommit  = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
-	portDatasetQueryAggregateOracleRelease = "post-v0.12.2-security-880"
+var (
+	portDatasetQueryAggregateOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	portDatasetQueryAggregateOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type portDatasetQueryAggregateFixtureData struct {
@@ -111,7 +112,7 @@ func buildPortDatasetQueryAggregateFixture(t *testing.T) (portDatasetQueryAggreg
 	fixture := portDatasetQueryAggregateFixtureData{
 		SchemaVersion: 1,
 		Oracle: portDatasetQueryAggregateOracle{
-			Commit: portDatasetQueryAggregateOracleCommit, Release: portDatasetQueryAggregateOracleRelease,
+			Commit: portDatasetQueryAggregateOracleCommit(), Release: portDatasetQueryAggregateOracleRelease(),
 			ModuleGo: "1.26.6", Toolchain: "go1.26.6",
 		},
 		Dataset: "orders", Rows: rows, Query: query, Result: result,

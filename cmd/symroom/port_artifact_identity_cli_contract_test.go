@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const artifactIdentityContractPath = "testdata/port/room/artifact-identity-cli.json"
@@ -105,7 +106,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 	owner := &identity.Identity{Name: "owner", MemberID: identity.ComputeMemberID(private.Public().(ed25519.PublicKey)), PublicKey: private.Public().(ed25519.PublicKey), PrivateKey: private}
 	fixture := artifactIdentityContract{
 		SchemaVersion:  1,
-		OracleRevision: "e4773d8ebbabbc7ae66a6bae1ae2548cc26545c9",
+		OracleRevision: fixtureoracle.Current().Commit,
 		IdentityKey:    hex.EncodeToString(seed[:]),
 		SourceHashes:   map[string]string{},
 	}

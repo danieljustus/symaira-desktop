@@ -2,6 +2,9 @@
 
 //! Contract tests for symdesk-vault::history comparing against the live Go history oracle.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::{BTreeMap, VecDeque},
     fs,
@@ -17,11 +20,11 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "2c839475f5c3eb8c75dd061cd6d017fac57e7a5ca42413df993c17a738249fd6",
+        "4ddb297d4dde70096e12c7111d96fc97242d10ee6bf0e0ebc821ee8f58534aa5",
     ),
     (
         "go.sum",
-        "54d6151b45cee2b0a71c057cf7423da7751149dd39447aea434bf1837a75d315",
+        "3d460b0ff4ea0a87c6d837a79b7b66dc43b19d9c94934980f5ad703bf8e1a441",
     ),
     (
         "internal/history/checkpoint.go",
@@ -38,8 +41,6 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "68095b7eabff2de0e901c90931432b125df7ebc4";
-const EXPECTED_ORACLE_RELEASE: &str = "post-issue-1127-history-root-lifetime";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where
@@ -133,15 +134,17 @@ fn validate_oracle_metadata(doc: &OracleDocument) -> Result<(), String> {
             doc.schema_version
         ));
     }
-    if doc.oracle.commit != EXPECTED_ORACLE_COMMIT {
+    if doc.oracle.commit != oracle_identity::commit() {
         return Err(format!(
-            "oracle commit mismatch: expected {EXPECTED_ORACLE_COMMIT}, found {:?}",
+            "oracle commit mismatch: expected {}, found {:?}",
+            oracle_identity::commit(),
             doc.oracle.commit
         ));
     }
-    if doc.oracle.release != EXPECTED_ORACLE_RELEASE {
+    if doc.oracle.release != oracle_identity::release() {
         return Err(format!(
-            "oracle release mismatch: expected {EXPECTED_ORACLE_RELEASE}, found {:?}",
+            "oracle release mismatch: expected {}, found {:?}",
+            oracle_identity::release(),
             doc.oracle.release
         ));
     }
@@ -1057,6 +1060,29 @@ fn test_harness_mkdir_and_temp_vault_guard_collision() {
 }
 
 #[test]
+fn test_pinned_source_hashes_match_canonical_git_blobs() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for &(path, expected_hash) in PINNED_SOURCE_HASHES {
+        let object = format!("{}:{path}", oracle_identity::commit());
+        let output = std::process::Command::new("git")
+            .current_dir(&root)
+            .args(["show", &object])
+            .output()
+            .expect("read canonical history source blob");
+        assert!(
+            output.status.success(),
+            "read {object}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            symdesk_vault::sha256_hex(&output.stdout),
+            expected_hash,
+            "history source hash must match canonical Git blob for {path}"
+        );
+    }
+}
+
+#[test]
 fn test_oracle_metadata_positive_and_negative_controls() {
     let mut valid_hashes = BTreeMap::new();
     for &(path, hash) in PINNED_SOURCE_HASHES {
@@ -1079,8 +1105,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     // 1. Positive control: valid exact 5-source metadata
     let valid_doc = make_doc(
         valid_hashes.clone(),
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     assert!(
@@ -1096,8 +1122,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     );
     let altered_doc = make_doc(
         altered_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     let err = validate_oracle_metadata(&altered_doc)
@@ -1115,8 +1141,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     );
     let upper_doc = make_doc(
         upper_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     let err =
@@ -1131,8 +1157,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     short_hashes.insert("go.sum".to_string(), "943bc31c".to_string());
     let short_doc = make_doc(
         short_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     let err =
@@ -1147,8 +1173,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     missing_hashes.remove("go.mod");
     let missing_doc = make_doc(
         missing_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     let err = validate_oracle_metadata(&missing_doc)
@@ -1166,8 +1192,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     );
     let extra_doc = make_doc(
         extra_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         1,
     );
     let err = validate_oracle_metadata(&extra_doc)
@@ -1181,7 +1207,7 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     let wrong_commit_doc = make_doc(
         valid_hashes.clone(),
         "0000000000000000000000000000000000000000",
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::release(),
         1,
     );
     let err =
@@ -1192,7 +1218,7 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     );
 
     // 8. Negative control: altered release label
-    let wrong_release_doc = make_doc(valid_hashes.clone(), EXPECTED_ORACLE_COMMIT, "v1.0.0", 1);
+    let wrong_release_doc = make_doc(valid_hashes.clone(), oracle_identity::commit(), "v1.0.0", 1);
     let err = validate_oracle_metadata(&wrong_release_doc)
         .expect_err("wrong release must fail validation");
     assert!(
@@ -1203,8 +1229,8 @@ fn test_oracle_metadata_positive_and_negative_controls() {
     // 9. Negative control: wrong schema_version
     let wrong_ver_doc = make_doc(
         valid_hashes,
-        EXPECTED_ORACLE_COMMIT,
-        EXPECTED_ORACLE_RELEASE,
+        oracle_identity::commit(),
+        oracle_identity::release(),
         2,
     );
     let err = validate_oracle_metadata(&wrong_ver_doc)

@@ -17,6 +17,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const noteCLIContractPath = "testdata/port/room/note-cli.json"
@@ -136,7 +137,7 @@ func makeNoteCLIContract(t *testing.T, root string) (noteCLIContract, error) {
 	}
 	fixture := noteCLIContract{
 		SchemaVersion:  1,
-		OracleRevision: "f2f139bd6b7182d116e02369becba332da52484b",
+		OracleRevision: fixtureoracle.Current().Commit,
 		IdentityKey:    hex.EncodeToString(seed[:]),
 		IdentityMember: signer.MemberID,
 		RoomTOML:       "id = \"rm_note_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",

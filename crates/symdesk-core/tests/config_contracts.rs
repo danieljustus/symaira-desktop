@@ -258,6 +258,58 @@ fn save_reports_the_go_file_error_prefix_for_an_unwritable_parent() {
     );
 }
 
+#[cfg(windows)]
+#[test]
+fn canonical_verbatim_config_path_supports_file_io() {
+    let root = unique_temp_dir("verbatim-global-path");
+    let canonical = fs::canonicalize(&root).expect("canonicalize config root");
+    let canonical = canonical.to_str().expect("Windows path is UTF-8");
+    assert!(
+        canonical.starts_with(r"\\?\"),
+        "expected a Windows verbatim path, got {canonical:?}"
+    );
+
+    let environment = BTreeMap::from([("XDG_CONFIG_HOME".to_owned(), canonical.to_owned())]);
+    let path = config::global_path(&environment);
+    let expected = std::path::Path::new(canonical)
+        .join("symdesk")
+        .join("config.toml");
+    assert_eq!(
+        path,
+        expected.to_str().expect("config path is UTF-8"),
+        "verbatim paths must retain native Windows separators"
+    );
+
+    let mut config = Config::default();
+    config.llm_provider = "openai".to_owned();
+    config::save(&path, &config).expect("save config through verbatim path");
+    let contents = fs::read_to_string(&path).expect("read config through verbatim path");
+    let loaded = config::load(Some(&contents), &BTreeMap::new()).expect("parse saved config");
+    assert_eq!(loaded.llm_provider, "openai");
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[cfg(windows)]
+#[test]
+fn verbatim_global_paths_match_native_go_observations() {
+    let capture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../testdata/port/config/windows-verbatim-paths.json"
+    ))
+    .expect("actual Windows Go capture");
+    let cases = capture["cases"].as_array().expect("captured cases");
+    assert_eq!(cases.len(), 11);
+    for case in cases {
+        let root = case["input"].as_str().expect("captured input");
+        let environment = BTreeMap::from([("XDG_CONFIG_HOME".to_owned(), root.to_owned())]);
+        assert_eq!(
+            config::global_path(&environment),
+            case["expected"],
+            "{}",
+            case["id"]
+        );
+    }
+}
+
 #[test]
 fn base_and_global_paths_match_go_contract() {
     for case in fixture().cases.paths {

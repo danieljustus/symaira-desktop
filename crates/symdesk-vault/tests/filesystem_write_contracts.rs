@@ -8,6 +8,9 @@
 //! content, permission bits, content hashes, the resulting Markdown file set,
 //! the walker output, the error stage and the temporary-file leftovers.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -131,8 +134,8 @@ fn fixture() -> Fixture {
 fn generated_go_atomic_writes_match_bytes_modes_hashes_and_file_sets() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert!(!fixture.oracle.commit.is_empty());
-    assert!(!fixture.oracle.release.is_empty());
+    assert_eq!(fixture.oracle.commit, oracle_identity::commit());
+    assert_eq!(fixture.oracle.release, oracle_identity::release());
     assert!(!fixture.source_hashes.is_empty());
     assert_eq!(fixture.temp_file_pattern.prefix, ".symdesk-frontmatter-");
     assert_eq!(fixture.temp_file_pattern.suffix, ".tmp");

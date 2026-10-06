@@ -18,15 +18,20 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/retention"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
 const (
-	retentionStateFixtureRel     = "testdata/port/vault/retention-state.json"
-	retentionStateFixtureSchema  = 1
-	retentionStateOracleCommit   = "68095b7eabff2de0e901c90931432b125df7ebc4"
-	retentionStateOracleRelease  = "RUST-007-authoritative-retention-state"
+	retentionStateFixtureRel    = "testdata/port/vault/retention-state.json"
+	retentionStateFixtureSchema = 1
+
 	retentionStateGenerateEnv    = "PORT_GENERATE"
 	retentionStateFixturePathEnv = "PORT_FIXTURE_PATH"
+)
+
+var (
+	retentionStateOracleCommit  = func() string { return fixtureoracle.Current().Commit }
+	retentionStateOracleRelease = func() string { return fixtureoracle.Current().Release }
 )
 
 type retentionStateFixture struct {
@@ -127,8 +132,8 @@ func buildRetentionStateFixture(t *testing.T) retentionStateFixture {
 		SchemaVersion: retentionStateFixtureSchema,
 		GeneratedOn:   runtime.GOOS,
 		Oracle: retentionStateOracle{
-			Commit:  retentionStateOracleCommit,
-			Release: retentionStateOracleRelease,
+			Commit:  retentionStateOracleCommit(),
+			Release: retentionStateOracleRelease(),
 		},
 		SourceHashes: map[string]string{
 			"internal/dataset/dataset.go":                            retentionStateSourceHash(t, "internal/dataset/dataset.go"),

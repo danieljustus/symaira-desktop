@@ -5,10 +5,10 @@ use std::{
     io::{BufRead, Read, Write},
     net::{TcpListener, TcpStream},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::{Child, Command, ExitStatus, Output, Stdio},
     sync::{Arc, Mutex, mpsc},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 #[path = "support/isolated_root.rs"]
@@ -87,6 +87,12 @@ impl Drop for RunningAskEmbeddingServer {
 
 struct TestRoot(PathBuf);
 
+#[derive(Clone, Copy)]
+enum RequestDelivery {
+    Batched,
+    Serial,
+}
+
 impl TestRoot {
     fn new(id: &str) -> Self {
         let root = isolated_root::create(&format!("symdesk-mcp-ask-{id}"));
@@ -109,16 +115,61 @@ impl Drop for TestRoot {
 
 #[test]
 fn real_mcp_ask_replays_go_handler_envelope() {
-    replay_fixture(false);
+    replay_fixture(false, false);
+}
+
+#[test]
+fn real_mcp_ask_replays_go_envelope_with_live_sidecar_anchor() {
+    replay_fixture(false, true);
+}
+
+#[test]
+fn real_mcp_ask_replays_go_envelope_with_serial_delivery() {
+    replay_fixture_with_delivery(false, false, RequestDelivery::Serial);
+}
+
+#[test]
+fn serial_transport_deadline_reaps_the_owned_mcp_process() {
+    let root = TestRoot::new("serial-timeout-control");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
+        .arg("mcp")
+        .env_clear()
+        .env("HOME", root.path("home"))
+        .env("USERPROFILE", root.path("home"))
+        .env(
+            "SYSTEMROOT",
+            std::env::var("SYSTEMROOT").unwrap_or_default(),
+        )
+        .current_dir(root.path("cwd"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("launch owned deadline-control MCP process");
+    let result = serial_mcp_output(&mut child, &[], Instant::now());
+    assert!(
+        result
+            .expect_err("elapsed deadline must fail")
+            .contains("deadline")
+    );
+    assert!(child.try_wait().expect("reap control process").is_some());
 }
 
 #[cfg(unix)]
 #[test]
 fn real_mcp_ask_replays_go_envelope_through_symlinked_vault_root() {
-    replay_fixture(true);
+    replay_fixture(true, false);
 }
 
-fn replay_fixture(alias_vault: bool) {
+fn replay_fixture(alias_vault: bool, keep_sidecar_open: bool) {
+    replay_fixture_with_delivery(alias_vault, keep_sidecar_open, RequestDelivery::Batched);
+}
+
+fn replay_fixture_with_delivery(
+    alias_vault: bool,
+    keep_sidecar_open: bool,
+    delivery: RequestDelivery,
+) {
     let fixture_path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/mcp/ask-offline.json");
     let fixture: Fixture = serde_json::from_slice(
@@ -128,11 +179,16 @@ fn replay_fixture(alias_vault: bool) {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.cases.len(), 3);
     for case in &fixture.cases {
-        replay_case(case, alias_vault);
+        replay_case(case, alias_vault, keep_sidecar_open, delivery);
     }
 }
 
-fn replay_case(case: &FixtureCase, alias_vault: bool) {
+fn replay_case(
+    case: &FixtureCase,
+    alias_vault: bool,
+    keep_sidecar_open: bool,
+    delivery: RequestDelivery,
+) {
     let root = TestRoot::new(&case.id);
     let vault = root.path("vault").canonicalize().expect("canonical vault");
     #[cfg(unix)]
@@ -157,7 +213,9 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     sidecar
         .refresh_index_for_cli(&vault)
         .expect("index test vault for scoped FTS");
-    drop(sidecar);
+    // The default replay still closes the seed connection before MCP starts.
+    // The control changes only whether that connection stays open.
+    let _sidecar_anchor = keep_sidecar_open.then_some(sidecar);
 
     let embedding_server = if case.embedding_dim > 0 {
         let server = start_ask_embedding_server(case);
@@ -184,7 +242,7 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     for (index, call) in case.calls.iter().enumerate() {
         requests.push(call_fixture_request(index + 2, call));
     }
-    let frames = run_mcp(&root, &vault, &sidecar_path, &requests, None);
+    let frames = run_mcp_with_delivery(&root, &vault, &sidecar_path, &requests, None, delivery);
     assert_eq!(
         frames.len(),
         case.calls.len() + 1,
@@ -265,6 +323,24 @@ fn run_mcp(
     requests: &[String],
     config: Option<&str>,
 ) -> Vec<Value> {
+    run_mcp_with_delivery(
+        root,
+        vault,
+        sidecar,
+        requests,
+        config,
+        RequestDelivery::Batched,
+    )
+}
+
+fn run_mcp_with_delivery(
+    root: &TestRoot,
+    vault: &std::path::Path,
+    sidecar: &std::path::Path,
+    requests: &[String],
+    config: Option<&str>,
+    delivery: RequestDelivery,
+) -> Vec<Value> {
     let config_dir = root.path("home/config/symdesk");
     fs::create_dir_all(&config_dir).expect("create private config directory");
     if let Some(config) = config {
@@ -297,14 +373,44 @@ fn run_mcp(
         .stderr(Stdio::piped())
         .spawn()
         .expect("launch symdesk MCP process");
-    let input = requests.join("\n") + "\n";
-    child
-        .stdin
-        .take()
-        .expect("MCP stdin")
-        .write_all(input.as_bytes())
-        .expect("send MCP requests");
-    let output = child.wait_with_output().expect("wait for MCP process");
+    let output = match delivery {
+        RequestDelivery::Batched => {
+            let input = requests.join("\n") + "\n";
+            child
+                .stdin
+                .take()
+                .expect("MCP stdin")
+                .write_all(input.as_bytes())
+                .expect("send MCP requests");
+            child.wait_with_output().expect("wait for MCP process")
+        }
+        RequestDelivery::Serial => {
+            let output = serial_mcp_output(
+                &mut child,
+                requests,
+                Instant::now() + Duration::from_secs(120),
+            );
+            // Write directly so successful controls retain their raw evidence
+            // in native job logs even when libtest captures passing test output.
+            let evidence = match &output {
+                Ok(output) => json!({
+                    "case_root": root.0.file_name().map(|name| name.to_string_lossy()),
+                    "requests": requests,
+                    "stdout_hex": output.stdout.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+                    "stderr_hex": output.stderr.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+                    "process_reaped": true,
+                    "transport_error": null,
+                }),
+                Err(error) => json!({
+                    "case_root": root.0.file_name().map(|name| name.to_string_lossy()),
+                    "transport_error": error,
+                }),
+            };
+            writeln!(std::io::stderr().lock(), "SERIAL_MCP_DIAGNOSTIC {evidence}")
+                .expect("retain serial diagnostic evidence");
+            output.expect("serial MCP transport failed, not a SQLite verdict")
+        }
+    };
     assert!(
         output.status.success(),
         "symdesk MCP failed: {}",
@@ -314,6 +420,160 @@ fn run_mcp(
         .into_iter::<Value>()
         .map(|frame| frame.expect("decode MCP response frame"))
         .collect()
+}
+
+fn serial_mcp_output(
+    child: &mut Child,
+    requests: &[String],
+    deadline: Instant,
+) -> Result<Output, String> {
+    const CAPTURE_LIMIT: u64 = 1024 * 1024;
+    let stdout = child.stdout.take().expect("MCP stdout");
+    let stderr = child.stderr.take().expect("MCP stderr");
+    let (send, receive) = mpsc::sync_channel(1);
+    let stdout_reader = thread::spawn(move || {
+        let mut reader = std::io::BufReader::new(stdout);
+        loop {
+            let mut bytes = Vec::new();
+            let result = reader
+                .by_ref()
+                .take(CAPTURE_LIMIT + 1)
+                .read_until(b'\n', &mut bytes);
+            let stop = result.is_err() || bytes.is_empty() || bytes.len() as u64 > CAPTURE_LIMIT;
+            let frame = result.and_then(|_| {
+                if bytes.len() as u64 > CAPTURE_LIMIT {
+                    Err(std::io::Error::other(
+                        "MCP stdout frame exceeds capture limit",
+                    ))
+                } else {
+                    Ok(bytes)
+                }
+            });
+            if send.send(frame).is_err() || stop {
+                break;
+            }
+        }
+    });
+    let stderr_reader = thread::spawn(move || {
+        let mut bytes = Vec::new();
+        stderr.take(CAPTURE_LIMIT + 1).read_to_end(&mut bytes)?;
+        if bytes.len() as u64 > CAPTURE_LIMIT {
+            return Err(std::io::Error::other("MCP stderr exceeds capture limit"));
+        }
+        Ok(bytes)
+    });
+    let mut stdout_bytes = Vec::new();
+    let mut result = (|| -> Result<ExitStatus, String> {
+        let mut input = child.stdin.take().expect("MCP stdin");
+        for request in requests {
+            if Instant::now() >= deadline {
+                return Err("serial MCP deadline elapsed before request".to_owned());
+            }
+            // Each frozen frame fits an empty stdin pipe. A previous response
+            // proves its request was consumed before the next frame is sent.
+            if request.len() + 1 > 512 {
+                return Err("serial fixture request exceeds bounded stdin frame".to_owned());
+            }
+            input
+                .write_all(request.as_bytes())
+                .map_err(|e| e.to_string())?;
+            input.write_all(b"\n").map_err(|e| e.to_string())?;
+            input.flush().map_err(|e| e.to_string())?;
+            let bytes = receive
+                .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+                .map_err(|e| format!("serial MCP response deadline/channel: {e}"))?
+                .map_err(|e| e.to_string())?;
+            stdout_bytes.extend_from_slice(&bytes);
+            if bytes.is_empty() || stdout_bytes.len() as u64 > CAPTURE_LIMIT {
+                return Err("serial MCP missing response or capture limit exceeded".to_owned());
+            }
+            let response: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+            let sent: Value = serde_json::from_str(request).map_err(|e| e.to_string())?;
+            if response["id"] != sent["id"] {
+                return Err(format!(
+                    "serial MCP response ID differs: {} != {}",
+                    response["id"], sent["id"]
+                ));
+            }
+        }
+        drop(input);
+        loop {
+            if Instant::now() >= deadline {
+                return Err("serial MCP process/EOF deadline elapsed".to_owned());
+            }
+            if let Ok(frame) = receive.try_recv() {
+                let bytes = frame.map_err(|e| e.to_string())?;
+                stdout_bytes.extend_from_slice(&bytes);
+                if !bytes.is_empty() {
+                    return Err("serial MCP returned an extra stdout frame".to_owned());
+                }
+            }
+            if let Some(status) = child.try_wait().map_err(|e| e.to_string())?
+                && stdout_reader.is_finished()
+                && stderr_reader.is_finished()
+            {
+                return Ok(status);
+            }
+            thread::sleep(Duration::from_millis(5));
+        }
+    })();
+    // ponytail: these native read-only MCP fixtures spawn no subprocess tools.
+    // Use a process-tree harness before extending this control to spawning tools.
+    if result.is_err() {
+        let _ = child.kill();
+    }
+    let cleanup_deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        while Instant::now() < cleanup_deadline {
+            let Ok(frame) = receive.try_recv() else {
+                break;
+            };
+            match frame {
+                Ok(bytes) => {
+                    if result.is_ok() && !bytes.is_empty() {
+                        result = Err("serial MCP returned an extra stdout frame".to_owned());
+                    }
+                    if stdout_bytes.len() + bytes.len() <= CAPTURE_LIMIT as usize {
+                        stdout_bytes.extend_from_slice(&bytes);
+                    } else {
+                        result = Err("serial MCP stdout capture limit exceeded".to_owned());
+                    }
+                }
+                Err(error) if result.is_ok() => result = Err(error.to_string()),
+                Err(_) => {}
+            }
+        }
+        if child.try_wait().map_err(|e| e.to_string())?.is_some()
+            && stdout_reader.is_finished()
+            && stderr_reader.is_finished()
+        {
+            break;
+        }
+        if Instant::now() >= cleanup_deadline {
+            return Err(format!(
+                "serial MCP cleanup deadline elapsed; original result: {result:?}"
+            ));
+        }
+        thread::sleep(Duration::from_millis(5));
+    }
+    stdout_reader
+        .join()
+        .map_err(|_| "serial stdout reader panicked")?;
+    let stderr_bytes = stderr_reader
+        .join()
+        .map_err(|_| "serial stderr reader panicked")?
+        .map_err(|e| e.to_string())?;
+    match result {
+        Ok(status) => Ok(Output {
+            status,
+            stdout: stdout_bytes,
+            stderr: stderr_bytes,
+        }),
+        Err(error) => Err(format!(
+            "{error}; stdout={:?}; stderr={:?}",
+            stdout_bytes, stderr_bytes
+        )),
+    }
 }
 
 fn seed_ask_retrieval_index(

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/spf13/cobra"
 )
 
@@ -123,7 +124,7 @@ func observeVaultSelection(t *testing.T) vaultSelectionFixtureData {
 			t.Fatalf("case %s: output %s does not identify selected vault %q", testCase.ID, output, testCase.Selected)
 		}
 	}
-	return vaultSelectionFixtureData{SchemaVersion: 1, OracleCommit: "e023816a9db2b3d71514049195886fe1b9766a5a", Cases: cases}
+	return vaultSelectionFixtureData{SchemaVersion: 1, OracleCommit: fixtureoracle.Current().Commit, Cases: cases}
 }
 
 func TestVaultSelectionHelper(t *testing.T) {

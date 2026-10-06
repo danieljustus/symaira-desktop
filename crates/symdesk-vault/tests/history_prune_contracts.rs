@@ -2,6 +2,9 @@
 
 //! Replays Go `HistoryStore.Prune` policy and side effects.
 
+#[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
+mod oracle_identity;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -101,14 +104,8 @@ fn go_history_prune_contracts_replay() {
         serde_json::from_slice(&fs::read(fixture_path()).expect("read Go history prune fixture"))
             .expect("decode Go history prune fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle.commit,
-        "68095b7eabff2de0e901c90931432b125df7ebc4"
-    );
-    assert_eq!(
-        fixture.oracle.release,
-        "post-issue-1127-history-root-lifetime"
-    );
+    assert_eq!(fixture.oracle.commit, oracle_identity::commit());
+    assert_eq!(fixture.oracle.release, oracle_identity::release());
     assert!(
         fixture
             .source_hashes

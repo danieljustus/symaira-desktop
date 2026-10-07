@@ -39,11 +39,11 @@ func main() {
 	pinned := false
 	for _, dependency := range info.Deps {
 		if dependency.Path == "github.com/danieljustus/symaira-corekit" {
-			pinned = dependency.Version == "v0.18.0" && dependency.Sum == "h1:vHbJtQqPkdQqt5N2bT7OOCGL1iEpBUsc/MXEGw8Ajig=" && dependency.Replace == nil
+			pinned = dependency.Version == "v0.18.2" && dependency.Sum == "h1:Nl05PxfSrYJ5njEbdmqFHSQRtKlK6aj8HsOJReC15dY=" && dependency.Replace == nil
 		}
 	}
 	if !pinned {
-		fail("CoreKit v0.18.0 source identity mismatch")
+		fail("CoreKit v0.18.2 source identity mismatch")
 	}
 	cases := []pathCase{
 		{ID: "drive-canonical", Input: `\\?\C:\root`},

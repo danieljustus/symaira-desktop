@@ -106,15 +106,17 @@ fn mcp001_initialize_replays_generated_cases() {
                 assert_eq!(response["result"], json_object());
             }
             "mcp001-initialize-notification" => assert!(output.stdout.is_empty()),
-            "mcp001-null-method" => {
-                let response: Value = serde_json::from_slice(&output.stdout).expect("response");
-                assert_eq!(response["id"], "null-method");
-                assert_eq!(response["error"]["code"], -32601);
-                assert_eq!(response["error"]["message"], "Method not found: ");
-            }
-            "mcp001-invalid-array" | "mcp001-invalid-method-type" => {
+            // CoreKit v0.18 mcpserver: valid JSON that is not a JSON-RPC 2.0
+            // request object is an Invalid Request with a null id.
+            "mcp001-null-method" | "mcp001-invalid-array" | "mcp001-invalid-method-type" => {
                 let response: Value = serde_json::from_slice(&output.stdout).expect("error frame");
-                assert_eq!(response["error"]["code"], -32700, "{}", case.id);
+                assert_eq!(response["id"], Value::Null, "{}", case.id);
+                assert_eq!(response["error"]["code"], -32600, "{}", case.id);
+                assert_eq!(
+                    response["error"]["message"], "Invalid Request",
+                    "{}",
+                    case.id
+                );
             }
             _ => unreachable!("unexpected MCP-001 fixture case {}", case.id),
         }

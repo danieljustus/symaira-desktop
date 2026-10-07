@@ -21,6 +21,7 @@ use symdesk_index::{
 const PROTOCOL_VERSION: &str = "2024-11-05";
 const MAX_MESSAGE_BYTES: usize = 1 << 20;
 const PARSE_ERROR: i64 = -32700;
+const INVALID_REQUEST: i64 = -32600;
 const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 const INTERNAL_ERROR: i64 = -32603;
@@ -114,6 +115,7 @@ struct McpSearchResponse {
 #[derive(Debug)]
 enum ReadFailure {
     Parse { mode: ResponseMode, message: String },
+    InvalidRequest { mode: ResponseMode },
     Fatal(io::Error),
 }
 
@@ -168,6 +170,19 @@ where
                     Value::Null,
                     PARSE_ERROR,
                     format!("Parse error: {message}"),
+                ) {
+                    terminal_error = Some(error);
+                    break;
+                }
+            }
+            Err(ReadFailure::InvalidRequest { mode }) => {
+                join_calls(&mut calls, &output, &config);
+                if let Err(error) = send_error(
+                    &output,
+                    mode,
+                    Value::Null,
+                    INVALID_REQUEST,
+                    "Invalid Request".to_owned(),
                 ) {
                     terminal_error = Some(error);
                     break;
@@ -736,33 +751,26 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
             error.to_string()
         },
     })?;
-    let Some(object) = value.as_object() else {
-        return Err(ReadFailure::Parse {
-            mode,
-            message: "json: cannot unmarshal array into Go value of type mcpserver.requestAlias"
-                .to_owned(),
-        });
-    };
+    // CoreKit v0.18 mcpserver: well-formed JSON that is not a JSON-RPC 2.0
+    // request object is an Invalid Request answered with a null id.
+    let invalid = || ReadFailure::InvalidRequest { mode };
+    let object = value.as_object().ok_or_else(invalid)?;
+    if object.get("jsonrpc").and_then(Value::as_str) != Some("2.0") {
+        return Err(invalid());
+    }
     let method = match object.get("method") {
-        None => String::new(),
-        Some(Value::String(method)) => method.clone(),
-        Some(Value::Null) => String::new(),
-        Some(value) => {
-            let value_type = match value {
-                Value::Bool(_) => "bool",
-                Value::Number(_) => "number",
-                Value::Array(_) => "array",
-                Value::Object(_) => "object",
-                _ => unreachable!("handled method values above"),
-            };
-            return Err(ReadFailure::Parse {
-                mode,
-                message: format!(
-                    "json: cannot unmarshal {value_type} into Go struct field requestAlias.method of type string"
-                ),
-            });
-        }
+        Some(Value::String(method)) if !method.is_empty() => method.clone(),
+        _ => return Err(invalid()),
     };
+    if object
+        .get("id")
+        .is_some_and(|id| !matches!(id, Value::Null | Value::String(_) | Value::Number(_)))
+        || object
+            .get("params")
+            .is_some_and(|params| !matches!(params, Value::Object(_) | Value::Array(_)))
+    {
+        return Err(invalid());
+    }
     let id = object.get("id").cloned().unwrap_or(Value::Null);
     let raw_arguments = raw_arguments_from_frame(data);
     Ok((

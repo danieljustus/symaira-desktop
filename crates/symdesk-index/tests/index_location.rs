@@ -304,7 +304,17 @@ fn resolve_expected_path(value: &str, root: &Path, temp_root: &Path, vault_root:
     let mut value = expand_string(value, root, temp_root);
     if value.contains("$VAULT_HASH") {
         let canonical = fs::canonicalize(vault_root).expect("canonical fixture vault");
-        let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
+        // Go hashes filepath.EvalSymlinks, which never yields a Windows
+        // verbatim spelling; fs::canonicalize does (#1194).
+        let canonical = canonical.to_string_lossy();
+        let ordinary = match canonical.strip_prefix(r"\\?\UNC\") {
+            Some(rest) => format!(r"\\{rest}"),
+            None => canonical
+                .strip_prefix(r"\\?\")
+                .unwrap_or(&canonical)
+                .to_owned(),
+        };
+        let digest = symdesk_vault::sha256_hex(ordinary.as_bytes());
         value = value.replace("$VAULT_HASH", &digest[..16]);
     }
     PathBuf::from(value)

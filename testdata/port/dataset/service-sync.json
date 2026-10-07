@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "e04fe5af531070a79b585b4e945e322078201f0d",
+    "commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
     "release": "post-v0.12.2-security-880",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
@@ -12,8 +12,8 @@
   "generator_sha256": "10eecc2a9727d6b932af83837fd3cafafbf79bcd9186d9945cac4d31901ade46",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
-    "go.mod": "4ddb297d4dde70096e12c7111d96fc97242d10ee6bf0e0ebc821ee8f58534aa5",
-    "go.sum": "3d460b0ff4ea0a87c6d837a79b7b66dc43b19d9c94934980f5ad703bf8e1a441",
+    "go.mod": "288ae2ad49c60c5eb413e3f5df14b0b9ce03f1580be3669bfdab778bf5f1fb2c",
+    "go.sum": "52160dc8761487c0cdd336b008d6e630afb94f80573025a94f33a858ef8ff17c",
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
     "internal/service/dataset_additional_test.go": "6ca20045616742b92aaaa4adf6d7eebf9842190a85d7a80e0d3d7b874fb7107a",

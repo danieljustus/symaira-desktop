@@ -97,7 +97,10 @@ func TestLoad_ConfigFile(t *testing.T) {
 		"SYMINGEST_PAPERLESS_BASE_URL", "SYMINGEST_SYMSEEK_ENABLED",
 		"SYMINGEST_SYMSEEK_BINARY",
 	} {
-		t.Setenv(key, "")
+		t.Setenv(key, "") // restores the ambient value after the test
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	cfgDir := filepath.Join(home, ".config", "symingest")
@@ -160,7 +163,10 @@ func TestLoad_DefaultsWhenNothingSet(t *testing.T) {
 		"SYMINGEST_PAPERLESS_BASE_URL", "SYMINGEST_SYMSEEK_ENABLED",
 		"SYMINGEST_SYMSEEK_BINARY",
 	} {
-		t.Setenv(key, "")
+		t.Setenv(key, "") // restores the ambient value after the test
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	cfg, err := Load()

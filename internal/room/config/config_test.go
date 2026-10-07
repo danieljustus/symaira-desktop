@@ -141,10 +141,10 @@ default_ttl = "45m"
 	}
 }
 
-// TestTOMLFalseValueIgnored pins configkit's non-zero-application rule: a TOML
-// `enabled = false` is treated as a zero value and silently skipped, so the
-// default stays true. Disabling must go through the env override instead.
-func TestTOMLFalseValueIgnored(t *testing.T) {
+// TestTOMLFalseValueDisablesUpdatecheck pins configkit's zero-value rule
+// (CoreKit v0.18.0+): an explicitly present TOML `enabled = false` overrides
+// the true default, so update checks can be disabled from config.toml.
+func TestTOMLFalseValueDisablesUpdatecheck(t *testing.T) {
 	tempDir := t.TempDir()
 	t.Setenv("HOME", tempDir)
 
@@ -165,8 +165,8 @@ enabled = false
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
 	}
-	if !cfg.Updatecheck.Enabled {
-		t.Errorf("expected updatecheck.enabled to remain true (TOML false is ignored), got false")
+	if cfg.Updatecheck.Enabled {
+		t.Errorf("expected TOML updatecheck.enabled = false to disable update checks, got true")
 	}
 }
 

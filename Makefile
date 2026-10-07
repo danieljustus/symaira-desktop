@@ -1,4 +1,4 @@
-.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: retention-cli-regressions-test
@@ -58,6 +58,11 @@
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
 ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=$(if $(VERSION),$(VERSION),(dev))
+# Go's VCS stamping recognizes only a .git directory, so a linked worktree
+# nested inside another checkout is stamped with that checkout's revision
+# (#1189). Point git at this worktree explicitly; in an ordinary checkout these
+# are the same paths, and outside Git the prefix is empty.
+GO_VCS_ENV := $(shell d=$$(git rev-parse --absolute-git-dir 2>/dev/null) && t=$$(git rev-parse --show-toplevel 2>/dev/null) && printf "GIT_DIR='%s' GIT_WORK_TREE='%s'" "$$d" "$$t")
 CARGO ?= cargo
 # Keep differential artifacts in the candidate's isolated Cargo target tree.
 RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
@@ -94,7 +99,14 @@ override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
 	@mkdir -p bin
-	go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
+	$(GO_VCS_ENV) go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
+
+# Verifies the identity of the binary actually built: the stamped revision must
+# be this checkout's HEAD and the CLI must run.
+build-identity-check: build
+	@want=$$(git rev-parse HEAD); got=$$(go version -m bin/symdesk | awk '$$2 ~ /^vcs\.revision=/ { sub(/^vcs\.revision=/, "", $$2); print $$2 }'); \
+	if [ "$$got" != "$$want" ]; then echo "bin/symdesk stamped vcs.revision=$$got, want HEAD $$want" >&2; exit 1; fi; \
+	bin/symdesk version --json >/dev/null && echo "PASS build identity $$want"
 
 test:
 	CGO_ENABLED=0 go test -race ./...

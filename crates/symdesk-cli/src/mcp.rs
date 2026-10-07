@@ -26,10 +26,14 @@ const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 const INTERNAL_ERROR: i64 = -32603;
 
-#[derive(Clone)]
 struct ServerConfig {
     version: String,
     vault: Option<String>,
+    /// One sidecar connection kept open for the whole session, like Go's
+    /// pooled handle. Without a live connection, concurrently dispatched calls
+    /// each re-ran WAL setup, migrations and backfill on a database nobody held
+    /// open, which on Windows raced into SQLITE_PROTOCOL (#1190).
+    sidecar_anchor: Mutex<Option<Sidecar>>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -140,6 +144,7 @@ where
     let config = Arc::new(ServerConfig {
         version: super::VERSION.to_owned(),
         vault,
+        sidecar_anchor: Mutex::new(None),
     });
     let mut calls = Vec::new();
     let mut reader = reader;
@@ -516,6 +521,18 @@ fn object_arguments(arguments: Value) -> Result<serde_json::Map<String, Value>, 
 
 fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
     let vault = super::resolve_vault(config.vault.as_deref())?;
+    {
+        // The first call sets the database up once and keeps that connection;
+        // later calls block here only until it exists. Calls still run
+        // concurrently with their own connections afterwards.
+        let mut anchor = config
+            .sidecar_anchor
+            .lock()
+            .map_err(|_| "sidecar anchor lock poisoned".to_owned())?;
+        if anchor.is_none() {
+            *anchor = Some(open_for_vault(&vault).map_err(|error| error.to_string())?);
+        }
+    }
     let sidecar = open_for_vault(&vault).map_err(|error| error.to_string())?;
     Ok((vault, sidecar))
 }
@@ -963,6 +980,7 @@ mod tests {
         let config = Arc::new(ServerConfig {
             version: "test".to_owned(),
             vault: None,
+            sidecar_anchor: Mutex::new(None),
         });
         let mut calls = vec![(
             ResponseMode::Framed,

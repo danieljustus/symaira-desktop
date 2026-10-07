@@ -464,9 +464,16 @@ fn vault_retrieval_path(
     {
         root = absolute_clean(temp_root, cwd).join("symdesk/test-vaults");
     }
-    let canonical_text = canonical.to_string_lossy();
-    let digest = symdesk_vault::sha256_hex(canonical_text.as_bytes());
+    let digest = vault_retrieval_digest(&canonical.to_string_lossy());
     Ok(root.join(&digest[..16]).join("retrieval.db"))
+}
+
+/// Go keys the per-vault index by `filepath.EvalSymlinks`, which never yields
+/// a Windows verbatim (`\\?\`) spelling; Rust's `fs::canonicalize` does. Hash the
+/// ordinary spelling so both runtimes open the same index (#1194), as the
+/// sidecar storage key already does.
+fn vault_retrieval_digest(canonical: &str) -> String {
+    symdesk_vault::sha256_hex(crate::strip_verbatim_prefix(canonical).as_bytes())
 }
 
 fn data_home(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
@@ -543,7 +550,23 @@ fn lexical_clean(path: &Path) -> PathBuf {
 mod tests {
     use std::{collections::BTreeMap, fs, path::Path};
 
-    use super::retrieval_embedding_config;
+    use super::{retrieval_embedding_config, vault_retrieval_digest};
+
+    #[test]
+    fn vault_retrieval_digest_ignores_windows_verbatim_spelling() {
+        assert_eq!(
+            vault_retrieval_digest(r"\\?\C:\Users\runner\vault"),
+            vault_retrieval_digest(r"C:\Users\runner\vault")
+        );
+        assert_eq!(
+            vault_retrieval_digest(r"\\?\UNC\server\share\vault"),
+            vault_retrieval_digest(r"\\server\share\vault")
+        );
+        assert_eq!(
+            vault_retrieval_digest("/home/runner/vault"),
+            symdesk_vault::sha256_hex(b"/home/runner/vault")
+        );
+    }
 
     #[test]
     fn embedding_projection_uses_existing_config_and_go_defaults() {

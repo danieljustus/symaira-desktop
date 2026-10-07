@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "e04fe5af531070a79b585b4e945e322078201f0d",
+  "oracle_commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
   "source_hashes": {
     "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
     "internal/history/history.go": "07dee7fd493294bc5ed070a0a75058b3192d1f109824e27b9c3b20d5d1ae867f",

@@ -353,9 +353,7 @@ fn default_identity() -> Result<String, String> {
     if let Ok(cwd) = std::env::current_dir() {
         name = merge_identity_config(&cwd.join(".symroom.toml"), "project config error", name)?;
     }
-    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY")
-        && !value.is_empty()
-    {
+    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY") {
         name = value;
     }
     Ok(name)

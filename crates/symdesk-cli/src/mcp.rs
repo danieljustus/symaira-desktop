@@ -539,7 +539,8 @@ fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
 
 fn list_entry(root: &std::path::Path, file: &ListedDocument) -> McpLsEntry {
     McpLsEntry {
-        path: super::relative_path(root, &file.path),
+        // Go's MCP Ls returns filepath.Rel, i.e. native separators.
+        path: super::native_relative_path(root, &file.path),
         title: file.title.clone(),
         document_type: file.document_type.clone(),
         modified: file.modified_at.clone(),

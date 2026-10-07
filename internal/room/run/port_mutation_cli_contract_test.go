@@ -159,7 +159,11 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + caseRoom,
 			"SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
-			"SYMROOM_DEFAULT_IDENTITY=" + vector.defaultEnv,
+		}
+		// An explicitly empty value clears a configured identity, so cases
+		// without an environment identity leave the variable unset.
+		if vector.defaultEnv != "" {
+			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY="+vector.defaultEnv)
 		}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr

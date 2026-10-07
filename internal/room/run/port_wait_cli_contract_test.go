@@ -39,6 +39,8 @@ type runWaitCLICase struct {
 	Stderr string   `json:"stderr"`
 }
 
+const runWaitOracleHangGuard = 60 * time.Second
+
 // TestPortRunWaitCLIContract freezes the real Go run wait command. Normal
 // verification compares the committed fixture without rewriting it.
 func TestPortRunWaitCLIContract(t *testing.T) {
@@ -178,7 +180,10 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 		{"wait-help", "main", []string{"run", "wait", "-h"}},
 		{"unknown-flag", "main", []string{"run", "wait", "--unknown"}},
 	} {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		// A hang guard, not a contract bound: every case exits without
+		// waiting. The first launch of a freshly built binary can take
+		// seconds on Windows runners (on-access scanning), so stay generous.
+		ctx, cancel := context.WithTimeout(context.Background(), runWaitOracleHangGuard)
 		cmd := exec.CommandContext(ctx, executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		caseEnv := filepath.Join(temp, "env-"+vector.name)
 		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
@@ -192,7 +197,7 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 		timedOut := ctx.Err() != nil
 		cancel()
 		if timedOut {
-			return runWaitCLIContract{}, fmt.Errorf("Go oracle case %s exceeded 5s", vector.name)
+			return runWaitCLIContract{}, fmt.Errorf("Go oracle case %s exceeded %s", vector.name, runWaitOracleHangGuard)
 		}
 		code := 0
 		if err != nil {

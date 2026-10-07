@@ -265,9 +265,7 @@ fn default_identity() -> (String, Option<String>) {
             return (String::new(), Some(error));
         }
     }
-    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY")
-        && !value.is_empty()
-    {
+    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY") {
         name = value;
     }
     (name, None)

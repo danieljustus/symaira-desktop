@@ -171,8 +171,12 @@ fn run_symroom(
         .env("LC_ALL", "C")
         .env("LANG", "C")
         .env("SYMROOM_ROOM_DIR", room)
-        .env("SYMROOM_IDENTITY_KEY", identity_key)
-        .env("SYMROOM_DEFAULT_IDENTITY", default_identity);
+        .env("SYMROOM_IDENTITY_KEY", identity_key);
+    // An explicitly empty value clears a configured identity; mirror the Go
+    // harness and leave the variable unset when a case has none.
+    if !default_identity.is_empty() {
+        command.env("SYMROOM_DEFAULT_IDENTITY", default_identity);
+    }
     command.output().expect("run Rust symroom process")
 }
 

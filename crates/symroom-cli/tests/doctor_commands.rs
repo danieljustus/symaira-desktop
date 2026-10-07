@@ -117,7 +117,8 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
         let before = room_snapshot(&room);
         let identities_before = room_snapshot(&data_home);
         let calls_path = work.join("tool-calls");
-        let output = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
+        command
             .args(&case.args)
             .current_dir(&work)
             .env_clear()
@@ -132,18 +133,16 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
             .env("LANG", "C")
             .env("SYMROOM_ROOM_DIR", &room)
             .env("DOCTOR_TOOL_LOG", &calls_path)
-            .env("DOCTOR_IDENTITY_KEY", &fixture.identity_key)
-            .env("SYMROOM_DEFAULT_IDENTITY", &case.default_env)
-            .env(
-                "SYMROOM_IDENTITY_KEY",
-                if case.identity_key {
-                    &fixture.identity_key
-                } else {
-                    ""
-                },
-            )
-            .output()
-            .expect("run Rust doctor process");
+            .env("DOCTOR_IDENTITY_KEY", &fixture.identity_key);
+        // Mirror the Go harness: an explicitly empty value clears the
+        // configured identity, so absent cases leave the variable unset.
+        if !case.default_env.is_empty() {
+            command.env("SYMROOM_DEFAULT_IDENTITY", &case.default_env);
+        }
+        if case.identity_key {
+            command.env("SYMROOM_IDENTITY_KEY", &fixture.identity_key);
+        }
+        let output = command.output().expect("run Rust doctor process");
 
         let expected_exit = if cfg!(windows) && !case.identity_files.is_empty() {
             1

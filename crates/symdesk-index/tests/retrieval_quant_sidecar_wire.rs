@@ -5,7 +5,7 @@ use symdesk_index::retrieval_quant_sidecar::{
 
 const GO_WIRE_FIXTURE: &str =
     include_str!("../../../testdata/port/retrieval/quant-sidecar-wire.json");
-const COREKIT_SUM: &str = "h1:pDtkMy0Pel1PWglNupMiLYpxo0WxUQ3CkjlR2LaUAZ4=";
+const COREKIT_SUM: &str = "h1:Nl05PxfSrYJ5njEbdmqFHSQRtKlK6aj8HsOJReC15dY=";
 
 #[derive(Debug, Deserialize)]
 struct Fixture {
@@ -170,7 +170,7 @@ fn pinned_go_fixture_replays_all_wire_cases() {
     assert_eq!(fixture.oracle.go_version, "go1.26.6");
     assert_eq!(
         fixture.oracle.corekit_module,
-        "github.com/danieljustus/symaira-corekit/v0.17.0"
+        "github.com/danieljustus/symaira-corekit/v0.18.2"
     );
     assert_eq!(fixture.oracle.corekit_sum, COREKIT_SUM);
     assert!(fixture.oracle.scope.contains("NaN/infinity interpretation"));

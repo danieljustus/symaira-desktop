@@ -114,7 +114,7 @@ baseline remains `ae863319` / `v0.12.2`.
 The bounded #1137 foundation compares only the eight-byte little-endian
 `f32` min/max header, opaque packed bytes, and short-header error semantics.
 `crates/symdesk-index/src/retrieval_quant_sidecar.rs::read_blob` deliberately
-returns an owned snapshot. Pinned Go CoreKit v0.17.0
+returns an owned snapshot. Pinned Go CoreKit v0.18.2
 `vectorkit/turboquant.UnpackSidecarBlob` instead returns `Bytes: blob[8:]`, a
 mutable alias of the caller's buffer. **This is an intentional Rust API
 difference, not Go ownership parity.** Mutations do not propagate in either

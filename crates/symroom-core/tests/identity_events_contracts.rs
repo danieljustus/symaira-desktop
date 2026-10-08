@@ -326,6 +326,9 @@ fn room_identity_event_vectors_match_the_go_oracle() {
         assert_eq!(message, vector.error, "{}: verification error", vector.id);
     }
 
+    // File fallbacks must not probe the operator's symvault or Keychain tools.
+    let unavailable_providers = temp_data_home("providers-unavailable");
+    set_env("PATH", &unavailable_providers.to_string_lossy());
     replay_file_cases(&fixture, modes_observable);
     #[cfg(unix)]
     replay_provider_cases(&fixture);

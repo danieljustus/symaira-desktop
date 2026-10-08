@@ -242,7 +242,10 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn process_runner_deadline_covers_descendants_holding_stdout_open() {
-        let command = fake_command("(sleep 0.25) & exit 0");
+        // Waiting for the descendant would take at least 5s; returning near
+        // the 50ms deadline proves it was not awaited. The 2s bound leaves
+        // headroom for process spawn and reaping on loaded CI runners.
+        let command = fake_command("(sleep 5) & exit 0");
         let started = std::time::Instant::now();
         let output = run_process(
             command.to_str().expect("UTF-8 temp path"),
@@ -251,6 +254,6 @@ mod tests {
         );
         fs::remove_file(command).expect("remove fake command");
         assert_eq!(output, None);
-        assert!(started.elapsed() < Duration::from_millis(200));
+        assert!(started.elapsed() < Duration::from_secs(2));
     }
 }

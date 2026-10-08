@@ -93,6 +93,8 @@ func TestPaths_DefaultHomeFallback(t *testing.T) {
 }
 
 func TestSidecarVaultDirDistinguishesTemporaryAndPersistentVaults(t *testing.T) {
+	// T.TempDir follows GOTMPDIR, but temporary vaults use the runtime temp root.
+	t.Setenv("GOTMPDIR", os.TempDir())
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)

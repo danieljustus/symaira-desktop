@@ -29,8 +29,8 @@ type capture struct {
 func main() {
 	check := flag.String("check", "", "compare native Go cases without rewriting the recorded capture")
 	flag.Parse()
-	if flag.NArg() != 0 || runtime.GOOS != "windows" || runtime.Version() != "go1.26.6" {
-		fail("native Windows and Go 1.26.6 required")
+	if flag.NArg() != 0 || runtime.GOOS != "windows" || runtime.Version() != "go1.26.9" {
+		fail("native Windows and Go 1.26.9 required")
 	}
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -74,9 +74,14 @@ func main() {
 		if err := json.Unmarshal(raw, &recorded); err != nil {
 			fail(err.Error())
 		}
-		// The actual capture is retained under its original architecture; only
-		// the path observations are platform-neutral across Windows architectures.
-		if recorded.GoOS != observed.GoOS || recorded.GoVersion != observed.GoVersion || (recorded.GoArch != "amd64" && recorded.GoArch != "arm64") || !reflect.DeepEqual(recorded.Cases, observed.Cases) {
+		// Preserve the original native Go 1.26.6 capture metadata while replaying
+		// its path cases under the active Go 1.26.9 toolchain.
+		if recorded.GoOS != observed.GoOS || recorded.GoVersion != "go1.26.6" {
+			fail("recorded capture identity is not the preserved Go 1.26.6 record")
+		}
+		// The recorded architecture is retained; path observations are portable
+		// across Windows architectures and compared against this native replay.
+		if (recorded.GoArch != "amd64" && recorded.GoArch != "arm64") || !reflect.DeepEqual(recorded.Cases, observed.Cases) {
 			fail("recorded cases differ from actual native Go observations")
 		}
 		fmt.Fprintf(os.Stderr, "Native Go path capture check passed: %d cases on %s\n", len(cases), runtime.GOARCH)

@@ -73,8 +73,8 @@ def run():
                 if result.returncode:
                     return result.returncode
                 text = (OUTPUT / f"{index:02d}-stdout.log").read_text()
-                if index == 0 and not text.startswith("go version go1.26.6 "):
-                    raise RuntimeError("history oracle requires Go 1.26.6")
+                if index == 0 and not text.startswith("go version go1.26.9 "):
+                    raise RuntimeError("history oracle requires Go 1.26.9")
                 if index == 1 and not text.startswith("rustc 1.98.0 "):
                     raise RuntimeError("history replay requires Rust 1.98.0")
                 if index == 3 and "test test_history_live_differential_against_go_oracle ... ok" not in text:

@@ -11,12 +11,12 @@ Thanks for helping improve SymDesk. Contributions should preserve the project’
 
 ## Local checks
 
-The frozen Go/Rust oracle contracts require Go 1.26.6. Select that toolchain
+The frozen Go/Rust oracle contracts require Go 1.26.9. Select that toolchain
 explicitly rather than regenerating fixtures after a newer Go version changes
 the recorded behavior.
 
 ```sh
-export GOTOOLCHAIN=go1.26.6
+export GOTOOLCHAIN=go1.26.9
 make build
 make lint
 make test # macOS: CGO_ENABLED=0 go test -race ./...

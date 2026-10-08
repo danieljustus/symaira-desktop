@@ -27,8 +27,8 @@ import (
 const (
 	portDatasetSyncServiceFixtureRel     = "testdata/port/dataset/service-sync.json"
 	portDatasetSyncServiceFixtureSchema  = 1
-	portDatasetSyncServiceGoVersion      = "go1.26.6"
-	portDatasetSyncServiceModuleGo       = "1.26.6"
+	portDatasetSyncServiceGoVersion      = "go1.26.9"
+	portDatasetSyncServiceModuleGo       = "1.26.9"
 	portDatasetSyncServiceGenerateEnv    = "PORT_GENERATE"
 	portDatasetSyncServiceFixturePathEnv = "PORT_FIXTURE_PATH"
 )

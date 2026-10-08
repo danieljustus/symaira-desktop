@@ -178,12 +178,12 @@ $ symdesk version --json
 
 ## Development
 
-Use Go 1.26.6 for the frozen Go/Rust oracle contracts. A newer Go version can
+Use Go 1.26.9 for the frozen Go/Rust oracle contracts. A newer Go version can
 change their Unicode and JSON behavior; do not regenerate fixtures to work
 around a toolchain mismatch.
 
 ```sh
-export GOTOOLCHAIN=go1.26.6
+export GOTOOLCHAIN=go1.26.9
 make build          # → bin/symdesk
 make build-identity-check # verify bin/symdesk is stamped with this checkout's HEAD
 make test           # macOS: CGO_ENABLED=0 go test -race ./...

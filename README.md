@@ -185,6 +185,7 @@ around a toolchain mismatch.
 ```sh
 export GOTOOLCHAIN=go1.26.6
 make build          # → bin/symdesk
+make build-identity-check # verify bin/symdesk is stamped with this checkout's HEAD
 make test           # macOS: CGO_ENABLED=0 go test -race ./...
 make lint           # formatting, vet, dependency/boundary/version/signing guards
 make benchmark-large # generate and index a deterministic 10k-document vault

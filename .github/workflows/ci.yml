@@ -66,7 +66,12 @@ jobs:
         run: go build ./...
 
       - name: Test
+        if: matrix.os != 'ubuntu-latest'
         run: go test -race -count=1 ./...
+
+      - name: Test with coverage
+        if: matrix.os == 'ubuntu-latest'
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
 
       - name: Native retention runner negative controls
         if: matrix.os == 'ubuntu-latest'
@@ -81,12 +86,8 @@ jobs:
           COVERAGE_THRESHOLD: "70"
         run: |
           set -euo pipefail
-          go test -count=1 -coverprofile=coverage.out ./...
-          TOTAL=$(go tool cover -func=coverage.out | tail -1 | grep -oE '[0-9]+\.[0-9]+')
-          echo "Total coverage: ${TOTAL}% (threshold: ${COVERAGE_THRESHOLD}%)"
-          awk -v total="$TOTAL" -v threshold="$COVERAGE_THRESHOLD" 'BEGIN { exit !(total < threshold) }' \
-            && { echo "::error::Coverage ${TOTAL}% is below the ${COVERAGE_THRESHOLD}% gate"; exit 1; }
-          echo "Coverage gate passed."
+          ./scripts/check-go-coverage-threshold.sh --self-test "$COVERAGE_THRESHOLD"
+          ./scripts/check-go-coverage-threshold.sh coverage.out "$COVERAGE_THRESHOLD"
 
   # Preserve the existing ruleset context without mislabeling the real matrix.
   # Remove this compatibility job when the ruleset adopts a versionless name.

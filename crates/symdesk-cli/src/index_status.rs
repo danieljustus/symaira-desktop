@@ -197,7 +197,10 @@ fn render_documents(
     let sidecar = symdesk_index::open_for_vault(&root).map_err(|error| error.to_string())?;
     let state = state.filter(|state| !state.is_empty());
     if let Some(state) = state.filter(|state| !VALID_STATES.contains(state)) {
-        return Err(format!("invalid index state {state:?}"));
+        return Err(format!(
+            "invalid index state {}",
+            symdesk_vault::go_quote(state)
+        ));
     }
     let statuses = sidecar
         .list_index_statuses()
@@ -374,17 +377,38 @@ fn worker_error(output: &ProcessOutput) -> String {
 }
 
 fn parse_timeout(value: &str) -> Result<Duration, String> {
-    let nanoseconds = parse_go_duration_nanos(value)
-        .ok_or_else(|| format!("invalid timeout duration {value:?}"))?;
+    let nanoseconds = parse_go_duration_nanos(value).map_err(|error| {
+        format!(
+            "invalid argument {} for \"--timeout\" flag: {error}",
+            symdesk_vault::go_quote(value)
+        )
+    })?;
     if nanoseconds < 0 {
         return Err("--timeout must be non-negative".to_owned());
     }
-    let nanoseconds =
-        u64::try_from(nanoseconds).map_err(|_| format!("invalid timeout duration {value:?}"))?;
-    Ok(Duration::from_nanos(nanoseconds))
+    // Parsing already enforces Go's signed 64-bit nanosecond range.
+    Ok(Duration::from_nanos(nanoseconds as u64))
 }
 
-fn parse_go_duration_nanos(input: &str) -> Option<i128> {
+fn duration_quote(value: &str) -> String {
+    // time.quote is not strconv.Quote: non-ASCII/control bytes use hex,
+    // but DEL is retained literally. Keep this local to time diagnostics.
+    let mut output = String::from("\"");
+    for byte in value.bytes() {
+        match byte {
+            b'"' => output.push_str("\\\""),
+            b'\\' => output.push_str("\\\\"),
+            b' '..=0x7f => output.push(char::from(byte)),
+            _ => output.push_str(&format!("\\x{byte:02x}")),
+        }
+    }
+    output.push('"');
+    output
+}
+
+fn parse_go_duration_nanos(input: &str) -> Result<i128, String> {
+    let original = input;
+    let invalid = || format!("time: invalid duration {}", duration_quote(original));
     let (negative, input) = match input.strip_prefix('-') {
         Some(rest) => (true, rest),
         None => match input.strip_prefix('+') {
@@ -394,10 +418,10 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
     };
     // Go checks the zero sentinel after consuming the optional sign.
     if input == "0" {
-        return Some(0);
+        return Ok(0);
     }
     if input.is_empty() {
-        return None;
+        return Err(invalid());
     }
 
     let mut remaining = input;
@@ -408,6 +432,15 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
             .unwrap_or(remaining.len());
         let integer = &remaining[..integer_end];
         remaining = &remaining[integer_end..];
+        let whole = if integer.is_empty() {
+            0
+        } else {
+            integer
+                .parse::<u128>()
+                .ok()
+                .filter(|value| *value <= 1_u128 << 63)
+                .ok_or_else(&invalid)?
+        };
         let mut fraction = "";
         if let Some(after_dot) = remaining.strip_prefix('.') {
             let fraction_end = after_dot
@@ -417,30 +450,34 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
             remaining = &after_dot[fraction_end..];
         }
         if integer.is_empty() && fraction.is_empty() {
-            return None;
+            return Err(invalid());
         }
-        if remaining.starts_with('.') || remaining.is_empty() {
-            return None;
+        let unit_end = remaining
+            .find(|character: char| character == '.' || character.is_ascii_digit())
+            .unwrap_or(remaining.len());
+        if unit_end == 0 {
+            return Err(format!(
+                "time: missing unit in duration {}",
+                duration_quote(original)
+            ));
         }
-
-        let (unit, scale) = [
-            ("ns", 1_u128),
-            ("us", 1_000),
-            ("µs", 1_000),
-            ("μs", 1_000),
-            ("ms", 1_000_000),
-            ("s", 1_000_000_000),
-            ("m", 60_000_000_000),
-            ("h", 3_600_000_000_000),
-        ]
-        .into_iter()
-        .find(|(unit, _)| remaining.starts_with(unit))?;
-        let whole = if integer.is_empty() {
-            0
-        } else {
-            integer.parse::<u128>().ok()?
+        let unit = &remaining[..unit_end];
+        let scale = match unit {
+            "ns" => 1_u128,
+            "us" | "µs" | "μs" => 1_000,
+            "ms" => 1_000_000,
+            "s" => 1_000_000_000,
+            "m" => 60_000_000_000,
+            "h" => 3_600_000_000_000,
+            _ => {
+                return Err(format!(
+                    "time: unknown unit {} in duration {}",
+                    duration_quote(unit),
+                    duration_quote(original)
+                ));
+            }
         };
-        let mut component = whole.checked_mul(scale)?;
+        let mut component = whole.checked_mul(scale).ok_or_else(&invalid)?;
         if !fraction.is_empty() {
             // Match time.leadingFraction in the pinned Go toolchain: excess
             // digits are consumed but stop contributing after integer overflow.
@@ -458,17 +495,21 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
                 numerator = next;
                 denominator *= 10.0;
             }
-            component =
-                component.checked_add((numerator as f64 * (scale as f64 / denominator)) as u128)?;
+            component = component
+                .checked_add((numerator as f64 * (scale as f64 / denominator)) as u128)
+                .ok_or_else(&invalid)?;
         }
-        total = total.checked_add(component)?;
-        if total > i64::MAX as u128 + u128::from(negative) {
-            return None;
+        total = total.checked_add(component).ok_or_else(&invalid)?;
+        if total > 1_u128 << 63 {
+            return Err(invalid());
         }
         remaining = &remaining[unit.len()..];
     }
-    let total = i128::try_from(total).ok()?;
-    Some(if negative { -total } else { total })
+    if !negative && total > i64::MAX as u128 {
+        return Err(invalid());
+    }
+    let total = total as i128;
+    Ok(if negative { -total } else { total })
 }
 
 fn go_duration(value: Duration) -> String {
@@ -663,18 +704,35 @@ mod tests {
 
     #[test]
     fn duration_parser_accepts_compound_and_fractional_go_syntax() {
-        assert_eq!(parse_go_duration_nanos("1h2m3.5s"), Some(3_723_500_000_000));
-        assert_eq!(parse_go_duration_nanos(".5s"), Some(500_000_000));
-        assert_eq!(parse_go_duration_nanos("1.5µs"), Some(1_500));
-        assert_eq!(parse_go_duration_nanos("1.s"), Some(1_000_000_000));
+        assert_eq!(parse_go_duration_nanos("1h2m3.5s"), Ok(3_723_500_000_000));
+        assert_eq!(parse_go_duration_nanos(".5s"), Ok(500_000_000));
+        assert_eq!(parse_go_duration_nanos("1.5µs"), Ok(1_500));
+        assert_eq!(parse_go_duration_nanos("1.s"), Ok(1_000_000_000));
         for zero in [
             "+0",
             "-0",
             "0.000000000000000000000000000000000000000000000001s",
         ] {
-            assert_eq!(parse_go_duration_nanos(zero), Some(0), "{zero}");
+            assert_eq!(parse_go_duration_nanos(zero), Ok(0), "{zero}");
         }
-        assert_eq!(parse_go_duration_nanos(".s"), None);
+        assert!(parse_go_duration_nanos(".s").is_err());
+        for (input, expected) in [
+            ("bad", "time: invalid duration \"bad\""),
+            ("1..s", "time: missing unit in duration \"1..s\""),
+            ("1.sx", "time: unknown unit \"sx\" in duration \"1.sx\""),
+            (
+                "1é",
+                "time: unknown unit \"\\xc3\\xa9\" in duration \"1\\xc3\\xa9\"",
+            ),
+            ("1\n", "time: unknown unit \"\\x0a\" in duration \"1\\x0a\""),
+            ("1\x7f", "time: unknown unit \"\x7f\" in duration \"1\x7f\""),
+            (
+                "9223372036854775808ns",
+                "time: invalid duration \"9223372036854775808ns\"",
+            ),
+        ] {
+            assert_eq!(parse_go_duration_nanos(input).unwrap_err(), expected);
+        }
         assert_eq!(go_duration(Duration::from_millis(150)), "150ms");
         assert_eq!(go_duration(Duration::from_millis(1_500)), "1.5s");
         assert_eq!(go_duration(Duration::from_nanos(1_000_001)), "1.000001ms");

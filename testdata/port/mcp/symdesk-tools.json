@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
+    "commit": "68c7cdb83b3a7698278fc767668cf8326eb5d5a8",
     "release": "post-v0.12.2-security-880"
   },
   "server_name": "symdesk",

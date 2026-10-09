@@ -27,6 +27,7 @@ mod backup;
 mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
+pub mod index_status;
 mod metadata;
 mod retrieval;
 mod retrieval_config;
@@ -48,9 +49,9 @@ pub use metadata::{
 pub use retrieval::{
     RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
     RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
-    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
-    RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
-    go_simple_lowercase, local_hash_embedding, materialize_chunks,
+    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalStatusSnapshot,
+    RetrievalVectorSearchChunk, RetrievalVectorSearchResult, SearchSource, SourceRegistry,
+    StoredRetrievalChunk, go_simple_lowercase, local_hash_embedding, materialize_chunks,
 };
 pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,

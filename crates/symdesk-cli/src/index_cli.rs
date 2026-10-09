@@ -20,6 +20,11 @@ use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::time::Duration;
 
+#[path = "index_status.rs"]
+mod status;
+#[path = "index_status_process.rs"]
+mod status_process;
+
 pub fn cli() -> Command {
     Command::new("index")
         .arg(Arg::new("path").value_name("PATH").num_args(0..=1))
@@ -32,6 +37,35 @@ pub fn cli() -> Command {
             Arg::new("re-embed")
                 .long("re-embed")
                 .action(clap::ArgAction::SetTrue),
+        )
+        .subcommand(
+            Command::new("status")
+                .about("Show retrieval and document indexing status")
+                .arg(
+                    Arg::new("documents")
+                        .long("documents")
+                        .action(clap::ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("state")
+                        .long("state")
+                        .num_args(1)
+                        .value_name("STATE"),
+                )
+                .arg(
+                    Arg::new("timeout")
+                        .long("timeout")
+                        .num_args(1)
+                        .allow_hyphen_values(true)
+                        .default_value("10s")
+                        .value_name("DURATION"),
+                )
+                .arg(
+                    Arg::new("worker")
+                        .long("worker")
+                        .hide(true)
+                        .action(clap::ArgAction::SetTrue),
+                ),
         )
         .subcommand(
             Command::new("maintenance")
@@ -71,6 +105,9 @@ pub fn run(
     json_output: bool,
     json_flag: bool,
 ) -> ExitCode {
+    if let Some(("status", status)) = command.subcommand() {
+        return status::run(status, vault, json_output);
+    }
     let Some(("maintenance", maintenance)) = command.subcommand() else {
         return run_build(command, vault, json_output);
     };

@@ -566,6 +566,16 @@ pub struct RetrievalDb {
     connection: Connection,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct RetrievalStatusSnapshot {
+    pub document_count: i64,
+    pub chunk_count: i64,
+    pub database_bytes: i64,
+    pub last_indexed_at: Option<String>,
+    pub pending_chunk_count: i64,
+    pub mixed_embedding_spaces: bool,
+}
+
 const RETRIEVAL_MIGRATIONS: &[(&str, &str)] = &[
     (
         "0001_baseline",
@@ -796,6 +806,34 @@ impl RetrievalDb {
         let mut spaces = rows.collect::<Result<Vec<_>, _>>()?;
         spaces.sort_by(|left, right| left.space.cmp(&right.space));
         Ok(spaces)
+    }
+
+    pub fn status_snapshot(&self) -> Result<RetrievalStatusSnapshot, SidecarError> {
+        let document_count =
+            self.connection
+                .query_row("SELECT COUNT(*) FROM documents", [], |row| row.get(0))?;
+        let chunk_count = self.count_chunks()?;
+        let pending_chunk_count = self.count_pending_chunks()?;
+        let page_count: i64 = self
+            .connection
+            .query_row("PRAGMA page_count", [], |row| row.get(0))?;
+        let page_size: i64 = self
+            .connection
+            .query_row("PRAGMA page_size", [], |row| row.get(0))?;
+        let last_indexed_at =
+            self.connection
+                .query_row("SELECT MAX(updated_at) FROM documents", [], |row| {
+                    row.get::<_, Option<String>>(0)
+                })?;
+        let mixed_embedding_spaces = self.detect_mixed_embedding_spaces()?.len() > 1;
+        Ok(RetrievalStatusSnapshot {
+            document_count,
+            chunk_count,
+            database_bytes: page_count.saturating_mul(page_size),
+            last_indexed_at,
+            pending_chunk_count,
+            mixed_embedding_spaces,
+        })
     }
 
     pub fn search_bm25(

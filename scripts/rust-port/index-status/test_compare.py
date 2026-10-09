@@ -95,6 +95,7 @@ class CompareNegativeControls(unittest.TestCase):
             "aggregate_invalid_retrieval_db_json",
             "timeout_negative_json",
             "timeout_blocked_local_provider_json",
+            "timeout_blocked_sidecar_json",
         }
         for role in ("go", "rust"):
             for case_id in compare.REQUIRED_CASE_IDS:
@@ -105,6 +106,11 @@ class CompareNegativeControls(unittest.TestCase):
                 if duration:
                     mode, duration_input, _ = duration
                     extra.update({"duration_mode": mode, "duration_input": duration_input})
+                timestamp = compare.TIMESTAMP_CASE_BY_ID.get(case_id)
+                if timestamp:
+                    mode, value, storage = timestamp
+                    extra.update({"timestamp_mode": mode, "timestamp_input": value, "timestamp_storage": storage,
+                                  "timestamp_observed_hex": (bytes.fromhex(value) if storage == "hex-text" else value.encode("utf-8")).hex().upper()})
                 if case_id == "provider_retry_one_probe_json":
                     extra["provider_probe_count"] = 1
                     extra["provider_response_codes"] = [503]
@@ -260,8 +266,8 @@ class CompareNegativeControls(unittest.TestCase):
 
     def test_valid_structural_control_executes_all_required_ids(self) -> None:
         self._assert_valid_baseline()
-        self.assertEqual(len(compare.REQUIRED_CASE_IDS), 85)
-        self.assertEqual(len(self.manifest["executed_case_ids"]), 170)
+        self.assertEqual(len(compare.REQUIRED_CASE_IDS), 125)
+        self.assertEqual(len(self.manifest["executed_case_ids"]), 2 * len(compare.REQUIRED_CASE_IDS))
         report = json.loads(self.report_path.read_bytes())
         self.assertEqual(report["compared_cases"], len(compare.REQUIRED_CASE_IDS))
         self.assertFalse(report["clean_acceptance"])
@@ -448,6 +454,30 @@ class CompareNegativeControls(unittest.TestCase):
         self.assertNotEqual(exit_code, 0)
         self.assertTrue(any("references an unknown disposable world" in error for error in report["errors"]), report["errors"])
 
+
+    def test_timestamp_input_and_worker_phase_mutations_fail_closed(self) -> None:
+        self._assert_valid_baseline()
+        original = copy.deepcopy(self.manifest)
+        row = next(row for row in self.manifest["runs"] if row["role"] == "rust"
+                   and row["case_id"] == "aggregate_timestamp_go_monotonic_json")
+        row["timestamp_input"] = "2026-01-02T03:04:05Z"
+        self._write_manifest()
+        exit_code, report = self._invoke()
+        self.assertNotEqual(exit_code, 0)
+        self.assertTrue(any("SQLite timestamp input" in error for error in report["errors"]), report)
+        self.manifest = copy.deepcopy(original)
+        row = next(row for row in self.manifest["runs"] if row["role"] == "rust"
+                   and row["case_id"] == "worker_documents_json")
+        raw = b"SYMDESK_INDEX_STATUS_PHASE retrieval status\n"
+        (self.capture / row["stderr_file"]).write_bytes(raw)
+        row["stderr_size_bytes"] = len(raw)
+        row["stderr_sha256"] = hashlib.sha256(raw).hexdigest()
+        self._write_manifest()
+        exit_code, report = self._invoke()
+        self.assertNotEqual(exit_code, 0)
+        self.assertTrue(any(row["case_id"] == "worker_documents_json"
+                            and row["go_stderr_sha256"] != row["rust_stderr_sha256"]
+                            for row in report["mismatches"]), report)
 
     def test_symlink_artifact_is_rejected_without_following_it(self) -> None:
         self._assert_valid_baseline()

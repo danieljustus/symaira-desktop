@@ -26,6 +26,9 @@ from typing import Any
 from compare import (
     CANONICAL_ORACLE_COMMIT,
     DURATION_CASES,
+    TIMESTAMP_CASES,
+    WORKER_CASE_IDS,
+    case_argv,
     REQUIRED_CASE_IDS,
     FULL_REVISION,
     SHA256,
@@ -520,6 +523,35 @@ def run_duration_cases(
         )
 
 
+def run_timestamp_and_worker_cases(binary: Path, role: str, paths: dict[str, Path], world_key: str,
+                                   output_dir: Path, manifest: dict[str, Any]) -> None:
+    retrieval = paths["xdg_data"] / "symdesk" / "retrieval.db"
+    for case_id, mode, value, storage in TIMESTAMP_CASES:
+        with closing(sqlite3.connect(retrieval)) as connection:
+            if storage == "hex-text":
+                connection.execute("UPDATE documents SET updated_at = CAST(? AS TEXT)",
+                                   (sqlite3.Binary(bytes.fromhex(value)),))
+            else:
+                bound = sqlite3.Binary(value.encode("utf-8")) if storage == "blob" else value
+                connection.execute("UPDATE documents SET updated_at = ?", (bound,))
+            connection.commit()
+            observed = connection.execute("SELECT DISTINCT hex(CAST(updated_at AS BLOB)) FROM documents").fetchall()
+        if len(observed) != 1:
+            raise RuntimeError(f"timestamp input was not stored uniformly: {case_id}: {observed}")
+        record_run(case_id=case_id, role=role, binary=binary,
+                   args=case_argv(case_id, str(binary), {key: str(path) for key, path in paths.items()})[1:],
+                   paths=paths, world_key=world_key, output_dir=output_dir, manifest=manifest,
+                   extra_metadata={"timestamp_mode": mode, "timestamp_input": value,
+                                   "timestamp_storage": storage, "timestamp_observed_hex": observed[0][0]})
+    with closing(sqlite3.connect(retrieval)) as connection:
+        connection.execute("UPDATE documents SET updated_at = ?", (FIXED_TIME,))
+        connection.commit()
+    for case_id in WORKER_CASE_IDS:
+        record_run(case_id=case_id, role=role, binary=binary,
+                   args=case_argv(case_id, str(binary), {key: str(path) for key, path in paths.items()})[1:],
+                   paths=paths, world_key=world_key, output_dir=output_dir, manifest=manifest)
+
+
 def run_status_cases(
     binary: Path,
     role: str,
@@ -562,6 +594,25 @@ def run_status_cases(
     capture("documents_populated_text", ["--vault", vault, "index", "status", "--documents"])
     for state in STATES:
         capture(f"documents_state_{state}_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", state])
+    run_timestamp_and_worker_cases(binary, role, paths, world_key, output_dir, manifest)
+
+    sidecars = list((paths["xdg_data"] / "symdesk" / "vaults").glob("*/sidecar.db"))
+    if len(sidecars) != 1:
+        raise RuntimeError(f"expected exactly one sidecar for the deadline control: {sidecars}")
+    with closing(sqlite3.connect(sidecars[0])) as blocker:
+        blocker.execute("PRAGMA journal_mode=DELETE")
+        blocker.execute("BEGIN EXCLUSIVE")
+        try:
+            run = capture("timeout_blocked_sidecar_json", ["--json", "--vault", vault, "index", "status",
+                          "--documents", "--timeout", "500ms"], 1)
+            diagnostic = json.loads((output_dir / run["stdout_file"]).read_bytes())
+            run["success"] = (run["success"] and run["elapsed_seconds"] < 1.5
+                              and diagnostic.get("error") == "index status timed out during open sidecar database after 500ms: context deadline exceeded")
+            persist_manifest(output_dir, manifest)
+            if not run["success"]:
+                raise RuntimeError(f"{role}: locked sidecar did not establish the bounded open-sidecar phase; raw output retained")
+        finally:
+            blocker.rollback()
 
     with LoopbackServer(EmbeddingSuccessHandler) as server:
         write_config(paths["home"], server.url)

@@ -820,11 +820,18 @@ impl RetrievalDb {
         let page_size: i64 = self
             .connection
             .query_row("PRAGMA page_size", [], |row| row.get(0))?;
-        let last_indexed_at =
-            self.connection
-                .query_row("SELECT MAX(updated_at) FROM documents", [], |row| {
-                    row.get::<_, Option<String>>(0)
-                })?;
+        let last_indexed_at = self
+            .connection
+            .query_row("SELECT MAX(updated_at) FROM documents", [], |row| {
+                Ok(row
+                    .get_ref(0)?
+                    .as_bytes()
+                    .ok()
+                    .and_then(|bytes| std::str::from_utf8(bytes).ok())
+                    .map(str::to_owned))
+            })
+            .ok()
+            .flatten();
         let mixed_embedding_spaces = self.detect_mixed_embedding_spaces()?.len() > 1;
         Ok(RetrievalStatusSnapshot {
             document_count,

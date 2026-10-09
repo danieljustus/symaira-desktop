@@ -394,6 +394,10 @@ struct RepresentativeArgs {
 }
 
 fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
+    resolve_vault_with_report(flag, || {})
+}
+
+fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
     let environment = std::env::vars().collect::<BTreeMap<_, _>>();
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
@@ -414,6 +418,7 @@ fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
         .ok_or_else(|| {
             "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)".to_owned()
         })?;
+    report();
     let path = PathBuf::from(raw);
     let absolute = if path.is_absolute() {
         path

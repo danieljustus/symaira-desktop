@@ -54,6 +54,7 @@ BASE_CASE_IDS = (
     "timeout_zero_delayed_local_provider_json",
     "timeout_blocked_local_provider_json",
     "aggregate_invalid_retrieval_db_json",
+    "timeout_blocked_sidecar_json",
 )
 BASE_CASE_EXPECTED_EXIT_CODES = {
     case_id: 1 if case_id in {
@@ -63,6 +64,7 @@ BASE_CASE_EXPECTED_EXIT_CODES = {
         "timeout_negative_json",
         "timeout_blocked_local_provider_json",
         "aggregate_invalid_retrieval_db_json",
+        "timeout_blocked_sidecar_json",
     } else 0
     for case_id in BASE_CASE_IDS
 }
@@ -104,7 +106,34 @@ DURATION_CASE_BY_ID = {
     case_id: (mode, value, expected_exit)
     for case_id, mode, value, expected_exit in DURATION_CASES
 }
-REQUIRED_CASE_IDS = BASE_CASE_IDS + tuple(case_id for case_id, _, _, _ in DURATION_CASES)
+TIMESTAMP_INPUTS = (
+    ("rfc_nanos", "2026-01-02T03:04:05.123456789Z", "text"),
+    ("go_seconds", "2026-01-02 03:04:05 +0000 UTC", "text"),
+    ("go_micros", "2026-01-02 03:04:05.123456 +0000 UTC", "text"),
+    ("go_nanos", "2026-01-02 03:04:05.123456789 +0000 UTC", "text"),
+    ("go_monotonic", "2026-01-02 03:04:05.123456789 +0000 UTC m=+1.25", "text"),
+    ("go_offset_east", "2026-01-02 03:04:05.123456789 +0200 CEST", "text"),
+    ("go_offset_west", "2026-01-02 03:04:05 -0530 ABC", "text"),
+    ("go_utc_offset_conflict", "2026-01-02 03:04:05 +0200 UTC", "text"),
+    ("invalid", "not a timestamp", "text"),
+    ("invalid_zone", "2026-01-02 03:04:05 +0200 abcd", "text"),
+    ("empty", "", "text"),
+    ("zero_rfc", "0001-01-01T00:00:00Z", "text"),
+    ("zero_go", "0001-01-01 00:00:00 +0000 UTC", "text"),
+    ("upper_utc_boundary", "9999-12-31T23:59:59-01:00", "text"),
+    ("lower_utc_boundary", "0000-01-01T00:00:00+01:00", "text"),
+    ("go_comma", "2026-01-02 03:04:05,123456789 +0200 CEST", "text"),
+    ("invalid_utf8", "7472756e63617465642dff", "hex-text"),
+    ("blob_rfc", "2026-01-02T03:04:05Z", "blob"),
+)
+TIMESTAMP_CASES = tuple(
+    (f"aggregate_timestamp_{name}_{mode}", mode, value, storage)
+    for name, value, storage in TIMESTAMP_INPUTS for mode in ("json", "text")
+)
+TIMESTAMP_CASE_BY_ID = {case_id: (mode, value, storage) for case_id, mode, value, storage in TIMESTAMP_CASES}
+WORKER_CASE_IDS = ("worker_aggregate_json", "worker_aggregate_default_json", "worker_documents_json")
+REQUIRED_CASE_IDS = (BASE_CASE_IDS + tuple(case_id for case_id, _, _, _ in DURATION_CASES)
+                     + tuple(case_id for case_id, _, _, _ in TIMESTAMP_CASES) + WORKER_CASE_IDS)
 CANONICAL_ORACLE_COMMIT = "191100811b7e61a0b43d21bd80963281c4c9cf8c"
 FULL_REVISION = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -137,6 +166,11 @@ def inventory_sha256() -> str:
             {"case_id": case_id, "mode": mode, "input": value, "expected_exit_code": expected_exit}
             for case_id, mode, value, expected_exit in DURATION_CASES
         ],
+        "timestamp_cases": [
+            {"case_id": case_id, "mode": mode, "input": value, "storage": storage, "expected_exit_code": 0}
+            for case_id, mode, value, storage in TIMESTAMP_CASES
+        ],
+        "worker_cases": list(WORKER_CASE_IDS),
     }
     encoded = json.dumps(inventory, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     return sha256(encoded)
@@ -151,6 +185,13 @@ def case_argv(case_id: str, binary: str, world: dict[str, str]) -> list[str]:
         mode, value, _ = DURATION_CASE_BY_ID[case_id]
         return [binary, *(["--json"] if mode == "json" else []), "--vault", vault,
                 "index", "status", "--documents", "--timeout", value]
+    if case_id in TIMESTAMP_CASE_BY_ID:
+        mode, _, _ = TIMESTAMP_CASE_BY_ID[case_id]
+        return [binary, *(["--json"] if mode == "json" else []), "--vault", vault, "index", "status"]
+    if case_id in WORKER_CASE_IDS:
+        return [binary, "--json", *([] if case_id == "worker_aggregate_default_json" else ["--vault", vault]),
+                "index", "status", "--worker", "--timeout", "0s",
+                *(["--documents"] if case_id == "worker_documents_json" else [])]
     if case_id not in BASE_CASE_IDS:
         raise ValueError(f"unknown case {case_id}")
     args = [binary, *(["--json"] if case_id.endswith("_json") else [])]
@@ -170,6 +211,8 @@ def case_argv(case_id: str, binary: str, world: dict[str, str]) -> list[str]:
                 state = ""
         if state is not None:
             args.extend(["--state", state])
+    if case_id == "timeout_blocked_sidecar_json":
+        args.extend(["--documents", "--timeout", "500ms"])
     timeout = {"timeout_negative_json": "-1ms", "timeout_zero_delayed_local_provider_json": "0s",
                "timeout_blocked_local_provider_json": "150ms"}.get(case_id)
     if timeout is not None:
@@ -576,6 +619,8 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
             errors.append(f"{role} zero-timeout delayed-provider control did not wait for the local response")
         if case_id == "timeout_blocked_local_provider_json" and elapsed_number is not None and elapsed_number >= 1.5:
             errors.append(f"{role} blocked-provider deadline exceeded the 1.5s cleanup bound")
+        if case_id == "timeout_blocked_sidecar_json" and elapsed_number is not None and elapsed_number >= 1.5:
+            errors.append(f"{role} blocked-sidecar deadline exceeded the 1.5s cleanup bound")
         if case_id in BASE_CASE_EXPECTED_EXIT_CODES and expected_exit != BASE_CASE_EXPECTED_EXIT_CODES[case_id]:
             errors.append(f"{role}:{case_id} expected exit does not match the reviewed base case")
         if case_id in DURATION_CASE_BY_ID:
@@ -601,6 +646,16 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
                 errors.append(f"{role} retry_count=1 control must record exactly one provider probe")
             if run.get("provider_response_codes") != [503]:
                 errors.append(f"{role} retry_count=1 control must record only the first HTTP 503 response")
+        if case_id in TIMESTAMP_CASE_BY_ID:
+            mode, value, storage = TIMESTAMP_CASE_BY_ID[case_id]
+            expected_hex = (bytes.fromhex(value) if storage == "hex-text" else value.encode("utf-8")).hex().upper()
+            if (run.get("timestamp_mode") != mode or run.get("timestamp_input") != value
+                    or run.get("timestamp_storage") != storage or run.get("timestamp_observed_hex") != expected_hex):
+                errors.append(f"{role}:{case_id} SQLite timestamp input does not match the reviewed corpus")
+            if expected_exit != 0:
+                errors.append(f"{role}:{case_id} best-effort timestamp status must succeed")
+        if case_id in WORKER_CASE_IDS and expected_exit != 0:
+            errors.append(f"{role}:{case_id} worker phase trace must succeed")
 
         world_key = run.get("world_key")
         if not isinstance(world_key, str) or world_key not in world_paths:

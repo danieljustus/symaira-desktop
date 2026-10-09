@@ -3,7 +3,10 @@ use std::{collections::BTreeMap, process::Command, time::Duration};
 use clap::ArgMatches;
 use serde::Serialize;
 use symdesk_index::{RetrievalDb, index_location_for_vault, retrieval_embedding_config};
-use time::{OffsetDateTime, UtcOffset, format_description::well_known::Rfc3339};
+use time::{
+    OffsetDateTime, PrimitiveDateTime, UtcOffset, format_description::well_known::Rfc3339,
+    macros::format_description,
+};
 use tokio::runtime::Builder;
 
 use super::status_process::{self, ProcessError, ProcessOutput};
@@ -93,7 +96,7 @@ pub fn run(matches: &ArgMatches, vault: Option<&str>, json_output: bool) -> std:
     };
 
     if matches.get_flag("worker") {
-        eprintln!("{WORKER_PHASE_PREFIX}retrieval status");
+        eprintln!("{WORKER_PHASE_PREFIX}worker startup");
         return match run_in_process(
             vault,
             json_output,
@@ -151,8 +154,7 @@ fn run_parent(
         Ok(output) if output.status.success() => super::super::write_stdout_bytes(&output.stdout),
         Ok(output) => super::super::emit_error(worker_error(&output), json_output),
         Err(ProcessError::TimedOut(output)) => {
-            let phase =
-                worker_phase(&output.stderr).unwrap_or_else(|| "retrieval status".to_owned());
+            let phase = worker_phase(&output.stderr).unwrap_or_else(|| "worker startup".to_owned());
             super::super::emit_error(
                 format!(
                     "index status timed out during {phase} after {}: context deadline exceeded",
@@ -182,6 +184,7 @@ fn run_in_process(
     documents: bool,
     state: Option<&str>,
 ) -> Result<Vec<u8>, String> {
+    eprintln!("{WORKER_PHASE_PREFIX}worker startup");
     if documents {
         return render_documents(vault, state, json_output);
     }
@@ -193,8 +196,11 @@ fn render_documents(
     state: Option<&str>,
     json_output: bool,
 ) -> Result<Vec<u8>, String> {
+    eprintln!("{WORKER_PHASE_PREFIX}resolve vault root");
     let root = required_vault(vault)?;
+    eprintln!("{WORKER_PHASE_PREFIX}open sidecar database");
     let sidecar = symdesk_index::open_for_vault(&root).map_err(|error| error.to_string())?;
+    eprintln!("{WORKER_PHASE_PREFIX}document status listing");
     let state = state.filter(|state| !state.is_empty());
     if let Some(state) = state.filter(|state| !VALID_STATES.contains(state)) {
         return Err(format!(
@@ -245,6 +251,7 @@ fn render_documents(
 }
 
 fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, String> {
+    eprintln!("{WORKER_PHASE_PREFIX}retrieval status");
     let environment = std::env::vars().collect::<BTreeMap<_, _>>();
     let cwd = std::env::current_dir()
         .map_err(|error| format!("failed to get current directory: {error}"))?;
@@ -258,9 +265,7 @@ fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, St
     let last_indexed_at = snapshot
         .last_indexed_at
         .as_deref()
-        .filter(|value| !value.is_empty())
-        .map(|value| format_go_rfc3339(value, true, false))
-        .transpose()?;
+        .and_then(aggregate_timestamp);
     let embedding_config =
         retrieval_embedding_config(&environment, &cwd).map_err(|error| error.to_string())?;
     let backend_available = embedding_backend_available(&embedding_config)?;
@@ -270,7 +275,10 @@ fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, St
         "local-hash".to_owned()
     };
     let vault_document_count = optional_vault(vault)?
-        .map(|root| symdesk_vault::walk_markdown(&root).map(|paths| paths.len()))
+        .map(|root| {
+            eprintln!("{WORKER_PHASE_PREFIX}vault counting");
+            symdesk_vault::walk_markdown(&root).map(|paths| paths.len())
+        })
         .transpose()
         .map_err(|error| error.to_string())?;
 
@@ -330,7 +338,9 @@ fn required_vault(vault: Option<&str>) -> Result<std::path::PathBuf, String> {
 }
 
 fn optional_vault(vault: Option<&str>) -> Result<Option<std::path::PathBuf>, String> {
-    match super::super::resolve_vault(vault) {
+    match super::super::resolve_vault_with_report(vault, || {
+        eprintln!("{WORKER_PHASE_PREFIX}resolve vault root");
+    }) {
         Ok(root) => Ok(Some(root)),
         Err(error)
             if vault.filter(|value| !value.is_empty()).is_none()
@@ -560,6 +570,89 @@ fn scaled_duration(nanos: u128, scale: u128, unit: &str) -> String {
     format!("{whole}.{}{unit}", fraction.trim_end_matches('0'))
 }
 
+// Retrieval GetStats is deliberately best-effort and accepts database/sql's
+// time.Time.String storage. Document lifecycle timestamps remain RFC3339-only.
+fn aggregate_timestamp(value: &str) -> Option<String> {
+    let fields = value.split_whitespace().collect::<Vec<_>>();
+    let normalized = if fields.len() >= 4 {
+        fields[..4].join(" ")
+    } else {
+        value.to_owned()
+    };
+    let parsed = OffsetDateTime::parse(&normalized, &Rfc3339)
+        .ok()
+        .or_else(|| {
+            let [date, clock, offset, zone, ..] = fields.as_slice() else {
+                return None;
+            };
+            if date.len() != 10 || !go_zone_name(zone) {
+                return None;
+            }
+            let offset = offset.as_bytes();
+            if offset.len() != 5
+                || !matches!(offset[0], b'+' | b'-')
+                || !offset[1..].iter().all(u8::is_ascii_digit)
+            {
+                return None;
+            }
+            let hours = i64::from(offset[1] - b'0') * 10 + i64::from(offset[2] - b'0');
+            let minutes = i64::from(offset[3] - b'0') * 10 + i64::from(offset[4] - b'0');
+            if hours > 24 || minutes > 60 {
+                return None;
+            }
+            let wall = format!("{date} {}", clock.replace(',', "."));
+            let parsed = PrimitiveDateTime::parse(
+                &wall,
+                format_description!(
+                    "[year]-[month]-[day] [hour padding:none]:[minute]:[second].[subsecond]"
+                ),
+            )
+            .or_else(|_| {
+                PrimitiveDateTime::parse(
+                    &wall,
+                    format_description!(
+                        "[year]-[month]-[day] [hour padding:none]:[minute]:[second]"
+                    ),
+                )
+            })
+            .ok()?;
+            // Go treats the literal UTC abbreviation specially, even when the
+            // numeric offset disagrees. Other accepted names use that offset.
+            let seconds = if *zone == "UTC" {
+                0
+            } else {
+                (hours * 3_600 + minutes * 60) * if offset[0] == b'-' { -1 } else { 1 }
+            };
+            parsed
+                .assume_utc()
+                .checked_sub(time::Duration::seconds(seconds))
+        })?
+        .to_offset(UtcOffset::UTC);
+    if parsed == time::macros::datetime!(0001-01-01 0:00 UTC) {
+        return None;
+    }
+    Some(render_go_rfc3339(parsed, false))
+}
+
+fn go_zone_name(zone: &str) -> bool {
+    if matches!(zone, "ChST" | "MeST" | "WITA") {
+        return true;
+    }
+    let bytes = zone.as_bytes();
+    if bytes.iter().all(u8::is_ascii_uppercase)
+        && (bytes.len() == 3 || ((bytes.len() == 4 || bytes.len() == 5) && zone.ends_with('T')))
+    {
+        return true;
+    }
+    let signed = zone.strip_prefix("GMT").unwrap_or(zone);
+    signed.strip_prefix(['+', '-']).is_some_and(|hours| {
+        !hours.is_empty()
+            && hours.len() <= 2
+            && hours.bytes().all(|byte| byte.is_ascii_digit())
+            && hours.parse::<u8>().is_ok_and(|hours| hours <= 23)
+    })
+}
+
 fn format_go_rfc3339(value: &str, utc: bool, fractional: bool) -> Result<String, String> {
     let parsed = OffsetDateTime::parse(value, &Rfc3339)
         .map_err(|error| format!("invalid index timestamp {value:?}: {error}"))?;
@@ -568,9 +661,17 @@ fn format_go_rfc3339(value: &str, utc: bool, fractional: bool) -> Result<String,
     } else {
         parsed
     };
+    Ok(render_go_rfc3339(parsed, fractional))
+}
+
+fn render_go_rfc3339(parsed: OffsetDateTime, fractional: bool) -> String {
+    let year = if parsed.year() < 0 {
+        format!("-{:04}", -parsed.year())
+    } else {
+        format!("{:04}", parsed.year())
+    };
     let mut rendered = format!(
-        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
-        parsed.year(),
+        "{year}-{:02}-{:02}T{:02}:{:02}:{:02}",
         u8::from(parsed.month()),
         parsed.day(),
         parsed.hour(),
@@ -594,7 +695,7 @@ fn format_go_rfc3339(value: &str, utc: bool, fractional: bool) -> Result<String,
             (absolute % 3_600) / 60
         ));
     }
-    Ok(rendered)
+    rendered
 }
 
 fn go_time_text(value: &str) -> Result<String, String> {
@@ -659,6 +760,54 @@ fn aggregate_text(status: &AggregateStatus) -> String {
 mod tests {
     use super::{format_go_rfc3339, go_duration, parse_go_duration_nanos, parse_timeout};
     use std::time::Duration;
+
+    #[test]
+    fn aggregate_timestamp_replays_native_go_storage_without_broadening_documents() {
+        // Expected values come from the canonical Go executable's SQLite status
+        // reads, including UTC's special abbreviation and year rollover.
+        for (input, expected) in [
+            (
+                "2026-01-02 03:04:05 +0000 UTC",
+                Some("2026-01-02T03:04:05Z"),
+            ),
+            (
+                "2026-01-02 03:04:05.123456789 +0000 UTC m=+1.25",
+                Some("2026-01-02T03:04:05Z"),
+            ),
+            (
+                "2026-01-02 03:04:05,123456789 +0200 CEST",
+                Some("2026-01-02T01:04:05Z"),
+            ),
+            (
+                "2026-01-02 03:04:05 -0530 ABC",
+                Some("2026-01-02T08:34:05Z"),
+            ),
+            (
+                "2026-01-02 03:04:05 +0200 UTC",
+                Some("2026-01-02T03:04:05Z"),
+            ),
+            ("9999-12-31T23:59:59-01:00", Some("10000-01-01T00:59:59Z")),
+            ("0000-01-01T00:00:00+01:00", Some("-0001-12-31T23:00:00Z")),
+            ("not a timestamp", None),
+            ("2026-01-02 03:04:05 +0200 abcd", None),
+            ("0001-01-01T00:00:00Z", None),
+            ("0001-01-01 00:00:00 +0000 UTC", None),
+            ("", None),
+        ] {
+            assert_eq!(
+                super::aggregate_timestamp(input).as_deref(),
+                expected,
+                "{input}"
+            );
+        }
+        assert!(format_go_rfc3339("2026-01-02 03:04:05 +0000 UTC", false, true).is_err());
+        assert_eq!(
+            super::worker_phase(b"unmarked failure\n")
+                .unwrap_or_else(|| "worker startup".to_owned()),
+            "worker startup"
+        );
+        assert_eq!(super::worker_phase(b"SYMDESK_INDEX_STATUS_PHASE worker startup\nSYMDESK_INDEX_STATUS_PHASE document status listing\n").as_deref(), Some("document status listing"));
+    }
 
     #[test]
     fn diagnostic_json_preserves_go_escaping_and_invalid_byte_boundaries() {

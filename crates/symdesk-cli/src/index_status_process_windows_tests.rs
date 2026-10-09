@@ -76,7 +76,7 @@ fn powershell_worker(root: &TestRoot, keep_leader: bool) -> Command {
             "-NoProfile",
             "-NonInteractive",
             "-Command",
-            r#"$child = Start-Process -FilePath $env:ComSpec -ArgumentList '/c','echo descendant-ready & echo ready>"%CHILD_READY%" & timeout /t 300 /nobreak' -NoNewWindow -PassThru; [IO.File]::WriteAllText($env:PID_FILE,[string]$child.Id); $deadline = [DateTime]::UtcNow.AddSeconds(10); while (-not (Test-Path $env:CHILD_READY) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 10 }; if (-not (Test-Path $env:CHILD_READY)) { exit 42 }; [IO.File]::WriteAllText($env:READY_FILE,'ready'); if ($env:KEEP_LEADER -eq 'yes') { Start-Sleep -Seconds 30 }"#,
+            r#"$code = '[Console]::Write("descendant-ready"); [IO.File]::WriteAllText($env:CHILD_READY,"ready"); Start-Sleep -Seconds 300'; $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code)); $child = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList '-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',$encoded -NoNewWindow -PassThru; [IO.File]::WriteAllText($env:PID_FILE,[string]$child.Id); $deadline = [DateTime]::UtcNow.AddSeconds(10); while (-not (Test-Path $env:CHILD_READY) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 10 }; if (-not (Test-Path $env:CHILD_READY)) { exit 42 }; if ($child.HasExited) { exit 43 }; [IO.File]::WriteAllText($env:READY_FILE,'ready'); if ($env:KEEP_LEADER -eq 'yes') { Start-Sleep -Seconds 30 }"#,
         ])
         .env("PID_FILE", root.path().join("child.pid"))
         .env("READY_FILE", root.path().join("child.ready"))
@@ -117,6 +117,32 @@ fn normal_leader_exit_closes_job_and_kills_ready_descendant() {
     .expect("worker should complete normally");
     assert!(output.status.success());
     assert_descendant_exited(&root, &output.stdout);
+}
+
+#[test]
+fn fixture_descendant_survives_without_job_cleanup() {
+    // timeout.exe can exit immediately with redirected stdin; prove this
+    // non-interactive fixture genuinely stays alive without our Job cleanup.
+    let mut root = TestRoot::create("negative-control");
+    let pid_path = root.path().join("child.pid");
+    root.own_pid_file(pid_path.clone());
+    let mut child = ChildGuard(
+        powershell_worker(&root, false)
+            .spawn()
+            .expect("spawn fixture"),
+    );
+    assert!(
+        super::super::wait_for_exit(&mut child.0, Duration::from_secs(10))
+            .expect("fixture leader exits")
+            .success()
+    );
+    assert!(root.path().join("child.ready").is_file());
+    let pid = fs::read_to_string(pid_path)
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
+    assert!(!process_is_gone(pid, Duration::from_millis(100)).expect("live descendant"));
 }
 
 #[test]

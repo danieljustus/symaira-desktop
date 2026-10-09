@@ -40,13 +40,14 @@ class CompareNegativeControls(unittest.TestCase):
         self.temp_context.cleanup()
 
     def _make_valid_structure(self) -> dict[str, Any]:
+        head = subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
         bins = self.root / "binaries"
         bins.mkdir()
         binary_paths: dict[str, Path] = {}
         identities: dict[str, dict[str, Any]] = {}
         for role, payload, revision, provenance in (
             ("go", b"synthetic-go-identity", compare.CANONICAL_ORACLE_COMMIT, "structural unit control"),
-            ("rust", b"synthetic-rust-identity", compare.RUST_DIAGNOSTIC_BINARY_SOURCE, "structural unit control"),
+            ("rust", b"synthetic-rust-identity", head, "structural unit control"),
         ):
             path = bins / f"{role}.bin"
             path.write_bytes(payload)
@@ -89,8 +90,6 @@ class CompareNegativeControls(unittest.TestCase):
 
         error_cases = {
             "documents_invalid_state_json",
-            "documents_state_empty_json",
-            "documents_state_empty_text",
             "documents_missing_vault_json",
             "aggregate_missing_vault_json",
             "aggregate_invalid_retrieval_db_json",
@@ -184,15 +183,7 @@ class CompareNegativeControls(unittest.TestCase):
             "NO_PROXY": "*",
             "no_proxy": "*",
         }
-        argv = [str(binary)]
-        duration = compare.DURATION_CASE_BY_ID.get(case_id)
-        if duration:
-            mode, value, _ = duration
-            if mode == "json":
-                argv.append("--json")
-            argv.extend(["--vault", str(world["vault"]), "index", "status", "--documents", "--timeout", value])
-        else:
-            argv.extend(["index", "status"])
+        argv = compare.case_argv(case_id, str(binary), {key: str(path) for key, path in world.items()})
         stem = f"{role}--{case_id}--{world_key}" if case_id == "seed_index" else f"{role}--{case_id}"
         stdout_name = f"{stem}.stdout.bin"
         stderr_name = f"{stem}.stderr.bin"
@@ -246,6 +237,9 @@ class CompareNegativeControls(unittest.TestCase):
                 str(HERE / "compare.py"),
                 "--manifest", str(self.manifest_path),
                 "--report", str(self.report_path),
+                "--expected-rust-commit", self.baseline["rust_binary"]["build_source_commit"],
+                "--expected-go-sha256", self.baseline["go_binary"]["sha256"],
+                "--expected-rust-sha256", self.baseline["rust_binary"]["sha256"],
             ],
             cwd=REPO,
             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
@@ -309,7 +303,7 @@ class CompareNegativeControls(unittest.TestCase):
         original = copy.deepcopy(self.manifest)
         for mutation in ("false", "missing", "numeric_exit", "nonfinite_elapsed", "reviewed_exit_tamper"):
             self.manifest = copy.deepcopy(original)
-            target_case = "documents_state_empty_json" if mutation == "reviewed_exit_tamper" else "documents_invalid_state_json"
+            target_case = "documents_invalid_state_json"
             run = next(row for row in self.manifest["runs"] if row["case_id"] == target_case and row["role"] == "go")
             if mutation == "false":
                 run["success"] = False
@@ -369,7 +363,7 @@ class CompareNegativeControls(unittest.TestCase):
         self.assertTrue(any("full lowercase 40-character" in error for error in report["errors"]), report["errors"])
 
         self.manifest = copy.deepcopy(original)
-        self.manifest["platform"] = {"os": "windows", "architecture": "arm64"}
+        self.manifest["platform"] = {"os": "not-a-native-os", "architecture": "invalid"}
         self._write_manifest()
         exit_code, report = self._invoke()
         self.assertNotEqual(exit_code, 0)
@@ -403,6 +397,10 @@ class CompareNegativeControls(unittest.TestCase):
 
     def test_duration_arguments_are_bound_to_all_54_reviewed_oracle_rows(self) -> None:
         self._assert_valid_baseline()
+        empty_row = next(row for row in self.manifest["runs"]
+                         if row["case_id"] == "documents_state_empty_json" and row["role"] == "go")
+        self.assertEqual(empty_row["argv"][-2:], ["--state", ""])
+        self.assertEqual(empty_row["expected_exit_code"], 0)
         self.assertEqual(len(compare.DURATION_CASES), 54)
         self.assertTrue(
             {"1.sx", "9223372036854775808ns1x", "1\n", "1\x7f", "1\u2028", "+0", "-0", "1.s"}
@@ -420,6 +418,11 @@ class CompareNegativeControls(unittest.TestCase):
             <= set(compare.BASE_CASE_IDS)
         )
         original = copy.deepcopy(self.manifest)
+        empty_row["argv"][-1] = "empty"
+        self._write_manifest()
+        exit_code, report = self._invoke()
+        self.assertNotEqual(exit_code, 0)
+        self.assertTrue(any("reviewed case inputs" in error for error in report["errors"]), report)
         case_id = "timeout_parse_overflow_then_unknown_unit_text"
         self.manifest = copy.deepcopy(original)
         row = next(row for row in self.manifest["runs"] if row["role"] == "go" and row["case_id"] == case_id)

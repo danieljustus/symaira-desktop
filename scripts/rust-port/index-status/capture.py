@@ -27,7 +27,8 @@ from compare import (
     CANONICAL_ORACLE_COMMIT,
     DURATION_CASES,
     REQUIRED_CASE_IDS,
-    RUST_DIAGNOSTIC_BINARY_SOURCE,
+    FULL_REVISION,
+    SHA256,
     inventory_sha256,
 )
 
@@ -175,6 +176,7 @@ def prepare_world(base: Path, role: str, populated: bool) -> dict[str, Path]:
     local_appdata = world / "local-appdata"
     for directory in (home, xdg_data, xdg_config, temp, vault, appdata, local_appdata):
         directory.mkdir(parents=True, mode=0o700)
+    (world / "no-providers").mkdir(mode=0o700)
     write_config(home)
     if populated:
         for state in STATES:
@@ -206,7 +208,7 @@ def prepare_world(base: Path, role: str, populated: bool) -> dict[str, Path]:
 
 def isolated_env(paths: dict[str, Path], binary: Path) -> dict[str, str]:
     system = platform.system().lower()
-    path_entries = [str(binary.parent)]
+    path_entries = [str(paths["world"] / "no-providers")]
     env: dict[str, str] = {
         "HOME": str(paths["home"]),
         "USERPROFILE": str(paths["home"]),
@@ -232,12 +234,6 @@ def isolated_env(paths: dict[str, Path], binary: Path) -> dict[str, str]:
     if system.startswith("win"):
         system_root = os.environ.get("SystemRoot", r"C:\Windows")
         env["SystemRoot"] = system_root
-        path_entries.append(str(Path(system_root) / "System32"))
-    else:
-        if system == "darwin":
-            path_entries.extend(("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"))
-        else:
-            path_entries.extend(("/usr/local/bin", "/usr/bin", "/bin"))
     env["PATH"] = os.pathsep.join(dict.fromkeys(path_entries))
     return env
 
@@ -247,7 +243,7 @@ def _terminate_process_tree(process: subprocess.Popen[bytes], env: dict[str, str
     if os.name == "nt":
         try:
             subprocess.run(
-                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                [str(Path(env.get("SystemRoot", env.get("SYSTEMROOT", r"C:\Windows"))) / "System32/taskkill.exe"), "/PID", str(process.pid), "/T", "/F"],
                 env=env,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -556,8 +552,8 @@ def run_status_cases(
         capture("aggregate_empty_with_vault_text", ["--vault", vault, "index", "status"])
         capture("documents_empty_json", ["--json", "--vault", vault, "index", "status", "--documents"])
         capture("documents_empty_text", ["--vault", vault, "index", "status", "--documents"])
-        capture("documents_state_empty_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", "empty"], 1)
-        capture("documents_state_empty_text", ["--vault", vault, "index", "status", "--documents", "--state", "empty"], 1)
+        capture("documents_state_empty_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", ""])
+        capture("documents_state_empty_text", ["--vault", vault, "index", "status", "--documents", "--state", ""])
         return
 
     capture("aggregate_populated_json", ["--json", "--vault", vault, "index", "status"])
@@ -664,6 +660,7 @@ def main() -> int:
     parser.add_argument("--go-bin", required=True, type=Path)
     parser.add_argument("--rust-bin", required=True, type=Path)
     parser.add_argument("--rust-build-source-commit", required=True)
+    parser.add_argument("--expected-go-sha256", required=True)
     parser.add_argument("--expected-rust-sha256", required=True)
     parser.add_argument("--world-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -674,12 +671,18 @@ def main() -> int:
     rust_bin = args.rust_bin.resolve(strict=True)
     if go_bin == rust_bin or sha256_file(go_bin) == sha256_file(rust_bin):
         parser.error("Go and Rust binary paths and content identities must be distinct")
-    if args.rust_build_source_commit != RUST_DIAGNOSTIC_BINARY_SOURCE:
-        parser.error("diagnostic replay requires the independently recorded parent Rust source revision")
+    if not FULL_REVISION.fullmatch(args.rust_build_source_commit):
+        parser.error("Rust source revision must be a full lowercase Git revision")
+    if not SHA256.fullmatch(args.expected_go_sha256) or not SHA256.fullmatch(args.expected_rust_sha256):
+        parser.error("expected binary digests must be lowercase SHA-256 values")
+    if sha256_file(go_bin) != args.expected_go_sha256:
+        parser.error("Go binary hash does not match the independently recorded oracle build")
     if sha256_file(rust_bin) != args.expected_rust_sha256:
         parser.error("Rust binary hash does not match the independently recorded parent build")
 
     source_commit = git_text("rev-parse", "HEAD")
+    if source_commit != args.rust_build_source_commit:
+        parser.error("native differential requires a Rust build from the captured source revision")
     source_status = git_text("status", "--porcelain=v1", "--untracked-files=all")
     if source_status:
         raise RuntimeError("capture requires a clean source worktree; commit only after tests and rerun")
@@ -702,8 +705,8 @@ def main() -> int:
 
     manifest: dict[str, Any] = {
         "schema_version": 2,
-        "purpose": "focused index-status diagnostic replay; not clean production acceptance",
-        "evidence_class": "diagnostic-replay",
+        "purpose": "focused index-status native differential on clean immutable source",
+        "evidence_class": "native-differential",
         "label": args.label,
         "source_commit": source_commit,
         "source_worktree": str(WORKTREE),
@@ -723,7 +726,7 @@ def main() -> int:
             rust_bin,
             role="rust",
             source_commit=args.rust_build_source_commit,
-            provenance="existing parent-built binary used for explicitly diagnostic replay; not a worker clean build",
+            provenance="independently built executable, source revision and binary digest supplied by the owning build gate",
         ),
         "declared_case_ids": list(REQUIRED_CASE_IDS),
         "executed_case_ids": [],
@@ -758,6 +761,10 @@ def main() -> int:
         list(REQUIRED_CASE_IDS) + [f"rust:{case_id}" for case_id in REQUIRED_CASE_IDS]
     ):
         raise RuntimeError("executed case order/count differs from the immutable reviewed inventory")
+    if git_text("rev-parse", "HEAD") != source_commit or git_text("status", "--porcelain=v1", "--untracked-files=all"):
+        raise RuntimeError("source changed during native capture; retained evidence cannot be accepted")
+    if sha256_file(go_bin) != args.expected_go_sha256 or sha256_file(rust_bin) != args.expected_rust_sha256:
+        raise RuntimeError("binary changed during native capture; retained evidence cannot be accepted")
     persist_manifest(args.output, manifest)
     print(json.dumps({
         "manifest": str(args.output / "manifest.json"),

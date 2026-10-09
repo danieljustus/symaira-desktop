@@ -57,8 +57,6 @@ BASE_CASE_IDS = (
 )
 BASE_CASE_EXPECTED_EXIT_CODES = {
     case_id: 1 if case_id in {
-        "documents_state_empty_json",
-        "documents_state_empty_text",
         "documents_invalid_state_json",
         "documents_missing_vault_json",
         "aggregate_missing_vault_json",
@@ -108,7 +106,6 @@ DURATION_CASE_BY_ID = {
 }
 REQUIRED_CASE_IDS = BASE_CASE_IDS + tuple(case_id for case_id, _, _, _ in DURATION_CASES)
 CANONICAL_ORACLE_COMMIT = "191100811b7e61a0b43d21bd80963281c4c9cf8c"
-RUST_DIAGNOSTIC_BINARY_SOURCE = "82bbe5074bf02ca198846ed7f95f3587fe74565c"
 FULL_REVISION = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 EMPTY_CASES = {
@@ -143,6 +140,41 @@ def inventory_sha256() -> str:
     }
     encoded = json.dumps(inventory, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     return sha256(encoded)
+
+
+def case_argv(case_id: str, binary: str, world: dict[str, str]) -> list[str]:
+    """Bind every named case to its actual inputs, not merely its label."""
+    vault = world["vault"]
+    if case_id == "seed_index":
+        return [binary, "--json", "--vault", vault, "index", vault]
+    if case_id in DURATION_CASE_BY_ID:
+        mode, value, _ = DURATION_CASE_BY_ID[case_id]
+        return [binary, *(["--json"] if mode == "json" else []), "--vault", vault,
+                "index", "status", "--documents", "--timeout", value]
+    if case_id not in BASE_CASE_IDS:
+        raise ValueError(f"unknown case {case_id}")
+    args = [binary, *(["--json"] if case_id.endswith("_json") else [])]
+    if case_id not in {"aggregate_empty_default_json", "aggregate_empty_default_text",
+                       "documents_missing_vault_json", "aggregate_invalid_retrieval_db_json"}:
+        selected = str(Path(world["world"]) / "absent-vault") if case_id == "aggregate_missing_vault_json" else vault
+        args.extend(["--vault", selected])
+    args.extend(["index", "status"])
+    if case_id.startswith("documents_"):
+        args.append("--documents")
+        state = {"documents_invalid_state_json": "bogus",
+                 "documents_lifecycle_invalid_utf8_json": "failed",
+                 "documents_lifecycle_valid_replacement_json": "queued"}.get(case_id)
+        if case_id.startswith("documents_state_"):
+            state = case_id.removeprefix("documents_state_").rsplit("_", 1)[0]
+            if state == "empty":
+                state = ""
+        if state is not None:
+            args.extend(["--state", state])
+    timeout = {"timeout_negative_json": "-1ms", "timeout_zero_delayed_local_provider_json": "0s",
+               "timeout_blocked_local_provider_json": "150ms"}.get(case_id)
+    if timeout is not None:
+        args.extend(["--timeout", timeout])
+    return args
 
 
 def normalize(data: bytes, replacements: list[tuple[bytes, bytes]]) -> bytes:
@@ -298,7 +330,8 @@ def _report_error(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
-def compare_manifest(manifest_path: Path) -> dict[str, Any]:
+def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
+                     expected_go_sha256: str, expected_rust_sha256: str) -> dict[str, Any]:
     errors: list[str] = []
     mismatches: list[dict[str, Any]] = []
     compared = 0
@@ -332,6 +365,8 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
         errors.append("case inventory digest does not match the reviewed required inventory")
 
     expected_roles = ["go", "rust"]
+    _validate_revision(expected_rust_commit, "expected Rust revision", errors)
+    expected_hashes = {"go": expected_go_sha256, "rust": expected_rust_sha256}
     roles = manifest.get("roles")
     if roles != expected_roles:
         errors.append("roles must be exactly ['go', 'rust'] in that order")
@@ -344,6 +379,11 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
             role_binaries[role] = identity
         binary_manifest = manifest.get(f"{role}_binary")
         if isinstance(binary_manifest, dict):
+            expected_hash = expected_hashes[role]
+            if not isinstance(expected_hash, str) or not SHA256.fullmatch(expected_hash):
+                errors.append(f"expected {role} binary digest is malformed")
+            elif binary_manifest.get("sha256") != expected_hash:
+                errors.append(f"{role} binary differs from independently supplied build digest")
             if binary_manifest.get("role") != role:
                 errors.append(f"{role} binary role identity is swapped or missing")
             build_revision = binary_manifest.get("build_source_commit")
@@ -351,8 +391,8 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
             provenance = binary_manifest.get("build_provenance")
             if not isinstance(provenance, str) or not provenance:
                 errors.append(f"{role} binary build_provenance is missing")
-            if role == "rust" and build_revision != RUST_DIAGNOSTIC_BINARY_SOURCE:
-                errors.append("Rust diagnostic binary is not bound to the independently recorded parent source revision")
+            if role == "rust" and build_revision != expected_rust_commit:
+                errors.append("Rust binary is not bound to the independently supplied source revision")
     if "go" in role_binaries and "rust" in role_binaries:
         go_path, go_hash, _ = role_binaries["go"]
         rust_path, rust_hash, _ = role_binaries["rust"]
@@ -383,8 +423,15 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
         if ancestry.returncode != 0:
             errors.append("canonical Go oracle revision is not an ancestor of source_commit")
 
-    if manifest.get("evidence_class") != "diagnostic-replay":
-        errors.append("evidence_class must explicitly identify this as diagnostic-replay")
+    evidence_class = manifest.get("evidence_class")
+    if evidence_class not in ("diagnostic-replay", "native-differential"):
+        errors.append("evidence_class is unknown")
+    if evidence_class == "native-differential":
+        if source_commit != expected_rust_commit:
+            errors.append("native differential must execute the captured source revision")
+        actual_status = _git_output("status", "--porcelain=v1", "--untracked-files=all")
+        if actual_status.returncode or actual_status.stdout:
+            errors.append("native differential source worktree is not clean")
 
     captured_platform = manifest.get("platform")
     current_platform = _platform_identity()
@@ -494,6 +541,18 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
             errors.append(f"{role}:{case_id} argv must be a non-empty list of strings")
         elif Path(argv[0]).resolve() != binary_path:
             errors.append(f"{role}:{case_id} argv executable does not match its binary identity")
+        world_key_for_argv = run.get("world_key")
+        argv_world = worlds.get(world_key_for_argv) if isinstance(world_key_for_argv, str) else None
+        if isinstance(argv_world, dict) and (case_id in REQUIRED_CASE_IDS or case_id == "seed_index"):
+            try:
+                if argv != case_argv(case_id, str(binary_path), argv_world):
+                    errors.append(f"{role}:{case_id} argv does not execute the reviewed case inputs")
+            except (KeyError, TypeError, ValueError):
+                errors.append(f"{role}:{case_id} case world is malformed")
+        if case_id in REQUIRED_CASE_IDS:
+            group = "empty" if case_id in EMPTY_CASES else "populated"
+            if world_key_for_argv != f"{role}-{group}":
+                errors.append(f"{role}:{case_id} uses another role's or case's world")
 
         if run.get("platform") != captured_platform:
             errors.append(f"{role}:{case_id} platform identity differs from the capture")
@@ -631,6 +690,9 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
             root = world.get("world") if isinstance(world, dict) else None
             if isinstance(root, str):
                 replacements.append((root.encode("utf-8"), f"<WORLD_{group.upper()}>".encode("ascii")))
+                # JSON-encoded Windows roots contain doubled backslashes.
+                escaped = json.dumps(root, ensure_ascii=False)[1:-1].encode("utf-8")
+                replacements.append((escaped, f"<WORLD_{group.upper()}>".encode("ascii")))
         replacements_by_group[group] = sorted(replacements, key=lambda item: len(item[0]), reverse=True)
 
     for case_id in REQUIRED_CASE_IDS:
@@ -672,7 +734,7 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
     return {
         "manifest": str(manifest_resolved or manifest_path),
         "pass": passed,
-        "clean_acceptance": False,
+        "clean_acceptance": passed and evidence_class == "native-differential",
         "evidence_class": manifest.get("evidence_class"),
         "case_inventory_sha256": inventory_sha256(),
         "required_case_ids": len(REQUIRED_CASE_IDS),
@@ -690,9 +752,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--expected-rust-commit", required=True)
+    parser.add_argument("--expected-go-sha256", required=True)
+    parser.add_argument("--expected-rust-sha256", required=True)
     args = parser.parse_args()
 
-    report = compare_manifest(args.manifest)
+    report = compare_manifest(args.manifest, expected_rust_commit=args.expected_rust_commit,
+                              expected_go_sha256=args.expected_go_sha256,
+                              expected_rust_sha256=args.expected_rust_sha256)
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)

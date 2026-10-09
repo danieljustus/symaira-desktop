@@ -594,25 +594,6 @@ def run_status_cases(
     capture("documents_populated_text", ["--vault", vault, "index", "status", "--documents"])
     for state in STATES:
         capture(f"documents_state_{state}_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", state])
-    run_timestamp_and_worker_cases(binary, role, paths, world_key, output_dir, manifest)
-
-    sidecars = list((paths["xdg_data"] / "symdesk" / "vaults").glob("*/sidecar.db"))
-    if len(sidecars) != 1:
-        raise RuntimeError(f"expected exactly one sidecar for the deadline control: {sidecars}")
-    with closing(sqlite3.connect(sidecars[0])) as blocker:
-        blocker.execute("PRAGMA journal_mode=DELETE")
-        blocker.execute("BEGIN EXCLUSIVE")
-        try:
-            run = capture("timeout_blocked_sidecar_json", ["--json", "--vault", vault, "index", "status",
-                          "--documents", "--timeout", "500ms"], 1)
-            diagnostic = json.loads((output_dir / run["stdout_file"]).read_bytes())
-            run["success"] = (run["success"] and run["elapsed_seconds"] < 1.5
-                              and diagnostic.get("error") == "index status timed out during open sidecar database after 500ms: context deadline exceeded")
-            persist_manifest(output_dir, manifest)
-            if not run["success"]:
-                raise RuntimeError(f"{role}: locked sidecar did not establish the bounded open-sidecar phase; raw output retained")
-        finally:
-            blocker.rollback()
 
     with LoopbackServer(EmbeddingSuccessHandler) as server:
         write_config(paths["home"], server.url)
@@ -679,7 +660,26 @@ def run_status_cases(
         encoding="utf-8",
     )
     capture("aggregate_invalid_retrieval_db_json", ["--json", "index", "status"], 1)
+    sidecars = list((paths["xdg_data"] / "symdesk" / "vaults").glob("*/sidecar.db"))
+    if len(sidecars) != 1:
+        raise RuntimeError(f"expected exactly one sidecar for the deadline control: {sidecars}")
+    with closing(sqlite3.connect(sidecars[0])) as blocker:
+        blocker.execute("PRAGMA journal_mode=DELETE")
+        blocker.execute("BEGIN EXCLUSIVE")
+        try:
+            run = capture("timeout_blocked_sidecar_json", ["--json", "--vault", vault, "index", "status",
+                          "--documents", "--timeout", "500ms"], 1)
+            diagnostic = json.loads((output_dir / run["stdout_file"]).read_bytes())
+            run["success"] = (run["success"] and run["elapsed_seconds"] < 1.5
+                              and diagnostic.get("error") == "index status timed out during open sidecar database after 500ms: context deadline exceeded")
+            persist_manifest(output_dir, manifest)
+            if not run["success"]:
+                raise RuntimeError(f"{role}: locked sidecar did not establish the bounded open-sidecar phase; raw output retained")
+        finally:
+            blocker.rollback()
     run_duration_cases(binary, role, paths, world_key, output_dir, manifest)
+    write_config(paths["home"])
+    run_timestamp_and_worker_cases(binary, role, paths, world_key, output_dir, manifest)
 
 
 def git_text(*args: str) -> str:

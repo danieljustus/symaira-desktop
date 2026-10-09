@@ -37,7 +37,7 @@ class Schema6AcceptanceTests(unittest.TestCase):
         derived = json.loads(self.path.read_bytes())
         replacements = {
             validator.REPO_PLACEHOLDER: "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Repos/symaira-desktop/.worktrees/value001-main-5c5e98c5-20260918",
-            validator.TEMP_PLACEHOLDER: "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/BuildTargets/desktop-value001-main-5c5e98c5-T8WZ4R",
+            validator.TEMP_PLACEHOLDER: "/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/BuildTargets/desktop-value001-main-5c5e98c5-T8WZ4R",
         }
         raw = json.loads(self.path.read_bytes())
 

@@ -110,10 +110,14 @@ pub fn index_location_for_vault(
     if !config.index_path.trim().is_empty() {
         return Ok(absolute_clean(Path::new(&config.index_path), cwd));
     }
-    if !vault_root.trim().is_empty() {
-        return vault_retrieval_path(vault_root, environment, cwd, temp_root);
-    }
-    standalone_retrieval_path(environment, cwd)
+    let path = if !vault_root.trim().is_empty() {
+        vault_retrieval_path(vault_root, environment, cwd, temp_root)?
+    } else {
+        standalone_retrieval_path(environment, cwd)?
+    };
+    // Go's filepath.Join cleans every returned spelling, including Windows
+    // separators; PathBuf equality alone would hide mixed-separator output.
+    Ok(lexical_clean(&path))
 }
 
 /// Opens the effective retrieval database for a vault, seeding a missing

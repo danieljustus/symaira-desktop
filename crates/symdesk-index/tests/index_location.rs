@@ -118,6 +118,12 @@ fn location_and_config_paths_replay_go_fixture() {
             &vault_root,
         );
         assert_eq!(actual, expected, "case {}", case.id);
+        assert_eq!(
+            actual.as_os_str(),
+            lexical_clean(&expected).as_os_str(),
+            "case {} must retain Go's native path spelling",
+            case.id
+        );
 
         let config_path = symseek_config_path(&environment, &cwd);
         if let Some(expected_config) = &case.config_after

@@ -598,9 +598,13 @@ async fn embed_with_retries(
 }
 
 fn index_vault_error(requested: Option<&str>, error: &str) -> String {
-    if !error.contains("No such file or directory") && !error.contains("os error 2") {
+    let code = if cfg!(windows) && error.ends_with("(os error 3)") {
+        3
+    } else if error.contains("No such file or directory") || error.ends_with("(os error 2)") {
+        2
+    } else {
         return error.to_owned();
-    }
+    };
     let raw = requested
         .filter(|value| !value.is_empty())
         .map(str::to_owned)
@@ -617,10 +621,17 @@ fn index_vault_error(requested: Option<&str>, error: &str) -> String {
     } else {
         path
     };
-    format!(
-        "vault path does not exist: stat {}: no such file or directory",
-        super::lexical_clean(&absolute).display()
-    )
+    let operation = if cfg!(windows) {
+        "GetFileAttributesEx"
+    } else {
+        "stat"
+    };
+    let detail = symdesk_vault::go_path_error(
+        operation,
+        &super::lexical_clean(&absolute),
+        &std::io::Error::from_raw_os_error(code),
+    );
+    format!("vault path does not exist: {detail}")
 }
 
 fn indexed_paths(root: &Path) -> Result<BTreeMap<String, String>, String> {
@@ -682,6 +693,37 @@ fn emit_result(result: serde_json::Value, json_output: bool) -> ExitCode {
             .collect::<Vec<_>>()
             .join(" ");
         super::write_stdout(format!("map[{fields}]\n"))
+    }
+}
+
+#[cfg(test)]
+mod vault_error_tests {
+    #[test]
+    fn missing_vault_diagnostics_preserve_native_go_errors() {
+        let path = if cfg!(windows) {
+            r"C:\fixture\missing-vault"
+        } else {
+            "/fixture/missing-vault"
+        };
+        for code in [2, 3] {
+            let error = format!(
+                "vault path does not exist: {}",
+                std::io::Error::from_raw_os_error(code)
+            );
+            let expected = if cfg!(windows) {
+                let kind = if code == 3 { "path" } else { "file" };
+                format!(
+                    "vault path does not exist: GetFileAttributesEx {path}: The system cannot find the {kind} specified."
+                )
+            } else if code == 2 {
+                format!("vault path does not exist: stat {path}: no such file or directory")
+            } else {
+                error.clone()
+            };
+            assert_eq!(super::index_vault_error(Some(path), &error), expected);
+        }
+        let denied = "vault path does not exist: access denied";
+        assert_eq!(super::index_vault_error(Some(path), denied), denied);
     }
 }
 

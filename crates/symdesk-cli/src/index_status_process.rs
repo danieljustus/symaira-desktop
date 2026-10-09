@@ -242,14 +242,16 @@ fn terminate_child_and_reap(child: &mut Child, timeout: Duration) -> io::Result<
 fn terminate_process_tree(pid: u32) -> io::Result<()> {
     let target = format!("-{pid}");
     let mut kill = Command::new("/bin/kill");
-    kill.args(["-KILL", &target]);
+    // procps kill can report success without signaling a negative PGID unless
+    // options are explicitly terminated. The existence probe needs this too.
+    kill.args(["-KILL", "--", &target]);
     if bounded_cleanup(&mut kill)?.success() {
         return Ok(());
     }
     // A normal worker exit commonly leaves no group. Distinguish that from
     // an unsuccessful cleanup while the owned group is still present.
     let mut probe = Command::new("/bin/kill");
-    probe.args(["-0", &target]);
+    probe.args(["-0", "--", &target]);
     if bounded_cleanup(&mut probe)?.success() {
         return Err(io::Error::other(
             "index status process group survived cleanup",

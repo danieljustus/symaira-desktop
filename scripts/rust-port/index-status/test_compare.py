@@ -89,8 +89,11 @@ class CompareNegativeControls(unittest.TestCase):
 
         error_cases = {
             "documents_invalid_state_json",
+            "documents_state_empty_json",
+            "documents_state_empty_text",
             "documents_missing_vault_json",
             "aggregate_missing_vault_json",
+            "aggregate_invalid_retrieval_db_json",
             "timeout_negative_json",
             "timeout_blocked_local_provider_json",
         }
@@ -304,21 +307,32 @@ class CompareNegativeControls(unittest.TestCase):
     def test_false_missing_and_wrong_type_outcomes_fail_closed(self) -> None:
         self._assert_valid_baseline()
         original = copy.deepcopy(self.manifest)
-        for mutation in ("false", "missing", "numeric_exit", "nonfinite_elapsed"):
+        for mutation in ("false", "missing", "numeric_exit", "nonfinite_elapsed", "reviewed_exit_tamper"):
             self.manifest = copy.deepcopy(original)
-            run = next(row for row in self.manifest["runs"] if row["case_id"] == "documents_invalid_state_json" and row["role"] == "go")
+            target_case = "documents_state_empty_json" if mutation == "reviewed_exit_tamper" else "documents_invalid_state_json"
+            run = next(row for row in self.manifest["runs"] if row["case_id"] == target_case and row["role"] == "go")
             if mutation == "false":
                 run["success"] = False
             elif mutation == "missing":
                 run.pop("success")
             elif mutation == "numeric_exit":
                 run["expected_exit_code"] = True
-            else:
+            elif mutation == "nonfinite_elapsed":
                 run["elapsed_seconds"] = 10**1000
+            else:
+                run["exit_code"] = 0
+                run["expected_exit_code"] = 0
             self._write_manifest()
             exit_code, report = self._invoke()
             self.assertNotEqual(exit_code, 0)
-            reason = "exit codes must be integers" if mutation == "numeric_exit" else "elapsed_seconds must be a non-negative number" if mutation == "nonfinite_elapsed" else "success outcome"
+            if mutation == "numeric_exit":
+                reason = "exit codes must be integers"
+            elif mutation == "nonfinite_elapsed":
+                reason = "elapsed_seconds must be a non-negative number"
+            elif mutation == "reviewed_exit_tamper":
+                reason = "expected exit does not match the reviewed base case"
+            else:
+                reason = "success outcome"
             self.assertTrue(any(reason in error for error in report["errors"]), report["errors"])
 
     def test_binary_platform_and_revision_identity_mutations_fail(self) -> None:

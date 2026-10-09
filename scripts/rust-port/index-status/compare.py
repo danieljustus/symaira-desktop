@@ -55,6 +55,19 @@ BASE_CASE_IDS = (
     "timeout_blocked_local_provider_json",
     "aggregate_invalid_retrieval_db_json",
 )
+BASE_CASE_EXPECTED_EXIT_CODES = {
+    case_id: 1 if case_id in {
+        "documents_state_empty_json",
+        "documents_state_empty_text",
+        "documents_invalid_state_json",
+        "documents_missing_vault_json",
+        "aggregate_missing_vault_json",
+        "timeout_negative_json",
+        "timeout_blocked_local_provider_json",
+        "aggregate_invalid_retrieval_db_json",
+    } else 0
+    for case_id in BASE_CASE_IDS
+}
 DURATION_INPUTS = (
     ("invalid_text", "bad", 1),
     ("unitless_number", "1", 1),
@@ -119,6 +132,10 @@ def sha256(data: bytes) -> str:
 def inventory_sha256() -> str:
     inventory = {
         "case_ids": list(REQUIRED_CASE_IDS),
+        "base_cases": [
+            {"case_id": case_id, "expected_exit_code": BASE_CASE_EXPECTED_EXIT_CODES[case_id]}
+            for case_id in BASE_CASE_IDS
+        ],
         "duration_cases": [
             {"case_id": case_id, "mode": mode, "input": value, "expected_exit_code": expected_exit}
             for case_id, mode, value, expected_exit in DURATION_CASES
@@ -500,6 +517,8 @@ def compare_manifest(manifest_path: Path) -> dict[str, Any]:
             errors.append(f"{role} zero-timeout delayed-provider control did not wait for the local response")
         if case_id == "timeout_blocked_local_provider_json" and elapsed_number is not None and elapsed_number >= 1.5:
             errors.append(f"{role} blocked-provider deadline exceeded the 1.5s cleanup bound")
+        if case_id in BASE_CASE_EXPECTED_EXIT_CODES and expected_exit != BASE_CASE_EXPECTED_EXIT_CODES[case_id]:
+            errors.append(f"{role}:{case_id} expected exit does not match the reviewed base case")
         if case_id in DURATION_CASE_BY_ID:
             mode, duration_input, duration_exit = DURATION_CASE_BY_ID[case_id]
             if run.get("duration_mode") != mode or run.get("duration_input") != duration_input:

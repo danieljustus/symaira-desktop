@@ -556,8 +556,8 @@ def run_status_cases(
         capture("aggregate_empty_with_vault_text", ["--vault", vault, "index", "status"])
         capture("documents_empty_json", ["--json", "--vault", vault, "index", "status", "--documents"])
         capture("documents_empty_text", ["--vault", vault, "index", "status", "--documents"])
-        capture("documents_state_empty_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", "empty"])
-        capture("documents_state_empty_text", ["--vault", vault, "index", "status", "--documents", "--state", "empty"])
+        capture("documents_state_empty_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", "empty"], 1)
+        capture("documents_state_empty_text", ["--vault", vault, "index", "status", "--documents", "--state", "empty"], 1)
         return
 
     capture("aggregate_populated_json", ["--json", "--vault", vault, "index", "status"])

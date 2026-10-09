@@ -312,7 +312,7 @@ fn worker_phase(stderr: &[u8]) -> Option<String> {
     String::from_utf8_lossy(stderr)
         .lines()
         .filter_map(|line| line.strip_prefix(WORKER_PHASE_PREFIX))
-        .last()
+        .next_back()
         .map(str::to_owned)
 }
 
@@ -545,11 +545,7 @@ fn aggregate_text(status: &AggregateStatus) -> String {
             format!("{:p}", boxed.as_ref())
         },
     );
-    let last_indexed_at = status
-        .last_indexed_at
-        .as_deref()
-        .and_then(|value| go_time_text(value).ok())
-        .unwrap_or_default();
+    let last_indexed_at = status.last_indexed_at.as_deref().unwrap_or_default();
     format!(
         "&{{DocumentCount:{} ChunkCount:{} DatabaseBytes:{} LastIndexedAt:{} EmbeddingModel:{} BackendAvailable:{} PendingChunkCount:{} MixedEmbeddingSpaces:{} IndexScope:{} VaultDocumentCount:{} IndexLocation:{}}}\n",
         status.document_count,
@@ -581,6 +577,18 @@ mod tests {
         assert_eq!(
             parse_timeout("-1ms").expect_err("negative"),
             "--timeout must be non-negative"
+        );
+    }
+
+    #[test]
+    fn cli_timeout_default_is_ten_seconds() {
+        let matches = super::super::cli()
+            .try_get_matches_from(["index", "status"])
+            .expect("index status arguments");
+        let (_, status) = matches.subcommand().expect("status subcommand");
+        assert_eq!(
+            status.get_one::<String>("timeout").map(String::as_str),
+            Some("10s")
         );
     }
 

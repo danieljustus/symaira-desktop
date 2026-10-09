@@ -68,6 +68,41 @@ class LoopbackServer:
         self.thread.join(timeout=2)
 
 
+class EmbeddingSuccessHandler(http.server.BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
+        _ = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+        body = json.dumps({"data": [{"embedding": [0.0] * 768}]}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format: str, *args: object) -> None:
+        _ = (format, args)
+        return
+
+
+class EmbeddingSuccessServer:
+    def __init__(self) -> None:
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), EmbeddingSuccessHandler)
+        self.server.daemon_threads = True
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    @property
+    def url(self) -> str:
+        return f"http://127.0.0.1:{self.server.server_address[1]}/api/embeddings"
+
+    def __enter__(self) -> "EmbeddingSuccessServer":
+        self.thread.start()
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -243,6 +278,11 @@ def run_status_cases(binary: Path, role: str, paths: dict[str, Path], output_dir
     for state in STATES:
         capture(f"documents_state_{state}_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", state])
 
+    with EmbeddingSuccessServer() as server:
+        write_config(paths["home"], server.url)
+        capture("aggregate_provider_available_json", ["--json", "--vault", vault, "index", "status"])
+        capture("aggregate_provider_available_text", ["--vault", vault, "index", "status"])
+
     capture("documents_invalid_state_json", ["--json", "--vault", vault, "index", "status", "--documents", "--state", "bogus"], 1)
     capture("documents_missing_vault_json", ["--json", "index", "status", "--documents"], 1)
     capture("aggregate_missing_vault_json", ["--json", "--vault", str(paths["world"] / "absent-vault"), "index", "status"], 1)
@@ -309,6 +349,7 @@ def main() -> int:
         "documents_empty_json", "documents_empty_text",
         "aggregate_populated_json", "aggregate_populated_text",
         "documents_populated_json", "documents_populated_text",
+        "aggregate_provider_available_json", "aggregate_provider_available_text",
         *(f"documents_state_{state}_json" for state in STATES),
         "documents_invalid_state_json", "documents_missing_vault_json",
         "aggregate_missing_vault_json", "timeout_negative_json",

@@ -162,8 +162,12 @@ fn terminate_process_tree(pid: u32) {
 
 #[cfg(windows)]
 fn terminate_process_tree(pid: u32) {
+    let pid = pid.to_string();
     let _ = Command::new("taskkill")
-        .args(["/PID", &pid.to_string(), "/T", "/F"])
+        .arg("/PID")
+        .arg(pid)
+        .arg("/T")
+        .arg("/F")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())

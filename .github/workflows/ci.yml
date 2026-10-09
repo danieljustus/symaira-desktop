@@ -20,9 +20,8 @@ concurrency:
 permissions:
   contents: read
 
-# CodeQL default setup scans Python and Actions. Swift is excluded because the
-# macOS app depends on the private symaira-appkit repository, which the
-# repository-level GitHub token cannot clone during CodeQL autobuild.
+# Swift remains excluded from CodeQL default setup; native app jobs below
+# verify the macOS and iOS builds against the pinned public AppKit package.
 
 jobs:
   test:
@@ -88,6 +87,19 @@ jobs:
           awk -v total="$TOTAL" -v threshold="$COVERAGE_THRESHOLD" 'BEGIN { exit !(total < threshold) }' \
             && { echo "::error::Coverage ${TOTAL}% is below the ${COVERAGE_THRESHOLD}% gate"; exit 1; }
           echo "Coverage gate passed."
+
+  # Preserve the existing ruleset context without mislabeling the real matrix.
+  # Remove this compatibility job when the ruleset adopts a versionless name.
+  required-go-tests:
+    name: test (ubuntu-latest, 1.26.6)
+    needs: test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the current Go test matrix to pass
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        run: test "$TEST_RESULT" = success
 
   lint:
     runs-on: ubuntu-latest

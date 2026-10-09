@@ -346,9 +346,6 @@ fn parse_timeout(value: &str) -> Result<Duration, String> {
 }
 
 fn parse_go_duration_nanos(input: &str) -> Option<i128> {
-    if input == "0" {
-        return Some(0);
-    }
     let (negative, input) = match input.strip_prefix('-') {
         Some(rest) => (true, rest),
         None => match input.strip_prefix('+') {
@@ -356,6 +353,10 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
             None => (false, input),
         },
     };
+    // Go checks the zero sentinel after consuming the optional sign.
+    if input == "0" {
+        return Some(0);
+    }
     if input.is_empty() {
         return None;
     }
@@ -369,16 +370,14 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
         let integer = &remaining[..integer_end];
         remaining = &remaining[integer_end..];
         let mut fraction = "";
-        let mut had_decimal = false;
         if let Some(after_dot) = remaining.strip_prefix('.') {
-            had_decimal = true;
             let fraction_end = after_dot
                 .find(|character: char| !character.is_ascii_digit())
                 .unwrap_or(after_dot.len());
             fraction = &after_dot[..fraction_end];
             remaining = &after_dot[fraction_end..];
         }
-        if (integer.is_empty() && fraction.is_empty()) || (had_decimal && fraction.is_empty()) {
+        if integer.is_empty() && fraction.is_empty() {
             return None;
         }
         if remaining.starts_with('.') || remaining.is_empty() {
@@ -404,10 +403,24 @@ fn parse_go_duration_nanos(input: &str) -> Option<i128> {
         };
         let mut component = whole.checked_mul(scale)?;
         if !fraction.is_empty() {
-            let numerator = fraction.parse::<u128>().ok()?;
-            let denominator = 10_u128.checked_pow(u32::try_from(fraction.len()).ok()?)?;
+            // Match time.leadingFraction in the pinned Go toolchain: excess
+            // digits are consumed but stop contributing after integer overflow.
+            // Go deliberately uses float64 here for fractions of hours.
+            let mut numerator = 0_u64;
+            let mut denominator = 1_f64;
+            for digit in fraction.bytes() {
+                if numerator > (i64::MAX as u64) / 10 {
+                    break;
+                }
+                let next = numerator * 10 + u64::from(digit - b'0');
+                if next > 1_u64 << 63 {
+                    break;
+                }
+                numerator = next;
+                denominator *= 10.0;
+            }
             component =
-                component.checked_add(numerator.checked_mul(scale)?.checked_div(denominator)?)?;
+                component.checked_add((numerator as f64 * (scale as f64 / denominator)) as u128)?;
         }
         total = total.checked_add(component)?;
         if total > i64::MAX as u128 + u128::from(negative) {
@@ -462,8 +475,8 @@ fn scaled_duration(nanos: u128, scale: u128, unit: &str) -> String {
     if remainder == 0 {
         return format!("{whole}{unit}");
     }
-    let fraction = remainder * 1_000 / scale;
-    let fraction = format!("{fraction:03}");
+    let width = scale.ilog10() as usize;
+    let fraction = format!("{remainder:0width$}");
     format!("{whole}.{}{unit}", fraction.trim_end_matches('0'))
 }
 
@@ -597,9 +610,18 @@ mod tests {
         assert_eq!(parse_go_duration_nanos("1h2m3.5s"), Some(3_723_500_000_000));
         assert_eq!(parse_go_duration_nanos(".5s"), Some(500_000_000));
         assert_eq!(parse_go_duration_nanos("1.5µs"), Some(1_500));
-        assert_eq!(parse_go_duration_nanos("1.s"), None);
+        assert_eq!(parse_go_duration_nanos("1.s"), Some(1_000_000_000));
+        for zero in [
+            "+0",
+            "-0",
+            "0.000000000000000000000000000000000000000000000001s",
+        ] {
+            assert_eq!(parse_go_duration_nanos(zero), Some(0), "{zero}");
+        }
+        assert_eq!(parse_go_duration_nanos(".s"), None);
         assert_eq!(go_duration(Duration::from_millis(150)), "150ms");
         assert_eq!(go_duration(Duration::from_millis(1_500)), "1.5s");
+        assert_eq!(go_duration(Duration::from_nanos(1_000_001)), "1.000001ms");
     }
 
     #[test]

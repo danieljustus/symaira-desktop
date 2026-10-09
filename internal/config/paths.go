@@ -246,7 +246,7 @@ func IngestDBPath() (string, error) {
 // IngestDataPath resolves a named ingest data artifact (e.g. "symingest.db" or "archive").
 func IngestDataPath(name string) (string, error) {
 	cleanName := filepath.Clean(strings.TrimSpace(name))
-	if cleanName == "." || filepath.IsAbs(cleanName) || cleanName != filepath.Base(cleanName) {
+	if cleanName == "." || cleanName == ".." || filepath.IsAbs(cleanName) || cleanName != filepath.Base(cleanName) {
 		return "", fmt.Errorf("ingest data artifact must be a single relative name: %q", name)
 	}
 	dataHome, err := ResolveDataHome()

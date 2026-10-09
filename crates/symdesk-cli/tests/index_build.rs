@@ -82,8 +82,18 @@ impl Drop for TempRoot {
 fn fixture() -> Fixture {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../testdata/port/cli/index-build-process.json");
-    serde_json::from_slice(&fs::read(path).expect("Go-generated index build fixture"))
-        .expect("valid fixture")
+    let mut fixture: Fixture =
+        serde_json::from_slice(&fs::read(path).expect("Go-generated index build fixture"))
+            .expect("valid fixture");
+    if cfg!(windows) {
+        // The frozen fixture records Unix stat wording. The native Windows Go
+        // oracle uses GetFileAttributesEx and ERROR_FILE_NOT_FOUND instead.
+        fixture.missing.stdout = fixture.missing.stdout.replace(
+            "stat $ROOT/missing: no such file or directory",
+            "GetFileAttributesEx $ROOT/missing: The system cannot find the file specified.",
+        );
+    }
+    fixture
 }
 
 fn run(root: &TempRoot, args: &[&str]) -> ProcessResult {

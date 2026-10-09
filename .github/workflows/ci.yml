@@ -561,6 +561,25 @@ jobs:
         shell: bash
         run: make index-build-cli-differential
 
+      - name: Run native index status CLI differential
+        shell: bash
+        env:
+          INDEX_STATUS_OUTPUT: ${{ runner.temp }}/index-status
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 scripts/rust-port/index-status/verify.py --output "$INDEX_STATUS_OUTPUT"
+
+      - name: Retain native index status evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: index-status-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/index-status/native-gate.json
+            ${{ runner.temp }}/index-status/*.log
+            ${{ runner.temp }}/index-status/capture/
+          retention-days: 14
+          if-no-files-found: warn
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

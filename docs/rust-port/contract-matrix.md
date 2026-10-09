@@ -230,3 +230,33 @@ Darwin strict Clippy/fmt/actionlint also pass. Receipts
 build roots. Go production digest remains unchanged. PDF/Office/external
 parsing, other provider paths, complete retrieval facade and remaining target
 platforms still prevent whole-row acceptance; no release or cutover occurred.
+
+### Bounded index status CLI slice (#1225)
+
+`index status` now has an isolated Go/Rust process comparison in
+`scripts/rust-port/index-status/verify.py`. It builds the reachable canonical
+Go oracle `191100811b7e61a0b43d21bd80963281c4c9cf8c` and the exact clean Rust
+candidate, binds executable hashes, and retains raw stdout/stderr plus the
+source manifests before and after execution. Its fixed 85-case inventory
+covers aggregate and document output, state filtering, text/JSON diagnostics,
+duration parsing, provider failure behavior and a bounded timeout control.
+All inputs use disposable synthetic vaults and local fake providers.
+
+At `d9bd9ebf38b47c98e33191e650c98569196250e0`, the complete native gate passed
+on Darwin/arm64: 85 paired cases and 344 independently hash-verified output
+streams, with unchanged sources and binaries. Eight harness/report unit tests
+include controls for incomplete inventories, identity/output tampering and
+malformed or diagnostic-only acceptance reports. Six native Unix lifecycle
+tests also passed. These receipts establish that exact candidate only.
+
+The Windows implementation owns a kill-on-close Job Object and assigns a
+suspended child before resuming it. Windows-target compilation is not native
+execution; native Linux/Windows and final integrated-head CI remain required.
+The existing native CI matrix runs the fresh-build status gate and retains
+its evidence. Locally, provide a fresh `--output` directory, an approved clean
+`--oracle-worktree` and the required `--build-launcher` when storage policy
+requires source/build separation.
+
+This is a partial INDEX-002/INDEX-005/RUST-008 slice. Their statuses and parent
+#1136 remain open; this does not establish retry, the full retrieval lifecycle,
+Go retirement, or production cutover.

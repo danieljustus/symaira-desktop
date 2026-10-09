@@ -402,7 +402,14 @@ func TestIndexStatusHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_INDEX_STATUS_HELPER") != "1" {
 		return
 	}
-	fmt.Fprintf(os.Stderr, "%sretrieval status\n", phasePrefix)
+	mode := os.Getenv("GO_INDEX_STATUS_HELPER_MODE")
+	if mode != "startup" {
+		fmt.Fprintf(os.Stderr, "%sretrieval status\n", phasePrefix)
+	}
+	if mode == "timeout" {
+		fmt.Fprintf(os.Stderr, "%sretrieval status\n", timeoutPrefix)
+		return
+	}
 	// Block until killed
 	time.Sleep(10 * time.Minute)
 }
@@ -426,7 +433,9 @@ func TestIndexStatusHardDeadlineKillsWorker(t *testing.T) {
 			return nil, err
 		}
 		cmd := exec.Command(exe, "-test.run=TestIndexStatusHelperProcess", "--") // #nosec G204 -- os.Executable with static arguments.
-		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1")
+		// Startup may consume the whole deadline. Test termination without
+		// relying on the helper being scheduled soon enough to emit a phase.
+		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1", "GO_INDEX_STATUS_HELPER_MODE=startup")
 		return cmd, nil
 	}
 
@@ -450,11 +459,14 @@ func TestIndexStatusHardDeadlineKillsWorker(t *testing.T) {
 	if !errors.As(err, &timeoutErr) {
 		t.Fatalf("expected *IndexStatusTimeoutError, got %T: %v", err, err)
 	}
-	if timeoutErr.Phase != "retrieval status" {
-		t.Errorf("expected phase 'retrieval status', got %q", timeoutErr.Phase)
+	if timeoutErr.Phase != "worker startup" {
+		t.Errorf("expected phase 'worker startup', got %q", timeoutErr.Phase)
 	}
-	if reportedPhase != "retrieval status" {
-		t.Errorf("expected reported phase 'retrieval status', got %q", reportedPhase)
+	if reportedPhase != "worker startup" {
+		t.Errorf("expected reported phase 'worker startup', got %q", reportedPhase)
+	}
+	if timeoutErr.Timeout != timeout {
+		t.Errorf("reported timeout = %v, want %v", timeoutErr.Timeout, timeout)
 	}
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected errors.Is(err, context.DeadlineExceeded), got %v", err)
@@ -469,6 +481,46 @@ func TestIndexStatusHardDeadlineKillsWorker(t *testing.T) {
 
 	if !waitForProcessExit(childPid, time.Second) {
 		t.Errorf("child process %d still exists after kill", childPid)
+	}
+}
+
+func TestIndexStatusWorkerTimeoutReportsPhase(t *testing.T) {
+	origWorkerCmd := indexStatusWorkerCmd
+	t.Cleanup(func() { indexStatusWorkerCmd = origWorkerCmd })
+	indexStatusWorkerCmd = func(context.Context, indexStatusRequest) (*exec.Cmd, error) {
+		exe, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		cmd := exec.Command(exe, "-test.run=TestIndexStatusHelperProcess", "--") // #nosec G204 -- os.Executable with static arguments.
+		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1", "GO_INDEX_STATUS_HELPER_MODE=timeout")
+		return cmd, nil
+	}
+
+	// This checks an explicit worker marker, not the parent's hard deadline.
+	// Keep a separate watchdog so a broken helper cannot hang the test suite.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	timeout := 200 * time.Millisecond
+	var reportedPhase string
+	_, err := runIndexStatusChild(ctx, indexStatusRequest{Timeout: timeout}, func(phase string) {
+		reportedPhase = phase
+	})
+	var timeoutErr *IndexStatusTimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected *IndexStatusTimeoutError, got %T: %v", err, err)
+	}
+	if ctx.Err() != nil {
+		t.Fatalf("helper failed to report its own timeout before the watchdog: %v", ctx.Err())
+	}
+	if timeoutErr.Phase != "retrieval status" || reportedPhase != "retrieval status" {
+		t.Errorf("timeout phase = %q, reported phase = %q, want retrieval status", timeoutErr.Phase, reportedPhase)
+	}
+	if timeoutErr.Timeout != timeout {
+		t.Errorf("reported timeout = %v, want %v", timeoutErr.Timeout, timeout)
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected errors.Is(err, context.DeadlineExceeded), got %v", err)
 	}
 }
 

@@ -20,6 +20,11 @@ use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::time::Duration;
 
+#[path = "index_status.rs"]
+mod status;
+#[path = "index_status_process.rs"]
+mod status_process;
+
 pub fn cli() -> Command {
     Command::new("index")
         .arg(Arg::new("path").value_name("PATH").num_args(0..=1))
@@ -32,6 +37,35 @@ pub fn cli() -> Command {
             Arg::new("re-embed")
                 .long("re-embed")
                 .action(clap::ArgAction::SetTrue),
+        )
+        .subcommand(
+            Command::new("status")
+                .about("Show retrieval and document indexing status")
+                .arg(
+                    Arg::new("documents")
+                        .long("documents")
+                        .action(clap::ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("state")
+                        .long("state")
+                        .num_args(1)
+                        .value_name("STATE"),
+                )
+                .arg(
+                    Arg::new("timeout")
+                        .long("timeout")
+                        .num_args(1)
+                        .allow_hyphen_values(true)
+                        .default_value("10s")
+                        .value_name("DURATION"),
+                )
+                .arg(
+                    Arg::new("worker")
+                        .long("worker")
+                        .hide(true)
+                        .action(clap::ArgAction::SetTrue),
+                ),
         )
         .subcommand(
             Command::new("maintenance")
@@ -71,6 +105,9 @@ pub fn run(
     json_output: bool,
     json_flag: bool,
 ) -> ExitCode {
+    if let Some(("status", status)) = command.subcommand() {
+        return status::run(status, vault, json_output);
+    }
     let Some(("maintenance", maintenance)) = command.subcommand() else {
         return run_build(command, vault, json_output);
     };
@@ -561,9 +598,13 @@ async fn embed_with_retries(
 }
 
 fn index_vault_error(requested: Option<&str>, error: &str) -> String {
-    if !error.contains("No such file or directory") && !error.contains("os error 2") {
+    let code = if cfg!(windows) && error.ends_with("(os error 3)") {
+        3
+    } else if error.contains("No such file or directory") || error.ends_with("(os error 2)") {
+        2
+    } else {
         return error.to_owned();
-    }
+    };
     let raw = requested
         .filter(|value| !value.is_empty())
         .map(str::to_owned)
@@ -580,10 +621,17 @@ fn index_vault_error(requested: Option<&str>, error: &str) -> String {
     } else {
         path
     };
-    format!(
-        "vault path does not exist: stat {}: no such file or directory",
-        super::lexical_clean(&absolute).display()
-    )
+    let operation = if cfg!(windows) {
+        "GetFileAttributesEx"
+    } else {
+        "stat"
+    };
+    let detail = symdesk_vault::go_path_error(
+        operation,
+        &super::lexical_clean(&absolute),
+        &std::io::Error::from_raw_os_error(code),
+    );
+    format!("vault path does not exist: {detail}")
 }
 
 fn indexed_paths(root: &Path) -> Result<BTreeMap<String, String>, String> {
@@ -645,6 +693,37 @@ fn emit_result(result: serde_json::Value, json_output: bool) -> ExitCode {
             .collect::<Vec<_>>()
             .join(" ");
         super::write_stdout(format!("map[{fields}]\n"))
+    }
+}
+
+#[cfg(test)]
+mod vault_error_tests {
+    #[test]
+    fn missing_vault_diagnostics_preserve_native_go_errors() {
+        let path = if cfg!(windows) {
+            r"C:\fixture\missing-vault"
+        } else {
+            "/fixture/missing-vault"
+        };
+        for code in [2, 3] {
+            let error = format!(
+                "vault path does not exist: {}",
+                std::io::Error::from_raw_os_error(code)
+            );
+            let expected = if cfg!(windows) {
+                let kind = if code == 3 { "path" } else { "file" };
+                format!(
+                    "vault path does not exist: GetFileAttributesEx {path}: The system cannot find the {kind} specified."
+                )
+            } else if code == 2 {
+                format!("vault path does not exist: stat {path}: no such file or directory")
+            } else {
+                error.clone()
+            };
+            assert_eq!(super::index_vault_error(Some(path), &error), expected);
+        }
+        let denied = "vault path does not exist: access denied";
+        assert_eq!(super::index_vault_error(Some(path), denied), denied);
     }
 }
 

@@ -373,12 +373,11 @@ mod tests {
         #[cfg(target_os = "linux")]
         {
             let stat = fs::read_to_string(format!("/proc/{pid}/stat"));
-            if let Ok(stat) = stat {
-                if let Some((_, fields)) = stat.rsplit_once(')') {
-                    if fields.split_whitespace().next() == Some("Z") {
-                        return false;
-                    }
-                }
+            if let Ok(stat) = stat
+                && let Some((_, fields)) = stat.rsplit_once(')')
+                && fields.split_whitespace().next() == Some("Z")
+            {
+                return false;
             }
         }
         #[cfg(target_os = "macos")]

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
-    "go_version": "go1.26.6",
+    "commit": "68c7cdb83b3a7698278fc767668cf8326eb5d5a8",
+    "go_version": "go1.26.9",
     "source": "internal/export/export.go",
     "source_sha256": "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
   },

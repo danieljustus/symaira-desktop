@@ -1277,13 +1277,13 @@ def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dic
         if actual_commit != commit:
             raise HarnessError(f"Go oracle commit mismatch: requested {commit}, got {actual_commit}")
         env = dict(os.environ)
-        env["GOTOOLCHAIN"] = "go1.26.6"
+        env["GOTOOLCHAIN"] = "go1.26.9"
         build = ["go", "build", "-trimpath", "-ldflags=-s -w -X main.version=0.12.2", "-o", str(binary), "./cmd/symdesk"]
         result = run_checked(build, source, 300.0, env=env)
         return binary, {
             "commit": actual_commit,
             "status": status,
-            "build_command": "GOTOOLCHAIN=go1.26.6 " + command_text(build),
+            "build_command": "GOTOOLCHAIN=go1.26.9 " + command_text(build),
             "build_elapsed_ms": result["elapsed_ms"],
             "go_version": tool_version(["go", "version"], source, env=env),
             "binary_sha256": sha256_file(binary),
@@ -1794,7 +1794,7 @@ def contract_checks(root: Path, go_binary: Path, rust_binary: Path) -> list[dict
     with tempfile.TemporaryDirectory(prefix="symdesk-value001-contract-") as contract_name:
         contract_root = Path(contract_name)
         contract_env = dict(os.environ)
-        contract_env.update({"LANG": "C", "LC_ALL": "C", "TZ": "UTC", "NO_COLOR": "1", "GOTOOLCHAIN": "go1.26.6"})
+        contract_env.update({"LANG": "C", "LC_ALL": "C", "TZ": "UTC", "NO_COLOR": "1", "GOTOOLCHAIN": "go1.26.9"})
         for command in checks:
             result = run_checked(command, root, 300.0, env=contract_env)
             result["name"] = command[2]

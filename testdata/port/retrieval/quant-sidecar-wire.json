@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
+    "commit": "68c7cdb83b3a7698278fc767668cf8326eb5d5a8",
     "release": "post-v0.12.2-security-880",
-    "go_version": "go1.26.6",
+    "go_version": "go1.26.9",
     "corekit_module": "github.com/danieljustus/symaira-corekit/v0.18.2",
     "corekit_sum": "h1:Nl05PxfSrYJ5njEbdmqFHSQRtKlK6aj8HsOJReC15dY=",
     "scope": "Only persisted wire framing and opaque payload are asserted; generation invokes production Go EncodeSidecar. Intentional Rust API difference: read_blob owns a snapshot; Go UnpackSidecarBlob aliases mutable caller bytes. In-memory aliasing, NaN/infinity interpretation, decoded-vector accuracy, rotation/RNG parity, scoring, and performance are outside this bounded port."

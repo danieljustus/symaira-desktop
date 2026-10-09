@@ -14,7 +14,7 @@ spec.loader.exec_module(runner)
 
 
 class HistoryRunnerControls(unittest.TestCase):
-    def exercise(self, failure=None, version="go version go1.26.6 test/test\n", marker=True, drift=False, uppercase_ambient=False):
+    def exercise(self, failure=None, version="go version go1.26.9 test/test\n", marker=True, drift=False, uppercase_ambient=False):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "evidence"
@@ -72,7 +72,7 @@ class HistoryRunnerControls(unittest.TestCase):
                     with self.assertRaises(subprocess.TimeoutExpired):
                         runner.run()
                     result = None
-                elif drift or not marker or "go1.26.6 " not in version:
+                elif drift or not marker or "go1.26.9 " not in version:
                     with self.assertRaises(RuntimeError):
                         runner.run()
                     result = None
@@ -95,7 +95,7 @@ class HistoryRunnerControls(unittest.TestCase):
             self.assertEqual(len(calls), index + 1)
 
     def test_missing_execution_wrong_compiler_and_source_drift_fail_closed(self):
-        for marker, version, drift in ((False, "go version go1.26.6 test/test\n", False), (True, "go version go1.27.1 test/test\n", False), (True, "go version go1.26.6 test/test\n", True)):
+        for marker, version, drift in ((False, "go version go1.26.9 test/test\n", False), (True, "go version go1.27.1 test/test\n", False), (True, "go version go1.26.9 test/test\n", True)):
             _, report, _ = self.exercise(marker=marker, version=version, drift=drift)
             self.assertFalse(report["passed"])
 

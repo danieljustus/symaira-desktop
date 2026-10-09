@@ -163,7 +163,7 @@ mod tests {
                 .as_str()
                 .expect("central oracle commit")
         );
-        assert_eq!(fixture.oracle.go_version, "go1.26.6");
+        assert_eq!(fixture.oracle.go_version, "go1.26.9");
         assert_eq!(fixture.oracle.source, "internal/export/export.go");
         assert_eq!(fixture.oracle.source_sha256, GO_ORACLE_SOURCE_SHA256);
         assert_eq!(fixture.cases.len(), CASE_IDS.len());

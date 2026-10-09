@@ -167,7 +167,7 @@ fn check_case(case: &WireCase) -> Result<(), String> {
 fn pinned_go_fixture_replays_all_wire_cases() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle.go_version, "go1.26.6");
+    assert_eq!(fixture.oracle.go_version, "go1.26.9");
     assert_eq!(
         fixture.oracle.corekit_module,
         "github.com/danieljustus/symaira-corekit/v0.18.2"

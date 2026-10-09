@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	noteHTMLOracleGoVersion    = "go1.26.6"
+	noteHTMLOracleGoVersion    = "go1.26.9"
 	noteHTMLOracleSource       = "internal/export/export.go"
 	noteHTMLOracleSourceSHA256 = "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
 	noteHTMLFixturePath        = "testdata/port/render/html-note.json"
@@ -52,7 +52,7 @@ type noteHTMLCase struct {
 // TestPortRenderHTMLFixture captures noteToHTML itself, not a second renderer.
 // Regenerate deliberately with:
 //
-//	PORT_RENDER_HTML_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$'
+//	PORT_RENDER_HTML_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$'
 func TestPortRenderHTMLFixture(t *testing.T) {
 	fixture := buildNoteHTMLFixture(t)
 	encoded, err := encodeNoteHTMLFixture(fixture)

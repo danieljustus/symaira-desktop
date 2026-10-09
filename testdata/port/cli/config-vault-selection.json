@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "10542d18062a7424ba855f15ea3ee48fe57db51c",
+  "oracle_commit": "68c7cdb83b3a7698278fc767668cf8326eb5d5a8",
   "cases": [
     {
       "id": "toml-vault-alone",

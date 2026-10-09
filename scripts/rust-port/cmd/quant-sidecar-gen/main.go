@@ -67,8 +67,8 @@ func main() {
 	if flag.NArg() != 0 {
 		fatalf("unexpected positional arguments")
 	}
-	if runtime.Version() != "go1.26.6" {
-		fatalf("oracle requires Go 1.26.6, got %s", runtime.Version())
+	if runtime.Version() != "go1.26.9" {
+		fatalf("oracle requires Go 1.26.9, got %s", runtime.Version())
 	}
 
 	generated, err := generate()

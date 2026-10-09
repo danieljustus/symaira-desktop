@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "10542d18062a7424ba855f15ea3ee48fe57db51c",
+  "oracle_revision": "68c7cdb83b3a7698278fc767668cf8326eb5d5a8",
   "root_event": "wait-room-created",
   "root_pubkey": "ed25519:2ed7d33f47510765179a8dc4b9b41a697f4943fc2036455bfa52afcf2b29d121",
   "source_hashes": {

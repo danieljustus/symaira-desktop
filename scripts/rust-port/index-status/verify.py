@@ -19,12 +19,20 @@ sys.path.insert(0, str(HERE.parent))
 from history_live import source_manifest
 
 
+def native_case_count(comparison: dict) -> int:
+    count = comparison.get("compared_cases")
+    if (comparison.get("pass") is not True or comparison.get("clean_acceptance") is not True
+            or type(count) is not int or count != len(REQUIRED_CASE_IDS)):
+        raise RuntimeError("complete clean native comparison was not established")
+    return count
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--build-launcher", type=Path, help="local build-policy launcher, if required")
     parser.add_argument("--oracle-worktree", type=Path,
-                        help="fresh oracle checkout in the local policy's approved source area")
+                        help="clean canonical oracle checkout in the local policy's approved source area")
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -66,9 +74,12 @@ def main() -> int:
         report["oracle_commit"] = CANONICAL_ORACLE_COMMIT
         run(["git", "merge-base", "--is-ancestor", CANONICAL_ORACLE_COMMIT, head])
         oracle = args.oracle_worktree.resolve() if args.oracle_worktree else output / "oracle"
-        run(["git", "worktree", "add", "--detach", str(oracle), CANONICAL_ORACLE_COMMIT])
-        if git("rev-parse", "HEAD", cwd=oracle) != CANONICAL_ORACLE_COMMIT:
-            raise RuntimeError("oracle worktree revision differs")
+        if not oracle.exists():
+            run(["git", "worktree", "add", "--detach", str(oracle), CANONICAL_ORACLE_COMMIT])
+        if (Path(git("rev-parse", "--show-toplevel", cwd=oracle)).resolve() != oracle
+                or git("rev-parse", "HEAD", cwd=oracle) != CANONICAL_ORACLE_COMMIT
+                or git("status", "--porcelain=v1", "--untracked-files=all", cwd=oracle)):
+            raise RuntimeError("oracle worktree must be the exact clean canonical checkout")
         suffix = ".exe" if os.name == "nt" else ""
         go_binary = output / f"symdesk-go{suffix}"
         rust_binary = output / "cargo-target" / "debug" / f"symdesk{suffix}"
@@ -78,7 +89,7 @@ def main() -> int:
         go_hash, rust_hash = sha256_file(go_binary), sha256_file(rust_binary)
         report["binaries"] = {"go": {"path": str(go_binary), "sha256": go_hash},
                               "rust": {"path": str(rust_binary), "sha256": rust_hash}}
-        run([sys.executable, str(HERE / "test_compare.py")])
+        run([sys.executable, "-m", "unittest", "discover", "-s", str(HERE), "-p", "test_*.py"])
         capture = output / "capture"
         run([sys.executable, str(HERE / "capture.py"), "--go-bin", str(go_binary),
              "--rust-bin", str(rust_binary), "--output", str(capture),
@@ -89,15 +100,15 @@ def main() -> int:
              "--report", str(capture / "comparison.json"), "--expected-rust-commit", head,
              "--expected-go-sha256", go_hash, "--expected-rust-sha256", rust_hash])
         comparison = json.loads((capture / "comparison.json").read_text())
-        if not comparison["clean_acceptance"] or comparison["case_count"] != len(REQUIRED_CASE_IDS):
-            raise RuntimeError("complete clean native comparison was not established")
-        if git("status", "--porcelain=v1", "--untracked-files=all", cwd=oracle):
+        case_count = native_case_count(comparison)
+        if (git("rev-parse", "HEAD", cwd=oracle) != CANONICAL_ORACLE_COMMIT
+                or git("status", "--porcelain=v1", "--untracked-files=all", cwd=oracle)):
             raise RuntimeError("oracle source changed during the gate")
         if git("rev-parse", "HEAD") != head or git("status", "--porcelain=v1", "--untracked-files=all"):
             raise RuntimeError("candidate revision or source changed during the gate")
         if sha256_file(go_binary) != go_hash or sha256_file(rust_binary) != rust_hash:
             raise RuntimeError("executables changed during the gate")
-        report["case_count"] = comparison["case_count"]
+        report["case_count"] = case_count
         report["passed"] = True
         return 0
     finally:

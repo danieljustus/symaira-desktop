@@ -38,11 +38,49 @@ struct AggregateStatus {
 
 #[derive(Serialize)]
 struct DocumentStatus {
-    path: String,
-    index_state: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    index_failure_reason: String,
+    #[serde(serialize_with = "serialize_diagnostic_text")]
+    path: Vec<u8>,
+    #[serde(serialize_with = "serialize_diagnostic_text")]
+    index_state: Vec<u8>,
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        serialize_with = "serialize_diagnostic_text"
+    )]
+    index_failure_reason: Vec<u8>,
     index_updated_at: String,
+}
+
+// This read-only diagnostic surface retains SQLite text bytes. Do not use its
+// replacement-rendered JSON values as filesystem identities or mutation keys.
+fn serialize_diagnostic_text<S: serde::Serializer>(
+    bytes: &[u8],
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    use serde::ser::Error;
+    let mut remaining = bytes;
+    let mut quoted = String::from("\"");
+    while !remaining.is_empty() {
+        let (valid, invalid) = match std::str::from_utf8(remaining) {
+            Ok(text) => (text, false),
+            Err(error) => (
+                std::str::from_utf8(&remaining[..error.valid_up_to()]).map_err(S::Error::custom)?,
+                true,
+            ),
+        };
+        let encoded = serde_json::to_string(valid).map_err(S::Error::custom)?;
+        quoted.push_str(&encoded[1..encoded.len() - 1]);
+        remaining = &remaining[valid.len()..];
+        if invalid {
+            // encoding/json consumes one invalid byte per replacement, unlike
+            // from_utf8_lossy which may collapse a truncated sequence.
+            quoted.push_str("\\ufffd");
+            remaining = &remaining[1..];
+        }
+    }
+    quoted.push('"');
+    serde_json::value::RawValue::from_string(quoted)
+        .map_err(S::Error::custom)?
+        .serialize(serializer)
 }
 
 pub fn run(matches: &ArgMatches, vault: Option<&str>, json_output: bool) -> std::process::ExitCode {
@@ -62,7 +100,7 @@ pub fn run(matches: &ArgMatches, vault: Option<&str>, json_output: bool) -> std:
             matches.get_flag("documents"),
             matches.get_one::<String>("state").map(String::as_str),
         ) {
-            Ok(rendered) => super::super::write_stdout(rendered),
+            Ok(rendered) => super::super::write_stdout_bytes(&rendered),
             Err(error) => super::super::write_stderr(
                 &format!("{error}\n"),
                 symaira_core_exit::ExitCode::Generic,
@@ -110,13 +148,7 @@ fn run_parent(
 
     let deadline = (!timeout.is_zero()).then_some(timeout);
     match status_process::run_bounded(command, deadline) {
-        Ok(output) if output.status.success() => match String::from_utf8(output.stdout) {
-            Ok(rendered) => super::super::write_stdout(rendered),
-            Err(error) => super::super::emit_error(
-                format!("index status worker emitted non-UTF-8 output: {error}"),
-                json_output,
-            ),
-        },
+        Ok(output) if output.status.success() => super::super::write_stdout_bytes(&output.stdout),
         Ok(output) => super::super::emit_error(worker_error(&output), json_output),
         Err(ProcessError::TimedOut(output)) => {
             let phase =
@@ -149,28 +181,29 @@ fn run_in_process(
     json_output: bool,
     documents: bool,
     state: Option<&str>,
-) -> Result<String, String> {
-    if documents && let Some(state) = state.filter(|state| !VALID_STATES.contains(state)) {
-        return Err(format!("invalid index state {state:?}"));
-    }
+) -> Result<Vec<u8>, String> {
     if documents {
         return render_documents(vault, state, json_output);
     }
-    render_aggregate(vault, json_output)
+    render_aggregate(vault, json_output).map(String::into_bytes)
 }
 
 fn render_documents(
     vault: Option<&str>,
     state: Option<&str>,
     json_output: bool,
-) -> Result<String, String> {
+) -> Result<Vec<u8>, String> {
     let root = required_vault(vault)?;
     let sidecar = symdesk_index::open_for_vault(&root).map_err(|error| error.to_string())?;
-    let mut statuses = sidecar
+    let state = state.filter(|state| !state.is_empty());
+    if let Some(state) = state.filter(|state| !VALID_STATES.contains(state)) {
+        return Err(format!("invalid index state {state:?}"));
+    }
+    let statuses = sidecar
         .list_index_statuses()
         .map_err(|error| error.to_string())?
         .into_iter()
-        .filter(|status| state.is_none_or(|state| status.state == state))
+        .filter(|status| state.is_none_or(|state| status.state == state.as_bytes()))
         .map(|status| {
             Ok(DocumentStatus {
                 path: status.path,
@@ -180,32 +213,32 @@ fn render_documents(
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
-    statuses.sort_by(|left, right| left.path.cmp(&right.path));
-
     if json_output {
         if statuses.is_empty() {
-            return Ok("null\n".to_owned());
+            return Ok(b"null\n".to_vec());
         }
         let mut rendered = serde_json::to_string(&statuses).map_err(|error| error.to_string())?;
         rendered.push('\n');
-        return Ok(rendered);
+        return Ok(super::super::go_escape_json(rendered).into_bytes());
     }
 
-    let rendered = statuses
-        .iter()
-        .map(|status| {
-            format!(
-                "{{Path:{} State:{} Reason:{} UpdatedAt:{}}}",
-                status.path,
-                status.index_state,
-                status.index_failure_reason,
-                go_time_text(&status.index_updated_at)
-                    .unwrap_or_else(|_| status.index_updated_at.clone())
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(" ");
-    Ok(format!("[{rendered}]\n"))
+    let mut rendered = b"[".to_vec();
+    for (index, status) in statuses.iter().enumerate() {
+        if index != 0 {
+            rendered.push(b' ');
+        }
+        rendered.extend_from_slice(b"{Path:");
+        rendered.extend_from_slice(&status.path);
+        rendered.extend_from_slice(b" State:");
+        rendered.extend_from_slice(&status.index_state);
+        rendered.extend_from_slice(b" Reason:");
+        rendered.extend_from_slice(&status.index_failure_reason);
+        rendered.extend_from_slice(b" UpdatedAt:");
+        rendered.extend_from_slice(go_time_text(&status.index_updated_at)?.as_bytes());
+        rendered.push(b'}');
+    }
+    rendered.extend_from_slice(b"]\n");
+    Ok(rendered)
 }
 
 fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, String> {
@@ -254,7 +287,7 @@ fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, St
     if json_output {
         let mut rendered = serde_json::to_string(&status).map_err(|error| error.to_string())?;
         rendered.push('\n');
-        return Ok(rendered);
+        return Ok(super::super::go_escape_json(rendered));
     }
     Ok(aggregate_text(&status))
 }
@@ -266,8 +299,14 @@ fn embedding_backend_available(
         .enable_all()
         .build()
         .map_err(|error| format!("failed to create index status runtime: {error}"))?;
-    let inputs = ["symdesk index status".to_owned()];
-    let vectors = runtime.block_on(super::embed_with_retries(config, &inputs));
+    let inputs = ["symdesk retrieval status probe".to_owned()];
+    let vectors = runtime.block_on(symdesk_protocol::embed_local_ollama(
+        &config.ollama_url,
+        &config.model,
+        &inputs,
+        config.embedding_dim,
+        Duration::from_secs(config.timeout_seconds),
+    ));
     Ok(vectors.is_ok_and(|vectors| {
         vectors.len() == 1
             && vectors[0].iter().all(|value| value.is_finite())
@@ -579,6 +618,23 @@ fn aggregate_text(status: &AggregateStatus) -> String {
 mod tests {
     use super::{format_go_rfc3339, go_duration, parse_go_duration_nanos, parse_timeout};
     use std::time::Duration;
+
+    #[test]
+    fn diagnostic_json_preserves_go_escaping_and_invalid_byte_boundaries() {
+        // These bytes were compared against encoding/json through the real Go
+        // index-status command, including a truncated two-byte UTF-8 fragment.
+        let row = super::DocumentStatus {
+            path: b"invalid-\xff-\xe2\x82.md".to_vec(),
+            index_state: b"failed".to_vec(),
+            index_failure_reason: "x<&>\u{2028}\u{2029}�".as_bytes().to_vec(),
+            index_updated_at: "2026-01-02T03:04:05Z".into(),
+        };
+        let encoded = super::super::super::go_escape_json(serde_json::to_string(&row).unwrap());
+        assert_eq!(
+            encoded,
+            "{\"path\":\"invalid-\\ufffd-\\ufffd\\ufffd.md\",\"index_state\":\"failed\",\"index_failure_reason\":\"x\\u003c\\u0026\\u003e\\u2028\\u2029�\",\"index_updated_at\":\"2026-01-02T03:04:05Z\"}"
+        );
+    }
 
     #[test]
     fn default_and_zero_deadlines_are_distinct() {

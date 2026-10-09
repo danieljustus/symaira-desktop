@@ -666,7 +666,11 @@ fn emit_error(error: String, json_output: bool) -> ExitCode {
 }
 
 fn write_stdout(value: String) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    write_stdout_bytes(value.as_bytes())
+}
+
+fn write_stdout_bytes(value: &[u8]) -> ExitCode {
+    if io::stdout().write_all(value).is_err() {
         return process_exit(CoreExitCode::Generic);
     }
     process_exit(CoreExitCode::Ok)

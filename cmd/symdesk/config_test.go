@@ -79,6 +79,7 @@ func TestConfigInitCreatesFile(t *testing.T) {
 }
 
 func TestConfigPaths_JSON(t *testing.T) {
+	preserveConfigPathsState(t)
 	dataHome := t.TempDir()
 	configHome := t.TempDir()
 	cacheHome := t.TempDir()
@@ -139,6 +140,7 @@ func TestConfigPaths_JSON(t *testing.T) {
 }
 
 func TestConfigPaths_LegacyFallback(t *testing.T) {
+	preserveConfigPathsState(t)
 	dataHome := t.TempDir()
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("SYMDESK_VAULT", "")
@@ -191,6 +193,7 @@ func TestConfigPaths_LegacyFallback(t *testing.T) {
 }
 
 func TestConfigPathsReportsEffectiveOverrides(t *testing.T) {
+	preserveConfigPathsState(t)
 	home := t.TempDir()
 	dataHome := t.TempDir()
 	vaultRoot := t.TempDir()
@@ -265,6 +268,7 @@ func executeConfigPathsJSON(t *testing.T) config.StorePaths {
 }
 
 func TestConfigPaths_Text(t *testing.T) {
+	preserveConfigPathsState(t)
 	dataHome := t.TempDir()
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("SYMDESK_VAULT", "")
@@ -303,4 +307,14 @@ func TestConfigPaths_Text(t *testing.T) {
 			t.Errorf("expected %q in text output: %s", key, out)
 		}
 	}
+}
+
+func preserveConfigPathsState(t *testing.T) {
+	t.Helper()
+	origConfig, origVaultFlag := cfg, vaultFlag
+	origJSONFlag, origOutputFlag := jsonFlag, outputFlag
+	t.Cleanup(func() {
+		cfg, vaultFlag = origConfig, origVaultFlag
+		jsonFlag, outputFlag = origJSONFlag, origOutputFlag
+	})
 }

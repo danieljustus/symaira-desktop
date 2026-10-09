@@ -23,6 +23,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--build-launcher", type=Path, help="local build-policy launcher, if required")
+    parser.add_argument("--oracle-worktree", type=Path,
+                        help="fresh oracle checkout in the local policy's approved source area")
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -63,7 +65,7 @@ def main() -> int:
         report["source_commit"] = head
         report["oracle_commit"] = CANONICAL_ORACLE_COMMIT
         run(["git", "merge-base", "--is-ancestor", CANONICAL_ORACLE_COMMIT, head])
-        oracle = output / "oracle"
+        oracle = args.oracle_worktree.resolve() if args.oracle_worktree else output / "oracle"
         run(["git", "worktree", "add", "--detach", str(oracle), CANONICAL_ORACLE_COMMIT])
         if git("rev-parse", "HEAD", cwd=oracle) != CANONICAL_ORACLE_COMMIT:
             raise RuntimeError("oracle worktree revision differs")

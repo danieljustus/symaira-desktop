@@ -246,7 +246,7 @@ func inventoryGitOutputWithExecutable(repoRoot, git string, args ...string) ([]b
 	}
 	defer cleanup()
 	//nolint:gosec // callers use fixed Git subcommands and repository-derived revision/path inputs.
-	command := exec.CommandContext(ctx, git, append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
+	command := exec.CommandContext(ctx, git, append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects", "--no-lazy-fetch"}, args...)...)
 	command.WaitDelay = 2 * time.Second
 	command.Dir = repoRoot
 	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
@@ -286,6 +286,7 @@ func inventoryGitEnvironment(environment []string, configPath string) []string {
 		"GIT_CONFIG_GLOBAL="+configPath,
 		"GIT_CONFIG_NOSYSTEM=1",
 		"GIT_TERMINAL_PROMPT=0",
+		"GIT_NO_LAZY_FETCH=1",
 	)
 }
 

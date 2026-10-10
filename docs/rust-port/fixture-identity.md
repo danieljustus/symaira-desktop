@@ -74,18 +74,27 @@ remain immutable and independently checked. Missing, corrupt, wrong-source or
 unanchored records are rejected, including when a source-equivalent commit is
 available on an unrelated branch. Historical H roles are unchanged.
 
+Generation verifies A against `refs/remotes/origin/main`, or local
+`refs/heads/main` when no origin/main ref exists. The coordinator refreshes and
+verifies the main ref before generation. A PR-only ancestor is not a valid anchor.
+
 Readers import only into a private temporary bare object store. Caller refs,
 HEAD, index, worktree and object store remain untouched. The source verifier and
 source-reading generators use that store even in a fresh single-branch clone
 where squash removed P from reachable history. No network or GitHub credential
-is needed. Records are byte-bounded before JSON allocation and Git replay.
+is needed. Records are byte-bounded before JSON allocation and Git replay. Git
+reads explicitly disable lazy fetching; a partial clone with missing objects
+fails closed rather than fetching or populating the caller's object store.
 
 Clone-based source guards use `inventory.CloneOracleSource`, exposed as
 `go run ./scripts/rust-port/cmd/portgen --oracle-source-dir <outside-checkout>/source`.
 It verifies the selected source before creating a new disposable checkout and
 imports bundled objects only into that checkout. Its exact HEAD remains P after
 the temporary verification store is removed. Existing destinations are never
-overwritten. This is source materialization, not fixture generation or acceptance.
+overwritten, including empty directories. The destination's parent and caller
+paths are symlink-resolved before confinement checks and exclusive private
+directory creation. This is source materialization, not fixture generation or
+acceptance.
 
 The pre-merge fixture Q and the actual squash-merge tree must match in the
 coordinator's readback. Default-main validation replays every fixture from the

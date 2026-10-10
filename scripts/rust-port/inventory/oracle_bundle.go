@@ -70,7 +70,24 @@ func CreateOracleBundle(repoRoot, revision, anchor string) (*OracleBundle, error
 	if err != nil {
 		return nil, err
 	}
-	for _, descendant := range []string{"HEAD", revision} {
+	refs, err := inventoryGitOutputWithExecutable(repoRoot, git, "for-each-ref", "--format=%(refname)", "refs/remotes/origin/main", "refs/heads/main")
+	if err != nil {
+		return nil, err
+	}
+	mainRef := ""
+	for _, ref := range strings.Fields(string(refs)) {
+		if ref == "refs/remotes/origin/main" {
+			mainRef = ref
+			break
+		}
+		if ref == "refs/heads/main" {
+			mainRef = ref
+		}
+	}
+	if mainRef == "" {
+		return nil, fmt.Errorf("oracle bundle requires a verified origin/main or local main history")
+	}
+	for _, descendant := range []string{"HEAD", revision, mainRef} {
 		if _, err := inventoryGitOutputWithExecutable(repoRoot, git, "merge-base", "--is-ancestor", anchor, descendant); err != nil {
 			return nil, fmt.Errorf("oracle bundle anchor is not an ancestor: %w", err)
 		}
@@ -251,6 +268,15 @@ func CloneOracleSource(repoRoot, revision, destination string) error {
 	if err != nil {
 		return err
 	}
+	caller, err = filepath.EvalSymlinks(caller)
+	if err != nil {
+		return err
+	}
+	parent, err := filepath.EvalSymlinks(filepath.Dir(destination))
+	if err != nil {
+		return fmt.Errorf("resolve oracle source destination parent: %w", err)
+	}
+	destination = filepath.Join(parent, filepath.Base(destination))
 	relative, err := filepath.Rel(caller, destination)
 	if err != nil && strings.EqualFold(filepath.VolumeName(caller), filepath.VolumeName(destination)) {
 		return err
@@ -275,6 +301,9 @@ func CloneOracleSource(repoRoot, revision, destination string) error {
 		return err
 	}
 	defer cleanup()
+	if err := os.Mkdir(destination, 0700); err != nil {
+		return fmt.Errorf("create owned oracle source destination: %w", err)
+	}
 	if _, err := inventoryGitOutputWithExecutable(repoRoot, git, "clone", "--shared", "--no-checkout", "--template=", "--", repoRoot, destination); err != nil {
 		return err
 	}

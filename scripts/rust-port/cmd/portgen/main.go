@@ -134,12 +134,25 @@ func main() {
 	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "canonical live Go source P (defaults to central provenance)")
 	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "canonical live Go source release")
 	fixtureOracleCommit := flag.String("fixture-oracle-commit", "", "oracle commit for core and vault fixture corpora (defaults to --oracle-commit)")
+	anchor := flag.String("oracle-anchor", "", "ancestral commit for a generated immutable source bundle across squash merges")
 	applyArtifact := flag.String("apply-artifact", "", "validate and apply a generated patch in a disposable worktree, then print its commit")
+	sourceDirectory := flag.String("oracle-source-dir", "", "materialize the verified canonical source in a new disposable checkout outside this repository")
 	flag.Parse()
 
 	repoRoot, err := findRepoRoot()
 	if err != nil {
 		fatal("find repo root: %v", err)
+	}
+
+	if *sourceDirectory != "" {
+		if *check || *applyArtifact != "" || *anchor != "" || *fixtureOracleCommit != "" {
+			fatal("--oracle-source-dir cannot be combined with fixture operations")
+		}
+		if err := inventory.CloneOracleSource(repoRoot, *commit, *sourceDirectory); err != nil {
+			fatal("materialize oracle source: %v", err)
+		}
+		fmt.Println(*commit)
+		return
 	}
 
 	if *check {
@@ -156,12 +169,16 @@ func main() {
 		}
 		return
 	}
-	if err := generateArtifact(repoRoot, *commit, *release, *fixtureOracleCommit, os.Stdout); err != nil {
+	if err := generateArtifactWithAnchor(repoRoot, *commit, *release, *fixtureOracleCommit, *anchor, os.Stdout); err != nil {
 		fatal("generate fixture artifact: %v", err)
 	}
 }
 
 func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, output io.Writer) error {
+	return generateArtifactWithAnchor(repoRoot, commit, release, fixtureOracleCommit, "", output)
+}
+
+func generateArtifactWithAnchor(repoRoot, commit, release, fixtureOracleCommit, anchor string, output io.Writer) error {
 	resolvedCommit, err := resolveGenerationOracleCommit(repoRoot, commit)
 	if err != nil {
 		return fmt.Errorf("resolve generation oracle: %w", err)
@@ -176,6 +193,25 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 	}
 	if fixtureOracleCommit != commit {
 		return fmt.Errorf("all live fixtures must use one source P: oracle=%s fixture=%s", commit, fixtureOracleCommit)
+	}
+	var sourceBundle *inventory.OracleBundle
+	if anchor != "" {
+		sourceBundle, err = inventory.CreateOracleBundle(repoRoot, commit, anchor)
+		if err != nil {
+			return fmt.Errorf("preflight recorded source bundle: %w", err)
+		}
+	} else {
+		data, readErr := gitOutput(repoRoot, "show", "HEAD:"+provenanceFixture)
+		if readErr != nil {
+			return readErr
+		}
+		previous, decodeErr := decodeCanonicalProvenance(data)
+		if decodeErr != nil {
+			return decodeErr
+		}
+		if previous.Oracle.Commit == commit {
+			sourceBundle = previous.OracleBundle
+		}
 	}
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		return fmt.Errorf("generation requires a clean worktree: %w", err)
@@ -209,7 +245,7 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 	if err := validateFixtureDestinations(snapshot); err != nil {
 		return fmt.Errorf("validate private generation destinations: %w", err)
 	}
-	if err := runCompleteFixtureGeneration(goTool, snapshot, generationEnv, inventory.Oracle{Commit: commit, Release: release}, fixtureOracleCommit); err != nil {
+	if err := runCompleteFixtureGeneration(goTool, snapshot, generationEnv, inventory.Oracle{Commit: commit, Release: release}, fixtureOracleCommit, sourceBundle); err != nil {
 		return err
 	}
 	if err := validateFixtureDestinations(snapshot); err != nil {
@@ -234,7 +270,7 @@ func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, out
 	return nil
 }
 
-func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string) error {
+func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string, sourceBundle *inventory.OracleBundle) error {
 	generationEnv = generationEnvWithActivation(fixtureoracle.GenerationEnvironment(generationEnv, oracle))
 	// The configurable identity must describe the production bytes actually read.
 	fixtureSource, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, fixtureOracleCommit)
@@ -321,6 +357,7 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 	provenance := inventory.ProvenanceDocument{
 		SchemaVersion:          1,
 		Oracle:                 sidecarOracle,
+		OracleBundle:           sourceBundle,
 		ProductionSourceDigest: sourceDigest,
 		GeneratorSourceDigest:  generatorDigest,
 		SurfaceCounts:          expectedSurfaceCounts(),
@@ -332,6 +369,9 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		return fmt.Errorf("marshal provenance: %w", err)
 	}
 	provContent = append(provContent, '\n')
+	if len(provContent) > maxArtifactSize {
+		return fmt.Errorf("generated provenance exceeds the %d-byte bound", maxArtifactSize)
+	}
 
 	provPath := filepath.Join(repoRoot, provenanceFixture)
 	if err := os.WriteFile(provPath, provContent, 0o600); err != nil {

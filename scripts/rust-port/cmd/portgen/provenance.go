@@ -112,7 +112,9 @@ func resolveGenerationOracleCommit(repoRoot, requested string) (string, error) {
 		return "", err
 	}
 	if !ancestor {
-		return "", fmt.Errorf("requested oracle commit %s must be the checked revision %s or one of its ancestors", requested, head)
+		if err := verifyOracleSourceAt(repoRoot, head, requested); err != nil {
+			return "", fmt.Errorf("requested oracle commit %s must be ancestral or explicitly recorded: %w", requested, err)
+		}
 	}
 	return requested, nil
 }

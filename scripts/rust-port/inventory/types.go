@@ -137,6 +137,7 @@ type SurfaceCounts struct {
 type ProvenanceDocument struct {
 	SchemaVersion          int               `json:"schema_version"`
 	Oracle                 Oracle            `json:"oracle"`
+	OracleBundle           *OracleBundle     `json:"oracle_bundle,omitempty"`
 	ProductionSourceDigest string            `json:"production_source_digest"`
 	GeneratorSourceDigest  string            `json:"generator_source_digest"`
 	SurfaceCounts          SurfaceCounts     `json:"surface_counts"`

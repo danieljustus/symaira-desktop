@@ -187,7 +187,7 @@ func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, er
 	if len(target.outputs) == 0 {
 		return nil, fmt.Errorf("replay oracle target has no outputs")
 	}
-	if err := verifyProvenanceAncestry(repoRoot, oracle.Commit); err != nil {
+	if err := verifyOracleSource(repoRoot, oracle.Commit); err != nil {
 		return nil, fmt.Errorf("replay oracle ancestry: %w", err)
 	}
 	return append(append([]string(nil), target.args...), "--oracle-commit", oracle.Commit, "--oracle-release", oracle.Release), nil

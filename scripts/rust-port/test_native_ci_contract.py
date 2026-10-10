@@ -309,25 +309,28 @@ class NativeCIContracts(unittest.TestCase):
                     ["fetch-depth: 0"],
                 )
 
-    def test_clone_based_source_guards_use_reachable_canonical_oracle(self):
+    def test_clone_based_source_guards_preserve_verified_canonical_oracle(self):
         commits = pinned_source_guard_oracle_commits()
         self.assertEqual(set(commits), set(ORACLE_SOURCE_FILES))
         self.assertEqual(len(set(commits.values())), 1)
-        # Canonical P is an ancestor of the checkout, not an arbitrary legacy
-        # branch alias. Full-history CI checkouts are checked separately above.
-        # Prove a real no-local clone transfers the selected Git source object.
+        # Exercise the same strict source resolver used by the Go guard tests.
+        # An ancestral P or its immutable verified bundle must materialize the
+        # actual commit, including after a squash drops P from clone history.
         with tempfile.TemporaryDirectory(prefix="canonical-oracle-clone-") as temp:
             clone = Path(temp) / "clone"
+            commit = next(iter(commits.values()))
             result = subprocess.run(
-                ["git", "clone", "--no-local", "--no-checkout", str(ROOT), str(clone)],
-                capture_output=True, timeout=60,
+                ["go", "run", "./scripts/rust-port/cmd/portgen",
+                 "--oracle-commit", commit, "--oracle-source-dir", str(clone)],
+                cwd=ROOT, capture_output=True, timeout=120,
             )
             self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
-            for commit in set(commits.values()):
-                subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"], cwd=ROOT, check=True)
-                original = subprocess.check_output(["git", "show", commit + ":go.mod"], cwd=ROOT)
-                copied = subprocess.check_output(["git", "show", commit + ":go.mod"], cwd=clone)
-                self.assertEqual(copied, original)
+            self.assertEqual(result.stdout.decode("ascii").strip(), commit)
+            self.assertEqual(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=clone).decode("ascii").strip(), commit)
+            original = subprocess.check_output(["git", "show", "HEAD:go.mod"], cwd=ROOT)
+            copied = subprocess.check_output(["git", "show", commit + ":go.mod"], cwd=clone)
+            self.assertEqual(copied, original)
+            self.assertEqual(subprocess.check_output(["git", "status", "--porcelain"], cwd=clone), b"")
 
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():

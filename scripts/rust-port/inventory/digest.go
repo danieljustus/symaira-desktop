@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
 // ComputeProductionSourceDigest hashes production inputs that define the Go
@@ -55,9 +57,11 @@ func computeProductionSourceDigest(repoRoot string, gitOutput func(...string) ([
 // directly from a Git revision. Fixture generation uses this to prove that an
 // operator cannot label arbitrary working-tree bytes with a trusted oracle SHA.
 func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string, error) {
-	return computeGitRevisionProductionSourceDigest(repoRoot, revision, func(args ...string) ([]byte, error) {
-		return inventoryGitOutput(repoRoot, args...)
-	})
+	git, err := oracleGitExecutable()
+	if err != nil {
+		return "", err
+	}
+	return oracleRevisionDigest(repoRoot, git, revision)
 }
 
 func computeGitRevisionProductionSourceDigest(repoRoot, revision string, gitOutput func(...string) ([]byte, error)) (string, error) {
@@ -111,7 +115,7 @@ func NewProductionSourceVerifier(repoRoot string) (func(string) error, error) {
 		if err != nil {
 			return err
 		}
-		pinned, err := computeGitRevisionProductionSourceDigest(root, revision, output)
+		pinned, err := oracleRevisionDigest(root, git, revision)
 		if err != nil {
 			return err
 		}
@@ -234,13 +238,16 @@ func inventoryGitOutput(repoRoot string, args ...string) ([]byte, error) {
 }
 
 func inventoryGitOutputWithExecutable(repoRoot, git string, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	configPath, cleanup, err := PrivateGitConfig()
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup()
 	//nolint:gosec // callers use fixed Git subcommands and repository-derived revision/path inputs.
-	command := exec.Command(git, append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
+	command := exec.CommandContext(ctx, git, append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
+	command.WaitDelay = 2 * time.Second
 	command.Dir = repoRoot
 	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
 	output, err := command.CombinedOutput()

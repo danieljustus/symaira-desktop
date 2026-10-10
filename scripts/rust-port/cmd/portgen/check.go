@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
@@ -25,6 +27,14 @@ func runProvenanceCheck(repoRoot string) error {
 	if err := verifyPortFixtureTreeEntries(repoRoot, head); err != nil {
 		return fmt.Errorf("verify checked provenance tree entries: %w", err)
 	}
+	provSize, err := gitOutput(repoRoot, "cat-file", "-s", head+":"+provenanceFixture)
+	if err != nil {
+		return err
+	}
+	size, err := strconv.ParseInt(strings.TrimSpace(string(provSize)), 10, 64)
+	if err != nil || size < 0 || size > maxArtifactSize {
+		return fmt.Errorf("provenance record exceeds the %d-byte bound", maxArtifactSize)
+	}
 	provData, err := gitOutput(repoRoot, "show", head+":"+provenanceFixture)
 	if err != nil {
 		return fmt.Errorf("read %s from checked tree: %w", provenanceFixture, err)
@@ -36,7 +46,7 @@ func runProvenanceCheck(repoRoot string) error {
 	if err := validateProvenanceDocument(prov); err != nil {
 		return fmt.Errorf("validate %s: %w", provenanceFixture, err)
 	}
-	if err := verifyProvenanceAncestryAt(repoRoot, head, prov.Oracle.Commit); err != nil {
+	if err := verifyOracleSourceAt(repoRoot, head, prov.Oracle.Commit); err != nil {
 		return fmt.Errorf("verify oracle provenance ancestry: %w", err)
 	}
 

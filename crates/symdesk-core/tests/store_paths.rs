@@ -59,15 +59,33 @@ fn snapshot(root: &Path) -> BTreeMap<String, String> {
                 .expect("UTF-8 synthetic path")
                 .replace(std::path::MAIN_SEPARATOR, "/")
         };
-        if path.is_dir() {
+        let metadata =
+            fs::symlink_metadata(path).expect("inspect capture entry without following links");
+        if metadata.is_dir() && !metadata.file_type().is_symlink() {
             result.insert(key, "directory".to_owned());
             for entry in fs::read_dir(path).expect("read private capture directory") {
                 visit(root, &entry.expect("capture entry").path(), result);
             }
         } else {
             use std::fmt::Write as _;
-            let mut value = String::from("file:");
-            for byte in fs::read(path).expect("read seeded synthetic store") {
+            let (prefix, bytes) = if metadata.file_type().is_symlink() {
+                let target = fs::read_link(path).expect("retain native link target");
+                (
+                    "symlink:",
+                    target
+                        .to_str()
+                        .expect("UTF-8 synthetic link")
+                        .as_bytes()
+                        .to_vec(),
+                )
+            } else {
+                (
+                    "file:",
+                    fs::read(path).expect("read seeded synthetic store"),
+                )
+            };
+            let mut value = String::from(prefix);
+            for byte in bytes {
                 write!(value, "{byte:02x}").expect("write String");
             }
             result.insert(key, value);
@@ -131,6 +149,18 @@ fn contacts_and_ingest_paths_match_native_go() {
     );
     let raw = fs::read(&output).expect("retain/read complete original Go capture");
     let fixture: Fixture = serde_json::from_slice(&raw).expect("strict native capture schema");
+    let mut unexpected: serde_json::Value = serde_json::from_slice(&raw).expect("capture control");
+    unexpected
+        .as_object_mut()
+        .expect("capture object")
+        .insert("unexpected_top_level".to_owned(), true.into());
+    assert!(
+        serde_json::from_slice::<Fixture>(
+            &serde_json::to_vec(&unexpected).expect("serialize unknown-field control")
+        )
+        .is_err(),
+        "unknown top-level fields must fail through the actual capture decoder"
+    );
     assert_eq!(fixture.schema_version, 1);
     assert!(
         fixture.complete,
@@ -175,6 +205,11 @@ fn contacts_and_ingest_paths_match_native_go() {
         "relative-xdg",
         "lexical-xdg",
         "different-home-profile",
+        "legacy-symlink-files",
+        "legacy-symlink-directories",
+        "legacy-dangling-symlinks",
+        "primary-symlinks",
+        "primary-dangling-symlinks",
     ];
     let expected_names = [
         "symingest.db",

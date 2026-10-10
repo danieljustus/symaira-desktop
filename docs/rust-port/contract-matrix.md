@@ -119,18 +119,26 @@ supplies a fresh disposable root and an output inside that root; an existing
 root is rejected without overwriting it. The ordinary frozen config fixture
 is unchanged.
 
-Every native host executes Go 1.26.9 to record 15 filesystem layouts and 19
+Every native host executes Go 1.26.9 to record 20 filesystem layouts and 19
 ingest names per layout. The Rust replay compares all four contacts paths,
-every exact ingest result/error, and before/after names, types and file bytes.
+every exact ingest result/error, and before/after names, types, file bytes and
+native symlink targets without following links in the state snapshot.
 Modes and timestamps are outside this read-only path slice. The cases include
 unified/legacy precedence, existing directories, raw and padded contacts
 overrides, relative/lexically cleaned XDG paths, missing HOME, distinct
-HOME/USERPROFILE and native separator/drive-name validation. Outputs are not
+HOME/USERPROFILE and native separator/drive-name validation. Five added layouts
+cover legacy file/directory links, dangling legacy links, valid primary links
+and dangling primary links with a valid legacy fallback. Outputs are not
 normalized across operating systems. Raw captures and producer logs survive
-failures; `complete=false` cannot certify parity.
+failures, including a nested output directory; `complete=false` cannot certify
+parity. A bounded child-process fault control exercises failure retention and
+rejection of an existing root. The actual Rust decoder rejects an unknown
+top-level key inserted into a copy of the genuine capture.
 
-Local Darwin/arm64 diagnostics pass 285 ingest comparisons and all 24 core
-tests without failures or ignored tests. CI is prepared to replay and retain
+The pre-review Darwin/arm64 diagnostic passed 285 ingest comparisons and all
+24 core tests without failures or ignored tests; that retained result does not
+approve the expanded capture. Current local diagnostics require the exact
+revised source snapshot and 380 comparisons. CI is prepared to replay and retain
 the raw fixture in each of its six native targets; preparation is not native
 acceptance. Miri cannot spawn Go, so this external-process gate is explicitly
 excluded from Miri only, not from any native Cargo test target.

@@ -57,6 +57,7 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 		"fresh", "legacy-files", "both-files", "primary-directory", "legacy-directory",
 		"mixed-archive", "contacts-overrides", "padded-overrides", "blank-overrides",
 		"home-defaults", "no-home", "xdg-without-home", "relative-xdg", "lexical-xdg", "different-home-profile",
+		"legacy-symlink-files", "legacy-symlink-directories", "legacy-dangling-symlinks", "primary-symlinks", "primary-dangling-symlinks",
 	} {
 		caseRoot := filepath.Join(root, id)
 		env := map[string]string{
@@ -70,7 +71,7 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 		}
 		seed := map[string]bool{}
 		switch id {
-		case "legacy-files", "legacy-directory", "both-files", "primary-directory":
+		case "legacy-files", "legacy-directory", "both-files", "primary-directory", "primary-symlinks", "primary-dangling-symlinks":
 			for _, rel := range []string{"data/symrelate/symrelate.db", "data/symingest/symingest.db", "data/symingest/archive"} {
 				seed[rel] = id == "legacy-directory" || rel == "data/symingest/archive"
 			}
@@ -136,6 +137,40 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 				return value, err
 			}
 		}
+		switch id {
+		case "legacy-symlink-files", "legacy-symlink-directories", "legacy-dangling-symlinks", "primary-symlinks", "primary-dangling-symlinks":
+			for _, artifact := range [][2]string{{"symrelate", "symrelate.db"}, {"symingest", "symingest.db"}, {"symingest", "archive"}} {
+				app := artifact[0]
+				if id == "primary-symlinks" || id == "primary-dangling-symlinks" {
+					app = "symdesk"
+				}
+				target := filepath.Join(caseRoot, "targets", artifact[1])
+				if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+					return value, err
+				}
+				if id != "legacy-dangling-symlinks" && id != "primary-dangling-symlinks" {
+					if id == "legacy-symlink-directories" || artifact[1] == "archive" {
+						err = os.Mkdir(target, 0o700)
+					} else {
+						err = os.WriteFile(target, []byte("retained synthetic link target"), 0o600)
+					}
+					if err != nil {
+						return value, err
+					}
+				}
+				link := filepath.Join(caseRoot, "data", app, artifact[1])
+				if err := os.MkdirAll(filepath.Dir(link), 0o700); err != nil {
+					return value, err
+				}
+				relative, err := filepath.Rel(filepath.Dir(link), target)
+				if err != nil {
+					return value, err
+				}
+				if err := os.Symlink(relative, link); err != nil {
+					return value, fmt.Errorf("seed native symlink %s: %w", id, err)
+				}
+			}
+		}
 		out := storePathCase{ID: id, Root: caseRoot, Environment: maps.Clone(env)}
 		out.Before, err = storePathSnapshot(caseRoot)
 		if err != nil {
@@ -170,7 +205,8 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 	return value, nil
 }
 
-// Manifest names, types and exact file contents; modes/times are not compared.
+// Manifest names, types, exact file contents and link targets without following links.
+// Modes/times are not compared.
 func storePathSnapshot(root string) (map[string]string, error) {
 	result := map[string]string{}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -179,6 +215,11 @@ func storePathSnapshot(root string) (map[string]string, error) {
 		}
 		rel, err := filepath.Rel(root, path)
 		if err != nil {
+			return err
+		}
+		if entry.Type()&fs.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			result[filepath.ToSlash(rel)] = "symlink:" + hex.EncodeToString([]byte(target))
 			return err
 		}
 		if entry.IsDir() {

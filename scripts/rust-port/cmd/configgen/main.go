@@ -103,6 +103,8 @@ type pathCase struct {
 	GlobalPath  string            `json:"global_path"`
 }
 
+var nativeStorePaths = buildStorePaths
+
 func main() {
 	output := flag.String("output", "testdata/port/core/config.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
@@ -141,13 +143,16 @@ func main() {
 	if *storeRoot == "" {
 		value, err = buildDocument(oracle)
 	} else {
-		value, err = buildStorePaths(oracle, *storeRoot)
+		value, err = nativeStorePaths(oracle, *storeRoot)
 	}
 	if err != nil {
 		if partial, ok := value.(storePathDocument); ok && partial.ownedRoot {
 			content, marshalErr := json.MarshalIndent(partial, "", "  ")
 			if marshalErr != nil {
 				fatal("retain partial store capture: %v (capture failure: %v)", marshalErr, err)
+			}
+			if directoryErr := os.MkdirAll(filepath.Dir(*output), 0o700); directoryErr != nil {
+				fatal("retain partial store capture: %v (capture failure: %v)", directoryErr, err)
 			}
 			if writeErr := os.WriteFile(*output, append(content, '\n'), 0o600); writeErr != nil {
 				fatal("retain partial store capture: %v (capture failure: %v)", writeErr, err)

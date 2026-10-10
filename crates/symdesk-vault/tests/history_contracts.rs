@@ -1062,11 +1062,33 @@ fn test_harness_mkdir_and_temp_vault_guard_collision() {
 #[test]
 fn test_pinned_source_hashes_match_canonical_git_blobs() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let temporary = TempVaultGuard::new("symdesk-history-source");
+    let source = temporary.path.join("source");
+    // Reuse the strict source resolver: P may be bundled rather than ancestral
+    // after a squash. Import only into this disposable clone, never the caller.
+    let materialized = std::process::Command::new("go")
+        .current_dir(&root)
+        .args(["run", "./scripts/rust-port/cmd/portgen", "--oracle-commit"])
+        .arg(oracle_identity::commit())
+        .arg("--oracle-source-dir")
+        .arg(&source)
+        .output()
+        .expect("materialize verified canonical history source");
+    assert!(
+        materialized.status.success(),
+        "materialize history source: {}",
+        String::from_utf8_lossy(&materialized.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&materialized.stdout).trim(),
+        oracle_identity::commit(),
+        "materialized history source must have the exact canonical identity"
+    );
     for &(path, expected_hash) in PINNED_SOURCE_HASHES {
         let object = format!("{}:{path}", oracle_identity::commit());
         let output = std::process::Command::new("git")
-            .current_dir(&root)
-            .args(["show", &object])
+            .current_dir(&source)
+            .args(["--no-replace-objects", "--no-lazy-fetch", "show", &object])
             .output()
             .expect("read canonical history source blob");
         assert!(

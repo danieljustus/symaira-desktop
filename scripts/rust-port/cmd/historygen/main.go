@@ -154,10 +154,10 @@ func verifyOracle(root, revision, release string) (map[string]string, error) {
 	if release != defaultOracleRelease {
 		return nil, fmt.Errorf("oracle release must be pinned to %s", defaultOracleRelease)
 	}
-	if _, err := gitOutput(root, "rev-parse", "--verify", revision+"^{commit}"); err != nil {
+	if _, err := inventory.OracleGitOutput(root, revision, "rev-parse", "--verify", revision+"^{commit}"); err != nil {
 		return nil, fmt.Errorf("revision %s: %w", revision, err)
 	}
-	list, err := gitOutput(root, "ls-tree", "-r", "--name-only", revision, "--", "internal/history")
+	list, err := inventory.OracleGitOutput(root, revision, "ls-tree", "-r", "--name-only", revision, "--", "internal/history")
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func verifyOracle(root, revision, release string) (map[string]string, error) {
 		if !filepath.IsLocal(path) {
 			return nil, fmt.Errorf("source path %q is not local", path)
 		}
-		pinned, err := gitOutput(root, "show", revision+":"+path)
+		pinned, err := inventory.OracleGitOutput(root, revision, "show", revision+":"+path)
 		if err != nil {
 			return nil, fmt.Errorf("read %s from %s: %w", path, revision, err)
 		}

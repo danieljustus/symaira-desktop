@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 func TestVerifyOracleSourceGuard(t *testing.T) {
@@ -341,8 +343,9 @@ func clonePinnedRepo(t *testing.T) string {
 	root := filepath.Join(t.TempDir(), "repo")
 	// Share the local object store for this disposable test clone; each case
 	// gets its own worktree, so mutations cannot affect a sibling case.
-	runGit(t, filepath.Dir(root), "clone", "--shared", source, root)
-	runGit(t, root, "checkout", "--detach", defaultOracleCommit)
+	if err := inventory.CloneOracleSource(source, defaultOracleCommit, root); err != nil {
+		t.Fatal(err)
+	}
 	return root
 }
 

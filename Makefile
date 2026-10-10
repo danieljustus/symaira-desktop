@@ -77,6 +77,7 @@ export CARGO_TARGET_DIR
 endif
 PORT_ORACLE_COMMIT ?= $(shell python3 -c "import json; print(json.load(open('testdata/port/provenance.json'))['oracle']['commit'])")
 PORT_ORACLE_RELEASE ?= $(shell python3 -c "import json; print(json.load(open('testdata/port/provenance.json'))['oracle']['release'])")
+PORT_ORACLE_ANCHOR ?=
 # The sidecar lifecycle fixture uses the same live source P and release.
 # portgen enforces this pair during generation and immutable checks.
 PORTGEN_SIDECAR_ORACLE_COMMIT ?= $(PORT_ORACLE_COMMIT)
@@ -763,7 +764,8 @@ port-fixtures-generate:
 	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE) \
-		--fixture-oracle-commit $(PORT_ORACLE_COMMIT)
+		--fixture-oracle-commit $(PORT_ORACLE_COMMIT) \
+		--oracle-anchor "$(PORT_ORACLE_ANCHOR)"
 
 # Apply only a reviewed artifact. The generated commit is built and validated
 # in a disposable worktree; the invoking checkout is not modified.

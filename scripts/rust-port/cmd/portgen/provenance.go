@@ -112,7 +112,9 @@ func resolveGenerationOracleCommit(repoRoot, requested string) (string, error) {
 		return "", err
 	}
 	if !ancestor {
-		return "", fmt.Errorf("requested oracle commit %s must be the checked revision %s or one of its ancestors", requested, head)
+		if err := verifyOracleSourceAt(repoRoot, head, requested); err != nil {
+			return "", fmt.Errorf("requested oracle commit %s must be ancestral or explicitly recorded: %w", requested, err)
+		}
 	}
 	return requested, nil
 }
@@ -236,7 +238,7 @@ func gitCommand(repoRoot string, args ...string) (*exec.Cmd, func(), error) {
 	//nolint:gosec // every caller uses fixed Git subcommands and repository-derived revisions.
 	// The sanitized environment omits Actions' global safe.directory setting.
 	// Trust only this checkout, never a user-wide wildcard.
-	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
+	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects", "--no-lazy-fetch"}, args...)...)
 	command.Dir = repoRoot
 	command.Env = sanitizedGitEnvironment(os.Environ(), configPath)
 	return command, cleanup, nil
@@ -255,5 +257,6 @@ func sanitizedGitEnvironment(environment []string, configPath string) []string {
 		"GIT_CONFIG_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL="+configPath,
 		"GIT_TERMINAL_PROMPT=0",
+		"GIT_NO_LAZY_FETCH=1",
 	)
 }

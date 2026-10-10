@@ -475,10 +475,10 @@ func verifyOracle(root, revision string) (map[string]string, error) {
 	if revision != defaultOracleCommit {
 		return nil, fmt.Errorf("oracle commit must be pinned to %s", defaultOracleCommit)
 	}
-	if _, err := gitOutput(root, "rev-parse", "--verify", revision+"^{commit}"); err != nil {
+	if _, err := inventory.OracleGitOutput(root, revision, "rev-parse", "--verify", revision+"^{commit}"); err != nil {
 		return nil, fmt.Errorf("revision %s: %w", revision, err)
 	}
-	list, err := gitOutput(root, "ls-tree", "-r", "--name-only", revision, "--", "internal/vault")
+	list, err := inventory.OracleGitOutput(root, revision, "ls-tree", "-r", "--name-only", revision, "--", "internal/vault")
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +504,7 @@ func verifyOracle(root, revision string) (map[string]string, error) {
 	paths = append(paths, "go.mod", "go.sum")
 	hashes := make(map[string]string, len(paths))
 	for _, path := range paths {
-		pinned, err := gitOutput(root, "show", revision+":"+path)
+		pinned, err := inventory.OracleGitOutput(root, revision, "show", revision+":"+path)
 		if err != nil {
 			return nil, fmt.Errorf("read %s from %s: %w", path, revision, err)
 		}

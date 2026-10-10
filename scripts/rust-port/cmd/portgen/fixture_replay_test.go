@@ -72,7 +72,7 @@ func TestFixtureReplayOracleArguments(t *testing.T) {
 	}
 	// The source guard runs before any generator process is started.
 	writePortgenTestFile(t, root, "internal/core/core.go", "package core\n// changed production\n")
-	err := runCompleteFixtureGeneration("must-not-execute", root, nil, inventory.Oracle{Commit: head, Release: "release"}, head)
+	err := runCompleteFixtureGeneration("must-not-execute", root, nil, inventory.Oracle{Commit: head, Release: "release"}, head, nil)
 	if err == nil || !strings.Contains(err.Error(), "production source does not match") {
 		t.Fatalf("source mismatch guard = %v", err)
 	}

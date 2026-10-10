@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/history"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 func TestVerifyOracleSourceGuard(t *testing.T) {
@@ -171,8 +172,9 @@ func clonePinnedRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	root := filepath.Join(t.TempDir(), "repo")
-	runGit(t, filepath.Dir(root), "clone", "--no-local", source, root)
-	runGit(t, root, "checkout", "--detach", defaultOracleCommit)
+	if err := inventory.CloneOracleSource(source, defaultOracleCommit, root); err != nil {
+		t.Fatal(err)
+	}
 	return root
 }
 

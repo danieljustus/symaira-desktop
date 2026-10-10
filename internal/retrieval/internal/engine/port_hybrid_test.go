@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 var hybridOracleCommit = func() string { return fixtureoracle.Current().Commit }
@@ -396,10 +396,7 @@ func hybridVerifyPinnedSources(root string, hashes map[string]string) error {
 		if !filepath.IsLocal(rel) {
 			return fmt.Errorf("Go oracle source path is not local: %s", rel)
 		}
-		//nolint:gosec // fixed Git subcommand, pinned commit, and allowlisted test sources.
-		cmd := exec.Command("git", "show", hybridOracleCommit()+":"+filepath.ToSlash(rel))
-		cmd.Dir = root
-		data, err := cmd.Output()
+		data, err := inventory.OracleGitOutput(root, hybridOracleCommit(), "show", hybridOracleCommit()+":"+filepath.ToSlash(rel))
 		if err != nil {
 			return fmt.Errorf("read pinned Go source %s: %w", rel, err)
 		}

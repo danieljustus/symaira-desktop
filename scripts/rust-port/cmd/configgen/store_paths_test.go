@@ -100,12 +100,18 @@ func TestNativeStorePathsCaptureFailureRetainsNestedPartial(t *testing.T) {
 	}
 	var original []byte
 	for attempt, reason := range []string{"injected capture failure", "capture root must be fresh"} {
-		ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+		// The CLI certifies all production inputs before the injected failure;
+		// allow that Windows startup work without relaxing capture assertions.
+		ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 		//nolint:gosec // Current test executable only; no caller-supplied binary, bounded child.
 		command := exec.CommandContext(ctx, binary, "-test.run=^TestNativeStorePathsCaptureFailureRetainsNestedPartial$")
 		command.Env = append(os.Environ(), "SYMDESK_CONFIGGEN_CAPTURE_TEST_ROOT="+root, "SYMDESK_CONFIGGEN_CAPTURE_TEST_OUTPUT="+output)
 		message, runErr := command.CombinedOutput()
+		contextErr := ctx.Err()
 		cancel()
+		if contextErr != nil {
+			t.Fatalf("capture child deadline: %v, output=%s", contextErr, message)
+		}
 		var exit *exec.ExitError
 		if !errors.As(runErr, &exit) || exit.ExitCode() != 1 || !strings.Contains(string(message), reason) {
 			t.Fatalf("capture failure %d: exit=%v, output=%s", attempt, runErr, message)

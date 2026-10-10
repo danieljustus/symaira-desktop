@@ -9,7 +9,7 @@
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "d2b1992a7096125abd99f7d3179dca247805984c03c22956a2fb01ee31fca5c2",
+  "generator_sha256": "28ff4a91cc0ccae96ff227812f014223eb9033d359e6a86d36443611941b9fe8",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "37348759bc5b2eb8572a562ad9c350e45d3ecbb5f9f9021db3c26af9f4407683",

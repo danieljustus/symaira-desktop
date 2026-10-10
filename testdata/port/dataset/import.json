@@ -7,7 +7,7 @@
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "c315700b73d67217408574990f53c6b139d61e0fa0b5d1022db64de9f530a534",
+  "generator_sha256": "d51e8d802e44ba5dee281d05d8d9641368b7432f001836afe7d5e46e15e8deee",
   "source_sha256": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",

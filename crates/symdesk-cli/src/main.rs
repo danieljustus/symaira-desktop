@@ -2,6 +2,7 @@
 
 mod ai_cli;
 mod ai_secrets;
+mod config_paths;
 mod dataset;
 mod history;
 mod http;
@@ -65,6 +66,39 @@ fn main() -> ExitCode {
     let output = matches
         .get_one::<String>("output")
         .map_or("", String::as_str);
+    if let Some(("config", command)) = matches.subcommand()
+        && command.subcommand_name() == Some("paths")
+    {
+        let (root_config, environment) = match config_paths::load_root_config() {
+            Ok(value) => value,
+            Err(error) => {
+                return write_stderr(
+                    &format!("failed to load config: {error}\n"),
+                    CoreExitCode::Config,
+                );
+            }
+        };
+        if !output.is_empty() && !matches!(output, "text" | "json" | "yaml") {
+            return write_stderr(
+                &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
+                CoreExitCode::Generic,
+            );
+        }
+        let output_json = match output {
+            "json" => true,
+            "text" | "yaml" => false,
+            _ => matches.get_flag("json"),
+        };
+        let vault = matches
+            .get_one::<String>("vault")
+            .map(String::as_str)
+            .filter(|value| !value.is_empty())
+            .unwrap_or(root_config.vault.as_str());
+        return match config_paths::run(vault, &environment, output_json) {
+            Ok(rendered) => write_stdout(rendered),
+            Err(error) => emit_error(error, output_json),
+        };
+    }
     if !output.is_empty() && !matches!(output, "text" | "json" | "yaml") {
         return write_stderr(
             &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
@@ -294,6 +328,7 @@ fn cli() -> Command {
         .arg(Arg::new("output").long("output").global(true).num_args(1))
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
+        .subcommand(config_paths::command())
         .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),

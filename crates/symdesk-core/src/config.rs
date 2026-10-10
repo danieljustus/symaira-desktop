@@ -640,9 +640,11 @@ fn quote_artifact(value: &str) -> String {
 #[must_use]
 pub fn global_path(environment: &BTreeMap<String, String>) -> String {
     let base = nonempty(environment, "XDG_CONFIG_HOME")
-        .map(str::trim)
-        .filter(|value| portable_absolute(value))
-        .map_or_else(|| join(&home(environment), ".config"), str::to_owned);
+        .filter(|value| Path::new(value).is_absolute())
+        .map_or_else(
+            || join(user_home(environment).unwrap_or("."), ".config"),
+            str::to_owned,
+        );
     join(&join(&base, "symdesk"), "config.toml")
 }
 
@@ -686,20 +688,8 @@ fn home(environment: &BTreeMap<String, String>) -> String {
         .to_owned()
 }
 
-fn portable_absolute(value: &str) -> bool {
-    value.starts_with('/') || value.starts_with('\\') || value.as_bytes().get(1) == Some(&b':')
-}
-
 fn join(left: &str, right: &str) -> String {
-    let right = right.trim_start_matches(['/', '\\']);
-    if left.is_empty() || left == "." {
-        return format!("./{right}");
-    }
-    #[cfg(windows)]
-    if is_windows_verbatim(left) {
-        return join_windows_verbatim(left, right);
-    }
-    format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
+    store_join(left, right)
 }
 
 #[cfg(any(windows, test))]

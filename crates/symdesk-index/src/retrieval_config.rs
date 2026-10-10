@@ -120,6 +120,22 @@ pub fn index_location_for_vault(
     Ok(lexical_clean(&path))
 }
 
+/// Resolves the default retrieval path used by the unified-store preflight.
+/// It deliberately does not load or migrate the standalone retrieval config.
+pub fn store_retrieval_path_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<PathBuf, SidecarError> {
+    let path = if !vault_root.trim().is_empty() {
+        vault_retrieval_path(vault_root, environment, cwd, temp_root)?
+    } else {
+        standalone_retrieval_path(environment, cwd)?
+    };
+    Ok(lexical_clean(&path))
+}
+
 /// Opens the effective retrieval database for a vault, seeding a missing
 /// per-vault database from the existing standalone index on first open.
 ///
@@ -210,9 +226,8 @@ fn migrate_legacy_retrieval_index(
 }
 
 fn legacy_retrieval_path(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     Ok(PathBuf::from(home).join(".local/share/symaira-seek/symseek.db"))
 }
 
@@ -439,9 +454,8 @@ fn standalone_retrieval_path(
     let data_home = data_home(environment)?;
     let primary = data_home.join("symdesk/retrieval.db");
     let old_primary = data_home.join("symdesk/symseek.db");
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     let legacy = PathBuf::from(home).join(".local/share/symaira-seek/symseek.db");
     for candidate in [&primary, &old_primary, &legacy] {
         if absolute_clean(candidate, cwd).exists() {
@@ -484,10 +498,20 @@ fn data_home(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarE
     if let Some(value) = trimmed_environment(environment, "XDG_DATA_HOME") {
         return Ok(PathBuf::from(value));
     }
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     Ok(PathBuf::from(home).join(".local/share"))
+}
+
+fn user_home_error() -> &'static str {
+    #[cfg(windows)]
+    {
+        "user home dir: %userprofile% is not defined"
+    }
+    #[cfg(not(windows))]
+    {
+        "user home dir: $HOME is not defined"
+    }
 }
 
 fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {

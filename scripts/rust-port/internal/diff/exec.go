@@ -20,6 +20,7 @@ type Result struct {
 	TimedOut    bool
 	Stdout      []byte
 	Stderr      []byte
+	FilesBefore []ManifestEntry
 	Files       []ManifestEntry
 	SandboxRoot string
 }
@@ -35,7 +36,34 @@ func Run(binary string, testCase Case) (Result, error) {
 		return Result{}, fmt.Errorf("create sandbox: %w", err)
 	}
 	defer removeSandbox(root)
+	return runInRoot(absoluteBinary, testCase, root)
+}
 
+// RunAt executes in an explicitly owned absolute root and leaves that root in
+// place so a caller can retain or inspect its before/after evidence.
+func RunAt(binary string, testCase Case, root string) (Result, error) {
+	absoluteBinary, err := filepath.Abs(binary)
+	if err != nil {
+		return Result{}, fmt.Errorf("resolve binary: %w", err)
+	}
+	if !filepath.IsAbs(root) {
+		return Result{}, fmt.Errorf("sandbox root must be absolute: %q", root)
+	}
+	if _, err := os.Lstat(root); err == nil {
+		return Result{}, fmt.Errorf("sandbox root already exists: %s", root)
+	} else if !os.IsNotExist(err) {
+		return Result{}, fmt.Errorf("inspect sandbox root: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(root), 0o700); err != nil {
+		return Result{}, fmt.Errorf("create sandbox parent: %w", err)
+	}
+	if err := os.Mkdir(root, 0o700); err != nil {
+		return Result{}, fmt.Errorf("create sandbox root: %w", err)
+	}
+	return runInRoot(absoluteBinary, testCase, root)
+}
+
+func runInRoot(absoluteBinary string, testCase Case, root string) (Result, error) {
 	home := filepath.Join(root, "home")
 	workspace := filepath.Join(root, "workspace")
 	tmp := filepath.Join(root, "tmp")
@@ -67,6 +95,10 @@ func Run(binary string, testCase Case) (Result, error) {
 				return Result{}, fmt.Errorf("set fixture mtime: %w", chtimesErr)
 			}
 		}
+	}
+	filesBefore, err := buildManifest(root)
+	if err != nil {
+		return Result{}, fmt.Errorf("manifest sandbox before run: %w", err)
 	}
 
 	replacements := map[string]string{
@@ -155,6 +187,7 @@ func Run(binary string, testCase Case) (Result, error) {
 		TimedOut:    timedOut,
 		Stdout:      append([]byte(nil), stdout.Bytes()...),
 		Stderr:      append([]byte(nil), stderr.Bytes()...),
+		FilesBefore: filesBefore,
 		Files:       files,
 		SandboxRoot: root,
 	}, nil

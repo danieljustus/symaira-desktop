@@ -2004,6 +2004,7 @@ dependencies = [
  "symdesk-vault",
  "time",
  "tokio",
+ "toml",
  "windows-sys 0.61.2",
 ]
 

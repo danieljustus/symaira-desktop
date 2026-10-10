@@ -56,6 +56,13 @@ impl Drop for RestoreWorkingDirectory {
     }
 }
 
+fn private_case_root(capture: &Path, id: &str, path: &Path) -> bool {
+    path.parent() == Some(capture)
+        && path == capture.join(id)
+        && fs::symlink_metadata(path)
+            .is_ok_and(|metadata| metadata.is_dir() && !metadata.file_type().is_symlink())
+}
+
 fn snapshot(root: &Path) -> BTreeMap<String, String> {
     fn visit(root: &Path, path: &Path, result: &mut BTreeMap<String, String>) {
         let relative = path.strip_prefix(root).expect("contained capture entry");
@@ -243,6 +250,23 @@ fn contacts_and_ingest_paths_match_native_go() {
         "",
     ];
     assert_eq!(fixture.cases.len(), expected_ids.len());
+    assert!(private_case_root(&capture, "fresh", &capture.join("fresh")));
+    for invalid in ["../outside", "fresh/../outside", "fresh/home"] {
+        assert!(!private_case_root(
+            &capture,
+            "fresh",
+            &capture.join(invalid)
+        ));
+    }
+    // Exercise link rejection through the same guard, without changing Go seeds.
+    let control = root.join("case-root-control");
+    fs::create_dir(&control).expect("private root-guard control");
+    let link = control.join("fresh");
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(capture.join("fresh"), &link).expect("root-link control");
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_dir(capture.join("fresh"), &link).expect("root-link control");
+    assert!(!private_case_root(&control, "fresh", &link));
     let mut seen = BTreeSet::new();
     // ponytail: this integration binary has one test; use a child process
     // before adding parallel tests that also depend on the working directory.
@@ -250,6 +274,7 @@ fn contacts_and_ingest_paths_match_native_go() {
         std::env::current_dir().expect("original replay working directory"),
     );
     for case in &fixture.cases {
+        assert!(expected_ids.contains(&case.id.as_str()), "unknown case ID");
         assert!(seen.insert(case.id.as_str()), "duplicate case {}", case.id);
         assert_eq!(
             case.before, case.after,
@@ -258,7 +283,7 @@ fn contacts_and_ingest_paths_match_native_go() {
         );
         let case_root = Path::new(&case.root);
         assert!(
-            case_root.starts_with(&capture) && case_root != capture,
+            private_case_root(&capture, &case.id, case_root),
             "capture path containment"
         );
         std::env::set_current_dir(case_root).expect("private case working directory");

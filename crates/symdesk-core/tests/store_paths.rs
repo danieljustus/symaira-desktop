@@ -122,7 +122,9 @@ fn contacts_and_ingest_paths_match_native_go() {
         builder
     };
     builder.create(&root).expect("fresh private capture parent");
-    let root = fs::canonicalize(root).expect("canonical native root");
+    // Keep the native drive volume: Windows canonicalize introduces \\?\,
+    // which Go filepath.Rel cannot compare to its ordinary-drive working directory.
+    let root = std::path::absolute(root).expect("absolute native root");
     let capture = root.join("capture");
     let output = capture.join("native-go.json");
     let stdout = fs::File::create(root.join("go.stdout.log")).expect("retain producer stdout");

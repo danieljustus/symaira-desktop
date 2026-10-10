@@ -24,6 +24,7 @@ var configEnvKeys = []string{
 	"SYMDESK_TRASH_RETENTION_DAYS", "SYMDESK_RESULTS_MAX_AGE_DAYS", "SYMDESK_RESULTS_MAX_PER_TASK",
 	"SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY", "SYMDESK_STORAGE_PATH_TEMPLATE",
 	"XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "HOME", "USERPROFILE",
+	"SYMRELATE_DATA_HOME", "SYMRELATE_CONFIG_HOME", "SYMRELATE_CACHE_HOME",
 }
 
 type document struct {
@@ -102,12 +103,24 @@ type pathCase struct {
 	GlobalPath  string            `json:"global_path"`
 }
 
+var nativeStorePaths = buildStorePaths
+
 func main() {
 	output := flag.String("output", "testdata/port/core/config.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
 	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
 	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
+	storeRoot := flag.String("store-paths-root", "", "capture native contacts/ingest paths in a fresh disposable root (requires explicit --output)")
 	flag.Parse()
+	if *storeRoot != "" {
+		if *check || *output == "testdata/port/core/config.json" || !filepath.IsAbs(*storeRoot) {
+			fatal("native store capture requires an absolute fresh root and explicit output, without --check")
+		}
+		rel, err := filepath.Rel(*storeRoot, *output)
+		if err != nil || !filepath.IsLocal(rel) {
+			fatal("native store capture output must be inside its disposable root")
+		}
+	}
 
 	if *check {
 		oracle, err := inventory.ResolveCheckOracle(inventory.Oracle{Commit: *commit, Release: *release}, flag.CommandLine, *output)
@@ -124,8 +137,27 @@ func main() {
 		fatal("verify selected fixture source: %v", identityErr)
 	}
 
-	value, err := buildDocument(inventory.Oracle{Commit: *commit, Release: *release})
+	var value any
+	var err error
+	oracle := inventory.Oracle{Commit: *commit, Release: *release}
+	if *storeRoot == "" {
+		value, err = buildDocument(oracle)
+	} else {
+		value, err = nativeStorePaths(oracle, *storeRoot)
+	}
 	if err != nil {
+		if partial, ok := value.(storePathDocument); ok && partial.ownedRoot {
+			content, marshalErr := json.MarshalIndent(partial, "", "  ")
+			if marshalErr != nil {
+				fatal("retain partial store capture: %v (capture failure: %v)", marshalErr, err)
+			}
+			if directoryErr := os.MkdirAll(filepath.Dir(*output), 0o700); directoryErr != nil {
+				fatal("retain partial store capture: %v (capture failure: %v)", directoryErr, err)
+			}
+			if writeErr := os.WriteFile(*output, append(content, '\n'), 0o600); writeErr != nil {
+				fatal("retain partial store capture: %v (capture failure: %v)", writeErr, err)
+			}
+		}
 		fatal("build fixture: %v", err)
 	}
 	content, err := json.MarshalIndent(value, "", "  ")

@@ -441,6 +441,200 @@ pub fn cache_dir(environment: &BTreeMap<String, String>) -> String {
     join(&resolve_cache_home(environment), "symdesk")
 }
 
+/// Read-only contacts directory/database resolution, including legacy overrides.
+#[derive(Debug, Eq, PartialEq)]
+pub struct ContactsPaths {
+    pub config_dir: String,
+    pub data_dir: String,
+    pub cache_dir: String,
+    pub db_path: String,
+}
+
+#[must_use]
+pub fn contacts_paths(environment: &BTreeMap<String, String>) -> ContactsPaths {
+    let primary_dir = store_join(
+        &store_base(environment, "XDG_DATA_HOME", ".local/share"),
+        "symdesk",
+    );
+    let legacy_dir = store_join(
+        &store_base(environment, "XDG_DATA_HOME", ".local/share"),
+        "symrelate",
+    );
+    let override_dir = trimmed(environment, "SYMRELATE_DATA_HOME");
+    let db_path = override_dir.map_or_else(
+        || {
+            legacy_fallback(
+                store_join(&primary_dir, "symrelate.db"),
+                store_join(&legacy_dir, "symrelate.db"),
+            )
+        },
+        |directory| store_join(directory, "symrelate.db"),
+    );
+    let data_dir = override_dir.map_or_else(
+        || {
+            if db_path == store_join(&legacy_dir, "symrelate.db") {
+                legacy_dir
+            } else {
+                primary_dir
+            }
+        },
+        str::to_owned,
+    );
+    ContactsPaths {
+        config_dir: trimmed(environment, "SYMRELATE_CONFIG_HOME").map_or_else(
+            || {
+                store_join(
+                    &store_base(environment, "XDG_CONFIG_HOME", ".config"),
+                    "symdesk",
+                )
+            },
+            str::to_owned,
+        ),
+        data_dir,
+        cache_dir: trimmed(environment, "SYMRELATE_CACHE_HOME").map_or_else(
+            || {
+                store_join(
+                    &store_base(environment, "XDG_CACHE_HOME", ".cache"),
+                    "symdesk",
+                )
+            },
+            str::to_owned,
+        ),
+        db_path,
+    }
+}
+
+/// Resolves one ingest artifact without creating or migrating state.
+///
+/// # Errors
+/// Returns the Go validation/home-directory diagnostic for invalid inputs.
+pub fn ingest_data_path(
+    environment: &BTreeMap<String, String>,
+    name: &str,
+) -> Result<String, String> {
+    let clean = clean_store_path(Path::new(name.trim()));
+    let mut components = clean.components();
+    if !matches!(components.next(), Some(std::path::Component::Normal(_)))
+        || components.next().is_some()
+    {
+        return Err(format!(
+            "ingest data artifact must be a single relative name: {}",
+            quote_artifact(name)
+        ));
+    }
+    let base = match trimmed(environment, "XDG_DATA_HOME") {
+        Some(value) => value.to_owned(),
+        None => store_join(
+            user_home(environment).map_err(|error| {
+                format!("cannot determine home directory; set {name} explicitly: {error}")
+            })?,
+            ".local/share",
+        ),
+    };
+    let name = clean.to_str().expect("cleaning UTF-8 preserves UTF-8");
+    Ok(legacy_fallback(
+        store_join(&store_join(&base, "symdesk"), name),
+        store_join(&store_join(&base, "symingest"), name),
+    ))
+}
+
+fn trimmed<'a>(environment: &'a BTreeMap<String, String>, key: &str) -> Option<&'a str> {
+    nonempty(environment, key)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+}
+
+fn user_home(environment: &BTreeMap<String, String>) -> Result<&str, &'static str> {
+    #[cfg(windows)]
+    let (key, error) = ("USERPROFILE", "user home dir: %userprofile% is not defined");
+    #[cfg(not(windows))]
+    let (key, error) = ("HOME", "user home dir: $HOME is not defined");
+    nonempty(environment, key).ok_or(error)
+}
+
+fn store_base(environment: &BTreeMap<String, String>, key: &str, suffix: &str) -> String {
+    trimmed(environment, key).map_or_else(
+        || store_join(user_home(environment).unwrap_or("."), suffix),
+        str::to_owned,
+    )
+}
+
+fn legacy_fallback(primary: String, legacy: String) -> String {
+    // Go os.Stat accepts directories and follows symlinks, unlike is_file().
+    if Path::new(&primary).exists() || !Path::new(&legacy).exists() {
+        primary
+    } else {
+        legacy
+    }
+}
+
+fn store_join(left: &str, right: &str) -> String {
+    #[cfg(windows)]
+    if is_windows_verbatim(left) {
+        return join_windows_verbatim(left, right);
+    }
+    clean_store_path(&Path::new(left).join(right))
+        .to_string_lossy()
+        .into_owned()
+}
+
+fn clean_store_path(path: &Path) -> std::path::PathBuf {
+    use std::path::{Component, PathBuf};
+    let mut clean = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => (),
+            Component::ParentDir => {
+                if clean.file_name().is_some_and(|name| name != "..") {
+                    clean.pop();
+                } else if !clean.has_root() {
+                    clean.push("..");
+                }
+            }
+            _ => clean.push(component.as_os_str()),
+        }
+    }
+    if clean.as_os_str().is_empty() {
+        clean.push(".");
+    }
+    clean
+}
+
+// strconv.Quote, not Rust Debug or JSON: control escapes differ in diagnostics.
+fn quote_artifact(value: &str) -> String {
+    use std::{fmt::Write as _, sync::LazyLock};
+    static PRINTABLE: LazyLock<regex::Regex> = LazyLock::new(|| {
+        regex::Regex::new(r"^[\pL\pM\pN\pP\pS]$").expect("static Unicode categories")
+    });
+    let mut quoted = String::from("\"");
+    for character in value.chars() {
+        match character {
+            '"' => quoted.push_str("\\\""),
+            '\\' => quoted.push_str("\\\\"),
+            '\u{7}' => quoted.push_str("\\a"),
+            '\u{8}' => quoted.push_str("\\b"),
+            '\u{c}' => quoted.push_str("\\f"),
+            '\n' => quoted.push_str("\\n"),
+            '\r' => quoted.push_str("\\r"),
+            '\t' => quoted.push_str("\\t"),
+            '\u{b}' => quoted.push_str("\\v"),
+            c if c == ' ' || PRINTABLE.is_match(c.encode_utf8(&mut [0; 4])) => quoted.push(c),
+            c => {
+                let code = u32::from(c);
+                if code < 128 {
+                    write!(quoted, "\\x{code:02x}").expect("write String");
+                } else if code < 65536 {
+                    write!(quoted, "\\u{code:04x}").expect("write String");
+                } else {
+                    write!(quoted, "\\U{code:08x}").expect("write String");
+                }
+            }
+        }
+    }
+    quoted.push('"');
+    quoted
+}
+
 /// Mirrors configkit's important distinction: only an absolute XDG config
 /// home affects the global file path; relative values fall back to HOME.
 #[must_use]

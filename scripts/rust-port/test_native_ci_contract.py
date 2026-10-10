@@ -25,6 +25,7 @@ CONTRACT_FILES = [
     ".github/workflows/release.yml", "home-assistant-addon/symdesk/config.yaml",
 ]
 STEPS = {
+    "Replay native contacts and ingest path contracts": 1,
     "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
     "Check, lint, and test Rust workspace": 8,
@@ -160,6 +161,26 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_configuration_store_paths_run_and_retain_raw_native_evidence(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        native = workflow_job_body(workflow, "rust-native")
+        replay = re.search(
+            r"(?ms)^      - name: Replay native contacts and ingest path contracts\n"
+            r"(?P<body>.*?)(?=^      - name:|\Z)", native,
+        )
+        assert replay is not None, "missing native configuration replay step"
+        self.assertNotIn("        if:", replay.group("body"))
+        self.assertIn("SYMDESK_CFG_CAPTURE_DIR: ${{ runner.temp }}/config-store-paths", replay.group("body"))
+        self.assertIn("cargo test -p symdesk-core --test store_paths --locked -- --nocapture", replay.group("body"))
+        retain = re.search(
+            r"(?ms)^      - name: Retain native configuration path evidence\n"
+            r"(?P<body>.*?)(?=^      - name:|\Z)", native,
+        )
+        assert retain is not None, "missing native configuration capture retention"
+        self.assertIn("        if: always()", retain.group("body"))
+        self.assertIn("path: ${{ runner.temp }}/config-store-paths", retain.group("body"))
+        self.assertIn("if-no-files-found: error", retain.group("body"))
+
     def test_symroom_rollback_handoff_runs_on_native_matrix_without_logging_report(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         job = workflow_job_body(workflow, "rust-native")

@@ -16,6 +16,7 @@ import (
 func TestRecordedOracleSurvivesSquashWithoutCallerMutation(t *testing.T) {
 	git := func(root string, args ...string) string {
 		t.Helper()
+		//nolint:gosec // args are fixed test operations in disposable local repositories, without a shell.
 		cmd := exec.Command("git", append([]string{"-c", "user.name=Oracle Bundle Test", "-c", "user.email=oracle-bundle@example.invalid", "-c", "commit.gpgsign=false"}, args...)...)
 		cmd.Dir = root
 		out, err := cmd.CombinedOutput()
@@ -70,6 +71,7 @@ func TestRecordedOracleSurvivesSquashWithoutCallerMutation(t *testing.T) {
 	git(root, "clone", "--no-local", "--single-branch", "--branch", "main", "--no-tags", root, clone)
 	absent := func() {
 		t.Helper()
+		//nolint:gosec // p is the commit returned by Git in this test's disposable repository.
 		cmd := exec.Command("git", "cat-file", "-e", p+"^{commit}")
 		cmd.Dir = clone
 		if err := cmd.Run(); err == nil {

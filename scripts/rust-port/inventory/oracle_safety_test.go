@@ -11,6 +11,7 @@ import (
 
 func sourceSafetyGit(t *testing.T, root string, args ...string) string {
 	t.Helper()
+	//nolint:gosec // args are fixed test operations in disposable local repositories, without a shell.
 	cmd := exec.Command("git", append([]string{"-c", "user.name=Source Safety Test", "-c", "user.email=source-safety@example.invalid", "-c", "commit.gpgsign=false"}, args...)...)
 	cmd.Dir = root
 	out, err := cmd.CombinedOutput()
@@ -88,6 +89,7 @@ func TestInventoryGitReadsDoNotLazyFetch(t *testing.T) {
 		root := filepath.Join(t.TempDir(), name)
 		sourceSafetyGit(t, origin, "clone", "--filter=blob:none", "--no-checkout", "--", originURL, root)
 		sourceSafetyGit(t, root, "config", "protocol.file.allow", "always")
+		//nolint:gosec // blob is the object ID returned by Git in this test's disposable origin.
 		probe := exec.Command("git", "--no-lazy-fetch", "cat-file", "-e", blob)
 		probe.Dir = root
 		if err := probe.Run(); err == nil {
@@ -103,6 +105,7 @@ func TestInventoryGitReadsDoNotLazyFetch(t *testing.T) {
 	if _, err := inventoryGitOutput(root, "cat-file", "blob", blob); err == nil {
 		t.Fatal("read-only Git helper lazy-fetched a missing object into the caller")
 	}
+	//nolint:gosec // blob is the object ID returned by Git in this test's disposable origin.
 	probe := exec.Command("git", "--no-lazy-fetch", "cat-file", "-e", blob)
 	probe.Dir = root
 	if err := probe.Run(); err == nil {

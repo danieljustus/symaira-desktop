@@ -111,6 +111,7 @@ func CreateOracleBundle(repoRoot, revision, anchor string) (*OracleBundle, error
 	if info.Size() > maxOracleRecordBytes {
 		return nil, fmt.Errorf("oracle bundle exceeds %d bytes", maxOracleRecordBytes)
 	}
+	//nolint:gosec // path is the fixed bundle name inside the newly owned 0700 private store.
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

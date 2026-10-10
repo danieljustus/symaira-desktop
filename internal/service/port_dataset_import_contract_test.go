@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -22,6 +21,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 const (
@@ -464,7 +464,7 @@ func portDatasetImportHash(t *testing.T, relative string) string {
 	}
 	sum := sha256.Sum256(data)
 	if relative != "internal/service/port_dataset_import_contract_test.go" {
-		pinned, err := exec.Command("git", "-C", root, "show", portDatasetImportOracleCommit()+":"+relative).Output() //nolint:gosec // test-only command uses a fixed helper and controlled arguments
+		pinned, err := inventory.OracleGitOutput(root, portDatasetImportOracleCommit(), "show", portDatasetImportOracleCommit()+":"+relative)
 		if err != nil {
 			t.Fatalf("read pinned oracle source %s: %v", relative, err)
 		}

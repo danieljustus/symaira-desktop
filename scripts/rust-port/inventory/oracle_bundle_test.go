@@ -94,6 +94,10 @@ func TestRecordedOracleSurvivesSquashWithoutCallerMutation(t *testing.T) {
 	if err := VerifyOracleBundle(clone, m, p); err != nil {
 		t.Fatalf("fresh squash source verification: %v", err)
 	}
+	pinnedBlob, err := OracleGitOutput(clone, p, "show", p+":internal/probe/value.go")
+	if err != nil || string(pinnedBlob) != "package probe\nconst Value = 2\n" {
+		t.Fatalf("read exact canonical blob without importing P into caller: %q, %v", pinnedBlob, err)
+	}
 	got, err := ComputeGitRevisionProductionSourceDigest(clone, p)
 	if err != nil || got != pinned {
 		t.Fatalf("bundle source digest=%s error=%v, want %s", got, err, pinned)

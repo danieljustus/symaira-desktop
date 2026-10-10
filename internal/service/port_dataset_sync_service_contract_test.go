@@ -22,6 +22,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 const (
@@ -901,11 +902,7 @@ func portDatasetSyncServiceSourceHash(t *testing.T, relative string) string {
 	// The separately hashed generator is new; every recorded oracle input
 	// must still match the immutable production-source pin before capture.
 	if relative != "internal/service/port_dataset_sync_service_contract_test.go" {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, "git", "-C", portDatasetSyncServiceRepoRoot(t), "show", portDatasetSyncServiceOracleCommit()+":"+relative) //nolint:gosec // fixed git command reads the pinned oracle source
-		cmd.WaitDelay = time.Second
-		pinned, err := cmd.Output()
+		pinned, err := inventory.OracleGitOutput(portDatasetSyncServiceRepoRoot(t), portDatasetSyncServiceOracleCommit(), "show", portDatasetSyncServiceOracleCommit()+":"+relative)
 		if err != nil {
 			t.Fatalf("read pinned oracle source %s: %v", relative, err)
 		}

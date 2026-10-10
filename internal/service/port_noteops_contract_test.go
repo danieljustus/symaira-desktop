@@ -19,6 +19,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 // TestPortNoteOperationContract is the Go-owned service-level harness for the
@@ -251,7 +252,7 @@ func noteOperationSourceHashes(t *testing.T) map[string]string {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pinned, err := exec.Command("git", "-C", "../..", "show", noteOperationOracleCommit()+":"+rel).Output() //nolint:gosec // fixed command and pinned repository source paths
+		pinned, err := inventory.OracleGitOutput(filepath.Join("..", ".."), noteOperationOracleCommit(), "show", noteOperationOracleCommit()+":"+rel)
 		if err != nil {
 			t.Fatalf("read pinned note oracle source %s: %v", rel, err)
 		}

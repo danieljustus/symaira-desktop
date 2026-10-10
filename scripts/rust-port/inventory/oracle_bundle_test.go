@@ -14,11 +14,17 @@ import (
 // A real native Git squash and fresh single-branch clone exercise the structural
 // source-preservation contract. These are not production Go behavior fixtures.
 func TestRecordedOracleSurvivesSquashWithoutCallerMutation(t *testing.T) {
+	configPath, cleanup, err := PrivateGitConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(cleanup)
 	git := func(root string, args ...string) string {
 		t.Helper()
 		//nolint:gosec // args are fixed test operations in disposable local repositories, without a shell.
 		cmd := exec.Command("git", append([]string{"-c", "user.name=Oracle Bundle Test", "-c", "user.email=oracle-bundle@example.invalid", "-c", "commit.gpgsign=false"}, args...)...)
 		cmd.Dir = root
+		cmd.Env = inventoryGitEnvironment(os.Environ(), configPath)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("git %v: %v\n%s", args, err, out)

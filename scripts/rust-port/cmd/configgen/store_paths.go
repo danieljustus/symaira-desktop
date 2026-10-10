@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -43,8 +44,8 @@ type ingestPathResult struct {
 
 // Each native host executes the production resolvers. No Darwin expectations
 // are reused as Windows semantics, including backslashes, drive names and HOME.
-func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, error) {
-	value := storePathDocument{SchemaVersion: 1, Oracle: oracle, GOOS: runtime.GOOS, GOARCH: runtime.GOARCH, GoVersion: runtime.Version()}
+func buildStorePaths(oracle inventory.Oracle, root string) (value storePathDocument, captureErr error) {
+	value = storePathDocument{SchemaVersion: 1, Oracle: oracle, GOOS: runtime.GOOS, GOARCH: runtime.GOARCH, GoVersion: runtime.Version()}
 	if err := os.Mkdir(root, 0o700); err != nil {
 		return value, fmt.Errorf("capture root must be fresh: %w", err)
 	}
@@ -53,6 +54,12 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 	if err != nil {
 		return value, err
 	}
+	defer func() {
+		if err := os.Chdir(cwd); err != nil {
+			value.Complete = false
+			captureErr = errors.Join(captureErr, fmt.Errorf("restore capture working directory: %w", err))
+		}
+	}()
 	for _, id := range []string{
 		"fresh", "legacy-files", "both-files", "primary-directory", "legacy-directory",
 		"mixed-archive", "contacts-overrides", "padded-overrides", "blank-overrides",
@@ -68,6 +75,11 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 			if err := os.MkdirAll(filepath.Join(caseRoot, directory), 0o700); err != nil {
 				return value, err
 			}
+		}
+		// Relative resolvers must stay inside the owned case, including when
+		// the caller and temporary directory are on different Windows drives.
+		if err := os.Chdir(caseRoot); err != nil {
+			return value, err
 		}
 		seed := map[string]bool{}
 		switch id {
@@ -110,7 +122,7 @@ func buildStorePaths(oracle inventory.Oracle, root string) (storePathDocument, e
 			delete(env, "USERPROFILE")
 		case "relative-xdg":
 			for _, key := range []string{"XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME"} {
-				rel, err := filepath.Rel(cwd, env[key])
+				rel, err := filepath.Rel(caseRoot, env[key])
 				if err != nil {
 					return value, err
 				}

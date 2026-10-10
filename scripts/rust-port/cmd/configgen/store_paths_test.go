@@ -17,6 +17,10 @@ import (
 )
 
 func TestNativeStorePathsCaptureIsReadOnlyAndRequiresFreshRoot(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	parent := t.TempDir()
 	root := filepath.Join(parent, "capture")
 	t.Setenv("HOME", filepath.Join(parent, "outer-home"))
@@ -31,6 +35,9 @@ func TestNativeStorePathsCaptureIsReadOnlyAndRequiresFreshRoot(t *testing.T) {
 		t.Fatalf("complete=%t, capture has %d layouts, want 20", captured.Complete, len(captured.Cases))
 	}
 	for _, item := range captured.Cases {
+		if item.ID == "relative-xdg" && item.Environment["XDG_DATA_HOME"] != "data" {
+			t.Fatal("relative XDG must resolve inside the private capture working directory")
+		}
 		if len(item.Ingest) != 19 || !reflect.DeepEqual(item.Before, item.After) {
 			t.Fatalf("incomplete or mutable layout %s", item.ID)
 		}
@@ -62,6 +69,9 @@ func TestNativeStorePathsCaptureIsReadOnlyAndRequiresFreshRoot(t *testing.T) {
 	}
 	if !reflect.DeepEqual(before, after) {
 		t.Fatal("rejected capture changed the existing root")
+	}
+	if restored, err := os.Getwd(); err != nil || restored != cwd {
+		t.Fatalf("capture changed caller working directory: %q, %v", restored, err)
 	}
 }
 

@@ -48,6 +48,14 @@ struct Ingest {
     error: String,
 }
 
+struct RestoreWorkingDirectory(std::path::PathBuf);
+
+impl Drop for RestoreWorkingDirectory {
+    fn drop(&mut self) {
+        std::env::set_current_dir(&self.0).expect("restore native replay working directory");
+    }
+}
+
 fn snapshot(root: &Path) -> BTreeMap<String, String> {
     fn visit(root: &Path, path: &Path, result: &mut BTreeMap<String, String>) {
         let relative = path.strip_prefix(root).expect("contained capture entry");
@@ -236,6 +244,11 @@ fn contacts_and_ingest_paths_match_native_go() {
     ];
     assert_eq!(fixture.cases.len(), expected_ids.len());
     let mut seen = BTreeSet::new();
+    // ponytail: this integration binary has one test; use a child process
+    // before adding parallel tests that also depend on the working directory.
+    let _restore_directory = RestoreWorkingDirectory(
+        std::env::current_dir().expect("original replay working directory"),
+    );
     for case in &fixture.cases {
         assert!(seen.insert(case.id.as_str()), "duplicate case {}", case.id);
         assert_eq!(
@@ -248,6 +261,7 @@ fn contacts_and_ingest_paths_match_native_go() {
             case_root.starts_with(&capture) && case_root != capture,
             "capture path containment"
         );
+        std::env::set_current_dir(case_root).expect("private case working directory");
         assert_eq!(
             snapshot(case_root),
             case.before,

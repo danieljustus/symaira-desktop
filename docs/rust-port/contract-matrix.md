@@ -123,6 +123,10 @@ Every native host executes Go 1.26.9 to record 20 filesystem layouts and 19
 ingest names per layout. The Rust replay compares all four contacts paths,
 every exact ingest result/error, and before/after names, types, file bytes and
 native symlink targets without following links in the state snapshot.
+Both implementations resolve relative paths from the matching private case
+directory and restore their caller's working directory. This prevents access
+to caller-relative stores and does not require Windows temp and checkout
+directories to share a drive. Every capture still retains all 20 layouts.
 Modes and timestamps are outside this read-only path slice. The cases include
 unified/legacy precedence, existing directories, raw and padded contacts
 overrides, relative/lexically cleaned XDG paths, missing HOME, distinct

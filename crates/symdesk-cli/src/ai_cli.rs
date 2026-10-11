@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     fs,
     io::{self, Read, Write},
     path::{Path, PathBuf},
@@ -213,9 +212,10 @@ pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode 
         Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
     };
     if config.llm_provider == "anthropic" {
-        let base_url = std::env::var("SYMDESK_ANTHROPIC_URL")
-            .ok()
-            .filter(|value| !value.is_empty());
+        let base_url = match symdesk_core::config::environment_value("SYMDESK_ANTHROPIC_URL") {
+            Ok(value) => value.filter(|value| !value.is_empty()),
+            Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
+        };
         return run_anthropic_transform(
             command,
             &config,
@@ -232,7 +232,13 @@ pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode 
                 output_json,
             );
         };
-        let model_environment = std::env::var("SYMDESK_OLLAMA_MODEL").ok();
+        let model_environment =
+            match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
+                Ok(value) => value,
+                Err(error) => {
+                    return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json);
+                }
+            };
         let model = ollama_model(model_environment.as_deref());
         let intent = command
             .get_one::<String>("intent")
@@ -561,7 +567,7 @@ enum AnthropicTransformError {
 }
 
 fn load_config() -> Result<symdesk_core::config::Config, String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let input = match fs::read_to_string(path) {
         Ok(input) => Some(input),

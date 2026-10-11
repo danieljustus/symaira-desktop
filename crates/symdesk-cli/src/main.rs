@@ -2,6 +2,7 @@
 
 mod ai_cli;
 mod ai_secrets;
+mod config_paths;
 mod dataset;
 mod history;
 mod http;
@@ -13,7 +14,6 @@ mod search_cli;
 mod source_cli;
 
 use std::{
-    collections::BTreeMap,
     ffi::OsString,
     io::{self, Write},
     path::{Component, Path, PathBuf},
@@ -54,6 +54,7 @@ fn main() -> ExitCode {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
     rewrite_index_output_flag(&mut args);
+    rewrite_config_paths_repeated_flags(&mut args);
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -65,6 +66,39 @@ fn main() -> ExitCode {
     let output = matches
         .get_one::<String>("output")
         .map_or("", String::as_str);
+    if let Some(("config", command)) = matches.subcommand()
+        && command.subcommand_name() == Some("paths")
+    {
+        let (root_config, environment) = match config_paths::load_root_config() {
+            Ok(value) => value,
+            Err(error) => {
+                return write_stderr(
+                    &format!("failed to load config: {error}\n"),
+                    CoreExitCode::Config,
+                );
+            }
+        };
+        if !output.is_empty() && !matches!(output, "text" | "json" | "yaml") {
+            return write_stderr(
+                &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
+                CoreExitCode::Generic,
+            );
+        }
+        let output_json = match output {
+            "json" => true,
+            "text" | "yaml" => false,
+            _ => matches.get_flag("json"),
+        };
+        let vault = matches
+            .get_one::<String>("vault")
+            .map(String::as_str)
+            .filter(|value| !value.is_empty())
+            .unwrap_or(root_config.vault.as_str());
+        return match config_paths::run(vault, &environment, output_json) {
+            Ok(rendered) => write_stdout(rendered),
+            Err(error) => emit_error(error, output_json),
+        };
+    }
     if !output.is_empty() && !matches!(output, "text" | "json" | "yaml") {
         return write_stderr(
             &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
@@ -210,6 +244,139 @@ fn main() -> ExitCode {
     }
 }
 
+fn rewrite_config_paths_repeated_flags(args: &mut Vec<OsString>) {
+    if !has_config_paths_command(args) {
+        return;
+    }
+    let mut last_output = None;
+    let mut last_vault = None;
+    let mut index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            break;
+        }
+        match config_paths_global_flag(value) {
+            Some((name, true)) => {
+                if index + 1 < args.len() {
+                    match name {
+                        "output" => last_output = Some(index),
+                        "vault" => last_vault = Some(index),
+                        _ => unreachable!(),
+                    }
+                    index += 2;
+                } else {
+                    index += 1;
+                }
+            }
+            Some((name, false)) => {
+                match name {
+                    "output" => last_output = Some(index),
+                    "vault" => last_vault = Some(index),
+                    _ => unreachable!(),
+                }
+                index += 1;
+            }
+            None => index += 1,
+        }
+    }
+
+    let mut normalized = Vec::with_capacity(args.len());
+    if let Some(program) = args.first() {
+        normalized.push(program.clone());
+    }
+    index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            normalized.push(args[index].clone());
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            normalized.extend_from_slice(&args[index..]);
+            break;
+        }
+        match config_paths_global_flag(value) {
+            Some((name, true)) => {
+                let keep = index + 1 >= args.len()
+                    || match name {
+                        "output" => last_output == Some(index),
+                        "vault" => last_vault == Some(index),
+                        _ => unreachable!(),
+                    };
+                if keep {
+                    normalized.push(args[index].clone());
+                    if index + 1 < args.len() {
+                        normalized.push(args[index + 1].clone());
+                    }
+                }
+                index += if index + 1 < args.len() { 2 } else { 1 };
+            }
+            Some((name, false)) => {
+                let keep = match name {
+                    "output" => last_output == Some(index),
+                    "vault" => last_vault == Some(index),
+                    _ => unreachable!(),
+                };
+                if keep {
+                    normalized.push(args[index].clone());
+                }
+                index += 1;
+            }
+            None => {
+                normalized.push(args[index].clone());
+                index += 1;
+            }
+        }
+    }
+    *args = normalized;
+}
+
+fn has_config_paths_command(args: &[OsString]) -> bool {
+    let mut previous = "";
+    let mut index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            break;
+        }
+        if let Some((_, takes_value)) = config_paths_global_flag(value) {
+            index += if takes_value && index + 1 < args.len() {
+                2
+            } else {
+                1
+            };
+            continue;
+        }
+        if value.starts_with('-') {
+            index += 1;
+            continue;
+        }
+        if previous == "config" && value == "paths" {
+            return true;
+        }
+        previous = value;
+        index += 1;
+    }
+    false
+}
+
+fn config_paths_global_flag(value: &str) -> Option<(&'static str, bool)> {
+    match value {
+        "--output" => Some(("output", true)),
+        "--vault" => Some(("vault", true)),
+        _ if value.starts_with("--output=") => Some(("output", false)),
+        _ if value.starts_with("--vault=") => Some(("vault", false)),
+        _ => None,
+    }
+}
+
 fn rewrite_index_output_flag(args: &mut [OsString]) {
     let Some(index) = args.iter().position(|arg| arg == "index") else {
         return;
@@ -245,23 +412,30 @@ fn run_http_server(
         Ok(path) => path,
         Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     };
-    let token = token
-        .filter(|value| !value.is_empty())
-        .or_else(|| std::env::var("SYMDESK_SERVER_TOKEN").ok())
-        .unwrap_or_default();
-    let worker_token = worker_token
-        .filter(|value| !value.is_empty())
-        .or_else(|| std::env::var("SYMDESK_WORKER_TOKEN").ok())
-        .filter(|value| !value.is_empty());
-    let config = http::HttpConfig {
-        listen_address: listen
-            .filter(|value| !value.is_empty())
-            .or_else(|| std::env::var("SYMDESK_SERVER_LISTEN").ok())
-            .unwrap_or_else(|| "127.0.0.1:8787".to_owned()),
-        vault_root: vault,
-        token,
-        worker_token,
-        version: VERSION.to_owned(),
+    // A flag wins without reading its environment fallback. Never turn an
+    // invalid consumed value into a missing token or a default listener.
+    let setting = |flag: Option<String>, name: &str| {
+        flag.filter(|value| !value.is_empty()).map_or_else(
+            || symdesk_core::config::environment_value(name),
+            |value| Ok(Some(value)),
+        )
+    };
+    let config = match (|| {
+        let token = setting(token, "SYMDESK_SERVER_TOKEN")?.unwrap_or_default();
+        let worker_token =
+            setting(worker_token, "SYMDESK_WORKER_TOKEN")?.filter(|value| !value.is_empty());
+        let listen_address = setting(listen, "SYMDESK_SERVER_LISTEN")?
+            .unwrap_or_else(|| "127.0.0.1:8787".to_owned());
+        Ok::<_, String>(http::HttpConfig {
+            listen_address,
+            vault_root: vault,
+            token,
+            worker_token,
+            version: VERSION.to_owned(),
+        })
+    })() {
+        Ok(config) => config,
+        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -294,6 +468,7 @@ fn cli() -> Command {
         .arg(Arg::new("output").long("output").global(true).num_args(1))
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
+        .subcommand(config_paths::command())
         .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
@@ -398,7 +573,7 @@ fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
 }
 
 fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
         Ok(input) => Some(input),

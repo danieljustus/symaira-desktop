@@ -55,7 +55,8 @@ pub use retrieval::{
 };
 pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,
-    relocate_index_for_vault, retrieval_embedding_config, symseek_config_path,
+    relocate_index_for_vault, retrieval_embedding_config, store_retrieval_path_for_vault,
+    symseek_config_path,
 };
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,
@@ -285,32 +286,78 @@ pub struct Sidecar {
 /// Returns an error when the vault path, home directory, or digest input cannot
 /// be represented as UTF-8.
 pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
-    if let Ok(explicit) = std::env::var("SYMDESK_SIDECAR") {
-        let explicit = explicit.trim();
-        if !explicit.is_empty() {
-            return Ok(PathBuf::from(explicit));
-        }
-    }
-    let absolute = if vault_root.is_absolute() {
-        vault_root.to_path_buf()
-    } else {
-        std::env::current_dir()?.join(vault_root)
-    };
-    let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
-    let canonical = absolute_non_verbatim(&canonical)?;
-    let explicit_data_home = std::env::var("XDG_DATA_HOME")
-        .ok()
-        .map(|value| value.trim().to_owned())
-        .filter(|value| !value.is_empty());
+    let root = vault_root
+        .to_str()
+        .ok_or_else(|| SidecarError::NonUtf8Path {
+            context: "vault root",
+            path: vault_root.to_path_buf(),
+        })?;
+    let environment =
+        symdesk_core::config::environment_snapshot().map_err(SidecarError::Contract)?;
+    let cwd = std::env::current_dir()?;
     let temp_root = std::env::temp_dir();
+    sidecar_path_for_vault(root, &environment, &cwd, &temp_root)
+}
+
+/// Resolves the effective sidecar path without opening or creating it.
+/// A nonblank `SYMDESK_SIDECAR` takes precedence; an empty vault resolves to
+/// the shared standalone sidecar rather than a hash of the current directory.
+pub fn sidecar_path_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<PathBuf, SidecarError> {
+    if let Some(explicit) = environment
+        .get("SYMDESK_SIDECAR")
+        .map(String::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return Ok(PathBuf::from(explicit));
+    }
+    store_sidecar_path_for_vault(vault_root, environment, cwd, temp_root)
+}
+
+/// Resolves the sidecar path used by the initial unified-store preflight.
+/// Unlike [`sidecar_path_for_vault`], this intentionally ignores the legacy
+/// sidecar override, matching `config.ResolveStorePaths` in Go.
+pub fn store_sidecar_path_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<PathBuf, SidecarError> {
+    if vault_root.trim().is_empty() {
+        let data_home = sidecar_trimmed_environment(environment, "XDG_DATA_HOME")
+            .map(str::to_owned)
+            .or_else(|| {
+                sidecar_user_home(environment).map(|home| {
+                    PathBuf::from(home)
+                        .join(".local/share")
+                        .to_string_lossy()
+                        .into_owned()
+                })
+            })
+            .ok_or_else(|| SidecarError::Contract(sidecar_home_error().to_owned()))?;
+        return Ok(lexical_clean(
+            &Path::new(&data_home).join("symdesk/sidecar.db"),
+        ));
+    }
+
+    let supplied = sidecar_absolute_clean(Path::new(vault_root), cwd);
+    let canonical = fs::canonicalize(&supplied).unwrap_or(supplied);
+    let canonical = absolute_non_verbatim(&canonical)?;
+    let explicit_data_home =
+        sidecar_trimmed_environment(environment, "XDG_DATA_HOME").map(str::to_owned);
     let root = sidecar_storage_root(
         explicit_data_home.as_deref(),
-        std::env::var_os("HOME").map(PathBuf::from),
+        sidecar_user_home(environment).map(PathBuf::from),
         &canonical,
-        &temp_root,
+        temp_root,
     )?;
     let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
-    Ok(root.join(&digest[..16]).join("sidecar.db"))
+    Ok(lexical_clean(&root.join(&digest[..16]).join("sidecar.db")))
 }
 
 fn dataset_query_filter_where(
@@ -486,6 +533,47 @@ fn dataset_sql_value_to_json(value: rusqlite::types::Value) -> serde_json::Value
     }
 }
 
+fn sidecar_trimmed_environment<'a>(
+    environment: &'a BTreeMap<String, String>,
+    key: &str,
+) -> Option<&'a str> {
+    environment
+        .get(key)
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+}
+
+fn sidecar_user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
+    #[cfg(windows)]
+    let key = "USERPROFILE";
+    #[cfg(not(windows))]
+    let key = "HOME";
+    environment
+        .get(key)
+        .map(String::as_str)
+        .filter(|value| !value.is_empty())
+}
+
+fn sidecar_absolute_clean(path: &Path, cwd: &Path) -> PathBuf {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        cwd.join(path)
+    };
+    lexical_clean(&absolute)
+}
+
+fn sidecar_home_error() -> &'static str {
+    #[cfg(windows)]
+    {
+        "user home dir: %userprofile% is not defined"
+    }
+    #[cfg(not(windows))]
+    {
+        "user home dir: $HOME is not defined"
+    }
+}
+
 fn sidecar_storage_root(
     explicit_data_home: Option<&str>,
     home: Option<PathBuf>,
@@ -495,7 +583,7 @@ fn sidecar_storage_root(
     let data_home = explicit_data_home
         .map(PathBuf::from)
         .or_else(|| home.map(|path| path.join(".local/share")))
-        .ok_or_else(|| SidecarError::Contract("cannot determine home directory".to_owned()))?;
+        .ok_or_else(|| SidecarError::Contract(sidecar_home_error().to_owned()))?;
     let mut root = data_home.join("symdesk/vaults");
     let canonical_temp_root =
         fs::canonicalize(temp_root).unwrap_or_else(|_| temp_root.to_path_buf());

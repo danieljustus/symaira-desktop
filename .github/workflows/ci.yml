@@ -249,6 +249,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          # Detach even on main pushes; the gate owns an exact-SHA temporary branch.
+          ref: ${{ github.sha }}
           # The pinned Go source oracles are validated from Git history.
           fetch-depth: 0
 
@@ -273,6 +275,28 @@ jobs:
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+
+      - name: Run native config paths differential
+        shell: bash
+        env:
+          CONFIG_PATHS_EVIDENCE_DIR: ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}
+        run: |
+          set -euo pipefail
+          make config-paths-native CONFIG_PATHS_EVIDENCE_DIR="$CONFIG_PATHS_EVIDENCE_DIR"
+
+      - name: Retain native config paths evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: config-paths-native-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/gate.json
+            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/sources.before.json
+            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/sources.after.json
+            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/commands/
+            ${{ runner.temp }}/config-paths-native-${{ matrix.os }}-${{ github.sha }}/capture/
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Replay native contacts and ingest path contracts
         shell: bash

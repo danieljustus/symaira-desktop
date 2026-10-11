@@ -84,6 +84,19 @@ def workflow_job_body(workflow, job):
     return job_match.group("body")
 
 
+def config_paths_source_files():
+    """Read the producer and wrapper inventories from their real manifest."""
+    source = (ROOT / "scripts/rust-port/cmd/config-paths-diff/main.go").read_text(encoding="utf-8")
+
+    def inventory(name):
+        match = re.search(rf"(?ms)^var {name} = \[\]string\{{(?P<body>.*?)^\}}", source)
+        if match is None:
+            raise AssertionError(f"missing config-paths source inventory: {name}")
+        return re.findall(r'"([^"\\]+)"', match.group("body"))
+
+    return inventory("rustSourceFiles"), inventory("harnessSourceFiles")
+
+
 def pinned_source_guard_oracle_commits():
     canonical = json.loads((ROOT / "testdata/port/provenance.json").read_text())["oracle"]["commit"]
     if re.fullmatch(r"[0-9a-f]{40}", canonical) is None:
@@ -408,6 +421,31 @@ class NativeCIContracts(unittest.TestCase):
                 digest.update((rel + "\n").encode())
                 digest.update(content)
             self.assertEqual(digest.hexdigest(), expected["production_source_digest"])
+
+    def test_windows_checkout_preserves_config_paths_producer_and_harness_bytes(self):
+        producer, harness = config_paths_source_files()
+        paths = sorted(producer + harness)
+        self.assertTrue(producer, "missing config-paths producer input inventory")
+        self.assertTrue(harness, "missing config-paths wrapper input inventory")
+        self.assertEqual(len(paths), len(set(paths)), "overlapping or duplicate source inventories")
+        tracked = subprocess.check_output(
+            ["git", "ls-files", "-z", "--", *paths], cwd=ROOT, timeout=30,
+        ).decode("utf-8").rstrip("\0").split("\0")
+        self.assertEqual(sorted(tracked), paths)
+        with tempfile.TemporaryDirectory(prefix="config-paths-windows-checkout-") as temp:
+            result = subprocess.run(
+                ["git", "-c", "core.autocrlf=true", "checkout-index", "-z",
+                 "--prefix=" + Path(temp).as_posix() + "/", "--stdin"],
+                cwd=ROOT, input=("\0".join(paths) + "\0").encode("utf-8"),
+                capture_output=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+            for relative in paths:
+                checked_out = (Path(temp) / relative).read_bytes()
+                expected = subprocess.check_output(
+                    ["git", "show", f"HEAD:{relative}"], cwd=ROOT, timeout=30,
+                )
+                self.assertEqual(checked_out, expected, relative)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, process::Command, time::Duration};
+use std::{process::Command, time::Duration};
 
 use clap::ArgMatches;
 use serde::Serialize;
@@ -252,7 +252,7 @@ fn render_documents(
 
 fn render_aggregate(vault: Option<&str>, json_output: bool) -> Result<String, String> {
     eprintln!("{WORKER_PHASE_PREFIX}retrieval status");
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let cwd = std::env::current_dir()
         .map_err(|error| format!("failed to get current directory: {error}"))?;
     let temp_root = std::env::temp_dir();

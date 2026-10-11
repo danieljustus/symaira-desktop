@@ -2,9 +2,116 @@
 
 //! Unified SymDesk configuration semantics frozen from the Go loader.
 
-use std::{collections::BTreeMap, fmt, fs, io::Write, path::Path};
+use std::{
+    collections::BTreeMap,
+    ffi::OsString,
+    fmt, fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
+
+/// Collects Unicode environment settings used by the configuration loaders.
+/// Unrelated variables with non-Unicode values are ignored; a relevant
+/// configuration value fails explicitly instead of being silently defaulted.
+pub fn environment_snapshot() -> Result<BTreeMap<String, String>, String> {
+    collect_environment(std::env::vars_os())
+}
+
+/// Reads a setting when its caller actually consumes it, preserving absence and empty values.
+///
+/// # Errors
+/// Rejects a non-Unicode value without exposing its bytes or defaulting it.
+pub fn environment_value(name: &str) -> Result<Option<String>, String> {
+    decode_environment_value(name, std::env::var_os(name))
+}
+
+fn decode_environment_value(name: &str, value: Option<OsString>) -> Result<Option<String>, String> {
+    value
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| format!("environment variable {name} is not valid UTF-8"))
+        })
+        .transpose()
+}
+
+fn collect_environment(
+    variables: impl IntoIterator<Item = (OsString, OsString)>,
+) -> Result<BTreeMap<String, String>, String> {
+    let mut environment = BTreeMap::new();
+    for (name, value) in variables {
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        match value.into_string() {
+            Ok(value) => {
+                environment.insert(name.to_owned(), value);
+            }
+            Err(_) if is_configuration_environment_name(name) => {
+                return Err(format!("environment variable {name} is not valid UTF-8"));
+            }
+            Err(_) => {}
+        }
+    }
+    Ok(environment)
+}
+
+fn is_configuration_environment_name(name: &str) -> bool {
+    // Match the keys consumed by these loaders, not whole namespaces. Keep
+    // this exact list aligned with the configuration and path lookups below.
+    matches!(
+        name,
+        "HOME"
+            | "USERPROFILE"
+            | "TMPDIR"
+            | "TMP"
+            | "TEMP"
+            | "LANG"
+            | "LC_ALL"
+            | "LC_MESSAGES"
+            | "XDG_DATA_HOME"
+            | "XDG_CONFIG_HOME"
+            | "XDG_CACHE_HOME"
+            | "SYMDESK_VAULT"
+            | "SYMDESK_INBOX"
+            | "SYMDESK_SIDECAR"
+            | "SYMDESK_REVIEW_THRESHOLD"
+            | "SYMDESK_LLM_PROVIDER"
+            | "SYMDESK_LLM_API_KEY"
+            | "SYMDESK_LLM_MODEL"
+            | "SYMDESK_OLLAMA_URL"
+            | "SYMDESK_RECIPE_RUNNER"
+            | "SYMDESK_HERMES_SESSION"
+            | "SYMDESK_LANG"
+            | "SYMDESK_MAX_TOKENS"
+            | "SYMDESK_HISTORY_MAX_PER_FILE"
+            | "SYMDESK_HISTORY_MAX_AGE_DAYS"
+            | "SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS"
+            | "SYMDESK_TRASH_RETENTION_DAYS"
+            | "SYMDESK_RESULTS_MAX_AGE_DAYS"
+            | "SYMDESK_RESULTS_MAX_PER_TASK"
+            | "SYMDESK_AGENT_MAX_ITERATIONS"
+            | "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY"
+            | "SYMDESK_STORAGE_PATH_TEMPLATE"
+            | "SYMRELATE_CONFIG_HOME"
+            | "SYMRELATE_DATA_HOME"
+            | "SYMRELATE_CACHE_HOME"
+            | "SYMINGEST_VAULT"
+            | "SYMINGEST_OCR_LANG"
+            | "SYMINGEST_DB_PATH"
+            | "SYMINGEST_ARCHIVE_PATH"
+            | "SYMINGEST_INBOX"
+            | "SYMINGEST_PAPERLESS_BASE_URL"
+            | "SYMINGEST_SYMSEEK_ENABLED"
+            | "SYMINGEST_SYMSEEK_BINARY"
+            | "SYMINGEST_IMAP_ACCOUNTS"
+            | "SYMINGEST_IMAP_POLL_INTERVAL"
+            | "SYMINGEST_OLLAMA_BASE_URL"
+            | "SYMINGEST_OLLAMA_MODEL"
+    )
+}
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -314,12 +421,34 @@ pub fn load(
     environment: &BTreeMap<String, String>,
 ) -> Result<Config, String> {
     let mut config = match toml_input {
-        Some(input) => toml::from_str::<Config>(input)
-            .map_err(|error| format!("failed to decode config file: {error}"))?,
+        Some(input) => toml::from_str::<Config>(input).map_err(|error| {
+            format!(
+                "failed to decode config file: {}",
+                go_toml_error(input, &error)
+            )
+        })?,
         None => Config::default(),
     };
     config.apply_environment(environment);
     Ok(config)
+}
+
+fn go_toml_error(input: &str, error: &toml::de::Error) -> String {
+    let detail = error.to_string();
+    if !detail.contains("unclosed array") || !input.trim_end().ends_with('[') {
+        return detail;
+    }
+    let last_key = input
+        .lines()
+        .rev()
+        .find_map(|line| {
+            let line = line.split('#').next()?.trim();
+            let (key, _) = line.split_once('=')?;
+            Some(key.trim().trim_matches('"').to_owned())
+        })
+        .unwrap_or_default();
+    let line = input.lines().count().max(1);
+    format!("toml: line {line} (last key {last_key:?}): unexpected EOF; expected value")
 }
 
 /// Encodes the current complete configuration in field order.
@@ -635,15 +764,19 @@ fn quote_artifact(value: &str) -> String {
     quoted
 }
 
-/// Mirrors configkit's important distinction: only an absolute XDG config
-/// home affects the global file path; relative values fall back to HOME.
+/// Mirrors configkit's global path policy while retaining the product's
+/// OS-native home selection and Go filepath.Clean normalization.
 #[must_use]
 pub fn global_path(environment: &BTreeMap<String, String>) -> String {
-    let base = nonempty(environment, "XDG_CONFIG_HOME")
-        .map(str::trim)
-        .filter(|value| portable_absolute(value))
-        .map_or_else(|| join(&home(environment), ".config"), str::to_owned);
-    join(&join(&base, "symdesk"), "config.toml")
+    let xdg = nonempty(environment, "XDG_CONFIG_HOME").map(PathBuf::from);
+    // The product selects only HOME on Unix and only USERPROFILE on Windows.
+    // Do not forward both roots: CoreKit's Windows fallback accepts HOME when
+    // USERPROFILE is missing, unlike the Go caller.
+    let home = PathBuf::from(user_home(environment).unwrap_or("."));
+    let path = symaira_core_config::default_path_for_roots("symdesk", xdg, Some(home), None);
+    // CoreKit selects the path; retain Go's lexical cleanup and Windows
+    // verbatim-volume handling from the existing product adapter.
+    store_join(&path.to_string_lossy(), "")
 }
 
 fn warning_if_negative(findings: &mut Vec<Finding>, field: &'static str, value: i64) {
@@ -686,20 +819,8 @@ fn home(environment: &BTreeMap<String, String>) -> String {
         .to_owned()
 }
 
-fn portable_absolute(value: &str) -> bool {
-    value.starts_with('/') || value.starts_with('\\') || value.as_bytes().get(1) == Some(&b':')
-}
-
 fn join(left: &str, right: &str) -> String {
-    let right = right.trim_start_matches(['/', '\\']);
-    if left.is_empty() || left == "." {
-        return format!("./{right}");
-    }
-    #[cfg(windows)]
-    if is_windows_verbatim(left) {
-        return join_windows_verbatim(left, right);
-    }
-    format!("{}/{}", left.trim_end_matches(['/', '\\']), right)
+    store_join(left, right)
 }
 
 #[cfg(any(windows, test))]
@@ -777,6 +898,89 @@ mod windows_verbatim_join_tests {
             let actual =
                 join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
             assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod environment_snapshot_tests {
+    use super::{collect_environment, decode_environment_value};
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    #[test]
+    fn unrelated_non_unicode_environment_value_is_ignored_without_lossy_conversion() {
+        let environment = collect_environment([
+            (
+                OsString::from("XDG_DATA_HOME"),
+                OsString::from("/safe/data"),
+            ),
+            (
+                OsString::from("UNRELATED_BINARY_ENV"),
+                OsString::from_vec(vec![0xff]),
+            ),
+        ])
+        .expect("unrelated non-Unicode variable is not an error");
+        assert_eq!(
+            environment.get("XDG_DATA_HOME").map(String::as_str),
+            Some("/safe/data")
+        );
+        assert!(!environment.contains_key("UNRELATED_BINARY_ENV"));
+        for name in [
+            "XDG_UNUSED_BINARY",
+            "SYMDESK_UNUSED_BINARY",
+            "SYMINGEST_UNUSED_BINARY",
+            "SYMRELATE_UNUSED_BINARY",
+            "SYMSEEK_UNUSED_BINARY",
+            "OLLAMA_UNUSED_BINARY",
+            "SYMDESK_VAULT_EXTRA",
+            "xdg_data_home",
+            "SYMDESK_ANTHROPIC_URL",
+            "SYMDESK_OLLAMA_MODEL",
+            "SYMDESK_SERVER_TOKEN",
+            "SYMDESK_WORKER_TOKEN",
+            "SYMDESK_SERVER_LISTEN",
+            "TZ",
+        ] {
+            let environment =
+                collect_environment([(OsString::from(name), OsString::from_vec(vec![0xff]))])
+                    .expect("unknown keys are not configuration, regardless of prefix");
+            assert!(!environment.contains_key(name));
+        }
+    }
+
+    #[test]
+    fn non_unicode_configuration_value_is_reported_instead_of_defaulted() {
+        let error = collect_environment([(
+            OsString::from("XDG_DATA_HOME"),
+            OsString::from_vec(vec![0xff]),
+        )])
+        .expect_err("relevant non-Unicode configuration is not silently dropped");
+        assert_eq!(
+            error,
+            "environment variable XDG_DATA_HOME is not valid UTF-8"
+        );
+    }
+
+    #[test]
+    fn consumed_environment_values_preserve_absence_empty_and_unicode_but_reject_raw_bytes() {
+        for name in [
+            "SYMDESK_ANTHROPIC_URL",
+            "SYMDESK_OLLAMA_MODEL",
+            "SYMDESK_SERVER_TOKEN",
+            "SYMDESK_WORKER_TOKEN",
+            "SYMDESK_SERVER_LISTEN",
+        ] {
+            assert_eq!(decode_environment_value(name, None), Ok(None));
+            for value in ["", " padded é value "] {
+                assert_eq!(
+                    decode_environment_value(name, Some(OsString::from(value))),
+                    Ok(Some(value.to_owned()))
+                );
+            }
+            assert_eq!(
+                decode_environment_value(name, Some(OsString::from_vec(vec![0xff]))),
+                Err(format!("environment variable {name} is not valid UTF-8"))
+            );
         }
     }
 }

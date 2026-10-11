@@ -314,12 +314,34 @@ pub fn load(
     environment: &BTreeMap<String, String>,
 ) -> Result<Config, String> {
     let mut config = match toml_input {
-        Some(input) => toml::from_str::<Config>(input)
-            .map_err(|error| format!("failed to decode config file: {error}"))?,
+        Some(input) => toml::from_str::<Config>(input).map_err(|error| {
+            format!(
+                "failed to decode config file: {}",
+                go_toml_error(input, &error)
+            )
+        })?,
         None => Config::default(),
     };
     config.apply_environment(environment);
     Ok(config)
+}
+
+fn go_toml_error(input: &str, error: &toml::de::Error) -> String {
+    let detail = error.to_string();
+    if !detail.contains("unclosed array") || !input.trim_end().ends_with('[') {
+        return detail;
+    }
+    let last_key = input
+        .lines()
+        .rev()
+        .find_map(|line| {
+            let line = line.split('#').next()?.trim();
+            let (key, _) = line.split_once('=')?;
+            Some(key.trim().trim_matches('"').to_owned())
+        })
+        .unwrap_or_default();
+    let line = input.lines().count().max(1);
+    format!("toml: line {line} (last key {last_key:?}): unexpected EOF; expected value")
 }
 
 /// Encodes the current complete configuration in field order.

@@ -81,7 +81,7 @@ pub fn load_root_config() -> Result<(Config, BTreeMap<String, String>), String> 
         Err(error) => {
             return Err(format!(
                 "failed to read config file: {}",
-                go_path_error("open", &path, &error)
+                go_path_error("read", &path, &error)
             ));
         }
     };
@@ -220,12 +220,7 @@ fn apply_ingest_table(config: &mut IngestConfig, table: &toml::Table) -> Result<
         }
     }
     if let Some(value) = table.get("symseek_enabled") {
-        config.symseek_enabled = value.as_bool().ok_or_else(|| {
-            format!(
-                "field \"symseek_enabled\": cannot convert {} to bool",
-                go_toml_type(value)
-            )
-        })?;
+        config.symseek_enabled = go_toml_bool(value)?;
     }
     if let Some(value) = table.get("symseek_binary") {
         config.symseek_binary = value
@@ -242,6 +237,15 @@ fn apply_ingest_table(config: &mut IngestConfig, table: &toml::Table) -> Result<
         match value {
             toml::Value::Array(values) => {
                 if let Some((index, _)) = values.iter().enumerate().next() {
+                    if values
+                        .iter()
+                        .all(|value| matches!(value, toml::Value::Table(_)))
+                    {
+                        return Err(
+                            "field \"imap_accounts\": cannot convert []map[string]interface {} to []config.IMAPAccount"
+                                .to_owned(),
+                        );
+                    }
                     return Err(format!(
                         "field \"imap_accounts\": slice element {index}: unsupported field kind struct"
                     ));
@@ -364,6 +368,21 @@ fn parse_go_bool(value: &str) -> Result<bool, ()> {
         "1" | "t" | "T" | "TRUE" | "true" | "True" => Ok(true),
         "0" | "f" | "F" | "FALSE" | "false" | "False" => Ok(false),
         _ => Err(()),
+    }
+}
+
+fn go_toml_bool(value: &toml::Value) -> Result<bool, String> {
+    match value {
+        toml::Value::Boolean(value) => Ok(*value),
+        toml::Value::String(value) => parse_go_bool(value).map_err(|_| {
+            format!(
+                "field \"symseek_enabled\": cannot parse {value:?} as bool: strconv.ParseBool: parsing {value:?}: invalid syntax"
+            )
+        }),
+        other => Err(format!(
+            "field \"symseek_enabled\": cannot convert {} to bool",
+            go_toml_type(other)
+        )),
     }
 }
 

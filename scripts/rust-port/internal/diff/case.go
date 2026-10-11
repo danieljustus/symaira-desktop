@@ -36,6 +36,8 @@ type Case struct {
 	PrepareArgs          []string          `json:"prepare_args,omitempty"`
 	Stdin                string            `json:"stdin,omitempty"`
 	Env                  map[string]string `json:"env,omitempty"`
+	SandboxEnv           map[string]string `json:"sandbox_env,omitempty"`
+	UnsetSandboxEnv      []string          `json:"unset_sandbox_env,omitempty"`
 	WorkingDir           string            `json:"working_dir,omitempty"`
 	TimeoutMS            int               `json:"timeout_ms,omitempty"`
 	StdoutMode           string            `json:"stdout_mode,omitempty"`
@@ -46,12 +48,15 @@ type Case struct {
 	Setup                []SetupFile       `json:"setup,omitempty"`
 }
 
-// SetupFile is created below the isolated workspace before a process starts.
+// SetupFile creates a private fixture below the selected sandbox root.
 type SetupFile struct {
-	Path    string `json:"path"`
-	Content string `json:"content,omitempty"`
-	Mode    uint32 `json:"mode,omitempty"`
-	MTimeNS *int64 `json:"mtime_ns,omitempty"`
+	Path       string `json:"path"`
+	Base       string `json:"base,omitempty"` // "workspace" (default), "home", or "sandbox"
+	Kind       string `json:"kind,omitempty"` // "file" (default), "directory", or "symlink"
+	LinkTarget string `json:"link_target,omitempty"`
+	Content    string `json:"content,omitempty"`
+	Mode       uint32 `json:"mode,omitempty"`
+	MTimeNS    *int64 `json:"mtime_ns,omitempty"`
 }
 
 func (c Case) TargetBinary() string {

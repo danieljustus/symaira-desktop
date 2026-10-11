@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     fs::{self, OpenOptions},
-    io::Write,
+    io::{self, Write},
     path::{Component, Path, PathBuf},
 };
 
@@ -384,29 +384,88 @@ fn load_config(path: &Path) -> Result<SymseekConfig, SidecarError> {
         Ok(contents) => toml::from_str(&contents).map_err(|error| {
             SidecarError::Contract(format!("failed to decode config file: {error}"))
         }),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            let legacy_path = path.with_file_name("config.json");
-            match fs::read(&legacy_path) {
-                Ok(contents) => match serde_json::from_slice::<LegacyJsonConfig>(&contents) {
-                    Ok(legacy) => {
-                        let config = SymseekConfig::from(legacy);
-                        save_config(path, &config)?;
-                        Ok(config)
-                    }
-                    Err(_) => Ok(default_symseek_config()),
-                },
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                    Ok(default_symseek_config())
-                }
-                Err(error) => Err(SidecarError::Contract(format!(
-                    "read legacy JSON config: {error}"
-                ))),
-            }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            Ok(migrate_legacy_json_config(path)?.unwrap_or_else(default_symseek_config))
         }
         Err(error) => Err(SidecarError::Contract(format!(
-            "failed to read config file: {error}"
+            "failed to read config file: {}",
+            go_path_error("read", path, &error)
         ))),
     }
+}
+
+fn migrate_legacy_json_config(path: &Path) -> Result<Option<SymseekConfig>, SidecarError> {
+    let legacy_path = path.with_file_name("config.json");
+    let contents = match fs::read(&legacy_path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(SidecarError::Contract(format!(
+                "failed to migrate config: read legacy JSON config: {}",
+                go_path_error("read", &legacy_path, &error)
+            )));
+        }
+    };
+    let Ok(legacy) = serde_json::from_slice::<LegacyJsonConfig>(&contents) else {
+        return Ok(None);
+    };
+    let config = SymseekConfig::from(legacy);
+    migrate_json_config(path, &config)
+        .map_err(|error| SidecarError::Contract(format!("failed to migrate config: {error}")))?;
+    Ok(Some(config))
+}
+
+fn migrate_json_config(path: &Path, config: &SymseekConfig) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    create_private_dir_all(parent).map_err(|error| {
+        format!(
+            "create config directory: {}",
+            go_path_error("mkdir", parent, &error)
+        )
+    })?;
+    let contents =
+        toml::to_string(config).map_err(|error| format!("encode migrated TOML config: {error}"))?;
+    let mut options = OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path).map_err(|error| {
+        format!(
+            "create migrated TOML config: {}",
+            go_path_error("open", path, &error)
+        )
+    })?;
+    file.write_all(contents.as_bytes()).map_err(|error| {
+        format!(
+            "encode migrated TOML config: {}",
+            go_path_error("write", path, &error)
+        )
+    })?;
+    file.sync_all().map_err(|error| {
+        format!(
+            "close migrated TOML config: {}",
+            go_path_error("close", path, &error)
+        )
+    })
+}
+
+fn go_path_error(operation: &str, path: &Path, error: &io::Error) -> String {
+    let kind = match error.kind() {
+        io::ErrorKind::NotFound => "no such file or directory",
+        io::ErrorKind::PermissionDenied => "permission denied",
+        io::ErrorKind::NotADirectory => "not a directory",
+        io::ErrorKind::IsADirectory => "is a directory",
+        io::ErrorKind::AlreadyExists => "file exists",
+        io::ErrorKind::InvalidInput => "invalid argument",
+        _ => return format!("{operation} {}: {error}", path.display()),
+    };
+    format!("{operation} {}: {kind}", path.display())
 }
 
 fn save_config(path: &Path, config: &SymseekConfig) -> Result<(), SidecarError> {

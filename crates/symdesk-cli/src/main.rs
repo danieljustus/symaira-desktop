@@ -55,6 +55,7 @@ fn main() -> ExitCode {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
     rewrite_index_output_flag(&mut args);
+    rewrite_config_paths_repeated_flags(&mut args);
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -241,6 +242,139 @@ fn main() -> ExitCode {
             }
         }
         _ => process_exit(CoreExitCode::Ok),
+    }
+}
+
+fn rewrite_config_paths_repeated_flags(args: &mut Vec<OsString>) {
+    if !has_config_paths_command(args) {
+        return;
+    }
+    let mut last_output = None;
+    let mut last_vault = None;
+    let mut index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            break;
+        }
+        match config_paths_global_flag(value) {
+            Some((name, true)) => {
+                if index + 1 < args.len() {
+                    match name {
+                        "output" => last_output = Some(index),
+                        "vault" => last_vault = Some(index),
+                        _ => unreachable!(),
+                    }
+                    index += 2;
+                } else {
+                    index += 1;
+                }
+            }
+            Some((name, false)) => {
+                match name {
+                    "output" => last_output = Some(index),
+                    "vault" => last_vault = Some(index),
+                    _ => unreachable!(),
+                }
+                index += 1;
+            }
+            None => index += 1,
+        }
+    }
+
+    let mut normalized = Vec::with_capacity(args.len());
+    if let Some(program) = args.first() {
+        normalized.push(program.clone());
+    }
+    index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            normalized.push(args[index].clone());
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            normalized.extend_from_slice(&args[index..]);
+            break;
+        }
+        match config_paths_global_flag(value) {
+            Some((name, true)) => {
+                let keep = index + 1 >= args.len()
+                    || match name {
+                        "output" => last_output == Some(index),
+                        "vault" => last_vault == Some(index),
+                        _ => unreachable!(),
+                    };
+                if keep {
+                    normalized.push(args[index].clone());
+                    if index + 1 < args.len() {
+                        normalized.push(args[index + 1].clone());
+                    }
+                }
+                index += if index + 1 < args.len() { 2 } else { 1 };
+            }
+            Some((name, false)) => {
+                let keep = match name {
+                    "output" => last_output == Some(index),
+                    "vault" => last_vault == Some(index),
+                    _ => unreachable!(),
+                };
+                if keep {
+                    normalized.push(args[index].clone());
+                }
+                index += 1;
+            }
+            None => {
+                normalized.push(args[index].clone());
+                index += 1;
+            }
+        }
+    }
+    *args = normalized;
+}
+
+fn has_config_paths_command(args: &[OsString]) -> bool {
+    let mut previous = "";
+    let mut index = 1;
+    while index < args.len() {
+        let Some(value) = args[index].to_str() else {
+            index += 1;
+            continue;
+        };
+        if value == "--" {
+            break;
+        }
+        if let Some((_, takes_value)) = config_paths_global_flag(value) {
+            index += if takes_value && index + 1 < args.len() {
+                2
+            } else {
+                1
+            };
+            continue;
+        }
+        if value.starts_with('-') {
+            index += 1;
+            continue;
+        }
+        if previous == "config" && value == "paths" {
+            return true;
+        }
+        previous = value;
+        index += 1;
+    }
+    false
+}
+
+fn config_paths_global_flag(value: &str) -> Option<(&'static str, bool)> {
+    match value {
+        "--output" => Some(("output", true)),
+        "--vault" => Some(("vault", true)),
+        _ if value.starts_with("--output=") => Some(("output", false)),
+        _ if value.starts_with("--vault=") => Some(("vault", false)),
+        _ => None,
     }
 }
 

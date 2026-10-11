@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
+  "oracle_revision": "28cfedc2d062c4656d0a79e506ae16d5a61ef13d",
   "root_event": "mut-room-created",
   "root_pubkey": "ed25519:13238077c9a0e2ced3fa9d40ff04f15490cf3310f700d3018083737b6e6e4a88",
   "source_hashes": {

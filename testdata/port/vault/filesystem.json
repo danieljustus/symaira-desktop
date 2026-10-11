@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
-    "release": "post-v0.12.2-security-880"
+    "commit": "28cfedc2d062c4656d0a79e506ae16d5a61ef13d",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "tree": [
     {

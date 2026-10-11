@@ -1,15 +1,15 @@
 package ingest
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/pdfops"
 )
 
 // SplitPDF splits a PDF into multiple files at the given 1-based page
@@ -25,11 +25,7 @@ func SplitPDF(pdfPath string, splitPoints []int, outputDir string) ([]string, er
 	if len(splitPoints) == 0 {
 		// No splits — copy the original as a single part.
 		dst := filepath.Join(outputDir, "part-1.pdf")
-		data, err := os.ReadFile(pdfPath) //nolint:gosec // G304: input/output paths are supplied to the PDF split API
-		if err != nil {
-			return nil, fmt.Errorf("read input: %w", err)
-		}
-		if err := os.WriteFile(dst, data, 0o600); err != nil { //nolint:gosec // G703: output path is supplied to the PDF split API and stays within its output directory
+		if err := pdfops.Copy(pdfPath, dst); err != nil {
 			return nil, fmt.Errorf("write part: %w", err)
 		}
 		return []string{dst}, nil
@@ -72,19 +68,7 @@ func splitWithQPDF(qpdfPath, pdfPath string, splitPoints []int, outputDir string
 }
 
 func qpdfExtract(qpdfPath, inputPath, outputPath, pageRange string) error {
-	//nolint:gosec // G204: qpdfPath comes from exec.LookPath, and the remaining
-	// arguments are a fixed argv of file paths and a page range, never shell-
-	// interpreted.
-	cmd := exec.Command(qpdfPath,
-		"--empty", "--pages", inputPath, pageRange,
-		"--", outputPath,
-	)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err, stderr.String())
-	}
-	return nil
+	return (pdfops.Tools{QPDF: qpdfPath}).Extract(context.Background(), inputPath, outputPath, pageRange)
 }
 
 // splitWithPipeline splits through the absorbed ingest pipeline, which runs
@@ -109,6 +93,7 @@ func splitWithPipeline(pdfPath string, splitPoints []int, outputDir string) ([]s
 
 // HasPopplerSplit reports whether the Poppler utilities the pipeline's split
 // needs are all available on PATH.
+// Retained for compatibility with older callers; new operations use HasPDFSplit.
 func HasPopplerSplit() bool {
 	for _, tool := range []string{"pdfinfo", "pdfseparate", "pdfunite"} {
 		if _, err := exec.LookPath(tool); err != nil {
@@ -116,6 +101,12 @@ func HasPopplerSplit() bool {
 		}
 	}
 	return true
+}
+
+// HasPDFSplit reports availability of the validated PDF operation's tools.
+func HasPDFSplit() bool {
+	_, err := exec.LookPath("pdfinfo")
+	return err == nil && HasQPDF()
 }
 
 // BarcodeSplitResult holds the result of splitting a PDF by barcode separators.

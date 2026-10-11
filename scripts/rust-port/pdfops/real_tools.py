@@ -76,10 +76,12 @@ def main():
         dict(id='rotate-page-outside',operation='rotate',input='a.pdf',output='out/result.pdf',degrees=90,pages='50'),
         dict(id='merge-output-alias',operation='merge',inputs=['a.pdf','b.pdf'],output='a.pdf'),
         dict(id='rotate-output-alias',operation='rotate',input='a.pdf',degrees=90,output='a.pdf'),
+        dict(id='split-output-alias',operation='split',input='part-001.pdf',pages='1',output='.'),
     ]
     for alias in ('symlink','hardlink'):
         for operation in ('merge','rotate'):
             cases.append(dict(id=f'{operation}-{alias}-alias',operation=operation,input='a.pdf',inputs=['a.pdf','b.pdf'],degrees=90,output='alias.pdf',alias=alias))
+        cases.append(dict(id=f'split-{alias}-alias',operation='split',input='a.pdf',pages='1',output='parts',alias=alias))
     try:
         version_env={'PATH':'','LC_ALL':'C','TZ':'UTC','HOME':str(runtime)}
         for name,path in paths.items():
@@ -101,9 +103,16 @@ def main():
                 for key in ('HOME','USERPROFILE','XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_STATE_HOME','TMPDIR','TMP','TEMP'):
                     path=root/key; path.mkdir(mode=0o700); env[key]=str(path)
                 (root/'a.pdf').write_bytes(pdf(['one','two','three','four'])); (root/'b.pdf').write_bytes(pdf(['five','six'])); (root/'bad.pdf').write_bytes(b'%PDF-1.4\ninvalid\n')
-                if case.get('alias')=='symlink': (root/'alias.pdf').symlink_to('a.pdf')
-                if case.get('alias')=='hardlink': os.link(root/'a.pdf',root/'alias.pdf')
-                before={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in ('a.pdf','b.pdf','bad.pdf')}
+                inputs=['a.pdf','b.pdf','bad.pdf']
+                if case['id']=='split-output-alias':
+                    (root/'part-001.pdf').write_bytes(pdf(['one','two','three','four']))
+                    inputs.append('part-001.pdf')
+                if case.get('alias'):
+                    alias_path=root/('parts/part-001.pdf' if case['operation']=='split' else 'alias.pdf')
+                    alias_path.parent.mkdir(parents=True,exist_ok=True)
+                    if case['alias']=='symlink': alias_path.symlink_to(os.path.relpath(root/'a.pdf',alias_path.parent))
+                    if case['alias']=='hardlink': os.link(root/'a.pdf',alias_path)
+                before={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in inputs}
                 request={k:v for k,v in case.items() if k not in ('id','expected','alias')}
                 request.update(layer='api',tools={key:paths[name] for key,name in zip(TOOLS,NAMES)})
                 label=case['id']+'-'+language
@@ -132,6 +141,8 @@ def main():
                     errors.append(language+': page order/text mismatch')
                 if case['id'].startswith('malformed-') and not response['error']:
                     errors.append(language+': malformed input accepted')
+                if case['id'].endswith('-alias') and not response['error']:
+                    errors.append(language+': input alias accepted')
                 observations.append(normalized({'response':response,'artifacts':artifacts,'input_preserved':preserved},root))
             (out/(case['id']+'.json')).write_text(json.dumps(observations,indent=2)+'\n')
             try: compare(*observations)

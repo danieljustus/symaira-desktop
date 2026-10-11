@@ -10,7 +10,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/pdf"
 	"github.com/danieljustus/symaira-desktop/internal/pdf/internal/press"
-	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/pdfops/reference"
 )
 
 type step struct {
@@ -29,7 +29,7 @@ func main() {
 		panic("press oracle requires go1.26.9")
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--identity" {
-		emit(map[string]any{"oracle": fixtureoracle.Current(), "compiler": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH})
+		emit(map[string]any{"oracle": reference.Current(), "compiler": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH})
 		return
 	}
 	var steps []step

@@ -112,7 +112,7 @@ func newIngestCmd() *cobra.Command {
 // newIngestSplitCmd exposes the in-process SplitPDFAtSpec as `symdesk ingest
 // split` (issue #636). It mirrors the absorbed `symingest split --at N,M
 // --output-dir DIR <input.pdf>` contract and fails with a clear message when
-// the Poppler utilities probed by internal/ingest/split.go are absent instead
+// pdfinfo or qpdf probed by internal/ingest/split.go are absent instead
 // of erroring opaquely deeper in the pipeline.
 func newIngestSplitCmd() *cobra.Command {
 	var atSpec string
@@ -128,8 +128,8 @@ func newIngestSplitCmd() *cobra.Command {
 			if outputDir == "" {
 				return fmt.Errorf("--output-dir is required")
 			}
-			if !ingest.HasPopplerSplit() {
-				return fmt.Errorf("PDF splitting requires the Poppler utilities pdfinfo, pdfseparate and pdfunite on PATH (brew install poppler)")
+			if !ingest.HasPDFSplit() {
+				return fmt.Errorf("PDF splitting requires pdfinfo and qpdf on PATH (brew install poppler qpdf)")
 			}
 			parts, err := ingest.SplitPDFAtSpec(cmd.Context(), args[0], atSpec, outputDir)
 			if err != nil {

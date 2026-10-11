@@ -14,18 +14,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/pdfops/reference"
 )
 
 const (
 	noteHTMLOracleGoVersion    = "go1.26.9"
 	noteHTMLOracleSource       = "internal/export/export.go"
 	noteHTMLOracleSourceSHA256 = "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
-	noteHTMLFixturePath        = "testdata/port/render/html-note.json"
+	noteHTMLFixturePath        = "testdata/port/render/v2/html-note.json"
 )
 
 var noteHTMLOracleCommit = func() string {
-	return fixtureoracle.Current().Commit
+	return reference.Current().Commit
 }
 
 type noteHTMLFixture struct {

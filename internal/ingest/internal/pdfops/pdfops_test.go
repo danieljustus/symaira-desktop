@@ -46,13 +46,9 @@ func TestSplitEndToEndWithExternalToolAdapter(t *testing.T) {
 	}
 	tools := Tools{
 		PDFInfo: writeExecutable(t, dir, "pdfinfo", "printf 'Pages: 3\\n'"),
-		PDFSeparate: writeExecutable(t, dir, "pdfseparate", `out=$(printf "$6" "$2")
-printf '%%PDF-1.4 page-%s\\n' "$2" > "$out"
-`),
-		PDFUnite: writeExecutable(t, dir, "pdfunite", `
-last=""
-for arg in "$@"; do last="$arg"; done
-cp "$1" "$last"
+		QPDF: writeExecutable(t, dir, "qpdf", `
+if [ "$1" = --check ]; then exit 0; fi
+printf '%%PDF-1.4 page-%s\n' "${4%-*}" > "$6"
 `),
 	}
 	outputDir := filepath.Join(dir, "parts")

@@ -11,7 +11,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/pdfops"
-	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/pdfops/reference"
 )
 
 type request struct {
@@ -32,7 +32,7 @@ func main() {
 		panic("PDF oracle requires go1.26.9")
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--identity" {
-		emit(map[string]any{"oracle": fixtureoracle.Current(), "compiler": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH})
+		emit(map[string]any{"oracle": reference.Current(), "compiler": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH})
 		return
 	}
 	var r request

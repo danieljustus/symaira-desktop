@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'scripts/rust-port'))
 from history_live import source_manifest
 from press.verify import verify_press
+from safety import verify_safety
 
 TOOLS = ('PDFInfo', 'PDFSeparate', 'PDFUnite', 'QPDF')
 NAMES = ('pdfinfo', 'pdfseparate', 'pdfunite', 'qpdf')
@@ -33,39 +34,54 @@ def corpus():
         cases.append(dict(id=id, operation=operation, **kw))
     for i, pages in enumerate(('', ' ', '5,1-3', '1', ' 1 , 2 ', '+1,+3', '1-+3', '0', '-1', '3-1', '1,1', '1-3,2', '1--2', '1,,2', 'a', '1.0', '1\x00', '1,\u0085', '9223372036854775808', '1-0', '01,2')):
         add(f'parse-{i:02}', 'parse', pages=pages)
+    # Go quotes L/M/N/P/S as printable (plus ASCII space), using Unicode 15.
+    # Rust control/whitespace predicates miss formats, private and unassigned
+    # scalars; escape_debug also escapes printable combining marks.
+    for codepoint in (0, 7, 8, 11, 12, 0x7f, 0x80, 0x85, 0xa0, 0xad, 0x301,
+                      0x61c, 0x897, 0x200b, 0x200c, 0x200d, 0x200e, 0x200f,
+                      0x2028, 0x2029, 0x202e, 0x2060, 0xfeff, 0xe000, 0xfdd0,
+                      0xffff, 0x10000, 0x110bd, 0x1cc00, 0x1f600, 0xe0001,
+                      0xe0100, 0xf0000, 0x10ffff):
+        add(f'parse-unicode-{codepoint:06x}', 'parse', pages='x' + chr(codepoint) + 'z')
+    for name, pages in (('review', '1,\u200b'), ('range', '1-\u200b'),
+                        ('empty', '1,,\u200b'), ('escapes', 'x\'"\\\n\t')):
+        add(f'parse-unicode-{name}', 'parse', pages=pages)
     for layer in ('tools', 'api'):
         base = dict(layer=layer, input='a.pdf', inputs=['a.pdf', 'b.pdf'], output='out/result.pdf')
         def op(id, kind, **kw): add(f'{layer}-{id}', kind, **(base | kw))
         op('split', 'split', pages='3,1', output='out/parts')
         op('split-range', 'split', pages='1-3', output='out/parts')
         op('split-bad-selector', 'split', pages='1,1', output='out/parts')
+        op('split-unicode-selector', 'split', pages='1,\u200b', output='out/parts')
         op('split-outside', 'split', pages='4', output='out/parts')
         op('split-missing-input-precedence', 'split', input='missing.pdf', pages='', output='out/parts')
         op('split-missing-tool-precedence', 'split', pages='', missing='PDFInfo', output='out/parts')
         op('split-bad-count', 'split', pages='1', info='Pages: 0\nPages: invalid\n', output='out/parts')
         op('split-count-recovery', 'split', pages='1', info='Pages: 0\n Pages : +4\n', output='out/parts')
-        op('split-separate-failure', 'split', pages='1', mode='error', tool='pdfseparate', output='out/parts')
-        op('split-absent-page', 'split', pages='1', mode='no-output', tool='pdfseparate', output='out/parts')
-        op('split-unite-failure', 'split', pages='1', mode='quiet-error', tool='pdfunite', output='out/parts')
+        op('split-qpdf-failure', 'split', pages='1', mode='error', tool='qpdf', output='out/parts')
+        op('split-absent-part', 'split', pages='1', mode='no-output', tool='qpdf', output='out/parts')
+        op('split-validation-failure', 'split', pages='1', mode='check-error', tool='qpdf', output='out/parts')
+        op('split-count-limit', 'split', pages='1', info='Pages: 10001\n', output='out/parts')
         op('split-output-file', 'split', pages='1', output='a.pdf')
         op('merge', 'merge')
         op('merge-order', 'merge', inputs=['b.pdf', 'a.pdf'])
         op('merge-bare-output', 'merge', output='merged.pdf')
         op('merge-clean-paths', 'merge', inputs=['sub/../a.pdf', './b.pdf'], output='out/../merged.pdf')
-        op('merge-input-count', 'merge', inputs=['missing.pdf'], missing='PDFUnite')
+        op('merge-input-count', 'merge', inputs=['missing.pdf'], missing='QPDF')
         op('merge-missing-input', 'merge', inputs=['missing.pdf', 'b.pdf'])
         op('merge-directory-input', 'merge', inputs=['sub', 'b.pdf'])
-        op('merge-missing-tool', 'merge', missing='PDFUnite')
-        op('merge-unconfigured-tool', 'merge', empty='PDFUnite')
-        op('merge-missing-output', 'merge', mode='no-output', tool='pdfunite')
-        op('merge-tool-error', 'merge', mode='error', tool='pdfunite')
+        op('merge-missing-tool', 'merge', missing='QPDF')
+        op('merge-unconfigured-tool', 'merge', empty='QPDF')
+        op('merge-missing-output', 'merge', mode='no-output', tool='qpdf')
+        op('merge-tool-error', 'merge', mode='error', tool='qpdf')
         op('merge-precancelled', 'merge', cancel=True)
-        op('merge-cancel-running', 'merge', mode='cancel', tool='pdfunite', cancel_marker='ready')
+        op('merge-cancel-running', 'merge', mode='cancel', tool='qpdf', cancel_marker='ready')
         for degrees in (-270, -180, -90, 90, 180, 270, 0, 45, 360):
             op(f'rotate-{degrees}', 'rotate', degrees=degrees, pages='')
         op('rotate-pages', 'rotate', degrees=90, pages=' 3, +1 ')
         op('rotate-whitespace', 'rotate', degrees=90, pages=' ')
         op('rotate-duplicate', 'rotate', degrees=90, pages='1-2,2')
+        op('rotate-unicode-selector', 'rotate', degrees=90, pages='1,\u200b')
         op('rotate-missing-precedence', 'rotate', degrees=0, input='missing.pdf')
         op('rotate-tool-missing', 'rotate', degrees=90, missing='QPDF')
         op('rotate-empty-tool', 'rotate', degrees=90, empty='QPDF')
@@ -85,7 +101,7 @@ def normalized(value, root):
     # Only isolated case roots and random MkdirTemp basenames are variable.
     # Output bytes, ordering, status, errors and ordinary paths stay untouched.
     raw = json.dumps(value, ensure_ascii=False).replace(str(root), '<ROOT>')
-    raw = re.sub(r'<ROOT>/tmp/symingest-pdf-split-[^/\\" ]+', '<ROOT>/tmp/symingest-pdf-split-<TEMP>', raw)
+    raw = re.sub(r'\.symdesk-pdf-[^/\\" ]+', '.symdesk-pdf-<TEMP>', raw)
     return json.loads(raw)
 
 
@@ -172,6 +188,7 @@ def main():
         oracle = runtime / ('pdfops-go'+suffix)
         assert run(['go','version'],'go-version',build=True).startswith(b'go version go1.26.9 ')
         assert run(['rustc','--version'],'rust-version',build=True).startswith(b'rustc 1.98.0 ')
+        run(['go','run','./scripts/rust-port/pdfops/print_ranges','--check'],'go-print-ranges',build=True)
         metadata = json.loads(run(['cargo','metadata','--manifest-path',str(ROOT/'Cargo.toml'),'--no-deps','--format-version','1'],'cargo-metadata',build=True))
         assert Path(metadata['workspace_root']).resolve() == ROOT
         package = next(p for p in metadata['packages'] if p['name']=='symdesk-render')
@@ -182,6 +199,9 @@ def main():
         identity = json.loads(run([str(oracle),'--identity'],'oracle-identity'))
         report['oracle'] = identity
         assert identity['compiler'] == 'go1.26.9'
+        reference = json.loads((ROOT/'scripts/rust-port/pdfops/reference-v2.json').read_text())
+        assert reference['schema_version'] == 2 and identity['oracle'] == reference['oracle']
+        report['reference'] = reference
         binary_root = Path(metadata['target_directory']) / 'debug/examples'
         candidate = binary_root / ('pdfops_probe'+suffix)
         stub = binary_root / ('pdf_tool_stub'+suffix)
@@ -218,6 +238,7 @@ def main():
                 after = snapshot(world)
                 for name in ('a.pdf','b.pdf'): assert before[name] == after[name], 'input changed'
                 assert not list((world/'tmp').iterdir()), 'workspace leaked'
+                assert not list(world.rglob('.symdesk-pdf-*')), 'output stage leaked'
                 if (world/'ready').exists() and os.name != 'nt':
                     pid = int((world/'ready').read_text())
                     try: os.kill(pid,0)
@@ -247,13 +268,17 @@ def main():
             else: raise AssertionError('type/presence mutation accepted')
         report['mutation_controls']=6
         verify_press(run, runtime, output, env, binary_root, stub, report, compare, normalized, digest)
+        verify_safety(run, runtime, output, env,
+                      {'pdf':{'go':oracle,'rust':candidate},
+                       'press':{'go':runtime/('press-go'+suffix),'rust':binary_root/('press_probe'+suffix)}},
+                      report, compare, normalized)
         tests = run(['go','test','-count=1','-v','./internal/ingest/internal/pdfops'],'go-pdfops-tests',build=True)
         report['go_adapter_tests'] = len(re.findall(rb'^--- PASS: Test', tests, re.M))
         assert report['go_adapter_tests'] > 0
         facade = run(['go','test','-count=1','-v','./internal/ingest','-run','^Test(MergePDFs|RotatePDF)RealPath$'],'go-facade-tests',build=True)
         assert b'--- PASS: TestMergePDFsRealPath' in facade and b'--- PASS: TestRotatePDFRealPath' in facade
         report['go_facade_tests'] = 2
-        run(['go','run','./scripts/rust-port/cmd/renderirgen','--check'],'go-render-ir',build=True)
+        run(['go','run','./scripts/rust-port/cmd/renderirgen','--check','--output','testdata/port/render/v2/json-ir.json','--oracle-commit',reference['oracle']['commit'],'--oracle-release',reference['oracle']['release']],'go-render-ir',build=True)
         html = run(['go','test','-count=1','-v','./internal/export','-run','^TestPortRenderHTMLFixture$'],'go-render-html',build=True)
         assert b'--- PASS: TestPortRenderHTMLFixture' in html
         cargo = ['cargo']

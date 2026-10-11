@@ -240,13 +240,13 @@ var toolContracts = []toolContract{
 	},
 	{
 		name:        "desk_split_pdf",
-		description: "Splits a PDF into parts after the given pages and writes them into an output directory. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires the Poppler utilities (pdfinfo, pdfseparate, pdfunite) on PATH. Legacy alias: split_pdf.",
+		description: "Splits a PDF into new part files after the given pages. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires pdfinfo and qpdf on PATH. Existing outputs and input aliases are refused. Legacy alias: split_pdf.",
 		schema:      `{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"at":{"type":"string","description":"split after these pages, e.g. 2,4 or 2-3,6"},"output_dir":{"type":"string","description":"directory for the generated part PDFs"}},"required":["input","at","output_dir"]}`,
 		readOnly:    false,
 	},
 	{
 		name:        "desk_merge_pdf",
-		description: "Merges two or more PDFs into one output file without modifying the inputs. inputs is an array of PDF paths; output is the destination PDF path. Requires the Poppler utility pdfunite on PATH. Legacy alias: merge_pdf.",
+		description: "Merges two or more PDFs into a new output file without modifying the inputs. inputs is an array of PDF paths; output must not exist or alias an input. Requires qpdf on PATH. Legacy alias: merge_pdf.",
 		schema:      `{"type":"object","properties":{"inputs":{"type":"array","items":{"type":"string"},"description":"input PDF paths, at least two"},"output":{"type":"string","description":"destination PDF path"}},"required":["inputs","output"]}`,
 		readOnly:    false,
 	},

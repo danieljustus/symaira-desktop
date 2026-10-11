@@ -3,15 +3,12 @@
 //! are caller-selected local paths; this is not a vault-confinement boundary.
 use std::{
     collections::BTreeSet,
-    fs::{self, File},
-    io::{self, Read},
+    fs, io,
     path::{Component, Path, PathBuf},
-    process::{Command, Stdio},
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
-    thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
@@ -25,7 +22,14 @@ impl Context {
     pub fn cancel(&self) {
         self.cancelled.store(true, Ordering::Release);
     }
-    fn error(&self) -> Option<&'static str> {
+    fn bounded(&self) -> Self {
+        let deadline = Instant::now() + Duration::from_secs(60);
+        Self {
+            cancelled: self.cancelled.clone(),
+            deadline: Some(self.deadline.map_or(deadline, |at| at.min(deadline))),
+        }
+    }
+    pub(crate) fn error(&self) -> Option<&'static str> {
         if self.cancelled.load(Ordering::Acquire) {
             Some("context canceled")
         } else if self.deadline.is_some_and(|at| Instant::now() >= at) {
@@ -103,6 +107,7 @@ impl Tools {
         at: &str,
         output_dir: &str,
     ) -> Result<Vec<String>, String> {
+        let ctx = &ctx.bounded();
         let pages = self.page_count(ctx, input)?;
         let boundaries = parse_pages(at)?;
         for boundary in &boundaries {
@@ -114,49 +119,43 @@ impl Tools {
         }
         mkdir_all(Path::new(output_dir))
             .map_err(|e| format!("create split output directory: {e}"))?;
-        let temp = Workspace::new("symingest-pdf-split-")
+        let ends: Vec<_> = boundaries.into_iter().chain([pages]).collect();
+        let outputs: Vec<_> = (1..=ends.len())
+            .map(|index| {
+                text(&clean(
+                    Path::new(output_dir).join(format!("part-{index:03}.pdf")),
+                ))
+            })
+            .collect();
+        new_outputs(&[input.into()], &outputs)?;
+        let temp = Workspace::new(Path::new(output_dir))
             .map_err(|e| format!("create PDF split workspace: {e}"))?;
-        let mut page_paths = Vec::new();
-        for page in 1..=pages {
-            let pattern = text(&temp.0.join("page-%d.pdf"));
+        let mut start = 1;
+        for (index, end) in ends.into_iter().enumerate() {
+            let staged = text(&temp.0.join(format!("part-{:03}.pdf", index + 1)));
             self.run(
                 ctx,
-                &self.pdfseparate,
+                &self.qpdf,
                 &[
-                    "-f".into(),
-                    page.to_string(),
-                    "-l".into(),
-                    page.to_string(),
                     input.into(),
-                    pattern,
+                    "--pages".into(),
+                    ".".into(),
+                    format!("{start}-{end}"),
+                    "--".into(),
+                    staged.clone(),
                 ],
             )
-            .map_err(|e| format!("split page {page}: {e}"))?;
-            let path = text(&temp.0.join(format!("page-{page}.pdf")));
-            fs::metadata(&path).map_err(|e| {
-                format!(
-                    "split page {page} did not produce a PDF: {}",
-                    path_error("stat", &path, e)
-                )
-            })?;
-            page_paths.push(path);
+            .map_err(|e| format!("split part {}: {e}", index + 1))?;
+            self.validate(ctx, &staged)?;
+            start = end + 1;
         }
-        let mut start = 0;
-        let mut outputs = Vec::new();
-        for (index, end) in boundaries.into_iter().chain([pages]).enumerate() {
-            let output = text(&clean(
-                Path::new(output_dir).join(format!("part-{:03}.pdf", index + 1)),
-            ));
-            let mut args = page_paths[start..end as usize].to_vec();
-            args.push(output.clone());
-            self.run(ctx, &self.pdfunite, &args)
-                .map_err(|e| format!("merge split part {}: {e}", index + 1))?;
-            outputs.push(output);
-            start = end as usize;
+        for output in &outputs {
+            publish(ctx, &text(&temp.0.join(base(output))), output)?;
         }
         Ok(outputs)
     }
     pub fn merge(&self, ctx: &Context, inputs: &[String], output: &str) -> Result<(), String> {
+        let ctx = &ctx.bounded();
         if inputs.len() < 2 {
             return Err("merge requires at least two input PDFs".into());
         }
@@ -164,11 +163,20 @@ impl Tools {
             require_file(input).map_err(|e| format!("merge input {input}: {e}"))?;
         }
         mkdir_all(&parent(output)).map_err(|e| format!("create merge output directory: {e}"))?;
-        let mut args = inputs.to_vec();
-        args.push(output.into());
-        self.run(ctx, &self.pdfunite, &args)
-            .map_err(|e| format!("merge PDFs: {e}"))?;
-        require_file(output)
+        self.write_output(ctx, inputs, output, |staged| {
+            let mut args = vec![
+                inputs[0].clone(),
+                "--pages".into(),
+                ".".into(),
+                "1-z".into(),
+            ];
+            for input in &inputs[1..] {
+                args.extend([input.clone(), "1-z".into()]);
+            }
+            args.extend(["--".into(), staged.into()]);
+            self.run(ctx, &self.qpdf, &args)
+                .map_err(|e| format!("merge PDFs: {e}"))
+        })
     }
     pub fn rotate(
         &self,
@@ -178,6 +186,7 @@ impl Tools {
         degrees: i64,
         pages: &str,
     ) -> Result<(), String> {
+        let ctx = &ctx.bounded();
         require_file(input).map_err(|e| format!("rotate input: {e}"))?;
         if ![-270, -180, -90, 90, 180, 270].contains(&degrees) {
             return Err("rotation must be one of -270, -180, -90, 90, 180, 270".into());
@@ -191,18 +200,14 @@ impl Tools {
         } else {
             format!("{degrees:+}:{pages}")
         };
-        self.run(
-            ctx,
-            &self.qpdf,
-            &[
-                "--warning-exit-0".into(),
-                input.into(),
-                output.into(),
-                format!("--rotate={selector}"),
-            ],
-        )
-        .map_err(|e| format!("rotate PDF (qpdf is required): {e}"))?;
-        require_file(output)
+        self.write_output(ctx, &[input.into()], output, |staged| {
+            self.run(
+                ctx,
+                &self.qpdf,
+                &[input.into(), staged.into(), format!("--rotate={selector}")],
+            )
+            .map_err(|e| format!("rotate PDF (qpdf is required): {e}"))
+        })
     }
     fn page_count(&self, ctx: &Context, input: &str) -> Result<i64, String> {
         require_file(input).map_err(|e| format!("split input: {e}"))?;
@@ -213,6 +218,9 @@ impl Tools {
                 && key.trim() == "Pages"
                 && let Some(pages) = positive(value)
             {
+                if pages > 10_000 {
+                    return Err("PDF page count exceeds 10000 pages".into());
+                }
                 return Ok(pages);
             }
         }
@@ -224,6 +232,75 @@ impl Tools {
         let path = tool_path(name, &base(name))?;
         execute(ctx, &path, args).map(|_| ())
     }
+    fn write_output(
+        &self,
+        ctx: &Context,
+        inputs: &[String],
+        output: &str,
+        write: impl FnOnce(&str) -> Result<(), String>,
+    ) -> Result<(), String> {
+        new_outputs(inputs, &[output.into()])?;
+        let temp = Workspace::new(&parent(output))
+            .map_err(|e| format!("create PDF output workspace: {e}"))?;
+        let staged = text(&temp.0.join("result.pdf"));
+        write(&staged)?;
+        self.validate(ctx, &staged)?;
+        publish(ctx, &staged, output)
+    }
+    fn validate(&self, ctx: &Context, staged: &str) -> Result<(), String> {
+        let info = fs::symlink_metadata(staged).map_err(|e| path_error("lstat", staged, e))?;
+        if !info.file_type().is_file() {
+            return Err("PDF tool output is not a regular file".into());
+        }
+        self.run(ctx, &self.qpdf, &["--check".into(), staged.into()])
+            .map_err(|e| format!("validate PDF output: {e}"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(staged, fs::Permissions::from_mode(0o600))
+                .map_err(|e| e.to_string())?;
+        }
+        Ok(())
+    }
+}
+
+fn new_outputs(inputs: &[String], outputs: &[String]) -> Result<(), String> {
+    for output in outputs {
+        if let Ok(info) = fs::metadata(output) {
+            for input in inputs {
+                let original = fs::metadata(input).map_err(|e| path_error("stat", input, e))?;
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::MetadataExt;
+                    if info.dev() == original.dev() && info.ino() == original.ino() {
+                        return Err(format!("PDF output aliases input: {output}"));
+                    }
+                }
+                #[cfg(not(unix))]
+                let _ = (&info, original);
+            }
+        }
+        match fs::symlink_metadata(output) {
+            Ok(_) => return Err(format!("PDF output already exists: {output}")),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            Err(e) => return Err(path_error("lstat", output, e)),
+        }
+    }
+    Ok(())
+}
+
+fn publish(ctx: &Context, staged: &str, output: &str) -> Result<(), String> {
+    if let Some(error) = ctx.error() {
+        return Err(error.into());
+    }
+    // Atomic create-if-absent; never overwrite an alias or a raced-in path.
+    // A multi-part publication failure may retain already-published new parts.
+    fs::hard_link(staged, output).map_err(|e| {
+        format!(
+            "publish PDF output: {}",
+            path_error("link", &format!("{staged} {output}"), e)
+        )
+    })
 }
 
 /// Public facade mirrors ingest's lexical absolute-path conversion, without
@@ -318,6 +395,9 @@ fn require_file(path: &str) -> Result<(), String> {
     if metadata.is_dir() {
         return Err(format!("{path} is a directory"));
     }
+    if !metadata.is_file() {
+        return Err(format!("{path} is not a regular file"));
+    }
     Ok(())
 }
 fn path_error(op: &str, path: &str, error: io::Error) -> String {
@@ -411,14 +491,14 @@ pub(crate) fn tool_path(name: &str, label: &str) -> Result<PathBuf, String> {
 static NONCE: AtomicU64 = AtomicU64::new(0);
 struct Workspace(PathBuf);
 impl Workspace {
-    fn new(prefix: &str) -> Result<Self, String> {
+    fn new(directory: &Path) -> Result<Self, String> {
         for _ in 0..32 {
             let stamp = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_nanos();
-            let path = std::env::temp_dir().join(format!(
-                "{prefix}{}-{stamp}-{}",
+            let path = directory.join(format!(
+                ".symdesk-pdf-{}-{stamp}-{}",
                 std::process::id(),
                 NONCE.fetch_add(1, Ordering::Relaxed)
             ));
@@ -445,69 +525,7 @@ impl Drop for Workspace {
     }
 }
 pub(crate) fn execute(ctx: &Context, path: &Path, args: &[String]) -> Result<String, String> {
-    let label = base(&text(path));
-    if let Some(error) = ctx.error() {
-        return Err(format!("{label}: {error}"));
-    }
-    // File-backed capture avoids waiting for EOF from inherited descendant pipes.
-    // The Go adapter kills only its direct child; no tree-cleanup claim is made.
-    let workspace = Workspace::new("symdesk-pdf-capture-")?;
-    let out_path = workspace.0.join("stdout");
-    let err_path = workspace.0.join("stderr");
-    let stdout = File::create(&out_path).map_err(|e| e.to_string())?;
-    let stderr = File::create(&err_path).map_err(|e| e.to_string())?;
-    let mut child = Command::new(path)
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(stdout)
-        .stderr(stderr)
-        .spawn()
-        .map_err(|e| format!("{label}: {}", path_error("fork/exec", &text(path), e)))?;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) => {}
-            Err(error) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(format!("{label}: {error}"));
-            }
-        }
-        if ctx.error().is_some() {
-            let _ = child.kill();
-            break child.wait().map_err(|e| format!("{label}: {e}"))?;
-        }
-        thread::sleep(Duration::from_millis(5));
-    };
-    let read = |path: &Path| -> Result<String, String> {
-        let mut bytes = Vec::new();
-        File::open(path)
-            .map_err(|e| e.to_string())?
-            .take(16 * 1024 * 1024 + 1)
-            .read_to_end(&mut bytes)
-            .map_err(|e| e.to_string())?;
-        if bytes.len() > 16 * 1024 * 1024 {
-            return Err("PDF tool output exceeds 16 MiB".into());
-        }
-        Ok(String::from_utf8_lossy(&bytes).into_owned())
-    };
-    if !status.success() {
-        let message = read(&err_path)?;
-        let message = message.trim();
-        let fallback = status.code().map_or_else(
-            || "signal: killed".into(),
-            |code| format!("exit status {code}"),
-        );
-        return Err(format!(
-            "{label}: {}",
-            if message.is_empty() {
-                &fallback
-            } else {
-                message
-            }
-        ));
-    }
-    read(&out_path)
+    crate::pdfprocess::run(ctx, path, args)
 }
 fn quote(value: &str) -> String {
     let mut result = String::from("\"");
@@ -523,8 +541,12 @@ fn quote(value: &str) -> String {
             '\u{b}' => result.push_str("\\v"),
             '\u{c}' => result.push_str("\\f"),
             c if c < ' ' || c == '\u{7f}' => result.push_str(&format!("\\x{:02x}", c as u32)),
-            c if c.is_control() || (c.is_whitespace() && c != ' ') => {
-                result.push_str(&format!("\\u{:04x}", c as u32))
+            c if !crate::go_print::is_print(c) => {
+                if c as u32 <= 0xffff {
+                    result.push_str(&format!("\\u{:04x}", c as u32));
+                } else {
+                    result.push_str(&format!("\\U{:08x}", c as u32));
+                }
             }
             c => result.push(c),
         }
@@ -548,5 +570,17 @@ mod tests {
             "page selector exceeds 1000000 pages"
         );
         assert_eq!(clean(PathBuf::from("a/../b/./c")), Path::new("b/c"));
+    }
+
+    #[test]
+    fn go_unicode_error_quoting() {
+        assert_eq!(
+            parse_pages("1,\u{200b}").unwrap_err(),
+            "invalid page number \"\\u200b\""
+        );
+        assert_eq!(
+            quote("é東\u{301}\u{200b}\u{e000}\u{e0001}\u{1cc00}"),
+            "\"é東\u{301}\\u200b\\ue000\\U000e0001\\U0001cc00\""
+        );
     }
 }

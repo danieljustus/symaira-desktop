@@ -61,11 +61,33 @@ fn main() {
             });
         }
         "qpdf" => {
-            assert_eq!(args.len(), 4);
-            assert_eq!(args[0], "--warning-exit-0");
-            assert!(args[3].starts_with("--rotate="));
-            let bytes = fs::read(&args[1]).unwrap();
-            fs::write(&args[2], bytes).unwrap();
+            if args[0] == "--check" {
+                if active && mode == "check-error" {
+                    eprintln!("controlled validation warning");
+                    process::exit(3);
+                }
+                assert!(Path::new(&args[1]).is_file());
+            } else if args.len() == 3 {
+                assert!(args[2].starts_with("--rotate="));
+                fs::write(&args[1], fs::read(&args[0]).unwrap()).unwrap();
+            } else {
+                assert_eq!(args[1], "--pages");
+                assert_eq!(args[2], ".");
+                assert_eq!(args[args.len() - 2], "--");
+                let mut bytes = Vec::new();
+                for pair in args[2..args.len() - 2].as_chunks::<2>().0 {
+                    let input = if pair[0] == "." { &args[0] } else { &pair[0] };
+                    if pair[1] == "1-z" {
+                        bytes.extend(fs::read(input).unwrap());
+                    } else {
+                        let (first, last) = pair[1].split_once('-').unwrap();
+                        for page in first.parse::<usize>().unwrap()..=last.parse().unwrap() {
+                            bytes.extend(format!("%PDF-fixture-page-{page}\n").bytes());
+                        }
+                    }
+                }
+                fs::write(args.last().unwrap(), bytes).unwrap();
+            }
         }
         _ => panic!("unknown fake tool"),
     }

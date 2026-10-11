@@ -8,16 +8,16 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
-	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/pdfops/reference"
 )
 
-const symdeskToolsFixtureRel = "../../testdata/port/mcp/symdesk-tools.json"
+const symdeskToolsFixtureRel = "../../testdata/port/render/v2/symdesk-tools.json"
 
 func TestSymdeskMCPInventory(t *testing.T) {
 	oracle := inventory.Oracle{
-		Commit:  fixtureoracle.Current().Commit,
-		Release: fixtureoracle.Current().Release,
+		Commit:  reference.Current().Commit,
+		Release: reference.Current().Release,
 	}
 
 	doc := buildSymDeskMCPDocument(oracle)

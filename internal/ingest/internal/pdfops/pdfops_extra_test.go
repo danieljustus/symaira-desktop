@@ -37,12 +37,11 @@ func TestMerge_TwoFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pdfunite := writeExecutable(t, dir, "pdfunite", `
-last=""
-for arg in "$@"; do last="$arg"; done
-cat "$1" "$2" > "$last"
+	qpdf := writeExecutable(t, dir, "qpdf", `
+if [ "$1" = --check ]; then exit 0; fi
+cat "$1" "$5" > "$8"
 `)
-	tools := Tools{PDFUnite: pdfunite}
+	tools := Tools{QPDF: qpdf}
 
 	err := tools.Merge(context.Background(), []string{input1, input2}, output)
 	if err != nil {
@@ -115,7 +114,7 @@ func TestRotate_ValidDegreesWithoutQPDF(t *testing.T) {
 	}
 
 	// Use a fake qpdf that succeeds
-	qpdf := writeExecutable(t, dir, "qpdf", `cp "$2" "$3"`)
+	qpdf := writeExecutable(t, dir, "qpdf", `if [ "$1" = --check ]; then exit 0; fi; cp "$1" "$2"`)
 	tools := Tools{QPDF: qpdf}
 	output := filepath.Join(dir, "rotated.pdf")
 
@@ -140,7 +139,7 @@ func TestRotate_WithPageSpec(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	qpdf := writeExecutable(t, dir, "qpdf", `cp "$2" "$3"`)
+	qpdf := writeExecutable(t, dir, "qpdf", `if [ "$1" = --check ]; then exit 0; fi; cp "$1" "$2"`)
 	tools := Tools{QPDF: qpdf}
 	output := filepath.Join(dir, "rotated.pdf")
 

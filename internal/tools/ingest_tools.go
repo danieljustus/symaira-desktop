@@ -194,12 +194,12 @@ func newRulesDeleteTool(cfg *config.Config) *Tool {
 
 // newSplitPDFTool exposes the in-process PDF split (ingest.SplitPDFAtSpec) as
 // an MCP tool. Mutating: it writes part PDFs to the given output directory.
-// It fails with a clear message when the Poppler utilities the split needs
+// It fails with a clear message when pdfinfo or qpdf
 // are absent. Canonical surface behind the legacy `split_pdf` alias.
 func newSplitPDFTool() *Tool {
 	return &Tool{
 		Name:        "desk_split_pdf",
-		Description: "Splits a PDF into parts after the given pages and writes them into an output directory. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires the Poppler utilities (pdfinfo, pdfseparate, pdfunite) on PATH. Legacy alias: split_pdf.",
+		Description: "Splits a PDF into new part files after the given pages. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires pdfinfo and qpdf on PATH. Existing outputs and input aliases are refused. Legacy alias: split_pdf.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"at":{"type":"string","description":"split after these pages, e.g. 2,4 or 2-3,6"},"output_dir":{"type":"string","description":"directory for the generated part PDFs"}},"required":["input","at","output_dir"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
@@ -213,8 +213,8 @@ func newSplitPDFTool() *Tool {
 			if args.Input == "" || args.At == "" || args.OutputDir == "" {
 				return nil, fmt.Errorf("input, at and output_dir are required")
 			}
-			if !ingest.HasPopplerSplit() {
-				return nil, fmt.Errorf("PDF splitting requires the Poppler utilities pdfinfo, pdfseparate and pdfunite on PATH")
+			if !ingest.HasPDFSplit() {
+				return nil, fmt.Errorf("PDF splitting requires pdfinfo and qpdf on PATH")
 			}
 			parts, err := ingest.SplitPDFFunc(ctx, args.Input, args.At, args.OutputDir)
 			if err != nil {
@@ -227,12 +227,12 @@ func newSplitPDFTool() *Tool {
 
 // newMergePDFTool exposes the in-process PDF merge (ingest.MergePDFs) as an
 // MCP tool. Mutating: it writes the merged PDF to the given output path.
-// It fails with a clear message when the Poppler pdfunite utility is absent.
+// It fails with a clear message when qpdf is absent.
 // Canonical surface behind the legacy `merge_pdf` alias.
 func newMergePDFTool() *Tool {
 	return &Tool{
 		Name:        "desk_merge_pdf",
-		Description: "Merges two or more PDFs into one output file without modifying the inputs. inputs is an array of PDF paths; output is the destination PDF path. Requires the Poppler utility pdfunite on PATH. Legacy alias: merge_pdf.",
+		Description: "Merges two or more PDFs into a new output file without modifying the inputs. inputs is an array of PDF paths; output must not exist or alias an input. Requires qpdf on PATH. Legacy alias: merge_pdf.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"inputs":{"type":"array","items":{"type":"string"},"description":"input PDF paths, at least two"},"output":{"type":"string","description":"destination PDF path"}},"required":["inputs","output"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {

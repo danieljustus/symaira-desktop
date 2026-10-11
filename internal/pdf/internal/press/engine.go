@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/pdfprocess"
 )
 
 // Capability describes what an engine/profile combination guarantees.
@@ -99,7 +101,7 @@ func DetectTypst(ctx context.Context, binOverride string) EngineInfo {
 
 // typstVersion runs `typst --version` and extracts the semver. Best-effort.
 func typstVersion(ctx context.Context, path string) string {
-	out, err := exec.CommandContext(ctx, path, "--version").Output()
+	out, err := pdfprocess.Run(ctx, path, "--version")
 	if err != nil {
 		return ""
 	}

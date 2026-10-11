@@ -35,9 +35,10 @@ fn collect_environment(
 }
 
 fn is_configuration_environment_name(name: &str) -> bool {
-    let name = name.to_ascii_uppercase();
+    // Match the keys consumed by these loaders, not whole namespaces. Keep
+    // this exact list aligned with the configuration and path lookups below.
     matches!(
-        name.as_str(),
+        name,
         "HOME"
             | "USERPROFILE"
             | "TMPDIR"
@@ -46,13 +47,46 @@ fn is_configuration_environment_name(name: &str) -> bool {
             | "LANG"
             | "LC_ALL"
             | "LC_MESSAGES"
-            | "TZ"
-    ) || name.starts_with("XDG_")
-        || name.starts_with("SYMDESK_")
-        || name.starts_with("SYMINGEST_")
-        || name.starts_with("SYMRELATE_")
-        || name.starts_with("SYMSEEK_")
-        || name.starts_with("OLLAMA_")
+            | "XDG_DATA_HOME"
+            | "XDG_CONFIG_HOME"
+            | "XDG_CACHE_HOME"
+            | "SYMDESK_VAULT"
+            | "SYMDESK_INBOX"
+            | "SYMDESK_SIDECAR"
+            | "SYMDESK_REVIEW_THRESHOLD"
+            | "SYMDESK_LLM_PROVIDER"
+            | "SYMDESK_LLM_API_KEY"
+            | "SYMDESK_LLM_MODEL"
+            | "SYMDESK_OLLAMA_URL"
+            | "SYMDESK_RECIPE_RUNNER"
+            | "SYMDESK_HERMES_SESSION"
+            | "SYMDESK_LANG"
+            | "SYMDESK_MAX_TOKENS"
+            | "SYMDESK_HISTORY_MAX_PER_FILE"
+            | "SYMDESK_HISTORY_MAX_AGE_DAYS"
+            | "SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS"
+            | "SYMDESK_TRASH_RETENTION_DAYS"
+            | "SYMDESK_RESULTS_MAX_AGE_DAYS"
+            | "SYMDESK_RESULTS_MAX_PER_TASK"
+            | "SYMDESK_AGENT_MAX_ITERATIONS"
+            | "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY"
+            | "SYMDESK_STORAGE_PATH_TEMPLATE"
+            | "SYMRELATE_CONFIG_HOME"
+            | "SYMRELATE_DATA_HOME"
+            | "SYMRELATE_CACHE_HOME"
+            | "SYMINGEST_VAULT"
+            | "SYMINGEST_OCR_LANG"
+            | "SYMINGEST_DB_PATH"
+            | "SYMINGEST_ARCHIVE_PATH"
+            | "SYMINGEST_INBOX"
+            | "SYMINGEST_PAPERLESS_BASE_URL"
+            | "SYMINGEST_SYMSEEK_ENABLED"
+            | "SYMINGEST_SYMSEEK_BINARY"
+            | "SYMINGEST_IMAP_ACCOUNTS"
+            | "SYMINGEST_IMAP_POLL_INTERVAL"
+            | "SYMINGEST_OLLAMA_BASE_URL"
+            | "SYMINGEST_OLLAMA_MODEL"
+    )
 }
 
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -865,6 +899,21 @@ mod environment_snapshot_tests {
             Some("/safe/data")
         );
         assert!(!environment.contains_key("UNRELATED_BINARY_ENV"));
+        for name in [
+            "XDG_UNUSED_BINARY",
+            "SYMDESK_UNUSED_BINARY",
+            "SYMINGEST_UNUSED_BINARY",
+            "SYMRELATE_UNUSED_BINARY",
+            "SYMSEEK_UNUSED_BINARY",
+            "OLLAMA_UNUSED_BINARY",
+            "SYMDESK_VAULT_EXTRA",
+            "xdg_data_home",
+        ] {
+            let environment =
+                collect_environment([(OsString::from(name), OsString::from_vec(vec![0xff]))])
+                    .expect("unknown keys are not configuration, regardless of prefix");
+            assert!(!environment.contains_key(name));
+        }
     }
 
     #[test]

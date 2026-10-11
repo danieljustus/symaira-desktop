@@ -181,6 +181,16 @@ func configPathCases() []namedCase {
 			map[string]string{"UNRELATED_BINARY_ENV": "/w=="}),
 	}
 
+	for _, name := range []string{
+		"XDG_UNUSED_BINARY", "SYMDESK_UNUSED_BINARY", "SYMINGEST_UNUSED_BINARY",
+		"SYMRELATE_UNUSED_BINARY", "SYMSEEK_UNUSED_BINARY", "OLLAMA_UNUSED_BINARY",
+	} {
+		entry := withRawEnv(makeCase("unrelated-invalid-utf8-"+name, "robustness", "config", "paths"),
+			map[string]string{name: "/w=="})
+		entry.Platform = "unix"
+		cases = append(cases, entry)
+	}
+
 	for index := range cases {
 		if cases[index].ID == "unified-primary-symlinks-win" ||
 			cases[index].ID == "vault-symlink-alias-hash" ||

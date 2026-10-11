@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -136,6 +137,68 @@ class ConfigPathsNativeTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(gate.GateFailure, "duplicate IDs"):
             gate.validate_capture_report(duplicate, "Darwin", "1" * 40)
+
+    def test_go_metadata_only_source_is_rejected_after_package_graph_resolution(self):
+        metadata_only = {
+            "Path": gate.COREKIT,
+            "Version": gate.COREKIT_VERSION,
+            "Sum": "h1:corekit-test",
+        }
+        with self.assertRaisesRegex(gate.GateFailure, "no resolved source directory"):
+            gate.go_module_sources([{"Module": metadata_only}])
+
+        with tempfile.TemporaryDirectory(prefix="config-paths-module-source-") as temporary:
+            root = Path(temporary)
+            corekit_dir = root / "symaira-corekit@v0.18.2"
+            corekit_dir.mkdir()
+            (corekit_dir / "go.mod").write_text("module github.com/danieljustus/symaira-corekit\\n", encoding="utf-8")
+            resolved_module = {
+                **metadata_only,
+                "Dir": str(corekit_dir),
+            }
+            calls = []
+
+            def run_query(_report, _logs, name, _command, _cwd, **_kwargs):
+                calls.append(name)
+                if name in {"resolve-go-cli-build-inputs", "resolve-go-harness-test-inputs"}:
+                    value = {"ImportPath": name, "Module": resolved_module}
+                else:
+                    value = metadata_only
+                return json.dumps(value).encode("utf-8")
+
+            arguments = (
+                {"commands": []}, root, root, root,
+            )
+            options = {"env": {}, "launch_env": {}, "launcher": None}
+            with mock.patch.object(gate, "run_logged_command", side_effect=run_query):
+                with self.assertRaisesRegex(gate.GateFailure, "no resolved source directory"):
+                    gate.resolve_go_source_inputs(*arguments, **options)
+            self.assertEqual(calls, [
+                "resolve-go-cli-build-inputs",
+                "resolve-go-harness-test-inputs",
+                "resolve-pinned-corekit-source",
+            ])
+
+            calls.clear()
+
+            def run_resolved_query(_report, _logs, name, _command, _cwd, **_kwargs):
+                calls.append(name)
+                if name in {"resolve-go-cli-build-inputs", "resolve-go-harness-test-inputs"}:
+                    value = {"ImportPath": name, "Module": resolved_module}
+                else:
+                    value = resolved_module
+                return json.dumps(value).encode("utf-8")
+
+            with mock.patch.object(gate, "run_logged_command", side_effect=run_resolved_query):
+                _packages, modules, identity, source_dir = gate.resolve_go_source_inputs(*arguments, **options)
+            self.assertEqual(calls, [
+                "resolve-go-cli-build-inputs",
+                "resolve-go-harness-test-inputs",
+                "resolve-pinned-corekit-source",
+            ])
+            self.assertEqual(len(modules), 1)
+            self.assertEqual(identity["directory"], str(corekit_dir.resolve()))
+            self.assertEqual(source_dir, corekit_dir.resolve())
 
     def test_windows_requires_59_real_pairs_and_16_explicit_unix_skips(self):
         capture = synthetic_capture("Windows")

@@ -197,6 +197,57 @@ def go_module_sources(packages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(sources, key=lambda source: (str(source["path"]), str(source["version"]), str(source["directory"])))
 
 
+def resolve_go_source_inputs(
+    report: dict[str, Any],
+    logs_dir: Path,
+    oracle: Path,
+    root: Path,
+    *,
+    env: dict[str, str],
+    launch_env: dict[str, str],
+    launcher: str | None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any], Path]:
+    """Resolve build package sources before requiring the pinned module cache Dir."""
+    cli_packages = decode_json_stream(run_logged_command(
+        report, logs_dir, "resolve-go-cli-build-inputs",
+        ["go", "list", "-deps", "-json", "./cmd/symdesk"], oracle,
+        env=env, launch_env=launch_env, launcher=launcher,
+    ))
+    harness_packages = decode_json_stream(run_logged_command(
+        report, logs_dir, "resolve-go-harness-test-inputs",
+        ["go", "-C", str(root), "list", "-deps", "-test", "-json", "./scripts/rust-port/cmd/config-paths-diff", "./scripts/rust-port/internal/diff"], root,
+        env=env, launch_env=launch_env, launcher=launcher,
+    ))
+    packages = cli_packages + harness_packages
+
+    corekit_values = decode_json_stream(run_logged_command(
+        report, logs_dir, "resolve-pinned-corekit-source",
+        ["go", "list", "-m", "-json", COREKIT], oracle,
+        env=env, launch_env=launch_env, launcher=launcher,
+    ))
+    if len(corekit_values) != 1:
+        raise GateFailure("go list -m -json did not return one CoreKit module identity")
+    corekit = corekit_values[0]
+    if corekit.get("Path") != COREKIT or corekit.get("Version") != COREKIT_VERSION or corekit.get("Replace"):
+        raise GateFailure(f"CoreKit module path/version/replacement differs from the pin: {corekit}")
+    directory = corekit.get("Dir")
+    if not isinstance(directory, str) or not directory:
+        raise GateFailure(f"pinned CoreKit module has no resolved source directory: {COREKIT}")
+    corekit_dir = Path(directory).resolve(strict=True)
+    if not corekit_dir.is_dir() or corekit_dir.name != "symaira-corekit@v0.18.2" or not corekit.get("Sum"):
+        raise GateFailure("CoreKit source directory or checksum is not the actual pinned module")
+
+    modules = go_module_sources(packages)
+    if not any(
+        module["path"] == COREKIT and module["version"] == COREKIT_VERSION
+        and module["directory"] == str(corekit_dir) and module["sum"] == corekit["Sum"]
+        for module in modules
+    ):
+        raise GateFailure("Go CLI/test package input closure omits the exact queried CoreKit module")
+    identity = {"path": COREKIT, "version": COREKIT_VERSION, "sum": corekit["Sum"], "directory": str(corekit_dir)}
+    return packages, modules, identity, corekit_dir
+
+
 def cargo_package_sources(metadata: dict[str, Any]) -> list[dict[str, Any]]:
     workspace = set(metadata.get("workspace_members", []))
     package_sources = []
@@ -542,40 +593,11 @@ def main() -> int:
             raise GateFailure("local Go module/build caches must already exist; no internal fallback or cache creation")
         env.update(GOPATH=gopath, GOMODCACHE=gomodcache, GOCACHE=gocache)
 
-        corekit_bytes = run_logged_command(
-            runner, output / "commands", "resolve-pinned-corekit-source",
-            ["go", "list", "-m", "-json", COREKIT], oracle,
+        go_packages, go_modules_before, corekit_module, corekit_dir = resolve_go_source_inputs(
+            runner, output / "commands", oracle, root,
             env=env, launch_env=launch_env, launcher=launcher,
         )
-        corekit_values = decode_json_stream(corekit_bytes)
-        if len(corekit_values) != 1:
-            raise GateFailure("go list -m -json did not return one CoreKit module identity")
-        corekit = corekit_values[0]
-        if corekit.get("Path") != COREKIT or corekit.get("Version") != COREKIT_VERSION or corekit.get("Replace"):
-            raise GateFailure(f"CoreKit module path/version/replacement differs from the pin: {corekit}")
-        corekit_dir = Path(corekit.get("Dir", "")).resolve(strict=True)
-        if corekit_dir.name != "symaira-corekit@v0.18.2" or not corekit.get("Sum"):
-            raise GateFailure("CoreKit source directory or checksum is not the actual pinned module")
-        runner["corekit_module"] = {"path": COREKIT, "version": COREKIT_VERSION, "sum": corekit["Sum"], "directory": str(corekit_dir)}
-
-        cli_packages = decode_json_stream(run_logged_command(
-            runner, output / "commands", "resolve-go-cli-build-inputs",
-            ["go", "list", "-deps", "-json", "./cmd/symdesk"], oracle,
-            env=env, launch_env=launch_env, launcher=launcher,
-        ))
-        harness_packages = decode_json_stream(run_logged_command(
-            runner, output / "commands", "resolve-go-harness-test-inputs",
-            ["go", "-C", str(root), "list", "-deps", "-test", "-json", "./scripts/rust-port/cmd/config-paths-diff", "./scripts/rust-port/internal/diff"], root,
-            env=env, launch_env=launch_env, launcher=launcher,
-        ))
-        go_packages = cli_packages + harness_packages
-        go_modules_before = go_module_sources(go_packages)
-        if not any(
-            module["path"] == COREKIT and module["version"] == COREKIT_VERSION
-            and module["directory"] == str(corekit_dir) and module["sum"] == corekit["Sum"]
-            for module in go_modules_before
-        ):
-            raise GateFailure("Go CLI/test package input closure omits the exact queried CoreKit module")
+        runner["corekit_module"] = corekit_module
 
         cargo_target = output / "cargo-target"
         cargo_target.mkdir(mode=0o700)

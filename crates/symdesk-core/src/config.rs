@@ -2,7 +2,13 @@
 
 //! Unified SymDesk configuration semantics frozen from the Go loader.
 
-use std::{collections::BTreeMap, ffi::OsString, fmt, fs, io::Write, path::Path};
+use std::{
+    collections::BTreeMap,
+    ffi::OsString,
+    fmt, fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -758,17 +764,19 @@ fn quote_artifact(value: &str) -> String {
     quoted
 }
 
-/// Mirrors configkit's important distinction: only an absolute XDG config
-/// home affects the global file path; relative values fall back to HOME.
+/// Mirrors configkit's global path policy while retaining the product's
+/// OS-native home selection and Go filepath.Clean normalization.
 #[must_use]
 pub fn global_path(environment: &BTreeMap<String, String>) -> String {
-    let base = nonempty(environment, "XDG_CONFIG_HOME")
-        .filter(|value| Path::new(value).is_absolute())
-        .map_or_else(
-            || join(user_home(environment).unwrap_or("."), ".config"),
-            str::to_owned,
-        );
-    join(&join(&base, "symdesk"), "config.toml")
+    let xdg = nonempty(environment, "XDG_CONFIG_HOME").map(PathBuf::from);
+    // The product selects only HOME on Unix and only USERPROFILE on Windows.
+    // Do not forward both roots: CoreKit's Windows fallback accepts HOME when
+    // USERPROFILE is missing, unlike the Go caller.
+    let home = PathBuf::from(user_home(environment).unwrap_or("."));
+    let path = symaira_core_config::default_path_for_roots("symdesk", xdg, Some(home), None);
+    // CoreKit selects the path; retain Go's lexical cleanup and Windows
+    // verbatim-volume handling from the existing product adapter.
+    store_join(&path.to_string_lossy(), "")
 }
 
 fn warning_if_negative(findings: &mut Vec<Finding>, field: &'static str, value: i64) {

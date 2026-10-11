@@ -202,6 +202,9 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 
 func TestSanitizedCheckEnvironmentPreservesProcessLimit(t *testing.T) {
 	if os.Getenv("PORTGEN_RESOURCE_PROBE") == "1" {
+		if got := os.Getenv("GOMAXPROCS"); got != "2" {
+			t.Fatalf("child GOMAXPROCS environment = %q, want 2", got)
+		}
 		if got := runtime.GOMAXPROCS(0); got != 2 {
 			t.Fatalf("child GOMAXPROCS = %d, want 2", got)
 		}

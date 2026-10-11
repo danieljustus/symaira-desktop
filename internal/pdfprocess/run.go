@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -64,7 +65,10 @@ func Run(ctx context.Context, path string, args ...string) ([]byte, error) {
 	defer func() { _ = stderr.Close() }()
 	defer func() { _ = errWriter.Close() }()
 	cmd.Stdout, cmd.Stderr = outWriter, errWriter
-	cmd.Cancel = func() error { return terminate(cmd) }
+	// Cancellation and post-Wait cleanup share one signal and its result.
+	// Re-signalling a reaped group can hit zombies (EPERM) or a recycled ID.
+	stop := sync.OnceValue(func() error { return terminate(cmd) })
+	cmd.Cancel = stop
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("%s: %w", label, err)
 	}
@@ -86,9 +90,8 @@ func Run(ctx context.Context, path string, args ...string) ([]byte, error) {
 		cancel()
 		waitErr = <-waitDone
 	}
-	// Also clean descendants after a normal leader exit. Never repeat this
-	// group signal after returning; a later group could reuse the numeric ID.
-	cleanupErr := terminate(cmd)
+	// Also clean descendants after a normal leader exit, but never signal twice.
+	cleanupErr := stop()
 	for range 2 {
 		select {
 		case readErr := <-readDone:

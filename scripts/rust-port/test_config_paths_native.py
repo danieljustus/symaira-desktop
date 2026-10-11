@@ -59,6 +59,47 @@ def synthetic_capture(host: str = "Darwin") -> dict:
 
 
 class ConfigPathsNativeTests(unittest.TestCase):
+    def test_candidate_and_oracle_origins_accept_only_pinned_https_spellings(self):
+        origins = (gate.ORIGIN, gate.ORIGIN.removesuffix(".git"),
+                   gate.ORIGIN + "/extra", gate.ORIGIN + "?ref=main",
+                   "https://github.com.evil.example/danieljustus/symaira-desktop")
+        for role in ("candidate", "oracle"):
+            for origin in origins:
+                with self.subTest(role=role, origin=origin), tempfile.TemporaryDirectory() as temporary:
+                    parent = Path(temporary).resolve()
+                    candidate, oracle = parent / "candidate", parent / "oracle"
+                    candidate.mkdir()
+                    oracle.mkdir()
+                    output = parent / "evidence"
+
+                    def observe_git(root, *args):
+                        if args == ("rev-parse", "--show-toplevel"):
+                            return str(root)
+                        if args == ("remote", "get-url", "origin"):
+                            return origin if root == (candidate if role == "candidate" else oracle) else gate.ORIGIN
+                        if args == ("rev-parse", "HEAD"):
+                            return "not-a-commit" if root == (candidate if role == "candidate" else oracle) else "1" * 40
+                        if args == ("branch", "--show-current"):
+                            return "test-candidate"
+                        if args == ("rev-parse", "HEAD^{tree}"):
+                            return "2" * 40
+                        return ""
+
+                    with mock.patch.object(gate, "ROOT", candidate), \
+                         mock.patch.object(sys, "argv", ["native-gate", "--evidence-dir", str(output),
+                                                        "--oracle-worktree", str(oracle)]), \
+                         mock.patch.object(gate, "private_environment", return_value=({}, {})), \
+                         mock.patch.object(gate, "git", side_effect=observe_git), \
+                         mock.patch.object(sys, "stderr"):
+                        self.assertEqual(gate.main(), 1)
+                    receipt = json.loads((output / "gate.json").read_bytes())
+                    self.assertFalse(receipt["passed"])
+                    if origin in (gate.ORIGIN, gate.ORIGIN.removesuffix(".git")):
+                        expected = "HEAD is not a full immutable commit" if role == "candidate" else "not the exact clean immutable foundation"
+                    else:
+                        expected = "origin does not match the pinned repository"
+                    self.assertIn(expected, receipt["failure"])
+
     def test_output_symlink_parent_cannot_reenter_candidate_before_creation(self):
         with tempfile.TemporaryDirectory(prefix="config-paths-output-boundary-") as temporary:
             parent = Path(temporary).resolve()

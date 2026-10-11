@@ -42,10 +42,10 @@ func TestCaseSandboxEnvironmentAllowsConfinedPathsAndUnsetsHome(t *testing.T) {
 	if _, exists := values["USERPROFILE"]; exists {
 		t.Fatal("USERPROFILE remained set after requested unset")
 	}
-	if got, want := values["XDG_DATA_HOME"], "  "+root+string(os.PathSeparator)+"segment"+string(os.PathSeparator)+".."+string(os.PathSeparator)+"data  "; got != want {
+	if got, want := values["XDG_DATA_HOME"], "  "+root+"/segment/../data  "; got != want {
 		t.Fatalf("XDG_DATA_HOME = %q, want the unnormalized case value %q", got, want)
 	}
-	if got, want := values["SYMINGEST_DB_PATH"], filepath.Join(home, "ingest.db"); got != want {
+	if got, want := values["SYMINGEST_DB_PATH"], home+"/ingest.db"; got != want {
 		t.Fatalf("SYMINGEST_DB_PATH = %q, want %q", got, want)
 	}
 	if got := values["SYMINGEST_SYMSEEK_ENABLED"]; got != "maybe" {
@@ -108,7 +108,15 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resolved != filepath.Join(workspace, "vault") {
+	resolvedInfo, err := os.Stat(resolved)
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetInfo, err := os.Stat(filepath.Join(workspace, "vault"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !os.SameFile(resolvedInfo, targetInfo) {
 		t.Fatalf("symlink resolved to %q", resolved)
 	}
 	if err := setupSandboxFile(root, home, workspace, SetupFile{Path: "../outside", Content: "bad"}, replacements); err == nil {

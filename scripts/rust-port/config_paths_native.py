@@ -532,7 +532,7 @@ def main() -> int:
         root = ROOT.resolve(strict=True)
         if Path(git(root, "rev-parse", "--show-toplevel")).resolve() != root:
             raise GateFailure("runner is not executing from the exact candidate repository root")
-        if git(root, "remote", "get-url", "origin") != ORIGIN:
+        if git(root, "remote", "get-url", "origin") not in (ORIGIN, ORIGIN.removesuffix(".git")):
             raise GateFailure("candidate origin does not match the pinned repository")
         head = git(root, "rev-parse", "HEAD")
         if re.fullmatch(r"[0-9a-f]{40}", head) is None:
@@ -568,7 +568,7 @@ def main() -> int:
             oracle = oracle.resolve(strict=True)
         if Path(git(oracle, "rev-parse", "--show-toplevel")).resolve() != oracle:
             raise GateFailure("oracle worktree root does not match its explicitly owned path")
-        if git(oracle, "remote", "get-url", "origin") != ORIGIN:
+        if git(oracle, "remote", "get-url", "origin") not in (ORIGIN, ORIGIN.removesuffix(".git")):
             raise GateFailure("oracle checkout origin does not match the pinned repository")
         if git(oracle, "rev-parse", "HEAD") != FOUNDATION or git(oracle, "status", "--porcelain=v1", "--untracked-files=all"):
             raise GateFailure("Go oracle checkout is not the exact clean immutable foundation")

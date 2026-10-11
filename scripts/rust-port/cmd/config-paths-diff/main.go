@@ -274,7 +274,7 @@ func capture(goBinary, rustBinary, repoRoot, rustManifest, evidenceDir, corekitD
 		return report{}, err
 	}
 	if manifest != filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml") {
-		return report{}, fmt.Errorf("Rust manifest is not the assigned symdesk-cli manifest: %s", manifest)
+		return report{}, fmt.Errorf("rust manifest is not the assigned symdesk-cli manifest: %s", manifest)
 	}
 	corekitDir, err = filepath.Abs(corekitDir)
 	if err != nil {
@@ -291,7 +291,7 @@ func capture(goBinary, rustBinary, repoRoot, rustManifest, evidenceDir, corekitD
 	if err != nil {
 		return report{}, err
 	}
-	if origin != originURL {
+	if origin != originURL && origin != strings.TrimSuffix(originURL, ".git") {
 		return report{}, fmt.Errorf("unexpected origin %q", origin)
 	}
 	branch, err := git(root, "branch", "--show-current")
@@ -332,10 +332,10 @@ func capture(goBinary, rustBinary, repoRoot, rustManifest, evidenceDir, corekitD
 		return report{}, err
 	}
 	if goInfo.GoVersion != oracleGoVersion || goInfo.BuildPath != modulePath+"/cmd/symdesk" || goInfo.ModulePath != modulePath || goInfo.Revision != foundation || goInfo.Modified != "false" {
-		return report{}, fmt.Errorf("Go oracle identity mismatch: version=%s build_path=%s module=%s revision=%s modified=%s", goInfo.GoVersion, goInfo.BuildPath, goInfo.ModulePath, goInfo.Revision, goInfo.Modified)
+		return report{}, fmt.Errorf("go oracle identity mismatch: version=%s build_path=%s module=%s revision=%s modified=%s", goInfo.GoVersion, goInfo.BuildPath, goInfo.ModulePath, goInfo.Revision, goInfo.Modified)
 	}
 	if goInfo.CoreKitVersion != "v0.18.2" || goInfo.CoreKitModuleSum == "" {
-		return report{}, fmt.Errorf("Go oracle did not embed the pinned CoreKit dependency: version=%s sum=%s", goInfo.CoreKitVersion, goInfo.CoreKitModuleSum)
+		return report{}, fmt.Errorf("go oracle did not embed the pinned CoreKit dependency: version=%s sum=%s", goInfo.CoreKitVersion, goInfo.CoreKitModuleSum)
 	}
 	goCoreKit, err := moduleManifest(corekitDir, goInfo)
 	if err != nil {
@@ -533,7 +533,7 @@ func moduleManifest(directory string, binary binaryIdentity) (moduleIdentity, er
 	}
 	files := make(map[string]string, len(corekitSourceFiles))
 	for _, relative := range corekitSourceFiles {
-		content, err := os.ReadFile(filepath.Join(directory, relative))
+		content, err := os.ReadFile(filepath.Join(directory, relative)) // #nosec G304 -- explicit pinned-module source operand; relative is a fixed inventory entry.
 		if err != nil {
 			return moduleIdentity{}, fmt.Errorf("read pinned CoreKit source %s: %w", relative, err)
 		}
@@ -565,7 +565,7 @@ func sameModuleIdentity(left, right moduleIdentity) bool {
 
 func mutationControl(caseDir, caseID string, testCase portdiff.Case, oracle, candidate portdiff.Result) mutationEvidence {
 	inputPath := filepath.Join(caseDir, "go.stdout")
-	original, err := os.ReadFile(inputPath)
+	original, err := os.ReadFile(inputPath) // #nosec G304 -- fixed retained stdout file in the producer's own case directory.
 	if err != nil {
 		return mutationEvidence{CaseID: caseID, Field: "go.stdout[0]", Reason: "read retained source: " + err.Error()}
 	}
@@ -576,7 +576,7 @@ func mutationControl(caseDir, caseID string, testCase portdiff.Case, oracle, can
 		mutated.Stdout[0] ^= 0x01
 	}
 	compareErr := portdiff.Compare(testCase, mutated, candidate)
-	readback, readErr := os.ReadFile(inputPath)
+	readback, readErr := os.ReadFile(inputPath) // #nosec G304 -- reread the same producer-owned stdout without modifying the original.
 	return mutationEvidence{
 		CaseID:                 caseID,
 		Field:                  "go.stdout[0]",
@@ -644,7 +644,7 @@ func sourceManifest(root, commit string, files []string) (sourceIdentity, error)
 	}
 	identity.Tree = tree
 	for _, relative := range files {
-		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative))) // #nosec G304 -- explicit source checkout and fixed source-inventory operands.
 		if err != nil {
 			identity.Missing = append(identity.Missing, relative)
 			identity.InventoryErrors = append(identity.InventoryErrors, fmt.Sprintf("read %s: %v", relative, err))
@@ -657,13 +657,13 @@ func sourceManifest(root, commit string, files []string) (sourceIdentity, error)
 
 func verifyFilesAtCommit(root, commit string, files []string, hashes map[string]string) error {
 	for _, relative := range files {
-		command := exec.Command("git", "-C", root, "show", commit+":"+relative)
+		command := exec.Command("git", "-C", root, "show", commit+":"+relative) // #nosec G204 -- fixed Git executable and source operands passed as argv, not through a shell.
 		content, err := command.Output()
 		if err != nil {
 			return fmt.Errorf("read pinned Go source %s: %w", relative, err)
 		}
 		if got := digest(content); got != hashes[relative] {
-			return fmt.Errorf("Go production source differs from pinned commit at %s", relative)
+			return fmt.Errorf("go production source differs from pinned commit at %s", relative)
 		}
 	}
 	return nil
@@ -693,7 +693,7 @@ func inspectGoBinary(path string) (binaryIdentity, error) {
 			continue
 		}
 		if dependency.Replace != nil {
-			return binaryIdentity{}, errors.New("Go oracle replaces the pinned CoreKit module")
+			return binaryIdentity{}, errors.New("go oracle replaces the pinned CoreKit module")
 		}
 		identity.CoreKitVersion = dependency.Version
 		identity.CoreKitModuleSum = dependency.Sum
@@ -706,7 +706,7 @@ func inspectFileBinary(path string) (binaryIdentity, error) {
 	if err != nil {
 		return binaryIdentity{}, err
 	}
-	content, err := os.ReadFile(absolute)
+	content, err := os.ReadFile(absolute) // #nosec G304 -- explicitly selected producer/oracle/candidate executable, hashed without executing it.
 	if err != nil {
 		return binaryIdentity{}, err
 	}
@@ -723,7 +723,7 @@ func buildSetting(info *buildinfo.BuildInfo, key string) string {
 }
 
 func git(root string, args ...string) (string, error) {
-	command := exec.Command("git", append([]string{"-C", root}, args...)...)
+	command := exec.Command("git", append([]string{"-C", root}, args...)...) // #nosec G204 -- fixed Git executable; callers supply explicit argv without a shell.
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(string(output)))

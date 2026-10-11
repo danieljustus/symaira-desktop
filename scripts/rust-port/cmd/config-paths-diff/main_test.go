@@ -7,8 +7,35 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"testing"
 )
+
+func TestCaptureOriginAcceptsOnlyPinnedHTTPSRepositorySpellings(t *testing.T) {
+	for _, origin := range []string{originURL, strings.TrimSuffix(originURL, ".git"), originURL + "/extra", originURL + "?ref=main", "https://github.com.evil.example/danieljustus/symaira-desktop"} {
+		t.Run(origin, func(t *testing.T) {
+			base := t.TempDir()
+			root := filepath.Join(base, "repo")
+			if err := os.Mkdir(root, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := git(root, "init", "--initial-branch=main"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := git(root, "remote", "add", "origin", origin); err != nil {
+				t.Fatal(err)
+			}
+			_, err := capture("", "", root, filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml"), filepath.Join(base, "evidence"), filepath.Join(base, "symaira-corekit@v0.18.2"))
+			want := "unexpected origin"
+			if origin == originURL || origin == strings.TrimSuffix(originURL, ".git") {
+				want = "refusing non-isolated branch"
+			}
+			if err == nil || !strings.Contains(err.Error(), want) {
+				t.Fatalf("origin %q: got %v, want %q", origin, err, want)
+			}
+		})
+	}
+}
 
 func TestRetainPreflightFailureKeepsRawStreamsAndSourceClosure(t *testing.T) {
 	_, sourcePath, _, ok := runtime.Caller(0)
@@ -24,11 +51,11 @@ func TestRetainPreflightFailureKeepsRawStreamsAndSourceClosure(t *testing.T) {
 	if err := retainPreflightFailure(evidence, "", "", root, filepath.Join(evidence, "missing-corekit"), report{}, captureErr, stdout, stderr); err != nil {
 		t.Fatalf("retain failure: %v", err)
 	}
-	gotStdout, err := os.ReadFile(filepath.Join(evidence, "preflight.runner.stdout"))
+	gotStdout, err := os.ReadFile(filepath.Join(evidence, "preflight.runner.stdout")) // #nosec G304 -- fixed fixture path inside t.TempDir.
 	if err != nil {
 		t.Fatal(err)
 	}
-	gotStderr, err := os.ReadFile(filepath.Join(evidence, "preflight.runner.stderr"))
+	gotStderr, err := os.ReadFile(filepath.Join(evidence, "preflight.runner.stderr")) // #nosec G304 -- fixed fixture path inside t.TempDir.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +63,7 @@ func TestRetainPreflightFailureKeepsRawStreamsAndSourceClosure(t *testing.T) {
 		t.Fatalf("raw runner streams changed: stdout=%q stderr=%q", gotStdout, gotStderr)
 	}
 
-	content, err := os.ReadFile(filepath.Join(evidence, "preflight.failure.json"))
+	content, err := os.ReadFile(filepath.Join(evidence, "preflight.failure.json")) // #nosec G304 -- fixed fixture path inside t.TempDir.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +119,7 @@ func TestWriteNewPrivateRefusesToOverwriteExistingEvidence(t *testing.T) {
 	if err := writeNewPrivate(path, []byte("replacement bytes\n")); err == nil {
 		t.Fatal("overwrote existing evidence")
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) // #nosec G304 -- read the same test-owned evidence file inside t.TempDir.
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -134,7 +134,7 @@ func retainPreflightFailure(
 			receipt.GoCoreKitMissing = append(receipt.GoCoreKitMissing, relative)
 			continue
 		}
-		content, readErr := os.ReadFile(filepath.Join(corekitDirectory, filepath.FromSlash(relative)))
+		content, readErr := os.ReadFile(filepath.Join(corekitDirectory, filepath.FromSlash(relative))) // #nosec G304 -- explicit pinned-module source operand and fixed inventory entry.
 		if readErr != nil {
 			receipt.GoCoreKitMissing = append(receipt.GoCoreKitMissing, relative)
 			continue
@@ -175,7 +175,7 @@ func observeSourceIdentity(root, commit string, inputs []string) sourceIdentity 
 		identity.InventoryErrors = append(identity.InventoryErrors, "source tree: "+err.Error())
 	}
 	for _, relative := range inputs {
-		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative))) // #nosec G304 -- observe only the fixed source inventory in the explicitly selected checkout.
 		if err != nil {
 			identity.Missing = append(identity.Missing, relative)
 			identity.InventoryErrors = append(identity.InventoryErrors, fmt.Sprintf("read %s: %v", relative, err))
@@ -201,7 +201,7 @@ func resolvedPath(path string) string {
 }
 
 func writeNewPrivate(path string, content []byte) error {
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) // #nosec G304 -- exclusive creation of a producer-owned private evidence file; existing paths are never overwritten.
 	if err != nil {
 		return fmt.Errorf("create preflight evidence %s: %w", filepath.Base(path), err)
 	}

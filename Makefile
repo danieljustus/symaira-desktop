@@ -212,6 +212,17 @@ config-vault-selection-differential: port-fixtures-check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestPortVaultSelectionCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
 
+.PHONY: config-paths-native config-paths-native-test
+config-paths-native-test:
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/test_config_paths_native.py
+
+# Build the pinned Go oracle and exact candidate Rust CLI, then retain every
+# producer log/case. CONFIG_PATHS_EVIDENCE_DIR must be a new external path.
+config-paths-native:
+	@test -n "$(CONFIG_PATHS_EVIDENCE_DIR)" || { echo "CONFIG_PATHS_EVIDENCE_DIR must name a fresh external directory" >&2; exit 2; }
+	@if [ "$${GITHUB_ACTIONS:-}" != "true" ] && { [ -z "$(CONFIG_PATHS_BUILD_LAUNCHER)" ] || [ -z "$(CONFIG_PATHS_ORACLE_WORKTREE)" ]; }; then echo "local builds require the dev-external launcher and an explicit clean Go oracle worktree" >&2; exit 2; fi
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/config_paths_native.py --evidence-dir "$(CONFIG_PATHS_EVIDENCE_DIR)" $(if $(CONFIG_PATHS_BUILD_LAUNCHER),--build-launcher "$(CONFIG_PATHS_BUILD_LAUNCHER)") $(if $(CONFIG_PATHS_ORACLE_WORKTREE),--oracle-worktree "$(CONFIG_PATHS_ORACLE_WORKTREE)")
+
 vault-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \

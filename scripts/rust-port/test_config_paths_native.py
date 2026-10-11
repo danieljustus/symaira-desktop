@@ -59,6 +59,51 @@ def synthetic_capture(host: str = "Darwin") -> dict:
 
 
 class ConfigPathsNativeTests(unittest.TestCase):
+    def test_hosted_oracle_has_real_git_directory_and_exact_foundation(self):
+        with tempfile.TemporaryDirectory(prefix="config-paths-oracle-clone-") as temporary:
+            parent = Path(temporary).resolve()
+            source, oracle = parent / "source", parent / "oracle"
+            source.mkdir()
+            gate.git(source, "init", "-b", "candidate")
+            gate.git(source, "config", "user.name", "Native Gate Test")
+            gate.git(source, "config", "user.email", "88160656+danieljustus@users.noreply.github.com")
+            gate.git(source, "config", "commit.gpgsign", "false")
+            (source / "source.txt").write_bytes(b"immutable foundation\n")
+            gate.git(source, "add", "source.txt")
+            gate.git(source, "commit", "-m", "foundation fixture")
+            foundation = gate.git(source, "rev-parse", "HEAD")
+            (source / "source.txt").write_bytes(b"later candidate\n")
+            gate.git(source, "commit", "-am", "candidate fixture")
+            before = gate.repository_snapshot(source)
+
+            with mock.patch.object(gate, "FOUNDATION", foundation):
+                gate.create_oracle_checkout(source, oracle)
+
+            self.assertTrue((oracle / ".git").is_dir())
+            self.assertFalse((oracle / ".git/objects/info/alternates").exists())
+            self.assertEqual(gate.git(oracle, "rev-parse", "HEAD"), foundation)
+            self.assertEqual(gate.git(oracle, "remote", "get-url", "origin"), gate.ORIGIN)
+            self.assertEqual(gate.git(oracle, "branch", "--show-current"), "")
+            self.assertEqual(gate.git(oracle, "status", "--porcelain=v1"), "")
+            self.assertEqual((oracle / "source.txt").read_bytes(), b"immutable foundation\n")
+            self.assertEqual(gate.repository_snapshot(source), before)
+
+    def test_operator_windows_cache_root_is_preserved_but_runtime_stays_private(self):
+        with tempfile.TemporaryDirectory(prefix="config-paths-cache-root-") as temporary:
+            parent = Path(temporary).resolve()
+            output = parent / "evidence"
+            output.mkdir()
+            operator = {"HOME": str(parent / "operator"),
+                        "LOCALAPPDATA": str(parent / "operator-cache"),
+                        "SYMDESK_SERVER_TOKEN": "not-a-real-token"}
+            probe = gate.sanitized_environment(operator)
+            self.assertEqual(probe["LOCALAPPDATA"], operator["LOCALAPPDATA"])
+            self.assertNotIn("SYMDESK_SERVER_TOKEN", probe)
+            runtime, _launch = gate.private_environment(output, operator, None)
+            self.assertEqual(Path(runtime["LOCALAPPDATA"]), output / "runtime/localappdata")
+            self.assertNotEqual(runtime["LOCALAPPDATA"], operator["LOCALAPPDATA"])
+            self.assertNotIn("SYMDESK_SERVER_TOKEN", runtime)
+
     def test_candidate_and_oracle_origins_accept_only_pinned_https_spellings(self):
         origins = (gate.ORIGIN, gate.ORIGIN.removesuffix(".git"),
                    gate.ORIGIN + "/extra", gate.ORIGIN + "?ref=main",

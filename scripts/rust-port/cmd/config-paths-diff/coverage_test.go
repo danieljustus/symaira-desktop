@@ -111,11 +111,14 @@ func TestCaptureRejectsUnsafeProvenanceInputs(t *testing.T) {
 	})
 
 	t.Run("CoreKit directory must carry the pinned version", func(t *testing.T) {
-		root := t.TempDir()
+		root, err := filepath.EvalSymlinks(t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
 		evidence := filepath.Join(t.TempDir(), "evidence")
 		manifest := filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml")
 		wrongCoreKit := filepath.Join(t.TempDir(), "corekit-unpinned")
-		_, err := capture("", "", root, manifest, evidence, wrongCoreKit)
+		_, err = capture("", "", root, manifest, evidence, wrongCoreKit)
 		if err == nil || !strings.Contains(err.Error(), "not the pinned v0.18.2 module directory") {
 			t.Fatalf("capture error = %v, want pinned-CoreKit rejection", err)
 		}

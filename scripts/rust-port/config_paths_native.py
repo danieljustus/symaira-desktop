@@ -443,10 +443,17 @@ def run_logged_command(
     return stdout_bytes
 
 
+def create_oracle_checkout(root: Path, oracle: Path) -> None:
+    # Go's VCS discovery requires a .git directory, not a linked-worktree file.
+    git(root, "clone", "--no-local", "--no-hardlinks", "--no-checkout", str(root), str(oracle))
+    git(oracle, "remote", "set-url", "origin", ORIGIN)
+    git(oracle, "checkout", "--detach", FOUNDATION)
+
+
 def sanitized_environment(operator_env: dict[str, str]) -> dict[str, str]:
     allowed = {
         "PATH", "HOME", "USERPROFILE", "CARGO_HOME", "RUSTUP_HOME", "GOROOT", "GOPATH",
-        "GOMODCACHE", "GOCACHE", "SystemRoot", "SYSTEMROOT", "WINDIR", "windir",
+        "GOMODCACHE", "GOCACHE", "LOCALAPPDATA", "SystemRoot", "SYSTEMROOT", "WINDIR", "windir",
         "COMSPEC", "ComSpec", "PATHEXT", "SystemDrive", "DEVELOPER_DIR", "SDKROOT",
         "ProgramFiles", "ProgramFiles(x86)", "LANG", "LC_ALL", "CC", "CXX",
         "PKG_CONFIG_PATH", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH",
@@ -564,7 +571,7 @@ def main() -> int:
             if launcher:
                 raise GateFailure("local policy builds require an explicitly verified --oracle-worktree under an approved repo path")
             oracle = output / "worktrees/oracle"
-            git(root, "worktree", "add", "--detach", str(oracle), FOUNDATION)
+            create_oracle_checkout(root, oracle)
             oracle = oracle.resolve(strict=True)
         if Path(git(oracle, "rev-parse", "--show-toplevel")).resolve() != oracle:
             raise GateFailure("oracle worktree root does not match its explicitly owned path")

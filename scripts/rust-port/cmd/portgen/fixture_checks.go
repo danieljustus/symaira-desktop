@@ -215,7 +215,9 @@ func sanitizedCheckEnvironment(environment []string, configPath string) []string
 		case "USERPROFILE":
 			profile = value
 		}
-		if upper == fixtureoracle.CommitEnvironment || upper == fixtureoracle.ReleaseEnvironment || isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || (strings.HasPrefix(upper, "GO") && upper != "GOCACHE") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
+		// GOMAXPROCS also sets go's default build parallelism. Keep the caller's
+		// resource limit without admitting source-changing Go flags or overlays.
+		if upper == fixtureoracle.CommitEnvironment || upper == fixtureoracle.ReleaseEnvironment || isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || (strings.HasPrefix(upper, "GO") && upper != "GOCACHE" && upper != "GOMAXPROCS") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
 			continue
 		}
 		result = append(result, item)

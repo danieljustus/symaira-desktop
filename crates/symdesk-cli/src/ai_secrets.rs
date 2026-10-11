@@ -113,32 +113,6 @@ mod tests {
     use super::{PROCESS_TIMEOUT, resolve_key_with};
     use std::time::Duration;
 
-    #[cfg(unix)]
-    use std::{
-        fs,
-        os::unix::fs::PermissionsExt,
-        sync::atomic::{AtomicUsize, Ordering},
-    };
-
-    #[cfg(unix)]
-    static NEXT_SCRIPT: AtomicUsize = AtomicUsize::new(0);
-
-    #[cfg(unix)]
-    fn fake_command(script: &str) -> std::path::PathBuf {
-        let serial = NEXT_SCRIPT.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!(
-            "symdesk-ai-secret-test-{}-{serial}",
-            std::process::id()
-        ));
-        fs::write(&path, format!("#!/bin/sh\n{script}\n")).expect("write fake command");
-        let mut permissions = fs::metadata(&path)
-            .expect("stat fake command")
-            .permissions();
-        permissions.set_mode(0o700);
-        fs::set_permissions(&path, permissions).expect("make fake command executable");
-        path
-    }
-
     #[test]
     fn raw_reference_is_returned_verbatim_without_running_a_process() {
         let key = resolve_key_with(" raw-key\n", None, |_, _, _| panic!("unexpected process"));
@@ -214,27 +188,36 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn process_runner_discards_stderr() {
-        let command = fake_command("printf 'stderr-secret' >&2\nprintf 'stdout-key\\n'");
+        // Execute the existing shell, not a freshly written executable: concurrent
+        // process creation can make the latter fail with ETXTBSY on Linux.
         let output = run_process(
-            command.to_str().expect("UTF-8 temp path"),
-            &[],
+            "/bin/sh",
+            &["-c", "printf 'stderr-secret' >&2\nprintf 'stdout-key\\n'"],
             PROCESS_TIMEOUT,
         );
-        fs::remove_file(command).expect("remove fake command");
         assert_eq!(output, Some(b"stdout-key\n".to_vec()));
     }
 
     #[cfg(unix)]
     #[test]
+    fn process_runner_rejects_nonzero_status() {
+        let output = run_process(
+            "/bin/sh",
+            &["-c", "printf 'stdout-key\\n'; exit 7"],
+            PROCESS_TIMEOUT,
+        );
+        assert_eq!(output, None);
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn process_runner_kills_a_command_at_its_deadline() {
-        let command = fake_command("while :; do :; done");
         let started = std::time::Instant::now();
         let output = run_process(
-            command.to_str().expect("UTF-8 temp path"),
-            &[],
+            "/bin/sh",
+            &["-c", "while :; do :; done"],
             Duration::from_millis(50),
         );
-        fs::remove_file(command).expect("remove fake command");
         assert_eq!(output, None);
         assert!(started.elapsed() < Duration::from_secs(2));
     }
@@ -245,14 +228,12 @@ mod tests {
         // Waiting for the descendant would take at least 5s; returning near
         // the 50ms deadline proves it was not awaited. The 2s bound leaves
         // headroom for process spawn and reaping on loaded CI runners.
-        let command = fake_command("(sleep 5) & exit 0");
         let started = std::time::Instant::now();
         let output = run_process(
-            command.to_str().expect("UTF-8 temp path"),
-            &[],
+            "/bin/sh",
+            &["-c", "(sleep 5) & exit 0"],
             Duration::from_millis(50),
         );
-        fs::remove_file(command).expect("remove fake command");
         assert_eq!(output, None);
         assert!(started.elapsed() < Duration::from_secs(2));
     }

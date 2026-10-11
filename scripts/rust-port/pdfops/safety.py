@@ -11,20 +11,24 @@ import time
 # responses and side effects are captured from the real Go/Rust adapters.
 TOOL = r'''import os, signal, subprocess, sys, time
 from pathlib import Path
+def mark(name):
+    pending=Path(name+'.pending')
+    pending.write_text(str(os.getpid()))
+    pending.replace(name)
 if sys.argv[1:] == ['descendant']:
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
-    Path('descendant-ready').write_text(str(os.getpid()))
+    mark('descendant-ready')
     while True: time.sleep(1)
 if sys.argv[1] == '--check': raise SystemExit(0)
 mode = os.environ['SAFETY_MODE']
-Path('leader').write_text(str(os.getpid()))
+mark('leader')
 if mode.startswith('descendant-'):
     child = subprocess.Popen([sys.executable, __file__, 'descendant'])
     deadline = time.monotonic()+5
     while not Path('descendant-ready').exists():
         if time.monotonic()>deadline: raise RuntimeError('descendant readiness timeout')
         time.sleep(.005)
-    Path('ready').write_text(str(os.getpid()))
+    mark('ready')
     if mode == 'descendant-cancel':
         while True: time.sleep(1)
 if mode.startswith('flood-'):
@@ -115,7 +119,14 @@ def verify_safety(run, runtime, output, env, binaries, report, compare, normaliz
             finally:
                 # A failing product must not leak the fixture. Such cleanup is
                 # retained as FAILURE, never counted as product safety.
-                pids={int((root/marker).read_text()) for marker in ('leader','ready','descendant-ready') if (root/marker).is_file()}
+                pids=set()
+                for marker in ('leader','ready','descendant-ready'):
+                    if (root/marker).is_file():
+                        text=(root/marker).read_text()
+                        if not text.isdecimal():
+                            record['passed']=False
+                            record.setdefault('invalid_markers',[]).append(marker)
+                        else: pids.add(int(text))
                 for pid in pids:
                     if alive(pid):
                         record['outer_cleanup_required']=True

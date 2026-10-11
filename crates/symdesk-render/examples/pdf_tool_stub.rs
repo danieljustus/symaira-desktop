@@ -14,7 +14,9 @@ fn main() {
     let fail_tool = env::var("PDF_STUB_TOOL").unwrap_or_default();
     let active = fail_tool == tool;
     if active && mode == "cancel" {
-        fs::write("ready", process::id().to_string()).unwrap();
+        // Cancellation observes existence, so publish the complete PID atomically.
+        fs::write("ready.pending", process::id().to_string()).unwrap();
+        fs::rename("ready.pending", "ready").unwrap();
         loop {
             thread::sleep(Duration::from_secs(1));
         }

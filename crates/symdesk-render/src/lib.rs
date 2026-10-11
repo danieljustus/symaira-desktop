@@ -2,6 +2,7 @@
 
 pub mod export_html;
 pub mod pdfops;
+pub mod press;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};

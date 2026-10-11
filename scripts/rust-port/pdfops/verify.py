@@ -17,9 +17,11 @@ import signal
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'scripts/rust-port'))
 from history_live import source_manifest
+from press.verify import verify_press
 
 TOOLS = ('PDFInfo', 'PDFSeparate', 'PDFUnite', 'QPDF')
 NAMES = ('pdfinfo', 'pdfseparate', 'pdfunite', 'qpdf')
@@ -118,7 +120,17 @@ def main():
     output, runtime = args.output.resolve(), args.runtime_root.resolve()
     output.mkdir(parents=True, exist_ok=False)
     runtime.mkdir(parents=True, exist_ok=False)
+    # Resolve real compilers before HOME isolation; shims may consult user config.
+    go_root = Path(subprocess.check_output(
+        ['go', 'env', 'GOROOT'], text=True,
+        env=dict(os.environ, GOTOOLCHAIN='go1.26.9', GOENV='off', GOWORK='off'),
+    ).strip()).resolve()
+    rustc = Path(subprocess.check_output(
+        ['rustup', 'which', '--toolchain', '1.98.0', 'rustc'], text=True,
+    ).strip()).resolve()
+    toolchains = {str(p): digest(p) for p in (go_root/'bin/go', rustc, rustc.parent/'cargo')}
     env = {k:v for k,v in os.environ.items() if k in {'PATH','SystemRoot','WINDIR','PATHEXT','DEVELOPER_DIR','SDKROOT','CARGO_HOME','RUSTUP_HOME','CARGO_TARGET_DIR','GOCACHE','GOMODCACHE'}}
+    env['PATH'] = os.pathsep.join((str(go_root/'bin'), str(rustc.parent), env['PATH']))
     home = Path.home()
     env.setdefault('CARGO_HOME', str(home / '.cargo'))
     env.setdefault('RUSTUP_HOME', str(home / '.rustup'))
@@ -129,8 +141,9 @@ def main():
         path = runtime / 'build-env' / key
         path.mkdir(parents=True, mode=0o700)
         env[key] = str(path)
-    env.update(CARGO_BUILD_JOBS='2', GOMAXPROCS='2', GOFLAGS='-mod=readonly -p=2', GOTOOLCHAIN='go1.26.9', GOWORK='off', GOENV='off', CGO_ENABLED='0', TZ='UTC', LC_ALL='C', PYTHONDONTWRITEBYTECODE='1')
+    env.update(CARGO_BUILD_JOBS='2', RUST_TEST_THREADS='2', GOMAXPROCS='2', GOFLAGS='-mod=readonly -p=2', GOTOOLCHAIN='local', GOWORK='off', GOENV='off', CGO_ENABLED='0', TZ='UTC', LC_ALL='C', PYTHONDONTWRITEBYTECODE='1')
     report = {'passed':False, 'root':str(ROOT), 'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(), 'dirty':subprocess.check_output(['git','status','--porcelain=v1'],cwd=ROOT,text=True), 'native_os':platform.system(), 'native_arch':platform.machine(), 'sources_before':source_manifest(), 'commands':[], 'cases':[]}
+    report.update(toolchains=toolchains, build_environment=env)
     def run(command, label, cwd=ROOT, variables=env, stdin=None, build=False):
         original = command
         if build and args.build_launcher:
@@ -233,6 +246,7 @@ def main():
             except AssertionError: pass
             else: raise AssertionError('type/presence mutation accepted')
         report['mutation_controls']=6
+        verify_press(run, runtime, output, env, binary_root, stub, report, compare, normalized, digest)
         tests = run(['go','test','-count=1','-v','./internal/ingest/internal/pdfops'],'go-pdfops-tests',build=True)
         report['go_adapter_tests'] = len(re.findall(rb'^--- PASS: Test', tests, re.M))
         assert report['go_adapter_tests'] > 0

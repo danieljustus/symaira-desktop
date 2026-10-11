@@ -365,7 +365,7 @@ fn executable(path: &Path) -> bool {
         }
     })
 }
-fn tool_path(name: &str, label: &str) -> Result<PathBuf, String> {
+pub(crate) fn tool_path(name: &str, label: &str) -> Result<PathBuf, String> {
     if name.trim().is_empty() {
         return Err(format!(
             "{label} is not configured; install the required PDF tool"
@@ -444,7 +444,7 @@ impl Drop for Workspace {
         }
     }
 }
-fn execute(ctx: &Context, path: &Path, args: &[String]) -> Result<String, String> {
+pub(crate) fn execute(ctx: &Context, path: &Path, args: &[String]) -> Result<String, String> {
     let label = base(&text(path));
     if let Some(error) = ctx.error() {
         return Err(format!("{label}: {error}"));

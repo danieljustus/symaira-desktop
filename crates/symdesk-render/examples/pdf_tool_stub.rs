@@ -30,6 +30,10 @@ fn main() {
         return;
     }
     match tool {
+        "typst" => {
+            assert_eq!(args, &["--version"]);
+            print!("{}", env::var("PDF_STUB_INFO").unwrap_or_default());
+        }
         "pdfinfo" => print!(
             "{}",
             env::var("PDF_STUB_INFO").unwrap_or_else(|_| "Title: fixture\nPages: 4\n".into())

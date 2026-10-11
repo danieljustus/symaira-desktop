@@ -15,8 +15,9 @@ again afterward. It never generates expected Go responses by hand or overwrites
 an older capture.
 
 `make render-differential RENDER_EVIDENCE_ROOT=<fresh-evidence-directory>
-RENDER_RUNTIME_ROOT=<fresh-runtime-directory>` runs 111 paired local-tool cases,
-the Go adapter and facade tests, existing Go IR/HTML checks, the whole renderer
+RENDER_RUNTIME_ROOT=<fresh-runtime-directory>` runs 111 paired PDF local-tool cases
+and 13 profile/discovery pairs, the Go adapter, facade and press tests, Go IR/HTML
+checks, the whole renderer
 nextest suite, strict all-target Clippy and workspace fmt. Optional
 `RENDER_BUILD_LAUNCHER` selects the required local storage launcher; the caller
 owns the build-slot grant. The target preserves `make`'s original default build.
@@ -49,10 +50,78 @@ receipts are in the task's assigned external evidence root, not this repository.
 - Filesystem error text is currently verified on Darwin only. Windows native
   runtime, path lookup and error semantics remain acceptance requirements.
 - Callers must supply distinct input/output paths. The Go adapter does not
-  itself protect aliases; alias preservation needs a dedicated safety decision
-  and real-tool proof before production wiring.
+  itself protect aliases. Real-tool diagnostics now prove that same-path,
+  symlink and hardlink merge outputs destroy the original input on both sides.
+  This safety gate is **FAILED**, not waived by matching the Go behavior.
+  Alias rejection/transactional output needs an explicit versioned contract
+  decision and source-bound Go coordination before production wiring.
+
+## Current bounded continuation
+
+The nine inherited source hashes and three old binary hashes matched the retained
+attempt-69 and `pdfops-02` records before adoption. Originals were copied to the
+assigned evidence root. The first real command used those older frozen binaries
+as a diagnostic only: `pdfops-real-01` exited 1 at qpdf exit 3 on a Poppler output
+with an incorrect trailer `/Size`. Its raw failure was not overwritten.
+
+`pdfops-03` freshly built the profile/discovery WIP. All 111 PDF pairs passed;
+the 50-ms press deadline case exposed a process-start race (Go had not reached
+the tool, Rust had). The harness now checks an already-expired deadline and a
+separate readiness-synchronized running cancellation. It does not discard trace
+differences or claim that this proves a running deadline's exact timing.
+
+`pdfops-04` passed 111 PDF pairs, 13 press pairs, 23 Go PDF adapter tests, two
+facade tests, 12 Go press tests, four renderer tests (zero skipped), six comparator
+rejection controls, IR/HTML checks, strict all-target/all-feature Clippy and fmt.
+All 264 commands exited zero. The actual Go 1.26.9 and Rust 1.98.0 compiler paths
+are resolved before HOME isolation; compiler hashes and the allowlisted build
+environment are included in the report. This is library/facade acceptance only,
+not shipped Rust CLI/MCP behavior or Typst rendering.
+
+`real_tools.py` is a separate installed-tool diagnostic with 14 paired cases.
+It preserves raw argv/stdin/stdout/stderr/exits, PDF semantic objects and text,
+input hashes, malformed-input errors and direct/symlink/hardlink alias results.
+Synthetic valid PDF inputs are labelled and checked by qpdf before operations;
+only nondeterministic PDF trailer `/ID` values are excluded from comparison.
+qpdf warnings remain recorded nonzero exits, never clean validation. Every case
+runs even after a pair mismatch. The command exits nonzero when parity, input
+preservation or clean PDF validation fails; agreement on an unsafe result is
+not a passing safety gate. `pdfops-real-02` completed 14/14 matching pairs but
+failed safety: all three merge alias kinds changed the input; ordinary Poppler
+split/merge outputs produced `/Size` warnings. Poppler was 26.10.0, qpdf 12.4.2.
+
+The separately retained readiness-synchronized `pdfops-descendants-01` diagnostic
+used controlled Python tool inputs with a SIGTERM-resistant descendant. Go
+remained blocked on its inherited output pipe until the outer three-second
+watchdog; Rust returned after direct-child cancellation but left the descendant
+alive. The diagnostic killed its owned groups and verified both descendants
+absent. Product descendant cleanup and lifecycle equivalence remain **FAILED**;
+the outer harness cleanup is not a product fix. PDF page-count/disk-capture
+bounds also remain open. None of these findings permits Go removal or cutover.
+
+Independent spec/parity and quality/security review plus parent acceptance are
+pending for the current candidate. Earlier approval covers only the old bounded
+PDF checkpoint. Full RUST-011 remains open.
 
 ## Remaining dependency order
+
+Historical attempt 69 added **then-uncompiled WIP** for the profile registry, picker
+facade, capabilities and ten-second Typst discovery cache in `press.rs`, with
+Go/Rust probes and 12 declared paired cases under `scripts/rust-port/press/`.
+The owning PDF differential invokes these checks without a new Make target or
+dependency. No successful execution of those new Go/Rust paths is recorded.
+The previous 111-pair receipt and bounded review apply only to the committed PDF
+checkpoint, not this WIP. Python syntax and three comparator rejection controls
+pass; these are not compiler, discovery or rendering evidence.
+
+At that historical attempt, the reserved slot-A readiness check found no holder, but `dev-external --status`
+then failed its internal-space guard (exit 2, below the required 20 GiB reserve).
+The real-PDF gate was not launched. No cleanup or guard bypass was performed.
+The assigned external `package-handoff.json` and `resume-69/` retain raw guard
+output, changed-source hashes, static checks and exact resumption commands.
+The scheduler subsequently restored the reserve under separate authorization.
+The continuation above supersedes that storage hold and uncompiled-WIP status,
+not the failed safety gates or outstanding independent review.
 
 1. Complete PDF safety/real-tool corpus and wire actual Rust CLI/MCP consumers.
 2. PDF renderer profiles/frontmatter/assets/Typst compilation/output, including

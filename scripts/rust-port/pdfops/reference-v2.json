@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "compiler": "go1.26.9",
+  "oracle": {
+    "commit": "2d09aa301ee7b4663c7c606e04a7e00e77bb621b",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "historical_oracle": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
+  "contract": "docs/rust-port/pdfops-v2.md",
+  "status": "local corrected reference; independent review and integration pending"
+}

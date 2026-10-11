@@ -17,6 +17,7 @@ if sys.argv[1:] == ['descendant']:
     while True: time.sleep(1)
 if sys.argv[1] == '--check': raise SystemExit(0)
 mode = os.environ['SAFETY_MODE']
+Path('leader').write_text(str(os.getpid()))
 if mode.startswith('descendant-'):
     child = subprocess.Popen([sys.executable, __file__, 'descendant'])
     deadline = time.monotonic()+5
@@ -77,7 +78,7 @@ def verify_safety(run, runtime, output, env, binaries, report, compare, normaliz
             else:
                 request=dict(operation=operation,layer='api',input='a.pdf',inputs=['a.pdf','b.pdf'],
                              output='parts' if operation=='split' else 'out/result.pdf',
-                             pages='1',degrees=90,tools={'QPDF':str(tool),'PDFInfo':str(info)},
+                             pages='1',degrees=90,tools={'QPDF':str(tool),'PDFInfo':str(info),'PDFSeparate':'unused','PDFUnite':'unused'},
                              cancel_marker='ready' if mode=='descendant-cancel' else '')
             binary=binaries['press' if operation=='press' else 'pdf'][language]
             label=case_id+'-'+language
@@ -114,12 +115,12 @@ def verify_safety(run, runtime, output, env, binaries, report, compare, normaliz
             finally:
                 # A failing product must not leak the fixture. Such cleanup is
                 # retained as FAILURE, never counted as product safety.
-                for marker in ('ready','descendant-ready'):
-                    if (root/marker).is_file():
-                        pid=int((root/marker).read_text())
-                        if alive(pid):
-                            record['outer_cleanup_required']=True
-                            os.kill(pid,signal.SIGKILL)
+                pids={int((root/marker).read_text()) for marker in ('leader','ready','descendant-ready') if (root/marker).is_file()}
+                for pid in pids:
+                    if alive(pid):
+                        record['outer_cleanup_required']=True
+                        try: os.kill(pid,signal.SIGKILL)
+                        except ProcessLookupError: pass
                 (output/(case_id+'.safety.json')).write_text(json.dumps(records,indent=2)+'\n')
         compare(*observations)
         report['safety_cases'].append({'id':case_id,'passed':all(r['passed'] and not r['outer_cleanup_required'] for r in records),'observations':records})

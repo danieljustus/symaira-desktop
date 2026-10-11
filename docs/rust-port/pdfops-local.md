@@ -1,5 +1,11 @@
 # PDF adapter checkpoint (RUST-011, not complete)
 
+Current safety correction: [PDF contract v2](pdfops-v2.md). The records below
+are historical v1 checkpoints, not the current tool or overwrite contract.
+The v2 adapter requires qpdf for all writers, publishes only new validated
+destinations and bounds Unix process-group lifetime and captured output.
+Full RUST-011, native non-Unix support and independent acceptance remain open.
+
 The Rust `symdesk_render::pdfops` library provides split, merge and rotate
 through Poppler/qpdf, plus the ingest facade's lexical absolute-path behavior.
 It is not yet connected to the Rust CLI/MCP. The Go production paths are intact.
@@ -56,7 +62,7 @@ receipts are in the task's assigned external evidence root, not this repository.
   Alias rejection/transactional output needs an explicit versioned contract
   decision and source-bound Go coordination before production wiring.
 
-## Current bounded continuation
+## Historical bounded continuation (v1)
 
 The nine inherited source hashes and three old binary hashes matched the retained
 attempt-69 and `pdfops-02` records before adoption. Originals were copied to the

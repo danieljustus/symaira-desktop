@@ -497,11 +497,11 @@ impl Workspace {
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_nanos();
-            let path = directory.join(format!(
+            let path = clean(directory.join(format!(
                 ".symdesk-pdf-{}-{stamp}-{}",
                 std::process::id(),
                 NONCE.fetch_add(1, Ordering::Relaxed)
-            ));
+            )));
             let mut builder = fs::DirBuilder::new();
             #[cfg(unix)]
             {

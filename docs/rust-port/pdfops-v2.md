@@ -58,3 +58,12 @@ The affected Cobra/MCP inventories and IR/HTML snapshots are separately captured
 under `testdata/port/render/v2/`. The historical snapshots and migration-wide
 provenance stay intact. Integration must reconcile the wider migration's old
 source pin explicitly; this package does not silently repin unrelated contracts.
+
+The full `cmd/symdesk` suite currently stops at
+`TestPortVaultSelectionCLIContract`, which still checks the historical global
+source pin. The complete `fixtureoracle` suite likewise stops at its default-pin
+compiled-environment test. Those failures are retained, not skipped into a green
+whole-package claim. The renderer's new reference has its own full-source
+rejection control; the unchanged generic source-mutation controls also execute.
+Config/vault-selection files and the CFG1245 lane were not modified to silence
+these cross-package integration gates.

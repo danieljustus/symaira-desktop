@@ -7,42 +7,42 @@ use std::path::Path;
 pub(crate) fn run(ctx: &Context, path: &Path, args: &[String]) -> Result<String, String> {
     use std::{
         io::{self, Read},
+        net::Shutdown,
         os::{
             fd::OwnedFd,
             unix::{net::UnixStream, process::CommandExt},
         },
         process::{Command, Stdio},
+        sync::mpsc,
         thread,
         time::{Duration, Instant},
     };
     const LIMIT: usize = 16 * 1024 * 1024;
-    fn capture(reader: &mut UnixStream, bytes: &mut Vec<u8>) -> Result<(), String> {
+    fn capture(mut reader: UnixStream) -> Result<Vec<u8>, String> {
+        let mut bytes = Vec::new();
         let mut chunk = [0u8; 8192];
-        // A continuously writing tool must not starve cancellation checks.
-        for _ in 0..64 {
+        loop {
             match reader.read(&mut chunk) {
-                Ok(0) => return Ok(()),
+                Ok(0) => return Ok(bytes),
                 Ok(n) => {
                     if bytes.len() + n > LIMIT {
                         return Err("PDF tool output exceeds 16 MiB".into());
                     }
                     bytes.extend_from_slice(&chunk[..n]);
                 }
-                Err(e) if e.kind() == io::ErrorKind::WouldBlock => return Ok(()),
                 Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
                 Err(e) => return Err(e.to_string()),
             }
         }
-        Ok(())
     }
     let label = path.file_name().unwrap_or_default().to_string_lossy();
     if let Some(error) = ctx.error() {
         return Err(format!("{label}: {error}"));
     }
-    let (mut out, out_writer) = UnixStream::pair().map_err(|e| e.to_string())?;
-    let (mut err, err_writer) = UnixStream::pair().map_err(|e| e.to_string())?;
-    out.set_nonblocking(true).map_err(|e| e.to_string())?;
-    err.set_nonblocking(true).map_err(|e| e.to_string())?;
+    let (out, out_writer) = UnixStream::pair().map_err(|e| e.to_string())?;
+    let (err, err_writer) = UnixStream::pair().map_err(|e| e.to_string())?;
+    let stop_out = out.try_clone().map_err(|e| e.to_string())?;
+    let stop_err = err.try_clone().map_err(|e| e.to_string())?;
     let mut child = Command::new(path)
         .args(args)
         .process_group(0)
@@ -51,15 +51,29 @@ pub(crate) fn run(ctx: &Context, path: &Path, args: &[String]) -> Result<String,
         .stderr(Stdio::from(OwnedFd::from(err_writer)))
         .spawn()
         .map_err(|e| format!("{label}: fork/exec {}: {e}", path.display()))?;
-    let mut stdout = Vec::new();
-    let mut stderr = Vec::new();
+    // Independent blocking readers drain at producer speed without sleeping
+    // between socket chunks. The owner can shut them down before joining,
+    // even if an escaped descendant keeps an inherited handle open.
+    let (send, receive) = mpsc::channel();
+    let readers: Vec<_> = [out, err]
+        .into_iter()
+        .enumerate()
+        .map(|(index, reader)| {
+            let send = send.clone();
+            thread::spawn(move || {
+                let _ = send.send((index, capture(reader)));
+            })
+        })
+        .collect();
+    drop(send);
+    let mut captures = [None, None];
     let deadline = Instant::now() + Duration::from_secs(60);
     let mut capture_error = None;
     let status = loop {
-        if let Err(error) =
-            capture(&mut out, &mut stdout).and_then(|()| capture(&mut err, &mut stderr))
-        {
-            capture_error = Some(error);
+        while let Ok((index, result)) = receive.try_recv() {
+            captures[index] = Some(result);
+        }
+        if captures.iter().flatten().any(Result::is_err) {
             break None;
         }
         match child.try_wait() {
@@ -85,13 +99,30 @@ pub(crate) fn run(ctx: &Context, path: &Path, args: &[String]) -> Result<String,
             wait(&mut child)
         }
     };
+    while captures.iter().any(Option::is_none) {
+        match receive.recv_timeout(Duration::from_secs(1)) {
+            Ok((index, result)) => captures[index] = Some(result),
+            Err(_) => {
+                capture_error = Some("PDF process group capture did not close".into());
+                break;
+            }
+        }
+    }
+    let _ = stop_out.shutdown(Shutdown::Read);
+    let _ = stop_err.shutdown(Shutdown::Read);
+    for reader in readers {
+        if reader.join().is_err() {
+            capture_error = Some("PDF capture reader failed".into());
+        }
+    }
     cleanup?;
     let status = status?;
     if let Some(error) = capture_error {
         return Err(error);
     }
-    capture(&mut out, &mut stdout)?;
-    capture(&mut err, &mut stderr)?;
+    let [stdout, stderr] = captures;
+    let stdout = stdout.ok_or("PDF stdout capture missing")??;
+    let stderr = stderr.ok_or("PDF stderr capture missing")??;
     if !status.success() {
         let message = String::from_utf8_lossy(&stderr);
         let fallback = status.code().map_or_else(
@@ -156,4 +187,18 @@ fn terminate_group(pid: u32) -> Result<(), String> {
 #[cfg(not(unix))]
 pub(crate) fn run(_ctx: &Context, _path: &Path, _args: &[String]) -> Result<String, String> {
     Err("PDF subprocess isolation is unsupported on this platform".into())
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn output_limit_kills_active_writer() {
+        let mut ctx = Context::default();
+        ctx.deadline = Some(Instant::now() + Duration::from_secs(5));
+        let error = run(&ctx, Path::new("/usr/bin/yes"), &[]).unwrap_err();
+        assert_eq!(error, "PDF tool output exceeds 16 MiB");
+    }
 }

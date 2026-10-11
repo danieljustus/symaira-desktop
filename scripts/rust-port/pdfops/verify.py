@@ -46,6 +46,8 @@ def corpus():
     for name, pages in (('review', '1,\u200b'), ('range', '1-\u200b'),
                         ('empty', '1,,\u200b'), ('escapes', 'x\'"\\\n\t')):
         add(f'parse-unicode-{name}', 'parse', pages=pages)
+    add('parse-resource-limit', 'parse', pages='1-9223372036854775807')
+    add('parse-max-int-single', 'parse', pages='9223372036854775807')
     for layer in ('tools', 'api'):
         base = dict(layer=layer, input='a.pdf', inputs=['a.pdf', 'b.pdf'], output='out/result.pdf')
         def op(id, kind, **kw): add(f'{layer}-{id}', kind, **(base | kw))
@@ -202,6 +204,11 @@ def main():
         reference = json.loads((ROOT/'scripts/rust-port/pdfops/reference-v2.json').read_text())
         assert reference['schema_version'] == 2 and identity['oracle'] == reference['oracle']
         report['reference'] = reference
+        controls = run(['go','test','-count=1','-v','./scripts/rust-port/pdfops/reference'], 'go-reference-v2-controls', build=True)
+        assert b'--- PASS: TestCorrectedReferenceRejectsHistoricalProduction' in controls
+        controls = run(['go','test','-count=1','-v','./scripts/rust-port/fixtureoracle','-run','^Test(SourceRequiresTheActualSelectedProductionBytes|SourceRejectsUnexplainedOrNonexistentIdentities|GenerationEnvironmentReplacesAmbientIdentityAliases|CapturedSourceValidatesWhenAWriterFirstRequestsIt)$'], 'go-source-mutation-controls', build=True)
+        report['source_control_tests'] = len(re.findall(rb'^--- PASS: Test', controls, re.M))
+        assert report['source_control_tests'] == 4 and b'--- SKIP:' not in controls
         binary_root = Path(metadata['target_directory']) / 'debug/examples'
         candidate = binary_root / ('pdfops_probe'+suffix)
         stub = binary_root / ('pdf_tool_stub'+suffix)
@@ -275,6 +282,9 @@ def main():
         tests = run(['go','test','-count=1','-v','./internal/ingest/internal/pdfops'],'go-pdfops-tests',build=True)
         report['go_adapter_tests'] = len(re.findall(rb'^--- PASS: Test', tests, re.M))
         assert report['go_adapter_tests'] > 0
+        process_tests = run(['go','test','-count=1','-v','./internal/pdfprocess'],'go-process-tests',build=True)
+        assert b'--- PASS: TestCaptureLimitCannotBeBypassedByCopy' in process_tests
+        report['go_process_tests'] = 1
         facade = run(['go','test','-count=1','-v','./internal/ingest','-run','^Test(MergePDFs|RotatePDF)RealPath$'],'go-facade-tests',build=True)
         assert b'--- PASS: TestMergePDFsRealPath' in facade and b'--- PASS: TestRotatePDFRealPath' in facade
         report['go_facade_tests'] = 2

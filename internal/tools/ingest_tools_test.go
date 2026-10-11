@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -174,20 +177,26 @@ func TestSplitPDFTool(t *testing.T) {
 		}
 	})
 
-	t.Run("clear message when poppler absent", func(t *testing.T) {
-		if ingest.HasPopplerSplit() {
-			t.Skip("poppler present; absence path covered only when it is not")
-		}
+	t.Run("clear message when tools absent", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
 		_, err := tool.Handler(context.Background(), json.RawMessage(`{"input":"/x.pdf","at":"2","output_dir":"/tmp/out"}`))
-		if err == nil || !strings.Contains(err.Error(), "Poppler") {
-			t.Errorf("expected a clear Poppler-required error, got %v", err)
+		if err == nil || !strings.Contains(err.Error(), "pdfinfo and qpdf") {
+			t.Errorf("expected a clear required-tool error, got %v", err)
 		}
 	})
 
 	t.Run("splits through the seam", func(t *testing.T) {
-		if !ingest.HasPopplerSplit() {
-			t.Skip("poppler absent; success path needs the probe to pass")
+		bin := t.TempDir()
+		for _, name := range []string{"pdfinfo", "qpdf"} {
+			if runtime.GOOS == "windows" {
+				name += ".exe"
+			}
+			// Availability-only fixture: the isolated seam below never runs it.
+			if err := os.WriteFile(filepath.Join(bin, name), []byte("probe only"), 0o700); err != nil {
+				t.Fatal(err)
+			}
 		}
+		t.Setenv("PATH", bin)
 		orig := ingest.SplitPDFFunc
 		ingest.SplitPDFFunc = func(_ context.Context, input, at, out string) ([]string, error) {
 			return []string{out + "/part-1.pdf", out + "/part-2.pdf"}, nil

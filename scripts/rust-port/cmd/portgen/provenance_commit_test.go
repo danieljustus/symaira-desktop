@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -196,6 +197,27 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		if !strings.Contains(joined, "\n"+required) {
 			t.Fatalf("sanitizedCheckEnvironment() omitted %q from %#v", required, got)
 		}
+	}
+}
+
+func TestSanitizedCheckEnvironmentPreservesProcessLimit(t *testing.T) {
+	if os.Getenv("PORTGEN_RESOURCE_PROBE") == "1" {
+		if got := runtime.GOMAXPROCS(0); got != 2 {
+			t.Fatalf("child GOMAXPROCS = %d, want 2", got)
+		}
+		return
+	}
+	t.Setenv("PORTGEN_RESOURCE_PROBE", "1")
+	t.Setenv("GOMAXPROCS", "2")
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	//nolint:gosec // fixed self-test executable and exact test selection
+	command := exec.Command(executable, "-test.run=^TestSanitizedCheckEnvironmentPreservesProcessLimit$")
+	command.Env = sanitizedCheckEnvironment(os.Environ(), filepath.Join(t.TempDir(), "empty-gitconfig"))
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("sanitized child: %v\n%s", err, output)
 	}
 }
 

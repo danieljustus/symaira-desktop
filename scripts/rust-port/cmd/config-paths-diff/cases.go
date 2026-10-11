@@ -184,6 +184,9 @@ func configPathCases() []namedCase {
 	for _, name := range []string{
 		"XDG_UNUSED_BINARY", "SYMDESK_UNUSED_BINARY", "SYMINGEST_UNUSED_BINARY",
 		"SYMRELATE_UNUSED_BINARY", "SYMSEEK_UNUSED_BINARY", "OLLAMA_UNUSED_BINARY",
+		// These are consumed by other commands, not by config paths.
+		"SYMDESK_ANTHROPIC_URL", "SYMDESK_OLLAMA_MODEL", "SYMDESK_SERVER_TOKEN",
+		"SYMDESK_WORKER_TOKEN", "SYMDESK_SERVER_LISTEN", "TZ",
 	} {
 		entry := withRawEnv(makeCase("unrelated-invalid-utf8-"+name, "robustness", "config", "paths"),
 			map[string]string{name: "/w=="})

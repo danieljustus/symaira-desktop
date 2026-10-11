@@ -876,10 +876,12 @@ async fn handle_ai_transform(
         }
     } else if let Some(endpoint) = configured_ollama {
         let prompt = build_ai_transform_prompt(&config.language, &input.text, &input.intent);
-        let model = std::env::var("SYMDESK_OLLAMA_MODEL")
-            .ok()
-            .filter(|model| !model.is_empty())
-            .unwrap_or_else(|| "llama3.2".to_owned());
+        let model = match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
+            Ok(value) => value,
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        }
+        .filter(|model| !model.is_empty())
+        .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
         tokio::spawn(async move {
             let mut answer_capture = None;
@@ -1662,10 +1664,16 @@ async fn handle_ai_ask(
     let ask_prompt = configured_ollama
         .as_ref()
         .map(|_| build_ai_ask_prompt(&config.language, &input.query, &documents));
-    let model = std::env::var("SYMDESK_OLLAMA_MODEL")
-        .ok()
-        .filter(|model| !model.is_empty())
-        .unwrap_or_else(|| "llama3.2".to_owned());
+    let model = if configured_ollama.is_some() {
+        match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
+            Ok(value) => value,
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        }
+    } else {
+        None
+    }
+    .filter(|model| !model.is_empty())
+    .unwrap_or_else(|| "llama3.2".to_owned());
     tokio::spawn(async move {
         for event in events {
             if sender.send(Ok(event)).await.is_err() {

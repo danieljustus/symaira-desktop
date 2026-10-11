@@ -152,3 +152,102 @@ fn cli_vault_precedence_matches_go_process_fixture() {
         );
     }
 }
+
+#[cfg(unix)]
+#[test]
+fn consumed_raw_environment_is_rejected_without_defaulting_or_overriding_flags() {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    let root = TempRoot::new();
+    let isolated = || {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+        command
+            .env_clear()
+            .current_dir(&root.0)
+            .env("HOME", root.path("home"))
+            .env("USERPROFILE", root.path("home"))
+            .env("XDG_CONFIG_HOME", root.path("config"))
+            .env("XDG_DATA_HOME", root.path("data"))
+            .env("TMPDIR", &root.0)
+            .env("TEMP", &root.0)
+            .env("TMP", &root.0)
+            .env("PATH", root.path("no-credential-tools"))
+            // A missing fixture helper yields no key, even if URL validation regresses.
+            .env("SYMDESK_LLM_API_KEY", "op://missing-fixture-key")
+            .env(
+                "SYMDESK_SERVER_TOKEN",
+                "fixture-admin-token-no-real-authority-12345678",
+            );
+        command
+    };
+    for name in [
+        "SYMDESK_SERVER_TOKEN",
+        "SYMDESK_WORKER_TOKEN",
+        "SYMDESK_SERVER_LISTEN",
+        "SYMDESK_ANTHROPIC_URL",
+        "SYMDESK_OLLAMA_MODEL",
+    ] {
+        let mut command = isolated();
+        command.env(name, OsString::from_vec(vec![0xff]));
+        let expected_exit = if name == "SYMDESK_ANTHROPIC_URL" || name == "SYMDESK_OLLAMA_MODEL" {
+            command.args(["transform", "summarize", "--text=fixture"]);
+            if name == "SYMDESK_ANTHROPIC_URL" {
+                command.env("SYMDESK_LLM_PROVIDER", "anthropic");
+            } else {
+                command.env("SYMDESK_OLLAMA_URL", "http://127.0.0.1:0");
+            }
+            0
+        } else {
+            command
+                .arg(format!("--vault={}", root.0.display()))
+                .arg("serve");
+            if name == "SYMDESK_SERVER_LISTEN" {
+                // The former fallback must fail token validation before it could bind.
+                command.env("SYMDESK_SERVER_TOKEN", "");
+            } else {
+                command.arg("--listen=invalid-fixture-address");
+            }
+            1
+        };
+        let output = command.output().expect("run consumed environment control");
+        assert_eq!(output.status.code(), Some(expected_exit), "{name}");
+        let message = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            message.contains(&format!("environment variable {name} is not valid UTF-8")),
+            "{name}: {message}"
+        );
+    }
+    for (name, flag) in [
+        (
+            "SYMDESK_SERVER_TOKEN",
+            "--token=fixture-admin-token-no-real-authority-12345678",
+        ),
+        (
+            "SYMDESK_WORKER_TOKEN",
+            "--worker-token=fixture-worker-token-no-real-authority-12345678",
+        ),
+        ("SYMDESK_SERVER_LISTEN", "--listen=invalid-fixture-address"),
+    ] {
+        let output = isolated()
+            .env(name, OsString::from_vec(vec![0xff]))
+            .arg(format!("--vault={}", root.0.display()))
+            .args(["serve", flag])
+            .args((name != "SYMDESK_SERVER_LISTEN").then_some("--listen=invalid-fixture-address"))
+            .output()
+            .expect("run flag override control");
+        assert_eq!(output.status.code(), Some(1), "{name}");
+        let message = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            message.contains("invalid listen address"),
+            "{name}: {message}"
+        );
+        assert!(
+            !message.contains("not valid UTF-8"),
+            "a winning flag must not consume {name}"
+        );
+    }
+}

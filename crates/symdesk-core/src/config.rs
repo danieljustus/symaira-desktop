@@ -13,6 +13,24 @@ pub fn environment_snapshot() -> Result<BTreeMap<String, String>, String> {
     collect_environment(std::env::vars_os())
 }
 
+/// Reads a setting when its caller actually consumes it, preserving absence and empty values.
+///
+/// # Errors
+/// Rejects a non-Unicode value without exposing its bytes or defaulting it.
+pub fn environment_value(name: &str) -> Result<Option<String>, String> {
+    decode_environment_value(name, std::env::var_os(name))
+}
+
+fn decode_environment_value(name: &str, value: Option<OsString>) -> Result<Option<String>, String> {
+    value
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| format!("environment variable {name} is not valid UTF-8"))
+        })
+        .transpose()
+}
+
 fn collect_environment(
     variables: impl IntoIterator<Item = (OsString, OsString)>,
 ) -> Result<BTreeMap<String, String>, String> {
@@ -878,7 +896,7 @@ mod windows_verbatim_join_tests {
 
 #[cfg(all(test, unix))]
 mod environment_snapshot_tests {
-    use super::collect_environment;
+    use super::{collect_environment, decode_environment_value};
     use std::{ffi::OsString, os::unix::ffi::OsStringExt};
 
     #[test]
@@ -908,6 +926,12 @@ mod environment_snapshot_tests {
             "OLLAMA_UNUSED_BINARY",
             "SYMDESK_VAULT_EXTRA",
             "xdg_data_home",
+            "SYMDESK_ANTHROPIC_URL",
+            "SYMDESK_OLLAMA_MODEL",
+            "SYMDESK_SERVER_TOKEN",
+            "SYMDESK_WORKER_TOKEN",
+            "SYMDESK_SERVER_LISTEN",
+            "TZ",
         ] {
             let environment =
                 collect_environment([(OsString::from(name), OsString::from_vec(vec![0xff]))])
@@ -927,6 +951,29 @@ mod environment_snapshot_tests {
             error,
             "environment variable XDG_DATA_HOME is not valid UTF-8"
         );
+    }
+
+    #[test]
+    fn consumed_environment_values_preserve_absence_empty_and_unicode_but_reject_raw_bytes() {
+        for name in [
+            "SYMDESK_ANTHROPIC_URL",
+            "SYMDESK_OLLAMA_MODEL",
+            "SYMDESK_SERVER_TOKEN",
+            "SYMDESK_WORKER_TOKEN",
+            "SYMDESK_SERVER_LISTEN",
+        ] {
+            assert_eq!(decode_environment_value(name, None), Ok(None));
+            for value in ["", " padded é value "] {
+                assert_eq!(
+                    decode_environment_value(name, Some(OsString::from(value))),
+                    Ok(Some(value.to_owned()))
+                );
+            }
+            assert_eq!(
+                decode_environment_value(name, Some(OsString::from_vec(vec![0xff]))),
+                Err(format!("environment variable {name} is not valid UTF-8"))
+            );
+        }
     }
 }
 

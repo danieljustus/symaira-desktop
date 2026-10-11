@@ -412,23 +412,30 @@ fn run_http_server(
         Ok(path) => path,
         Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     };
-    let token = token
-        .filter(|value| !value.is_empty())
-        .or_else(|| std::env::var("SYMDESK_SERVER_TOKEN").ok())
-        .unwrap_or_default();
-    let worker_token = worker_token
-        .filter(|value| !value.is_empty())
-        .or_else(|| std::env::var("SYMDESK_WORKER_TOKEN").ok())
-        .filter(|value| !value.is_empty());
-    let config = http::HttpConfig {
-        listen_address: listen
-            .filter(|value| !value.is_empty())
-            .or_else(|| std::env::var("SYMDESK_SERVER_LISTEN").ok())
-            .unwrap_or_else(|| "127.0.0.1:8787".to_owned()),
-        vault_root: vault,
-        token,
-        worker_token,
-        version: VERSION.to_owned(),
+    // A flag wins without reading its environment fallback. Never turn an
+    // invalid consumed value into a missing token or a default listener.
+    let setting = |flag: Option<String>, name: &str| {
+        flag.filter(|value| !value.is_empty()).map_or_else(
+            || symdesk_core::config::environment_value(name),
+            |value| Ok(Some(value)),
+        )
+    };
+    let config = match (|| {
+        let token = setting(token, "SYMDESK_SERVER_TOKEN")?.unwrap_or_default();
+        let worker_token =
+            setting(worker_token, "SYMDESK_WORKER_TOKEN")?.filter(|value| !value.is_empty());
+        let listen_address = setting(listen, "SYMDESK_SERVER_LISTEN")?
+            .unwrap_or_else(|| "127.0.0.1:8787".to_owned());
+        Ok::<_, String>(http::HttpConfig {
+            listen_address,
+            vault_root: vault,
+            token,
+            worker_token,
+            version: VERSION.to_owned(),
+        })
+    })() {
+        Ok(config) => config,
+        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()

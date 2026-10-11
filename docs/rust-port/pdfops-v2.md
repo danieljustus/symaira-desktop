@@ -19,12 +19,20 @@ module contracts), never merely a selected-file hash.
 2. qpdf writes split, merge and rotate outputs from the original inputs, and
    every staged result must pass a separate `qpdf --check` with exit 0 before
    publication. No `--warning-exit-0`, repair-warning waiver or direct Poppler
-   output publication remains. Split also needs Poppler pdfinfo for page count.
+   output publication remains. Selector split also needs Poppler pdfinfo for page
+   count. Legacy barcode split remains qpdf-only and counts via `--show-npages`;
+   Poppler-only availability no longer advertises a usable barcode splitter.
    Historical Poppler 26.10.0 output `/Size` failures remain failed evidence.
 3. Operations have a 60-second deadline; split rejects page counts over 10,000.
    Both selectors reject expansions over 1,000,000 pages and avoid signed-limit
    loop overflow. Inputs must be regular files. The legacy barcode range writer
-   uses the same process/publication/validation path; no-split copies retain
+   uses one shared deadline across counting, all ranges, validation and publication,
+   and the same stage-all/publish path as selector split. It rejects more than
+   10,000 pages/parts and non-increasing, duplicate or out-of-document boundaries
+   before writing. `part-N.pdf` names and empty-document metadata are retained;
+   the final range now ends at the verified count instead of unbounded `z`.
+   The old per-range `Extract` and invalid Poppler-only fallback are removed.
+   No-split copies retain
    their no-tool behavior, stream at most 512 MiB and publish exclusively.
 4. Unix tool execution owns a fresh process group, including descendants holding
    capture handles after leader exit. Cancellation, overflow and normal leader

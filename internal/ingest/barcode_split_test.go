@@ -18,8 +18,8 @@ import (
 )
 
 // The tests in this file exercise ScanPDFForBarcodes and ingestPDFWithSplit
-// with a fake pdftoppm binary on PATH and the split/ingest pipeline seams
-// stubbed out (see stubSplitPipeline).  The fake pdftoppm "renders" pages
+// with fake pdftoppm/qpdf binaries on PATH and the ingest seam stubbed out
+// (see stubSplitPipeline). The fake pdftoppm "renders" pages
 // by copying pre-generated PNG files (real Code39 barcodes produced with the
 // gozxing writer, so the detection pipeline is exercised end to end).
 
@@ -131,26 +131,20 @@ func setupBarcodeFixture(t *testing.T) (imgDir, mockDir string) {
 	return imgDir, mockDir
 }
 
-// stubSplitPipeline points the split and ingest seams at doubles that mirror
-// what the pipeline does for these fixtures: every split yields two parts, and
-// every part ingests to a note named after it. ingestFails makes every ingest
-// fail, so the all-parts-failed path can be exercised.
+// stubSplitPipeline keeps the real legacy split operation and supplies controlled
+// qpdf responses for two pages. Every part ingests to a note named after it.
+// ingestFails exercises the all-parts-failed path.
 func stubSplitPipeline(t *testing.T, ingestFails bool) {
 	t.Helper()
-	originalSplit, originalIngest := SplitPDFFunc, IngestFunc
-	t.Cleanup(func() { SplitPDFFunc, IngestFunc = originalSplit, originalIngest })
-
-	SplitPDFFunc = func(_ context.Context, _, _, outputDir string) ([]string, error) {
-		var parts []string
-		for _, name := range []string{"part-1.pdf", "part-2.pdf"} {
-			path := filepath.Join(outputDir, name)
-			if err := os.WriteFile(path, minimalPDF(), 0600); err != nil {
-				return nil, err
-			}
-			parts = append(parts, path)
-		}
-		return parts, nil
-	}
+	originalIngest := IngestFunc
+	t.Cleanup(func() { IngestFunc = originalIngest })
+	tools := t.TempDir()
+	writeMockScript(t, tools, "qpdf", `
+if [ "$1" = --show-npages ]; then printf '2\n'; exit 0; fi
+if [ "$1" = --check ]; then exit 0; fi
+printf 'controlled split input' > "$6"
+`)
+	t.Setenv("PATH", tools+string(os.PathListSeparator)+os.Getenv("PATH"))
 
 	IngestFunc = func(_ context.Context, source string, _ Options) (*Result, error) {
 		if ingestFails {
@@ -222,12 +216,12 @@ const envForSplitTools = "%s:/bin:/usr/bin"
 func setMockSplitEnv(t *testing.T, withPipeline, firstScanHasBarcode bool) (vaultRoot, pdfPath string) {
 	t.Helper()
 	imgDir, mockDir := setupBarcodeFixture(t)
-	if withPipeline {
-		stubSplitPipeline(t, false)
-	}
 	stateDir := t.TempDir()
 
 	t.Setenv("PATH", strings.ReplaceAll(envForSplitTools, "%s", mockDir))
+	if withPipeline {
+		stubSplitPipeline(t, false)
+	}
 	t.Setenv("MOCK_IMG_DIR", imgDir)
 	t.Setenv("MOCK_STATE_DIR", stateDir)
 	t.Setenv("MOCK_PAGES", "2")

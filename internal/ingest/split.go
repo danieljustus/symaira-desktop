@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/pdfops"
 )
@@ -31,68 +28,17 @@ func SplitPDF(pdfPath string, splitPoints []int, outputDir string) ([]string, er
 		return []string{dst}, nil
 	}
 
-	// Prefer qpdf for splitting; otherwise go through the in-process ingest
-	// pipeline, which drives the Poppler utilities and reports its own
-	// missing-tool error — so this does not gate on HasPopplerSplit and
-	// swallow a pipeline that is present but failing for another reason.
-	if qpdfPath, err := exec.LookPath("qpdf"); err == nil {
-		return splitWithQPDF(qpdfPath, pdfPath, splitPoints, outputDir)
-	}
-	return splitWithPipeline(pdfPath, splitPoints, outputDir)
+	// qpdf is mandatory for validated outputs; Poppler alone cannot split.
+	return splitWithQPDF("qpdf", pdfPath, splitPoints, outputDir)
 }
 
-// splitWithQPDF uses qpdf to extract page ranges.
+// splitWithQPDF bounds page counting, all ranges, checks and publication together.
 func splitWithQPDF(qpdfPath, pdfPath string, splitPoints []int, outputDir string) ([]string, error) {
-	var parts []string
-	start := 1
-
-	for i, end := range splitPoints {
-		partPath := filepath.Join(outputDir, fmt.Sprintf("part-%d.pdf", i+1))
-		rangeSpec := fmt.Sprintf("%d-%d", start, end)
-		if err := qpdfExtract(qpdfPath, pdfPath, partPath, rangeSpec); err != nil {
-			return nil, fmt.Errorf("qpdf extract pages %s: %w", rangeSpec, err)
-		}
-		parts = append(parts, partPath)
-		start = end + 1
-	}
-
-	// Remaining pages after the last split point.
-	partPath := filepath.Join(outputDir, fmt.Sprintf("part-%d.pdf", len(splitPoints)+1))
-	rangeSpec := fmt.Sprintf("%d-z", start) // z = end of document in qpdf
-	if err := qpdfExtract(qpdfPath, pdfPath, partPath, rangeSpec); err != nil {
-		return nil, fmt.Errorf("qpdf extract pages %s: %w", rangeSpec, err)
-	}
-	parts = append(parts, partPath)
-
-	return parts, nil
+	return (pdfops.Tools{QPDF: qpdfPath}).SplitLegacy(context.Background(), pdfPath, splitPoints, outputDir)
 }
 
-func qpdfExtract(qpdfPath, inputPath, outputPath, pageRange string) error {
-	return (pdfops.Tools{QPDF: qpdfPath}).Extract(context.Background(), inputPath, outputPath, pageRange)
-}
-
-// splitWithPipeline splits through the absorbed ingest pipeline, which runs
-// the Poppler utilities in-process rather than as a sibling symingest binary.
-func splitWithPipeline(pdfPath string, splitPoints []int, outputDir string) ([]string, error) {
-	// The pipeline's selector lists the pages to split *after*, which is the
-	// same meaning splitPoints carries here.
-	strPoints := make([]string, len(splitPoints))
-	for i, p := range splitPoints {
-		strPoints[i] = strconv.Itoa(p)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	parts, err := SplitPDFFunc(ctx, pdfPath, strings.Join(strPoints, ","), outputDir)
-	if err != nil {
-		return nil, fmt.Errorf("split pdf: %w", err)
-	}
-	return parts, nil
-}
-
-// HasPopplerSplit reports whether the Poppler utilities the pipeline's split
-// needs are all available on PATH.
+// HasPopplerSplit reports whether the historical Poppler utilities are present.
+// It does not imply availability of validated PDF splitting, which needs qpdf.
 // Retained for compatibility with older callers; new operations use HasPDFSplit.
 func HasPopplerSplit() bool {
 	for _, tool := range []string{"pdfinfo", "pdfseparate", "pdfunite"} {

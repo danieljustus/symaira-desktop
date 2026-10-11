@@ -16,6 +16,8 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/pdfprocess"
 )
 
+const maxPages = 10_000
+
 // Tools contains the external PDF utilities used by the operations.
 type Tools struct {
 	PDFInfo     string
@@ -122,6 +124,12 @@ func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]st
 	for index := range ends {
 		outputs[index] = filepath.Join(outputDir, fmt.Sprintf("part-%03d.pdf", index+1))
 	}
+	return t.splitParts(ctx, input, ends, outputs, outputDir, false)
+}
+
+// splitParts stages every range under the caller's single operation deadline.
+// legacy preserves barcode splitting's empty-document metadata and filenames.
+func (t Tools) splitParts(ctx context.Context, input string, ends []int, outputs []string, outputDir string, legacy bool) ([]string, error) {
 	if err := newOutputs([]string{input}, outputs); err != nil {
 		return nil, err
 	}
@@ -137,8 +145,12 @@ func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]st
 
 	start := 1
 	for index, end := range ends {
-		staged := filepath.Join(tmp, fmt.Sprintf("part-%03d.pdf", index+1))
-		if err := t.run(ctx, t.QPDF, input, "--pages", ".", fmt.Sprintf("%d-%d", start, end), "--", staged); err != nil {
+		staged := filepath.Join(tmp, filepath.Base(outputs[index]))
+		args := []string{input, "--pages", ".", fmt.Sprintf("%d-%d", start, end), "--", staged}
+		if legacy {
+			args[0], args[2] = "--empty", input
+		}
+		if err := t.run(ctx, t.QPDF, args...); err != nil {
 			return nil, fmt.Errorf("split part %d: %w", index+1, err)
 		}
 		if err := t.validate(ctx, staged); err != nil {
@@ -230,7 +242,7 @@ func (t Tools) pageCount(ctx context.Context, input string) (int, error) {
 		if ok && strings.TrimSpace(key) == "Pages" {
 			pages, err := strconv.Atoi(strings.TrimSpace(value))
 			if err == nil && pages > 0 {
-				if pages > 10_000 {
+				if pages > maxPages {
 					return 0, fmt.Errorf("PDF page count exceeds 10000 pages")
 				}
 				return pages, nil

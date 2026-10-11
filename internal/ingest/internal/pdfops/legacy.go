@@ -6,17 +6,51 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/danieljustus/symaira-desktop/internal/pdfprocess"
 )
 
-// Extract is the legacy barcode split's range writer. It shares publication,
-// validation and process ownership with the page-selector operations.
-func (t Tools) Extract(ctx context.Context, input, output, pages string) error {
+// SplitLegacy retains the barcode caller's qpdf-only contract and part-N names,
+// but shares the bounded stage/validate/publish operation with Split.
+func (t Tools) SplitLegacy(ctx context.Context, input string, boundaries []int, outputDir string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, pdfprocess.Timeout)
+	defer cancel()
 	if err := requireFile(input); err != nil {
-		return err
+		return nil, err
 	}
-	return t.writeOutput(ctx, []string{input}, output, func(staged string) error {
-		return t.run(ctx, t.QPDF, "--empty", "--pages", input, pages, "--", staged)
-	})
+	if len(boundaries) >= maxPages {
+		return nil, fmt.Errorf("PDF split exceeds 10000 parts")
+	}
+	path, err := toolPath(t.QPDF, "qpdf")
+	if err != nil {
+		return nil, err
+	}
+	stdout, err := pdfprocess.Run(ctx, path, "--show-npages", input)
+	if err != nil {
+		return nil, err
+	}
+	pages, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+	if err != nil || pages <= 0 {
+		return nil, fmt.Errorf("qpdf did not report a positive page count for %s", input)
+	}
+	if pages > maxPages {
+		return nil, fmt.Errorf("PDF page count exceeds 10000 pages")
+	}
+	previous := 0
+	for _, boundary := range boundaries {
+		if boundary <= previous || boundary >= pages {
+			return nil, fmt.Errorf("split boundaries must increase within the document; got %d after %d for %d pages", boundary, previous, pages)
+		}
+		previous = boundary
+	}
+	ends := append(append([]int(nil), boundaries...), pages)
+	outputs := make([]string, len(ends))
+	for i := range ends {
+		outputs[i] = filepath.Join(outputDir, fmt.Sprintf("part-%d.pdf", i+1))
+	}
+	return t.splitParts(ctx, input, ends, outputs, outputDir, true)
 }
 
 // Copy preserves the legacy no-split/no-tool behavior without overwriting a

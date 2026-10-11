@@ -162,9 +162,9 @@ func ingestPDFWithSplit(vaultRoot, pdfPath string, cfg BarcodeConfig) ([]string,
 	return notes, nil
 }
 
-// hasSplitTools reports whether any PDF splitting tool is available.
+// hasSplitTools reports whether the legacy barcode splitter's required qpdf is available.
 func hasSplitTools() bool {
-	return HasQPDF() || HasPopplerSplit()
+	return HasQPDF()
 }
 
 // ingestBuiltin is the fallback copy-to-inbox path when the ingest pipeline

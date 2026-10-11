@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "35f5734b979fe50fb6fc9b3124f59136fbdf3eb9",
+    "commit": "28cfedc2d062c4656d0a79e506ae16d5a61ef13d",
     "release": "renderer-pdf-safety-v2-local"
   },
   "cases": [

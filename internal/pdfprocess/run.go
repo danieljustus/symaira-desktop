@@ -18,13 +18,14 @@ const CaptureLimit = 16 * 1024 * 1024
 const Timeout = 60 * time.Second
 
 type capture struct {
-	bytes.Buffer
+	// Do not embed Buffer: its promoted ReadFrom bypasses Write in io.Copy.
+	buffer   bytes.Buffer
 	overflow chan struct{}
 }
 
 func (c *capture) Write(p []byte) (int, error) {
 	n := len(p)
-	remaining := CaptureLimit - c.Len()
+	remaining := CaptureLimit - c.buffer.Len()
 	if n > remaining {
 		select {
 		case c.overflow <- struct{}{}:
@@ -32,7 +33,7 @@ func (c *capture) Write(p []byte) (int, error) {
 		}
 		p = p[:remaining]
 	}
-	_, _ = c.Buffer.Write(p)
+	_, _ = c.buffer.Write(p)
 	return n, nil // Drain until the owning process group is terminated.
 }
 
@@ -113,11 +114,11 @@ func Run(ctx context.Context, path string, args ...string) ([]byte, error) {
 		return nil, errors.New("PDF tool output exceeds 16 MiB")
 	}
 	if waitErr != nil {
-		message := strings.TrimSpace(diagnostic.String())
+		message := strings.TrimSpace(diagnostic.buffer.String())
 		if message == "" {
 			message = waitErr.Error()
 		}
 		return nil, fmt.Errorf("%s: %s", label, message)
 	}
-	return out.Bytes(), nil
+	return out.buffer.Bytes(), nil
 }

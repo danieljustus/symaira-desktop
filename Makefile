@@ -53,6 +53,8 @@
 .PHONY: retrieval-ask-mcp-fixtures-generate retrieval-ask-mcp-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
+.PHONY: render-differential render-pdfops-differential
+
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
@@ -101,6 +103,14 @@ override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 build:
 	@mkdir -p bin
 	$(GO_VCS_ENV) go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
+
+# Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
+# Supply fresh evidence/runtime roots. Native captures are never overwritten.
+render-differential: render-pdfops-differential
+
+render-pdfops-differential:
+	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
+	python3 scripts/rust-port/pdfops/verify.py --output "$(RENDER_EVIDENCE_ROOT)" --runtime-root "$(RENDER_RUNTIME_ROOT)" $(if $(RENDER_BUILD_LAUNCHER),--build-launcher "$(RENDER_BUILD_LAUNCHER)",)
 
 # Verifies the identity of the binary actually built: the stamped revision must
 # be this checkout's HEAD and the CLI must run.

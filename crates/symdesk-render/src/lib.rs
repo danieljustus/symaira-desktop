@@ -1,4 +1,7 @@
+#![deny(unsafe_code)]
+
 pub mod export_html;
+pub mod pdfops;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};

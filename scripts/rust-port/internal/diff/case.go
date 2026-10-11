@@ -37,6 +37,7 @@ type Case struct {
 	Stdin                string            `json:"stdin,omitempty"`
 	Env                  map[string]string `json:"env,omitempty"`
 	SandboxEnv           map[string]string `json:"sandbox_env,omitempty"`
+	SandboxEnvBase64     map[string]string `json:"sandbox_env_base64,omitempty"` // raw bytes are standard base64, for Unix-only oracle inputs
 	UnsetSandboxEnv      []string          `json:"unset_sandbox_env,omitempty"`
 	WorkingDir           string            `json:"working_dir,omitempty"`
 	TimeoutMS            int               `json:"timeout_ms,omitempty"`

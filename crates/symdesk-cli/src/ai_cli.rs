@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
     fs,
     io::{self, Read, Write},
     path::{Path, PathBuf},
@@ -561,7 +560,7 @@ enum AnthropicTransformError {
 }
 
 fn load_config() -> Result<symdesk_core::config::Config, String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let input = match fs::read_to_string(path) {
         Ok(input) => Some(input),

@@ -6,7 +6,10 @@ use std::{
 };
 
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{self, IgnoredAny, MapAccess, Visitor},
+};
 
 use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
@@ -329,8 +332,7 @@ fn default_symseek_config() -> SymseekConfig {
     }
 }
 
-#[derive(Default, Deserialize)]
-#[serde(default)]
+#[derive(Default)]
 struct LegacyJsonConfig {
     ollama_url: String,
     model: String,
@@ -351,6 +353,86 @@ struct LegacyJsonConfig {
     expand_query: bool,
     expand_model: String,
     expand_timeout_seconds: i64,
+}
+
+impl<'de> Deserialize<'de> for LegacyJsonConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct LegacyConfigVisitor;
+
+        impl<'de> Visitor<'de> for LegacyConfigVisitor {
+            type Value = LegacyJsonConfig;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("a JSON object or null")
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(LegacyJsonConfig::default())
+            }
+
+            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                macro_rules! set_non_null {
+                    ($target:expr, $map:ident, $kind:ty) => {
+                        if let Some(value) = $map.next_value::<Option<$kind>>()? {
+                            $target = value;
+                        }
+                    };
+                }
+
+                let mut config = LegacyJsonConfig::default();
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "ollama_url" => set_non_null!(config.ollama_url, map, String),
+                        "model" => set_non_null!(config.model, map, String),
+                        "embedding_dim" => set_non_null!(config.embedding_dim, map, i64),
+                        "timeout_seconds" => set_non_null!(config.timeout_seconds, map, i64),
+                        "retry_count" => set_non_null!(config.retry_count, map, i64),
+                        "retry_backoff_ms" => set_non_null!(config.retry_backoff_ms, map, i64),
+                        "index_cooldown_seconds" => {
+                            set_non_null!(config.index_cooldown_seconds, map, i64);
+                        }
+                        "vector_backend" => set_non_null!(config.vector_backend, map, String),
+                        "index_path" => set_non_null!(config.index_path, map, String),
+                        "vector_quantization" => {
+                            set_non_null!(config.vector_quantization, map, String);
+                        }
+                        "vector_quant_bits" => set_non_null!(config.vector_quant_bits, map, i64),
+                        "vector_quantized_shortlist" => {
+                            set_non_null!(config.vector_quantized_shortlist, map, i64);
+                        }
+                        "vector_exact_rerank" => {
+                            set_non_null!(config.vector_exact_rerank, map, bool);
+                        }
+                        "rerank_query" => set_non_null!(config.rerank_query, map, bool),
+                        "rerank_model" => set_non_null!(config.rerank_model, map, String),
+                        "rerank_timeout_seconds" => {
+                            set_non_null!(config.rerank_timeout_seconds, map, i64);
+                        }
+                        "expand_query" => set_non_null!(config.expand_query, map, bool),
+                        "expand_model" => set_non_null!(config.expand_model, map, String),
+                        "expand_timeout_seconds" => {
+                            set_non_null!(config.expand_timeout_seconds, map, i64);
+                        }
+                        _ => {
+                            let _: IgnoredAny = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(config)
+            }
+        }
+
+        deserializer.deserialize_any(LegacyConfigVisitor)
+    }
 }
 
 impl From<LegacyJsonConfig> for SymseekConfig {
@@ -739,5 +821,48 @@ mod tests {
             lexical_clean(Path::new("/../../var/../tmp/index.db")),
             PathBuf::from("/tmp/index.db")
         );
+    }
+}
+
+#[cfg(test)]
+mod legacy_json_null_tests {
+    use super::LegacyJsonConfig;
+
+    #[test]
+    fn legacy_json_null_is_accepted_for_top_level_string_integer_and_boolean_values() {
+        let top_level: LegacyJsonConfig = serde_json::from_str("null").expect("top-level null");
+        assert_eq!(top_level.index_path, "");
+        assert_eq!(top_level.embedding_dim, 0);
+        assert!(!top_level.vector_exact_rerank);
+
+        let fields: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":null,"embedding_dim":null,"vector_exact_rerank":null}"#,
+        )
+        .expect("null is a no-op for Go's scalar configuration fields");
+        assert_eq!(fields.index_path, "");
+        assert_eq!(fields.embedding_dim, 0);
+        assert!(!fields.vector_exact_rerank);
+    }
+
+    #[test]
+    fn duplicate_null_values_preserve_prior_non_null_string_integer_and_boolean() {
+        let config: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":"kept.db","index_path":null,"embedding_dim":21,"embedding_dim":null,"vector_exact_rerank":true,"vector_exact_rerank":null}"#,
+        )
+        .expect("Go accepts duplicate keys and null leaves a prior scalar unchanged");
+        assert_eq!(config.index_path, "kept.db");
+        assert_eq!(config.embedding_dim, 21);
+        assert!(config.vector_exact_rerank);
+    }
+
+    #[test]
+    fn non_null_values_after_duplicates_still_win() {
+        let config: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":null,"index_path":"last.db","embedding_dim":null,"embedding_dim":17,"vector_exact_rerank":null,"vector_exact_rerank":true}"#,
+        )
+        .expect("later non-null duplicate replaces the zero value");
+        assert_eq!(config.index_path, "last.db");
+        assert_eq!(config.embedding_dim, 17);
+        assert!(config.vector_exact_rerank);
     }
 }

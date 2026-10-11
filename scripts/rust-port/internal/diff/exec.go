@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -100,7 +101,7 @@ func runInRoot(absoluteBinary string, testCase Case, root string) (Result, error
 			return Result{}, err
 		}
 	}
-	command.Env, err = isolatedEnvForCase(
+	command.Env, err = isolatedEnvForCaseWithBase64(
 		home,
 		tmp,
 		runtimeDir,
@@ -108,6 +109,7 @@ func runInRoot(absoluteBinary string, testCase Case, root string) (Result, error
 		testCase.Env,
 		testCase.SandboxEnv,
 		testCase.UnsetSandboxEnv,
+		testCase.SandboxEnvBase64,
 		replacements,
 	)
 	if err != nil {
@@ -293,6 +295,16 @@ func isolatedEnvForCase(
 	unsetSandbox []string,
 	replacements map[string]string,
 ) ([]string, error) {
+	return isolatedEnvForCaseWithBase64(home, tmp, runtimeDir, state, extra, sandboxExtra, unsetSandbox, nil, replacements)
+}
+
+func isolatedEnvForCaseWithBase64(
+	home, tmp, runtimeDir, state string,
+	extra, sandboxExtra map[string]string,
+	unsetSandbox []string,
+	rawBase64 map[string]string,
+	replacements map[string]string,
+) ([]string, error) {
 	values := map[string]string{
 		"HOME":                 home,
 		"USERPROFILE":          home,
@@ -354,6 +366,28 @@ func isolatedEnvForCase(
 	sort.Strings(keys)
 	for _, key := range keys {
 		values[key] = replace(extra[key], replacements)
+	}
+	for key, encoded := range rawBase64 {
+		if key == "" || key != strings.ToUpper(key) || strings.ContainsAny(key, "=\x00") {
+			return nil, fmt.Errorf("case raw environment key must use a non-empty canonical uppercase spelling: %q", key)
+		}
+		if reservedSandboxEnv(key) {
+			return nil, fmt.Errorf("case raw environment cannot override sandbox variable %q", key)
+		}
+		if isSandboxPathEnv(key) {
+			return nil, fmt.Errorf("case raw path environment %q must use sandbox_env", key)
+		}
+		if _, exists := values[key]; exists {
+			return nil, fmt.Errorf("case raw environment variable %q collides with an existing variable", key)
+		}
+		value, err := base64.StdEncoding.DecodeString(encoded)
+		if err != nil || base64.StdEncoding.EncodeToString(value) != encoded {
+			return nil, fmt.Errorf("case raw environment variable %q must use canonical standard base64", key)
+		}
+		if strings.IndexByte(string(value), 0) >= 0 {
+			return nil, fmt.Errorf("case raw environment variable %q contains a NUL byte", key)
+		}
+		values[key] = string(value)
 	}
 	keys = keys[:0]
 	for key := range values {

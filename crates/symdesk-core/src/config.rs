@@ -2,9 +2,58 @@
 
 //! Unified SymDesk configuration semantics frozen from the Go loader.
 
-use std::{collections::BTreeMap, fmt, fs, io::Write, path::Path};
+use std::{collections::BTreeMap, ffi::OsString, fmt, fs, io::Write, path::Path};
 
 use serde::{Deserialize, Serialize};
+
+/// Collects Unicode environment settings used by the configuration loaders.
+/// Unrelated variables with non-Unicode values are ignored; a relevant
+/// configuration value fails explicitly instead of being silently defaulted.
+pub fn environment_snapshot() -> Result<BTreeMap<String, String>, String> {
+    collect_environment(std::env::vars_os())
+}
+
+fn collect_environment(
+    variables: impl IntoIterator<Item = (OsString, OsString)>,
+) -> Result<BTreeMap<String, String>, String> {
+    let mut environment = BTreeMap::new();
+    for (name, value) in variables {
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        match value.into_string() {
+            Ok(value) => {
+                environment.insert(name.to_owned(), value);
+            }
+            Err(_) if is_configuration_environment_name(name) => {
+                return Err(format!("environment variable {name} is not valid UTF-8"));
+            }
+            Err(_) => {}
+        }
+    }
+    Ok(environment)
+}
+
+fn is_configuration_environment_name(name: &str) -> bool {
+    let name = name.to_ascii_uppercase();
+    matches!(
+        name.as_str(),
+        "HOME"
+            | "USERPROFILE"
+            | "TMPDIR"
+            | "TMP"
+            | "TEMP"
+            | "LANG"
+            | "LC_ALL"
+            | "LC_MESSAGES"
+            | "TZ"
+    ) || name.starts_with("XDG_")
+        || name.starts_with("SYMDESK_")
+        || name.starts_with("SYMINGEST_")
+        || name.starts_with("SYMRELATE_")
+        || name.starts_with("SYMSEEK_")
+        || name.starts_with("OLLAMA_")
+}
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -790,6 +839,45 @@ mod windows_verbatim_join_tests {
                 join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
             assert_eq!(actual, case["expected"], "{}", case["id"]);
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod environment_snapshot_tests {
+    use super::collect_environment;
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    #[test]
+    fn unrelated_non_unicode_environment_value_is_ignored_without_lossy_conversion() {
+        let environment = collect_environment([
+            (
+                OsString::from("XDG_DATA_HOME"),
+                OsString::from("/safe/data"),
+            ),
+            (
+                OsString::from("UNRELATED_BINARY_ENV"),
+                OsString::from_vec(vec![0xff]),
+            ),
+        ])
+        .expect("unrelated non-Unicode variable is not an error");
+        assert_eq!(
+            environment.get("XDG_DATA_HOME").map(String::as_str),
+            Some("/safe/data")
+        );
+        assert!(!environment.contains_key("UNRELATED_BINARY_ENV"));
+    }
+
+    #[test]
+    fn non_unicode_configuration_value_is_reported_instead_of_defaulted() {
+        let error = collect_environment([(
+            OsString::from("XDG_DATA_HOME"),
+            OsString::from_vec(vec![0xff]),
+        )])
+        .expect_err("relevant non-Unicode configuration is not silently dropped");
+        assert_eq!(
+            error,
+            "environment variable XDG_DATA_HOME is not valid UTF-8"
+        );
     }
 }
 

@@ -122,6 +122,36 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	}
 }
 
+func TestIsolatedEnvironmentKeepsRawBase64Bytes(t *testing.T) {
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	tmp := filepath.Join(root, "tmp")
+	runtimeDir := filepath.Join(root, "runtime")
+	replacements := map[string]string{
+		"${SANDBOX}": root,
+		"${HOME}":    home,
+		"${TMPDIR}":  tmp,
+	}
+	environment, err := isolatedEnvForCaseWithBase64(
+		home,
+		tmp,
+		runtimeDir,
+		filepath.Join(home, ".local", "state"),
+		nil,
+		nil,
+		nil,
+		map[string]string{"UNRELATED_BINARY_ENV": "/w=="},
+		replacements,
+	)
+	if err != nil {
+		t.Fatalf("create environment with raw bytes: %v", err)
+	}
+	value, ok := environmentMap(environment)["UNRELATED_BINARY_ENV"]
+	if !ok || len(value) != 1 || value[0] != 0xff {
+		t.Fatalf("raw environment bytes = %v, want [255]", []byte(value))
+	}
+}
+
 func environmentMap(values []string) map[string]string {
 	result := make(map[string]string, len(values))
 	for _, pair := range values {

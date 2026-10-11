@@ -292,7 +292,8 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
             context: "vault root",
             path: vault_root.to_path_buf(),
         })?;
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment =
+        symdesk_core::config::environment_snapshot().map_err(SidecarError::Contract)?;
     let cwd = std::env::current_dir()?;
     let temp_root = std::env::temp_dir();
     sidecar_path_for_vault(root, &environment, &cwd, &temp_root)

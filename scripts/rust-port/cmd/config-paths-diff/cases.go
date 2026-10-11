@@ -22,6 +22,10 @@ func configPathCases() []namedCase {
 		entry.Input.SandboxEnv = env
 		return entry
 	}
+	withRawEnv := func(entry namedCase, env map[string]string) namedCase {
+		entry.Input.SandboxEnvBase64 = env
+		return entry
+	}
 	withoutHome := func(entry namedCase) namedCase {
 		entry.Input.UnsetSandboxEnv = []string{"HOME", "USERPROFILE"}
 		return entry
@@ -155,13 +159,34 @@ func configPathCases() []namedCase {
 		addFiles(makeCase("retrieval-migration-then-ingest-error-retains-toml", "ordered-side-effects", "config", "paths"),
 			file("home", ".config/symseek/config.json", "{\"index_path\":\"${WORKSPACE}/legacy-index.db\"}"),
 			file("workspace", ".symingest.toml", "ocr_lang = 7\n")),
+		makeCase("vault-leading-parent-ingest-archive-text", "path-overrides", "--vault=../../vault", "config", "paths"),
+		makeCase("vault-leading-parent-ingest-archive-json", "path-overrides", "--vault=../../vault", "config", "paths", "--output=json"),
+		addFiles(makeCase("retrieval-json-null-scalar-fields", "retrieval-migration", "config", "paths", "--output=json"),
+			file("home", ".config/symseek/config.json", `{"index_path":null,"embedding_dim":null,"vector_exact_rerank":null}`)),
+		addFiles(makeCase("retrieval-json-null-top-level", "retrieval-migration", "config", "paths", "--output=json"),
+			file("home", ".config/symseek/config.json", `null`)),
+		addFiles(makeCase("retrieval-json-duplicate-null-preserves-earlier-scalars", "retrieval-migration", "config", "paths", "--output=json"),
+			file("home", ".config/symseek/config.json", `{"index_path":"${WORKSPACE}/first.db","index_path":null,"embedding_dim":21,"embedding_dim":null,"vector_exact_rerank":true,"vector_exact_rerank":null}`)),
+		addFiles(makeCase("retrieval-json-duplicate-null-then-non-null-last-wins", "retrieval-migration", "config", "paths", "--output=json"),
+			file("home", ".config/symseek/config.json", `{"index_path":null,"index_path":"${WORKSPACE}/last.db","embedding_dim":null,"embedding_dim":17,"vector_exact_rerank":null,"vector_exact_rerank":true}`)),
+		withEnv(makeCase("symingest-invalid-bool-control-text", "diagnostic-quoting", "config", "paths"),
+			map[string]string{"SYMINGEST_SYMSEEK_ENABLED": "\x01"}),
+		withEnv(makeCase("symingest-invalid-bool-unicode-json", "diagnostic-quoting", "config", "paths", "--output=json"),
+			map[string]string{"SYMINGEST_SYMSEEK_ENABLED": "invalidé\u2028"}),
+		addFiles(makeCase("symingest-invalid-bool-toml-control-text", "diagnostic-quoting", "config", "paths"),
+			file("workspace", ".symingest.toml", `symseek_enabled = "\u0001"`)),
+		addFiles(makeCase("symingest-invalid-bool-toml-unicode-json", "diagnostic-quoting", "config", "paths", "--output=json"),
+			file("workspace", ".symingest.toml", `symseek_enabled = "affirmativeé\u2028"`)),
+		withRawEnv(makeCase("unrelated-invalid-utf8-environment-does-not-panic", "robustness", "config", "paths"),
+			map[string]string{"UNRELATED_BINARY_ENV": "/w=="}),
 	}
 
 	for index := range cases {
 		if cases[index].ID == "unified-primary-symlinks-win" ||
 			cases[index].ID == "vault-symlink-alias-hash" ||
 			cases[index].ID == "retrieval-migration-write-failure-retains-json" ||
-			cases[index].ID == "retrieval-migration-unix-private-mode" {
+			cases[index].ID == "retrieval-migration-unix-private-mode" ||
+			cases[index].ID == "unrelated-invalid-utf8-environment-does-not-panic" {
 			cases[index].Platform = "unix"
 		}
 	}

@@ -73,7 +73,7 @@ pub fn command() -> Command {
 }
 
 pub fn load_root_config() -> Result<(Config, BTreeMap<String, String>), String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let path = config::global_path(&environment);
     let content = match fs::read_to_string(&path) {
         Ok(content) => Some(content),
@@ -337,9 +337,10 @@ fn apply_ingest_environment(
         }
     }
     if let Some(value) = environment.get("SYMINGEST_SYMSEEK_ENABLED") {
+        let quoted = symdesk_vault::go_quote(value);
         config.symseek_enabled = parse_go_bool(value).map_err(|_| {
             format!(
-                "env override error: env SYMINGEST_SYMSEEK_ENABLED: cannot parse {value:?} as bool: strconv.ParseBool: parsing {value:?}: invalid syntax"
+                "env override error: env SYMINGEST_SYMSEEK_ENABLED: cannot parse {quoted} as bool: strconv.ParseBool: parsing {quoted}: invalid syntax"
             )
         })?;
     }
@@ -374,11 +375,14 @@ fn parse_go_bool(value: &str) -> Result<bool, ()> {
 fn go_toml_bool(value: &toml::Value) -> Result<bool, String> {
     match value {
         toml::Value::Boolean(value) => Ok(*value),
-        toml::Value::String(value) => parse_go_bool(value).map_err(|_| {
-            format!(
-                "field \"symseek_enabled\": cannot parse {value:?} as bool: strconv.ParseBool: parsing {value:?}: invalid syntax"
-            )
-        }),
+        toml::Value::String(value) => {
+            let quoted = symdesk_vault::go_quote(value);
+            parse_go_bool(value).map_err(|_| {
+                format!(
+                    "field \"symseek_enabled\": cannot parse {quoted} as bool: strconv.ParseBool: parsing {quoted}: invalid syntax"
+                )
+            })
+        }
         other => Err(format!(
             "field \"symseek_enabled\": cannot convert {} to bool",
             go_toml_type(other)
@@ -419,11 +423,18 @@ fn clean_path(path: &Path) -> PathBuf {
     for component in path.components() {
         match component {
             std::path::Component::CurDir => {}
-            std::path::Component::ParentDir => {
-                if !result.pop() && !result.has_root() {
-                    result.push("..");
+            std::path::Component::ParentDir => match result.components().next_back() {
+                Some(std::path::Component::Normal(_)) => {
+                    result.pop();
                 }
-            }
+                Some(std::path::Component::ParentDir) if !result.has_root() => {
+                    result.push(component.as_os_str());
+                }
+                None if !result.has_root() => {
+                    result.push(component.as_os_str());
+                }
+                _ => {}
+            },
             other => result.push(other.as_os_str()),
         }
     }
@@ -495,9 +506,12 @@ fn go_escape_json(value: String) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use std::{
+        collections::BTreeMap,
+        path::{Path, PathBuf},
+    };
 
-    use super::{IngestConfig, apply_ingest_environment, parse_go_bool};
+    use super::{IngestConfig, apply_ingest_environment, clean_path, parse_go_bool};
 
     #[test]
     fn symingest_environment_empty_values_override_config_strings() {
@@ -522,5 +536,21 @@ mod tests {
             assert_eq!(parse_go_bool(value), Ok(false), "{value}");
         }
         assert!(parse_go_bool("yes").is_err());
+    }
+
+    #[test]
+    fn clean_path_preserves_leading_parent_components() {
+        assert_eq!(
+            clean_path(Path::new("../../vault/archive/ingest")),
+            PathBuf::from("../../vault/archive/ingest")
+        );
+        assert_eq!(
+            clean_path(Path::new("../../alpha/../beta")),
+            PathBuf::from("../../beta")
+        );
+        assert_eq!(
+            clean_path(Path::new("/../../vault/archive/../ingest")),
+            PathBuf::from("/vault/ingest")
+        );
     }
 }

@@ -62,16 +62,34 @@ Rust CLI/MCP wiring, Typst rendering and the rest of RUST-011 remain unaccepted.
 This checkpoint cannot be published, released or used to remove Go without its
 independent spec/parity and quality/security review and coordinator acceptance.
 
-The affected Cobra/MCP inventories and IR/HTML snapshots are separately captured
-under `testdata/port/render/v2/`. The historical snapshots and migration-wide
-provenance stay intact. Integration must reconcile the wider migration's old
-source pin explicitly; this package does not silently repin unrelated contracts.
+The separately captured Cobra/MCP inventories and IR/HTML snapshots under
+`testdata/port/render/v2/` retain their reviewed bytes. The local composition at
+`f21a5a03e944e67b7771b4acbbf09eab7ce45a12` restores the existing canonical
+fixture writers and uses the genuine `portgen` generator and controlled P/Q
+replay to bind the complete live fixture set to corrected source
+`28cfedc2d062c4656d0a79e506ae16d5a61ef13d`, release
+`renderer-pdf-safety-v2-local`. The source bundle is anchored at verified main
+`47dd417ec5632c8e6a2edb32ead09db09e929ed9`. This is a semantic recapture, not
+historical-source parity: two MCP descriptions now describe the already-reviewed
+qpdf and exclusive-output behavior. Canonical renderer outputs equal the retained
+v2 bytes. Original provenance/bundle, fixtures and failed captures remain in Git
+and the retained pre-composition source archives.
 
-The full `cmd/symdesk` suite currently stops at
-`TestPortVaultSelectionCLIContract`, which still checks the historical global
-source pin. The complete `fixtureoracle` suite likewise stops at its default-pin
-compiled-environment test. Those failures are retained, not skipped into a green
-whole-package claim. The renderer's new reference has its own full-source
-rejection control; the unchanged generic source-mutation controls also execute.
-Config/vault-selection files and the CFG1245 lane were not modified to silence
-these cross-package integration gates.
+The two original global-pin failures, `TestPortVaultSelectionCLIContract` and
+`TestCurrentUsesCompiledSourceBeforeTestLocalEnvironmentChanges`, now pass, as
+does the complete affected Go caller/producer union. No source verifier or test
+was bypassed. Only the reviewed portgen process-limit fix and its subprocess
+test were reused from the local CFG foundation; its Rust, native producer,
+dependencies, CI and foreign PR were not imported or modified.
+
+Fresh local PDF/press, installed-tool, formatting, strict workspace Clippy,
+Go vet, source-mutation and dependency-security checks pass. The complete Rust
+workspace run remains **failed**, not waived: `symroom-cli`'s index CLI replay
+hits CoreKit's secure-directory rejection because the NVMe mount ancestor is
+group-writable (0775). The unchanged CoreKit security rule and shared mount
+permissions were not altered, and no internal runtime fallback was used.
+After an authorized secure external runtime is supplied, the failed and not-yet-
+reached Rust consumers still need execution, followed by independent composition
+review. Evidence index: `desktop/composed-renderer-local-handoff.json` under the
+coordinator's retained evidence root. Six-target native acceptance, publication
+and the remaining RUST-011 rows stay open.

@@ -249,6 +249,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          # Detach even on main pushes; the gate owns an exact-SHA temporary branch.
+          ref: ${{ github.sha }}
           # The pinned Go source oracles are validated from Git history.
           fetch-depth: 0
 

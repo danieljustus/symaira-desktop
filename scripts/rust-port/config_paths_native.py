@@ -494,7 +494,7 @@ def main() -> int:
     parser.add_argument("--build-launcher", type=Path, help="local dev-external launcher; omitted on hosted CI")
     parser.add_argument("--oracle-worktree", type=Path, help="explicit clean pinned Go foundation checkout for local policy builds")
     args = parser.parse_args()
-    output = args.evidence_dir.expanduser().absolute()
+    output = args.evidence_dir.expanduser().resolve()
     launcher = str(args.build_launcher.expanduser().resolve()) if args.build_launcher else None
     if launcher and not Path(launcher).is_file():
         parser.error(f"build launcher does not exist: {launcher}")

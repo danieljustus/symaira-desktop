@@ -59,6 +59,29 @@ def synthetic_capture(host: str = "Darwin") -> dict:
 
 
 class ConfigPathsNativeTests(unittest.TestCase):
+    def test_output_symlink_parent_cannot_reenter_candidate_before_creation(self):
+        with tempfile.TemporaryDirectory(prefix="config-paths-output-boundary-") as temporary:
+            parent = Path(temporary).resolve()
+            candidate = parent / "candidate"
+            candidate.mkdir()
+            alias = parent / "external-looking-alias"
+            alias.symlink_to(candidate, target_is_directory=True)
+            for relative in ("output", "missing/parents/output"):
+                with self.subTest(relative=relative):
+                    output = alias / relative
+                    with mock.patch.object(gate, "ROOT", candidate), \
+                         mock.patch.object(sys, "argv", ["native-gate", "--evidence-dir", str(output)]), \
+                         mock.patch.object(sys, "stderr") as stderr, \
+                         mock.patch.object(gate, "private_environment") as environment:
+                        with self.assertRaises(SystemExit) as rejected:
+                            gate.main()
+                        self.assertEqual(rejected.exception.code, 2)
+                        self.assertIn("outside the candidate checkout", "".join(
+                            call.args[0] for call in stderr.write.call_args_list
+                        ))
+                        environment.assert_not_called()
+                    self.assertEqual(list(candidate.iterdir()), [])
+
     def test_failure_keeps_exact_child_streams_and_exit(self):
         with tempfile.TemporaryDirectory(prefix="config-paths-command-") as temporary:
             root = Path(temporary)
@@ -216,6 +239,9 @@ class ConfigPathsNativeTests(unittest.TestCase):
         job = job_match.group("body")
         self.assertIn("if: github.event_name != 'pull_request'", job)
         self.assertIn("os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]", job)
+        checkout = job.split("      - uses: actions/checkout@", 1)[1].split("\n      - ", 1)[0]
+        self.assertIn("          ref: ${{ github.sha }}\n", checkout,
+                      "main push, schedule and dispatch must detach the immutable trigger SHA")
         steps = re.split(r"(?m)^      - name: ", job)[1:]
         gate_index = next(i for i, step in enumerate(steps) if step.startswith("Run native config paths differential"))
         artifact_index = next(i for i, step in enumerate(steps) if step.startswith("Retain native config paths evidence"))

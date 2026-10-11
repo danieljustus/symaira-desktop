@@ -2,7 +2,7 @@
   "schema_version": 2,
   "compiler": "go1.26.9",
   "oracle": {
-    "commit": "2d09aa301ee7b4663c7c606e04a7e00e77bb621b",
+    "commit": "35f5734b979fe50fb6fc9b3124f59136fbdf3eb9",
     "release": "renderer-pdf-safety-v2-local"
   },
   "historical_oracle": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",

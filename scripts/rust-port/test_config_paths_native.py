@@ -68,8 +68,10 @@ class ConfigPathsNativeTests(unittest.TestCase):
             gate.git(source, "config", "user.name", "Native Gate Test")
             gate.git(source, "config", "user.email", "88160656+danieljustus@users.noreply.github.com")
             gate.git(source, "config", "commit.gpgsign", "false")
+            # The byte fixture must survive a clone with Windows autocrlf enabled.
+            (source / ".gitattributes").write_bytes(b"source.txt -text\n")
             (source / "source.txt").write_bytes(b"immutable foundation\n")
-            gate.git(source, "add", "source.txt")
+            gate.git(source, "add", ".gitattributes", "source.txt")
             gate.git(source, "commit", "-m", "foundation fixture")
             foundation = gate.git(source, "rev-parse", "HEAD")
             (source / "source.txt").write_bytes(b"later candidate\n")
@@ -174,7 +176,7 @@ class ConfigPathsNativeTests(unittest.TestCase):
             logs = root / "commands"
             logs.mkdir()
             report = {"commands": []}
-            script = "import sys; sys.stdout.write('raw stdout\\n'); sys.stderr.write('raw stderr\\n'); sys.exit(23)"
+            script = "import sys; sys.stdout.buffer.write(b'raw stdout\\n'); sys.stderr.buffer.write(b'raw stderr\\n'); sys.exit(23)"
             with self.assertRaisesRegex(gate.GateFailure, "raw logs retained"):
                 gate.run_logged_command(
                     report,

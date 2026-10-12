@@ -118,7 +118,10 @@ fn main() -> ExitCode {
                 output_json,
             )
         }
-        Some(("mcp", _)) => match mcp::serve(matches.get_one::<String>("vault").cloned()) {
+        Some(("mcp", command)) => match mcp::serve(
+            matches.get_one::<String>("vault").cloned(),
+            command.get_flag("allow-write"),
+        ) {
             Ok(()) => process_exit(CoreExitCode::Ok),
             Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
         },
@@ -300,7 +303,22 @@ fn cli() -> Command {
         )
         .subcommand(ai_cli::transform_cli())
         .subcommand(ai_cli::ask_cli())
-        .subcommand(Command::new("mcp"))
+        .subcommand(Command::new("mcp").arg(
+            Arg::new("allow-write")
+                .long("allow-write")
+                .help("enable mutating MCP tools (note creation, ingest, status changes)")
+                .action(ArgAction::Set)
+                .num_args(0..=1)
+                .require_equals(true)
+                .default_missing_value("true")
+                .default_value("false")
+                .overrides_with("allow-write")
+                .value_parser(|value: &str| match value {
+                    "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
+                    "0" | "f" | "F" | "false" | "FALSE" | "False" => Ok(false),
+                    _ => Err("invalid boolean value"),
+                }),
+        ))
         .subcommand(
             Command::new("history")
                 .subcommand_required(true)

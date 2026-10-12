@@ -1,0 +1,14 @@
+{
+  "base_code_commit": "db1a447bcda9c9c1f0f58e8c052b8afdbfccfca8",
+  "wip_source_sha256": {
+    "Cargo.toml": "fc65b67e282eb1ee77aaa90c8b5e49efb9f73ae2a229163599cf48ff4d1c3f1e",
+    "crates/symdesk-cli/Cargo.toml": "fc521ba9c53fcdabd014d1220e837fc359547fbfa27b951a06dac230ef8771c0",
+    "crates/symdesk-cli/src/main.rs": "1854dfbd53a1e1d720001d7c4b6d811c047ff3112b954be9c7b692f51cd8aa69",
+    "crates/symdesk-cli/src/mcp.rs": "575a51db2fba1a0aa72424675ca5edf474ae82bc8d5fabbaea9ef7e6ebe28aed",
+    "crates/symdesk-cli/src/mcp/pdf.rs": "21f9d41b3f58e2a6ea1a998cb5895af9ad6d8ff3c2b9f28f2b555c0814d759d6",
+    "crates/symdesk-cli/src/mcp/pdf_tests.rs": "d08eedcc56c948778836ef79af50da798a50ed594ea7d75a0855fe4339ca7b7d",
+    "crates/symdesk-cli/tests/mcp_pdf_differential.py": "5871ef0fc6056b933f29858bcf987ffb627bb7762dbd5115dfe3dc84fba65dfb",
+    "crates/symdesk-cli/tests/mcp_pdf_transport.py": "45a657e0a1232b3ce703c66ef62239647c816a10b833b2aa25b07a157c70859c"
+  },
+  "scope": "Preserved source bytes, not runtime acceptance; no source changes made for closeout."
+}

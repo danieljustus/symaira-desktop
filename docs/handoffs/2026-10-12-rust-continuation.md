@@ -31,6 +31,10 @@ The manual CI suite now has a separate `PDF MCP native` job on Linux and macOS. 
 
 The Go lint configuration documents narrowly scoped rule/path/source exceptions for caller-selected local-file copies and disposable test fixtures. It does not disable gosec or alter pinned Go production/generator bytes. The arbitrary local-file API is not a vault-confinement boundary. Do not extend these exceptions to unrelated file access or command execution.
 
+The native workflow regression control changed the generator identity, so provenance was regenerated from clean candidate `bf44ecced95ef6a353792c401434171cc224bb69` using `make port-fixtures-generate`, then independently replayed with `make port-fixtures-apply PORT_FIXTURES_ARTIFACT=<reviewed-patch>`. Both commands completed successfully on macOS arm64 with Go 1.26.9. The artifact SHA-256 is `09e2510d575917d89e74386acdc611d741e3505af74774f13ca54756486b4b18`. The only changed JSON field is `generator_source_digest`, now `793fe68e8b59c3248efa939f1a97e975d9e52eb8b5ca7e088f5946dc9e524244`. All 106 checksum-covered fixture files are byte-identical to the candidate base; the oracle, immutable source bundle, production digest and observations are unchanged. The normal-author commit `b60a0ac0f9833e638b13c5d1fc4f81614d43e975` has the exact tree validated by the private generator. Windows checksum verification passed, but live Windows replay remains a native CI gate. Do not publish the private generator-authored validation commit as a substitute for the reviewed candidate.
+
+GitHub REST reads confirmed that the historical Go commit, versioned source bundle and handoff are reachable in the public repository. Repository ADMIN access, enabled Actions and the active CI workflow were checked. This establishes GitHub as the available verification target, not access to an unspecified external agent environment. The final published HEAD, independent remote-clone commands and fresh native run belong in the separate PR receipt. Until that receipt reports actual results, new-head native acceptance remains pending.
+
 The existing renderer gate is:
 
 ```sh

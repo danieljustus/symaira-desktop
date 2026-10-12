@@ -785,7 +785,7 @@ jobs:
           CARGO_BUILD_JOBS: "2"
           PYTHONDONTWRITEBYTECODE: "1"
           # Candidate-only consumer pin. Do not mutate the frozen Go oracle.
-          PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012104945-2fc87095bd3b"
+          PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012110002-27d2daf8ec1e"
         run: |
           set -euo pipefail
           evidence="$RUNNER_TEMP/pdf-mcp"

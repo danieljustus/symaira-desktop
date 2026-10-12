@@ -11,6 +11,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      refresh_adoption_oracle:
+        type: boolean
+        default: false
+        description: Temporary source-bound dependency adoption capture
   schedule:
     - cron: '51 5 * * 1'  # weekly Monday 05:51 UTC — full suite incl. macOS + app
 
@@ -25,6 +30,7 @@ permissions:
 
 jobs:
   test:
+    if: inputs.refresh_adoption_oracle != true
     strategy:
       matrix:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
@@ -94,7 +100,7 @@ jobs:
   required-go-tests:
     name: test (ubuntu-latest, 1.26.6)
     needs: test
-    if: ${{ always() }}
+    if: ${{ always() && inputs.refresh_adoption_oracle != true }}
     runs-on: ubuntu-latest
     steps:
       - name: Require the current Go test matrix to pass
@@ -103,6 +109,7 @@ jobs:
         run: test "$TEST_RESULT" = success
 
   lint:
+    if: inputs.refresh_adoption_oracle != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -141,7 +148,7 @@ jobs:
 
   port-contract:
     # Advisory parity coverage is retained on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: inputs.refresh_adoption_oracle != true && github.event_name != 'pull_request'
     name: Rust port contract
     strategy:
       fail-fast: false
@@ -199,7 +206,7 @@ jobs:
 
   rust:
     # Full Rust gates are advisory; keep the required PR path focused on Go.
-    if: github.event_name != 'pull_request'
+    if: inputs.refresh_adoption_oracle != true && github.event_name != 'pull_request'
     name: Rust
     runs-on: ubuntu-latest
     steps:
@@ -240,7 +247,7 @@ jobs:
 
   rust-native:
     name: Rust native (${{ matrix.os }})
-    if: github.event_name != 'pull_request'
+    if: inputs.refresh_adoption_oracle != true && github.event_name != 'pull_request'
     strategy:
       fail-fast: false
       matrix:
@@ -752,7 +759,7 @@ jobs:
   # documents, caches or remote services are required by this paired probe.
   pdf-mcp-native:
     name: PDF MCP native (${{ matrix.os }})
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.refresh_adoption_oracle != true && github.event_name == 'workflow_dispatch'
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -825,6 +832,7 @@ jobs:
           if-no-files-found: error
 
   govulncheck:
+    if: inputs.refresh_adoption_oracle != true
     name: govulncheck
     runs-on: ubuntu-latest
     steps:
@@ -838,6 +846,7 @@ jobs:
           go-version-input: "1.26.9"
 
   golangci-lint:
+    if: inputs.refresh_adoption_oracle != true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -863,6 +872,7 @@ jobs:
           only-new-issues: false
 
   version-consistency:
+    if: inputs.refresh_adoption_oracle != true
     name: Version consistency
     runs-on: ubuntu-latest
     steps:
@@ -937,7 +947,7 @@ jobs:
 
   app:
     # Native macOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: inputs.refresh_adoption_oracle != true && github.event_name != 'pull_request'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -977,7 +987,7 @@ jobs:
 
   app-ios:
     # Native iOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: inputs.refresh_adoption_oracle != true && github.event_name != 'pull_request'
     name: iOS app
     runs-on: macos-26
     steps:
@@ -1032,3 +1042,44 @@ jobs:
 
       - name: Run SymDeskMobileTests
         run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath "$RUNNER_TEMP/SymDesk-ios-derived-data" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+  refresh-adoption-oracle:
+    if: github.event_name == 'workflow_dispatch' && inputs.refresh_adoption_oracle == true
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      CGO_ENABLED: "0"
+      GOFLAGS: "-mod=readonly -p=2"
+      GOMAXPROCS: "2"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: "1.26.9"
+      - name: Generate and validate genuine source-bound fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/adoption-oracle"
+          mkdir -m 700 "$evidence"
+          git config user.name 'Daniel Justus'
+          git config user.email '88160656+danieljustus@users.noreply.github.com'
+          go run ./scripts/rust-port/cmd/portgen \
+            --oracle-commit "$GITHUB_SHA" \
+            --oracle-anchor 47dd417ec5632c8e6a2edb32ead09db09e929ed9 \
+            --oracle-release renderer-pdf-safety-v2-local \
+            > "$evidence/fixtures.patch" 2> "$evidence/generate.log"
+          git diff --exit-code
+          test -z "$(git status --porcelain=v1)"
+          shasum -a 256 "$evidence/fixtures.patch" > "$evidence/fixtures.sha256"
+      - name: Retain generated artifact and diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: adoption-oracle-${{ github.sha }}
+          path: ${{ runner.temp }}/adoption-oracle/
+          retention-days: 14
+          if-no-files-found: error

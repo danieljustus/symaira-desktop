@@ -6,3 +6,40 @@ linters:
   # in issue #176.
   enable:
     - gosec
+  exclusions:
+    rules:
+      # This local-file copy API deliberately accepts caller-selected paths;
+      # it is not a vault-confinement boundary. Staging is an exclusive 0600
+      # file inside a fresh private MkdirTemp directory. Keep all other G304s.
+      - path: ^internal/ingest/internal/pdfops/legacy\.go$
+        linters: [gosec]
+        text: 'G304:'
+        source: 'os\.Open\(input\)|os\.OpenFile\(staged, os\.O_WRONLY\|os\.O_CREATE\|os\.O_EXCL, 0o600\)'
+      # Read only input/trace files created by these tests under t.TempDir.
+      - path: ^internal/ingest/internal/pdfops/(legacy|output)_test\.go$
+        linters: [gosec]
+        text: 'G304:'
+        source: 'os\.ReadFile\((trace|input)\)'
+      # The immutable public reference is located from this Go source file,
+      # not from requests or environment; its schema/compiler/source are checked.
+      - path: ^scripts/rust-port/pdfops/reference/reference(_test)?\.go$
+        linters: [gosec]
+        text: 'G304:'
+        source: 'os\.ReadFile\(filepath\.Join\(root, "scripts/rust-port/pdfops/reference-v2\.json"\)\)'
+      # Fixed qpdf executable and flags, no shell; arguments are disposable
+      # PDF fixture paths, never request-controlled commands.
+      - path: ^internal/ingest/barcode_test\.go$
+        linters: [gosec]
+        text: 'G204:'
+        source: 'exec\.Command\("qpdf", "--(check|show-npages)", (pdfPath|p)\)'
+      # Hash/preservation reads of the disposable PDF generated in t.TempDir.
+      - path: ^internal/ingest/barcode_test\.go$
+        linters: [gosec]
+        text: 'G304:'
+        source: 'os\.ReadFile\(pdfPath\)'
+      # The availability fixture must be executable, owner-only 0700, and
+      # the injected test seam never executes its contents.
+      - path: ^internal/tools/ingest_tools_test\.go$
+        linters: [gosec]
+        text: 'G306:'
+        source: 'os\.WriteFile\(filepath\.Join\(bin, name\), \[\]byte\("probe only"\), 0o700\)'

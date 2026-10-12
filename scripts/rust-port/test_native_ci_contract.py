@@ -161,6 +161,32 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_pdf_mcp_acceptance_is_manual_source_bound_and_fail_fast(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        job = workflow_job_body(workflow, "pdf-mcp-native")
+        self.assertIn("if: github.event_name == 'workflow_dispatch'", job)
+        self.assertIn("fail-fast: false", job)
+        self.assertIn("os: [ubuntu-latest, macos-latest]", job)
+        self.assertIn("fetch-depth: 0", job)
+        self.assertNotIn("secrets.", job)
+        block = job.split("      - name: Build and replay source-bound PDF MCP consumers\n", 1)[1]
+        lines = block.split("        run: |\n", 1)[1].splitlines()
+        body = []
+        for line in lines:
+            if line and not line.startswith("          "):
+                break
+            body.append(line[10:])
+        self.assertEqual(body[0], "set -euo pipefail")
+        commands = "\n".join(body)
+        self.assertIn("./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle", commands)
+        self.assertLess(commands.index("go test -count=1"), commands.index("go build -ldflags"))
+        self.assertIn("cargo build --locked -p symdesk-cli", commands)
+        self.assertIn('runtime_parent="$HOME/pdf-mcp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"', commands)
+        self.assertIn("crates/symdesk-cli/tests/mcp_pdf_differential.py", commands)
+        self.assertEqual(commands.count("git diff --exit-code"), 2)
+        result = subprocess.run([bash_executable(), "-n", "-c", commands], capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_configuration_store_paths_run_and_retain_raw_native_evidence(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         native = workflow_job_body(workflow, "rust-native")

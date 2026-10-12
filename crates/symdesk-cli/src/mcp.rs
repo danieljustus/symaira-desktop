@@ -155,6 +155,14 @@ impl ServerConfig {
 pub fn serve(vault: Option<String>, allow_write: bool) -> io::Result<()> {
     let vault = vault.or_else(|| std::env::var("SYMDESK_VAULT").ok());
     let reader = io::BufReader::new(io::stdin());
+    #[cfg(unix)]
+    let writer = {
+        use std::os::fd::AsFd;
+        // Stdout deliberately suppresses EBADF. Protocol transport must retain
+        // that error so it can cancel in-flight tools, not report silent success.
+        std::fs::File::from(io::stdout().as_fd().try_clone_to_owned()?)
+    };
+    #[cfg(not(unix))]
     let writer = io::stdout();
     let (_writer, result) = serve_io(reader, writer, vault, allow_write);
     result

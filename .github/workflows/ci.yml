@@ -784,6 +784,8 @@ jobs:
           GOFLAGS: "-mod=readonly -p=2"
           CARGO_BUILD_JOBS: "2"
           PYTHONDONTWRITEBYTECODE: "1"
+          # Candidate-only consumer pin. Do not mutate the frozen Go oracle.
+          PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012104945-2fc87095bd3b"
         run: |
           set -euo pipefail
           evidence="$RUNNER_TEMP/pdf-mcp"
@@ -794,7 +796,13 @@ jobs:
           go version > "$evidence/go-version.txt"
           rustc --version > "$evidence/rust-version.txt"
           go test -count=1 ./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle
-          go build -ldflags "-X main.version=0.12.2" -o "$evidence/symdesk-go" ./cmd/symdesk
+          cp go.mod "$evidence/consumer.mod"
+          cp go.sum "$evidence/consumer.sum"
+          go mod edit -modfile="$evidence/consumer.mod" -require="github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION"
+          go mod download -modfile="$evidence/consumer.mod" -json "github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION" > "$evidence/corekit-module.json"
+          go test -modfile="$evidence/consumer.mod" -count=1 github.com/danieljustus/symaira-corekit/mcpserver
+          go build -ldflags "-X main.version=0.12.2" -modfile="$evidence/consumer.mod" -o "$evidence/symdesk-go" ./cmd/symdesk
+          go version -m "$evidence/symdesk-go" > "$evidence/go-build-info.txt"
           SYMDESK_VERSION=0.12.2 cargo build --locked -p symdesk-cli
           target_dir="$(cargo metadata --no-deps --locked --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
           python3 crates/symdesk-cli/tests/mcp_pdf_differential.py \
@@ -809,6 +817,9 @@ jobs:
           name: pdf-mcp-${{ matrix.os }}-${{ github.sha }}
           path: |
             ${{ runner.temp }}/pdf-mcp/*.txt
+            ${{ runner.temp }}/pdf-mcp/*.mod
+            ${{ runner.temp }}/pdf-mcp/*.sum
+            ${{ runner.temp }}/pdf-mcp/corekit-module.json
             ${{ runner.temp }}/pdf-mcp/mcp/
           retention-days: 14
           if-no-files-found: error

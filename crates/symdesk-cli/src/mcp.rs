@@ -200,10 +200,17 @@ where
     let mut input_finished = false;
 
     while let Ok(event) = incoming.recv() {
-        if config.write_error.lock().unwrap_or_else(|e| e.into_inner()).is_some() {
+        if config
+            .write_error
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .is_some()
+        {
             break;
         }
-        let TransportEvent::Read(next) = event else { break };
+        let TransportEvent::Read(next) = event else {
+            break;
+        };
         match next {
             Ok(None) => {
                 input_finished = true;
@@ -282,7 +289,11 @@ where
     if input_finished {
         let _ = input.join();
     }
-    let write_error = config.write_error.lock().unwrap_or_else(|e| e.into_inner()).take();
+    let write_error = config
+        .write_error
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .take();
     let result = write_error.or(terminal_error).map_or(drain, Err);
     match Arc::try_unwrap(output) {
         Ok(mutex) => (
@@ -295,8 +306,14 @@ where
     }
 }
 
+type PendingCall = (
+    ResponseMode,
+    Option<Value>,
+    thread::JoinHandle<io::Result<()>>,
+);
+
 fn join_calls<W>(
-    calls: &mut Vec<(ResponseMode, Option<Value>, thread::JoinHandle<io::Result<()>>)>,
+    calls: &mut Vec<PendingCall>,
     output: &Arc<Mutex<W>>,
     config: &Arc<ServerConfig>,
 ) -> io::Result<()>
@@ -308,8 +325,13 @@ where
         let result = match call.join() {
             Ok(result) => result,
             Err(_) => match id {
-                Some(id) => send_error(output, mode, id, INTERNAL_ERROR,
-                    "Internal error: handler panicked".to_owned()),
+                Some(id) => send_error(
+                    output,
+                    mode,
+                    id,
+                    INTERNAL_ERROR,
+                    "Internal error: handler panicked".to_owned(),
+                ),
                 None => Ok(()),
             },
         };
@@ -433,8 +455,11 @@ fn call_tool(
             "capabilities": if config.allow_write { "read_write" } else { "read_only" },
         })),
         "desk_ls" => {
-            let args = go_string_fields(raw_arguments, &["dir"],
-                r#"struct { Dir string "json:\"dir\"" }"#)?;
+            let args = go_string_fields(
+                raw_arguments,
+                &["dir"],
+                r#"struct { Dir string "json:\"dir\"" }"#,
+            )?;
             let dir = &args[0];
             let (vault, mut sidecar) = open_sidecar(config)?;
             let mut files = sidecar
@@ -538,7 +563,9 @@ fn call_tool(
 // Match the shared Go tools/call parameter decoder before tool admission.
 // Duplicate/null names and malformed _meta must not bypass that boundary.
 fn tool_name(request: &Request) -> Result<String, String> {
-    let raw = request.raw_params.as_deref()
+    let raw = request
+        .raw_params
+        .as_deref()
         .ok_or_else(|| "unexpected end of JSON input".to_owned())?;
     if !raw.starts_with('{') {
         return Err(r#"json: cannot unmarshal array into Go value of type struct { Name string "json:\"name\""; Arguments json.RawMessage "json:\"arguments\""; Meta map[string]interface {} "json:\"_meta,omitempty\"" }"#.into());
@@ -558,9 +585,14 @@ fn tool_name(request: &Request) -> Result<String, String> {
             validate_meta_numbers(raw)?;
         } else {
             let value_type = go_json_type(raw);
-            let (field, target) = if is_name { ("name", "string") }
-                else { ("_meta", "map[string]interface {}") };
-            return Err(format!("json: cannot unmarshal {value_type} into Go struct field .{field} of type {target}"));
+            let (field, target) = if is_name {
+                ("name", "string")
+            } else {
+                ("_meta", "map[string]interface {}")
+            };
+            return Err(format!(
+                "json: cannot unmarshal {value_type} into Go struct field .{field} of type {target}"
+            ));
         }
     }
     Ok(name)
@@ -593,7 +625,8 @@ fn go_json_text(data: &[u8]) -> Result<Vec<u8>, String> {
                     if bytes.get(at..at + 2)? != b"\\u" {
                         return None;
                     }
-                    u16::from_str_radix(std::str::from_utf8(bytes.get(at + 2..at + 6)?).ok()?, 16).ok()
+                    u16::from_str_radix(std::str::from_utf8(bytes.get(at + 2..at + 6)?).ok()?, 16)
+                        .ok()
                 };
                 if let Some(first) = hex(index) {
                     if (0xd800..=0xdbff).contains(&first)
@@ -615,7 +648,10 @@ fn go_json_text(data: &[u8]) -> Result<Vec<u8>, String> {
             b'[' | b'{' if !quoted => {
                 depth += 1;
                 if depth > 10_000 {
-                    return Err(format!("invalid character '{}' exceeded max depth", char::from(bytes[index])));
+                    return Err(format!(
+                        "invalid character '{}' exceeded max depth",
+                        char::from(bytes[index])
+                    ));
                 }
             }
             b']' | b'}' if !quoted => depth = depth.saturating_sub(1),
@@ -655,7 +691,9 @@ fn validate_meta_numbers(raw: &str) -> Result<(), String> {
                 }
                 let token = &raw[start..index];
                 if !token.parse::<f64>().is_ok_and(f64::is_finite) {
-                    return Err(format!("json: cannot unmarshal number {token} into Go struct field ._meta of type float64"));
+                    return Err(format!(
+                        "json: cannot unmarshal number {token} into Go struct field ._meta of type float64"
+                    ));
                 }
                 continue;
             }
@@ -671,27 +709,43 @@ fn go_string_arguments(
     include_notebook: bool,
 ) -> Result<(String, String), String> {
     let (names, target): (&[&str], &str) = if include_notebook {
-        (&["query", "notebook"], r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#)
+        (
+            &["query", "notebook"],
+            r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#,
+        )
     } else {
         (&["query"], r#"struct { Query string "json:\"query\"" }"#)
     };
     let mut values = go_string_fields(raw_arguments, names, target)?.into_iter();
-    Ok((values.next().unwrap_or_default(), values.next().unwrap_or_default()))
+    Ok((
+        values.next().unwrap_or_default(),
+        values.next().unwrap_or_default(),
+    ))
 }
 
-fn go_string_fields(raw: Option<&str>, names: &[&str], target: &str) -> Result<Vec<String>, String> {
+fn go_string_fields(
+    raw: Option<&str>,
+    names: &[&str],
+    target: &str,
+) -> Result<Vec<String>, String> {
     let raw = raw.ok_or_else(|| "unexpected end of JSON input".to_owned())?;
     let mut values = vec![String::new(); names.len()];
     if raw == "null" {
         return Ok(values);
     }
     if !raw.starts_with('{') {
-        return Err(format!("json: cannot unmarshal {} into Go value of type {target}", go_json_type(raw)));
+        return Err(format!(
+            "json: cannot unmarshal {} into Go value of type {target}",
+            go_json_type(raw)
+        ));
     }
     // Unknown values remain RawMessage: their depth/numeric representation
     // must not overwrite an earlier typed-field error with missing arguments.
     for (key, value) in go_raw_fields(raw)?.0 {
-        let Some(index) = names.iter().position(|name| symdesk_vault::dataset::go_equal_fold(&key, name)) else {
+        let Some(index) = names
+            .iter()
+            .position(|name| symdesk_vault::dataset::go_equal_fold(&key, name))
+        else {
             continue;
         };
         let raw = value.get();
@@ -978,8 +1032,11 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
     }
     let object: BTreeMap<String, Box<RawValue>> =
         serde_json::from_str(raw.get()).map_err(parse_error)?;
-    let string_field = |key: &str| object.get(key)
-        .and_then(|value| serde_json::from_str::<String>(value.get()).ok());
+    let string_field = |key: &str| {
+        object
+            .get(key)
+            .and_then(|value| serde_json::from_str::<String>(value.get()).ok())
+    };
     if string_field("jsonrpc").as_deref() != Some("2.0") {
         return Err(invalid());
     }
@@ -987,8 +1044,11 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
         Some(method) if !method.is_empty() => method,
         _ => return Err(invalid()),
     };
-    let id: Value = object.get("id")
-        .map(|raw| serde_json::from_str(raw.get())).transpose().map_err(parse_error)?
+    let id: Value = object
+        .get("id")
+        .map(|raw| serde_json::from_str(raw.get()))
+        .transpose()
+        .map_err(parse_error)?
         .unwrap_or(Value::Null);
     if !matches!(id, Value::Null | Value::String(_) | Value::Number(_))
         || object
@@ -1015,7 +1075,10 @@ fn raw_arguments_from_frame(data: &[u8]) -> Option<String> {
     let frame: BTreeMap<String, Box<RawValue>> = serde_json::from_slice(data).ok()?;
     let params = frame.get("params")?;
     let params: OrderedFields<Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
-    params.0.into_iter().rev()
+    params
+        .0
+        .into_iter()
+        .rev()
         .find(|(key, _)| symdesk_vault::dataset::go_equal_fold(key, "arguments"))
         .map(|(_, raw)| raw.get().to_owned())
 }

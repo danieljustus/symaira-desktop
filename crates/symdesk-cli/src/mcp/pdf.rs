@@ -4,7 +4,7 @@ use std::path::Path;
 use serde_json::{Value, json, value::RawValue};
 use symdesk_render::pdfops::{self, Context, Tools};
 
-use super::{go_raw_fields, go_json_type as value_type};
+use super::{go_json_type as value_type, go_raw_fields};
 
 pub(super) fn canonical_name(name: &str) -> Option<&'static str> {
     match name {
@@ -39,9 +39,21 @@ pub(super) fn tool_definitions() -> Vec<Value> {
         }),
     ];
     for (index, name, description) in [
-        (0, "split_pdf", "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf."),
-        (1, "merge_pdf", "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf."),
-        (2, "rotate_pdf", "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf."),
+        (
+            0,
+            "split_pdf",
+            "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf.",
+        ),
+        (
+            1,
+            "merge_pdf",
+            "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf.",
+        ),
+        (
+            2,
+            "rotate_pdf",
+            "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf.",
+        ),
     ] {
         let mut alias = tools[index].clone();
         alias["name"] = name.into();
@@ -73,9 +85,15 @@ fn arguments(name: &str, raw: Option<&str>) -> Result<Arguments, String> {
     }
     if !raw.starts_with('{') {
         let target = match name {
-            "desk_split_pdf" => r#"struct { Input string "json:\"input\""; At string "json:\"at\""; OutputDir string "json:\"output_dir\"" }"#,
-            "desk_merge_pdf" => r#"struct { Inputs []string "json:\"inputs\""; Output string "json:\"output\"" }"#,
-            "desk_rotate_pdf" => r#"struct { Input string "json:\"input\""; Output string "json:\"output\""; Degrees int "json:\"degrees\""; Pages string "json:\"pages\"" }"#,
+            "desk_split_pdf" => {
+                r#"struct { Input string "json:\"input\""; At string "json:\"at\""; OutputDir string "json:\"output_dir\"" }"#
+            }
+            "desk_merge_pdf" => {
+                r#"struct { Inputs []string "json:\"inputs\""; Output string "json:\"output\"" }"#
+            }
+            "desk_rotate_pdf" => {
+                r#"struct { Input string "json:\"input\""; Output string "json:\"output\""; Degrees int "json:\"degrees\""; Pages string "json:\"pages\"" }"#
+            }
             _ => return Err(format!("Unknown tool: {name}")),
         };
         return Err(format!(
@@ -126,9 +144,9 @@ fn arguments(name: &str, raw: Option<&str>) -> Result<Arguments, String> {
                     if value_type(raw) != "number" {
                         return Err(field_error(value_type(raw), field, "int"));
                     }
-                    args.degrees = raw.parse::<i64>().map_err(|_| {
-                        field_error(&format!("number {raw}"), field, "int")
-                    })?;
+                    args.degrees = raw
+                        .parse::<i64>()
+                        .map_err(|_| field_error(&format!("number {raw}"), field, "int"))?;
                 }
             }
             _ => {
@@ -175,9 +193,8 @@ pub(super) fn call(name: &str, raw: Option<&str>, ctx: &Context) -> Result<Value
             if !on_path("pdfinfo") || !on_path("qpdf") {
                 return Err("PDF splitting requires pdfinfo and qpdf on PATH".into());
             }
-            let parts = pdfops::split_pdf_at_spec(
-                ctx, &tools, &args.input, &args.at, &args.output,
-            )?;
+            let parts =
+                pdfops::split_pdf_at_spec(ctx, &tools, &args.input, &args.at, &args.output)?;
             Ok(json!({"parts": parts}))
         }
         "desk_merge_pdf" => {
@@ -195,7 +212,12 @@ pub(super) fn call(name: &str, raw: Option<&str>, ctx: &Context) -> Result<Value
                 return Err("input and output are required".into());
             }
             pdfops::rotate_pdf(
-                ctx, &tools, &args.input, &args.output, args.degrees, &args.pages,
+                ctx,
+                &tools,
+                &args.input,
+                &args.output,
+                args.degrees,
+                &args.pages,
             )?;
             Ok(json!({"output": args.output}))
         }
@@ -268,22 +290,46 @@ mod tests {
         assert_eq!(args.degrees, 90);
         for token in ["90.0", "9e1", "9223372036854775808", "-9223372036854775809"] {
             let raw = format!("{{\"degrees\":{token}}}");
-            assert_eq!(arguments("desk_rotate_pdf", Some(&raw)).unwrap_err(),
-                field_error(&format!("number {token}"), "degrees", "int"));
+            assert_eq!(
+                arguments("desk_rotate_pdf", Some(&raw)).unwrap_err(),
+                field_error(&format!("number {token}"), "degrees", "int")
+            );
         }
-        assert_eq!(arguments("desk_rotate_pdf", Some(r#"{"pages":false,"input":1}"#)).unwrap_err(),
-            field_error("bool", "pages", "string"));
-        assert_eq!(arguments("desk_rotate_pdf", Some(r#"{"degrees":false,"degrees":90}"#)).unwrap_err(),
-            field_error("bool", "degrees", "int"));
-        let args = arguments("desk_merge_pdf", Some(r#"{"inputs":["one","two"],"inputs":[null,"three"]}"#)).unwrap();
+        assert_eq!(
+            arguments("desk_rotate_pdf", Some(r#"{"pages":false,"input":1}"#)).unwrap_err(),
+            field_error("bool", "pages", "string")
+        );
+        assert_eq!(
+            arguments("desk_rotate_pdf", Some(r#"{"degrees":false,"degrees":90}"#)).unwrap_err(),
+            field_error("bool", "degrees", "int")
+        );
+        let args = arguments(
+            "desk_merge_pdf",
+            Some(r#"{"inputs":["one","two"],"inputs":[null,"three"]}"#),
+        )
+        .unwrap();
         assert_eq!(args.inputs, ["one", "three"]);
-        let args = arguments("desk_merge_pdf", Some(r#"{"inputs":["one","two"],"inputs":["three"],"inputs":[null,null]}"#)).unwrap();
+        let args = arguments(
+            "desk_merge_pdf",
+            Some(r#"{"inputs":["one","two"],"inputs":["three"],"inputs":[null,null]}"#),
+        )
+        .unwrap();
         assert_eq!(args.inputs, ["three", "two"]);
-        let args = arguments("desk_merge_pdf", Some(r#"{"inputs":["one","two"],"inputs":[],"inputs":[null,null]}"#)).unwrap();
+        let args = arguments(
+            "desk_merge_pdf",
+            Some(r#"{"inputs":["one","two"],"inputs":[],"inputs":[null,null]}"#),
+        )
+        .unwrap();
         assert_eq!(args.inputs, ["", ""]);
-        let args = arguments("desk_merge_pdf", Some(r#"{"inputs":["one","two"],"inputs":null}"#)).unwrap();
+        let args = arguments(
+            "desk_merge_pdf",
+            Some(r#"{"inputs":["one","two"],"inputs":null}"#),
+        )
+        .unwrap();
         assert!(args.inputs.is_empty());
-        assert_eq!(arguments("desk_merge_pdf", Some(r#"{"inputs":[false]}"#)).unwrap_err(),
-            field_error("bool", "inputs", "string"));
+        assert_eq!(
+            arguments("desk_merge_pdf", Some(r#"{"inputs":[false]}"#)).unwrap_err(),
+            field_error("bool", "inputs", "string")
+        );
     }
 }

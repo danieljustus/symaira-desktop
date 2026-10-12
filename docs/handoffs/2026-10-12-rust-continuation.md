@@ -11,14 +11,21 @@ Go reference `28cfedc2d062c4656d0a79e506ae16d5a61ef13d` and the intermediate fix
 
 ## Concrete next task
 
-First resolve the pending lockfile/compiler step for the preserved MCP dependency wiring in an isolated supported environment. Do not edit the original frozen Go reference or rewrite prior captures. Run:
+The lockfile/compiler repair is now implemented: `Cargo.lock` records the existing `symdesk-render` dependency, the preserved MCP files are rustfmt-clean, and the pending-call tuple has a type alias for strict Clippy. No dependency version or runtime behavior was changed. The historical input inventory remains a record of the original preserved bytes, not hashes of this repaired candidate. Do not edit the original frozen Go reference or rewrite prior captures. Run:
 
 ```sh
 python3 -B crates/symdesk-cli/tests/mcp_pdf_differential.py --help
-cargo metadata --locked --format-version 1 --no-deps
+cargo metadata --manifest-path "$PWD/Cargo.toml" --locked --format-version 1 --no-deps
+cargo fmt --manifest-path "$PWD/Cargo.toml" --all --check
+cargo check --manifest-path "$PWD/Cargo.toml" --workspace --all-targets --all-features --locked
+cargo clippy --manifest-path "$PWD/Cargo.toml" --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --manifest-path "$PWD/Cargo.toml" -p symdesk-cli --bin symdesk --locked mcp:: -- --nocapture
+GOTOOLCHAIN=go1.26.9 CGO_ENABLED=0 GOFLAGS='-mod=readonly -p=2' go test -count=1 -v ./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle
 ```
 
-The first command was executed before publication and exits 0; it only validates loading and argument parsing. Cargo lock resolution and full build remain unaccepted. After source/lock review and a real compile, the existing differential requires explicitly source/compiler-bound Go/Rust executables plus real `pdfinfo`, `qpdf` and `pdftotext`, fresh runtime and evidence directories. Its `--help` lists every required argument. It does not build or establish provenance for arbitrary supplied binaries.
+These commands passed on the repaired local macOS arm64 source snapshot with Rust 1.98.0 and Go 1.26.9. The focused MCP run executed 19 passing tests. The source controls executed one PDF-reference test and five top-level fixture-oracle tests, including rejection of historical production and mismatching source identities. Workspace compiler and strict Clippy checks passed; neither is a full workspace test or native-matrix acceptance. The argument-help command only validates loading and parsing. The final independent GitHub-checkout receipt must bind these results to the published candidate separately.
+
+The next unresolved task is a real paired PDF/MCP run. The existing differential requires explicitly source/compiler-bound Go/Rust executables plus real `pdfinfo`, `qpdf` and `pdftotext`, fresh runtime and evidence directories. Its `--help` lists every required argument. It does not build or establish provenance for arbitrary supplied binaries.
 
 The existing renderer gate is:
 
@@ -30,17 +37,17 @@ Use the optional `RENDER_BUILD_LAUNCHER` only where the local host actually requ
 
 ## Unresolved inputs and acceptance gates
 
-- Eight PDF/MCP files were source-reviewed locally but never compiled or run as complete paired MCP acceptance. Full renderer, unreached symroom suites, native target matrix and RUST-011 remain open.
+- The preserved PDF/MCP wiring now compiles and passes focused unit tests. Complete paired MCP acceptance, full renderer replay, unreached symroom suites, native target matrix and RUST-011 remain open.
 - The prior Darwin index fixture failed the actual full-ancestor trust check on a group-writable/noowners external volume. A private child directory alone does not repair this. Use a genuinely trusted native runtime with its full ancestor/owner/ACL chain; do not relax product checks or call Linux Darwin proof.
 - Host-specific secure-image provisioning/launcher proposals and raw prior acceptance logs remain local, uninstalled and not accepted. They are not required for a portable cloud code build, but are required before reusing that particular Mac setup or claiming its old raw evidence has been independently revalidated. No public evidence URL is asserted for them.
 - Local storage reserve was restored; that is not runtime, compiler or native acceptance. No new production service is authorized.
-- Target cloud runtime, real PDF tools and native permissions: not checked.
+- GitHub repository visibility, identity, ADMIN access and enabled Actions were checked. Standard public runners for the existing six native labels are documented as free. The account Actions budget was read from GitHub's authenticated billing page: zero dollars with stop-usage enabled. The existing manual CI suite also uploads artifacts and uses caches; those storage charges are separate from free runner compute and must remain covered by that effective spending stop. Actual target execution, real PDF tools and native filesystem permissions are not yet checked. The workflow does not run the new PDF/MCP paired probe, so its green result alone cannot close that gate.
 
 ## Shared boundaries
 
 This is preserved work in progress, not migration completion or merge/release approval. Preserve exact Go/Rust byte contracts, original failed captures, source/compiler provenance, security policies and independent native-platform gates. Cross-compilation and source-only tests do not prove native execution. Never manufacture expected results, weaken a deadline, discard a mismatching row or change an oracle only to make a comparison pass. Signing, releases, productive cutover, Go retirement and destructive cleanup require separate authorization. Do not start paid models or services.
 
-Local automatic continuation has been disabled and the owned unfinished work parked. This document does not restart automation. Existing remote CI may run from the ordinary push; no workflow dispatch, merge, tag or release is requested.
+Local automatic continuation remains disabled and the older unfinished work remains parked. This document does not restart that automation. A separately requested bounded native CI verification may run at the published candidate under the verified zero-spend stop; its exact run and outcome belong in the external receipt. No merge, tag, release or productive cutover is authorized by this handoff.
 
 ## Reproduction environment
 
@@ -52,6 +59,6 @@ Fresh-checkout verification at the final handoff HEAD is pending until the separ
 
 ## Retained and excluded inputs
 
-Build outputs, package caches, Python bytecode, local control databases, private orchestration reports and the completed local cache-cleanup script are not shipped. None is an allowed replacement for missing source. Originals remain local. Historical local acceptance receipts are not silently treated as public or independently verified by this document; any needed unpublished immutable receipt remains an explicit blocker below. No credentials, `.env` values, production data, personal memory or signing keys are included. Provision target credentials only through the operator's approved secret manager if a later explicitly authorized operation needs them.
+Build outputs, package caches, Python bytecode, local control databases, private orchestration reports and the completed local cache-cleanup script are not shipped. None is an allowed replacement for missing source. Originals remain local. Required production-source bundles, toolchain/lockfiles, fixture checksums and generators are tracked and sufficient inputs for fresh reproduction. Unpublished historical raw logs are optional diagnosis inputs, not a blanket cloud dependency. Historical local acceptance receipts are not silently treated as public or as acceptance of this repaired candidate. No credentials, `.env` values, production data, personal memory or signing keys are included. Provision target credentials only through the operator's approved secret manager if a later explicitly authorized operation needs them.
 
 No submodules or Git LFS inputs were found in the inspected source inventory. Check locks and any downstream platform-specific dependencies again before their own gates. The portable source checkpoint is separate from native-runtime, access and acceptance readiness.

@@ -784,7 +784,7 @@ jobs:
           GOFLAGS: "-mod=readonly -p=2"
           CARGO_BUILD_JOBS: "2"
           PYTHONDONTWRITEBYTECODE: "1"
-          # Candidate-only consumer pin. Do not mutate the frozen Go oracle.
+          # Verify the exact dependency adopted by the production manifest.
           PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012110002-27d2daf8ec1e"
         run: |
           set -euo pipefail
@@ -798,7 +798,7 @@ jobs:
           go test -count=1 ./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle
           cp go.mod "$evidence/consumer.mod"
           cp go.sum "$evidence/consumer.sum"
-          go mod edit -modfile="$evidence/consumer.mod" -require="github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION"
+          test "$(go list -m -f '{{.Version}}' github.com/danieljustus/symaira-corekit)" = "$PDF_MCP_COREKIT_VERSION"
           go mod download -modfile="$evidence/consumer.mod" -json "github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION" > "$evidence/corekit-module.json"
           go test -modfile="$evidence/consumer.mod" -count=1 github.com/danieljustus/symaira-corekit/mcpserver
           go build -ldflags "-X main.version=0.12.2" -modfile="$evidence/consumer.mod" -o "$evidence/symdesk-go" ./cmd/symdesk

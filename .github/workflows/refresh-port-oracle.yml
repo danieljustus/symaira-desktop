@@ -1,0 +1,46 @@
+name: Refresh adoption oracle (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  refresh:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      CGO_ENABLED: "0"
+      GOFLAGS: "-mod=readonly -p=2"
+      GOMAXPROCS: "2"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: "1.26.9"
+      - name: Generate and validate genuine source-bound fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/adoption-oracle"
+          mkdir -m 700 "$evidence"
+          git config user.name 'Daniel Justus'
+          git config user.email '88160656+danieljustus@users.noreply.github.com'
+          git diff --exit-code
+          go run ./scripts/rust-port/cmd/portgen \
+            --oracle-commit "$GITHUB_SHA" \
+            --oracle-anchor 47dd417ec5632c8e6a2edb32ead09db09e929ed9 \
+            --oracle-release renderer-pdf-safety-v2-local \
+            > "$evidence/fixtures.patch" 2> "$evidence/generate.log"
+          git diff --exit-code
+          test -z "$(git status --porcelain=v1)"
+          shasum -a 256 "$evidence/fixtures.patch" > "$evidence/fixtures.sha256"
+      - name: Retain generated artifact and diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: adoption-oracle-${{ github.sha }}
+          path: ${{ runner.temp }}/adoption-oracle/
+          retention-days: 14
+          if-no-files-found: error

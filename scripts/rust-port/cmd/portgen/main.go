@@ -111,6 +111,10 @@ var fixturePaths = []string{
 	"testdata/port/render/html-note.json",
 	"testdata/port/retrieval/quant-sidecar-wire.json",
 	"testdata/port/render/json-ir.json",
+	"testdata/port/render/v2/html-note.json",
+	"testdata/port/render/v2/json-ir.json",
+	"testdata/port/render/v2/symdesk-command-tree.json",
+	"testdata/port/render/v2/symdesk-tools.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",
 	"testdata/port/room/mcp-mutations.json",
@@ -311,6 +315,9 @@ func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []strin
 		}
 	}
 
+	if err := syncRenderFixtureMirrors(repoRoot, true); err != nil {
+		return fmt.Errorf("generate versioned render fixture copies: %w", err)
+	}
 	commit, release := oracle.Commit, oracle.Release
 	sidecarOracle := oracle
 	if err := runSidecarLifecycleGenerator(repoRoot, sidecarOracle); err != nil {

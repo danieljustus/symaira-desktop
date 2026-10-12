@@ -295,7 +295,12 @@ func TestRunFixtureChecksInjectsValidatedSidecarOracle(t *testing.T) {
 		return nil
 	}
 
-	if err := runFixtureChecks(t.TempDir(), expected); err != nil {
+	root := t.TempDir()
+	for _, pair := range renderFixtureMirrors {
+		writePortgenTestFile(t, root, pair.source, "{}\n")
+		writePortgenTestFile(t, root, pair.mirror, "{}\n")
+	}
+	if err := runFixtureChecks(root, expected); err != nil {
 		t.Fatalf("runFixtureChecks() error = %v", err)
 	}
 	joined := "\n" + strings.Join(captured, "\n")

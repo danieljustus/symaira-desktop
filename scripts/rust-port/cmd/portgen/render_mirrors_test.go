@@ -30,6 +30,7 @@ func TestRenderFixtureMirrors(t *testing.T) {
 		if !isPortDerivedOutput(pair.mirror) {
 			t.Fatalf("copy omitted from artifact allowlist: %s", pair.mirror)
 		}
+		// #nosec G304 -- fixed mirror registry destination inside t.TempDir().
 		data, err := os.ReadFile(path)
 		if err != nil || string(data) != "fresh Go capture\n" {
 			t.Fatalf("generation did not copy actual source bytes: %s: %v", pair.mirror, err)
@@ -38,6 +39,7 @@ func TestRenderFixtureMirrors(t *testing.T) {
 		if err := syncRenderFixtureMirrors(root, false); err == nil || !strings.Contains(err.Error(), pair.mirror) {
 			t.Fatalf("mutated copy was not rejected: %s: %v", pair.mirror, err)
 		}
+		// #nosec G304 -- fixed mirror registry destination inside t.TempDir().
 		data, err = os.ReadFile(path)
 		if err != nil || string(data) != "mutated copy\n" {
 			t.Fatal("read-only check rewrote the mutated input")

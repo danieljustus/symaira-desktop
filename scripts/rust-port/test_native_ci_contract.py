@@ -28,7 +28,7 @@ STEPS = {
     "Replay native contacts and ingest path contracts": 1,
     "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
-    "Check, lint, and test Rust workspace": 8,
+    "Check, lint, and test Rust workspace": 9,
     "Run native SymRoom rollback handoff": 1,
     "Run native dataset rollback handoff": 2,
     "Run native Windows representative CLI HTTP and MCP parity": 7,

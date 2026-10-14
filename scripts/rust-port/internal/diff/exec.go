@@ -244,7 +244,7 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 		if err := sandbox.MkdirAll(filepath.Dir(relative), 0o700); err != nil {
 			return err
 		}
-		if err := sandbox.Symlink(target, relative); err != nil {
+		if err := createSandboxSymlink(sandbox, target, relative); err != nil {
 			return err
 		}
 	case "file":
@@ -267,19 +267,23 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 }
 
 func validateSandboxSymlink(root *os.Root, path, target string) error {
+	_, err := resolveSandboxSymlinkTarget(root, path, target)
+	return err
+}
+
+func resolveSandboxSymlinkTarget(root *os.Root, path, target string) (string, error) {
 	if target == "" {
-		return errors.New("symlink fixture requires link_target")
+		return "", errors.New("symlink fixture requires link_target")
 	}
 	probe, err := sandboxRelativeTarget(root, target)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !filepath.IsAbs(target) {
 		// Preserve traversal order: a symlink followed by .. must not be cleaned.
 		probe = filepath.Dir(filepath.FromSlash(path)) + string(filepath.Separator) + probe
 	}
-	_, err = resolveSandboxPath(root, probe)
-	return err
+	return resolveSandboxPath(root, probe)
 }
 
 // sandboxRelativeTarget preserves components while rebasing an absolute link.

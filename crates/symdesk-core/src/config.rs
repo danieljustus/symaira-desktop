@@ -45,6 +45,10 @@ fn collect_environment(
         let Some(name) = name.to_str() else {
             continue;
         };
+        #[cfg(windows)]
+        let normalized_name = name.to_ascii_uppercase();
+        #[cfg(windows)]
+        let name = normalized_name.as_str();
         match value.into_string() {
             Ok(value) => {
                 environment.insert(name.to_owned(), value);
@@ -898,6 +902,31 @@ mod windows_verbatim_join_tests {
             let actual =
                 join_windows_verbatim(&join_windows_verbatim(base, "symdesk"), "config.toml");
             assert_eq!(actual, case["expected"], "{}", case["id"]);
+        }
+    }
+}
+
+#[cfg(test)]
+mod environment_key_case_tests {
+    use super::collect_environment;
+    use std::ffi::OsString;
+
+    #[test]
+    fn snapshot_key_case_matches_the_native_environment_contract() {
+        for (name, canonical, value) in [
+            ("SymDesk_Sidecar", "SYMDESK_SIDECAR", " padded-sidecar.db "),
+            ("xdg_data_home", "XDG_DATA_HOME", "mixed-data"),
+        ] {
+            let environment = collect_environment([(OsString::from(name), OsString::from(value))])
+                .expect("Unicode environment value");
+            let expected_key = if cfg!(windows) { canonical } else { name };
+            assert_eq!(environment.len(), 1);
+            assert_eq!(
+                environment.get(expected_key).map(String::as_str),
+                Some(value)
+            );
+            let absent_key = if cfg!(windows) { name } else { canonical };
+            assert!(!environment.contains_key(absent_key));
         }
     }
 }

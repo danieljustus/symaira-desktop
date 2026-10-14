@@ -34,15 +34,14 @@ func TestMergePDFsRealPath(t *testing.T) {
 		}
 	}
 
-	// The fake pdfunite concatenates its PDF inputs into the last argument
-	// (the output path), mirroring the real tool's contract.
-	fakeUnite := writeFakeTool(t, dir, "pdfunite", `
-last=""
-for arg in "$@"; do last="$arg"; done
-cat "$1" "$2" > "$last"
+	// qpdf receives the primary input and page groups, followed by a staged
+	// destination. Its separate validation invocation must also succeed.
+	fakeQpdf := writeFakeTool(t, dir, "qpdf", `
+if [ "$1" = --check ]; then exit 0; fi
+cat "$1" "$5" > "$8"
 `)
 	pdfops.WithToolsFactory(func() pdfops.Tools {
-		return pdfops.Tools{PDFUnite: fakeUnite}
+		return pdfops.Tools{QPDF: fakeQpdf}
 	}, func() {
 		if err := MergePDFs(context.Background(), []string{input1, input2}, output); err != nil {
 			t.Fatalf("MergePDFs: %v", err)
@@ -58,7 +57,7 @@ cat "$1" "$2" > "$last"
 
 	// Failure path: unresolvable merge tool surfaces a clear error.
 	pdfops.WithToolsFactory(func() pdfops.Tools {
-		return pdfops.Tools{PDFUnite: filepath.Join(dir, "missing-pdfunite")}
+		return pdfops.Tools{QPDF: filepath.Join(dir, "missing-qpdf")}
 	}, func() {
 		err := MergePDFs(context.Background(), []string{input1, input2}, filepath.Join(dir, "out.pdf"))
 		if err == nil {
@@ -81,8 +80,9 @@ func TestRotatePDFRealPath(t *testing.T) {
 	// The fake qpdf records its arguments and copies input to output; the
 	// --rotate argument must carry the degrees and optional page selector.
 	argsFile := filepath.Join(dir, "qpdf-args.txt")
-	fakeQpdf := writeFakeTool(t, dir, "qpdf", `printf '%s\n' "$@" > `+argsFile+`
-cp "$2" "$3"
+	fakeQpdf := writeFakeTool(t, dir, "qpdf", `printf '%s\n' "$@" >> `+argsFile+`
+if [ "$1" = --check ]; then exit 0; fi
+cp "$1" "$2"
 `)
 	pdfops.WithToolsFactory(func() pdfops.Tools {
 		return pdfops.Tools{QPDF: fakeQpdf}
@@ -116,7 +116,7 @@ cp "$2" "$3"
 	pdfops.WithToolsFactory(func() pdfops.Tools {
 		return pdfops.Tools{QPDF: filepath.Join(dir, "missing-qpdf")}
 	}, func() {
-		err := RotatePDF(context.Background(), input, output, 90, "")
+		err := RotatePDF(context.Background(), input, filepath.Join(dir, "missing-output.pdf"), 90, "")
 		if err == nil {
 			t.Fatal("expected error for missing qpdf")
 		}

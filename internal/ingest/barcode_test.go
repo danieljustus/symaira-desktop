@@ -141,6 +141,13 @@ func TestSplitPDFWithQPDF(t *testing.T) {
 		t.Fatalf("qpdf concat: %v: %s", err, out)
 	}
 
+	original, err := os.ReadFile(pdfPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("qpdf", "--check", pdfPath).CombinedOutput(); err != nil {
+		t.Fatalf("generated input must be clean: %v: %s", err, out)
+	}
 	// Split after page 2 → two parts: pages 1-2, page 3.
 	parts, err := SplitPDF(pdfPath, []int{2}, outDir)
 	if err != nil {
@@ -150,11 +157,22 @@ func TestSplitPDFWithQPDF(t *testing.T) {
 		t.Fatalf("expected 2 parts, got %d: %v", len(parts), parts)
 	}
 
-	// Verify both files exist.
-	for _, p := range parts {
+	// Real outputs must validate without warning waivers and keep their ranges.
+	for i, p := range parts {
 		if _, err := os.Stat(p); err != nil {
 			t.Errorf("part missing: %s: %v", p, err)
 		}
+		if out, err := exec.Command("qpdf", "--check", p).CombinedOutput(); err != nil {
+			t.Fatalf("part validation: %v: %s", err, out)
+		}
+		count, err := exec.Command("qpdf", "--show-npages", p).Output()
+		if err != nil || strings.TrimSpace(string(count)) != []string{"2", "1"}[i] {
+			t.Fatalf("part page count: %q %v", count, err)
+		}
+	}
+	got, err := os.ReadFile(pdfPath)
+	if err != nil || string(got) != string(original) {
+		t.Fatal("legacy split changed its original input")
 	}
 }
 

@@ -4,7 +4,7 @@ go 1.26.9
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/danieljustus/symaira-corekit v0.18.2
+	github.com/danieljustus/symaira-corekit v0.18.3-0.20261012110002-27d2daf8ec1e
 	github.com/emersion/go-imap/v2 v2.0.0-beta.8
 	github.com/emersion/go-message v0.18.2
 	github.com/emersion/go-vcard v0.1.0

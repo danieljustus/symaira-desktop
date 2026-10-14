@@ -2,8 +2,8 @@
   "schema_version": 1,
   "generated_on": "darwin",
   "oracle": {
-    "commit": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
-    "release": "post-v0.12.2-security-880"
+    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",

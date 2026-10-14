@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
-    "release": "post-v0.12.2-security-880"
+    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {
     "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89",

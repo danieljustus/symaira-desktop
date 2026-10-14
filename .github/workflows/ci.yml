@@ -330,6 +330,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rust-port/test_native_ci_contract.py
+          python3 scripts/rust-port/test_download_go_modules.py
           go run ./scripts/rust-port/cmd/vaultwritegen --check
           go test -count=1 ./scripts/rust-port/cmd/vaultwritegen
           cargo fmt --all --check
@@ -771,6 +772,82 @@ jobs:
           export SYMROOM_VERSION="0.12.2"
           cargo build --release --workspace --locked
           go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/release/symdesk.exe --symroom-left bin/port/symroom-go.exe --symroom-right target/release/symroom.exe --cases testdata/port/cli/cases.json --stage version
+
+  # Explicit acceptance of the unfinished PDF/MCP slice. No secrets, user
+  # documents, caches or remote services are required by this paired probe.
+  pdf-mcp-native:
+    name: PDF MCP native (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.9"
+      - name: Install pinned Rust and real PDF tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.98.0 --profile minimal
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update
+            sudo apt-get install -y qpdf poppler-utils
+          else
+            brew install qpdf poppler
+          fi
+      - name: Build and replay source-bound PDF MCP consumers
+        shell: bash
+        env:
+          CGO_ENABLED: "0"
+          GOFLAGS: "-mod=readonly -p=2"
+          CARGO_BUILD_JOBS: "2"
+          PYTHONDONTWRITEBYTECODE: "1"
+          # Verify the exact dependency adopted by the production manifest.
+          PDF_MCP_COREKIT_VERSION: "v0.18.3-0.20261012110002-27d2daf8ec1e"
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/pdf-mcp"
+          runtime_parent="$HOME/pdf-mcp-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -m 700 "$evidence" "$runtime_parent"
+          git diff --exit-code
+          git rev-parse HEAD > "$evidence/source-head.txt"
+          go version > "$evidence/go-version.txt"
+          rustc --version > "$evidence/rust-version.txt"
+          go test -count=1 ./scripts/rust-port/pdfops/reference ./scripts/rust-port/fixtureoracle
+          cp go.mod "$evidence/consumer.mod"
+          cp go.sum "$evidence/consumer.sum"
+          test "$(go list -m -f '{{.Version}}' github.com/danieljustus/symaira-corekit)" = "$PDF_MCP_COREKIT_VERSION"
+          go mod download -modfile="$evidence/consumer.mod" -json "github.com/danieljustus/symaira-corekit@$PDF_MCP_COREKIT_VERSION" > "$evidence/corekit-module.json"
+          go test -modfile="$evidence/consumer.mod" -count=1 github.com/danieljustus/symaira-corekit/mcpserver
+          go build -ldflags "-X main.version=0.12.2" -modfile="$evidence/consumer.mod" -o "$evidence/symdesk-go" ./cmd/symdesk
+          go version -m "$evidence/symdesk-go" > "$evidence/go-build-info.txt"
+          SYMDESK_VERSION=0.12.2 cargo build --locked -p symdesk-cli
+          target_dir="$(cargo metadata --no-deps --locked --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
+          python3 crates/symdesk-cli/tests/mcp_pdf_differential.py \
+            --go-binary "$evidence/symdesk-go" --rust-binary "$target_dir/debug/symdesk" \
+            --runtime-root "$runtime_parent/mcp" --output "$evidence/mcp" \
+            --pdfinfo "$(command -v pdfinfo)" --qpdf "$(command -v qpdf)" --pdftotext "$(command -v pdftotext)"
+          git diff --exit-code
+      - name: Retain PDF MCP acceptance observations
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pdf-mcp-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/pdf-mcp/*.txt
+            ${{ runner.temp }}/pdf-mcp/*.mod
+            ${{ runner.temp }}/pdf-mcp/*.sum
+            ${{ runner.temp }}/pdf-mcp/corekit-module.json
+            ${{ runner.temp }}/pdf-mcp/mcp/
+          retention-days: 14
+          if-no-files-found: error
 
   govulncheck:
     name: govulncheck

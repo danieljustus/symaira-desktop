@@ -34,7 +34,12 @@ func TestWindowsConfigFixtureRegistrationAndNativeReplay(t *testing.T) {
 		}
 		return nil
 	}
-	if err := runFixtureChecks(t.TempDir(), inventory.Oracle{}); err != nil {
+	root := t.TempDir()
+	for _, pair := range renderFixtureMirrors {
+		writePortgenTestFile(t, root, pair.source, "{}\n")
+		writePortgenTestFile(t, root, pair.mirror, "{}\n")
+	}
+	if err := runFixtureChecks(root, inventory.Oracle{}); err != nil {
 		t.Fatal(err)
 	}
 	want := 0

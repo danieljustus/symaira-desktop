@@ -3,7 +3,6 @@
 package pdfops
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -13,7 +12,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/internal/pdfprocess"
 )
+
+const maxPages = 10_000
 
 // Tools contains the external PDF utilities used by the operations.
 type Tools struct {
@@ -76,12 +79,18 @@ func ParsePages(spec string) ([]int, error) {
 				return nil, fmt.Errorf("invalid page range %q", part)
 			}
 		}
-		for page := start; page <= end; page++ {
+		if end-start >= 1_000_000 || len(pages) > 1_000_000-(end-start+1) {
+			return nil, fmt.Errorf("page selector exceeds 1000000 pages")
+		}
+		for page := start; ; page++ {
 			if seen[page] {
 				return nil, fmt.Errorf("page %d appears more than once", page)
 			}
 			seen[page] = true
 			pages = append(pages, page)
+			if page == end {
+				break
+			}
 		}
 	}
 	sort.Ints(pages)
@@ -91,6 +100,8 @@ func ParsePages(spec string) ([]int, error) {
 // Split splits input after each page in atSpec and returns the generated part
 // paths in document order.
 func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, pdfprocess.Timeout)
+	defer cancel()
 	pages, err := t.pageCount(ctx, input)
 	if err != nil {
 		return nil, err
@@ -108,7 +119,21 @@ func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]st
 		return nil, fmt.Errorf("create split output directory: %w", err)
 	}
 
-	tmp, err := os.MkdirTemp("", "symingest-pdf-split-*")
+	ends := append(append([]int(nil), boundaries...), pages)
+	outputs := make([]string, len(ends))
+	for index := range ends {
+		outputs[index] = filepath.Join(outputDir, fmt.Sprintf("part-%03d.pdf", index+1))
+	}
+	return t.splitParts(ctx, input, ends, outputs, outputDir, false)
+}
+
+// splitParts stages every range under the caller's single operation deadline.
+// legacy preserves barcode splitting's empty-document metadata and filenames.
+func (t Tools) splitParts(ctx context.Context, input string, ends []int, outputs []string, outputDir string, legacy bool) ([]string, error) {
+	if err := newOutputs([]string{input}, outputs); err != nil {
+		return nil, err
+	}
+	tmp, err := os.MkdirTemp(outputDir, ".symdesk-pdf-*")
 	if err != nil {
 		return nil, fmt.Errorf("create PDF split workspace: %w", err)
 	}
@@ -118,36 +143,33 @@ func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]st
 		}
 	}()
 
-	pagePaths := make([]string, pages)
-	for page := 1; page <= pages; page++ {
-		pattern := filepath.Join(tmp, "page-%d.pdf")
-		if err := t.run(ctx, t.PDFSeparate, "-f", strconv.Itoa(page), "-l", strconv.Itoa(page), input, pattern); err != nil {
-			return nil, fmt.Errorf("split page %d: %w", page, err)
-		}
-		pagePaths[page-1] = filepath.Join(tmp, fmt.Sprintf("page-%d.pdf", page))
-		if _, err := os.Stat(pagePaths[page-1]); err != nil {
-			return nil, fmt.Errorf("split page %d did not produce a PDF: %w", page, err)
-		}
-	}
-
-	ends := append(append([]int(nil), boundaries...), pages)
 	start := 1
-	outputs := make([]string, 0, len(ends))
 	for index, end := range ends {
-		output := filepath.Join(outputDir, fmt.Sprintf("part-%03d.pdf", index+1))
-		inputs := pagePaths[start-1 : end]
-		args := append(append([]string(nil), inputs...), output)
-		if err := t.run(ctx, t.PDFUnite, args...); err != nil {
-			return nil, fmt.Errorf("merge split part %d: %w", index+1, err)
+		staged := filepath.Join(tmp, filepath.Base(outputs[index]))
+		args := []string{input, "--pages", ".", fmt.Sprintf("%d-%d", start, end), "--", staged}
+		if legacy {
+			args[0], args[2] = "--empty", input
 		}
-		outputs = append(outputs, output)
+		if err := t.run(ctx, t.QPDF, args...); err != nil {
+			return nil, fmt.Errorf("split part %d: %w", index+1, err)
+		}
+		if err := t.validate(ctx, staged); err != nil {
+			return nil, err
+		}
 		start = end + 1
+	}
+	for _, output := range outputs {
+		if err := publish(ctx, filepath.Join(tmp, filepath.Base(output)), output); err != nil {
+			return nil, err
+		}
 	}
 	return outputs, nil
 }
 
 // Merge combines two or more PDFs into output without modifying the inputs.
 func (t Tools) Merge(ctx context.Context, inputs []string, output string) error {
+	ctx, cancel := context.WithTimeout(ctx, pdfprocess.Timeout)
+	defer cancel()
 	if len(inputs) < 2 {
 		return fmt.Errorf("merge requires at least two input PDFs")
 	}
@@ -159,15 +181,24 @@ func (t Tools) Merge(ctx context.Context, inputs []string, output string) error 
 	if err := os.MkdirAll(filepath.Dir(output), 0o700); err != nil {
 		return fmt.Errorf("create merge output directory: %w", err)
 	}
-	if err := t.run(ctx, t.PDFUnite, append(inputs, output)...); err != nil {
-		return fmt.Errorf("merge PDFs: %w", err)
-	}
-	return requireFile(output)
+	return t.writeOutput(ctx, inputs, output, func(staged string) error {
+		args := []string{inputs[0], "--pages", ".", "1-z"}
+		for _, input := range inputs[1:] {
+			args = append(args, input, "1-z")
+		}
+		args = append(args, "--", staged)
+		if err := t.run(ctx, t.QPDF, args...); err != nil {
+			return fmt.Errorf("merge PDFs: %w", err)
+		}
+		return nil
+	})
 }
 
 // Rotate rotates selected pages by degrees. An empty page selector rotates all
-// pages. qpdf is intentionally required only for this operation.
+// pages. All writing operations require qpdf and a new destination.
 func (t Tools) Rotate(ctx context.Context, input, output string, degrees int, pageSpec string) error {
+	ctx, cancel := context.WithTimeout(ctx, pdfprocess.Timeout)
+	defer cancel()
 	if err := requireFile(input); err != nil {
 		return fmt.Errorf("rotate input: %w", err)
 	}
@@ -186,10 +217,12 @@ func (t Tools) Rotate(ctx context.Context, input, output string, degrees int, pa
 	if pageSpec != "" {
 		selector += ":" + pageSpec
 	}
-	if err := t.run(ctx, t.QPDF, "--warning-exit-0", input, output, "--rotate="+selector); err != nil {
-		return fmt.Errorf("rotate PDF (qpdf is required): %w", err)
-	}
-	return requireFile(output)
+	return t.writeOutput(ctx, []string{input}, output, func(staged string) error {
+		if err := t.run(ctx, t.QPDF, input, staged, "--rotate="+selector); err != nil {
+			return fmt.Errorf("rotate PDF (qpdf is required): %w", err)
+		}
+		return nil
+	})
 }
 
 func (t Tools) pageCount(ctx context.Context, input string) (int, error) {
@@ -200,18 +233,18 @@ func (t Tools) pageCount(ctx context.Context, input string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	cmd := exec.CommandContext(ctx, path, input) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return 0, commandError(path, stderr.String(), err)
+	stdout, err := pdfprocess.Run(ctx, path, input)
+	if err != nil {
+		return 0, err
 	}
-	for _, line := range strings.Split(stdout.String(), "\n") {
+	for _, line := range strings.Split(string(stdout), "\n") {
 		key, value, ok := strings.Cut(line, ":")
 		if ok && strings.TrimSpace(key) == "Pages" {
 			pages, err := strconv.Atoi(strings.TrimSpace(value))
 			if err == nil && pages > 0 {
+				if pages > maxPages {
+					return 0, fmt.Errorf("PDF page count exceeds 10000 pages")
+				}
 				return pages, nil
 			}
 		}
@@ -224,14 +257,8 @@ func (t Tools) run(ctx context.Context, name string, args ...string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, path, args...) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
-	var stderr bytes.Buffer
-	cmd.Stdout = &bytes.Buffer{}
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return commandError(path, stderr.String(), err)
-	}
-	return nil
+	_, err = pdfprocess.Run(ctx, path, args...)
+	return err
 }
 
 func toolPath(path, label string) (string, error) {
@@ -260,6 +287,9 @@ func requireFile(path string) error {
 	}
 	if info.IsDir() {
 		return fmt.Errorf("%s is a directory", path)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file", path)
 	}
 	return nil
 }

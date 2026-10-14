@@ -18,8 +18,8 @@ import (
 
 const (
 	corekitPath    = "github.com/danieljustus/symaira-corekit"
-	corekitVersion = "v0.18.2"
-	corekitSum     = "h1:Nl05PxfSrYJ5njEbdmqFHSQRtKlK6aj8HsOJReC15dY="
+	corekitVersion = "v0.18.3-0.20261012110002-27d2daf8ec1e"
+	corekitSum     = "h1:lEwB4izhkSVb8fREvaPOiXuVHx7CF6fymsYGC8O1bsc="
 )
 
 type fixture struct {
@@ -104,7 +104,7 @@ func generate() ([]byte, error) {
 		}
 	}
 	if corekit == nil || corekit.Version != corekitVersion || corekit.Sum != corekitSum || corekit.Replace != nil {
-		return nil, fmt.Errorf("CoreKit runtime module identity differs from pinned v0.18.2 source")
+		return nil, fmt.Errorf("CoreKit runtime module identity differs from pinned %s source", corekitVersion)
 	}
 	cases := make([]wireCase, 0, 16)
 	inputs := []codecInput{

@@ -6,6 +6,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6N
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/danieljustus/symaira-corekit v0.18.2 h1:Nl05PxfSrYJ5njEbdmqFHSQRtKlK6aj8HsOJReC15dY=
 github.com/danieljustus/symaira-corekit v0.18.2/go.mod h1:kDTdvY9ZZZzj5zoPFom/Sukma43aFNWHnxB/7WSD3Zw=
+github.com/danieljustus/symaira-corekit v0.18.3-0.20261012110002-27d2daf8ec1e h1:lEwB4izhkSVb8fREvaPOiXuVHx7CF6fymsYGC8O1bsc=
+github.com/danieljustus/symaira-corekit v0.18.3-0.20261012110002-27d2daf8ec1e/go.mod h1:g969jbCUPYGY3qXFw4RQf6dCbxpdaRS5URgpKE6n+nk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=

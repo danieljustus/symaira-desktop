@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
-    "release": "post-v0.12.2-security-880"
+    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "journal_lines": [
     "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"artifact_id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\"},\"id\":\"ev_fixture\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:4POGOLP1hfJy/puzCkVyholOoW/x6tXy8XX91Ut3wj4MLoLffvYln/HBEo/wKxemVt88dktJc4qXTF4tGZURCg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",

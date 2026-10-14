@@ -572,7 +572,7 @@ func FetchMail(ctx context.Context, opts MailFetchOptions) (*MailFetchResult, er
 
 // SplitPDFAtSpec splits input after each page in atSpec ("2,4" or "2-3,6") and
 // writes the parts into outputDir, returning their paths in document order.
-// It requires the Poppler utilities pdfinfo, pdfseparate and pdfunite.
+// It requires Poppler pdfinfo and qpdf. Every destination must be new.
 func SplitPDFAtSpec(ctx context.Context, input, atSpec, outputDir string) ([]string, error) {
 	abs, err := filepath.Abs(input)
 	if err != nil {
@@ -586,8 +586,7 @@ func SplitPDFAtSpec(ctx context.Context, input, atSpec, outputDir string) ([]str
 }
 
 // MergePDFs combines two or more PDFs into output without modifying the inputs.
-// It requires the Poppler pdfunite utility on PATH and reports a clear error
-// when it is absent.
+// It requires qpdf on PATH and refuses existing destinations, including aliases.
 func MergePDFs(ctx context.Context, inputs []string, output string) error {
 	absInputs := make([]string, len(inputs))
 	for i, input := range inputs {
@@ -606,7 +605,7 @@ func MergePDFs(ctx context.Context, inputs []string, output string) error {
 
 // RotatePDF rotates selected pages of input by degrees and writes the result
 // to output without modifying the input. An empty pageSpec rotates all pages.
-// It requires qpdf on PATH and reports a clear error when it is absent.
+// It requires qpdf on PATH and a new destination, including for in-place aliases.
 func RotatePDF(ctx context.Context, input, output string, degrees int, pageSpec string) error {
 	abs, err := filepath.Abs(input)
 	if err != nil {

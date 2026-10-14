@@ -32,7 +32,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},
 	{"config vault selection", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortVaultSelectionCLIContract$"}, []string{"testdata/port/cli/config-vault-selection.json"}, false},
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},
-	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json"}, false},
+	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json", "testdata/port/render/v2/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},
 	{"symroom note CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortNoteCLIContract$"}, []string{"testdata/port/room/note-cli.json"}, false},
 	{"symroom identity CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortIdentityCLIContract$"}, []string{"testdata/port/room/identity-cli.json"}, false},
@@ -72,7 +72,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"index maintenance CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexMaintenanceProcessPortFixture$"}, []string{"testdata/port/cli/index-maintenance-process.json"}, false},
 	{"index build CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexBuildProcessPortFixture$"}, []string{"testdata/port/cli/index-build-process.json"}, false},
 	{"recipe validate CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeValidateCLIContract$"}, []string{"testdata/port/ai/recipe-validate.json"}, false},
-	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json"}, false},
+	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json", "testdata/port/render/v2/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},
 	{"vault resolution", []string{"test", "-count=1", "./internal/service", "-run", "TestVaultResolutionInventory"}, []string{"testdata/port/vault/resolution.json"}, false},
 	{"health links", []string{"test", "-count=1", "./internal/health", "-run", "TestHealthLinkResolutionInventory"}, []string{"testdata/port/vault/health-links.json"}, false},
@@ -119,9 +119,9 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"retrieval embedding state", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalEmbeddingStateFixture$"}, []string{"testdata/port/retrieval/embedding-state.json"}, false},
 	{"retrieval vector fallback", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalVectorFixture$"}, []string{"testdata/port/retrieval/retrieval-vector.json"}, false},
 	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
-	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json"}, false},
+	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"retrieval quant sidecar wire", []string{"run", "./scripts/rust-port/cmd/quant-sidecar-gen", "--check"}, []string{"testdata/port/retrieval/quant-sidecar-wire.json"}, false},
-	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json"}, false},
+	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},
@@ -367,6 +367,9 @@ func runSidecarLifecycleGenerator(repoRoot string, oracle inventory.Oracle) erro
 
 func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	if err := validateFixtureCheckCoverage(); err != nil {
+		return err
+	}
+	if err := syncRenderFixtureMirrors(repoRoot, false); err != nil {
 		return err
 	}
 	goTool, err := trustedGoTool()

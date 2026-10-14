@@ -22,6 +22,7 @@ symdesk-core.workspace = true
 symaira-core-exit.workspace = true
 symdesk-index.workspace = true
 symdesk-protocol.workspace = true
+symdesk-render.workspace = true
 symdesk-vault.workspace = true
 symaira-core-llm.workspace = true
 time.workspace = true

@@ -2012,6 +2012,7 @@ dependencies = [
  "symdesk-core",
  "symdesk-index",
  "symdesk-protocol",
+ "symdesk-render",
  "symdesk-vault",
  "time",
  "tokio",

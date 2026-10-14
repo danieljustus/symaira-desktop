@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "d0092bb10282c16ef43f70b20c2a00ffd43ffec6",
-    "release": "post-v0.12.2-security-880"
+    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "release": "renderer-pdf-safety-v2-local"
   },
   "server_name": "symdesk",
   "server_version": "0.12.2",
@@ -869,7 +869,7 @@
     {
       "name": "desk_split_pdf",
       "order": 36,
-      "description": "Splits a PDF into parts after the given pages and writes them into an output directory. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires the Poppler utilities (pdfinfo, pdfseparate, pdfunite) on PATH. Legacy alias: split_pdf.",
+      "description": "Splits a PDF into new part files after the given pages. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires pdfinfo and qpdf on PATH. Existing outputs and input aliases are refused. Legacy alias: split_pdf.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -899,7 +899,7 @@
     {
       "name": "desk_merge_pdf",
       "order": 37,
-      "description": "Merges two or more PDFs into one output file without modifying the inputs. inputs is an array of PDF paths; output is the destination PDF path. Requires the Poppler utility pdfunite on PATH. Legacy alias: merge_pdf.",
+      "description": "Merges two or more PDFs into a new output file without modifying the inputs. inputs is an array of PDF paths; output must not exist or alias an input. Requires qpdf on PATH. Legacy alias: merge_pdf.",
       "input_schema": {
         "type": "object",
         "properties": {

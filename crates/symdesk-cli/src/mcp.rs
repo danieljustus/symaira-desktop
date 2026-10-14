@@ -1,10 +1,14 @@
 #![allow(clippy::module_name_repetitions)]
 
+mod pdf;
+#[cfg(test)]
+mod pdf_tests;
+
 use std::{
     collections::BTreeMap,
     io::{self, BufRead, Write},
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, mpsc},
     thread,
 };
 
@@ -29,6 +33,9 @@ const INTERNAL_ERROR: i64 = -32603;
 struct ServerConfig {
     version: String,
     vault: Option<String>,
+    allow_write: bool,
+    pdf_context: symdesk_render::pdfops::Context,
+    write_error: Mutex<Option<io::Error>>,
     /// One sidecar connection kept open for the whole session, like Go's
     /// pooled handle. Without a live connection, concurrently dispatched calls
     /// each re-ran WAL setup, migrations and backfill on a database nobody held
@@ -47,22 +54,22 @@ struct Request {
     id: Value,
     has_id: bool,
     method: String,
-    params: Value,
     raw_arguments: Option<String>,
+    raw_params: Option<String>,
 }
 
 #[derive(Default)]
-struct OrderedFields(Vec<(String, Value)>);
+struct OrderedFields<T = Value>(Vec<(String, T)>);
 
-impl<'de> Deserialize<'de> for OrderedFields {
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for OrderedFields<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct OrderedFieldsVisitor;
+        struct OrderedFieldsVisitor<T>(std::marker::PhantomData<T>);
 
-        impl<'de> Visitor<'de> for OrderedFieldsVisitor {
-            type Value = OrderedFields;
+        impl<'de, T: Deserialize<'de>> Visitor<'de> for OrderedFieldsVisitor<T> {
+            type Value = OrderedFields<T>;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 formatter.write_str("an object of ordered string arguments")
@@ -74,13 +81,13 @@ impl<'de> Deserialize<'de> for OrderedFields {
             {
                 let mut fields = Vec::new();
                 while let Some(key) = map.next_key::<String>()? {
-                    fields.push((key, map.next_value::<Value>()?));
+                    fields.push((key, map.next_value::<T>()?));
                 }
                 Ok(OrderedFields(fields))
             }
         }
 
-        deserializer.deserialize_map(OrderedFieldsVisitor)
+        deserializer.deserialize_map(OrderedFieldsVisitor(std::marker::PhantomData))
     }
 }
 
@@ -123,52 +130,127 @@ enum ReadFailure {
     Fatal(io::Error),
 }
 
-/// Runs the representative read-only MCP server on stdin/stdout.
+enum TransportEvent {
+    Read(Result<Option<(Request, ResponseMode)>, ReadFailure>),
+    WriteFailed,
+}
+
+impl ServerConfig {
+    fn record_write_error(&self, error: &io::Error, events: &mpsc::SyncSender<TransportEvent>) {
+        self.pdf_context.cancel();
+        let mut first = self.write_error.lock().unwrap_or_else(|e| e.into_inner());
+        if first.is_none() {
+            *first = Some(io::Error::new(error.kind(), error.to_string()));
+        }
+        // Do not block a handler behind the single buffered read. Either event
+        // wakes the server, which checks write_error before another dispatch.
+        let _ = events.try_send(TransportEvent::WriteFailed);
+    }
+}
+
+/// Runs the MCP server on stdin/stdout, read-only unless explicitly opted in.
 ///
 /// Only protocol frames are written to stdout. Diagnostics and transport
 /// failures are returned to the caller so the CLI can write them to stderr.
-pub fn serve(vault: Option<String>) -> io::Result<()> {
+pub fn serve(vault: Option<String>, allow_write: bool) -> io::Result<()> {
     let vault = vault.or_else(|| std::env::var("SYMDESK_VAULT").ok());
     let reader = io::BufReader::new(io::stdin());
+    #[cfg(unix)]
+    let writer = {
+        use std::os::fd::AsFd;
+        // Stdout deliberately suppresses EBADF. Protocol transport must retain
+        // that error so it can cancel in-flight tools, not report silent success.
+        std::fs::File::from(io::stdout().as_fd().try_clone_to_owned()?)
+    };
+    #[cfg(not(unix))]
     let writer = io::stdout();
-    let (_writer, result) = serve_io(reader, writer, vault);
+    let (_writer, result) = serve_io(reader, writer, vault, allow_write);
     result
 }
 
-fn serve_io<R, W>(reader: R, writer: W, vault: Option<String>) -> (W, io::Result<()>)
+fn serve_io<R, W>(
+    reader: R,
+    writer: W,
+    vault: Option<String>,
+    allow_write: bool,
+) -> (W, io::Result<()>)
 where
-    R: BufRead,
+    R: BufRead + Send + 'static,
     W: Write + Send + 'static,
 {
     let output = Arc::new(Mutex::new(writer));
     let config = Arc::new(ServerConfig {
         version: super::VERSION.to_owned(),
         vault,
+        allow_write,
+        pdf_context: symdesk_render::pdfops::Context::default(),
+        write_error: Mutex::new(None),
         sidecar_anchor: Mutex::new(None),
     });
     let mut calls = Vec::new();
-    let mut reader = reader;
     let mut terminal_error = None;
 
-    loop {
-        match read_request(&mut reader) {
-            Ok(None) => break,
+    // Like Go ServeIO, a failed writer must wake the server even when the
+    // input blocks. Bound read-ahead to one message. A generic non-closable
+    // reader may remain blocked after abort, but owns no writer or PDF context.
+    let (events, incoming) = mpsc::sync_channel(1);
+    let reads = events.clone();
+    let input = thread::spawn(move || {
+        let mut reader = reader;
+        loop {
+            let next = read_request(&mut reader);
+            let done = matches!(&next, Ok(None) | Err(ReadFailure::Fatal(_)));
+            if reads.send(TransportEvent::Read(next)).is_err() || done {
+                break;
+            }
+        }
+    });
+    let mut input_finished = false;
+
+    while let Ok(event) = incoming.recv() {
+        if config
+            .write_error
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .is_some()
+        {
+            break;
+        }
+        let TransportEvent::Read(next) = event else {
+            break;
+        };
+        match next {
+            Ok(None) => {
+                input_finished = true;
+                break;
+            }
             Ok(Some((request, mode))) => {
                 if request.method == "tools/call" {
                     let output = Arc::clone(&output);
                     let config = Arc::clone(&config);
+                    let events = events.clone();
                     calls.push((
                         mode,
-                        request.id.clone(),
-                        thread::spawn(move || dispatch(&request, mode, &config, &output)),
+                        request.has_id.then(|| request.id.clone()),
+                        thread::spawn(move || {
+                            let result = dispatch(&request, mode, &config, &output);
+                            if let Err(error) = &result {
+                                config.record_write_error(error, &events);
+                            }
+                            result
+                        }),
                     ));
                 } else if let Err(error) = dispatch(&request, mode, &config, &output) {
+                    config.record_write_error(&error, &events);
                     terminal_error = Some(error);
                     break;
                 }
             }
             Err(ReadFailure::Parse { mode, message }) => {
-                join_calls(&mut calls, &output, &config);
+                if let Err(error) = join_calls(&mut calls, &output, &config) {
+                    terminal_error = Some(error);
+                    break;
+                }
                 if let Err(error) = send_error(
                     &output,
                     mode,
@@ -176,12 +258,16 @@ where
                     PARSE_ERROR,
                     format!("Parse error: {message}"),
                 ) {
+                    config.record_write_error(&error, &events);
                     terminal_error = Some(error);
                     break;
                 }
             }
             Err(ReadFailure::InvalidRequest { mode }) => {
-                join_calls(&mut calls, &output, &config);
+                if let Err(error) = join_calls(&mut calls, &output, &config) {
+                    terminal_error = Some(error);
+                    break;
+                }
                 if let Err(error) = send_error(
                     &output,
                     mode,
@@ -189,19 +275,34 @@ where
                     INVALID_REQUEST,
                     "Invalid Request".to_owned(),
                 ) {
+                    config.record_write_error(&error, &events);
                     terminal_error = Some(error);
                     break;
                 }
             }
             Err(ReadFailure::Fatal(error)) => {
+                config.pdf_context.cancel();
+                input_finished = true;
                 terminal_error = Some(error);
                 break;
             }
         }
     }
 
-    join_calls(&mut calls, &output, &config);
-    let result = terminal_error.map_or(Ok(()), Err);
+    // Clean EOF drains without cancellation. Fatal reads cancel before this
+    // join; worker write failures cancel immediately, including during drain.
+    let drain = join_calls(&mut calls, &output, &config);
+    config.pdf_context.cancel();
+    drop(incoming);
+    if input_finished {
+        let _ = input.join();
+    }
+    let write_error = config
+        .write_error
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .take();
+    let result = write_error.or(terminal_error).map_or(drain, Err);
     match Arc::try_unwrap(output) {
         Ok(mutex) => (
             mutex
@@ -213,33 +314,41 @@ where
     }
 }
 
+type PendingCall = (
+    ResponseMode,
+    Option<Value>,
+    thread::JoinHandle<io::Result<()>>,
+);
+
 fn join_calls<W>(
-    calls: &mut Vec<(ResponseMode, Value, thread::JoinHandle<io::Result<()>>)>,
+    calls: &mut Vec<PendingCall>,
     output: &Arc<Mutex<W>>,
     config: &Arc<ServerConfig>,
-) where
+) -> io::Result<()>
+where
     W: Write + Send + 'static,
 {
+    let mut first_error = None;
     for (mode, id, call) in calls.drain(..) {
-        match call.join() {
-            Ok(Ok(())) => {}
-            Ok(Err(error)) => {
-                // The first writer error is surfaced by a best-effort internal
-                // response only when possible; the transport caller still gets
-                // a clean shutdown after all handlers have been reaped.
-                let _ = send_error(output, mode, id, INTERNAL_ERROR, error.to_string());
-            }
-            Err(_) => {
-                let _ = send_error(
+        let result = match call.join() {
+            Ok(result) => result,
+            Err(_) => match id {
+                Some(id) => send_error(
                     output,
                     mode,
                     id,
                     INTERNAL_ERROR,
-                    format!("Internal error: handler panicked ({})", config.version),
-                );
-            }
+                    "Internal error: handler panicked".to_owned(),
+                ),
+                None => Ok(()),
+            },
+        };
+        if let Err(error) = result {
+            config.pdf_context.cancel();
+            first_error.get_or_insert(error);
         }
     }
+    first_error.map_or(Ok(()), Err)
 }
 
 fn dispatch<W>(
@@ -251,8 +360,9 @@ fn dispatch<W>(
 where
     W: Write + Send + 'static,
 {
-    // A notification has no response, including an unknown method.
-    if !request.has_id {
+    // Only tools/call has side effects. Dispatch it even without an id;
+    // dispatch_tool_call suppresses its success and error responses.
+    if !request.has_id && request.method != "tools/call" {
         return Ok(());
     }
 
@@ -272,7 +382,7 @@ where
             output,
             mode,
             request.id.clone(),
-            json!({"tools": tool_definitions()}),
+            json!({"tools": tool_definitions(config.allow_write)}),
         ),
         "tools/call" => dispatch_tool_call(request, mode, config, output),
         method => send_error(
@@ -294,30 +404,28 @@ fn dispatch_tool_call<W>(
 where
     W: Write + Send + 'static,
 {
-    let Some(params) = request.params.as_object() else {
-        if request.params.is_null() {
+    let name = match tool_name(request) {
+        Ok(name) => name,
+        Err(error) => {
+            if !request.has_id {
+                return Ok(());
+            }
             return send_error(
                 output,
                 mode,
                 request.id.clone(),
-                METHOD_NOT_FOUND,
-                "Unknown tool: ".to_owned(),
+                INVALID_PARAMS,
+                format!("Invalid params: {error}"),
             );
         }
-        return send_error(
-            output,
-            mode,
-            request.id.clone(),
-            INVALID_PARAMS,
-            "Invalid params: expected an object".to_owned(),
-        );
     };
-    let name = params
-        .get("name")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let arguments = params.get("arguments").cloned().unwrap_or(Value::Null);
-    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask") {
+    let name = name.as_str();
+    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask")
+        && !(config.allow_write && pdf::canonical_name(name).is_some())
+    {
+        if !request.has_id {
+            return Ok(());
+        }
         return send_error(
             output,
             mode,
@@ -327,7 +435,11 @@ where
         );
     }
 
-    match call_tool(name, arguments, request.raw_arguments.as_deref(), config) {
+    let result = call_tool(name, request.raw_arguments.as_deref(), config);
+    if !request.has_id {
+        return Ok(());
+    }
+    match result {
         Ok(value) => send_tool_result(output, mode, request.id.clone(), value, false),
         Err(message) => send_tool_result(
             output,
@@ -341,7 +453,6 @@ where
 
 fn call_tool(
     name: &str,
-    arguments: Value,
     raw_arguments: Option<&str>,
     config: &ServerConfig,
 ) -> Result<Value, String> {
@@ -349,11 +460,15 @@ fn call_tool(
         "desk_status" => Ok(json!({
             "version": config.version,
             "vault": config.vault.clone().unwrap_or_default(),
-            "capabilities": "read_only",
+            "capabilities": if config.allow_write { "read_write" } else { "read_only" },
         })),
         "desk_ls" => {
-            let args = object_arguments(arguments)?;
-            let dir = args.get("dir").and_then(Value::as_str).unwrap_or_default();
+            let args = go_string_fields(
+                raw_arguments,
+                &["dir"],
+                r#"struct { Dir string "json:\"dir\"" }"#,
+            )?;
+            let dir = &args[0];
             let (vault, mut sidecar) = open_sidecar(config)?;
             let mut files = sidecar
                 .list_files(&vault, dir)
@@ -380,7 +495,7 @@ fn call_tool(
             ))
         }
         "desk_search" => {
-            let (query, _) = go_string_arguments(raw_arguments, &arguments, false)?;
+            let (query, _) = go_string_arguments(raw_arguments, false)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
@@ -419,7 +534,7 @@ fn call_tool(
             ))
         }
         "desk_ask" => {
-            let (query, notebook) = go_string_arguments(raw_arguments, &arguments, true)?;
+            let (query, notebook) = go_string_arguments(raw_arguments, true)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
@@ -446,77 +561,215 @@ fn call_tool(
             let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
             Ok(json!({"answer": answer}))
         }
+        _ if config.allow_write && pdf::canonical_name(name).is_some() => {
+            pdf::call(name, raw_arguments, &config.pdf_context)
+        }
         _ => Err(format!("Unknown tool: {name}")),
     }
 }
 
+// Match the shared Go tools/call parameter decoder before tool admission.
+// Duplicate/null names and malformed _meta must not bypass that boundary.
+fn tool_name(request: &Request) -> Result<String, String> {
+    let raw = request
+        .raw_params
+        .as_deref()
+        .ok_or_else(|| "unexpected end of JSON input".to_owned())?;
+    if !raw.starts_with('{') {
+        return Err(r#"json: cannot unmarshal array into Go value of type struct { Name string "json:\"name\""; Arguments json.RawMessage "json:\"arguments\""; Meta map[string]interface {} "json:\"_meta,omitempty\"" }"#.into());
+    }
+    let fields = go_raw_fields(raw)?;
+    let mut name = String::new();
+    for (key, value) in fields.0 {
+        let is_name = symdesk_vault::dataset::go_equal_fold(&key, "name");
+        let is_meta = symdesk_vault::dataset::go_equal_fold(&key, "_meta");
+        let raw = value.get();
+        if (!is_name && !is_meta) || raw == "null" {
+            continue;
+        }
+        if is_name && raw.starts_with('"') {
+            name = serde_json::from_str(raw).map_err(|error| error.to_string())?;
+        } else if is_meta && raw.starts_with('{') {
+            validate_meta_numbers(raw)?;
+        } else {
+            let value_type = go_json_type(raw);
+            let (field, target) = if is_name {
+                ("name", "string")
+            } else {
+                ("_meta", "map[string]interface {}")
+            };
+            return Err(format!(
+                "json: cannot unmarshal {value_type} into Go struct field .{field} of type {target}"
+            ));
+        }
+    }
+    Ok(name)
+}
+
+fn go_json_type(raw: &str) -> &str {
+    match raw.as_bytes().first() {
+        Some(b'"') => "string",
+        Some(b'[') => "array",
+        Some(b'{') => "object",
+        Some(b't' | b'f') => "bool",
+        Some(b'n') => "null",
+        _ => "number",
+    }
+}
+
+// Go encoding/json accepts lone UTF-16 surrogates as U+FFFD, including keys.
+// Normalize only those escapes, before serde's typed string decoding. Keep
+// numbers raw, preserve escaped backslashes/pairs, and bound nesting without
+// recursive Value construction (Go's scanner limit is 10,000 containers).
+fn go_json_text(data: &[u8]) -> Result<Vec<u8>, String> {
+    let mut bytes = data.to_vec();
+    let mut quoted = false;
+    let mut depth = 0_usize;
+    let mut index = 0;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'\\' if quoted => {
+                let hex = |at: usize| -> Option<u16> {
+                    if bytes.get(at..at + 2)? != b"\\u" {
+                        return None;
+                    }
+                    u16::from_str_radix(std::str::from_utf8(bytes.get(at + 2..at + 6)?).ok()?, 16)
+                        .ok()
+                };
+                if let Some(first) = hex(index) {
+                    if (0xd800..=0xdbff).contains(&first)
+                        && hex(index + 6).is_some_and(|next| (0xdc00..=0xdfff).contains(&next))
+                    {
+                        index += 12;
+                        continue;
+                    }
+                    if (0xd800..=0xdfff).contains(&first) {
+                        bytes[index..index + 6].copy_from_slice(b"\\ufffd");
+                    }
+                    index += 6;
+                } else {
+                    index += 2;
+                }
+                continue;
+            }
+            b'"' => quoted = !quoted,
+            b'[' | b'{' if !quoted => {
+                depth += 1;
+                if depth > 10_000 {
+                    return Err(format!(
+                        "invalid character '{}' exceeded max depth",
+                        char::from(bytes[index])
+                    ));
+                }
+            }
+            b']' | b'}' if !quoted => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+        index += 1;
+    }
+    Ok(bytes)
+}
+
+fn go_raw_fields(raw: &str) -> Result<OrderedFields<Box<RawValue>>, String> {
+    let bytes = go_json_text(raw.as_bytes())?;
+    serde_json::from_slice(&bytes).map_err(|error| error.to_string())
+}
+
+// _meta is map[string]any in Go, unlike arguments (RawMessage). Its numeric
+// leaves must fit float64, even in unknown nested fields or duplicate keys.
+// The JSON grammar has already been checked; scan leaves in source order with
+// constant stack space, never converting ignored tool arguments to Value.
+fn validate_meta_numbers(raw: &str) -> Result<(), String> {
+    let bytes = raw.as_bytes();
+    let mut quoted = false;
+    let mut index = 0;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'\\' if quoted => {
+                index += 2;
+                continue;
+            }
+            b'"' => quoted = !quoted,
+            b'-' | b'0'..=b'9' if !quoted => {
+                let start = index;
+                while index < bytes.len()
+                    && matches!(bytes[index], b'0'..=b'9' | b'-' | b'+' | b'.' | b'e' | b'E')
+                {
+                    index += 1;
+                }
+                let token = &raw[start..index];
+                if !token.parse::<f64>().is_ok_and(f64::is_finite) {
+                    return Err(format!(
+                        "json: cannot unmarshal number {token} into Go struct field ._meta of type float64"
+                    ));
+                }
+                continue;
+            }
+            _ => {}
+        }
+        index += 1;
+    }
+    Ok(())
+}
+
 fn go_string_arguments(
     raw_arguments: Option<&str>,
-    parsed_arguments: &Value,
     include_notebook: bool,
 ) -> Result<(String, String), String> {
-    let raw_arguments = raw_arguments.ok_or_else(|| "unexpected end of JSON input".to_owned())?;
-    if parsed_arguments.is_null() {
-        return Ok((String::new(), String::new()));
+    let (names, target): (&[&str], &str) = if include_notebook {
+        (
+            &["query", "notebook"],
+            r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#,
+        )
+    } else {
+        (&["query"], r#"struct { Query string "json:\"query\"" }"#)
+    };
+    let mut values = go_string_fields(raw_arguments, names, target)?.into_iter();
+    Ok((
+        values.next().unwrap_or_default(),
+        values.next().unwrap_or_default(),
+    ))
+}
+
+fn go_string_fields(
+    raw: Option<&str>,
+    names: &[&str],
+    target: &str,
+) -> Result<Vec<String>, String> {
+    let raw = raw.ok_or_else(|| "unexpected end of JSON input".to_owned())?;
+    let mut values = vec![String::new(); names.len()];
+    if raw == "null" {
+        return Ok(values);
     }
-    if !parsed_arguments.is_object() {
-        let go_type = match parsed_arguments {
-            Value::Bool(_) => "bool",
-            Value::Number(_) => "number",
-            Value::String(_) => "string",
-            Value::Array(_) => "array",
-            Value::Object(_) | Value::Null => unreachable!("handled above"),
-        };
-        let target = if include_notebook {
-            r#"struct { Query string "json:\"query\""; Notebook string "json:\"notebook\"" }"#
-        } else {
-            r#"struct { Query string "json:\"query\"" }"#
-        };
+    if !raw.starts_with('{') {
         return Err(format!(
-            "json: cannot unmarshal {go_type} into Go value of type {target}"
+            "json: cannot unmarshal {} into Go value of type {target}",
+            go_json_type(raw)
         ));
     }
-    let fields: OrderedFields = serde_json::from_str(raw_arguments).map_err(|error| {
-        if error.is_eof() {
-            "unexpected end of JSON input".to_owned()
-        } else {
-            error.to_string()
-        }
-    })?;
-    let mut query = String::new();
-    let mut notebook = String::new();
-    for (key, value) in fields.0 {
-        let field = if symdesk_vault::dataset::go_equal_fold(&key, "query") {
-            Some((&mut query, "query"))
-        } else if include_notebook && symdesk_vault::dataset::go_equal_fold(&key, "notebook") {
-            Some((&mut notebook, "notebook"))
-        } else {
-            None
-        };
-        let Some((target, field_name)) = field else {
+    // Unknown values remain RawMessage: their depth/numeric representation
+    // must not overwrite an earlier typed-field error with missing arguments.
+    for (key, value) in go_raw_fields(raw)?.0 {
+        let Some(index) = names
+            .iter()
+            .position(|name| symdesk_vault::dataset::go_equal_fold(&key, name))
+        else {
             continue;
         };
-        match value {
-            Value::Null => {}
-            Value::String(value) => *target = value,
-            Value::Bool(_) => return Err(go_string_field_type_error("bool", field_name)),
-            Value::Number(_) => return Err(go_string_field_type_error("number", field_name)),
-            Value::Array(_) => return Err(go_string_field_type_error("array", field_name)),
-            Value::Object(_) => return Err(go_string_field_type_error("object", field_name)),
+        let raw = value.get();
+        if raw == "null" {
+            continue;
         }
+        if !raw.starts_with('"') {
+            return Err(go_string_field_type_error(go_json_type(raw), names[index]));
+        }
+        values[index] = serde_json::from_str(raw).map_err(|error| error.to_string())?;
     }
-    Ok((query, notebook))
+    Ok(values)
 }
 
 fn go_string_field_type_error(value_type: &str, field: &str) -> String {
     format!("json: cannot unmarshal {value_type} into Go struct field .{field} of type string")
-}
-
-fn object_arguments(arguments: Value) -> Result<serde_json::Map<String, Value>, String> {
-    arguments
-        .as_object()
-        .cloned()
-        .ok_or_else(|| "invalid arguments: expected an object".to_owned())
 }
 
 fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
@@ -567,8 +820,8 @@ fn search_entry(root: &std::path::Path, hit: &SearchHit, sources: &[SearchSource
     }
 }
 
-fn tool_definitions() -> Vec<Value> {
-    vec![
+fn tool_definitions(allow_write: bool) -> Vec<Value> {
+    let mut tools = vec![
         json!({
             "name": "desk_status",
             "description": "Returns the current version and vault path configuration for symdesk.",
@@ -593,7 +846,11 @@ fn tool_definitions() -> Vec<Value> {
             "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "notebook": {"type": "string", "description": "optional: notebook id or path to restrict retrieval and citations to"}}, "required": ["query"]},
             "annotations": {"readOnlyHint": true},
         }),
-    ]
+    ];
+    if allow_write {
+        tools.extend(pdf::tool_definitions());
+    }
+    tools
 }
 
 fn send_result<W>(
@@ -628,7 +885,7 @@ where
     W: Write + Send + 'static,
 {
     let text = value.as_str().map_or_else(
-        || serde_json::to_string(&value).unwrap_or_default(),
+        || super::go_escape_json(serde_json::to_string(&value).unwrap_or_default()),
         str::to_owned,
     );
     send_result(
@@ -672,7 +929,8 @@ fn write_response<W>(
 where
     W: Write + Send + 'static,
 {
-    let data = serde_json::to_vec(&response).map_err(io::Error::other)?;
+    let data = super::go_escape_json(serde_json::to_string(&response).map_err(io::Error::other)?)
+        .into_bytes();
     if data.len() > MAX_MESSAGE_BYTES {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -761,43 +1019,61 @@ fn parse_header(line: &str, content_length: &mut Option<usize>) -> Result<(), Re
 }
 
 fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMode), ReadFailure> {
-    let value: Value = serde_json::from_slice(data).map_err(|error| ReadFailure::Parse {
+    // Go keeps params/arguments as RawMessage. Do not coerce an argument's
+    // numeric token through f64 before its handler can validate a Go int.
+    let parse_error = |error: serde_json::Error| ReadFailure::Parse {
         mode,
         message: if error.is_eof() {
             "unexpected end of JSON input".to_owned()
         } else {
             error.to_string()
         },
-    })?;
+    };
+    let compatible = go_json_text(data).map_err(|message| ReadFailure::Parse { mode, message })?;
+    let data = compatible.as_slice();
+    let raw: Box<RawValue> = serde_json::from_slice(data).map_err(parse_error)?;
     // CoreKit v0.18 mcpserver: well-formed JSON that is not a JSON-RPC 2.0
     // request object is an Invalid Request answered with a null id.
     let invalid = || ReadFailure::InvalidRequest { mode };
-    let object = value.as_object().ok_or_else(invalid)?;
-    if object.get("jsonrpc").and_then(Value::as_str) != Some("2.0") {
+    if !raw.get().starts_with('{') {
         return Err(invalid());
     }
-    let method = match object.get("method") {
-        Some(Value::String(method)) if !method.is_empty() => method.clone(),
+    let object: BTreeMap<String, Box<RawValue>> =
+        serde_json::from_str(raw.get()).map_err(parse_error)?;
+    let string_field = |key: &str| {
+        object
+            .get(key)
+            .and_then(|value| serde_json::from_str::<String>(value.get()).ok())
+    };
+    if string_field("jsonrpc").as_deref() != Some("2.0") {
+        return Err(invalid());
+    }
+    let method = match string_field("method") {
+        Some(method) if !method.is_empty() => method,
         _ => return Err(invalid()),
     };
-    if object
+    let id: Value = object
         .get("id")
-        .is_some_and(|id| !matches!(id, Value::Null | Value::String(_) | Value::Number(_)))
+        .map(|raw| serde_json::from_str(raw.get()))
+        .transpose()
+        .map_err(parse_error)?
+        .unwrap_or(Value::Null);
+    if !matches!(id, Value::Null | Value::String(_) | Value::Number(_))
         || object
             .get("params")
-            .is_some_and(|params| !matches!(params, Value::Object(_) | Value::Array(_)))
+            .is_some_and(|params| !matches!(params.get().as_bytes().first(), Some(b'{' | b'[')))
     {
         return Err(invalid());
     }
-    let id = object.get("id").cloned().unwrap_or(Value::Null);
     let raw_arguments = raw_arguments_from_frame(data);
+    let raw_params = object.get("params").map(|raw| raw.get().to_owned());
     Ok((
         Request {
             id,
             has_id: object.contains_key("id"),
             method,
-            params: object.get("params").cloned().unwrap_or(Value::Null),
             raw_arguments,
+            raw_params,
         },
         mode,
     ))
@@ -806,8 +1082,13 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
 fn raw_arguments_from_frame(data: &[u8]) -> Option<String> {
     let frame: BTreeMap<String, Box<RawValue>> = serde_json::from_slice(data).ok()?;
     let params = frame.get("params")?;
-    let params: BTreeMap<String, Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
-    params.get("arguments").map(|raw| raw.get().to_owned())
+    let params: OrderedFields<Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
+    params
+        .0
+        .into_iter()
+        .rev()
+        .find(|(key, _)| symdesk_vault::dataset::go_equal_fold(key, "arguments"))
+        .map(|(_, raw)| raw.get().to_owned())
 }
 
 fn read_non_empty_line<R: BufRead>(reader: &mut R) -> io::Result<Option<(Vec<u8>, bool)>> {
@@ -856,6 +1137,7 @@ mod tests {
             Cursor::new(input.to_vec()),
             Vec::new(),
             Some("/tmp/rust006-vault".to_owned()),
+            false,
         );
         result.expect("server should finish cleanly");
         String::from_utf8(output).expect("responses are UTF-8")
@@ -950,13 +1232,14 @@ mod tests {
     #[test]
     fn oversized_line_and_truncated_frame_are_rejected_without_output() {
         let oversized = vec![b'x'; MAX_MESSAGE_BYTES + 1];
-        let (_output, result) = serve_io(Cursor::new(oversized), Vec::new(), None::<String>);
+        let (_output, result) = serve_io(Cursor::new(oversized), Vec::new(), None::<String>, false);
         assert!(result.is_err());
 
         let (_output, result) = serve_io(
             Cursor::new(b"Content-Length: 10\r\n\r\n{}".to_vec()),
             Vec::new(),
             None::<String>,
+            false,
         );
         assert!(result.is_err());
     }
@@ -976,26 +1259,24 @@ mod tests {
     }
 
     #[test]
-    fn framed_handler_error_preserves_framing_and_request_id() {
+    fn handler_write_error_is_returned_without_a_second_response() {
         let output = Arc::new(Mutex::new(Vec::new()));
         let config = Arc::new(ServerConfig {
             version: "test".to_owned(),
             vault: None,
+            allow_write: false,
+            pdf_context: symdesk_render::pdfops::Context::default(),
+            write_error: Mutex::new(None),
             sidecar_anchor: Mutex::new(None),
         });
         let mut calls = vec![(
             ResponseMode::Framed,
-            Value::from(7),
+            Some(Value::from(7)),
             thread::spawn(|| -> io::Result<()> { Err(io::Error::other("response exceeds limit")) }),
         )];
 
-        join_calls(&mut calls, &output, &config);
-
-        let response = String::from_utf8(output.lock().unwrap().clone()).unwrap();
-        assert!(response.starts_with("Content-Length: "));
-        let payload = response.split_once("\r\n\r\n").unwrap().1;
-        let payload: Value = serde_json::from_str(payload).unwrap();
-        assert_eq!(payload["id"], 7);
-        assert_eq!(payload["error"]["code"], INTERNAL_ERROR);
+        let error = join_calls(&mut calls, &output, &config).unwrap_err();
+        assert_eq!(error.to_string(), "response exceeds limit");
+        assert!(output.lock().unwrap().is_empty());
     }
 }

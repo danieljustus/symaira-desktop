@@ -53,6 +53,8 @@
 .PHONY: retrieval-ask-mcp-fixtures-generate retrieval-ask-mcp-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
+.PHONY: render-differential render-pdfops-differential
+
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
@@ -101,6 +103,14 @@ override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 build:
 	@mkdir -p bin
 	$(GO_VCS_ENV) go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
+
+# Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
+# Supply fresh evidence/runtime roots. Native captures are never overwritten.
+render-differential: render-pdfops-differential
+
+render-pdfops-differential:
+	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
+	python3 scripts/rust-port/pdfops/verify.py --output "$(RENDER_EVIDENCE_ROOT)" --runtime-root "$(RENDER_RUNTIME_ROOT)" $(if $(RENDER_BUILD_LAUNCHER),--build-launcher "$(RENDER_BUILD_LAUNCHER)",)
 
 # Verifies the identity of the binary actually built: the stamped revision must
 # be this checkout's HEAD and the CLI must run.
@@ -848,6 +858,7 @@ VALUE_RUNTIME_ENV = HOME="$(VALUE_RUNTIME_ROOT)/home" USERPROFILE="$(VALUE_RUNTI
 RESOURCE_STRESS_ROOT ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/BuildTargets/symaira-desktop-sec003
 RESOURCE_RUSTUP_HOME ?= /Volumes/1TB_NVMe_SN850X/Dev/caches/rustup
 RESOURCE_EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
+RESOURCE_GO_ENV = HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" GOTOOLCHAIN=local GOENV=off GOWORK=off GOFLAGS=-mod=readonly
 
 value-runtime-dirs:
 	@mkdir -p "$(VALUE_RUNTIME_ROOT)/home" "$(VALUE_RUNTIME_ROOT)/tmp" "$(VALUE_RUNTIME_ROOT)/xdg-config" "$(VALUE_RUNTIME_ROOT)/xdg-data" "$(VALUE_RUNTIME_ROOT)/xdg-cache" "$(VALUE_RUNTIME_ROOT)/pycache"
@@ -858,13 +869,14 @@ value-runtime-dirs:
 resource-stress:
 	@mkdir -p "$(RESOURCE_STRESS_ROOT)/home" "$(RESOURCE_STRESS_ROOT)/tmp"
 	@mkdir -p "$(RESOURCE_STRESS_ROOT)/bin"
-	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" \
+	$(RESOURCE_GO_ENV) python3 scripts/rust-port/download_go_modules.py "$(RESOURCE_STRESS_ROOT)/bootstrap"
+	$(RESOURCE_GO_ENV) GOPROXY=off \
 		go build -ldflags="-X main.version=0.12.2" -o "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go$(RESOURCE_EXE_SUFFIX)" ./cmd/symdesk
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		$(CARGO) test -p symdesk-cli --locked oversized_response_is_rejected_before_writing
-	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
+	$(RESOURCE_GO_ENV) GOPROXY=off RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		go run ./scripts/rust-port/cmd/resource-stress --go "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go$(RESOURCE_EXE_SUFFIX)" --rust "$(RESOURCE_STRESS_ROOT)/cargo-target/debug/symdesk$(RESOURCE_EXE_SUFFIX)" --root "$(RESOURCE_STRESS_ROOT)"
 
 value-001-evidence-tests: value-runtime-dirs

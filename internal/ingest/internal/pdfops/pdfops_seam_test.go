@@ -27,16 +27,15 @@ func TestNewToolsOverride(t *testing.T) {
 		}
 	}
 
-	fake := writeExecutable(t, dir, "pdfunite", `
-last=""
-for arg in "$@"; do last="$arg"; done
-cat "$1" "$2" > "$last"
+	fake := writeExecutable(t, dir, "qpdf", `
+if [ "$1" = --check ]; then exit 0; fi
+cat "$1" "$5" > "$8"
 `)
 	WithToolsFactory(func() Tools {
-		return Tools{PDFUnite: fake}
+		return Tools{QPDF: fake}
 	}, func() {
-		if got := NewTools().PDFUnite; got != fake {
-			t.Fatalf("NewTools().PDFUnite = %q, want injected %q", got, fake)
+		if got := NewTools().QPDF; got != fake {
+			t.Fatalf("NewTools().QPDF = %q, want injected %q", got, fake)
 		}
 		if err := NewTools().Merge(context.Background(), []string{input1, input2}, output); err != nil {
 			t.Fatalf("Merge with injected tools: %v", err)
@@ -66,7 +65,7 @@ func TestNewToolsMissingTool(t *testing.T) {
 	}
 
 	WithToolsFactory(func() Tools {
-		return Tools{PDFUnite: filepath.Join(dir, "definitely-not-on-path-pdfunite")}
+		return Tools{QPDF: filepath.Join(dir, "definitely-not-on-path-qpdf")}
 	}, func() {
 		err := NewTools().Merge(context.Background(), []string{input, input}, filepath.Join(dir, "out.pdf"))
 		if err == nil {

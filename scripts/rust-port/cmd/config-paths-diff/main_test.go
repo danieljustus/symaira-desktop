@@ -29,7 +29,7 @@ func TestCaptureOriginAcceptsOnlyPinnedHTTPSRepositorySpellings(t *testing.T) {
 			if _, err := git(root, "remote", "add", "origin", origin); err != nil {
 				t.Fatal(err)
 			}
-			_, err = capture("", "", root, filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml"), filepath.Join(base, "evidence"), filepath.Join(base, "symaira-corekit@v0.18.2"))
+			_, err = capture("", "", root, filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml"), filepath.Join(base, "evidence"), filepath.Join(base, "symaira-corekit@"+corekitVersion))
 			want := "unexpected origin"
 			if origin == originURL || origin == strings.TrimSuffix(originURL, ".git") {
 				want = "refusing non-isolated branch"

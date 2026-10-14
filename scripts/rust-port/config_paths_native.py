@@ -17,10 +17,10 @@ from typing import Any
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[2]
-FOUNDATION = "47dd417ec5632c8e6a2edb32ead09db09e929ed9"
+FOUNDATION = "30d98d66a627297a62cd3250649e84ac71d23cd7"
 ORIGIN = "https://github.com/danieljustus/symaira-desktop.git"
 COREKIT = "github.com/danieljustus/symaira-corekit"
-COREKIT_VERSION = "v0.18.2"
+COREKIT_VERSION = "v0.18.3-0.20261012110002-27d2daf8ec1e"
 GO_VERSION = "go1.26.9"
 RUST_VERSION = "1.98.0"
 CASE_COUNT = 75
@@ -234,7 +234,7 @@ def resolve_go_source_inputs(
     if not isinstance(directory, str) or not directory:
         raise GateFailure(f"pinned CoreKit module has no resolved source directory: {COREKIT}")
     corekit_dir = Path(directory).resolve(strict=True)
-    if not corekit_dir.is_dir() or corekit_dir.name != "symaira-corekit@v0.18.2" or not corekit.get("Sum"):
+    if not corekit_dir.is_dir() or corekit_dir.name != f"symaira-corekit@{COREKIT_VERSION}" or not corekit.get("Sum"):
         raise GateFailure("CoreKit source directory or checksum is not the actual pinned module")
 
     modules = go_module_sources(packages)

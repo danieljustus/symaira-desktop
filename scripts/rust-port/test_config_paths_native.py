@@ -260,7 +260,7 @@ class ConfigPathsNativeTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(prefix="config-paths-module-source-") as temporary:
             root = Path(temporary)
-            corekit_dir = root / "symaira-corekit@v0.18.2"
+            corekit_dir = root / f"symaira-corekit@{gate.COREKIT_VERSION}"
             corekit_dir.mkdir()
             (corekit_dir / "go.mod").write_text("module github.com/danieljustus/symaira-corekit\\n", encoding="utf-8")
             resolved_module = {

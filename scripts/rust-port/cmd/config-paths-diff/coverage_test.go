@@ -119,7 +119,7 @@ func TestCaptureRejectsUnsafeProvenanceInputs(t *testing.T) {
 		manifest := filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml")
 		wrongCoreKit := filepath.Join(t.TempDir(), "corekit-unpinned")
 		_, err = capture("", "", root, manifest, evidence, wrongCoreKit)
-		if err == nil || !strings.Contains(err.Error(), "not the pinned v0.18.2 module directory") {
+		if err == nil || !strings.Contains(err.Error(), "not the pinned "+corekitVersion+" module directory") {
 			t.Fatalf("capture error = %v, want pinned-CoreKit rejection", err)
 		}
 	})
@@ -127,7 +127,7 @@ func TestCaptureRejectsUnsafeProvenanceInputs(t *testing.T) {
 	t.Run("main branch is not an isolated candidate", func(t *testing.T) {
 		root := newCoverageGitRepo(t, "main", originURL)
 		evidence := filepath.Join(t.TempDir(), "evidence")
-		corekit := filepath.Join(t.TempDir(), "symaira-corekit@v0.18.2")
+		corekit := filepath.Join(t.TempDir(), "symaira-corekit@"+corekitVersion)
 		manifest := filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml")
 		_, err := capture("", "", root, manifest, evidence, corekit)
 		if err == nil || !strings.Contains(err.Error(), "refusing non-isolated branch") {
@@ -138,7 +138,7 @@ func TestCaptureRejectsUnsafeProvenanceInputs(t *testing.T) {
 	t.Run("candidate must descend from the frozen foundation", func(t *testing.T) {
 		root := newCoverageGitRepo(t, "candidate", originURL)
 		evidence := filepath.Join(t.TempDir(), "evidence")
-		corekit := filepath.Join(t.TempDir(), "symaira-corekit@v0.18.2")
+		corekit := filepath.Join(t.TempDir(), "symaira-corekit@"+corekitVersion)
 		manifest := filepath.Join(root, "crates", "symdesk-cli", "Cargo.toml")
 		_, err := capture("", "", root, manifest, evidence, corekit)
 		if err == nil || !strings.Contains(err.Error(), "foundation is not an ancestor of candidate HEAD") {
@@ -207,7 +207,7 @@ func TestModuleManifestAndIdentityRejectUnpinnedInputs(t *testing.T) {
 	for path, content := range files {
 		coverageWriteFile(t, root, path, content)
 	}
-	binary := binaryIdentity{CoreKitVersion: "v0.18.2", CoreKitModuleSum: "h1:locked-module-sum"}
+	binary := binaryIdentity{CoreKitVersion: corekitVersion, CoreKitModuleSum: "h1:locked-module-sum"}
 	identity, err := moduleManifest(root, binary)
 	if err != nil {
 		t.Fatalf("moduleManifest: %v", err)

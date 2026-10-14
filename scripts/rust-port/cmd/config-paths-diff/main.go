@@ -21,7 +21,8 @@ import (
 const (
 	modulePath      = "github.com/danieljustus/symaira-desktop"
 	originURL       = "https://github.com/danieljustus/symaira-desktop.git"
-	foundation      = "47dd417ec5632c8e6a2edb32ead09db09e929ed9"
+	foundation      = "30d98d66a627297a62cd3250649e84ac71d23cd7"
+	corekitVersion  = "v0.18.3-0.20261012110002-27d2daf8ec1e"
 	oracleGoVersion = "go1.26.9"
 )
 
@@ -283,8 +284,8 @@ func capture(goBinary, rustBinary, repoRoot, rustManifest, evidenceDir, corekitD
 	if resolved, err := filepath.EvalSymlinks(corekitDir); err == nil {
 		corekitDir = resolved
 	}
-	if filepath.Base(corekitDir) != "symaira-corekit@v0.18.2" {
-		return report{}, fmt.Errorf("CoreKit source is not the pinned v0.18.2 module directory: %s", corekitDir)
+	if filepath.Base(corekitDir) != "symaira-corekit@"+corekitVersion {
+		return report{}, fmt.Errorf("CoreKit source is not the pinned %s module directory: %s", corekitVersion, corekitDir)
 	}
 
 	origin, err := git(root, "remote", "get-url", "origin")
@@ -334,7 +335,7 @@ func capture(goBinary, rustBinary, repoRoot, rustManifest, evidenceDir, corekitD
 	if goInfo.GoVersion != oracleGoVersion || goInfo.BuildPath != modulePath+"/cmd/symdesk" || goInfo.ModulePath != modulePath || goInfo.Revision != foundation || goInfo.Modified != "false" {
 		return report{}, fmt.Errorf("go oracle identity mismatch: version=%s build_path=%s module=%s revision=%s modified=%s", goInfo.GoVersion, goInfo.BuildPath, goInfo.ModulePath, goInfo.Revision, goInfo.Modified)
 	}
-	if goInfo.CoreKitVersion != "v0.18.2" || goInfo.CoreKitModuleSum == "" {
+	if goInfo.CoreKitVersion != corekitVersion || goInfo.CoreKitModuleSum == "" {
 		return report{}, fmt.Errorf("go oracle did not embed the pinned CoreKit dependency: version=%s sum=%s", goInfo.CoreKitVersion, goInfo.CoreKitModuleSum)
 	}
 	goCoreKit, err := moduleManifest(corekitDir, goInfo)
@@ -528,7 +529,7 @@ func platformApplicable(platform, goos string) (bool, error) {
 
 func moduleManifest(directory string, binary binaryIdentity) (moduleIdentity, error) {
 	const modulePath = "github.com/danieljustus/symaira-corekit"
-	if binary.CoreKitVersion != "v0.18.2" || binary.CoreKitModuleSum == "" {
+	if binary.CoreKitVersion != corekitVersion || binary.CoreKitModuleSum == "" {
 		return moduleIdentity{}, fmt.Errorf("unexpected CoreKit binary identity: %s %s", binary.CoreKitVersion, binary.CoreKitModuleSum)
 	}
 	files := make(map[string]string, len(corekitSourceFiles))

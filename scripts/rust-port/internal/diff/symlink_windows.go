@@ -80,13 +80,17 @@ func createSandboxSymlink(root *os.Root, target, path string) (result error) {
 }
 
 func sandboxSymlinkReparseData(target string) ([]byte, error) {
-	substitute := target
+	substitute := filepath.FromSlash(target)
 	var flags uint32 = 1 // SYMLINK_FLAG_RELATIVE
-	if filepath.IsAbs(target) {
+	if filepath.IsAbs(substitute) {
 		flags = 0
-		substitute = `\??\` + target
-		if strings.HasPrefix(target, `\\`) {
-			substitute = `\??\UNC\` + target[2:]
+		switch {
+		case strings.HasPrefix(substitute, `\\?\`):
+			substitute = `\??\` + substitute[4:]
+		case strings.HasPrefix(substitute, `\\`):
+			substitute = `\??\UNC\` + substitute[2:]
+		default:
+			substitute = `\??\` + substitute
 		}
 	}
 	sub, err := windows.UTF16FromString(substitute)

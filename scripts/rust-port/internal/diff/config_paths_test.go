@@ -134,6 +134,8 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 		{Path: "relative-alias", Kind: "symlink", LinkTarget: "absolute-alias"},
 		{Path: "absolute-file-alias", Kind: "symlink", LinkTarget: filepath.Join(workspace, "vault", "marker.md")},
 		{Path: "relative-file-alias", Kind: "symlink", LinkTarget: "absolute-file-alias"},
+		{Path: "slash-file-alias", Kind: "symlink", LinkTarget: "vault/marker.md"},
+		{Path: "slash-directory-alias", Kind: "symlink", LinkTarget: "alias/../vault"},
 		{Path: "relative-alias/nested", Kind: "directory", Mode: 0o700},
 		{Path: "relative-alias/nested/note.md", Content: "through aliases", MTimeNS: &mtimeNS},
 		{Path: "relative-alias/child-alias", Kind: "symlink", LinkTarget: "."},
@@ -146,7 +148,7 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	if target, err := os.Readlink(filepath.Join(workspace, "absolute-alias")); err != nil || target != filepath.Join(workspace, "vault") {
 		t.Fatalf("changed the requested absolute link target: %q, %v", target, err)
 	}
-	for _, alias := range []string{"absolute-file-alias", "relative-file-alias"} {
+	for _, alias := range []string{"absolute-file-alias", "relative-file-alias", "slash-file-alias", "slash-directory-alias/marker.md"} {
 		if content, err := os.ReadFile(filepath.Join(workspace, alias)); err != nil || string(content) != "fixture" {
 			t.Fatalf("file alias %q is not traversable: %q, %v", alias, content, err)
 		}

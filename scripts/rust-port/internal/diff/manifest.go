@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 // ManifestEntry captures observable filesystem state without timestamps or owners.
@@ -55,10 +54,11 @@ func buildManifest(root string) ([]ManifestEntry, error) {
 				return err
 			}
 			if filepath.IsAbs(item.LinkTarget) {
-				targetRel, relErr := filepath.Rel(root, item.LinkTarget)
-				if relErr == nil && targetRel != ".." && !strings.HasPrefix(targetRel, ".."+string(filepath.Separator)) {
-					item.LinkTarget = filepath.ToSlash(filepath.Join("<SANDBOX>", targetRel))
+				targetRel, relErr := sandboxRelativeTarget(rootHandle, item.LinkTarget)
+				if relErr != nil {
+					return relErr
 				}
+				item.LinkTarget = filepath.ToSlash(filepath.Join("<SANDBOX>", targetRel))
 			}
 		case info.IsDir():
 			item.Type = "directory"

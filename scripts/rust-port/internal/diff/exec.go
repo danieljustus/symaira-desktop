@@ -296,6 +296,17 @@ func sandboxRelativeTarget(root *os.Root, target string) (string, error) {
 		return target, nil
 	}
 	name := filepath.FromSlash(root.Name())
+	if runtime.GOOS == "windows" {
+		// Go Readlink returns ordinary DOS/UNC names even for extended roots.
+		// Compare equivalent volume spellings without cleaning path components.
+		normalizeVolume := func(value string) string {
+			if len(value) >= 8 && strings.EqualFold(value[:8], `\\?\UNC\`) {
+				return `\\` + value[8:]
+			}
+			return strings.TrimPrefix(value, `\\?\`)
+		}
+		name, target = normalizeVolume(name), normalizeVolume(target)
+	}
 	equal := func(a, b string) bool {
 		return a == b || runtime.GOOS == "windows" && strings.EqualFold(a, b)
 	}

@@ -81,6 +81,12 @@ func TestCaseSandboxEnvironmentRejectsEscapesAndUnvalidatedPathOverrides(t *test
 	if err := base(map[string]string{"UNKNOWN_TEST_SETTING": "value"}, nil); err == nil {
 		t.Fatal("accepted an unsupported sandbox environment variable")
 	}
+	for _, key := range []string{"XDG_DATA_HOME", "PATH", "home"} {
+		environment, err := isolatedEnvForCase(home, tmp, root, root, nil, nil, []string{key}, replacements)
+		if err == nil || !strings.Contains(err.Error(), "cannot unset sandbox variable") || environment != nil {
+			t.Fatalf("accepted unsafe unset of %q: env=%v err=%v", key, environment, err)
+		}
+	}
 }
 
 func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
@@ -193,9 +199,39 @@ func TestRunAtRetainsEvidenceAndRejectsExistingRoots(t *testing.T) {
 	if _, err := RunAt(os.Args[0], caseSpec, output); err == nil || !strings.Contains(err.Error(), "already exists") {
 		t.Fatalf("existing file was not rejected: %v", err)
 	}
+	if _, err := RunAt(os.Args[0], caseSpec, filepath.Join(output, "child")); err == nil {
+		t.Fatal("accepted an existing file as a sandbox parent")
+	}
 	after, err := buildManifest(root)
 	if err != nil || !reflect.DeepEqual(after, retained) {
 		t.Fatalf("rejected run changed original evidence: %v", err)
+	}
+}
+
+func TestRunAtRetainsFailedSetupAndStartEvidence(t *testing.T) {
+	for _, test := range []struct {
+		name, want string
+		input      Case
+	}{
+		{"missing-binary", "start ", Case{}},
+		{"escaping-setup", "workspace path escapes sandbox", Case{Setup: []SetupFile{{Path: "../escape"}}}},
+		{"escaping-cwd", "workspace path escapes sandbox", Case{WorkingDir: "../escape"}},
+		{"invalid-environment", "cannot override sandbox variable", Case{Env: map[string]string{"HOME": "unvalidated"}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			parent := t.TempDir()
+			root := filepath.Join(parent, "case")
+			_, err := RunAt(filepath.Join(parent, "missing-binary"), test.input, root)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("wrong failure for retained run: %v", err)
+			}
+			if info, err := os.Stat(filepath.Join(root, "workspace")); err != nil || !info.IsDir() {
+				t.Fatalf("failure removed its sandbox: %v", err)
+			}
+			if _, err := os.Stat(filepath.Join(root, "escape")); !os.IsNotExist(err) {
+				t.Fatalf("rejected path escaped the workspace: %v", err)
+			}
+		})
 	}
 }
 

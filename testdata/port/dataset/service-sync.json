@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "commit": "38d1371a703c1c0aba66577dbffecb3aaf5075ba",
     "release": "renderer-pdf-safety-v2-local",
     "module_go": "1.26.9",
     "toolchain": "go1.26.9",
@@ -12,8 +12,8 @@
   "generator_sha256": "28ff4a91cc0ccae96ff227812f014223eb9033d359e6a86d36443611941b9fe8",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
-    "go.mod": "eda66acabd09d37a89ea8bc710e394a2119ccd7b77128a7597f0b7660ace7357",
-    "go.sum": "d0871bf4c4a8ef9cef9589170983e553d6cd26129f9aa04ee40622bae858dde2",
+    "go.mod": "696b8a7dd98d98d74afb0684b4f61886ecbd8d17b97f51799b74d0a4ae062522",
+    "go.sum": "84c9791ca16675620d31a44ebc539269fe7a1bca7ef180ed1111e5d999f24f08",
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
     "internal/service/dataset_additional_test.go": "6ca20045616742b92aaaa4adf6d7eebf9842190a85d7a80e0d3d7b874fb7107a",

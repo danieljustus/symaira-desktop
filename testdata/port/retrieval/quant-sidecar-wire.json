@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "a2abb6ff676d6dfc203b559c96df2854137fb289",
+    "commit": "38d1371a703c1c0aba66577dbffecb3aaf5075ba",
     "release": "renderer-pdf-safety-v2-local",
     "go_version": "go1.26.9",
     "corekit_module": "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e",

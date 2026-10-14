@@ -326,7 +326,7 @@ jobs:
           spctl --assess --type open --context context:primary-signature --verbose=4 "$PUBLISHED_DMG"
 
       - name: Upload app artifacts to workflow
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: SymDesk-macos
           path: |
@@ -384,13 +384,13 @@ jobs:
         run: bash scripts/release-ios.sh --dry-run
 
       - name: Import iOS distribution certificate
-        uses: Apple-Actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
+        uses: Apple-Actions/import-codesign-certs@77ba2a2a8f5cfc8c405ebf3159f767c323e238f9 # v7.1.0
         with:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
           p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
 
       - name: Download main app provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
         with:
           bundle-id: com.symaira.desktop.ios
           profile-type: IOS_APP_STORE
@@ -399,7 +399,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: Download Share Extension provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
         with:
           bundle-id: com.symaira.desktop.ios.share
           profile-type: IOS_APP_STORE
@@ -408,7 +408,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: Download Widget provisioning profile
-        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        uses: Apple-Actions/download-provisioning-profiles@230860ab5f632551a5f9a5e1d98a774485463888 # v7.0.0
         with:
           bundle-id: com.symaira.desktop.ios.widget
           profile-type: IOS_APP_STORE
@@ -456,7 +456,7 @@ jobs:
           echo "Exported IPA: $(basename "${IPAS[0]}")"
 
       - name: Upload IPA, dSYMs, and archive as workflow artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: SymDesk-iOS-${{ github.run_number }}
           path: |
@@ -465,7 +465,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload build to TestFlight
-        uses: Apple-Actions/upload-testflight-build@14df18fee5a4ff3b76971dd382f033494a0194e9 # v5.5.0
+        uses: Apple-Actions/upload-testflight-build@155ea93be9ee6d5186c71f660a612f5eddb14510 # v5.6.0
         with:
           app-path: ${{ env.IOS_IPA_PATH }}
           app-type: ios

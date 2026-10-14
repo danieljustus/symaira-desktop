@@ -20,11 +20,11 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "eda66acabd09d37a89ea8bc710e394a2119ccd7b77128a7597f0b7660ace7357",
+        "696b8a7dd98d98d74afb0684b4f61886ecbd8d17b97f51799b74d0a4ae062522",
     ),
     (
         "go.sum",
-        "d0871bf4c4a8ef9cef9589170983e553d6cd26129f9aa04ee40622bae858dde2",
+        "84c9791ca16675620d31a44ebc539269fe7a1bca7ef180ed1111e5d999f24f08",
     ),
     (
         "internal/history/checkpoint.go",

@@ -339,7 +339,7 @@ fn rewrite_config_paths_repeated_flags(args: &mut Vec<OsString>) {
 }
 
 fn has_config_paths_command(args: &[OsString]) -> bool {
-    let mut previous = "";
+    let mut saw_config = false;
     let mut index = 1;
     while index < args.len() {
         let Some(value) = args[index].to_str() else {
@@ -361,10 +361,13 @@ fn has_config_paths_command(args: &[OsString]) -> bool {
             index += 1;
             continue;
         }
-        if previous == "config" && value == "paths" {
-            return true;
+        if saw_config {
+            return value == "paths";
         }
-        previous = value;
+        if value != "config" {
+            return false;
+        }
+        saw_config = true;
         index += 1;
     }
     false
@@ -886,6 +889,56 @@ fn write_stderr(value: &str, code: CoreExitCode) -> ExitCode {
 #[cfg(test)]
 mod exit_code_tests {
     use super::CoreExitCode;
+
+    #[test]
+    fn config_path_flag_rewrite_is_scoped_to_root_command() {
+        use super::{OsString, cli, rewrite_config_paths_repeated_flags};
+
+        for command in [
+            vec!["search", "config", "paths"],
+            vec!["version", "config", "paths"],
+            vec!["config", "other", "config", "paths"],
+            vec!["config", "--", "paths"],
+        ] {
+            let mut args: Vec<OsString> = ["symdesk", "--output=text"]
+                .into_iter()
+                .chain(command)
+                .chain(["--output=json"])
+                .map(OsString::from)
+                .collect();
+            let original = args.clone();
+            rewrite_config_paths_repeated_flags(&mut args);
+            assert_eq!(
+                args, original,
+                "other commands and positionals are untouched"
+            );
+        }
+
+        let mut args = [
+            "symdesk",
+            "--output=text",
+            "--vault",
+            "paths",
+            "config",
+            "--json",
+            "paths",
+            "--output=json",
+        ]
+        .map(OsString::from)
+        .to_vec();
+        rewrite_config_paths_repeated_flags(&mut args);
+        let parsed = cli()
+            .try_get_matches_from(args)
+            .expect("config paths remains valid");
+        assert_eq!(
+            parsed.get_one::<String>("output").map(String::as_str),
+            Some("json")
+        );
+        assert_eq!(
+            parsed.get_one::<String>("vault").map(String::as_str),
+            Some("paths")
+        );
+    }
 
     #[test]
     fn nested_listing_preserves_native_separators_and_search_uses_references() {

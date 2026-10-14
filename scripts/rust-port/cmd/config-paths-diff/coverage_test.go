@@ -560,3 +560,62 @@ func coverageSHA256(content []byte) string {
 	sum := sha256.Sum256(content)
 	return hex.EncodeToString(sum[:])
 }
+
+func TestPreflightReceiptKeepsAvailableBinaryAndModuleIdentity(t *testing.T) {
+	root := newCoverageGitRepo(t, "candidate", originURL)
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := inspectGoBinary(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	module := t.TempDir()
+	for _, name := range corekitSourceFiles {
+		coverageWriteFile(t, module, name, "partial source fixture\n")
+	}
+	evidence := t.TempDir()
+	stderr := []byte("source rejected\x00\xff\n")
+	captureErr := errors.New("source identity rejected before execution")
+	// A test executable is inspectable, but is not the pinned production oracle.
+	// Its available identity must survive without turning the failure into parity.
+	if err := retainPreflightFailure(evidence, executable, executable, root, module, report{}, captureErr, nil, stderr); err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(filepath.Join(evidence, "preflight.failure.json")) // #nosec G304 -- fixed receipt in the test-owned directory.
+	if err != nil {
+		t.Fatal(err)
+	}
+	var receipt preflightFailure
+	if err := json.Unmarshal(content, &receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.GoBinary != identity || receipt.GoBinaryError != "" || receipt.RustBinaryError != "" || receipt.RustBinary.SHA256 != identity.SHA256 {
+		t.Fatalf("available executable identity was lost: %#v", receipt)
+	}
+	if receipt.Head != mustCoverageGit(t, root, "rev-parse", "HEAD") || receipt.Branch != "candidate" || receipt.Origin != originURL || receipt.GitStatus != "" {
+		t.Fatalf("checkout identity was lost: %#v", receipt)
+	}
+	if receipt.NativeCaptureClaimed || receipt.ExecutedCaseCount != 0 || receipt.DeclaredCaseCount != 0 || receipt.Error != captureErr.Error() || receipt.ExitCode != 1 {
+		t.Fatalf("preflight failure was misclassified: %#v", receipt)
+	}
+	if len(receipt.GoCoreKitFiles) != len(corekitSourceFiles) || len(receipt.GoCoreKitMissing) != 0 {
+		t.Fatalf("available module files were not retained: %#v", receipt)
+	}
+	for _, name := range corekitSourceFiles {
+		if receipt.GoCoreKitFiles[name] != coverageSHA256([]byte("partial source fixture\n")) {
+			t.Errorf("wrong retained source hash for %s", name)
+		}
+	}
+	if !strings.Contains(strings.Join(receipt.IdentityErrors, "\n"), "CoreKit source: unexpected CoreKit binary identity") {
+		t.Fatalf("unpinned executable was not diagnosed: %v", receipt.IdentityErrors)
+	}
+	if err := retainPreflightFailure(evidence, executable, executable, root, module, report{}, captureErr, nil, nil); err == nil {
+		t.Fatal("a repeated failure overwrote retained evidence")
+	}
+	retained, err := os.ReadFile(filepath.Join(evidence, "preflight.runner.stderr")) // #nosec G304 -- reread the same test-owned failure stream.
+	if err != nil || !bytes.Equal(retained, stderr) || receipt.StderrSHA256 != coverageSHA256(stderr) {
+		t.Fatalf("original failure stream changed: bytes=%v err=%v", retained, err)
+	}
+}

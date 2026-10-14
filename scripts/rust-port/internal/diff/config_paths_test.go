@@ -3,6 +3,7 @@ package diff
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -157,6 +158,71 @@ func TestIsolatedEnvironmentKeepsRawBase64Bytes(t *testing.T) {
 	value, ok := environmentMap(environment)["UNRELATED_BINARY_ENV"]
 	if !ok || len(value) != 1 || value[0] != 0xff {
 		t.Fatalf("raw environment bytes = %v, want [255]", []byte(value))
+	}
+}
+
+func TestRunAtRetainsEvidenceAndRejectsExistingRoots(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "retained", "case")
+	caseSpec := Case{
+		ID:   "retained-helper",
+		Args: []string{"-test.run=^TestRunAndCompareIdenticalHelper$"},
+		Env:  map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_OUTPUT": "${WORKSPACE}/out.txt"},
+	}
+	if _, err := RunAt(os.Args[0], caseSpec, "relative-root"); err == nil || !strings.Contains(err.Error(), "must be absolute") {
+		t.Fatalf("relative root was not rejected: %v", err)
+	}
+	result, err := RunAt(os.Args[0], caseSpec, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.SandboxRoot != root || result.ExitCode != 0 || result.TimedOut || result.Signal != "" || !strings.Contains(string(result.Stdout), "ok\n") {
+		t.Fatalf("unexpected retained process result: %#v", result)
+	}
+	output := filepath.Join(root, "workspace", "out.txt")
+	content, err := os.ReadFile(output) // #nosec G304 -- fixed helper output under the test-owned sandbox.
+	if err != nil || string(content) != "deterministic\n" {
+		t.Fatalf("helper output not retained: %q, %v", content, err)
+	}
+	retained, err := buildManifest(root)
+	if err != nil || !reflect.DeepEqual(retained, result.Files) || reflect.DeepEqual(result.FilesBefore, result.Files) {
+		t.Fatalf("before/after evidence does not match retained files: %v", err)
+	}
+	if _, err := RunAt(os.Args[0], caseSpec, root); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("existing root was not rejected: %v", err)
+	}
+	if _, err := RunAt(os.Args[0], caseSpec, output); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("existing file was not rejected: %v", err)
+	}
+	after, err := buildManifest(root)
+	if err != nil || !reflect.DeepEqual(after, retained) {
+		t.Fatalf("rejected run changed original evidence: %v", err)
+	}
+}
+
+func TestRawEnvironmentRejectsInvalidAndConflictingInputs(t *testing.T) {
+	root := t.TempDir()
+	home, tmp := filepath.Join(root, "home"), filepath.Join(root, "tmp")
+	for _, test := range []struct {
+		name, key, value, want string
+	}{
+		{"empty key", "", "eA==", "non-empty canonical uppercase"},
+		{"lowercase key", "lower", "eA==", "non-empty canonical uppercase"},
+		{"equals in key", "BAD=KEY", "eA==", "non-empty canonical uppercase"},
+		{"nul in key", "BAD\x00KEY", "eA==", "non-empty canonical uppercase"},
+		{"reserved", "HOME", "eA==", "cannot override sandbox variable"},
+		{"path override", "SYMINGEST_DB_PATH", "eA==", "must use sandbox_env"},
+		{"collision", "NO_COLOR", "eA==", "collides with an existing variable"},
+		{"malformed base64", "RAW_TEST", "!", "canonical standard base64"},
+		{"noncanonical base64", "RAW_TEST", "eA==\n", "canonical standard base64"},
+		{"nul in value", "RAW_TEST", "AA==", "contains a NUL byte"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			environment, err := isolatedEnvForCaseWithBase64(home, tmp, root, root, nil, nil, nil,
+				map[string]string{test.key: test.value}, map[string]string{"${SANDBOX}": root})
+			if err == nil || !strings.Contains(err.Error(), test.want) || environment != nil {
+				t.Fatalf("invalid raw environment was not rejected: env=%v err=%v", environment, err)
+			}
+		})
 	}
 }
 

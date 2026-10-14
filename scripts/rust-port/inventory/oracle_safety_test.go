@@ -112,3 +112,51 @@ func TestInventoryGitReadsDoNotLazyFetch(t *testing.T) {
 		t.Fatal("read-only helper mutated caller by materializing the missing blob")
 	}
 }
+
+func TestCreateOracleBundleRejectsMultipleNativePrerequisites(t *testing.T) {
+	root, common := sourceSafetyRepo(t)
+	sourceSafetyGit(t, root, "switch", "-c", "side")
+	if err := os.WriteFile(filepath.Join(root, "side.txt"), []byte("side\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	sourceSafetyGit(t, root, "add", ".")
+	sourceSafetyGit(t, root, "commit", "-m", "side")
+	sourceSafetyGit(t, root, "switch", "main")
+	if err := os.WriteFile(filepath.Join(root, "main.txt"), []byte("main\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	sourceSafetyGit(t, root, "add", ".")
+	sourceSafetyGit(t, root, "commit", "-m", "main anchor")
+	anchor := sourceSafetyGit(t, root, "rev-parse", "HEAD")
+	sourceSafetyGit(t, root, "switch", "-c", "source")
+	sourceSafetyGit(t, root, "merge", "--no-ff", "side", "-m", "merge source")
+	source := sourceSafetyGit(t, root, "rev-parse", "HEAD")
+	refs := sourceSafetyGit(t, root, "show-ref")
+
+	// Native Git accepts this merge bundle, but the recorded-source contract
+	// intentionally accepts exactly one prerequisite. Do not rewrite its bytes.
+	path := filepath.Join(t.TempDir(), "native.bundle")
+	sourceSafetyGit(t, root, "bundle", "create", "--version=2", path, "HEAD", "^"+anchor)
+	sourceSafetyGit(t, root, "bundle", "verify", path)
+	//nolint:gosec // path is the fixed control bundle in this test's private directory.
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	header := strings.SplitN(string(data), "\n\n", 2)[0]
+	lines := strings.Split(header, "\n")
+	if len(lines) != 4 || !strings.HasPrefix(lines[1], "-") || !strings.HasPrefix(lines[2], "-") {
+		t.Fatalf("native control did not emit two prerequisites: %q", header)
+	}
+	proof, err := CreateOracleBundle(root, source, anchor)
+	if err == nil || proof != nil || !strings.Contains(err.Error(), "common main ancestor") {
+		t.Fatalf("multiple prerequisites did not fail before fixture generation: proof=%v err=%v", proof != nil, err)
+	}
+	proof, err = CreateOracleBundle(root, source, common)
+	if err != nil || proof == nil || proof.Anchor != common {
+		t.Fatalf("common main ancestor did not produce an accepted native bundle: %v", err)
+	}
+	if sourceSafetyGit(t, root, "show-ref") != refs || sourceSafetyGit(t, root, "rev-parse", "HEAD") != source || sourceSafetyGit(t, root, "status", "--porcelain") != "" {
+		t.Fatal("bundle preflight mutated caller refs, HEAD or worktree")
+	}
+}

@@ -127,14 +127,29 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	if !os.SameFile(resolvedInfo, targetInfo) {
 		t.Fatalf("symlink resolved to %q", resolved)
 	}
+	mtimeNS := int64(1_600_000_000_000_000_000)
 	for _, setup := range []SetupFile{
 		{Path: "home-alias", Kind: "symlink", LinkTarget: "../home"},
 		{Path: "absolute-alias", Kind: "symlink", LinkTarget: filepath.Join(workspace, "vault")},
+		{Path: "relative-alias", Kind: "symlink", LinkTarget: "absolute-alias"},
+		{Path: "relative-alias/nested", Kind: "directory", Mode: 0o700},
+		{Path: "relative-alias/nested/note.md", Content: "through aliases", MTimeNS: &mtimeNS},
+		{Path: "relative-alias/child-alias", Kind: "symlink", LinkTarget: "."},
 		{Path: "dangling-alias", Kind: "symlink", LinkTarget: "missing/target.toml"},
 	} {
 		if err := setupSandboxFile(root, home, workspace, setup, replacements); err != nil {
 			t.Fatalf("rejected a confined fixture symlink: %v", err)
 		}
+	}
+	if target, err := os.Readlink(filepath.Join(workspace, "absolute-alias")); err != nil || target != filepath.Join(workspace, "vault") {
+		t.Fatalf("changed the requested absolute link target: %q, %v", target, err)
+	}
+	note := filepath.Join(workspace, "relative-alias", "nested", "note.md")
+	if content, err := os.ReadFile(note); err != nil || string(content) != "through aliases" {
+		t.Fatalf("aliased write did not reach its confined target: %q, %v", content, err)
+	}
+	if info, err := os.Stat(note); err != nil || info.ModTime().UnixNano() != mtimeNS {
+		t.Fatalf("aliased write did not preserve its fixture timestamp: %v, %v", info, err)
 	}
 	if _, err := buildManifest(root); err != nil {
 		t.Fatalf("confined fixture links did not retain a valid manifest: %v", err)
@@ -144,6 +159,11 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	}
 	if err := setupSandboxFile(root, home, workspace, SetupFile{Path: "bad-link", Kind: "symlink", LinkTarget: "../../outside"}, replacements); err == nil {
 		t.Fatal("accepted symlink target outside sandbox")
+	}
+	for _, target := range []string{"", "missing/../vault", "vault/marker.md/child", root + "-other/target"} {
+		if err := setupSandboxFile(root, home, workspace, SetupFile{Path: "invalid-link", Kind: "symlink", LinkTarget: target}, replacements); err == nil {
+			t.Fatalf("accepted an invalid fixture target: %q", target)
+		}
 	}
 	if strings.Contains(resolved, "outside") {
 		t.Fatalf("resolved alias escaped sandbox: %q", resolved)
@@ -182,6 +202,18 @@ func TestSandboxFixtureSymlinkChainCannotChangeOutsideFiles(t *testing.T) {
 	}
 	if setupErr == nil {
 		t.Fatal("accepted a symlink chain escaping the sandbox")
+	}
+	retained := filepath.Join(workspace, "retained-bad")
+	for _, target := range []string{outside, "retained-bad", "missing/../../.."} {
+		if err := os.Symlink(target, retained); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := buildManifest(root); err == nil {
+			t.Fatalf("accepted an unconfined or cyclic retained symlink: %q", target)
+		}
+		if err := os.Remove(retained); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

@@ -219,6 +219,18 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 	if kind == "" {
 		kind = "file"
 	}
+	resolvePath := relative
+	if kind == "symlink" {
+		resolvePath = filepath.Dir(relative)
+	}
+	resolved, err := resolveSandboxPath(sandbox, resolvePath)
+	if err != nil {
+		return err
+	}
+	if kind == "symlink" {
+		resolved = filepath.Join(resolved, filepath.Base(relative))
+	}
+	relative = resolved
 	switch kind {
 	case "directory":
 		if err := sandbox.MkdirAll(relative, mode); err != nil {
@@ -258,37 +270,101 @@ func validateSandboxSymlink(root *os.Root, path, target string) error {
 	if target == "" {
 		return errors.New("symlink fixture requires link_target")
 	}
-	// Do not Join/Clean this probe: resolving a symlink before .. can change
-	// the destination. Root resolves the actual chain without leaving its tree.
-	probe := filepath.Dir(filepath.FromSlash(path)) + string(filepath.Separator) + target
-	if filepath.IsAbs(target) {
-		prefix := root.Name() + string(filepath.Separator)
-		if target == root.Name() {
-			probe = "."
-		} else if strings.HasPrefix(target, prefix) {
-			probe = strings.TrimPrefix(target, prefix)
-		} else {
-			return fmt.Errorf("symlink fixture escapes sandbox: %q", target)
-		}
+	probe, err := sandboxRelativeTarget(root, target)
+	if err != nil {
+		return err
 	}
-	if !filepath.IsLocal(probe) {
-		return fmt.Errorf("symlink fixture escapes sandbox: %q", target)
+	if !filepath.IsAbs(target) {
+		// Preserve traversal order: a symlink followed by .. must not be cleaned.
+		probe = filepath.Dir(filepath.FromSlash(path)) + string(filepath.Separator) + probe
 	}
-	if _, err := root.Stat(probe); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("symlink fixture target is not confined: %w", err)
+	_, err = resolveSandboxPath(root, probe)
+	return err
+}
+
+// sandboxRelativeTarget preserves components while rebasing an absolute link.
+func sandboxRelativeTarget(root *os.Root, target string) (string, error) {
+	target = filepath.FromSlash(target)
+	if !filepath.IsAbs(target) {
+		if filepath.VolumeName(target) != "" || len(target) > 0 && os.IsPathSeparator(target[0]) {
+			return "", fmt.Errorf("symlink fixture has an unconfined rooted target: %q", target)
 		}
-		// ponytail: a missing target with parent traversal cannot prove its
-		// eventual destination; require an existing parent for such fixtures.
-		for _, part := range strings.FieldsFunc(probe, func(r rune) bool {
-			return r == rune(filepath.Separator) || runtime.GOOS == "windows" && r == '/'
-		}) {
-			if part == ".." {
-				return fmt.Errorf("dangling symlink fixture with parent traversal is not confined: %q", target)
+		return target, nil
+	}
+	name := filepath.FromSlash(root.Name())
+	equal := func(a, b string) bool {
+		return a == b || runtime.GOOS == "windows" && strings.EqualFold(a, b)
+	}
+	if equal(target, name) {
+		return ".", nil
+	}
+	prefix := name + string(filepath.Separator)
+	if len(target) >= len(prefix) && equal(target[:len(prefix)], prefix) {
+		return target[len(prefix):], nil
+	}
+	return "", fmt.Errorf("symlink fixture escapes sandbox: %q", target)
+}
+
+// Root rejects all absolute symlinks, including confined ones. Resolve their
+// components with rooted metadata reads, then keep every mutation rooted too.
+func resolveSandboxPath(root *os.Root, name string) (string, error) {
+	name, err := sandboxRelativeTarget(root, name)
+	if err != nil {
+		return "", err
+	}
+	pending := strings.Split(filepath.ToSlash(name), "/")
+	resolved, followed := ".", 0
+	for len(pending) > 0 {
+		part := pending[0]
+		pending = pending[1:]
+		switch part {
+		case "", ".":
+			continue
+		case "..":
+			if resolved == "." {
+				return "", fmt.Errorf("symlink fixture escapes sandbox: %q", name)
 			}
+			resolved = filepath.Dir(resolved)
+			continue
 		}
+		next := filepath.Join(resolved, part)
+		info, err := root.Lstat(next)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return "", err
+			}
+			for _, rest := range pending {
+				if rest == ".." {
+					return "", fmt.Errorf("dangling symlink fixture with parent traversal is not confined: %q", name)
+				}
+			}
+			return filepath.Join(append([]string{next}, pending...)...), nil
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			if followed == 8 { // Match the pinned os.Root symlink traversal limit.
+				return "", fmt.Errorf("symlink fixture exceeds sandbox traversal limit: %q", name)
+			}
+			followed++
+			target, err := root.Readlink(next)
+			if err != nil {
+				return "", err
+			}
+			relative, err := sandboxRelativeTarget(root, target)
+			if err != nil {
+				return "", err
+			}
+			if filepath.IsAbs(target) {
+				resolved = "."
+			}
+			pending = append(strings.Split(filepath.ToSlash(relative), "/"), pending...)
+			continue
+		}
+		if len(pending) > 0 && !info.IsDir() {
+			return "", fmt.Errorf("fixture path parent is not a directory: %q", next)
+		}
+		resolved = next
 	}
-	return nil
+	return resolved, nil
 }
 
 func runPrepare(command *exec.Cmd, timeout time.Duration) error {

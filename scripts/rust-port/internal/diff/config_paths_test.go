@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -126,6 +127,18 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	if !os.SameFile(resolvedInfo, targetInfo) {
 		t.Fatalf("symlink resolved to %q", resolved)
 	}
+	for _, setup := range []SetupFile{
+		{Path: "home-alias", Kind: "symlink", LinkTarget: "../home"},
+		{Path: "absolute-alias", Kind: "symlink", LinkTarget: filepath.Join(workspace, "vault")},
+		{Path: "dangling-alias", Kind: "symlink", LinkTarget: "missing/target.toml"},
+	} {
+		if err := setupSandboxFile(root, home, workspace, setup, replacements); err != nil {
+			t.Fatalf("rejected a confined fixture symlink: %v", err)
+		}
+	}
+	if _, err := buildManifest(root); err != nil {
+		t.Fatalf("confined fixture links did not retain a valid manifest: %v", err)
+	}
 	if err := setupSandboxFile(root, home, workspace, SetupFile{Path: "../outside", Content: "bad"}, replacements); err == nil {
 		t.Fatal("accepted fixture path outside workspace")
 	}
@@ -134,6 +147,41 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 	}
 	if strings.Contains(resolved, "outside") {
 		t.Fatalf("resolved alias escaped sandbox: %q", resolved)
+	}
+}
+
+func TestSandboxFixtureSymlinkChainCannotChangeOutsideFiles(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix symlink traversal control; Windows retains its native fixture tests")
+	}
+	parent := t.TempDir()
+	root := filepath.Join(parent, "sandbox")
+	home, workspace := filepath.Join(root, "home"), filepath.Join(root, "workspace")
+	for _, path := range []string{home, workspace} {
+		if err := os.MkdirAll(path, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	outside := filepath.Join(parent, "escape.txt")
+	if err := os.WriteFile(outside, []byte("original"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var setupErr error
+	for _, setup := range []SetupFile{
+		{Path: "a", Kind: "symlink", LinkTarget: "../home"},
+		{Path: "b", Kind: "symlink", LinkTarget: "a/../.."},
+		{Path: "b/escape.txt", Content: "outside"},
+	} {
+		if setupErr = setupSandboxFile(root, home, workspace, setup, nil); setupErr != nil {
+			break
+		}
+	}
+	content, err := os.ReadFile(outside)
+	if err != nil || string(content) != "original" {
+		t.Fatalf("fixture setup modified a test-owned file outside its sandbox: %q, %v", content, err)
+	}
+	if setupErr == nil {
+		t.Fatal("accepted a symlink chain escaping the sandbox")
 	}
 }
 

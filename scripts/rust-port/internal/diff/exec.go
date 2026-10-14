@@ -202,6 +202,15 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 	if err != nil {
 		return err
 	}
+	sandbox, err := os.OpenRoot(root)
+	if err != nil {
+		return err
+	}
+	defer sandbox.Close()
+	relative, err := filepath.Rel(root, path)
+	if err != nil {
+		return err
+	}
 	mode := os.FileMode(setup.Mode)
 	if mode == 0 {
 		mode = 0o600
@@ -212,44 +221,72 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 	}
 	switch kind {
 	case "directory":
-		if err := os.MkdirAll(path, mode); err != nil {
+		if err := sandbox.MkdirAll(relative, mode); err != nil {
 			return err
 		}
 	case "symlink":
 		target := replace(setup.LinkTarget, replacements)
-		if target == "" {
-			return errors.New("symlink fixture requires link_target")
-		}
-		resolvedTarget := target
-		if !filepath.IsAbs(resolvedTarget) {
-			resolvedTarget = filepath.Join(filepath.Dir(path), resolvedTarget)
-		}
-		resolvedTarget = filepath.Clean(resolvedTarget)
-		relative, err := filepath.Rel(root, resolvedTarget)
-		if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-			return fmt.Errorf("symlink fixture escapes sandbox: %q", setup.LinkTarget)
-		}
-		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		if err := validateSandboxSymlink(sandbox, relative, target); err != nil {
 			return err
 		}
-		if err := os.Symlink(target, path); err != nil {
+		if err := sandbox.MkdirAll(filepath.Dir(relative), 0o700); err != nil {
+			return err
+		}
+		if err := sandbox.Symlink(target, relative); err != nil {
 			return err
 		}
 	case "file":
-		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		if err := sandbox.MkdirAll(filepath.Dir(relative), 0o700); err != nil {
 			return err
 		}
-		if err := os.WriteFile(path, []byte(replace(setup.Content, replacements)), mode); err != nil {
+		if err := sandbox.WriteFile(relative, []byte(replace(setup.Content, replacements)), mode); err != nil {
 			return err
 		}
 		if setup.MTimeNS != nil {
 			mtime := time.Unix(0, *setup.MTimeNS)
-			if err := os.Chtimes(path, mtime, mtime); err != nil {
+			if err := sandbox.Chtimes(relative, mtime, mtime); err != nil {
 				return fmt.Errorf("set fixture mtime: %w", err)
 			}
 		}
 	default:
 		return fmt.Errorf("unsupported setup kind %q", kind)
+	}
+	return nil
+}
+
+func validateSandboxSymlink(root *os.Root, path, target string) error {
+	if target == "" {
+		return errors.New("symlink fixture requires link_target")
+	}
+	// Do not Join/Clean this probe: resolving a symlink before .. can change
+	// the destination. Root resolves the actual chain without leaving its tree.
+	probe := filepath.Dir(filepath.FromSlash(path)) + string(filepath.Separator) + target
+	if filepath.IsAbs(target) {
+		prefix := root.Name() + string(filepath.Separator)
+		if target == root.Name() {
+			probe = "."
+		} else if strings.HasPrefix(target, prefix) {
+			probe = strings.TrimPrefix(target, prefix)
+		} else {
+			return fmt.Errorf("symlink fixture escapes sandbox: %q", target)
+		}
+	}
+	if !filepath.IsLocal(probe) {
+		return fmt.Errorf("symlink fixture escapes sandbox: %q", target)
+	}
+	if _, err := root.Stat(probe); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("symlink fixture target is not confined: %w", err)
+		}
+		// ponytail: a missing target with parent traversal cannot prove its
+		// eventual destination; require an existing parent for such fixtures.
+		for _, part := range strings.FieldsFunc(probe, func(r rune) bool {
+			return r == rune(filepath.Separator) || runtime.GOOS == "windows" && r == '/'
+		}) {
+			if part == ".." {
+				return fmt.Errorf("dangling symlink fixture with parent traversal is not confined: %q", target)
+			}
+		}
 	}
 	return nil
 }

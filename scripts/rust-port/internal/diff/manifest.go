@@ -51,6 +51,9 @@ func buildManifest(root string) ([]ManifestEntry, error) {
 			if err != nil {
 				return err
 			}
+			if err := validateSandboxSymlink(rootHandle, path, item.LinkTarget); err != nil {
+				return err
+			}
 			if filepath.IsAbs(item.LinkTarget) {
 				targetRel, relErr := filepath.Rel(root, item.LinkTarget)
 				if relErr == nil && targetRel != ".." && !strings.HasPrefix(targetRel, ".."+string(filepath.Separator)) {

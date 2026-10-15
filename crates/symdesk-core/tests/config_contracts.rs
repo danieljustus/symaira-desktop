@@ -313,6 +313,11 @@ fn verbatim_global_paths_match_native_go_observations() {
 #[test]
 fn base_and_global_paths_match_go_contract() {
     for case in fixture().cases.paths {
+        let case = if cfg!(windows) {
+            windows_fixture_paths(case)
+        } else {
+            case
+        };
         assert_eq!(config::resolve_data_home(&case.environment), case.data_home);
         assert_eq!(
             config::resolve_config_home(&case.environment),
@@ -327,6 +332,65 @@ fn base_and_global_paths_match_go_contract() {
         assert_eq!(config::cache_dir(&case.environment), case.cache_dir);
         assert_eq!(config::global_path(&case.environment), case.global_path);
     }
+}
+
+// Match configgen's hostEnvironment/hostPath materialization, not a rewrite of
+// actual product output. Relative XDG values and surrounding whitespace stay raw.
+fn windows_fixture_paths(mut case: PathCase) -> PathCase {
+    for value in case.environment.values_mut().chain([
+        &mut case.data_home,
+        &mut case.config_home,
+        &mut case.cache_home,
+    ]) {
+        if value.trim().starts_with("/fixture") {
+            *value = value
+                .replacen("/fixture", r"C:\fixture", 1)
+                .replace('/', r"\");
+        }
+    }
+    if let Some(home) = case.environment.get("HOME").cloned() {
+        case.environment
+            .entry("USERPROFILE".to_owned())
+            .or_insert(home);
+    }
+    for value in [
+        &mut case.data_dir,
+        &mut case.config_dir,
+        &mut case.cache_dir,
+        &mut case.global_path,
+    ] {
+        *value = value
+            .replacen("/fixture", r"C:\fixture", 1)
+            .replace('/', r"\");
+    }
+    case
+}
+
+#[test]
+fn windows_fixture_materialization_preserves_the_declared_inputs() {
+    let mut cases = fixture().cases.paths.into_iter().map(windows_fixture_paths);
+    let absolute = cases.next().expect("absolute XDG case");
+    assert_eq!(
+        absolute.environment["XDG_DATA_HOME"],
+        r"  C:\fixture\data  "
+    );
+    assert_eq!(absolute.environment["USERPROFILE"], r"C:\fixture\home");
+    assert_eq!(absolute.data_home, r"C:\fixture\data");
+    assert_eq!(
+        absolute.global_path,
+        r"C:\fixture\config\symdesk\config.toml"
+    );
+    let home = cases.next().expect("home fallback case");
+    assert_eq!(home.data_home, r"C:\fixture\home\.local\share");
+    let relative = cases.next().expect("relative XDG case");
+    assert_eq!(relative.environment["XDG_CONFIG_HOME"], "relative/config");
+    assert_eq!(relative.config_home, "relative/config");
+    assert_eq!(relative.config_dir, r"relative\config\symdesk");
+    assert_eq!(
+        relative.global_path,
+        r"C:\fixture\home\.config\symdesk\config.toml"
+    );
+    assert!(cases.next().is_none());
 }
 
 fn assert_config(actual: &Config, expected: &SafeConfig) {

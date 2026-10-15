@@ -511,8 +511,8 @@ fn migrate_json_config(path: &Path, config: &SymseekConfig) -> Result<(), String
             go_path_error("mkdir", parent, &error)
         )
     })?;
-    let contents =
-        toml::to_string(config).map_err(|error| format!("encode migrated TOML config: {error}"))?;
+    let contents = symdesk_core::config::render_flat_toml(config)
+        .map_err(|error| format!("encode migrated TOML config: {error}"))?;
     let mut options = OpenOptions::new();
     options.write(true).create(true).truncate(true);
     #[cfg(unix)]
@@ -548,7 +548,7 @@ fn save_config(path: &Path, config: &SymseekConfig) -> Result<(), SidecarError> 
     create_private_dir_all(parent).map_err(|error| {
         SidecarError::Contract(format!("failed to create config directory: {error}"))
     })?;
-    let contents = toml::to_string(config)
+    let contents = symdesk_core::config::render_flat_toml(config)
         .map_err(|error| SidecarError::Contract(format!("failed to encode config: {error}")))?;
     let mut options = OpenOptions::new();
     options.write(true).create(true).truncate(true);

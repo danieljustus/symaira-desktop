@@ -461,7 +461,36 @@ fn go_toml_error(input: &str, error: &toml::de::Error) -> String {
 ///
 /// Returns the TOML serializer error.
 pub fn render_toml(config: &Config) -> Result<String, String> {
-    toml::to_string(config).map_err(|error| format!("failed to encode config: {error}"))
+    render_flat_toml(config).map_err(|error| format!("failed to encode config: {error}"))
+}
+
+/// Encodes the flat string/integer/boolean configurations used by the Go loaders.
+/// Keeps Serde field order but uses BurntSushi/toml's basic-string escaping.
+///
+/// # Errors
+/// Returns serialization/parse errors, rejecting non-flat configuration schemas.
+pub fn render_flat_toml(config: &impl Serialize) -> Result<String, String> {
+    let mut output = toml::to_string(config).map_err(|error| error.to_string())?;
+    let fields: BTreeMap<String, toml::Spanned<toml::Value>> =
+        toml::from_str(&output).map_err(|error| error.to_string())?;
+    let mut strings = Vec::new();
+    for field in fields.values() {
+        match field.get_ref() {
+            toml::Value::String(value) => {
+                let quoted = serde_json::to_string(value).map_err(|error| error.to_string())?;
+                strings.push((field.span(), quoted.replace('\u{7f}', "\\u007f")));
+            }
+            toml::Value::Integer(_) | toml::Value::Boolean(_) => {}
+            _ => return Err("expected a flat string/integer/boolean configuration".to_owned()),
+        }
+    }
+    // Parser-provided token spans avoid matching apparent fields inside a
+    // multiline value. Work backwards so escaping cannot invalidate offsets.
+    strings.sort_by_key(|(span, _)| std::cmp::Reverse(span.start));
+    for (span, quoted) in strings {
+        output.replace_range(span, &quoted);
+    }
+    Ok(output)
 }
 
 /// Every directory below `directory` that does not exist yet, ordered from the

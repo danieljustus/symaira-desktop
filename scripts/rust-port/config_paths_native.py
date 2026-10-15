@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shutil
 import subprocess
 import sys
 from typing import Any
@@ -35,6 +36,12 @@ _capture_module = importlib.util.module_from_spec(_capture_spec)
 _capture_spec.loader.exec_module(_capture_module)
 _terminate_process_tree = _capture_module._terminate_process_tree
 sha256_file = _capture_module.sha256_file
+
+_rollback_spec = importlib.util.spec_from_file_location("config_paths_native_rollback", ROOT / "scripts/rust-port/room-rollback.py")
+if _rollback_spec is None or _rollback_spec.loader is None:
+    raise RuntimeError("cannot load the existing native MSVC environment helper")
+_rollback_module = importlib.util.module_from_spec(_rollback_spec)
+_rollback_spec.loader.exec_module(_rollback_module)
 
 
 class GateFailure(RuntimeError):
@@ -461,6 +468,21 @@ def sanitized_environment(operator_env: dict[str, str]) -> dict[str, str]:
     return {key: value for key, value in operator_env.items() if key in allowed}
 
 
+def msvc_environment(output: Path, env: dict[str, str]) -> dict[str, str]:
+    rustc = shutil.which("rustc", path=env.get("PATH"))
+    if rustc is None:
+        raise GateFailure("cannot locate rustc for native MSVC setup")
+    compiler = _rollback_module.build_environment(output / "runtime/msvc", rustc)
+    linkers = {key: value for key, value in compiler.items()
+               if re.fullmatch(r"CARGO_TARGET_(?:AARCH64|X86_64)_PC_WINDOWS_MSVC_LINKER", key) and value}
+    if not linkers:
+        raise GateFailure("cannot locate a native MSVC linker; refusing PATH fallback")
+    allowed = {"PATH", "LIB", "LIBPATH", "INCLUDE", "VCINSTALLDIR", "VCToolsInstallDir",
+               "WindowsSdkDir", "WindowsSDKVersion", "UniversalCRTSdkDir",
+               "VSCMD_ARG_HOST_ARCH", "VSCMD_ARG_TGT_ARCH"}
+    return {**{key: value for key, value in compiler.items() if key in allowed}, **linkers}
+
+
 def private_environment(output: Path, operator_env: dict[str, str], launcher: str | None) -> tuple[dict[str, str], dict[str, str]]:
     runtime = output / "runtime"
     names = ("HOME", "USERPROFILE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME", "TMPDIR", "TMP", "TEMP", "APPDATA", "LOCALAPPDATA")
@@ -606,6 +628,8 @@ def main() -> int:
         )
         runner["corekit_module"] = corekit_module
 
+        if os.name == "nt":
+            env.update(msvc_environment(output, env))
         cargo_target = output / "cargo-target"
         cargo_target.mkdir(mode=0o700)
         metadata_bytes = run_logged_command(

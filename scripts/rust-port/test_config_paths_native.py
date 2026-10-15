@@ -106,6 +106,22 @@ class ConfigPathsNativeTests(unittest.TestCase):
             self.assertNotEqual(runtime["LOCALAPPDATA"], operator["LOCALAPPDATA"])
             self.assertNotIn("SYMDESK_SERVER_TOKEN", runtime)
 
+    def test_native_msvc_setup_keeps_only_compiler_state(self):
+        compiler = {
+            "PATH": "native-msvc;system-tools",
+            "LIB": "native-sdk-libraries",
+            "INCLUDE": "native-sdk-headers",
+            "CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER": "native-msvc/link.exe",
+        }
+        inherited = {**compiler, "HOME": "operator-home", "CARGO_HOME": "other-cache",
+                     "SYMDESK_SERVER_TOKEN": "not-a-real-token"}
+        with mock.patch.object(gate.shutil, "which", return_value="installed-rustc"), \
+             mock.patch.object(gate._rollback_module, "build_environment", return_value=inherited):
+            self.assertEqual(gate.msvc_environment(Path("private-evidence"), {}), compiler)
+            del inherited["CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER"]
+            with self.assertRaisesRegex(gate.GateFailure, "native MSVC linker"):
+                gate.msvc_environment(Path("private-evidence"), {})
+
     def test_candidate_and_oracle_origins_accept_only_pinned_https_spellings(self):
         origins = (gate.ORIGIN, gate.ORIGIN.removesuffix(".git"),
                    gate.ORIGIN + "/extra", gate.ORIGIN + "?ref=main",

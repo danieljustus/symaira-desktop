@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/danieljustus/symaira-corekit/fsutil"
+
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/store"
 	"github.com/fsnotify/fsnotify"
@@ -454,7 +456,7 @@ func writeFailureSidecar(path, stage string, err error) error {
 	if marshalErr != nil {
 		return marshalErr
 	}
-	return os.WriteFile(path+".error.json", append(data, '\n'), 0o600)
+	return fsutil.AtomicWriteFile(path+".error.json", append(data, '\n'), 0o600)
 }
 
 func isIgnored(path string) bool {

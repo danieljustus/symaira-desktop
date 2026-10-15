@@ -1,12 +1,21 @@
 package main
 
-import portdiff "github.com/danieljustus/symaira-desktop/scripts/rust-port/internal/diff"
+import (
+	"path/filepath"
+	"strings"
+
+	portdiff "github.com/danieljustus/symaira-desktop/scripts/rust-port/internal/diff"
+)
 
 // configPathCases is the complete named, synthetic process corpus for the
 // current config paths contract. Native filesystem cases are labeled explicitly.
 func configPathCases() []namedCase {
 	file := func(base, path, content string) portdiff.SetupFile {
-		return portdiff.SetupFile{Base: base, Path: path, Content: content}
+		format := strings.TrimPrefix(filepath.Ext(path), ".")
+		if format != "toml" && format != "json" {
+			format = ""
+		}
+		return portdiff.SetupFile{Base: base, Path: path, Content: content, ContentFormat: format}
 	}
 	directory := func(base, path string) portdiff.SetupFile {
 		return portdiff.SetupFile{Base: base, Path: path, Kind: "directory", Mode: 0o700}

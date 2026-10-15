@@ -95,7 +95,7 @@ func TestPortArtifactIdentityCLIContract(t *testing.T) {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", artifactIdentityContractPath, err)
 	}
 	if !bytes.Equal(got, data) {
-		t.Fatal("Go artifact identity fixture is stale; regenerate deliberately with PORT_GENERATE=1")
+		t.Fatalf("Go artifact identity fixture is stale (first differing field: %s); regenerate deliberately with PORT_GENERATE=1", noteCLIContractDifference(got, data))
 	}
 }
 

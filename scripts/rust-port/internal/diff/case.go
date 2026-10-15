@@ -51,13 +51,14 @@ type Case struct {
 
 // SetupFile creates a private fixture below the selected sandbox root.
 type SetupFile struct {
-	Path       string `json:"path"`
-	Base       string `json:"base,omitempty"` // "workspace" (default), "home", or "sandbox"
-	Kind       string `json:"kind,omitempty"` // "file" (default), "directory", or "symlink"
-	LinkTarget string `json:"link_target,omitempty"`
-	Content    string `json:"content,omitempty"`
-	Mode       uint32 `json:"mode,omitempty"`
-	MTimeNS    *int64 `json:"mtime_ns,omitempty"`
+	Path          string `json:"path"`
+	Base          string `json:"base,omitempty"` // "workspace" (default), "home", or "sandbox"
+	Kind          string `json:"kind,omitempty"` // "file" (default), "directory", or "symlink"
+	LinkTarget    string `json:"link_target,omitempty"`
+	Content       string `json:"content,omitempty"`
+	ContentFormat string `json:"content_format,omitempty"` // "json" or "toml" escapes placeholder values inside basic strings
+	Mode          uint32 `json:"mode,omitempty"`
+	MTimeNS       *int64 `json:"mtime_ns,omitempty"`
 }
 
 func (c Case) TargetBinary() string {

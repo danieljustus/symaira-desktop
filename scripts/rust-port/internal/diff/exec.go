@@ -2,6 +2,7 @@ package diff
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -248,10 +249,14 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 			return err
 		}
 	case "file":
+		content, err := setupContent(setup, replacements)
+		if err != nil {
+			return err
+		}
 		if err := sandbox.MkdirAll(filepath.Dir(relative), 0o700); err != nil {
 			return err
 		}
-		if err := sandbox.WriteFile(relative, []byte(replace(setup.Content, replacements)), mode); err != nil {
+		if err := sandbox.WriteFile(relative, []byte(content), mode); err != nil {
 			return err
 		}
 		if setup.MTimeNS != nil {
@@ -264,6 +269,27 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 		return fmt.Errorf("unsupported setup kind %q", kind)
 	}
 	return nil
+}
+
+// setupContent escapes only placeholder values, preserving deliberate syntax,
+// duplicate JSON keys and null fields in the fixture itself. JSON string escapes
+// are also valid TOML basic-string escapes; raw process/path inputs are unchanged.
+func setupContent(setup SetupFile, replacements map[string]string) (string, error) {
+	if setup.ContentFormat == "" {
+		return replace(setup.Content, replacements), nil
+	}
+	if setup.ContentFormat != "json" && setup.ContentFormat != "toml" {
+		return "", fmt.Errorf("unsupported setup content format %q", setup.ContentFormat)
+	}
+	escaped := make(map[string]string, len(replacements))
+	for key, value := range replacements {
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			return "", fmt.Errorf("encode setup placeholder: %w", err)
+		}
+		escaped[key] = string(encoded[1 : len(encoded)-1])
+	}
+	return replace(setup.Content, escaped), nil
 }
 
 func validateSandboxSymlink(root *os.Root, path, target string) error {

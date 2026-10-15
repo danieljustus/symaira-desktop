@@ -13,6 +13,7 @@ use symdesk_index::{
     index_location_for_vault, sidecar_path_for_vault, store_retrieval_path_for_vault,
     store_sidecar_path_for_vault,
 };
+use symdesk_vault::{go_path_error, go_read_to_string};
 
 #[derive(Serialize)]
 pub struct Paths {
@@ -75,13 +76,13 @@ pub fn command() -> Command {
 pub fn load_root_config() -> Result<(Config, BTreeMap<String, String>), String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let path = config::global_path(&environment);
-    let content = match fs::read_to_string(&path) {
+    let content = match go_read_to_string(Path::new(&path)) {
         Ok(content) => Some(content),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
-        Err(error) => {
+        Err((_, error)) if error.kind() == io::ErrorKind::NotFound => None,
+        Err((operation, error)) => {
             return Err(format!(
                 "failed to read config file: {}",
-                go_path_error("read", &path, &error)
+                go_path_error(operation, Path::new(&path), &error)
             ));
         }
     };
@@ -163,7 +164,10 @@ fn load_ingest_config_inner(
     let home = user_home(environment)
         .ok_or_else(|| format!("cannot determine home directory: {}", home_error()))?;
     let mut config = IngestConfig::defaults(environment);
-    let global = PathBuf::from(home).join(".config/symingest/config.toml");
+    let global = PathBuf::from(home)
+        .join(".config")
+        .join("symingest")
+        .join("config.toml");
     merge_ingest_file(&mut config, &global, "global config error")?;
     let project = cwd.join(".symingest.toml");
     merge_ingest_file(&mut config, &project, "project config error")?;
@@ -187,11 +191,11 @@ fn merge_ingest_file(config: &mut IngestConfig, path: &Path, source: &str) -> Re
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
         Err(_) | Ok(_) => {}
     }
-    let contents = fs::read_to_string(path).map_err(|error| {
+    let contents = go_read_to_string(path).map_err(|(operation, error)| {
         format!(
             "{source}: failed to parse {}: {}",
             path.display(),
-            go_path_error("open", &path.display().to_string(), &error)
+            go_path_error(operation, path, &error)
         )
     })?;
     let table = toml::from_str::<toml::Table>(&contents)
@@ -463,19 +467,6 @@ fn home_error() -> &'static str {
     }
 }
 
-fn go_path_error(operation: &str, path: &str, error: &io::Error) -> String {
-    let kind = match error.kind() {
-        io::ErrorKind::NotFound => "no such file or directory",
-        io::ErrorKind::PermissionDenied => "permission denied",
-        io::ErrorKind::NotADirectory => "not a directory",
-        io::ErrorKind::IsADirectory => "is a directory",
-        io::ErrorKind::AlreadyExists => "file exists",
-        io::ErrorKind::InvalidInput => "invalid argument",
-        _ => return format!("{operation} {path}: {error}"),
-    };
-    format!("{operation} {path}: {kind}")
-}
-
 fn render(paths: &Paths, json: bool) -> String {
     if json {
         let rendered = serde_json::to_string_pretty(paths).unwrap_or_default();
@@ -512,6 +503,50 @@ mod tests {
     };
 
     use super::{IngestConfig, apply_ingest_environment, clean_path, parse_go_bool};
+
+    #[test]
+    fn symingest_global_diagnostic_uses_native_path_components() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-ingest-path-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let config_dir = root.join(".config").join("symingest");
+        std::fs::create_dir_all(&config_dir).unwrap();
+        let path = config_dir.join("config.toml");
+        #[cfg(windows)]
+        let home_key = "USERPROFILE";
+        #[cfg(not(windows))]
+        let home_key = "HOME";
+        let environment =
+            BTreeMap::from([(home_key.to_owned(), root.to_str().unwrap().to_owned())]);
+        for (contents, operation) in [("[", "parse"), ("ocr_lang = 7", "apply")] {
+            std::fs::write(&path, contents).unwrap();
+            let error = super::load_ingest_config(&environment, &root).unwrap_err();
+            assert!(
+                error.starts_with(&format!(
+                    "reload symingest configuration: global config error: failed to {operation} {}:",
+                    path.display()
+                )),
+                "{error}"
+            );
+        }
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        let error = super::load_ingest_config(&environment, &root).unwrap_err();
+        assert!(
+            error.starts_with(&format!(
+                "reload symingest configuration: global config error: failed to parse {}: read {}:",
+                path.display(),
+                path.display()
+            )),
+            "{error}"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn symingest_environment_empty_values_override_config_strings() {

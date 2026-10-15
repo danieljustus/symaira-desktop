@@ -42,7 +42,9 @@ pub use base_write::{
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
-pub use go_io::path_error as go_path_error;
+pub use go_io::{
+    path_error as go_path_error, read as go_read, read_to_string as go_read_to_string,
+};
 pub use go_string::{lowercase as go_lowercase, quote as go_quote};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
 pub use history::{

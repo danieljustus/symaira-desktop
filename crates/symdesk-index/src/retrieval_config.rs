@@ -10,13 +10,16 @@ use serde::{
     Deserialize, Deserializer, Serialize,
     de::{self, IgnoredAny, MapAccess, Visitor},
 };
+use symdesk_vault::{go_path_error, go_read, go_read_to_string};
 
 use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
 /// Resolves the standalone symseek config file, which intentionally ignores
 /// `XDG_CONFIG_HOME` just like the Go config package.
-#[must_use]
-pub fn symseek_config_path(environment: &BTreeMap<String, String>, cwd: &Path) -> PathBuf {
+pub fn symseek_config_path(
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<PathBuf, SidecarError> {
     let home = user_home(environment).map(PathBuf::from);
     let path = home
         .map(|home| home.join(".config/symseek/config.toml"))
@@ -54,7 +57,7 @@ pub fn retrieval_embedding_config(
     environment: &BTreeMap<String, String>,
     cwd: &Path,
 ) -> Result<RetrievalEmbeddingConfig, SidecarError> {
-    let path = symseek_config_path(environment, cwd);
+    let path = symseek_config_path(environment, cwd)?;
     let config = load_config(&path)?;
     let model = if config.model.is_empty() {
         "qwen3-embedding:0.6b".to_owned()
@@ -108,10 +111,10 @@ pub fn index_location_for_vault(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<PathBuf, SidecarError> {
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let config = load_config(&config_path)?;
     if !config.index_path.trim().is_empty() {
-        return Ok(absolute_clean(Path::new(&config.index_path), cwd));
+        return absolute_clean(Path::new(&config.index_path), cwd);
     }
     let path = if !vault_root.trim().is_empty() {
         vault_retrieval_path(vault_root, environment, cwd, temp_root)?
@@ -152,18 +155,18 @@ pub fn open_retrieval_for_vault(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<RetrievalDb, SidecarError> {
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let config = load_config(&config_path)?;
     let explicit_override = !config.index_path.trim().is_empty();
     let index_path = if explicit_override {
-        absolute_clean(Path::new(&config.index_path), cwd)
+        absolute_clean(Path::new(&config.index_path), cwd)?
     } else if vault_root.trim().is_empty() {
-        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)
+        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)?
     } else {
         absolute_clean(
             &vault_retrieval_path(vault_root, environment, cwd, temp_root)?,
             cwd,
-        )
+        )?
     };
 
     if explicit_override || vault_root.trim().is_empty() {
@@ -187,7 +190,7 @@ fn migrate_legacy_retrieval_index(
         Err(_) => return Ok(()),
     }
 
-    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd);
+    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)?;
     if source == *destination {
         return Ok(());
     }
@@ -218,7 +221,7 @@ fn migrate_legacy_retrieval_index(
         }
     };
 
-    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd);
+    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd)?;
     if source == legacy {
         drop(validated);
         remove_retrieval_database_artifacts(&source).map_err(|error| {
@@ -265,7 +268,7 @@ pub fn relocate_index_for_vault(
         ));
     }
     let source = index_location_for_vault("", environment, cwd, temp_root)?;
-    let destination = absolute_clean(destination, cwd);
+    let destination = absolute_clean(destination, cwd)?;
     let source_info = fs::metadata(&source)
         .map_err(|error| SidecarError::Contract(format!("stat retrieval index: {error}")))?;
     if !source_info.is_file() {
@@ -277,7 +280,7 @@ pub fn relocate_index_for_vault(
     let connection = Connection::open(&source)?;
     let relocated = relocate_database(&connection, &destination)?;
 
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let mut config = load_config(&config_path)?;
     config.index_path = relocated.to_string_lossy().into_owned();
     save_config(&config_path, &config)?;
@@ -462,29 +465,29 @@ impl From<LegacyJsonConfig> for SymseekConfig {
 }
 
 fn load_config(path: &Path) -> Result<SymseekConfig, SidecarError> {
-    match fs::read_to_string(path) {
+    match go_read_to_string(path) {
         Ok(contents) => toml::from_str(&contents).map_err(|error| {
             SidecarError::Contract(format!("failed to decode config file: {error}"))
         }),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+        Err((_, error)) if error.kind() == io::ErrorKind::NotFound => {
             Ok(migrate_legacy_json_config(path)?.unwrap_or_else(default_symseek_config))
         }
-        Err(error) => Err(SidecarError::Contract(format!(
+        Err((operation, error)) => Err(SidecarError::Contract(format!(
             "failed to read config file: {}",
-            go_path_error("read", path, &error)
+            go_path_error(operation, path, &error)
         ))),
     }
 }
 
 fn migrate_legacy_json_config(path: &Path) -> Result<Option<SymseekConfig>, SidecarError> {
     let legacy_path = path.with_file_name("config.json");
-    let contents = match fs::read(&legacy_path) {
+    let contents = match go_read(&legacy_path) {
         Ok(contents) => contents,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => {
+        Err((_, error)) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err((operation, error)) => {
             return Err(SidecarError::Contract(format!(
                 "failed to migrate config: read legacy JSON config: {}",
-                go_path_error("read", &legacy_path, &error)
+                go_path_error(operation, &legacy_path, &error)
             )));
         }
     };
@@ -537,19 +540,6 @@ fn migrate_json_config(path: &Path, config: &SymseekConfig) -> Result<(), String
     })
 }
 
-fn go_path_error(operation: &str, path: &Path, error: &io::Error) -> String {
-    let kind = match error.kind() {
-        io::ErrorKind::NotFound => "no such file or directory",
-        io::ErrorKind::PermissionDenied => "permission denied",
-        io::ErrorKind::NotADirectory => "not a directory",
-        io::ErrorKind::IsADirectory => "is a directory",
-        io::ErrorKind::AlreadyExists => "file exists",
-        io::ErrorKind::InvalidInput => "invalid argument",
-        _ => return format!("{operation} {}: {error}", path.display()),
-    };
-    format!("{operation} {}: {kind}", path.display())
-}
-
 fn save_config(path: &Path, config: &SymseekConfig) -> Result<(), SidecarError> {
     let parent = path
         .parent()
@@ -599,7 +589,7 @@ fn standalone_retrieval_path(
         .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     let legacy = PathBuf::from(home).join(".local/share/symaira-seek/symseek.db");
     for candidate in [&primary, &old_primary, &legacy] {
-        if absolute_clean(candidate, cwd).exists() {
+        if absolute_clean(candidate, cwd)?.exists() {
             return Ok(candidate.to_path_buf());
         }
     }
@@ -612,16 +602,20 @@ fn vault_retrieval_path(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<PathBuf, SidecarError> {
-    let supplied = absolute_clean(Path::new(vault_root), cwd);
+    let supplied = absolute_clean(Path::new(vault_root), cwd)?;
     let canonical = fs::canonicalize(&supplied).unwrap_or_else(|_| supplied.clone());
     let mut root = data_home(environment)?.join("symdesk/vaults");
     let canonical_temp =
-        fs::canonicalize(temp_root).unwrap_or_else(|_| absolute_clean(temp_root, cwd));
+        fs::canonicalize(temp_root).or_else(|_| crate::sidecar_absolute_clean(temp_root, cwd))?;
+    let ordinary_temp = PathBuf::from(crate::strip_verbatim_prefix(
+        &canonical_temp.to_string_lossy(),
+    ));
+    let ordinary_vault = PathBuf::from(crate::strip_verbatim_prefix(&canonical.to_string_lossy()));
     if trimmed_environment(environment, "XDG_DATA_HOME").is_none()
-        && canonical.starts_with(&canonical_temp)
-        && canonical != canonical_temp
+        && ordinary_vault.starts_with(&ordinary_temp)
+        && ordinary_vault != ordinary_temp
     {
-        root = absolute_clean(temp_root, cwd).join("symdesk/test-vaults");
+        root = absolute_clean(temp_root, cwd)?.join("symdesk/test-vaults");
     }
     let digest = vault_retrieval_digest(&canonical.to_string_lossy());
     Ok(root.join(&digest[..16]).join("retrieval.db"))
@@ -683,13 +677,9 @@ fn nonempty_environment<'a>(
         .filter(|value| !value.trim().is_empty())
 }
 
-fn absolute_clean(path: &Path, cwd: &Path) -> PathBuf {
-    let path = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        cwd.join(path)
-    };
-    lexical_clean(&path)
+fn absolute_clean(path: &Path, cwd: &Path) -> Result<PathBuf, SidecarError> {
+    crate::sidecar_absolute_clean(path, cwd)
+        .map_err(|error| SidecarError::Contract(format!("absolute index path: {error}")))
 }
 
 fn lexical_clean(path: &Path) -> PathBuf {
@@ -720,6 +710,81 @@ mod tests {
     use std::{collections::BTreeMap, fs, path::Path};
 
     use super::{retrieval_embedding_config, vault_retrieval_digest};
+
+    #[test]
+    fn absolute_paths_preserve_leading_spaces_and_share_vault_storage_digest() {
+        let cwd = std::env::current_dir().unwrap();
+        let raw = Path::new("  relative/../relative vault ");
+        let expected_name = if cfg!(windows) {
+            "relative vault"
+        } else {
+            "relative vault "
+        };
+        let expected = cwd.join(expected_name);
+        assert_eq!(
+            super::absolute_clean(raw, &cwd).unwrap().as_os_str(),
+            expected.as_os_str()
+        );
+        let leading = super::absolute_clean(Path::new(" leading/file "), &cwd).unwrap();
+        let expected_file = if cfg!(windows) { "file" } else { "file " };
+        assert_eq!(
+            leading.as_os_str(),
+            cwd.join(" leading").join(expected_file).as_os_str()
+        );
+        let temp = std::env::temp_dir();
+        let data = temp.join("symdesk-absolute-pure-test-data");
+        let environment = BTreeMap::from([(
+            "XDG_DATA_HOME".to_owned(),
+            data.to_str().unwrap().to_owned(),
+        )]);
+        let digest = vault_retrieval_digest(&expected.to_string_lossy());
+        let directory = super::lexical_clean(&data.join("symdesk/vaults").join(&digest[..16]));
+        assert_eq!(
+            crate::store_sidecar_path_for_vault(raw.to_str().unwrap(), &environment, &cwd, &temp)
+                .unwrap(),
+            directory.join("sidecar.db")
+        );
+        assert_eq!(
+            super::store_retrieval_path_for_vault(raw.to_str().unwrap(), &environment, &cwd, &temp)
+                .unwrap(),
+            directory.join("retrieval.db")
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_absolute_paths_cover_drive_root_unc_verbatim_and_invalid_input() {
+        use std::path::{Component, PathBuf, Prefix};
+        let cwd = std::env::current_dir().unwrap();
+        if let Some(Component::Prefix(prefix)) = cwd.components().next()
+            && let Prefix::Disk(drive) = prefix.kind()
+        {
+            let relative = format!("{}:not-created.db. ", char::from(drive));
+            assert_eq!(
+                super::absolute_clean(Path::new(&relative), &cwd).unwrap(),
+                cwd.join("not-created.db")
+            );
+            assert_eq!(
+                super::absolute_clean(Path::new(r"\not-created.db. "), &cwd).unwrap(),
+                PathBuf::from(format!("{}:\\not-created.db", char::from(drive)))
+            );
+        }
+        for (input, expected) in [
+            (
+                r"\\server\share\not-created.db. ",
+                r"\\server\share\not-created.db",
+            ),
+            (r"\\?\C:\not-created.db. ", r"\\?\C:\not-created.db. "),
+        ] {
+            assert_eq!(
+                super::absolute_clean(Path::new(input), &cwd)
+                    .unwrap()
+                    .as_os_str(),
+                Path::new(expected).as_os_str()
+            );
+        }
+        assert!(super::absolute_clean(Path::new("bad\0path"), &cwd).is_err());
+    }
 
     #[test]
     fn vault_retrieval_digest_ignores_windows_verbatim_spelling() {

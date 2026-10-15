@@ -345,7 +345,8 @@ pub fn store_sidecar_path_for_vault(
         ));
     }
 
-    let supplied = sidecar_absolute_clean(Path::new(vault_root), cwd);
+    let supplied = sidecar_absolute_clean(Path::new(vault_root), cwd)
+        .map_err(|error| SidecarError::Contract(format!("resolve vault for sidecar: {error}")))?;
     let canonical = fs::canonicalize(&supplied).unwrap_or(supplied);
     let canonical = absolute_non_verbatim(&canonical)?;
     let explicit_data_home =
@@ -554,13 +555,17 @@ fn sidecar_user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
         .filter(|value| !value.is_empty())
 }
 
-fn sidecar_absolute_clean(path: &Path, cwd: &Path) -> PathBuf {
+fn sidecar_absolute_clean(path: &Path, cwd: &Path) -> io::Result<PathBuf> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
         cwd.join(path)
     };
-    lexical_clean(&absolute)
+    // Go's filepath.Abs uses GetFullPathNameW on Windows, even for an already
+    // absolute path. It normalizes terminal dots/spaces without trimming input.
+    #[cfg(windows)]
+    let absolute = std::path::absolute(&absolute)?;
+    Ok(lexical_clean(&absolute))
 }
 
 fn sidecar_home_error() -> &'static str {
@@ -587,6 +592,13 @@ fn sidecar_storage_root(
     let mut root = data_home.join("symdesk/vaults");
     let canonical_temp_root =
         fs::canonicalize(temp_root).unwrap_or_else(|_| temp_root.to_path_buf());
+    // canonicalize returns verbatim Windows paths; the vault storage key has
+    // already had that prefix removed. Compare equivalent spellings locally,
+    // without changing document keys or the returned storage path.
+    let canonical_temp_root = PathBuf::from(strip_verbatim_prefix(
+        &canonical_temp_root.to_string_lossy(),
+    ));
+    let canonical_vault = PathBuf::from(strip_verbatim_prefix(&canonical_vault.to_string_lossy()));
     if explicit_data_home.is_none()
         && canonical_vault.starts_with(&canonical_temp_root)
         && canonical_vault != canonical_temp_root

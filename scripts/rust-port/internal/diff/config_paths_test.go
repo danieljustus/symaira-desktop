@@ -149,6 +149,7 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 		t.Fatalf("changed the requested absolute link target: %q, %v", target, err)
 	}
 	for _, alias := range []string{"absolute-file-alias", "relative-file-alias", "slash-file-alias", "slash-directory-alias/marker.md"} {
+		// #nosec G304 -- fixed aliases created above inside this test's t.TempDir.
 		if content, err := os.ReadFile(filepath.Join(workspace, alias)); err != nil || string(content) != "fixture" {
 			t.Fatalf("file alias %q is not traversable: %q, %v", alias, content, err)
 		}
@@ -160,6 +161,7 @@ func TestSandboxFixtureSymlinkAndPathContainment(t *testing.T) {
 		t.Fatalf("failed link creation changed the existing alias: %q, %v", target, err)
 	}
 	note := filepath.Join(workspace, "relative-alias", "nested", "note.md")
+	// #nosec G304 -- fixed aliased fixture under this test's t.TempDir.
 	if content, err := os.ReadFile(note); err != nil || string(content) != "through aliases" {
 		t.Fatalf("aliased write did not reach its confined target: %q, %v", content, err)
 	}
@@ -211,7 +213,7 @@ func TestSandboxFixtureSymlinkChainCannotChangeOutsideFiles(t *testing.T) {
 			break
 		}
 	}
-	content, err := os.ReadFile(outside)
+	content, err := os.ReadFile(outside) // #nosec G304 -- fixed sentinel in this test's t.TempDir, outside only its nested sandbox.
 	if err != nil || string(content) != "original" {
 		t.Fatalf("fixture setup modified a test-owned file outside its sandbox: %q, %v", content, err)
 	}

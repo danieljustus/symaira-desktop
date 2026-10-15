@@ -206,7 +206,7 @@ func setupSandboxFile(root, home, workspace string, setup SetupFile, replacement
 	if err != nil {
 		return err
 	}
-	defer sandbox.Close()
+	defer func() { _ = sandbox.Close() }()
 	relative, err := filepath.Rel(root, path)
 	if err != nil {
 		return err

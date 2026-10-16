@@ -111,10 +111,12 @@ func TestWriteFailureSidecarFailedReplacementPreservesRecord(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:gosec // G302: this private directory needs owner traversal to test failed publication.
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
+		//nolint:gosec // G302: restore owner-only directory access so t.TempDir can remove it.
 		if err := os.Chmod(dir, 0o700); err != nil {
 			t.Error(err)
 		}

@@ -6,28 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 func TestRoundtrip(t *testing.T) {
-	vaultPath, err := filepath.Abs("testdata/vault")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0700)
-
-	dbPath := filepath.Join(vaultPath, "sidecar.db")
-	_ = os.Remove(dbPath)
-
-	db, err := sidecar.Open(dbPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = db.Close() }()
-
-	svc := New(vaultPath, db)
+	vaultPath, db := newIsolatedVault(t)
+	svc := newNoteCaseService(t, vaultPath, db)
 
 	// 1. Note New
 	path, err := svc.NoteNew("Roundtrip Test", "Testing content [[Target Note]]", "")
@@ -92,26 +75,13 @@ func TestRoundtrip(t *testing.T) {
 // files on disk must still index them before Ls returns, now that this
 // delegates to sidecar.DB.RefreshIndex's stat-based fast path (issue #180).
 func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
-	vaultPath, err := filepath.Abs("testdata/vault_bootstrap")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0700)
-	t.Cleanup(func() { _ = os.RemoveAll(vaultPath) })
+	vaultPath, db := newIsolatedVault(t)
 
 	if err := os.WriteFile(filepath.Join(vaultPath, "Existing.md"), []byte("---\ntitle: Existing\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
-	dbPath := filepath.Join(vaultPath, "sidecar.db")
-	db, err := sidecar.Open(dbPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = db.Close() }()
-
-	svc := New(vaultPath, db)
+	svc := newNoteCaseService(t, vaultPath, db)
 
 	ls, err := svc.Ls("")
 	if err != nil {
@@ -139,21 +109,8 @@ func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
 
 func TestEventsStress(t *testing.T) {
 	// A simple test to simulate writing 1000 files
-	vaultPath, err := filepath.Abs("testdata/vault_stress")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0700)
-
-	dbPath := filepath.Join(vaultPath, "sidecar.db")
-	db, err := sidecar.Open(dbPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = db.Close() }()
-
-	svc := New(vaultPath, db)
+	vaultPath, db := newIsolatedVault(t)
+	svc := newNoteCaseService(t, vaultPath, db)
 
 	for i := 0; i < 100; i++ { // Reduced to 100 for fast CI tests, but concept stands
 		// We use NoteNew to write files rapidly

@@ -12,7 +12,7 @@ import time
 
 sys.dont_write_bytecode = True
 SOURCE_SHA = "88e78b2abf0b2983bd5197e4e5d814022960b9f2"
-ORIGIN = "https://github.com/danieljustus/symaira-desktop.git"
+ORIGIN = "https://github.com/danieljustus/symaira-desktop"
 MAX_ATTEMPTS = 3
 COMMAND = ["go", "run", "./scripts/rust-port/cmd/portgen", "--check"]
 
@@ -70,10 +70,11 @@ def main():
     try:
         if platform.system() != "Windows":
             raise RuntimeError("this experiment requires a genuine native Windows host")
-        if module.git(root, "remote", "get-url", "origin") != ORIGIN:
-            raise RuntimeError("unexpected source repository")
         before = module.repository_snapshot(root)
         module.write_json(evidence / "sources.before.json", before)
+        report["source_origin"] = module.git(root, "remote", "get-url", "origin")
+        if report["source_origin"] != ORIGIN:
+            raise RuntimeError("unexpected source repository")
         if before["commit"] != SOURCE_SHA or before["status"]:
             raise RuntimeError("pristine exact-source preflight failed")
         env = module.sanitized_environment(dict(os.environ))

@@ -28,7 +28,7 @@ jobs:
   artifact-identity-diagnostic:
     name: Artifact identity diagnostic (${{ matrix.os }})
     if: github.event_name == 'workflow_dispatch'
-    timeout-minutes: 55
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -69,7 +69,7 @@ jobs:
         with:
           go-version: "1.26.9"
           cache-dependency-path: source/go.sum
-      - name: Collect at most three pristine full replays, stop on first failure
+      - name: Collect remaining two focused pristine replays, stop on first failure
         shell: bash
         run: python3 -B collector/scripts/rust-port/artifact_identity_native_diagnostic.py source "$RUNNER_TEMP/artifact-identity-diagnostic"
       - name: Retain diagnostic observations even on failure

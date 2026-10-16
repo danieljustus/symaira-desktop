@@ -13,8 +13,8 @@ import time
 sys.dont_write_bytecode = True
 SOURCE_SHA = "88e78b2abf0b2983bd5197e4e5d814022960b9f2"
 ORIGIN = "https://github.com/danieljustus/symaira-desktop"
-MAX_ATTEMPTS = 3
-COMMAND = ["go", "run", "./scripts/rust-port/cmd/portgen", "--check"]
+MAX_ATTEMPTS = 2  # One earlier full replay already ran on each target.
+COMMAND = ["go", "test", "-count=1", "./cmd/symroom", "-run", "^TestPortArtifactIdentityCLIContract$"]
 
 
 def replay(module, report, logs, root, env):
@@ -22,8 +22,8 @@ def replay(module, report, logs, root, env):
         started = time.monotonic()
         try:
             module.run_logged_command(
-                report, logs, f"pristine-portgen-{attempt}", COMMAND, root,
-                env=env, launch_env=env, timeout=900,
+                report, logs, f"pristine-artifact-identity-{attempt}", COMMAND, root,
+                env=env, launch_env=env, timeout=300,
             )
         except Exception as error:
             # Raw original failure is retained by the existing runner first.
@@ -59,6 +59,8 @@ def main():
         "runner_label": os.environ.get("NATIVE_RUNNER_LABEL"),
         "collector_sha256": module.sha256_file(Path(__file__)),
         "maximum_attempts": MAX_ATTEMPTS,
+        "previous_full_replays_per_target": 1,
+        "experiment": "Focused artifact-identity replay; no complete portgen acceptance",
         "commands": [],
         "attempt_durations_seconds": [],
         "outcome": "preflight-not-completed",

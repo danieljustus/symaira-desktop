@@ -340,15 +340,11 @@ func modePointer(mode uint32) *uint32 {
 // vault, so the recorded file set contains only vault content.
 func newIsolatedVault(t *testing.T) (string, *sidecar.DB) {
 	t.Helper()
-	// Self-managed directories instead of t.TempDir(): the history store these
-	// cases drive caches an os.Root that Go never closes, so on Windows the
-	// handle can still be open when t.TempDir's cleanup runs and the removal
-	// would fail a test whose every assertion passed (#964).
-	root := newPortTempDir(t, "symdesk-port-noteops-")
+	root := t.TempDir()
 	if canonical, err := filepath.EvalSymlinks(root); err == nil {
 		root = canonical
 	}
-	dbPath := filepath.Join(newPortTempDir(t, "symdesk-port-sidecar-"), "sidecar.db")
+	dbPath := filepath.Join(t.TempDir(), "sidecar.db")
 	db, err := sidecar.Open(dbPath)
 	if err != nil {
 		t.Fatal(err)
@@ -357,16 +353,15 @@ func newIsolatedVault(t *testing.T) (string, *sidecar.DB) {
 	return root, db
 }
 
-// newPortTempDir creates a directory the harness removes itself, ignoring a
-// platform that still holds an open handle (see the note above).
-func newPortTempDir(t *testing.T, prefix string) string {
+func newNoteCaseService(t *testing.T, root string, db *sidecar.DB) *Service {
 	t.Helper()
-	dir, err := os.MkdirTemp("", prefix)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	return dir
+	svc := New(root, db)
+	t.Cleanup(func() {
+		if err := svc.Close(); err != nil {
+			t.Errorf("close note fixture service: %v", err)
+		}
+	})
+	return svc
 }
 
 func runNoteCase(t *testing.T, spec noteCase) noteCase {
@@ -411,7 +406,7 @@ func runNoteCase(t *testing.T, spec noteCase) noteCase {
 	//nolint:gosec // 0o500 is the read-only vault case under test
 	t.Cleanup(func() { _ = os.Chmod(root, 0o750) })
 
-	svc := New(root, db)
+	svc := newNoteCaseService(t, root, db)
 	spec.Before = noteStateOf(t, root)
 	spec.Result = ""
 	var err error

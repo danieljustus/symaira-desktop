@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "38d1371a703c1c0aba66577dbffecb3aaf5075ba",
+  "oracle_revision": "1e31bf59e1a487f1c3b2affb7a71f3e546ae7d7b",
   "source_hashes": {
     "cmd/symroom/cmd_doctor.go": "3bf94a721a0c61a3ecac7ca58083dc09ea76e539bf44c6dcaf724a2153758b88",
     "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",

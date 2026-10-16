@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "38d1371a703c1c0aba66577dbffecb3aaf5075ba",
+    "commit": "1e31bf59e1a487f1c3b2affb7a71f3e546ae7d7b",
     "toolchain": "go1.26.9",
     "goos": "darwin",
     "goarch": "arm64"

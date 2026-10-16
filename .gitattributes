@@ -2,9 +2,12 @@
 # identical across Windows, macOS, and Linux checkouts.
 *.sql text eol=lf
 
-# The Go oracle hashes exact source and embedded-asset bytes. Windows Git
-# must not rewrite those bytes; binary assets and raw fixtures stay untouched.
+# Go oracle and config-paths producer hash exact source and embedded-asset bytes.
+# Windows Git must not rewrite those bytes; binary assets and raw fixtures stay untouched.
 *.go text eol=lf
+*.rs text eol=lf
+Cargo.toml text eol=lf
+Cargo.lock text eol=lf
 /go.mod text eol=lf
 /go.sum text eol=lf
 /.goreleaser.yml text eol=lf

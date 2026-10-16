@@ -25,7 +25,7 @@ pub fn hybrid_search_results(
     if !hybrid_query_is_eligible(query) {
         return Ok(None);
     }
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let cwd =
         std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
     let index = open_retrieval_for_vault(
@@ -55,7 +55,7 @@ pub(crate) fn hybrid_search_results_if_populated(
     if !hybrid_query_is_eligible(query) {
         return Ok(None);
     }
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let cwd =
         std::env::current_dir().map_err(|error| format!("read current directory: {error}"))?;
     let index = open_retrieval_for_vault(

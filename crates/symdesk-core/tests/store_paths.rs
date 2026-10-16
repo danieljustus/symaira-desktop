@@ -200,6 +200,67 @@ fn contacts_and_ingest_paths_match_native_go() {
             arch => arch,
         }
     );
+    // ConfigDir and Go CoreKit's DefaultPath share the native-home/absolute-XDG
+    // base rules for these captured cases. Derive the filename from the live Go
+    // output instead of adding another hand-authored path fixture.
+    let go_config_path = |case: &Case| {
+        Path::new(&case.contacts[0])
+            .join("config.toml")
+            .to_string_lossy()
+            .into_owned()
+    };
+    let home_defaults = fixture
+        .cases
+        .iter()
+        .find(|case| case.id == "home-defaults")
+        .expect("Go capture has HOME defaults");
+    let no_home = fixture
+        .cases
+        .iter()
+        .find(|case| case.id == "no-home")
+        .expect("Go capture has an empty-home case");
+    let different_home_profile = fixture
+        .cases
+        .iter()
+        .find(|case| case.id == "different-home-profile")
+        .expect("Go capture separates HOME and USERPROFILE");
+    let mut home_only = home_defaults.environment.clone();
+    home_only.remove("USERPROFILE");
+    assert_eq!(
+        config::global_path(&home_only),
+        go_config_path(if cfg!(windows) {
+            no_home
+        } else {
+            home_defaults
+        }),
+        "HOME-only selection matches the native Go observation"
+    );
+    let mut userprofile_only = different_home_profile.environment.clone();
+    userprofile_only.remove("HOME");
+    assert_eq!(
+        config::global_path(&userprofile_only),
+        go_config_path(if cfg!(windows) {
+            different_home_profile
+        } else {
+            no_home
+        }),
+        "USERPROFILE-only selection matches the native Go observation"
+    );
+    assert_eq!(
+        config::global_path(&BTreeMap::new()),
+        go_config_path(no_home),
+        "empty environment matches the native Go fallback"
+    );
+    let absolute_xdg = fixture
+        .cases
+        .iter()
+        .find(|case| case.id == "xdg-without-home")
+        .expect("Go capture has absolute XDG without a home");
+    assert_eq!(
+        config::global_path(&absolute_xdg.environment),
+        go_config_path(absolute_xdg),
+        "absolute XDG remains authoritative without either home variable"
+    );
     let provenance: serde_json::Value = serde_json::from_slice(
         &fs::read(repository.join("testdata/port/provenance.json"))
             .expect("canonical oracle provenance"),

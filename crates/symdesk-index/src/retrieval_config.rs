@@ -1,19 +1,25 @@
 use std::{
     collections::BTreeMap,
     fs::{self, OpenOptions},
-    io::Write,
+    io::{self, Write},
     path::{Component, Path, PathBuf},
 };
 
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{self, IgnoredAny, MapAccess, Visitor},
+};
+use symdesk_vault::{go_path_error, go_read, go_read_to_string};
 
 use crate::{RetrievalDb, SidecarError, backup_database, relocate_database};
 
 /// Resolves the standalone symseek config file, which intentionally ignores
 /// `XDG_CONFIG_HOME` just like the Go config package.
-#[must_use]
-pub fn symseek_config_path(environment: &BTreeMap<String, String>, cwd: &Path) -> PathBuf {
+pub fn symseek_config_path(
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+) -> Result<PathBuf, SidecarError> {
     let home = user_home(environment).map(PathBuf::from);
     let path = home
         .map(|home| home.join(".config/symseek/config.toml"))
@@ -51,7 +57,7 @@ pub fn retrieval_embedding_config(
     environment: &BTreeMap<String, String>,
     cwd: &Path,
 ) -> Result<RetrievalEmbeddingConfig, SidecarError> {
-    let path = symseek_config_path(environment, cwd);
+    let path = symseek_config_path(environment, cwd)?;
     let config = load_config(&path)?;
     let model = if config.model.is_empty() {
         "qwen3-embedding:0.6b".to_owned()
@@ -105,10 +111,10 @@ pub fn index_location_for_vault(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<PathBuf, SidecarError> {
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let config = load_config(&config_path)?;
     if !config.index_path.trim().is_empty() {
-        return Ok(absolute_clean(Path::new(&config.index_path), cwd));
+        return absolute_clean(Path::new(&config.index_path), cwd);
     }
     let path = if !vault_root.trim().is_empty() {
         vault_retrieval_path(vault_root, environment, cwd, temp_root)?
@@ -117,6 +123,22 @@ pub fn index_location_for_vault(
     };
     // Go's filepath.Join cleans every returned spelling, including Windows
     // separators; PathBuf equality alone would hide mixed-separator output.
+    Ok(lexical_clean(&path))
+}
+
+/// Resolves the default retrieval path used by the unified-store preflight.
+/// It deliberately does not load or migrate the standalone retrieval config.
+pub fn store_retrieval_path_for_vault(
+    vault_root: &str,
+    environment: &BTreeMap<String, String>,
+    cwd: &Path,
+    temp_root: &Path,
+) -> Result<PathBuf, SidecarError> {
+    let path = if !vault_root.trim().is_empty() {
+        vault_retrieval_path(vault_root, environment, cwd, temp_root)?
+    } else {
+        standalone_retrieval_path(environment, cwd)?
+    };
     Ok(lexical_clean(&path))
 }
 
@@ -133,18 +155,18 @@ pub fn open_retrieval_for_vault(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<RetrievalDb, SidecarError> {
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let config = load_config(&config_path)?;
     let explicit_override = !config.index_path.trim().is_empty();
     let index_path = if explicit_override {
-        absolute_clean(Path::new(&config.index_path), cwd)
+        absolute_clean(Path::new(&config.index_path), cwd)?
     } else if vault_root.trim().is_empty() {
-        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)
+        absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)?
     } else {
         absolute_clean(
             &vault_retrieval_path(vault_root, environment, cwd, temp_root)?,
             cwd,
-        )
+        )?
     };
 
     if explicit_override || vault_root.trim().is_empty() {
@@ -168,7 +190,7 @@ fn migrate_legacy_retrieval_index(
         Err(_) => return Ok(()),
     }
 
-    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd);
+    let source = absolute_clean(&standalone_retrieval_path(environment, cwd)?, cwd)?;
     if source == *destination {
         return Ok(());
     }
@@ -199,7 +221,7 @@ fn migrate_legacy_retrieval_index(
         }
     };
 
-    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd);
+    let legacy = absolute_clean(&legacy_retrieval_path(environment)?, cwd)?;
     if source == legacy {
         drop(validated);
         remove_retrieval_database_artifacts(&source).map_err(|error| {
@@ -210,9 +232,8 @@ fn migrate_legacy_retrieval_index(
 }
 
 fn legacy_retrieval_path(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     Ok(PathBuf::from(home).join(".local/share/symaira-seek/symseek.db"))
 }
 
@@ -247,7 +268,7 @@ pub fn relocate_index_for_vault(
         ));
     }
     let source = index_location_for_vault("", environment, cwd, temp_root)?;
-    let destination = absolute_clean(destination, cwd);
+    let destination = absolute_clean(destination, cwd)?;
     let source_info = fs::metadata(&source)
         .map_err(|error| SidecarError::Contract(format!("stat retrieval index: {error}")))?;
     if !source_info.is_file() {
@@ -259,7 +280,7 @@ pub fn relocate_index_for_vault(
     let connection = Connection::open(&source)?;
     let relocated = relocate_database(&connection, &destination)?;
 
-    let config_path = symseek_config_path(environment, cwd);
+    let config_path = symseek_config_path(environment, cwd)?;
     let mut config = load_config(&config_path)?;
     config.index_path = relocated.to_string_lossy().into_owned();
     save_config(&config_path, &config)?;
@@ -314,8 +335,7 @@ fn default_symseek_config() -> SymseekConfig {
     }
 }
 
-#[derive(Default, Deserialize)]
-#[serde(default)]
+#[derive(Default)]
 struct LegacyJsonConfig {
     ollama_url: String,
     model: String,
@@ -336,6 +356,86 @@ struct LegacyJsonConfig {
     expand_query: bool,
     expand_model: String,
     expand_timeout_seconds: i64,
+}
+
+impl<'de> Deserialize<'de> for LegacyJsonConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct LegacyConfigVisitor;
+
+        impl<'de> Visitor<'de> for LegacyConfigVisitor {
+            type Value = LegacyJsonConfig;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("a JSON object or null")
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(LegacyJsonConfig::default())
+            }
+
+            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                macro_rules! set_non_null {
+                    ($target:expr, $map:ident, $kind:ty) => {
+                        if let Some(value) = $map.next_value::<Option<$kind>>()? {
+                            $target = value;
+                        }
+                    };
+                }
+
+                let mut config = LegacyJsonConfig::default();
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        "ollama_url" => set_non_null!(config.ollama_url, map, String),
+                        "model" => set_non_null!(config.model, map, String),
+                        "embedding_dim" => set_non_null!(config.embedding_dim, map, i64),
+                        "timeout_seconds" => set_non_null!(config.timeout_seconds, map, i64),
+                        "retry_count" => set_non_null!(config.retry_count, map, i64),
+                        "retry_backoff_ms" => set_non_null!(config.retry_backoff_ms, map, i64),
+                        "index_cooldown_seconds" => {
+                            set_non_null!(config.index_cooldown_seconds, map, i64);
+                        }
+                        "vector_backend" => set_non_null!(config.vector_backend, map, String),
+                        "index_path" => set_non_null!(config.index_path, map, String),
+                        "vector_quantization" => {
+                            set_non_null!(config.vector_quantization, map, String);
+                        }
+                        "vector_quant_bits" => set_non_null!(config.vector_quant_bits, map, i64),
+                        "vector_quantized_shortlist" => {
+                            set_non_null!(config.vector_quantized_shortlist, map, i64);
+                        }
+                        "vector_exact_rerank" => {
+                            set_non_null!(config.vector_exact_rerank, map, bool);
+                        }
+                        "rerank_query" => set_non_null!(config.rerank_query, map, bool),
+                        "rerank_model" => set_non_null!(config.rerank_model, map, String),
+                        "rerank_timeout_seconds" => {
+                            set_non_null!(config.rerank_timeout_seconds, map, i64);
+                        }
+                        "expand_query" => set_non_null!(config.expand_query, map, bool),
+                        "expand_model" => set_non_null!(config.expand_model, map, String),
+                        "expand_timeout_seconds" => {
+                            set_non_null!(config.expand_timeout_seconds, map, i64);
+                        }
+                        _ => {
+                            let _: IgnoredAny = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(config)
+            }
+        }
+
+        deserializer.deserialize_any(LegacyConfigVisitor)
+    }
 }
 
 impl From<LegacyJsonConfig> for SymseekConfig {
@@ -365,33 +465,79 @@ impl From<LegacyJsonConfig> for SymseekConfig {
 }
 
 fn load_config(path: &Path) -> Result<SymseekConfig, SidecarError> {
-    match fs::read_to_string(path) {
+    match go_read_to_string(path) {
         Ok(contents) => toml::from_str(&contents).map_err(|error| {
             SidecarError::Contract(format!("failed to decode config file: {error}"))
         }),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            let legacy_path = path.with_file_name("config.json");
-            match fs::read(&legacy_path) {
-                Ok(contents) => match serde_json::from_slice::<LegacyJsonConfig>(&contents) {
-                    Ok(legacy) => {
-                        let config = SymseekConfig::from(legacy);
-                        save_config(path, &config)?;
-                        Ok(config)
-                    }
-                    Err(_) => Ok(default_symseek_config()),
-                },
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                    Ok(default_symseek_config())
-                }
-                Err(error) => Err(SidecarError::Contract(format!(
-                    "read legacy JSON config: {error}"
-                ))),
-            }
+        Err((_, error)) if error.kind() == io::ErrorKind::NotFound => {
+            Ok(migrate_legacy_json_config(path)?.unwrap_or_else(default_symseek_config))
         }
-        Err(error) => Err(SidecarError::Contract(format!(
-            "failed to read config file: {error}"
+        Err((operation, error)) => Err(SidecarError::Contract(format!(
+            "failed to read config file: {}",
+            go_path_error(operation, path, &error)
         ))),
     }
+}
+
+fn migrate_legacy_json_config(path: &Path) -> Result<Option<SymseekConfig>, SidecarError> {
+    let legacy_path = path.with_file_name("config.json");
+    let contents = match go_read(&legacy_path) {
+        Ok(contents) => contents,
+        Err((_, error)) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err((operation, error)) => {
+            return Err(SidecarError::Contract(format!(
+                "failed to migrate config: read legacy JSON config: {}",
+                go_path_error(operation, &legacy_path, &error)
+            )));
+        }
+    };
+    let Ok(legacy) = serde_json::from_slice::<LegacyJsonConfig>(&contents) else {
+        return Ok(None);
+    };
+    let config = SymseekConfig::from(legacy);
+    migrate_json_config(path, &config)
+        .map_err(|error| SidecarError::Contract(format!("failed to migrate config: {error}")))?;
+    Ok(Some(config))
+}
+
+fn migrate_json_config(path: &Path, config: &SymseekConfig) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    create_private_dir_all(parent).map_err(|error| {
+        format!(
+            "create config directory: {}",
+            go_path_error("mkdir", parent, &error)
+        )
+    })?;
+    let contents = symdesk_core::config::render_flat_toml(config)
+        .map_err(|error| format!("encode migrated TOML config: {error}"))?;
+    let mut options = OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path).map_err(|error| {
+        format!(
+            "create migrated TOML config: {}",
+            go_path_error("open", path, &error)
+        )
+    })?;
+    file.write_all(contents.as_bytes()).map_err(|error| {
+        format!(
+            "encode migrated TOML config: {}",
+            go_path_error("write", path, &error)
+        )
+    })?;
+    file.sync_all().map_err(|error| {
+        format!(
+            "close migrated TOML config: {}",
+            go_path_error("close", path, &error)
+        )
+    })
 }
 
 fn save_config(path: &Path, config: &SymseekConfig) -> Result<(), SidecarError> {
@@ -402,7 +548,7 @@ fn save_config(path: &Path, config: &SymseekConfig) -> Result<(), SidecarError> 
     create_private_dir_all(parent).map_err(|error| {
         SidecarError::Contract(format!("failed to create config directory: {error}"))
     })?;
-    let contents = toml::to_string(config)
+    let contents = symdesk_core::config::render_flat_toml(config)
         .map_err(|error| SidecarError::Contract(format!("failed to encode config: {error}")))?;
     let mut options = OpenOptions::new();
     options.write(true).create(true).truncate(true);
@@ -439,12 +585,11 @@ fn standalone_retrieval_path(
     let data_home = data_home(environment)?;
     let primary = data_home.join("symdesk/retrieval.db");
     let old_primary = data_home.join("symdesk/symseek.db");
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     let legacy = PathBuf::from(home).join(".local/share/symaira-seek/symseek.db");
     for candidate in [&primary, &old_primary, &legacy] {
-        if absolute_clean(candidate, cwd).exists() {
+        if absolute_clean(candidate, cwd)?.exists() {
             return Ok(candidate.to_path_buf());
         }
     }
@@ -457,16 +602,20 @@ fn vault_retrieval_path(
     cwd: &Path,
     temp_root: &Path,
 ) -> Result<PathBuf, SidecarError> {
-    let supplied = absolute_clean(Path::new(vault_root), cwd);
+    let supplied = absolute_clean(Path::new(vault_root), cwd)?;
     let canonical = fs::canonicalize(&supplied).unwrap_or_else(|_| supplied.clone());
     let mut root = data_home(environment)?.join("symdesk/vaults");
     let canonical_temp =
-        fs::canonicalize(temp_root).unwrap_or_else(|_| absolute_clean(temp_root, cwd));
+        fs::canonicalize(temp_root).or_else(|_| crate::sidecar_absolute_clean(temp_root, cwd))?;
+    let ordinary_temp = PathBuf::from(crate::strip_verbatim_prefix(
+        &canonical_temp.to_string_lossy(),
+    ));
+    let ordinary_vault = PathBuf::from(crate::strip_verbatim_prefix(&canonical.to_string_lossy()));
     if trimmed_environment(environment, "XDG_DATA_HOME").is_none()
-        && canonical.starts_with(&canonical_temp)
-        && canonical != canonical_temp
+        && ordinary_vault.starts_with(&ordinary_temp)
+        && ordinary_vault != ordinary_temp
     {
-        root = absolute_clean(temp_root, cwd).join("symdesk/test-vaults");
+        root = absolute_clean(temp_root, cwd)?.join("symdesk/test-vaults");
     }
     let digest = vault_retrieval_digest(&canonical.to_string_lossy());
     Ok(root.join(&digest[..16]).join("retrieval.db"))
@@ -484,10 +633,20 @@ fn data_home(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarE
     if let Some(value) = trimmed_environment(environment, "XDG_DATA_HOME") {
         return Ok(PathBuf::from(value));
     }
-    let home = user_home(environment).ok_or_else(|| {
-        SidecarError::Contract("user home dir: cannot determine home directory".to_owned())
-    })?;
+    let home = user_home(environment)
+        .ok_or_else(|| SidecarError::Contract(user_home_error().to_owned()))?;
     Ok(PathBuf::from(home).join(".local/share"))
+}
+
+fn user_home_error() -> &'static str {
+    #[cfg(windows)]
+    {
+        "user home dir: %userprofile% is not defined"
+    }
+    #[cfg(not(windows))]
+    {
+        "user home dir: $HOME is not defined"
+    }
 }
 
 fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
@@ -518,13 +677,9 @@ fn nonempty_environment<'a>(
         .filter(|value| !value.trim().is_empty())
 }
 
-fn absolute_clean(path: &Path, cwd: &Path) -> PathBuf {
-    let path = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        cwd.join(path)
-    };
-    lexical_clean(&path)
+fn absolute_clean(path: &Path, cwd: &Path) -> Result<PathBuf, SidecarError> {
+    crate::sidecar_absolute_clean(path, cwd)
+        .map_err(|error| SidecarError::Contract(format!("absolute index path: {error}")))
 }
 
 fn lexical_clean(path: &Path) -> PathBuf {
@@ -555,6 +710,81 @@ mod tests {
     use std::{collections::BTreeMap, fs, path::Path};
 
     use super::{retrieval_embedding_config, vault_retrieval_digest};
+
+    #[test]
+    fn absolute_paths_preserve_leading_spaces_and_share_vault_storage_digest() {
+        let cwd = std::env::current_dir().unwrap();
+        let raw = Path::new("  relative/../relative vault ");
+        let expected_name = if cfg!(windows) {
+            "relative vault"
+        } else {
+            "relative vault "
+        };
+        let expected = cwd.join(expected_name);
+        assert_eq!(
+            super::absolute_clean(raw, &cwd).unwrap().as_os_str(),
+            expected.as_os_str()
+        );
+        let leading = super::absolute_clean(Path::new(" leading/file "), &cwd).unwrap();
+        let expected_file = if cfg!(windows) { "file" } else { "file " };
+        assert_eq!(
+            leading.as_os_str(),
+            cwd.join(" leading").join(expected_file).as_os_str()
+        );
+        let temp = std::env::temp_dir();
+        let data = temp.join("symdesk-absolute-pure-test-data");
+        let environment = BTreeMap::from([(
+            "XDG_DATA_HOME".to_owned(),
+            data.to_str().unwrap().to_owned(),
+        )]);
+        let digest = vault_retrieval_digest(&expected.to_string_lossy());
+        let directory = super::lexical_clean(&data.join("symdesk/vaults").join(&digest[..16]));
+        assert_eq!(
+            crate::store_sidecar_path_for_vault(raw.to_str().unwrap(), &environment, &cwd, &temp)
+                .unwrap(),
+            directory.join("sidecar.db")
+        );
+        assert_eq!(
+            super::store_retrieval_path_for_vault(raw.to_str().unwrap(), &environment, &cwd, &temp)
+                .unwrap(),
+            directory.join("retrieval.db")
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_absolute_paths_cover_drive_root_unc_verbatim_and_invalid_input() {
+        use std::path::{Component, PathBuf, Prefix};
+        let cwd = std::env::current_dir().unwrap();
+        if let Some(Component::Prefix(prefix)) = cwd.components().next()
+            && let Prefix::Disk(drive) = prefix.kind()
+        {
+            let relative = format!("{}:not-created.db. ", char::from(drive));
+            assert_eq!(
+                super::absolute_clean(Path::new(&relative), &cwd).unwrap(),
+                cwd.join("not-created.db")
+            );
+            assert_eq!(
+                super::absolute_clean(Path::new(r"\not-created.db. "), &cwd).unwrap(),
+                PathBuf::from(format!("{}:\\not-created.db", char::from(drive)))
+            );
+        }
+        for (input, expected) in [
+            (
+                r"\\server\share\not-created.db. ",
+                r"\\server\share\not-created.db",
+            ),
+            (r"\\?\C:\not-created.db. ", r"\\?\C:\not-created.db. "),
+        ] {
+            assert_eq!(
+                super::absolute_clean(Path::new(input), &cwd)
+                    .unwrap()
+                    .as_os_str(),
+                Path::new(expected).as_os_str()
+            );
+        }
+        assert!(super::absolute_clean(Path::new("bad\0path"), &cwd).is_err());
+    }
 
     #[test]
     fn vault_retrieval_digest_ignores_windows_verbatim_spelling() {
@@ -656,5 +886,48 @@ mod tests {
             lexical_clean(Path::new("/../../var/../tmp/index.db")),
             PathBuf::from("/tmp/index.db")
         );
+    }
+}
+
+#[cfg(test)]
+mod legacy_json_null_tests {
+    use super::LegacyJsonConfig;
+
+    #[test]
+    fn legacy_json_null_is_accepted_for_top_level_string_integer_and_boolean_values() {
+        let top_level: LegacyJsonConfig = serde_json::from_str("null").expect("top-level null");
+        assert_eq!(top_level.index_path, "");
+        assert_eq!(top_level.embedding_dim, 0);
+        assert!(!top_level.vector_exact_rerank);
+
+        let fields: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":null,"embedding_dim":null,"vector_exact_rerank":null}"#,
+        )
+        .expect("null is a no-op for Go's scalar configuration fields");
+        assert_eq!(fields.index_path, "");
+        assert_eq!(fields.embedding_dim, 0);
+        assert!(!fields.vector_exact_rerank);
+    }
+
+    #[test]
+    fn duplicate_null_values_preserve_prior_non_null_string_integer_and_boolean() {
+        let config: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":"kept.db","index_path":null,"embedding_dim":21,"embedding_dim":null,"vector_exact_rerank":true,"vector_exact_rerank":null}"#,
+        )
+        .expect("Go accepts duplicate keys and null leaves a prior scalar unchanged");
+        assert_eq!(config.index_path, "kept.db");
+        assert_eq!(config.embedding_dim, 21);
+        assert!(config.vector_exact_rerank);
+    }
+
+    #[test]
+    fn non_null_values_after_duplicates_still_win() {
+        let config: LegacyJsonConfig = serde_json::from_str(
+            r#"{"index_path":null,"index_path":"last.db","embedding_dim":null,"embedding_dim":17,"vector_exact_rerank":null,"vector_exact_rerank":true}"#,
+        )
+        .expect("later non-null duplicate replaces the zero value");
+        assert_eq!(config.index_path, "last.db");
+        assert_eq!(config.embedding_dim, 17);
+        assert!(config.vector_exact_rerank);
     }
 }

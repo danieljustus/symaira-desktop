@@ -581,6 +581,58 @@ fn sidecar_storage_root_matches_go_for_temp_and_xdg_paths() {
     assert_eq!(explicit, PathBuf::from("/explicit/data/symdesk/vaults"));
 }
 
+#[test]
+fn sidecar_storage_root_temp_boundaries_use_equivalent_spellings() {
+    let temp_root = std::env::temp_dir();
+    let canonical_temp = fs::canonicalize(&temp_root).expect("canonical temporary root");
+    let ordinary_temp = PathBuf::from(strip_verbatim_prefix(&canonical_temp.to_string_lossy()));
+    let home = ordinary_temp.join("home");
+    let default_root = home.join(".local/share/symdesk/vaults");
+    let descendant = ordinary_temp.join(format!(
+        "symdesk-nonexistent-vault-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    assert!(
+        !descendant.exists(),
+        "exercise lexical fallback for a missing vault"
+    );
+    let sibling = ordinary_temp.with_file_name(format!(
+        "{}-sibling",
+        ordinary_temp
+            .file_name()
+            .expect("temporary root name")
+            .to_string_lossy()
+    ));
+    let temporary_storage = temp_root.join("symdesk/test-vaults");
+    for (vault, expected) in [
+        (&ordinary_temp, &default_root),
+        (&sibling, &default_root),
+        (&descendant, &temporary_storage),
+    ] {
+        assert_eq!(
+            sidecar_storage_root(None, Some(home.clone()), vault, &temp_root).unwrap(),
+            *expected,
+            "vault {}",
+            vault.display()
+        );
+        let explicit = ordinary_temp.join("explicit-data");
+        assert_eq!(
+            sidecar_storage_root(
+                Some(explicit.to_str().unwrap()),
+                Some(home.clone()),
+                vault,
+                &temp_root
+            )
+            .unwrap(),
+            explicit.join("symdesk/vaults")
+        );
+    }
+}
+
 #[cfg(windows)]
 #[test]
 fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {

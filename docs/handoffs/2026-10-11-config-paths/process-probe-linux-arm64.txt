@@ -1,0 +1,8 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+case=stdout-plus-discarded-stderr result=Some(stdout-key\n)
+case=nonzero-shell-status result=None
+stage=child-status success=false code=Some(7)
+stage=spawn kind=NotFound errno=Some(2) error=No such file or directory (os error 2)
+case=spawn-ENOENT result=None
+case=descendant-holds-stdout-pipe result=None
+stage=reader-deadline

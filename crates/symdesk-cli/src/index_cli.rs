@@ -111,7 +111,10 @@ pub fn run(
     let Some(("maintenance", maintenance)) = command.subcommand() else {
         return run_build(command, vault, json_output);
     };
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = match symdesk_core::config::environment_snapshot() {
+        Ok(environment) => environment,
+        Err(error) => return super::emit_error(error, json_output),
+    };
     let cwd = match std::env::current_dir() {
         Ok(path) => path,
         Err(error) => {
@@ -330,7 +333,7 @@ struct ReembedReport {
 }
 
 fn reembed_pending_documents() -> Result<ReembedReport, String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
     let temp_root = std::env::temp_dir();
     let path = index_location_for_vault("", &environment, &cwd, &temp_root)

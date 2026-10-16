@@ -57,27 +57,32 @@ statuses for both binaries, and a focused unit test pins the complete CoreKit
 
 ## Config slice
 
-**Audit conclusion: adoption deferred.** `symdesk-core` has a product-specific
-`Config` schema and validation (`crates/symdesk-core/src/config.rs:9-80,
-151-250`), but its generic-looking helpers are not behavior-compatible with
-CoreKit's `symaira-core-config` at the pinned revision. No Cargo dependency or
-loading call-site change was made: routing through CoreKit would change the
-observable contract frozen by `crates/symdesk-core/tests/config_contracts.rs`.
+**Audit conclusion: narrow path-helper adoption.** `symdesk-core` has a product-specific
+`Config` schema and validation (`crates/symdesk-core/src/config.rs`), and now
+pins `symaira-core-config` at CoreKit commit
+`04d1411adb57aa602b992509121011aa7666ff1a` for the existing
+`config::global_path` seam only. The adapter supplies the Go caller's
+OS-native home choice (HOME on Unix, USERPROFILE on Windows) and retains its
+lexical cleanup and Windows-verbatim handling. It does not adopt CoreKit's
+`Loader`, file/env processing, validation, or diagnostics.
 
 The exact CoreKit rows reviewed were CFG-001 through CFG-007 in
 `symaira-corekit/docs/rust-port/contract-matrix.json:351-454`. The comparison is:
 
-- **Default paths (CFG-001):** there is a partial duplicate. Desktop exposes
-  data/config/cache home and directory helpers plus a global path
-  (`config.rs:311-349`), while CoreKit exposes only the config-file path and
-  legacy option (`symaira-core-config/src/lib.rs:90-113, 193-201`). Desktop's
-  helpers return `String`, accept portable Windows-looking absolute paths on
-  every host (`config.rs:392-394`), and fall back to `./...` when HOME is
-  absent (`config.rs:385-390, 396-405`). CoreKit uses host-native
-  `PathBuf::is_absolute` and platform-selected HOME/USERPROFILE, and its
-  `Loader` returns `cannot determine home directory` when no home exists
-  (`symaira-core-config/src/lib.rs:107-132, 188-191`). These paths and failure
-  behavior are not identical.
+- **Default paths (CFG-001):** Desktop exposes data/config/cache homes and
+  directories plus a global config path (`crates/symdesk-core/src/config.rs`);
+  CoreKit exposes the global config-file path and legacy option
+  (`symaira-core-config/src/lib.rs:90-113, 193-201`). The narrow adoption uses
+  `default_path_for_roots` for `global_path` only. It passes HOME only on Unix
+  or USERPROFILE only on Windows, including the product's `.` fallback, rather
+  than forwarding both variables and activating CoreKit's Windows HOME fallback.
+  The existing adapter then performs Go-compatible lexical cleanup, including
+  Windows verbatim-device paths. The other Desktop helpers still return
+  `String`, accept portable Windows-looking absolute paths on every host, and
+  retain their own fallback behavior; they are not routed through this helper.
+  CoreKit's separate `Loader` still errors when it cannot determine a home,
+  while `default_path_for_roots` returns a relative `.config/<app>/config.toml`
+  path when both roots are absent.
 - **Precedence (CFG-003):** the conceptual order overlaps, but the loaders do
   not. Desktop `load` consumes one caller-supplied optional TOML string and
   then its explicit environment snapshot (`config.rs:284-300`); it does not
@@ -99,18 +104,21 @@ The exact CoreKit rows reviewed were CFG-001 through CFG-007 in
 - **TOML merge and errors (CFG-002/006):** Desktop deserializes the complete
   supplied document directly and wraps failures as
   `failed to decode config file: ...` (`config.rs:289-296`). CoreKit reads
-  filesystem paths, skips only NotFound, checks map/type compatibility,
-  merges only non-zero overlay values, and prefixes errors with the path and
-  operation (`symaira-core-config/src/lib.rs:215-250`). Those bytes and merge
+  filesystem paths, skips only NotFound, checks map/type compatibility, and
+  applies present non-null overlay values (including zero, false, and empty
+  values), with path/operation-prefixed errors
+  (`symaira-core-config/src/lib.rs:215-250, 353-367`). Those bytes and merge
   semantics differ, including the fact that CoreKit can produce global/project
   read/parse/apply errors that Desktop cannot produce.
 
-The existing generated config fixture and tests explicitly pin Desktop's
-single-input/allowlist/path behavior (`crates/symdesk-core/tests/config_contracts.rs:104-170`),
-so this is evidence for deferral rather than a missing implementation. A
-future adoption would require a CoreKit-compatible adapter or a separately
-reviewed CoreKit change, followed by regenerated Go differential evidence; it
-must not silently replace these semantics.
+The existing generated config fixture and tests continue to pin Desktop's
+single-input loader, environment allowlist, and path behavior. Only the shared
+absolute-XDG/home path selection is now delegated; product loading, validation,
+error reporting, store-specific path adapters, and Windows verbatim cleanup
+remain local. The Go-owned core config fixture, ten-case precedence oracle,
+existing global-path checks, and native Go-backed store/path replay remain the
+relevant compatibility evidence. This path-helper reuse is not full config
+adoption, #1135 completion, or approval of the broader migration.
 
 ## Log slice
 

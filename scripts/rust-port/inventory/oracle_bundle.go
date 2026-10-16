@@ -116,8 +116,20 @@ func CreateOracleBundle(repoRoot, revision, anchor string) (*OracleBundle, error
 	if err != nil {
 		return nil, err
 	}
+	if err := validateOracleBundleHeader(data, revision, anchor); err != nil {
+		return nil, fmt.Errorf("%w; choose a common main ancestor whose native bundle has exactly one prerequisite", err)
+	}
 	hash := sha256.Sum256(data)
 	return &OracleBundle{Anchor: anchor, SHA256: hex.EncodeToString(hash[:]), Data: data}, nil
+}
+
+func validateOracleBundleHeader(data []byte, revision, anchor string) error {
+	header, pack, ok := bytes.Cut(data, []byte("\n\n"))
+	lines := bytes.Split(header, []byte("\n"))
+	if !ok || len(lines) != 3 || string(lines[0]) != "# v2 git bundle" || !bytes.HasPrefix(lines[1], []byte("-"+anchor+" ")) || string(lines[2]) != revision+" HEAD" || !bytes.HasPrefix(pack, []byte("PACK")) {
+		return fmt.Errorf("oracle bundle must advertise exactly its recorded source and anchor")
+	}
+	return nil
 }
 
 func recordedOracle(repoRoot, git, head string) (*ProvenanceDocument, error) {
@@ -167,10 +179,8 @@ func openRecordedOracle(repoRoot, git, head, revision string) (string, func(), b
 	if proof.SHA256 != hex.EncodeToString(hash[:]) {
 		return "", nil, false, fmt.Errorf("recorded oracle bundle checksum mismatch")
 	}
-	header, pack, ok := bytes.Cut(proof.Data, []byte("\n\n"))
-	lines := bytes.Split(header, []byte("\n"))
-	if !ok || len(lines) != 3 || string(lines[0]) != "# v2 git bundle" || !bytes.HasPrefix(lines[1], []byte("-"+proof.Anchor+" ")) || string(lines[2]) != revision+" HEAD" || !bytes.HasPrefix(pack, []byte("PACK")) {
-		return "", nil, false, fmt.Errorf("oracle bundle must advertise exactly its recorded source and anchor")
+	if err := validateOracleBundleHeader(proof.Data, revision, proof.Anchor); err != nil {
+		return "", nil, false, err
 	}
 	if _, err := inventoryGitOutputWithExecutable(repoRoot, git, "merge-base", "--is-ancestor", proof.Anchor, head); err != nil {
 		return "", nil, false, fmt.Errorf("recorded oracle anchor is outside checked history: %w", err)

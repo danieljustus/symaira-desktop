@@ -27,7 +27,6 @@ pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
-    collections::BTreeMap,
     ffi::{OsStr, OsString},
     fmt::Write as _,
     fs,
@@ -831,7 +830,10 @@ async fn handle_ai_transform(
     // Go's service constructor falls back to DefaultConfig when config.Load
     // fails. Resolve once here, then render the fallback directly so a child
     // process cannot reload a changed provider config after this safety check.
-    let config = ai_transform_config_or_default(load_ai_transform_config());
+    let config = match ai_transform_config_or_default(load_ai_transform_config()) {
+        Ok(config) => config,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
     let fallback = ai_transform_fallback_text(&config);
     let configured_ollama = if fallback.is_none() {
         match (&*config.llm_provider, config.ollama_url.as_str()) {
@@ -874,10 +876,12 @@ async fn handle_ai_transform(
         }
     } else if let Some(endpoint) = configured_ollama {
         let prompt = build_ai_transform_prompt(&config.language, &input.text, &input.intent);
-        let model = std::env::var("SYMDESK_OLLAMA_MODEL")
-            .ok()
-            .filter(|model| !model.is_empty())
-            .unwrap_or_else(|| "llama3.2".to_owned());
+        let model = match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
+            Ok(value) => value,
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        }
+        .filter(|model| !model.is_empty())
+        .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
         tokio::spawn(async move {
             let mut answer_capture = None;
@@ -1375,7 +1379,10 @@ async fn handle_ai_ask(
     // response path. Unscoped retrieval can use the shared hybrid selector;
     // notebook scope remains sidecar-only. ACL filtering still precedes
     // context and citations.
-    let config = ai_transform_config_or_default(load_ai_transform_config());
+    let config = match ai_transform_config_or_default(load_ai_transform_config()) {
+        Ok(config) => config,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
     let configured_ollama = if ai_ask_provider_is_unconfigured(&config) {
         None
     } else {
@@ -1657,10 +1664,16 @@ async fn handle_ai_ask(
     let ask_prompt = configured_ollama
         .as_ref()
         .map(|_| build_ai_ask_prompt(&config.language, &input.query, &documents));
-    let model = std::env::var("SYMDESK_OLLAMA_MODEL")
-        .ok()
-        .filter(|model| !model.is_empty())
-        .unwrap_or_else(|| "llama3.2".to_owned());
+    let model = if configured_ollama.is_some() {
+        match symdesk_core::config::environment_value("SYMDESK_OLLAMA_MODEL") {
+            Ok(value) => value,
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        }
+    } else {
+        None
+    }
+    .filter(|model| !model.is_empty())
+    .unwrap_or_else(|| "llama3.2".to_owned());
     tokio::spawn(async move {
         for event in events {
             if sender.send(Ok(event)).await.is_err() {
@@ -2210,7 +2223,7 @@ fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
 }
 
 fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
-    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let environment = symdesk_core::config::environment_snapshot()?;
     let path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let input = match fs::read_to_string(path) {
         Ok(input) => Some(input),
@@ -2222,8 +2235,12 @@ fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
 
 fn ai_transform_config_or_default(
     config: Result<symdesk_core::config::Config, String>,
-) -> symdesk_core::config::Config {
-    config.unwrap_or_default()
+) -> Result<symdesk_core::config::Config, String> {
+    match config {
+        Ok(config) => Ok(config),
+        Err(error) if error.starts_with("environment variable ") => Err(error),
+        Err(_) => Ok(symdesk_core::config::Config::default()),
+    }
 }
 
 fn ai_transform_fallback_text(config: &symdesk_core::config::Config) -> Option<&'static str> {
@@ -5518,6 +5535,8 @@ async fn shutdown_signal() {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
 
     struct PendingBody;
@@ -7095,11 +7114,19 @@ mod tests {
             "environment provider must take precedence over TOML"
         );
 
-        let failed_load = ai_transform_config_or_default(Err("invalid TOML".to_owned()));
+        let failed_load = ai_transform_config_or_default(Err("invalid TOML".to_owned()))
+            .expect("ordinary config load failures keep the Go default fallback");
         assert_eq!(
             ai_transform_fallback_text(&failed_load),
             ai_transform_fallback_text(&default),
             "Go's service constructor uses DefaultConfig when config.Load fails"
+        );
+        let invalid_environment = ai_transform_config_or_default(Err(
+            "environment variable SYMDESK_VAULT is not valid UTF-8".to_owned(),
+        ));
+        assert_eq!(
+            invalid_environment.expect_err("relevant non-Unicode configuration must not default"),
+            "environment variable SYMDESK_VAULT is not valid UTF-8"
         );
     }
 

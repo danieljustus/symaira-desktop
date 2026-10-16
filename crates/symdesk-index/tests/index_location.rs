@@ -125,7 +125,8 @@ fn location_and_config_paths_replay_go_fixture() {
             case.id
         );
 
-        let config_path = symseek_config_path(&environment, &cwd);
+        let config_path =
+            symseek_config_path(&environment, &cwd).expect("resolve fixture config path");
         if let Some(expected_config) = &case.config_after
             && config_path.exists()
         {
@@ -177,7 +178,8 @@ fn relocation_persists_path_and_preserves_symseek_config_fields() {
             temp_root.to_string_lossy().into_owned(),
         ),
     ]);
-    let config_path = symseek_config_path(&environment, &cwd);
+    let config_path =
+        symseek_config_path(&environment, &cwd).expect("resolve relocation config path");
     fs::create_dir_all(config_path.parent().expect("config parent"))
         .expect("create config directory");
     fs::write(
@@ -257,7 +259,8 @@ fn prepare_case(
         .iter()
         .map(|(key, value)| (key.clone(), expand_string(value, root, &temp_root)))
         .collect::<BTreeMap<_, _>>();
-    let config_path = symseek_config_path(&environment, &cwd);
+    let config_path =
+        symseek_config_path(&environment, &cwd).expect("resolve prepared config path");
     if let Some(config) = &case.config_toml {
         fs::create_dir_all(config_path.parent().expect("config parent"))
             .expect("create config parent");

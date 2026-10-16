@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -252,7 +253,7 @@ func inventoryGitOutputWithExecutable(repoRoot, git string, args ...string) ([]b
 	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
 	output, err := command.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(string(output)))
+		return nil, fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), errors.Join(err, ctx.Err()), strings.TrimSpace(string(output)))
 	}
 	return output, nil
 }

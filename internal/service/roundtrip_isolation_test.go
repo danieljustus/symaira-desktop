@@ -32,6 +32,7 @@ func TestRoundtripPreservesWorkingDirectory(t *testing.T) {
 
 			t.Run("execute", tc.run)
 
+			//nolint:gosec // G304: sentinel is a fixed file in this subtest's private working directory.
 			data, err := os.ReadFile(sentinel)
 			if err != nil || string(data) != original {
 				t.Errorf("roundtrip test changed existing working-directory content: %q, %v", data, err)

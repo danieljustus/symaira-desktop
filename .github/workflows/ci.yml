@@ -1,3 +1,4 @@
+# Disposable #1270 diagnostic overlay. Never merge this branch.
 name: CI
 
 on:
@@ -24,7 +25,64 @@ permissions:
 # verify the macOS and iOS builds against the pinned public AppKit package.
 
 jobs:
+  artifact-identity-diagnostic:
+    name: Artifact identity diagnostic (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      NATIVE_RUNNER_LABEL: ${{ matrix.os }}
+    steps:
+      - name: Check out disposable collector separately
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: collector
+          persist-credentials: false
+      - name: Check out unchanged exact main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: 88e78b2abf0b2983bd5197e4e5d814022960b9f2
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - name: Materialize the existing immutable oracle refs
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
+          git fetch --no-tags origin +69e0e149671611563e1fdf7ab636bbba09582844:refs/heads/rust-port-oracle-69e0e149671611563e1fdf7ab636bbba09582844
+          git fetch --no-tags origin +e077104b1be0c2c82ddfc64109a46aaeb4a114cf:refs/heads/rust-port-oracle-e077104b1be0c2c82ddfc64109a46aaeb4a114cf
+          git fetch --no-tags origin +09245b243154f484d8e14afdc9056b9999dd530d:refs/heads/rust-port-oracle-09245b243154f484d8e14afdc9056b9999dd530d
+          git fetch --no-tags origin +7035aab79df453f7e9d5c1a5084ac46e9a39b2a2:refs/heads/rust-port-oracle-7035aab79df453f7e9d5c1a5084ac46e9a39b2a2
+          git fetch --no-tags origin +3a8b461ade6fe3682a9d983bae697ad02c411b31:refs/heads/rust-port-oracle-3a8b461ade6fe3682a9d983bae697ad02c411b31
+          git fetch --no-tags origin +68095b7eabff2de0e901c90931432b125df7ebc4:refs/heads/rust-port-oracle-68095b7eabff2de0e901c90931432b125df7ebc4
+          git fetch --no-tags origin +3c1ef32f7de92420a972d34f6067a9b5f2de63c9:refs/heads/rust-port-oracle-3c1ef32f7de92420a972d34f6067a9b5f2de63c9
+          git fetch --no-tags origin +9b0bf8bda0e1b56eaf5e2766b00850b466d8021e:refs/heads/rust-port-oracle-9b0bf8bda0e1b56eaf5e2766b00850b466d8021e
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.9"
+          cache-dependency-path: source/go.sum
+      - name: Collect at most three pristine full replays, stop on first failure
+        shell: bash
+        run: python3 -B collector/scripts/rust-port/artifact_identity_native_diagnostic.py source "$RUNNER_TEMP/artifact-identity-diagnostic"
+      - name: Retain diagnostic observations even on failure
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: artifact-identity-diagnostic-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/artifact-identity-diagnostic/
+          retention-days: 14
+          if-no-files-found: error
+
   test:
+    if: github.ref == 'refs/heads/main'
     strategy:
       matrix:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
@@ -94,7 +152,7 @@ jobs:
   required-go-tests:
     name: test (ubuntu-latest, 1.26.6)
     needs: test
-    if: ${{ always() }}
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Require the current Go test matrix to pass
@@ -103,6 +161,7 @@ jobs:
         run: test "$TEST_RESULT" = success
 
   lint:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -141,7 +200,7 @@ jobs:
 
   port-contract:
     # Advisory parity coverage is retained on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     name: Rust port contract
     strategy:
       fail-fast: false
@@ -199,7 +258,7 @@ jobs:
 
   rust:
     # Full Rust gates are advisory; keep the required PR path focused on Go.
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     name: Rust
     runs-on: ubuntu-latest
     steps:
@@ -240,7 +299,7 @@ jobs:
 
   rust-native:
     name: Rust native (${{ matrix.os }})
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -777,7 +836,7 @@ jobs:
   # documents, caches or remote services are required by this paired probe.
   pdf-mcp-native:
     name: PDF MCP native (${{ matrix.os }})
-    if: github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main'
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -850,6 +909,7 @@ jobs:
           if-no-files-found: error
 
   govulncheck:
+    if: github.ref == 'refs/heads/main'
     name: govulncheck
     runs-on: ubuntu-latest
     steps:
@@ -863,6 +923,7 @@ jobs:
           go-version-input: "1.26.9"
 
   golangci-lint:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -888,6 +949,7 @@ jobs:
           only-new-issues: false
 
   version-consistency:
+    if: github.ref == 'refs/heads/main'
     name: Version consistency
     runs-on: ubuntu-latest
     steps:
@@ -962,7 +1024,7 @@ jobs:
 
   app:
     # Native macOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -1002,7 +1064,7 @@ jobs:
 
   app-ios:
     # Native iOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     name: iOS app
     runs-on: macos-26
     steps:

@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -32,7 +33,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const token = "0123456789abcdef0123456789abcdef"
 const workerToken = "fedcba9876543210fedcba9876543210"
 const namedUserToken = "test-named-user-token-for-http-differential"
 const namedWorkerToken = "test-named-worker-token-for-http-differential"
@@ -179,12 +179,6 @@ func run() (runErr error) {
 			}
 		}
 	}()
-	if err := leftServer.ready(); err != nil {
-		fatal("Go readiness: %v", err)
-	}
-	if err := rightServer.ready(); err != nil {
-		fatal("Rust readiness: %v", err)
-	}
 	var leftProviderServer, rightProviderServer *runningServer
 	activeProvider := ""
 	defer func() {
@@ -231,12 +225,6 @@ func run() (runErr error) {
 			}
 			leftServer = startServer(*left, leftVault)
 			rightServer = startServer(*right, rightVault)
-			if err := leftServer.ready(); err != nil {
-				fatal("Go hybrid fixture readiness: %v", err)
-			}
-			if err := rightServer.ready(); err != nil {
-				fatal("Rust hybrid fixture readiness: %v", err)
-			}
 			if err := provider.assertEmbeddingRequests(4, "Body"); err != nil {
 				fatal("hybrid fixture embedding requests: %v", err)
 			}
@@ -333,12 +321,6 @@ func run() (runErr error) {
 				}
 				leftProviderServer = startServerWithEnv(*left, leftVault, providerEnv)
 				rightProviderServer = startServerWithEnv(*right, rightVault, providerEnv)
-				if err := leftProviderServer.ready(); err != nil {
-					fatal("Go provider readiness: %v", err)
-				}
-				if err := rightProviderServer.ready(); err != nil {
-					fatal("Rust provider readiness: %v", err)
-				}
 				activeProvider = providerMode
 			}
 			leftCurrent, rightCurrent = leftProviderServer, rightProviderServer
@@ -1644,9 +1626,10 @@ func assertIndexedWrite(vault, relative, body string) error {
 const serverStopTimeout = 5 * time.Second
 
 type runningServer struct {
-	cmd  *exec.Cmd
-	base string
-	logs boundedBuffer
+	cmd   *exec.Cmd
+	base  string
+	logs  boundedBuffer
+	token string
 }
 
 type fakeOllamaRequest struct {
@@ -1845,7 +1828,7 @@ func (s *runningServer) requestDisconnect(tc httpCase) (transcript, error) {
 		return transcript{}, err
 	}
 	if tc.Auth == "valid" {
-		request.Header.Set("Authorization", "Bearer "+token)
+		request.Header.Set("Authorization", "Bearer "+s.token)
 	}
 	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableCompression: true}}
 	response, err := client.Do(request)
@@ -1896,11 +1879,13 @@ func startServerWithEnv(binary, vault string, extra map[string]string) *runningS
 	if err := os.MkdirAll(filepath.Join(home, "tmp"), 0o700); err != nil {
 		fatal("isolation root: %v", err)
 	}
+	// Fresh credentials distinguish this launch from other harness children.
+	launchToken := rand.Text() + rand.Text()
 	//nolint:gosec // absoluteBinary is the explicit Go/Rust harness operand
-	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", token, "--worker-token", workerToken)
+	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", launchToken, "--worker-token", workerToken)
 	cmd.Dir = home
 	cmd.Env = isolatedEnv(vault, home, extra)
-	server := &runningServer{cmd: cmd, base: "http://" + address}
+	server := &runningServer{cmd: cmd, base: "http://" + address, token: launchToken}
 	cmd.Stdout = io.Discard
 	cmd.Stderr = &server.logs
 	// Bound os/exec cleanup if a descendant retains an inherited handle.
@@ -1908,11 +1893,20 @@ func startServerWithEnv(binary, vault string, extra map[string]string) *runningS
 	if err := cmd.Start(); err != nil {
 		fatal("start %s: %v", binary, err)
 	}
+	// Finish binding before another launch can select its released port.
+	if err := server.ready(); err != nil {
+		fatal("start %s: %v", binary, errors.Join(err, server.stop()))
+	}
 	return server
 }
 
 func (s *runningServer) ready() error {
-	client := &http.Client{Timeout: 250 * time.Millisecond}
+	client := &http.Client{
+		Timeout:       250 * time.Millisecond,
+		Transport:     &http.Transport{Proxy: nil},
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
+	defer client.CloseIdleConnections()
 	// Windows runners can take longer than 10 s for the first launch of a
 	// freshly built server binary (#1118); a healthy server answers sooner.
 	deadline := time.Now().Add(60 * time.Second)
@@ -1922,7 +1916,7 @@ func (s *runningServer) ready() error {
 			body, readErr := io.ReadAll(io.LimitReader(response.Body, 1024))
 			_ = response.Body.Close()
 			if readErr == nil && response.StatusCode == http.StatusOK && string(body) == `{"status":"ok"}` {
-				return nil
+				return s.verifyLaunch(client)
 			}
 		}
 		if s.cmd.ProcessState != nil {
@@ -1939,6 +1933,31 @@ func (s *runningServer) ready() error {
 		return fmt.Errorf("timed out waiting for %s: stderr exceeded 1 MiB; stderr=%s", s.base, logs)
 	}
 	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.base, logs)
+}
+
+// verifyLaunch requires the credential of this launch, not anonymous health.
+func (s *runningServer) verifyLaunch(client *http.Client) error {
+	request, err := http.NewRequest(http.MethodGet, s.base+"/api/v1/status", nil)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Authorization", "Bearer "+s.token)
+	response, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("verify server launch: %w", err)
+	}
+	body, readErr := io.ReadAll(io.LimitReader(response.Body, 1024))
+	closeErr := response.Body.Close()
+	if err := errors.Join(readErr, closeErr); err != nil {
+		return fmt.Errorf("read launch status: %w", err)
+	}
+	var status struct {
+		Status string `json:"status"`
+	}
+	if response.StatusCode != http.StatusOK || json.Unmarshal(body, &status) != nil || status.Status != "ok" {
+		return fmt.Errorf("server launch identity rejected at %s (HTTP %d)", s.base, response.StatusCode)
+	}
+	return nil
 }
 
 func (s *runningServer) request(tc httpCase, previousETag string, provider *fakeOllama, readProviderStream bool) (transcript, string, error) {
@@ -2002,7 +2021,7 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 	}
 	switch tc.Auth {
 	case "valid":
-		request.Header.Set("Authorization", "Bearer "+token)
+		request.Header.Set("Authorization", "Bearer "+s.token)
 	case "worker":
 		request.Header.Set("Authorization", "Bearer "+workerToken)
 	case "named":
@@ -2014,7 +2033,7 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 	case "wrong":
 		request.Header.Set("Authorization", "Bearer 0000000000000000000000000000wrong")
 	case "raw":
-		request.Header.Set("Authorization", token)
+		request.Header.Set("Authorization", s.token)
 	}
 	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableCompression: true}}
 	response, err := client.Do(request)

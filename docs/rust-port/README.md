@@ -325,12 +325,12 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
   zero unsafe expressions, while the reviewed SQLite wrapper/FFI remains an
   explicit transitive boundary.
-- Unverified WIP — not evidence: `migration/rust-room-journal` (`f015a694`) holds a
-  SymRoom journal draft (Go contract test, fixture, crate change) from a worker whose own
-  replay was not byte-exact and whose Make target called the generator instead of
-  verifying it; the draft is kept as WIP and was not promoted. The writer worktrees
-  `.worktrees/subagent-sa-1-905b9a86` and `../w-rust-room-journal` still hold the two
-  differing `testdata/port/room/journal.json` captures.
+- Superseded WIP — not evidence: `migration/rust-room-journal` (`f015a694`) held a
+  SymRoom journal draft from a worker whose own replay was not byte-exact and whose
+  Make target called the generator instead of verifying it. It was never promoted;
+  the journal landed instead through `migration/rust-room-journal-v2`
+  ([#1017](https://github.com/danieljustus/symaira-desktop/pull/1017)). The draft
+  branch and its writer worktrees no longer exist.
 - Done since `b98ca146`: the CI wiring landed in #1012, CFG-004 reached `PASS`, and
   #1006 is closed on `migration/rust-sidecar-metadata` — `open_for_vault` now writes
   `vaults/<hash>/metadata.json` byte-identically to Go (13 recorded encoding cases —

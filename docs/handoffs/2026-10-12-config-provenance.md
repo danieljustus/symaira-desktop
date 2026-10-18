@@ -1,6 +1,8 @@
 # Config-paths fixture provenance continuation
 
 Repository: `danieljustus/symaira-desktop`. Remote branch: `handoff/20261012-config-provenance`.
+
+Status 2026-10-18: this checkpoint was closed unmerged as [PR #1252](https://github.com/danieljustus/symaira-desktop/pull/1252) and its work was integrated through [PR #1245](https://github.com/danieljustus/symaira-desktop/pull/1245). The branch is deleted; its head remains fetchable as `refs/pull/1252/head`. The text below describes the state at the time.
 Base code commit: `996e7a7a739b9fa0ae4091fb1c11c6dd1fb6c2b2`. This is a separate unfinished alternative to the PDF/MCP continuation; do not merge them implicitly. Existing [PR #1245](https://github.com/danieljustus/symaira-desktop/pull/1245) remains unchanged.
 
 ## Preserved delta

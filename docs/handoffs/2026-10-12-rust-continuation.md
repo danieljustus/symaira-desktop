@@ -3,6 +3,8 @@
 ## Goal and source identity
 
 Repository: `danieljustus/symaira-desktop`. Remote branch: `handoff/20261012-rust-wip`.
+
+Status 2026-10-18: this checkpoint was closed unmerged as [PR #1251](https://github.com/danieljustus/symaira-desktop/pull/1251) and its work was integrated through [PR #1255](https://github.com/danieljustus/symaira-desktop/pull/1255). The branch is deleted; its head remains fetchable as `refs/pull/1251/head`. The text below describes the state at the time.
 Base code commit: `db1a447bcda9c9c1f0f58e8c052b8afdbfccfca8`, preserving thirteen renderer/Go-oracle commits and eight WIP files listed in `2026-10-12-rust-inputs.json`. The separate config-path PR [#1245](https://github.com/danieljustus/symaira-desktop/pull/1245) is not integrated by this checkpoint.
 
 Preserved work covers bounded PDF tool execution, validated output publication, process-group cleanup, versioned source-bound Go/Rust PDF fixtures, profile discovery, and unfinished native PDF MCP consumers. See `docs/rust-port/pdfops-v2.md` for the current contract; earlier v1 failures in `pdfops-local.md` remain historical evidence, not the current safety policy.

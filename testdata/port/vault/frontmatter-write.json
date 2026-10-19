@@ -1,12 +1,12 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "1e31bf59e1a487f1c3b2affb7a71f3e546ae7d7b",
+    "commit": "addb0ba615a435b89dbd690e923bf28bbafbc0e3",
     "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {
-    "go.mod": "696b8a7dd98d98d74afb0684b4f61886ecbd8d17b97f51799b74d0a4ae062522",
-    "go.sum": "84c9791ca16675620d31a44ebc539269fe7a1bca7ef180ed1111e5d999f24f08",
+    "go.mod": "826373e4e4c071e6c5ad8333de40617f2935119cc5d0c53c7afbce3401e08e5f",
+    "go.sum": "ffe0a0d61d65e11ae50dae2f4075be58a06f096e8d3deb3c0a973e6c64f848c3",
     "internal/vault/adopt.go": "bca6c7451d706eb9f3d72c62ff1042d4b0f78acf44b769ee31e50236d00bb96f",
     "internal/vault/asn.go": "3724de55e70b001a29e770719d8bcc7919bc9f52005019170c1f8bd64c524334",
     "internal/vault/asn_lock_unix.go": "7219874019353d841785ef18577a9decdf28ac3668c8f5f7f93f0e0e6bc4f2ad",

@@ -53,6 +53,7 @@ BASE_CASE_IDS = (
     "timeout_negative_json",
     "timeout_zero_delayed_local_provider_json",
     "timeout_blocked_local_provider_json",
+    "timeout_blocked_ready_provider_json",
     "aggregate_invalid_retrieval_db_json",
     "timeout_blocked_sidecar_json",
 )
@@ -63,11 +64,30 @@ BASE_CASE_EXPECTED_EXIT_CODES = {
         "aggregate_missing_vault_json",
         "timeout_negative_json",
         "timeout_blocked_local_provider_json",
+        "timeout_blocked_ready_provider_json",
         "aggregate_invalid_retrieval_db_json",
         "timeout_blocked_sidecar_json",
     } else 0
     for case_id in BASE_CASE_IDS
 }
+# #1257: the 150ms whole-worker deadline can expire before a cold worker
+# reports its first phase, so each implementation honestly reports either the
+# worker-startup fallback or the retrieval phase. This hard-deadline/cleanup
+# control therefore admits exactly these two stdout bodies per role instead of
+# byte parity. Phase parity is asserted on the ready-provider case, which runs
+# only after the loopback provider has observed the status probe.
+DEADLINE_CONTROL_CASE = "timeout_blocked_local_provider_json"
+DEADLINE_CONTROL_STDOUT = tuple(
+    f'{{"error":"index status timed out during {phase} after 150ms: context deadline exceeded"}}\n'.encode("ascii")
+    for phase in ("worker startup", "retrieval status")
+)
+READY_PROVIDER_CASE = "timeout_blocked_ready_provider_json"
+READY_PROVIDER_TIMEOUT = "2s"
+READY_PROVIDER_TIMEOUT_SECONDS = 2.0
+# Hang detection only: the provider holds the probe for 30s, and cleanup latency
+# is bounded strictly by the 150ms control. Native Windows Go took 4.4s here
+# (run 39249393171), so the bound leaves room for platform process teardown.
+READY_PROVIDER_CLEANUP_BOUND_SECONDS = 7.0
 DURATION_INPUTS = (
     ("invalid_text", "bad", 1),
     ("unitless_number", "1", 1),
@@ -214,7 +234,8 @@ def case_argv(case_id: str, binary: str, world: dict[str, str]) -> list[str]:
     if case_id == "timeout_blocked_sidecar_json":
         args.extend(["--documents", "--timeout", "500ms"])
     timeout = {"timeout_negative_json": "-1ms", "timeout_zero_delayed_local_provider_json": "0s",
-               "timeout_blocked_local_provider_json": "150ms"}.get(case_id)
+               "timeout_blocked_local_provider_json": "150ms",
+               READY_PROVIDER_CASE: READY_PROVIDER_TIMEOUT}.get(case_id)
     if timeout is not None:
         args.extend(["--timeout", timeout])
     return args
@@ -621,6 +642,14 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
             errors.append(f"{role} blocked-provider deadline exceeded the 1.5s cleanup bound")
         if case_id == "timeout_blocked_sidecar_json" and elapsed_number is not None and elapsed_number >= 1.5:
             errors.append(f"{role} blocked-sidecar deadline exceeded the 1.5s cleanup bound")
+        if case_id == READY_PROVIDER_CASE:
+            if elapsed_number is not None and elapsed_number >= READY_PROVIDER_CLEANUP_BOUND_SECONDS:
+                errors.append(f"{role} ready-provider deadline exceeded the {READY_PROVIDER_CLEANUP_BOUND_SECONDS}s cleanup bound")
+            if not _is_int(run.get("provider_probe_count")) or run.get("provider_probe_count") != 1:
+                errors.append(f"{role} ready-provider control must record exactly one provider probe")
+            ready = _number_or_none(run.get("provider_ready_seconds"))
+            if ready is None or ready < 0 or ready >= READY_PROVIDER_TIMEOUT_SECONDS:
+                errors.append(f"{role} ready-provider probe was not observed before the {READY_PROVIDER_TIMEOUT} deadline")
         if case_id in BASE_CASE_EXPECTED_EXIT_CODES and expected_exit != BASE_CASE_EXPECTED_EXIT_CODES[case_id]:
             errors.append(f"{role}:{case_id} expected exit does not match the reviewed base case")
         if case_id in DURATION_CASE_BY_ID:
@@ -772,6 +801,11 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
                 normalized[stream] = normalize(raw, replacements_by_group[group])
             normalized_runs[role] = normalized
         compared += 1
+        if case_id == DEADLINE_CONTROL_CASE:
+            for role in expected_roles:
+                if normalized_runs[role]["stdout"] not in DEADLINE_CONTROL_STDOUT:
+                    errors.append(f"{role} 150ms deadline control reported neither the worker-startup nor the retrieval phase")
+            normalized_runs = {role: {**run, "stdout": b"<DEADLINE CONTROL PHASE CHECKED>"} for role, run in normalized_runs.items()}
         if normalized_runs.get("go") != normalized_runs.get("rust"):
             mismatches.append(
                 {
@@ -797,7 +831,7 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
         "executed_case_ids": len(executed),
         "raw_runs_including_seed_commands": len(runs),
         "compared_cases": compared,
-        "normalization": "only the exact four recorded disposable world roots and Go VaultDocumentCount pointer values; raw artifacts are unchanged",
+        "normalization": "only the exact four recorded disposable world roots and Go VaultDocumentCount pointer values; the 150ms deadline-control stdout is checked against its two admitted phase bodies instead of byte parity; raw artifacts are unchanged",
         "errors": errors,
         "mismatches": mismatches,
     }

@@ -28,6 +28,10 @@ from compare import (
     DURATION_CASES,
     TIMESTAMP_CASES,
     WORKER_CASE_IDS,
+    READY_PROVIDER_CASE,
+    READY_PROVIDER_CLEANUP_BOUND_SECONDS,
+    READY_PROVIDER_TIMEOUT,
+    READY_PROVIDER_TIMEOUT_SECONDS,
     case_argv,
     REQUIRED_CASE_IDS,
     FULL_REVISION,
@@ -47,6 +51,28 @@ class SlowHandler(http.server.BaseHTTPRequestHandler):
         _ = self.rfile.read(int(self.headers.get("Content-Length", "0")))
         time.sleep(self.delay)
         body = b'{"error":"controlled local timeout probe"}\n'
+        self.send_response(503)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+    def log_message(self, format: str, *args: object) -> None:
+        _ = (format, args)
+
+
+class ReadinessHandler(http.server.BaseHTTPRequestHandler):
+    """Record each provider probe, then hold it until the capture releases it."""
+
+    def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
+        _ = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+        self.server.probe_times.append(time.monotonic())  # type: ignore[attr-defined]
+        self.server.probe_count += 1  # type: ignore[attr-defined]
+        self.server.release.wait(30)  # type: ignore[attr-defined]
+        body = b'{"error":"controlled local readiness probe"}\n'
         self.send_response(503)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -105,6 +131,8 @@ class LoopbackServer:
         self.server.daemon_threads = True
         self.server.probe_count = probe_count  # type: ignore[attr-defined]
         self.server.response_codes = []  # type: ignore[attr-defined]
+        self.server.probe_times = []  # type: ignore[attr-defined]
+        self.server.release = threading.Event()  # type: ignore[attr-defined]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     @property
@@ -116,6 +144,7 @@ class LoopbackServer:
         return self
 
     def __exit__(self, *_exc: object) -> None:
+        self.server.release.set()  # type: ignore[attr-defined]
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
@@ -649,6 +678,32 @@ def run_status_cases(
         persist_manifest(output_dir, manifest)
         if elapsed >= 1.5:
             raise RuntimeError(f"{role}: blocked provider exceeded safety bound ({elapsed:.3f}s); raw output retained")
+
+    # #1257: phase parity is observed only after the loopback provider proves
+    # the status probe arrived before the deadline; the 150ms case above stays
+    # the hard-deadline and cleanup control.
+    with LoopbackServer(ReadinessHandler) as server:
+        write_config(paths["home"], server.url)
+        before = time.monotonic()
+        run = capture(
+            READY_PROVIDER_CASE,
+            ["--json", "--vault", vault, "index", "status", "--timeout", READY_PROVIDER_TIMEOUT],
+            1,
+        )
+        elapsed = time.monotonic() - before
+        probes = list(server.server.probe_times)  # type: ignore[attr-defined]
+        run["assertion"] = f"{READY_PROVIDER_TIMEOUT} deadline observed after the provider received the status probe"
+        run["elapsed_seconds"] = elapsed
+        run["provider_probe_count"] = len(probes)
+        run["provider_ready_seconds"] = probes[0] - before if probes else None
+        ready = len(probes) == 1 and probes[0] - before < READY_PROVIDER_TIMEOUT_SECONDS
+        run["success"] = run["success"] and ready and elapsed < READY_PROVIDER_CLEANUP_BOUND_SECONDS
+        persist_manifest(output_dir, manifest)
+        if not ready:
+            raise RuntimeError(f"{role}: provider readiness was not observed before the {READY_PROVIDER_TIMEOUT} deadline "
+                               f"({len(probes)} probe(s)); raw output retained")
+        if elapsed >= READY_PROVIDER_CLEANUP_BOUND_SECONDS:
+            raise RuntimeError(f"{role}: ready provider exceeded safety bound ({elapsed:.3f}s); raw output retained")
 
     invalid = paths["world"] / "invalid-index.db"
     invalid.write_bytes(b"not a SQLite database\n")

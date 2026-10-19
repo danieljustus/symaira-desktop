@@ -95,6 +95,7 @@ class CompareNegativeControls(unittest.TestCase):
             "aggregate_invalid_retrieval_db_json",
             "timeout_negative_json",
             "timeout_blocked_local_provider_json",
+            "timeout_blocked_ready_provider_json",
             "timeout_blocked_sidecar_json",
         }
         for role in ("go", "rust"):
@@ -114,6 +115,9 @@ class CompareNegativeControls(unittest.TestCase):
                 if case_id == "provider_retry_one_probe_json":
                     extra["provider_probe_count"] = 1
                     extra["provider_response_codes"] = [503]
+                if case_id == compare.READY_PROVIDER_CASE:
+                    extra["provider_probe_count"] = 1
+                    extra["provider_ready_seconds"] = 0.4
                 elapsed = 0.25 if case_id == "timeout_zero_delayed_local_provider_json" else 0.15 if case_id == "timeout_blocked_local_provider_json" else 0.01
                 runs.append(
                     self._run_record(
@@ -193,7 +197,8 @@ class CompareNegativeControls(unittest.TestCase):
         stem = f"{role}--{case_id}--{world_key}" if case_id == "seed_index" else f"{role}--{case_id}"
         stdout_name = f"{stem}.stdout.bin"
         stderr_name = f"{stem}.stderr.bin"
-        stdout = b'{"synthetic":"structural-only"}\n'
+        stdout = (compare.DEADLINE_CONTROL_STDOUT[0] if case_id == compare.DEADLINE_CONTROL_CASE
+                  else b'{"synthetic":"structural-only"}\n')
         stderr = b""
         (self.capture / stdout_name).write_bytes(stdout)
         (self.capture / stderr_name).write_bytes(stderr)
@@ -266,7 +271,7 @@ class CompareNegativeControls(unittest.TestCase):
 
     def test_valid_structural_control_executes_all_required_ids(self) -> None:
         self._assert_valid_baseline()
-        self.assertEqual(len(compare.REQUIRED_CASE_IDS), 125)
+        self.assertEqual(len(compare.REQUIRED_CASE_IDS), 126)
         self.assertEqual(len(self.manifest["executed_case_ids"]), 2 * len(compare.REQUIRED_CASE_IDS))
         report = json.loads(self.report_path.read_bytes())
         self.assertEqual(report["compared_cases"], len(compare.REQUIRED_CASE_IDS))
@@ -478,6 +483,53 @@ class CompareNegativeControls(unittest.TestCase):
         self.assertTrue(any(row["case_id"] == "worker_documents_json"
                             and row["go_stderr_sha256"] != row["rust_stderr_sha256"]
                             for row in report["mismatches"]), report)
+
+    def _set_stdout(self, role: str, case_id: str, raw: bytes) -> None:
+        row = next(row for row in self.manifest["runs"] if row["role"] == role and row["case_id"] == case_id)
+        (self.capture / row["stdout_file"]).write_bytes(raw)
+        row["stdout_size_bytes"] = len(raw)
+        row["stdout_sha256"] = hashlib.sha256(raw).hexdigest()
+
+    def test_deadline_control_admits_only_the_two_honest_phases(self) -> None:
+        # Original #1257 observation (CI run 38293765963 attempt 1, macOS Intel):
+        # a cold Go worker had not reported a phase when the 150ms deadline fired.
+        startup, retrieval = compare.DEADLINE_CONTROL_STDOUT
+        self.assertEqual(startup, b'{"error":"index status timed out during worker startup after 150ms: context deadline exceeded"}\n')
+        self._set_stdout("go", compare.DEADLINE_CONTROL_CASE, startup)
+        self._set_stdout("rust", compare.DEADLINE_CONTROL_CASE, retrieval)
+        self._assert_valid_baseline()
+        self._set_stdout("rust", compare.DEADLINE_CONTROL_CASE,
+                         b'{"error":"index status timed out during open sidecar database after 150ms: context deadline exceeded"}\n')
+        self._write_manifest()
+        exit_code, report = self._invoke()
+        self.assertNotEqual(exit_code, 0)
+        self.assertTrue(any("150ms deadline control" in error for error in report["errors"]), report["errors"])
+
+    def test_ready_provider_requires_readiness_and_strict_phase_parity(self) -> None:
+        self._assert_valid_baseline()
+        original = copy.deepcopy(self.manifest)
+        startup, retrieval = (body.replace(b"150ms", b"2s") for body in compare.DEADLINE_CONTROL_STDOUT)
+        # The cold-start pair that the deadline control admits must fail once
+        # readiness is established: phase parity is byte-exact here.
+        self._set_stdout("go", compare.READY_PROVIDER_CASE, startup)
+        self._set_stdout("rust", compare.READY_PROVIDER_CASE, retrieval)
+        self._write_manifest()
+        exit_code, report = self._invoke()
+        self.assertNotEqual(exit_code, 0)
+        self.assertTrue(any(row["case_id"] == compare.READY_PROVIDER_CASE for row in report["mismatches"]), report)
+        for field, value, message in (
+            ("provider_probe_count", 0, "exactly one provider probe"),
+            ("provider_ready_seconds", 2.0, "not observed before"),
+            ("provider_ready_seconds", None, "not observed before"),
+            ("elapsed_seconds", compare.READY_PROVIDER_CLEANUP_BOUND_SECONDS, "cleanup bound"),
+        ):
+            self.manifest = copy.deepcopy(original)
+            row = next(row for row in self.manifest["runs"] if row["role"] == "go" and row["case_id"] == compare.READY_PROVIDER_CASE)
+            row[field] = value
+            self._write_manifest()
+            exit_code, report = self._invoke()
+            self.assertNotEqual(exit_code, 0, field)
+            self.assertTrue(any(message in error for error in report["errors"]), (field, report["errors"]))
 
     def test_symlink_artifact_is_rejected_without_following_it(self) -> None:
         self._assert_valid_baseline()

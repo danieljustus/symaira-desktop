@@ -320,7 +320,16 @@ func inventoryGitOutput(repoRoot string, args ...string) ([]byte, error) {
 }
 
 func inventoryGitOutputWithExecutable(repoRoot, git string, args ...string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	return inventoryGitOutputWithTimeout(repoRoot, git, 30*time.Second, args...)
+}
+
+// oracleCheckoutTimeout bounds Git commands whose cost scales with the whole
+// source tree. A full oracle checkout took 38-42 s on loaded native Windows
+// runners, beyond the 30 s default for short metadata reads.
+const oracleCheckoutTimeout = 5 * time.Minute
+
+func inventoryGitOutputWithTimeout(repoRoot, git string, timeout time.Duration, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	configPath, cleanup, err := PrivateGitConfig()
 	if err != nil {

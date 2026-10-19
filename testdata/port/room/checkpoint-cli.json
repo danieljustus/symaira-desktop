@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "1e31bf59e1a487f1c3b2affb7a71f3e546ae7d7b",
+  "oracle_revision": "addb0ba615a435b89dbd690e923bf28bbafbc0e3",
   "root_event": "event-room-created",
   "root_pubkey": "ed25519:2cbb097991644a68a8a9aae504de9bdeb2e2b754e0676de52641d3830be3f115",
   "normalization": "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event",

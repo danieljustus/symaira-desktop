@@ -224,11 +224,11 @@ func VerifyOracleBundle(repoRoot, head, revision string) error {
 	if !bundled {
 		return fmt.Errorf("source is neither ancestral nor explicitly recorded in an oracle bundle")
 	}
-	pinned, err := computeGitRevisionProductionSourceDigest(root, revision, func(args ...string) ([]byte, error) { return inventoryGitOutputWithExecutable(root, git, args...) })
+	pinned, err := computeGitRevisionProductionSourceDigest(root, git, revision)
 	if err != nil {
 		return err
 	}
-	checked, err := computeGitRevisionProductionSourceDigest(repoRoot, head, func(args ...string) ([]byte, error) { return inventoryGitOutputWithExecutable(repoRoot, git, args...) })
+	checked, err := computeGitRevisionProductionSourceDigest(repoRoot, git, head)
 	if err != nil {
 		return err
 	}
@@ -336,7 +336,7 @@ func oracleRevisionDigest(repoRoot, git, revision string) (string, error) {
 		return "", err
 	}
 	defer cleanup()
-	return computeGitRevisionProductionSourceDigest(root, revision, func(args ...string) ([]byte, error) { return inventoryGitOutputWithExecutable(root, git, args...) })
+	return computeGitRevisionProductionSourceDigest(root, git, revision)
 }
 
 // OracleGitOutput supports source-reading generators after the original source

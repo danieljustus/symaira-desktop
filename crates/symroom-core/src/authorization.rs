@@ -34,19 +34,26 @@ pub fn try_acquire(room_dir: &Path) -> io::Result<Option<Guard>> {
     }
 }
 
+#[cfg(unix)]
+fn create_private_dir(path: &Path) -> io::Result<()> {
+    use std::os::unix::fs::DirBuilderExt;
+    let mut builder = fs::DirBuilder::new();
+    builder.mode(0o700);
+    builder.create(path)
+}
+
+#[cfg(not(unix))]
+fn create_private_dir(path: &Path) -> io::Result<()> {
+    fs::create_dir(path)
+}
+
 // The non-authoritative lock lives in ignored local .symroom state. Never
 // remove the file: another process may already be waiting on its inode.
 // Go confines this through os.Root; Rust refuses a symlinked state directory
 // or lock file so the lock can never be created outside the room.
 fn open(room_dir: &Path) -> io::Result<File> {
     let state = room_dir.join(".symroom");
-    let builder = {
-        let mut builder = fs::DirBuilder::new();
-        #[cfg(unix)]
-        std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
-        builder
-    };
-    match builder.create(&state) {
+    match create_private_dir(&state) {
         Ok(()) => {}
         Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
         Err(error) => return Err(error),

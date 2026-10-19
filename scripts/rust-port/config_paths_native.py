@@ -18,7 +18,7 @@ from typing import Any
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[2]
-FOUNDATION = "addb0ba615a435b89dbd690e923bf28bbafbc0e3"
+FOUNDATION = "ffa083487c60d669066fe6db0f07e77afa5f5a55"
 ORIGIN = "https://github.com/danieljustus/symaira-desktop.git"
 COREKIT = "github.com/danieljustus/symaira-corekit"
 COREKIT_VERSION = "v0.18.3-0.20261012110002-27d2daf8ec1e"

@@ -359,16 +359,16 @@ pub fn add_member(
         return Err(MemberMutationError::InvalidKind);
     }
 
-    let stats = journal::read_journal_stats(room_dir)?;
-    require_owner(&stats, signer)?;
-    let mut body = BTreeMap::new();
-    body.insert("id", crate::identity::compute_member_id(&public_key));
-    body.insert("name", name.to_owned());
-    body.insert("public_key", public_key_hex.to_owned());
-    body.insert("role", role.to_owned());
-    body.insert("kind", kind.to_owned());
-    let body = go_json(&body)?;
-    append_member_event(room_dir, signer, &stats, "member.added", body)
+    with_owner_transaction(room_dir, signer, |stats| {
+        let mut body = BTreeMap::new();
+        body.insert("id", crate::identity::compute_member_id(&public_key));
+        body.insert("name", name.to_owned());
+        body.insert("public_key", public_key_hex.to_owned());
+        body.insert("role", role.to_owned());
+        body.insert("kind", kind.to_owned());
+        let body = go_json(&body)?;
+        append_member_event(room_dir, signer, stats, "member.added", body)
+    })
 }
 
 /// Go `room.RemoveMember`: require an owner and an existing target, then append
@@ -378,13 +378,13 @@ pub fn remove_member(
     member_id: &str,
     signer: &Identity,
 ) -> Result<Event, MemberMutationError> {
-    let stats = journal::read_journal_stats(room_dir)?;
-    require_owner(&stats, signer)?;
-    if !stats.member_state.members.contains_key(member_id) {
-        return Err(MemberMutationError::NotFound);
-    }
-    let body = go_json(&BTreeMap::from([("id", member_id)]))?;
-    append_member_event(room_dir, signer, &stats, "member.removed", body)
+    with_owner_transaction(room_dir, signer, |stats| {
+        if !stats.member_state.members.contains_key(member_id) {
+            return Err(MemberMutationError::NotFound);
+        }
+        let body = go_json(&BTreeMap::from([("id", member_id)]))?;
+        append_member_event(room_dir, signer, stats, "member.removed", body)
+    })
 }
 
 /// Go `room.SetMemberRole`: validate role before owner and target checks, then
@@ -398,18 +398,34 @@ pub fn set_member_role(
     if !valid_role(role) {
         return Err(MemberMutationError::InvalidRole);
     }
-    let stats = journal::read_journal_stats(room_dir)?;
-    require_owner(&stats, signer)?;
-    if !stats.member_state.members.contains_key(member_id) {
-        return Err(MemberMutationError::NotFound);
-    }
-    let body = go_json(&BTreeMap::from([("id", member_id), ("role", role)]))?;
-    append_member_event(room_dir, signer, &stats, "member.role_changed", body)
+    with_owner_transaction(room_dir, signer, |stats| {
+        if !stats.member_state.members.contains_key(member_id) {
+            return Err(MemberMutationError::NotFound);
+        }
+        let body = go_json(&BTreeMap::from([("id", member_id), ("role", role)]))?;
+        append_member_event(room_dir, signer, stats, "member.role_changed", body)
+    })
 }
 
 /// Go `room.ListMembers` projection.
 pub fn list_members(room_dir: &Path) -> Result<State, std::io::Error> {
     Ok(journal::read_journal_stats(room_dir)?.member_state)
+}
+
+// Keep ordinary owner-denial errors before attempting the write lock, then
+// re-read and authorize under the shared transaction before signing/appending
+// (Go `withOwnerTransaction`, #1043).
+fn with_owner_transaction(
+    room_dir: &Path,
+    signer: &Identity,
+    operation: impl FnOnce(&journal::JournalStats) -> Result<Event, MemberMutationError>,
+) -> Result<Event, MemberMutationError> {
+    require_owner(&journal::read_journal_stats(room_dir)?, signer)?;
+    crate::authorization::with_room(room_dir, || {
+        let stats = journal::read_journal_stats(room_dir)?;
+        require_owner(&stats, signer)?;
+        operation(&stats)
+    })
 }
 
 fn require_owner(

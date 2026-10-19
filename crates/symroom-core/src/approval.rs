@@ -6,6 +6,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
+    authorization,
     event::{self, Event, EventError},
     identity::Identity,
     journal, members,
@@ -19,6 +20,33 @@ pub fn approve(
     scope: &str,
     ttl: time::Duration,
     signer: &Identity,
+) -> Result<Event, ApprovalError> {
+    approve_with_barrier(room_dir, run_id, scope, ttl, signer, None)
+}
+
+// `after_authorization` is a per-call barrier seam for concurrency tests; public
+// callers pass `None`. It runs with the room transaction held (Go `approve`).
+fn approve_with_barrier(
+    room_dir: &Path,
+    run_id: &str,
+    scope: &str,
+    ttl: time::Duration,
+    signer: &Identity,
+    after_authorization: Option<&dyn Fn()>,
+) -> Result<Event, ApprovalError> {
+    runs::read_room_config(room_dir)?;
+    authorization::with_room(room_dir, || {
+        approve_locked(room_dir, run_id, scope, ttl, signer, after_authorization)
+    })
+}
+
+fn approve_locked(
+    room_dir: &Path,
+    run_id: &str,
+    scope: &str,
+    ttl: time::Duration,
+    signer: &Identity,
+    after_authorization: Option<&dyn Fn()>,
 ) -> Result<Event, ApprovalError> {
     let config = runs::read_room_config(room_dir)?;
     let events = journal::merge_all(room_dir)
@@ -48,6 +76,9 @@ pub fn approve(
         } else {
             ApprovalError::InvalidRole
         });
+    }
+    if let Some(barrier) = after_authorization {
+        barrier();
     }
 
     let run = runs::get(room_dir, run_id)?;
@@ -198,4 +229,173 @@ pub enum ApprovalError {
     Encoding(String),
     #[error(transparent)]
     Event(#[from] EventError),
+    #[error("{0}")]
+    Authorization(#[from] std::io::Error),
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::{BufRead, BufReader};
+    use std::process::{Command, Stdio};
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    use super::*;
+    use crate::identity;
+
+    const CHILD: &str = "SYMROOM_APPROVAL_ROLE_CHILD";
+
+    fn room(owner: &Identity, actor: &Identity) -> (std::path::PathBuf, String) {
+        let mut nonce = [0_u8; 8];
+        getrandom::fill(&mut nonce).expect("nonce");
+        let parent = std::env::temp_dir().join(format!(
+            "symroom-approval-race-{}-{}",
+            std::process::id(),
+            hex::encode(nonce)
+        ));
+        let dir = parent.join("room");
+        crate::room_init::init(
+            &dir,
+            "race",
+            owner,
+            "room_race",
+            "ev_race_root",
+            time::OffsetDateTime::now_utc(),
+        )
+        .expect("init room");
+        let run = runs::request(&dir, "deploy", "", "", owner).expect("request run");
+        let run_id =
+            serde_json::from_str::<serde_json::Value>(run.body.get()).expect("body")["run_id"]
+                .as_str()
+                .expect("run id")
+                .to_owned();
+        members::add_member(
+            &dir,
+            "reviewer",
+            &hex::encode(&actor.public_key),
+            "member",
+            "human",
+            owner,
+        )
+        .expect("add member");
+        (dir, run_id)
+    }
+
+    // The subprocess must observe real kernel contention before the parent
+    // releases its approval barrier, so the test does not depend on timing.
+    #[test]
+    fn approve_serializes_independent_role_changes() {
+        if std::env::var_os(CHILD).is_some() {
+            return;
+        }
+        for action in ["remove", "observer", "agent"] {
+            let owner = identity::generate("owner").expect("owner");
+            let actor = identity::generate("reviewer").expect("actor");
+            let (dir, run_id) = room(&owner, &actor);
+            let (checked_tx, checked_rx) = mpsc::channel();
+            let (resume_tx, resume_rx) = mpsc::channel::<()>();
+            let approved = std::thread::scope(|scope| {
+                let (dir, run_id, actor) = (&dir, &run_id, &actor);
+                let approval = scope.spawn(move || {
+                    let barrier = || {
+                        checked_tx.send(()).expect("checked");
+                        resume_rx.recv().expect("resume");
+                    };
+                    approve_with_barrier(
+                        dir,
+                        run_id,
+                        "all",
+                        time::Duration::hours(1),
+                        actor,
+                        Some(&barrier),
+                    )
+                });
+                checked_rx
+                    .recv_timeout(Duration::from_secs(30))
+                    .expect("approval reached barrier");
+                let mut child = Command::new(std::env::current_exe().expect("test image"))
+                    .args([
+                        "--exact",
+                        "approval::tests::approval_role_change_child",
+                        "--nocapture",
+                        "--test-threads=1",
+                    ])
+                    .env(CHILD, action)
+                    .env("SYMROOM_APPROVAL_ROOM", dir)
+                    .env("SYMROOM_APPROVAL_MEMBER", &actor.member_id)
+                    .env("SYMROOM_APPROVAL_OWNER", hex::encode(&owner.private_key))
+                    .stdout(Stdio::piped())
+                    .spawn()
+                    .expect("spawn role writer");
+                let mut lines = BufReader::new(child.stdout.take().expect("stdout")).lines();
+                let contended = lines
+                    .by_ref()
+                    .map_while(Result::ok)
+                    // libtest may prefix the line with its own `test name ... ` progress.
+                    .any(|line| line.ends_with("AUTHORIZATION_LOCK_BUSY"));
+                if !contended {
+                    resume_tx.send(()).ok();
+                    panic!("independent writer did not see held kernel lock: {action}");
+                }
+                assert!(!approval.is_finished(), "approval left paused barrier");
+                resume_tx.send(()).expect("resume");
+                let approved = approval.join().expect("approval thread");
+                lines.for_each(drop);
+                assert!(
+                    child.wait().expect("role writer").success(),
+                    "role writer failed"
+                );
+                approved.expect("serialized approval")
+            });
+
+            let events = journal::merge_all(&dir).expect("merge");
+            let approval_index = events.iter().position(|e| e.id == approved.id);
+            let change_index = events
+                .iter()
+                .rposition(|e| matches!(e.kind.as_str(), "member.removed" | "member.role_changed"));
+            assert!(
+                matches!((approval_index, change_index), (Some(a), Some(c)) if c > a),
+                "role change overtook locked authorization: {approval_index:?} {change_index:?}"
+            );
+            assert_eq!(runs::get(&dir, &run_id).expect("run").state, "approved");
+            assert!(journal::verify(&dir).expect("verify").valid);
+            // A later attempt observes the changed role and keeps existing denials.
+            let error = approve(&dir, &run_id, "all", time::Duration::hours(1), &actor)
+                .expect_err("post-change approval");
+            let want = match action {
+                "remove" => "member not found",
+                "observer" => "observer role has read-only access",
+                _ => "agent identity is forbidden from approving runs",
+            };
+            assert_eq!(error.to_string(), want);
+            std::fs::remove_dir_all(dir.parent().expect("parent")).ok();
+        }
+    }
+
+    #[test]
+    fn approval_role_change_child() {
+        let Some(action) = std::env::var_os(CHILD) else {
+            return;
+        };
+        let env = |key| std::env::var(key).expect(key);
+        let dir = std::path::PathBuf::from(env("SYMROOM_APPROVAL_ROOM"));
+        let guard = authorization::try_acquire(&dir).expect("contention probe");
+        assert!(
+            guard.is_none(),
+            "approval released its transaction before append"
+        );
+        // Bypass libtest output capture so the parent sees the signal at once.
+        let mut stdout = std::io::stdout().lock();
+        std::io::Write::write_all(&mut stdout, b"AUTHORIZATION_LOCK_BUSY\n").expect("signal");
+        std::io::Write::flush(&mut stdout).expect("flush");
+        drop(stdout);
+        let key = hex::decode(env("SYMROOM_APPROVAL_OWNER")).expect("owner key");
+        let owner = identity::identity_from_private_key("owner", &key).expect("owner");
+        let member = env("SYMROOM_APPROVAL_MEMBER");
+        match action.to_str().expect("action") {
+            "remove" => members::remove_member(&dir, &member, &owner),
+            role => members::set_member_role(&dir, &member, role, &owner),
+        }
+        .expect("role change");
+    }
 }

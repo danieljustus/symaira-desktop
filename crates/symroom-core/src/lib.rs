@@ -15,6 +15,7 @@
 
 pub mod approval;
 pub mod artifact;
+pub mod authorization;
 pub mod desk_watch;
 pub mod event;
 pub mod identity;

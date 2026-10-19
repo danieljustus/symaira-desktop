@@ -84,6 +84,10 @@ DEADLINE_CONTROL_STDOUT = tuple(
 READY_PROVIDER_CASE = "timeout_blocked_ready_provider_json"
 READY_PROVIDER_TIMEOUT = "2s"
 READY_PROVIDER_TIMEOUT_SECONDS = 2.0
+# Far above the deadline: with the default 2s provider client timeout, native
+# macOS Rust finished the HTTP probe as unavailable before the 2s deadline fired
+# (exit 0) while Go reported the timeout (run 39258907869).
+READY_PROVIDER_CLIENT_TIMEOUT_SECONDS = 30
 # Hang detection only: the provider holds the probe for 30s, and cleanup latency
 # is bounded strictly by the 150ms control. Native Windows Go took 4.4s here
 # (run 39249393171), so the bound leaves room for platform process teardown.
@@ -647,6 +651,8 @@ def compare_manifest(manifest_path: Path, *, expected_rust_commit: str,
                 errors.append(f"{role} ready-provider deadline exceeded the {READY_PROVIDER_CLEANUP_BOUND_SECONDS}s cleanup bound")
             if not _is_int(run.get("provider_probe_count")) or run.get("provider_probe_count") != 1:
                 errors.append(f"{role} ready-provider control must record exactly one provider probe")
+            if run.get("provider_client_timeout_seconds") != READY_PROVIDER_CLIENT_TIMEOUT_SECONDS:
+                errors.append(f"{role} ready-provider client timeout must be {READY_PROVIDER_CLIENT_TIMEOUT_SECONDS}s so it cannot race the deadline")
             ready = _number_or_none(run.get("provider_ready_seconds"))
             if ready is None or ready < 0 or ready >= READY_PROVIDER_TIMEOUT_SECONDS:
                 errors.append(f"{role} ready-provider probe was not observed before the {READY_PROVIDER_TIMEOUT} deadline")

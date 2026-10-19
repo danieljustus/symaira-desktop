@@ -30,6 +30,7 @@ from compare import (
     WORKER_CASE_IDS,
     READY_PROVIDER_CASE,
     READY_PROVIDER_CLEANUP_BOUND_SECONDS,
+    READY_PROVIDER_CLIENT_TIMEOUT_SECONDS,
     READY_PROVIDER_TIMEOUT,
     READY_PROVIDER_TIMEOUT_SECONDS,
     case_argv,
@@ -180,6 +181,7 @@ def write_config(
     endpoint: str = "http://127.0.0.1:1/api/embeddings",
     *,
     retry_count: int = 0,
+    timeout_seconds: int = 2,
 ) -> None:
     config = home / ".config" / "symseek" / "config.toml"
     config.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -187,7 +189,7 @@ def write_config(
         f'ollama_url = "{endpoint}"\n'
         'model = "qwen3-embedding:0.6b"\n'
         "embedding_dim = 768\n"
-        "timeout_seconds = 2\n"
+        f"timeout_seconds = {timeout_seconds}\n"
         f"retry_count = {retry_count}\n"
         "retry_backoff_ms = 1\n",
         encoding="utf-8",
@@ -683,7 +685,8 @@ def run_status_cases(
     # the status probe arrived before the deadline; the 150ms case above stays
     # the hard-deadline and cleanup control.
     with LoopbackServer(ReadinessHandler) as server:
-        write_config(paths["home"], server.url)
+        # The provider client timeout must not race the whole-worker deadline.
+        write_config(paths["home"], server.url, timeout_seconds=READY_PROVIDER_CLIENT_TIMEOUT_SECONDS)
         before = time.monotonic()
         run = capture(
             READY_PROVIDER_CASE,
@@ -694,6 +697,7 @@ def run_status_cases(
         probes = list(server.server.probe_times)  # type: ignore[attr-defined]
         run["assertion"] = f"{READY_PROVIDER_TIMEOUT} deadline observed after the provider received the status probe"
         run["elapsed_seconds"] = elapsed
+        run["provider_client_timeout_seconds"] = READY_PROVIDER_CLIENT_TIMEOUT_SECONDS
         run["provider_probe_count"] = len(probes)
         run["provider_ready_seconds"] = probes[0] - before if probes else None
         ready = len(probes) == 1 and probes[0] - before < READY_PROVIDER_TIMEOUT_SECONDS

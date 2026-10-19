@@ -118,6 +118,7 @@ class CompareNegativeControls(unittest.TestCase):
                 if case_id == compare.READY_PROVIDER_CASE:
                     extra["provider_probe_count"] = 1
                     extra["provider_ready_seconds"] = 0.4
+                    extra["provider_client_timeout_seconds"] = compare.READY_PROVIDER_CLIENT_TIMEOUT_SECONDS
                 elapsed = 0.25 if case_id == "timeout_zero_delayed_local_provider_json" else 0.15 if case_id == "timeout_blocked_local_provider_json" else 0.01
                 runs.append(
                     self._run_record(
@@ -522,6 +523,7 @@ class CompareNegativeControls(unittest.TestCase):
             ("provider_ready_seconds", 2.0, "not observed before"),
             ("provider_ready_seconds", None, "not observed before"),
             ("elapsed_seconds", compare.READY_PROVIDER_CLEANUP_BOUND_SECONDS, "cleanup bound"),
+            ("provider_client_timeout_seconds", 2, "cannot race the deadline"),
         ):
             self.manifest = copy.deepcopy(original)
             row = next(row for row in self.manifest["runs"] if row["role"] == "go" and row["case_id"] == compare.READY_PROVIDER_CASE)

@@ -338,8 +338,16 @@
       "passed": 1
     },
     "cargo test -p symroom-core --locked --test verify_contracts": {
-      "ignored": 0,
-      "passed": 1
+      "by_platform": {
+        "darwin": {
+          "ignored": 0,
+          "passed": 1
+        },
+        "linux": {
+          "ignored": 0,
+          "passed": 2
+        }
+      }
     },
     "cargo test -p symroom-core --locked --test watch_stream_contracts": {
       "ignored": 0,

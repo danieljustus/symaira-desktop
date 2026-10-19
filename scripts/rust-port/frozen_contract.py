@@ -112,6 +112,23 @@ def check_skips(command, skips, env):
             raise RuntimeError(f"{command}: live-only skip {skip!r} matches {hits}")
 
 
+def expected_counts(entry):
+    """Return (passed, ignored) for this platform; platform-gated tests differ."""
+    if "by_platform" not in entry:
+        return entry["passed"], entry["ignored"]
+    if sys.platform not in entry["by_platform"]:
+        raise RuntimeError(f"no recorded counts for platform {sys.platform}")
+    counts = entry["by_platform"][sys.platform]
+    return counts["passed"], counts["ignored"]
+
+
+def record_counts(entry, got):
+    if "by_platform" in entry:
+        entry["by_platform"][sys.platform] = {"passed": got["passed"], "ignored": got["ignored"]}
+    else:
+        entry.update(passed=got["passed"], ignored=got["ignored"])
+
+
 def replay(command, entry, env):
     skips = entry.get("live_only_tests", [])
     if skips:
@@ -188,10 +205,11 @@ def main(argv=None):
             entry = manifest["replays"][command]
             got, skipped = replay(command, entry, env)
             if args.record:
-                entry.update(passed=got["passed"], ignored=got["ignored"])
-            elif (got["passed"], got["ignored"]) != (entry["passed"], entry["ignored"]):
+                record_counts(entry, got)
+            elif (got["passed"], got["ignored"]) != expected_counts(entry):
+                want = expected_counts(entry)
                 print(f"FAIL {command}: got {got['passed']} passed/{got['ignored']} ignored, "
-                      f"recorded {entry['passed']}/{entry['ignored']}", file=sys.stderr)
+                      f"recorded {want[0]}/{want[1]} on {sys.platform}", file=sys.stderr)
                 return 1
             total += got["passed"]
             live_total += got["passed"] + skipped

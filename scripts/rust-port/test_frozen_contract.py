@@ -96,7 +96,19 @@ class FrozenContractControls(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertGreater(len(commands), 50)
         for command in commands:
-            self.assertGreater(manifest["replays"][command]["passed"], 0, command)
+            self.assertGreater(runner.expected_counts(manifest["replays"][command])[0], 0, command)
+
+    def test_platform_gated_replay_counts_are_per_platform(self):
+        entry = {"by_platform": {"linux": {"passed": 2, "ignored": 0}}}
+        original = runner.sys.platform
+        try:
+            runner.sys.platform = "linux"
+            self.assertEqual(runner.expected_counts(entry), (2, 0))
+            runner.sys.platform = "darwin"
+            with self.assertRaises(RuntimeError):
+                runner.expected_counts(entry)
+        finally:
+            runner.sys.platform = original
 
 
 if __name__ == "__main__":

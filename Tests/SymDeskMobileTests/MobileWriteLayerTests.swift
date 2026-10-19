@@ -315,17 +315,17 @@ final class MobileWriteLayerTests: XCTestCase {
         let entry = MobileOutboxEntry(kind: .createNote, path: "drained.md", content: "content")
         try await coordinator.enqueue(entry)
 
-        // Give the async drain a moment to run.
-        for _ in 0..<250 {
-            if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent("drained.md").path) {
-                break
-            }
+        // The drain writes the file before it removes the entry, so wait for the
+        // queue itself to empty: the file alone appears while the entry is still
+        // uploading.
+        var remaining = await coordinator.entries()
+        for _ in 0..<250 where !remaining.isEmpty {
             try? await Task.sleep(for: .milliseconds(20))
+            remaining = await coordinator.entries()
         }
 
-        XCTAssertTrue(try String(contentsOf: vaultRoot.appendingPathComponent("drained.md"), encoding: .utf8) == "content")
-        let remaining = await coordinator.entries()
         XCTAssertTrue(remaining.isEmpty, "applied entries must leave the queue")
+        XCTAssertTrue(try String(contentsOf: vaultRoot.appendingPathComponent("drained.md"), encoding: .utf8) == "content")
     }
 
     func testCoordinatorNetworkFailureKeepsEntryQueued() async throws {

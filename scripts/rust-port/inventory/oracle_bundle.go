@@ -322,11 +322,11 @@ func CloneOracleSource(repoRoot, revision, destination string) error {
 		if _, err := inventoryGitOutputWithExecutable(root, git, "update-ref", "HEAD", revision); err != nil {
 			return err
 		}
-		if _, err := inventoryGitOutputWithExecutable(destination, git, "fetch", "--no-tags", "--no-write-fetch-head", "--", root, revision); err != nil {
+		if _, err := inventoryGitOutputWithTimeout(destination, git, oracleCheckoutTimeout, "fetch", "--no-tags", "--no-write-fetch-head", "--", root, revision); err != nil {
 			return err
 		}
 	}
-	_, err = inventoryGitOutputWithExecutable(destination, git, "checkout", "--detach", revision)
+	_, err = inventoryGitOutputWithTimeout(destination, git, oracleCheckoutTimeout, "checkout", "--detach", revision)
 	return err
 }
 

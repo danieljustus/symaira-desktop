@@ -782,6 +782,13 @@ func TestWatchDirectory_CreatesAndIndexes(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 
+	// Watchers are registered before the initial sync, so an indexed seed file
+	// proves the watcher is live before new.md is created.
+	readyFile := filepath.Join(docsDir, "ready.md")
+	if err := os.WriteFile(readyFile, []byte("watcher readiness"), 0600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -790,25 +797,19 @@ func TestWatchDirectory_CreatesAndIndexes(t *testing.T) {
 		errCh <- WatchDirectory(ctx, dbClient, embedder, docsDir)
 	}()
 
-	time.Sleep(200 * time.Millisecond)
+	waitForWatchedDocument(t, dbClient, readyFile, func(doc *db.Document) bool { return doc != nil }, "initial index of ready.md")
 
 	newFile := filepath.Join(docsDir, "new.md")
 	if err := os.WriteFile(newFile, []byte("watched content"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
-	time.Sleep(1500 * time.Millisecond)
-
-	doc, err := dbClient.GetDocument(newFile)
-	if err != nil {
-		t.Fatalf("GetDocument: %v", err)
-	}
-	if doc == nil {
-		t.Errorf("expected new.md to be indexed by watcher, got nil")
-	}
+	waitForWatchedDocument(t, dbClient, newFile, func(doc *db.Document) bool { return doc != nil }, "watcher index of new.md")
 
 	cancel()
-	<-errCh
+	if err := <-errCh; err != nil {
+		t.Errorf("WatchDirectory: %v", err)
+	}
 }
 
 func TestWatchDirectory_ModifiesFile(t *testing.T) {
@@ -854,42 +855,21 @@ func TestWatchDirectory_ModifiesFile(t *testing.T) {
 		errCh <- WatchDirectory(ctx, dbClient, embedder, docsDir)
 	}()
 
-	// Wait for the initial sync to finish. Poll instead of sleeping a fixed
-	// 200ms: on a loaded CI runner the initial index can take longer, which
-	// makes the fixed-sleep variant flaky.
-	var doc *db.Document
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) {
-		doc, err = dbClient.GetDocument(existingFile)
-		if err == nil && doc != nil {
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
-	if err != nil || doc == nil {
-		t.Fatalf("initial index: doc=%v err=%v", doc, err)
-	}
+	doc := waitForWatchedDocument(t, dbClient, existingFile, func(doc *db.Document) bool { return doc != nil }, "initial index of existing.md")
 	originalHash := doc.Hash
 
 	if err := os.WriteFile(existingFile, []byte("updated content for watcher"), 0600); err != nil {
 		t.Fatalf("update: %v", err)
 	}
 
-	time.Sleep(1500 * time.Millisecond)
-
-	docAfter, err := dbClient.GetDocument(existingFile)
-	if err != nil {
-		t.Fatalf("GetDocument after modify: %v", err)
-	}
-	if docAfter == nil {
-		t.Fatal("expected existing.md to still be in DB after modify")
-	}
-	if docAfter.Hash == originalHash {
-		t.Errorf("expected hash to change after file modification, still %q", originalHash)
-	}
+	waitForWatchedDocument(t, dbClient, existingFile, func(doc *db.Document) bool {
+		return doc != nil && doc.Hash != originalHash
+	}, "re-index of modified existing.md")
 
 	cancel()
-	<-errCh
+	if err := <-errCh; err != nil {
+		t.Errorf("WatchDirectory: %v", err)
+	}
 }
 
 func TestWatchDirectory_RemovesFile(t *testing.T) {
@@ -935,29 +915,40 @@ func TestWatchDirectory_RemovesFile(t *testing.T) {
 		errCh <- WatchDirectory(ctx, dbClient, embedder, docsDir)
 	}()
 
-	time.Sleep(200 * time.Millisecond)
-
-	doc, err := dbClient.GetDocument(doomedFile)
-	if err != nil || doc == nil {
-		t.Fatalf("initial index: doc=%v err=%v", doc, err)
-	}
+	waitForWatchedDocument(t, dbClient, doomedFile, func(doc *db.Document) bool { return doc != nil }, "initial index of doomed.md")
 
 	if err := os.Remove(doomedFile); err != nil {
 		t.Fatalf("remove: %v", err)
 	}
 
-	time.Sleep(1500 * time.Millisecond)
-
-	docAfter, err := dbClient.GetDocument(doomedFile)
-	if err != nil {
-		t.Fatalf("GetDocument after remove: %v", err)
-	}
-	if docAfter != nil {
-		t.Errorf("expected doomed.md to be removed from index, still present")
-	}
+	waitForWatchedDocument(t, dbClient, doomedFile, func(doc *db.Document) bool { return doc == nil }, "removal of doomed.md from the index")
 
 	cancel()
-	<-errCh
+	if err := <-errCh; err != nil {
+		t.Errorf("WatchDirectory: %v", err)
+	}
+}
+
+// waitForWatchedDocument polls the index until ready reports the expected
+// state, replacing fixed sleeps that flaked on loaded CI runners.
+func waitForWatchedDocument(t *testing.T, store interface {
+	GetDocument(string) (*db.Document, error)
+}, path string, ready func(*db.Document) bool, what string) *db.Document {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		doc, err := store.GetDocument(path)
+		if err != nil {
+			t.Fatalf("%s: GetDocument: %v", what, err)
+		}
+		if ready(doc) {
+			return doc
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%s: not observed within 10s (doc=%v)", what, doc)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 }
 
 func TestIndexDirectory(t *testing.T) {

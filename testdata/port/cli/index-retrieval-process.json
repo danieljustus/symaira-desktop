@@ -1,0 +1,1423 @@
+{
+  "schema_version": 1,
+  "config": "index_path = $INDEX_PATH\nollama_url = \"$SERVER/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+  "files": [
+    {
+      "path": "alpha.md",
+      "body": "---\ntitle: Alpha Oracle\ntags: [retrieval, oracle]\ntype: note\n---\n# Alpha\n\nIntro text.\n\n## Details\n\nalpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text \n"
+    },
+    {
+      "path": "nested/beta.md",
+      "body": "plain beta document without headings\nsecond line\n"
+    },
+    {
+      "path": "dup.md",
+      "body": "# Same\n\nrepeat body\n\n# Same\n\nrepeat body\n"
+    },
+    {
+      "path": "failing.md",
+      "body": "# Failing\n\nprovider-fail marker text\n\n# Healthy\n\nhealthy section text\n"
+    },
+    {
+      "path": "empty.md",
+      "body": ""
+    }
+  ],
+  "large_file": "big.md",
+  "large_bytes": 10485761,
+  "steps": [
+    {
+      "id": "initial",
+      "args": [
+        "--json",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":6,\"skipped\":0,\"status\":\"ok\"}\n",
+        "stderr": "Indexed: $ROOT/vault/alpha.md (5 chunks)\nWarning: failed to update hybrid index for $ROOT/vault/big.md: file $ROOT/vault/big.md exceeds 10485760 byte limit (10485761 bytes)\nIndexed: $ROOT/vault/dup.md (3 chunks)\nIndexed: $ROOT/vault/empty.md (1 chunks)\nengine: ollama retry 1/2 after 500ms (last error: llmkit: provider_error (status 500): {\"error\":\"fixture provider failure\"})\nengine: ollama retry 2/2 after 1s (last error: llmkit: provider_error (status 500): {\"error\":\"fixture provider failure\"})\nengine: batch embedding failed (ollama: exhausted 2 retries: llmkit: provider_error (status 500): {\"error\":\"fixture provider failure\"}), falling back to per-text requests\nengine: ollama retry 1/2 after 500ms (last error: llmkit: provider_error (status 500): {\"error\":\"fixture provider failure\"})\nengine: ollama retry 2/2 after 1s (last error: llmkit: provider_error (status 500): {\"error\":\"fixture provider failure\"})\nIndexed: $ROOT/vault/failing.md (3 chunks, 1 pending — embedding backend unavailable, will re-embed when available)\nIndexed: $ROOT/vault/nested/beta.md (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntype: note\nsimhash: aac0258f0185a02b\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Alpha\n\nIntro text.",
+              "## Details",
+              "alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha",
+              " contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: dup\ntitle: dup\ntitle: dup\ntype: note\nsimhash: 0d6b960886012212\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Same\n\nrepeat body",
+              "# Same\n\nrepeat body"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: empty\ntitle: empty\ntitle: empty\ntype: note\n__SYMDESK_SEARCH_METADATA_END__"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Failing\n\nprovider-fail marker text",
+              "# Healthy\n\nhealthy section text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Failing\n\nprovider-fail marker text",
+              "# Healthy\n\nhealthy section text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Failing\n\nprovider-fail marker text",
+              "# Healthy\n\nhealthy section text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "# Failing\n\nprovider-fail marker text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "# Failing\n\nprovider-fail marker text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "# Failing\n\nprovider-fail marker text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "# Healthy\n\nhealthy section text"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: f52fa19b154ea0a7\n__SYMDESK_SEARCH_METADATA_END__",
+              "plain beta document without headings\nsecond line\n"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/alpha.md",
+            "hash": "19d1a5011624e5103a6e99be3414cee1eab7f669b9ff279fbd11300c8ad367c3"
+          },
+          {
+            "path": "$ROOT/vault/dup.md",
+            "hash": "64b512ad558fffe6ce04d1713a9a4aad0ff607ed8f2108dc86b650989c0e78dd"
+          },
+          {
+            "path": "$ROOT/vault/empty.md",
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "$ROOT/vault/failing.md",
+            "hash": "c7bbce2be5a346e848748b67307d7e587df770df7d2848dd4533ee4bb15f40f7"
+          },
+          {
+            "path": "$ROOT/vault/nested/beta.md",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntype: note\nsimhash: aac0258f0185a02b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "3fbcb042a3432c1ae96eb40efb2b78e3e3c3116b41c6e95089d264d60b91140d",
+            "embedding": "894cc33e0000003f000080be",
+            "norm": "3fe5a7fca0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl alpha oracl tags retrieval type note simhash aac0258f0185a02b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 1,
+            "content": "# Alpha\n\nIntro text.",
+            "hash": "80b2a1fb4bb86c4f0b1705a7f81a4686f94053d982dc9b3ed90c4a58bc5b29cb",
+            "embedding": "4f22533e0000003f000080be",
+            "norm": "3fe3110880000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 20,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha",
+            "content_norm": "alpha intro text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 2,
+            "content": "## Details",
+            "hash": "98618570d40cf0abd338d7a1d41e84e9f5f7f2999f14e264562b0ee23a180cca",
+            "embedding": "4f22d33d0000003f000080be",
+            "norm": "3fe230b0a0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 22,
+            "char_end": 32,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "detail"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 3,
+            "content": "alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha",
+            "hash": "db89ea50553bc46f18f844a9ce58f5e7c7d596d5cfea92f63636f17df0d77dd9",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 34,
+            "char_end": 1029,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "alpha retrieval contract text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 4,
+            "content": " contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text",
+            "hash": "ddf5880f7d3d2efa2cd3155a0046e5fa43c92f5fcc4d37a3aa22d2e654a82ab3",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 829,
+            "char_end": 1533,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "contract text alpha retrieval"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: dup\ntitle: dup\ntitle: dup\ntype: note\nsimhash: 0d6b960886012212\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "c09cd927cf83339746eae4865e37e0860cf514c9c8906d52421f61f65d674ba3",
+            "embedding": "cb93c83e0000003f000080be",
+            "norm": "3fe5d805e0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl dup type note simhash 0d6b960886012212 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 1,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 19,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 2,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 21,
+            "char_end": 40,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/empty.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: empty\ntitle: empty\ntitle: empty\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "825b89a16ce85b2ac0f7dbd4dcdcedcc01c5acc8f6f24ddc0de49e85249c7eb0",
+            "embedding": "47053e3e0000003f000080be",
+            "norm": "3fe2d92fa0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl empty type note symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "39ca0142d2ce8b9899ef01c910360fb0108a0a573cea76be0c3b9cd70c70f1b4",
+            "embedding": "71f5033f0000003f000080be",
+            "norm": "3fe8552b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl failing type note simhash ae44b64b04116272 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 1,
+            "content": "# Failing\n\nprovider-fail marker text",
+            "hash": "99ef620e73be1407c606446d6c9fc191413c7bb6b6b05d5306a5ae2324b7c3d4",
+            "embedding": "",
+            "norm": "0",
+            "binary_signature": "",
+            "binary_signature_type": "null",
+            "dim": 0,
+            "model": "local-hash",
+            "char_start": 0,
+            "char_end": 36,
+            "embedding_pending": 1,
+            "anchor_kind": "heading",
+            "anchor_value": "Failing",
+            "content_norm": "failing provider-fail mark text"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 2,
+            "content": "# Healthy\n\nhealthy section text",
+            "hash": "90027736774c6c86c1b09ac955b92c6dcbfedeaac7f2a8bcf2bceb72fd02e925",
+            "embedding": "fda0a33e0000003f000080be",
+            "norm": "3fe49b0380000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 38,
+            "char_end": 69,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Healthy",
+            "content_norm": "healthy section text"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: f52fa19b154ea0a7\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "eb96f59b8e752bce0e674c0d2d20302200377e2a0e0126681cee1940f33a0703",
+            "embedding": "9169d83e0000003f000080be",
+            "norm": "3fe66d2d20000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl beta type note simhash f52fa19b154ea0a7 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 1,
+            "content": "plain beta document without headings\nsecond line\n",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305",
+            "embedding": "d051013f0000003f000080be",
+            "norm": "3fe81c3b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 49,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "plain beta document without heading second line"
+          }
+        ],
+        "generation": 5,
+        "index_storage": 0,
+        "lifecycle": {
+          "alpha.md": "indexed",
+          "beta.md": "indexed",
+          "big.md": "failed",
+          "dup.md": "indexed",
+          "empty.md": "indexed",
+          "failing.md": "indexed"
+        },
+        "lifecycle_reasons": {
+          "big.md": "file $ROOT/vault/big.md exceeds 10485760 byte limit (10485761 bytes)"
+        }
+      }
+    },
+    {
+      "id": "unchanged",
+      "args": [
+        "--json",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"skipped\":6,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/alpha.md",
+            "hash": "19d1a5011624e5103a6e99be3414cee1eab7f669b9ff279fbd11300c8ad367c3"
+          },
+          {
+            "path": "$ROOT/vault/dup.md",
+            "hash": "64b512ad558fffe6ce04d1713a9a4aad0ff607ed8f2108dc86b650989c0e78dd"
+          },
+          {
+            "path": "$ROOT/vault/empty.md",
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "$ROOT/vault/failing.md",
+            "hash": "c7bbce2be5a346e848748b67307d7e587df770df7d2848dd4533ee4bb15f40f7"
+          },
+          {
+            "path": "$ROOT/vault/nested/beta.md",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntype: note\nsimhash: aac0258f0185a02b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "3fbcb042a3432c1ae96eb40efb2b78e3e3c3116b41c6e95089d264d60b91140d",
+            "embedding": "894cc33e0000003f000080be",
+            "norm": "3fe5a7fca0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl alpha oracl tags retrieval type note simhash aac0258f0185a02b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 1,
+            "content": "# Alpha\n\nIntro text.",
+            "hash": "80b2a1fb4bb86c4f0b1705a7f81a4686f94053d982dc9b3ed90c4a58bc5b29cb",
+            "embedding": "4f22533e0000003f000080be",
+            "norm": "3fe3110880000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 20,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha",
+            "content_norm": "alpha intro text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 2,
+            "content": "## Details",
+            "hash": "98618570d40cf0abd338d7a1d41e84e9f5f7f2999f14e264562b0ee23a180cca",
+            "embedding": "4f22d33d0000003f000080be",
+            "norm": "3fe230b0a0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 22,
+            "char_end": 32,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "detail"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 3,
+            "content": "alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha",
+            "hash": "db89ea50553bc46f18f844a9ce58f5e7c7d596d5cfea92f63636f17df0d77dd9",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 34,
+            "char_end": 1029,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "alpha retrieval contract text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 4,
+            "content": " contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text",
+            "hash": "ddf5880f7d3d2efa2cd3155a0046e5fa43c92f5fcc4d37a3aa22d2e654a82ab3",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 829,
+            "char_end": 1533,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "contract text alpha retrieval"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: dup\ntitle: dup\ntitle: dup\ntype: note\nsimhash: 0d6b960886012212\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "c09cd927cf83339746eae4865e37e0860cf514c9c8906d52421f61f65d674ba3",
+            "embedding": "cb93c83e0000003f000080be",
+            "norm": "3fe5d805e0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl dup type note simhash 0d6b960886012212 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 1,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 19,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 2,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 21,
+            "char_end": 40,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/empty.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: empty\ntitle: empty\ntitle: empty\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "825b89a16ce85b2ac0f7dbd4dcdcedcc01c5acc8f6f24ddc0de49e85249c7eb0",
+            "embedding": "47053e3e0000003f000080be",
+            "norm": "3fe2d92fa0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl empty type note symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "39ca0142d2ce8b9899ef01c910360fb0108a0a573cea76be0c3b9cd70c70f1b4",
+            "embedding": "71f5033f0000003f000080be",
+            "norm": "3fe8552b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl failing type note simhash ae44b64b04116272 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 1,
+            "content": "# Failing\n\nprovider-fail marker text",
+            "hash": "99ef620e73be1407c606446d6c9fc191413c7bb6b6b05d5306a5ae2324b7c3d4",
+            "embedding": "",
+            "norm": "0",
+            "binary_signature": "",
+            "binary_signature_type": "null",
+            "dim": 0,
+            "model": "local-hash",
+            "char_start": 0,
+            "char_end": 36,
+            "embedding_pending": 1,
+            "anchor_kind": "heading",
+            "anchor_value": "Failing",
+            "content_norm": "failing provider-fail mark text"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 2,
+            "content": "# Healthy\n\nhealthy section text",
+            "hash": "90027736774c6c86c1b09ac955b92c6dcbfedeaac7f2a8bcf2bceb72fd02e925",
+            "embedding": "fda0a33e0000003f000080be",
+            "norm": "3fe49b0380000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 38,
+            "char_end": 69,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Healthy",
+            "content_norm": "healthy section text"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: f52fa19b154ea0a7\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "eb96f59b8e752bce0e674c0d2d20302200377e2a0e0126681cee1940f33a0703",
+            "embedding": "9169d83e0000003f000080be",
+            "norm": "3fe66d2d20000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl beta type note simhash f52fa19b154ea0a7 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 1,
+            "content": "plain beta document without headings\nsecond line\n",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305",
+            "embedding": "d051013f0000003f000080be",
+            "norm": "3fe81c3b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 49,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "plain beta document without heading second line"
+          }
+        ],
+        "generation": 5,
+        "index_storage": 0,
+        "lifecycle": {
+          "alpha.md": "indexed",
+          "beta.md": "indexed",
+          "big.md": "indexed",
+          "dup.md": "indexed",
+          "empty.md": "indexed",
+          "failing.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "frontmatter-only",
+      "writes": [
+        {
+          "path": "alpha.md",
+          "body": "---\ntitle: Alpha Renamed\ntags: [retrieval, oracle]\ntype: note\n---\n# Alpha\n\nIntro text.\n\n## Details\n\nalpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text \n"
+        }
+      ],
+      "args": [
+        "--json",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":1,\"skipped\":5,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/alpha.md",
+            "hash": "19d1a5011624e5103a6e99be3414cee1eab7f669b9ff279fbd11300c8ad367c3"
+          },
+          {
+            "path": "$ROOT/vault/dup.md",
+            "hash": "64b512ad558fffe6ce04d1713a9a4aad0ff607ed8f2108dc86b650989c0e78dd"
+          },
+          {
+            "path": "$ROOT/vault/empty.md",
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "$ROOT/vault/failing.md",
+            "hash": "c7bbce2be5a346e848748b67307d7e587df770df7d2848dd4533ee4bb15f40f7"
+          },
+          {
+            "path": "$ROOT/vault/nested/beta.md",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntype: note\nsimhash: aac0258f0185a02b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "3fbcb042a3432c1ae96eb40efb2b78e3e3c3116b41c6e95089d264d60b91140d",
+            "embedding": "894cc33e0000003f000080be",
+            "norm": "3fe5a7fca0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl alpha oracl tags retrieval type note simhash aac0258f0185a02b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 1,
+            "content": "# Alpha\n\nIntro text.",
+            "hash": "80b2a1fb4bb86c4f0b1705a7f81a4686f94053d982dc9b3ed90c4a58bc5b29cb",
+            "embedding": "4f22533e0000003f000080be",
+            "norm": "3fe3110880000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 20,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha",
+            "content_norm": "alpha intro text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 2,
+            "content": "## Details",
+            "hash": "98618570d40cf0abd338d7a1d41e84e9f5f7f2999f14e264562b0ee23a180cca",
+            "embedding": "4f22d33d0000003f000080be",
+            "norm": "3fe230b0a0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 22,
+            "char_end": 32,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "detail"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 3,
+            "content": "alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha",
+            "hash": "db89ea50553bc46f18f844a9ce58f5e7c7d596d5cfea92f63636f17df0d77dd9",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 34,
+            "char_end": 1029,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "alpha retrieval contract text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 4,
+            "content": " contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text",
+            "hash": "ddf5880f7d3d2efa2cd3155a0046e5fa43c92f5fcc4d37a3aa22d2e654a82ab3",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 829,
+            "char_end": 1533,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "contract text alpha retrieval"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: dup\ntitle: dup\ntitle: dup\ntype: note\nsimhash: 0d6b960886012212\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "c09cd927cf83339746eae4865e37e0860cf514c9c8906d52421f61f65d674ba3",
+            "embedding": "cb93c83e0000003f000080be",
+            "norm": "3fe5d805e0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl dup type note simhash 0d6b960886012212 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 1,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 19,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 2,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 21,
+            "char_end": 40,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/empty.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: empty\ntitle: empty\ntitle: empty\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "825b89a16ce85b2ac0f7dbd4dcdcedcc01c5acc8f6f24ddc0de49e85249c7eb0",
+            "embedding": "47053e3e0000003f000080be",
+            "norm": "3fe2d92fa0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl empty type note symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "39ca0142d2ce8b9899ef01c910360fb0108a0a573cea76be0c3b9cd70c70f1b4",
+            "embedding": "71f5033f0000003f000080be",
+            "norm": "3fe8552b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl failing type note simhash ae44b64b04116272 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 1,
+            "content": "# Failing\n\nprovider-fail marker text",
+            "hash": "99ef620e73be1407c606446d6c9fc191413c7bb6b6b05d5306a5ae2324b7c3d4",
+            "embedding": "",
+            "norm": "0",
+            "binary_signature": "",
+            "binary_signature_type": "null",
+            "dim": 0,
+            "model": "local-hash",
+            "char_start": 0,
+            "char_end": 36,
+            "embedding_pending": 1,
+            "anchor_kind": "heading",
+            "anchor_value": "Failing",
+            "content_norm": "failing provider-fail mark text"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 2,
+            "content": "# Healthy\n\nhealthy section text",
+            "hash": "90027736774c6c86c1b09ac955b92c6dcbfedeaac7f2a8bcf2bceb72fd02e925",
+            "embedding": "fda0a33e0000003f000080be",
+            "norm": "3fe49b0380000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 38,
+            "char_end": 69,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Healthy",
+            "content_norm": "healthy section text"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: f52fa19b154ea0a7\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "eb96f59b8e752bce0e674c0d2d20302200377e2a0e0126681cee1940f33a0703",
+            "embedding": "9169d83e0000003f000080be",
+            "norm": "3fe66d2d20000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl beta type note simhash f52fa19b154ea0a7 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 1,
+            "content": "plain beta document without headings\nsecond line\n",
+            "hash": "3bf4ad262c4df1309133c67dca2e50e33058a62c7fced51e40a62ccf45498305",
+            "embedding": "d051013f0000003f000080be",
+            "norm": "3fe81c3b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 49,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "plain beta document without heading second line"
+          }
+        ],
+        "generation": 5,
+        "index_storage": 0,
+        "lifecycle": {
+          "alpha.md": "indexed",
+          "beta.md": "indexed",
+          "big.md": "indexed",
+          "dup.md": "indexed",
+          "empty.md": "indexed",
+          "failing.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "body-change",
+      "writes": [
+        {
+          "path": "nested/beta.md",
+          "body": "changed beta body\n"
+        }
+      ],
+      "args": [
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "Index complete. 1 new/updated files, 5 skipped.\n",
+        "stderr": "Indexed: $ROOT/vault/nested/beta.md (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: df2de79bd64430b7\n__SYMDESK_SEARCH_METADATA_END__",
+              "changed beta body\n"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/alpha.md",
+            "hash": "19d1a5011624e5103a6e99be3414cee1eab7f669b9ff279fbd11300c8ad367c3"
+          },
+          {
+            "path": "$ROOT/vault/dup.md",
+            "hash": "64b512ad558fffe6ce04d1713a9a4aad0ff607ed8f2108dc86b650989c0e78dd"
+          },
+          {
+            "path": "$ROOT/vault/empty.md",
+            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "$ROOT/vault/failing.md",
+            "hash": "c7bbce2be5a346e848748b67307d7e587df770df7d2848dd4533ee4bb15f40f7"
+          },
+          {
+            "path": "$ROOT/vault/nested/beta.md",
+            "hash": "a0c0cda47d37246a9a4d248c2327ae0088ae62af06d78f7c3affec160647d8d9"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntitle: Alpha Oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntags: retrieval oracle\ntype: note\nsimhash: aac0258f0185a02b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "3fbcb042a3432c1ae96eb40efb2b78e3e3c3116b41c6e95089d264d60b91140d",
+            "embedding": "894cc33e0000003f000080be",
+            "norm": "3fe5a7fca0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl alpha oracl tags retrieval type note simhash aac0258f0185a02b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 1,
+            "content": "# Alpha\n\nIntro text.",
+            "hash": "80b2a1fb4bb86c4f0b1705a7f81a4686f94053d982dc9b3ed90c4a58bc5b29cb",
+            "embedding": "4f22533e0000003f000080be",
+            "norm": "3fe3110880000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 20,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha",
+            "content_norm": "alpha intro text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 2,
+            "content": "## Details",
+            "hash": "98618570d40cf0abd338d7a1d41e84e9f5f7f2999f14e264562b0ee23a180cca",
+            "embedding": "4f22d33d0000003f000080be",
+            "norm": "3fe230b0a0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 22,
+            "char_end": 32,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "detail"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 3,
+            "content": "alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha",
+            "hash": "db89ea50553bc46f18f844a9ce58f5e7c7d596d5cfea92f63636f17df0d77dd9",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 34,
+            "char_end": 1029,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "alpha retrieval contract text"
+          },
+          {
+            "document_path": "$ROOT/vault/alpha.md",
+            "chunk_index": 4,
+            "content": " contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text alpha retrieval contract text",
+            "hash": "ddf5880f7d3d2efa2cd3155a0046e5fa43c92f5fcc4d37a3aa22d2e654a82ab3",
+            "embedding": "71f5833e0000003f000080be",
+            "norm": "3fe3b2bec0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 829,
+            "char_end": 1533,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Alpha \u003e Details",
+            "content_norm": "contract text alpha retrieval"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: dup\ntitle: dup\ntitle: dup\ntype: note\nsimhash: 0d6b960886012212\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "c09cd927cf83339746eae4865e37e0860cf514c9c8906d52421f61f65d674ba3",
+            "embedding": "cb93c83e0000003f000080be",
+            "norm": "3fe5d805e0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl dup type note simhash 0d6b960886012212 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 1,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 19,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/dup.md",
+            "chunk_index": 2,
+            "content": "# Same\n\nrepeat body",
+            "hash": "879981b702b106e9aeecfe304cb4588a33e2f764be17a206e155aa74ef46ef4b",
+            "embedding": "cb93483e0000003f000080be",
+            "norm": "3fe2f47480000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 21,
+            "char_end": 40,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Same",
+            "content_norm": "same repeat body"
+          },
+          {
+            "document_path": "$ROOT/vault/empty.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: empty\ntitle: empty\ntitle: empty\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "825b89a16ce85b2ac0f7dbd4dcdcedcc01c5acc8f6f24ddc0de49e85249c7eb0",
+            "embedding": "47053e3e0000003f000080be",
+            "norm": "3fe2d92fa0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl empty type note symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: failing\ntitle: failing\ntitle: failing\ntype: note\nsimhash: ae44b64b04116272\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "39ca0142d2ce8b9899ef01c910360fb0108a0a573cea76be0c3b9cd70c70f1b4",
+            "embedding": "71f5033f0000003f000080be",
+            "norm": "3fe8552b40000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl failing type note simhash ae44b64b04116272 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 1,
+            "content": "# Failing\n\nprovider-fail marker text",
+            "hash": "99ef620e73be1407c606446d6c9fc191413c7bb6b6b05d5306a5ae2324b7c3d4",
+            "embedding": "",
+            "norm": "0",
+            "binary_signature": "",
+            "binary_signature_type": "null",
+            "dim": 0,
+            "model": "local-hash",
+            "char_start": 0,
+            "char_end": 36,
+            "embedding_pending": 1,
+            "anchor_kind": "heading",
+            "anchor_value": "Failing",
+            "content_norm": "failing provider-fail mark text"
+          },
+          {
+            "document_path": "$ROOT/vault/failing.md",
+            "chunk_index": 2,
+            "content": "# Healthy\n\nhealthy section text",
+            "hash": "90027736774c6c86c1b09ac955b92c6dcbfedeaac7f2a8bcf2bceb72fd02e925",
+            "embedding": "fda0a33e0000003f000080be",
+            "norm": "3fe49b0380000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 38,
+            "char_end": 69,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Healthy",
+            "content_norm": "healthy section text"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: beta\ntitle: beta\ntitle: beta\ntype: note\nsimhash: df2de79bd64430b7\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "831bf4420fa694c77680b70aab4e4330da8b88ea1d07d6d022e9a44c2618851f",
+            "embedding": "9169d83e0000003f000080be",
+            "norm": "3fe66d2d20000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl beta type note simhash df2de79bd64430b7 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/nested/beta.md",
+            "chunk_index": 1,
+            "content": "changed beta body\n",
+            "hash": "a0c0cda47d37246a9a4d248c2327ae0088ae62af06d78f7c3affec160647d8d9",
+            "embedding": "47053e3e0000003f000080be",
+            "norm": "3fe2d92fa0000000",
+            "binary_signature": "0300000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 18,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "changed beta body"
+          }
+        ],
+        "generation": 7,
+        "index_storage": 0,
+        "lifecycle": {
+          "alpha.md": "indexed",
+          "beta.md": "indexed",
+          "big.md": "indexed",
+          "dup.md": "indexed",
+          "empty.md": "indexed",
+          "failing.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    }
+  ]
+}

@@ -1,0 +1,494 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "1e31bf59e1a487f1c3b2affb7a71f3e546ae7d7b",
+    "go_version": "go1.26.9",
+    "sources": {
+      "internal/export/export.go": "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861",
+      "internal/export/search_results.go": "1600b78dfbfa37ac6845b094ae761e61b4a108dedb5709175677b5aa60f4bdda"
+    }
+  },
+  "cases": [
+    {
+      "id": "search-empty-markdown",
+      "search": {
+        "query": "q",
+        "title": "",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"q\"\nresult_count: 0\ntitle: Search results\ntype: search_result_set\n---\n\n# Search results\n\nQuery: `q`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-empty-md-alias",
+      "search": {
+        "query": "",
+        "title": "  ",
+        "created": "2026-10-19T08:00:00Z",
+        "format": " MD ",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"\"\nresult_count: 0\ntitle: Search results\ntype: search_result_set\n---\n\n# Search results\n\nQuery: ``\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-empty-pdf",
+      "search": {
+        "query": "q",
+        "title": "Report",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "PDF",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"q\"\nresult_count: 0\ntitle: Report\ntype: search_result_set\n---\n\nQuery: `q`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-one-hit",
+      "search": {
+        "query": "alpha",
+        "title": "Results",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": [
+          {
+            "path": "notes/Alpha Beta.md",
+            "title": "Alpha",
+            "snippet": "first line\nsecond line",
+            "score": 0.5,
+            "anchor": null,
+            "metadata_matches": null
+          }
+        ]
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"alpha\"\nresult_count: 1\ntitle: Results\ntype: search_result_set\n---\n\n# Results\n\nQuery: `alpha`\n\n**1 result**\n\n## 1. Alpha\n\n**Source:** [[notes/Alpha%20Beta.md]] (`notes/Alpha Beta.md`)\n**Location:** Not available\n**Score:** 0.500000\n\n\u003e first line\n\u003e second line\n\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-one-hit-pdf",
+      "search": {
+        "query": "alpha",
+        "title": "Results",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "pdf",
+        "hits": [
+          {
+            "path": "notes/Alpha Beta.md",
+            "title": "Alpha",
+            "snippet": "first line\nsecond line",
+            "score": 0.5,
+            "anchor": null,
+            "metadata_matches": null
+          }
+        ]
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"alpha\"\nresult_count: 1\ntitle: Results\ntype: search_result_set\n---\n\nQuery: `alpha`\n\n**1 result**\n\n## 1. Alpha\n\n**Source:** [[notes/Alpha%20Beta.md]] (`notes/Alpha Beta.md`)\n**Location:** Not available\n**Score:** 0.500000\n\n\u003e first line\n\u003e second line\n\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-many-hits",
+      "search": {
+        "query": "x",
+        "title": "Many",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": [
+          {
+            "path": "notes/Alpha Beta.md",
+            "title": "Alpha",
+            "snippet": "first line\nsecond line",
+            "score": 0.5,
+            "anchor": null,
+            "metadata_matches": null
+          },
+          {
+            "path": "notes/Alpha Beta.md",
+            "title": "Alpha",
+            "snippet": "first line\nsecond line",
+            "score": 0.5,
+            "anchor": {
+              "kind": "page",
+              "value": "3"
+            },
+            "metadata_matches": [
+              "tags",
+              "au`thor"
+            ]
+          },
+          {
+            "path": "dir/[[x]]|y#z/\u0026ü %?.md",
+            "title": "## \r\n#Heading\nwith break",
+            "snippet": "crlf\r\nline\n\n\u003e nested",
+            "score": -5e-7,
+            "anchor": {
+              "kind": "heading",
+              "value": "A/B [c]|d ü\u0026`e`"
+            },
+            "metadata_matches": null
+          },
+          {
+            "path": "notes/Alpha Beta.md",
+            "title": "   ",
+            "snippet": "first line\nsecond line",
+            "score": 123456.7890125,
+            "anchor": {
+              "kind": "page",
+              "value": ""
+            },
+            "metadata_matches": null
+          }
+        ]
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"x\"\nresult_count: 4\ntitle: Many\ntype: search_result_set\n---\n\n# Many\n\nQuery: `x`\n\n**4 results**\n\n## 1. Alpha\n\n**Source:** [[notes/Alpha%20Beta.md]] (`notes/Alpha Beta.md`)\n**Location:** Not available\n**Score:** 0.500000\n\n\u003e first line\n\u003e second line\n\n## 2. Alpha\n\n**Source:** [[notes/Alpha%20Beta.md#page:3]] (`notes/Alpha Beta.md`)\n**Location:** page: 3\n**Score:** 0.500000\n**Metadata matches:** tags, au'thor\n\n\u003e first line\n\u003e second line\n\n## 3.    #Heading with break\n\n**Source:** [[dir/%5B%5Bx%5D%5D%7Cy%23z/%26%C3%BC%20%25%3F.md#heading:A%2FB%20%5Bc%5D%7Cd%20%C3%BC%26%60e%60]] (`dir/[[x]]|y#z/\u0026ü %?.md`)\n**Location:** heading: A/B [c]|d ü\u0026'e'\n**Score:** -0.000000\n\n\u003e crlf\n\u003e line\n\u003e \n\u003e \u003e nested\n\n## 4. Untitled result\n\n**Source:** [[notes/Alpha%20Beta.md]] (`notes/Alpha Beta.md`)\n**Location:** Not available\n**Score:** 123456.789012\n\n\u003e first line\n\u003e second line\n\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-unsupported-format",
+      "search": {
+        "query": "q",
+        "title": "t",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "html",
+        "hits": null
+      },
+      "want": {
+        "output": "",
+        "error": "unsupported search export format \"html\": use markdown or pdf",
+        "links": []
+      }
+    },
+    {
+      "id": "search-unsupported-unicode-format",
+      "search": {
+        "query": "q",
+        "title": "t",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "İΣ​\t",
+        "hits": null
+      },
+      "want": {
+        "output": "",
+        "error": "unsupported search export format \"iσ\\u200b\": use markdown or pdf",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-keyword-title",
+      "search": {
+        "query": "true",
+        "title": "null",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"true\"\nresult_count: 0\ntitle: \"null\"\ntype: search_result_set\n---\n\n# null\n\nQuery: `true`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-number-title",
+      "search": {
+        "query": "1e3",
+        "title": "0x1F",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"1e3\"\nresult_count: 0\ntitle: \"0x1F\"\ntype: search_result_set\n---\n\n# 0x1F\n\nQuery: `1e3`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-indicator-title",
+      "search": {
+        "query": "- dash",
+        "title": "#hash: colon",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"- dash\"\nresult_count: 0\ntitle: '#hash: colon'\ntype: search_result_set\n---\n\n# hash: colon\n\nQuery: `- dash`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-quote-title",
+      "search": {
+        "query": "it's \"quoted\" \\ back",
+        "title": "'single' and \"double\"",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"it's \\\"quoted\\\" \\\\ back\"\nresult_count: 0\ntitle: '''single'' and \"double\"'\ntype: search_result_set\n---\n\n# 'single' and \"double\"\n\nQuery: `it's \"quoted\" \\ back`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-space-title",
+      "search": {
+        "query": " lead",
+        "title": "trail ",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \" lead\"\nresult_count: 0\ntitle: 'trail '\ntype: search_result_set\n---\n\n# trail\n\nQuery: ` lead`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-multiline-title",
+      "search": {
+        "query": "line1\nline2",
+        "title": "first\nsecond\n",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"line1\\nline2\"\nresult_count: 0\ntitle: |\n    first\n    second\ntype: search_result_set\n---\n\n# first second\n\nQuery: `line1 line2`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-timestamp-title",
+      "search": {
+        "query": "2026-10-19",
+        "title": "2026-10-19",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"2026-10-19\"\nresult_count: 0\ntitle: \"2026-10-19\"\ntype: search_result_set\n---\n\n# 2026-10-19\n\nQuery: `2026-10-19`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-control-query",
+      "search": {
+        "query": "\u0000\u0007\b\t\u000b\f\r\u001b \u2028\u2029﻿￾😀é",
+        "title": "ctlx",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"\\0\\a\\b\\t\\v\\f\\r\\e\\x7F\\x80\\N \\L\\P\\uFEFF\\uFFFE\\U0001F600é\"\nresult_count: 0\ntitle: \"ctl\\Nx\"\ntype: search_result_set\n---\n\n# ctlx\n\nQuery: `\u0000\u0007\b\t\u000b\f \u001b \u2028\u2029﻿￾😀é`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-supplementary-title",
+      "search": {
+        "query": "q",
+        "title": "Notiz 😀 é",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"q\"\nresult_count: 0\ntitle: \"Notiz \\U0001F600 é\"\ntype: search_result_set\n---\n\n# Notiz 😀 é\n\nQuery: `q`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-tab-title",
+      "search": {
+        "query": "tab\tq",
+        "title": "tab\ttitle",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"tab\\tq\"\nresult_count: 0\ntitle: \"tab\\ttitle\"\ntype: search_result_set\n---\n\n# tab\ttitle\n\nQuery: `tab\tq`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-yaml-long-query",
+      "search": {
+        "query": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word end",
+        "title": "title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title end",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word end\"\nresult_count: 0\ntitle: title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title end\ntype: search_result_set\n---\n\n# title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title end\n\nQuery: `word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word end`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "search-backtick-query",
+      "search": {
+        "query": "a`b\r\nc",
+        "title": "T",
+        "created": "2026-10-19T08:00:00Z",
+        "format": "markdown",
+        "hits": null
+      },
+      "want": {
+        "output": "---\ncreated: \"2026-10-19T08:00:00Z\"\nquery: \"a`b\\r\\nc\"\nresult_count: 0\ntitle: T\ntype: search_result_set\n---\n\n# T\n\nQuery: `a'b  c`\n\n**0 results**\n\n_No matching passages._\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "table-empty",
+      "table": {
+        "columns": null,
+        "rows": null
+      },
+      "want": {
+        "output": "|  |\n|\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "table-sorted-extra-columns",
+      "table": {
+        "columns": [
+          "title",
+          "path",
+          "title"
+        ],
+        "rows": [
+          {
+            "path": "a.md",
+            "title": "A|B",
+            "zeta": "z"
+          },
+          {
+            "alpha": "x\ny",
+            "path": "b.md"
+          }
+        ]
+      },
+      "want": {
+        "output": "| alpha | path | title | zeta |\n| --- | --- | --- | --- |\n|  | a.md | A\\|B | z |\n| x\ny | b.md |  |  |\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "table-no-columns-row",
+      "table": {
+        "columns": null,
+        "rows": [
+          {}
+        ]
+      },
+      "want": {
+        "output": "|  |\n|\n|  |\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "table-unicode-columns",
+      "table": {
+        "columns": [
+          "Ä",
+          "a",
+          "B"
+        ],
+        "rows": [
+          {
+            "a": "||",
+            "Ä": "ä"
+          }
+        ]
+      },
+      "want": {
+        "output": "| B | a | Ä |\n| --- | --- | --- |\n|  | \\|\\| | ä |\n",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "links-none",
+      "links": "no links here",
+      "want": {
+        "output": "",
+        "error": "",
+        "links": []
+      }
+    },
+    {
+      "id": "links-dedupe-and-strip",
+      "links": "[[A|label]] [[A#part]] [[ B ]] ![[Embed]] [[#only]] [[|empty]]",
+      "want": {
+        "output": "",
+        "error": "",
+        "links": [
+          "A",
+          "B",
+          "Embed"
+        ]
+      }
+    },
+    {
+      "id": "links-unterminated",
+      "links": "[[open [[inner]] ]]",
+      "want": {
+        "output": "",
+        "error": "",
+        "links": [
+          "open [[inner"
+        ]
+      }
+    },
+    {
+      "id": "links-unicode",
+      "links": "[[Über Notiz]] [[日本#見出し|ラベル]]",
+      "want": {
+        "output": "",
+        "error": "",
+        "links": [
+          "Über Notiz",
+          "日本"
+        ]
+      }
+    }
+  ]
+}

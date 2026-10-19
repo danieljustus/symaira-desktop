@@ -41,6 +41,7 @@
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
 .PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: retrieval-turboquant-differential retrieval-turboquant-benchmark
 .PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
 .PHONY: retrieval-pending-rebuild-fixtures-generate retrieval-pending-rebuild-differential
 .PHONY: retrieval-sections-fixtures-generate retrieval-sections-differential
@@ -619,6 +620,17 @@ retrieval-vector-fixtures-generate:
 retrieval-vector-differential:
 	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
+
+# Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, then Rust replay.
+retrieval-turboquant-differential:
+	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-gen --check
+	$(CARGO) test -p symdesk-index --locked --test turboquant_codec
+
+# Go vs Rust p95/throughput; a Rust regression above 10% exits nonzero.
+TURBOQUANT_BENCH_REPORT ?= docs/rust-port/turboquant-benchmark.md
+retrieval-turboquant-benchmark:
+	$(CARGO) build --release --locked -p symdesk-index --bin turboquant-bench
+	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-bench --rust-bin "$(RUST_TARGET_DIR)/release/turboquant-bench" --report "$(TURBOQUANT_BENCH_REPORT)"
 
 render-ir-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/renderirgen

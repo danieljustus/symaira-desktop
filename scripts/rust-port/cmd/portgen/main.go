@@ -110,6 +110,7 @@ var fixturePaths = []string{
 	"testdata/port/ai/recipe-validate.json",
 	"testdata/port/render/html-note.json",
 	"testdata/port/retrieval/quant-sidecar-wire.json",
+	"testdata/port/retrieval/turboquant-codec.json",
 	"testdata/port/render/json-ir.json",
 	"testdata/port/render/v2/html-note.json",
 	"testdata/port/render/v2/json-ir.json",

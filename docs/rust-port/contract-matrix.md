@@ -210,8 +210,42 @@ the owned snapshot must not silently become an alias.
 
 The generator records actual Go `EncodeSidecar`/`UnpackSidecarBlob` output
 and verifies runtime module version, checksum, and absence of replacement
-before generation or checking. Global provenance, native platform evidence,
-the full codec, benchmarks, and INDEX-005/#1137 acceptance remain pending.
+before generation or checking.
+
+### TurboQuant local codec (#1137)
+
+`crates/symdesk-index/src/turboquant/` ports the full pinned CoreKit codec:
+Go `math/rand` rotation signs (including the copied `rngCooked` table),
+Walsh-Hadamard rotation, uniform min/max quantization, LSB-first bit packing
+for 2/3/4/2.5/3.5-bit widths, `Score`/`ScoreCosine`, the 32-byte metadata
+header, `EncodeSidecar`/`DecodeSidecar`/`ValidateSidecarMeta`, Go error
+strings and Go `json.Marshal` bytes for `SidecarMeta`.
+`scripts/rust-port/cmd/turboquant-gen` records 18 sign sequences (up to 2048
+draws, crossing the 607-entry ring), Hadamard/rotation `f64` bits, 60 codec
+cases (12 inputs x 5 bit widths, dims 1..768, negative and >32-bit seeds,
+zero/constant/extreme vectors), 21 metadata JSON cases and 21 error cases in
+`testdata/port/retrieval/turboquant-codec.json`. Run
+`make retrieval-turboquant-differential`.
+
+Exact comparisons: packed codes, min/max, metadata bytes, metadata round-trip
+encodes (including Go's `uint32` seed truncation), sidecar blobs and JSON,
+rotations, scores and cosine scores. Rust-written sidecar blob and JSON bytes
+equal Go's, so the Go fallback reads them like its own; Go-written sidecars
+decode and score in Rust. **Declared tolerance:** Go fuses `min+(max-min)*mid`
+into FMA on arm64 but not amd64, so Go's own decoded bits differ by
+architecture (5 of 60 cases). Decode is recorded on a `max(|min|,|max|)/4096`
+grid that the generator check reproduces on darwin/arm64 and darwin/amd64
+(Rosetta); Rust must match the grid exactly. Rust never fuses (amd64
+semantics). Recorded scores were identical on both Go architectures.
+
+Intentional differences: Go `Score`/`ScoreCosine` panic on short packed codes;
+Rust returns `0.0`. No Rust production caller is wired yet; DB backfill and
+quantized search facades stay with RUST-008/INDEX-005.
+
+`make retrieval-turboquant-benchmark` compares Go and Rust encode and
+quantized-scan latency/throughput (best of alternating trials) and fails on a
+Rust p95 or throughput regression above 10%; the committed report is
+[turboquant-benchmark.md](turboquant-benchmark.md).
 
 ### Local retrieval additions (2026-09-29)
 

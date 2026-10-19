@@ -121,6 +121,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"retrieval quant sidecar wire", []string{"run", "./scripts/rust-port/cmd/quant-sidecar-gen", "--check"}, []string{"testdata/port/retrieval/quant-sidecar-wire.json"}, false},
+	{"retrieval TurboQuant codec", []string{"run", "./scripts/rust-port/cmd/turboquant-gen", "--check"}, []string{"testdata/port/retrieval/turboquant-codec.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},

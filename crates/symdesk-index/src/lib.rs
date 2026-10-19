@@ -34,6 +34,7 @@ mod retrieval_config;
 mod retrieval_markdown;
 pub mod retrieval_quant_sidecar;
 mod search_plan;
+pub mod turboquant;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};

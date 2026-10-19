@@ -40,9 +40,12 @@ pub fn try_acquire(room_dir: &Path) -> io::Result<Option<Guard>> {
 // or lock file so the lock can never be created outside the room.
 fn open(room_dir: &Path) -> io::Result<File> {
     let state = room_dir.join(".symroom");
-    let mut builder = fs::DirBuilder::new();
-    #[cfg(unix)]
-    std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+    let builder = {
+        let mut builder = fs::DirBuilder::new();
+        #[cfg(unix)]
+        std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+        builder
+    };
     match builder.create(&state) {
         Ok(()) => {}
         Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}

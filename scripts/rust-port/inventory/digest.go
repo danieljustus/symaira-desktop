@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -65,10 +67,10 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	return oracleRevisionDigest(repoRoot, git, revision)
 }
 
-func computeGitRevisionProductionSourceDigest(repoRoot, revision string, gitOutput func(...string) ([]byte, error)) (string, error) {
+func computeGitRevisionProductionSourceDigest(repoRoot, git, revision string) (string, error) {
 	args := []string{"ls-tree", "-r", "--name-only", revision, "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	output, err := gitOutput(args...)
+	output, err := inventoryGitOutputWithExecutable(repoRoot, git, args...)
 	if err != nil {
 		return "", fmt.Errorf("list production inputs at %s: %w", revision, err)
 	}
@@ -81,15 +83,94 @@ func computeGitRevisionProductionSourceDigest(repoRoot, revision string, gitOutp
 	}
 	sort.Strings(files)
 	hasher := sha256.New()
-	for _, rel := range files {
+	err = inventoryGitBlobs(repoRoot, git, revision, files, func(rel string, content io.Reader) error {
 		_, _ = io.WriteString(hasher, rel+"\n")
-		content, showErr := gitOutput("show", revision+":"+rel)
-		if showErr != nil {
-			return "", fmt.Errorf("read %s at %s: %w", rel, revision, showErr)
-		}
-		_, _ = hasher.Write(content)
+		_, err := io.Copy(hasher, content)
+		return err
+	})
+	if err != nil {
+		return "", err
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// inventoryGitBlobs streams revision:path blobs in order through one
+// `git cat-file --batch` process (#1243). A process per file dominated native
+// Windows oracle verification; the bytes and their order are unchanged.
+func inventoryGitBlobs(repoRoot, git, revision string, files []string, visit func(string, io.Reader) error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	configPath, cleanup, err := PrivateGitConfig()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	//nolint:gosec // fixed Git subcommand; object names are repository-derived revision/path inputs.
+	command := exec.CommandContext(ctx, git, "-c", "safe.directory="+filepath.ToSlash(repoRoot), "--no-replace-objects", "--no-lazy-fetch", "cat-file", "--batch")
+	command.WaitDelay = 2 * time.Second
+	command.Dir = repoRoot
+	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
+	var stderr strings.Builder
+	command.Stderr = &stderr
+	stdin, err := command.StdinPipe()
+	if err != nil {
+		return err
+	}
+	stdout, err := command.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := command.Start(); err != nil {
+		return fmt.Errorf("git cat-file --batch: %w", err)
+	}
+	go func() {
+		defer func() { _ = stdin.Close() }()
+		for _, rel := range files {
+			if _, err := io.WriteString(stdin, revision+":"+rel+"\n"); err != nil {
+				return
+			}
+		}
+	}()
+	readErr := readGitBlobs(bufio.NewReader(stdout), revision, files, visit)
+	if readErr != nil {
+		cancel()
+	}
+	waitErr := command.Wait()
+	if readErr != nil {
+		return readErr
+	}
+	if waitErr != nil {
+		return fmt.Errorf("git cat-file --batch: %w: %s", errors.Join(waitErr, ctx.Err()), strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+func readGitBlobs(output *bufio.Reader, revision string, files []string, visit func(string, io.Reader) error) error {
+	for _, rel := range files {
+		header, err := output.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("read %s at %s: %w", rel, revision, err)
+		}
+		fields := strings.Fields(header)
+		if len(fields) != 3 || fields[1] != "blob" {
+			return fmt.Errorf("read %s at %s: unexpected object %q", rel, revision, strings.TrimSpace(header))
+		}
+		size, err := strconv.ParseInt(fields[2], 10, 64)
+		if err != nil || size < 0 {
+			return fmt.Errorf("read %s at %s: invalid object size %q", rel, revision, fields[2])
+		}
+		content := io.LimitReader(output, size)
+		if err := visit(rel, content); err != nil {
+			return fmt.Errorf("read %s at %s: %w", rel, revision, err)
+		}
+		if _, err := io.Copy(io.Discard, content); err != nil {
+			return fmt.Errorf("read %s at %s: %w", rel, revision, err)
+		}
+		if terminator, err := output.ReadByte(); err != nil || terminator != '\n' {
+			return fmt.Errorf("read %s at %s: truncated object", rel, revision)
+		}
+	}
+	return nil
 }
 
 // NewProductionSourceVerifier captures the source root and Git executable without

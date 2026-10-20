@@ -54,6 +54,7 @@
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
 .PHONY: render-differential render-pdfops-differential
+.PHONY: render-export-fixtures-generate render-export-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -98,6 +99,7 @@ override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXT
 override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_DATASET_IMPORT_FIXTURE -u port_dataset_import_fixture -u PORT_DATASET_ERROR_FIXTURE -u port_dataset_error_fixture
 override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixture_source_commit -u PORTGEN_FIXTURE_SOURCE_RELEASE -u portgen_fixture_source_release
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_export_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -106,7 +108,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-pdfops-differential
+render-differential: render-export-differential render-pdfops-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -637,6 +639,14 @@ render-html-fixtures-check:
 
 render-html-differential: render-html-fixtures-check
 	$(CARGO) test -p symdesk-render --locked
+
+# Search-result Markdown, view tables and plain links (RENDER-002 pure core).
+render-export-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$'
+
+render-export-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked export_markdown
 
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'

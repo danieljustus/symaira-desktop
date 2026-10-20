@@ -600,6 +600,10 @@ jobs:
         shell: bash
         run: make render-ir-differential
 
+      - name: Run native render Markdown export differential
+        shell: bash
+        run: make render-export-differential
+
       - name: Run native dataset aggregate differential
         shell: bash
         run: make dataset-aggregate-differential

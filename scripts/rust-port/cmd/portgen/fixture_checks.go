@@ -121,6 +121,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"retrieval vector fallback", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalVectorFixture$"}, []string{"testdata/port/retrieval/retrieval-vector.json"}, false},
 	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
+	{"render export Markdown", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportMarkdownFixture$"}, []string{"testdata/port/render/export-markdown.json"}, false},
 	{"retrieval quant sidecar wire", []string{"run", "./scripts/rust-port/cmd/quant-sidecar-gen", "--check"}, []string{"testdata/port/retrieval/quant-sidecar-wire.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},

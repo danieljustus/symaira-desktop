@@ -34,6 +34,7 @@ mod retrieval_config;
 mod retrieval_markdown;
 pub mod retrieval_quant_sidecar;
 mod search_plan;
+pub mod turboquant;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -59,7 +60,8 @@ pub use retrieval_config::{
     symseek_config_path,
 };
 pub use retrieval_markdown::{
-    MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_retrieval_sections, parse_text_retrieval_sections,
+    MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_body_retrieval_sections,
+    parse_markdown_retrieval_sections, parse_text_retrieval_sections,
 };
 pub use search_plan::SearchPlanResponse;
 
@@ -1372,6 +1374,19 @@ impl Sidecar {
             return Err(error);
         }
         walk_result.map_err(Into::into)
+    }
+
+    /// Records one `index_lifecycle` row like Go's `SetIndexStatus`.
+    ///
+    /// # Errors
+    /// Returns timestamp formatting or SQLite errors.
+    pub fn set_index_status(
+        &self,
+        path: &str,
+        state: &str,
+        reason: &str,
+    ) -> Result<(), SidecarError> {
+        self.set_lifecycle_state(path, state, reason)
     }
 
     fn set_lifecycle_state(

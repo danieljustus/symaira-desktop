@@ -13,6 +13,12 @@ use std::{
 
 use rusqlite::Connection;
 use serde::Deserialize;
+use std::{
+    io::{BufRead, BufReader, Read, Write},
+    net::TcpListener,
+    sync::{Arc, atomic::AtomicUsize},
+    thread,
+};
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 struct ProcessResult {
@@ -125,7 +131,13 @@ fn result(output: Output, root: &Path) -> ProcessResult {
     ProcessResult {
         exit_code: output.status.code().unwrap_or(-1),
         stdout: normalize(&String::from_utf8_lossy(&output.stdout), root),
-        stderr: normalize(&String::from_utf8_lossy(&output.stderr), root),
+        // The Go recorder uses exec.Output, which keeps stderr only for a
+        // failed process.
+        stderr: if output.status.success() {
+            String::new()
+        } else {
+            normalize(&String::from_utf8_lossy(&output.stderr), root)
+        },
     }
 }
 
@@ -173,20 +185,20 @@ fn index_build_cli_replays_go_process_fixture() {
     fs::write(root.path("vault/draft.DOC"), "legacy office document").expect("legacy document");
     fs::write(root.path("vault/book.mobi"), "ebook document").expect("ebook document");
 
+    let provider = start_provider();
     let config_directory = root.path("home/.config/symseek");
     fs::create_dir_all(&config_directory).expect("create isolated symseek config directory");
+    // Same config as the Go oracle: the local fake provider answers every
+    // request with one 8-dimensional zero vector.
     fs::write(
         config_directory.join("config.toml"),
         format!(
-            "index_path = {:?}\n",
-            root.path("data/retrieval.db").to_string_lossy()
+            "index_path = {:?}\nollama_url = \"http://127.0.0.1:{}/api/embeddings\"\nembedding_dim = 8\ntimeout_seconds = 1\nretry_count = 0\nmodel = \"fixture\"\n",
+            root.path("data/retrieval.db").to_string_lossy(),
+            provider.port,
         ),
     )
     .expect("configure isolated standalone retrieval database");
-    let retrieval = Connection::open(root.path("data/retrieval.db")).expect("create retrieval db");
-    retrieval
-        .execute_batch("CREATE TABLE chunks (document_path TEXT NOT NULL, embedding_pending INTEGER NOT NULL DEFAULT 0);")
-        .expect("create no-pending retrieval schema");
 
     let default_vault = root.path("vault").to_string_lossy().into_owned();
     let explicit_vault = root.path("explicit").to_string_lossy().into_owned();
@@ -199,13 +211,15 @@ fn index_build_cli_replays_go_process_fixture() {
         run(&root, &["--json", "--vault", &default_vault, "index"]),
         fixture.default_again
     );
+    let requests_before_reembed = provider.requests.load(Ordering::SeqCst);
     assert_eq!(
         run(&root, &["--vault", &default_vault, "index", "--re-embed"]),
         fixture.reembed
     );
-    assert!(
+    assert_eq!(
         fixture.reembed_no_network,
-        "Go no-pending re-embed made no local fake-provider request"
+        provider.requests.load(Ordering::SeqCst) == requests_before_reembed,
+        "no-pending re-embed provider traffic differs from Go"
     );
     fs::remove_file(root.path("vault/nested/second.md")).expect("remove stale indexed note");
     assert_eq!(
@@ -328,4 +342,46 @@ fn read_lifecycle_reasons(connection: &Connection) -> BTreeMap<String, String> {
             (path, reason)
         })
         .collect()
+}
+
+struct FakeProvider {
+    port: u16,
+    requests: Arc<AtomicUsize>,
+}
+
+/// Mirrors the Go fixture server: every request gets one zero vector, so
+/// multi-input batches fall back to per-text requests in both stacks.
+fn start_provider() -> FakeProvider {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind fake provider");
+    let port = listener.local_addr().expect("provider address").port();
+    let requests = Arc::new(AtomicUsize::new(0));
+    let counter = Arc::clone(&requests);
+    thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { return };
+            let mut reader = BufReader::new(stream.try_clone().expect("clone provider stream"));
+            let mut length = 0usize;
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).unwrap_or(0) == 0 || line == "\r\n" {
+                    break;
+                }
+                if let Some((name, value)) = line.split_once(':')
+                    && name.eq_ignore_ascii_case("content-length")
+                {
+                    length = value.trim().parse().unwrap_or(0);
+                }
+            }
+            let mut body = vec![0; length];
+            let _ = reader.read_exact(&mut body);
+            counter.fetch_add(1, Ordering::SeqCst);
+            let response = r#"{"data":[{"embedding":[0,0,0,0,0,0,0,0]}]}"#;
+            let _ = write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response}",
+                response.len()
+            );
+        }
+    });
+    FakeProvider { port, requests }
 }

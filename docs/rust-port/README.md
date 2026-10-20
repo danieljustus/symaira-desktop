@@ -436,6 +436,41 @@ inputs too (`scripts/rust-port/inventory/digest.go`), so a change as small as a
 new Make target needs its own **Q** re-freeze — a functional `P` that adds a
 target leaves `main` red on the port contract until that **Q** lands.
 
+## Go-independent frozen contract (#1153)
+
+`make port-contract-frozen` is the contract aggregate that must keep protecting
+the Rust port after Go is deleted. It needs only Python 3 and Cargo:
+
+- `scripts/rust-port/frozen_contract.py` reads every `*-differential` target in
+  the `Makefile` and runs each distinct `$(CARGO) test` replay of the committed
+  Go-oracle fixtures. Every `go` executable is removed from `PATH`, and `HOME`,
+  `XDG_*` and `TMPDIR` point into a disposable root.
+- `scripts/rust-port/frozen-contract.json` records the exact passed and ignored
+  counts for each replay. A count drift, a zero-case run, a failed test binary or
+  a missing count fails. New differential targets fail until their counts are
+  recorded with `python3 scripts/rust-port/frozen_contract.py --record`, which
+  also runs without Go.
+- Targets without a Rust replay must be declared `live_only` with a reason.
+  These targets compare two live binaries: diffharness, `mcpdiff`, `httpdiff`,
+  source, history and pdfops. Rust tests that still execute Go are listed per
+  command as `live_only_tests`. Each skip must name exactly one listed test. The
+  output reports the frozen count and the corresponding live-mode count.
+- Mutation controls change one Go-recorded observation, such as a fixture byte
+  covered by the provenance checksum or a recorded journal value. The runner
+  requires the replay to fail and then restores the bytes. It refuses to mutate
+  a modified fixture.
+
+The disposable root is created under `TMPDIR`. Room and index replays reject
+roots with a group- or world-writable ancestor. On such a host, such as the
+external Dev volume, point `TMPDIR` at a private directory under `/private/tmp`.
+
+The CI job `Rust frozen contract (no Go)` deletes any preinstalled Go before it
+runs the target. The existing live targets (`port-contract` and the
+`*-differential` recipes) are unchanged and still verify fixtures against Go
+while Go remains in the tree. Freezing the live-only binary comparisons and the
+`live_only_tests` is a follow-up. Until then, they are named rather than
+silently skipped.
+
 ## Execution rule
 
 Start at the first `ready` item in `work-items.json`. Complete its fixture,

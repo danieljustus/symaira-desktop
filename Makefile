@@ -808,6 +808,15 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
+# Issue #1153: Go-independent contract aggregate. Replays every committed Go
+# oracle fixture of each `*-differential` target through Rust with `go` removed
+# from PATH, requires the recorded case counts in
+# scripts/rust-port/frozen-contract.json, and checks that mutated fixtures fail.
+.PHONY: port-contract-frozen
+port-contract-frozen:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/rust-port/test_frozen_contract.py
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/frozen_contract.py
+
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential dataset-sync-differential retention-state-differential
 
 representative-fixtures-generate:

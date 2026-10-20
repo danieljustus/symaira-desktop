@@ -14,6 +14,7 @@
 //! pointers have no Rust equivalent.
 
 mod go_rand_cooked;
+pub mod sidecar_corpus;
 
 use serde::Deserialize;
 use thiserror::Error;

@@ -105,6 +105,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"sidecar metadata", []string{"test", "-count=1", "./internal/sidecar", "-run", "^TestPortSidecarMetadataContract$"}, []string{"testdata/port/sidecar/metadata.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},
+	{"retrieval TurboQuant Rust sidecar read-back", []string{"test", "-count=1", "./scripts/rust-port/cmd/turboquant-gen", "-run", "^TestGoReadsRustSidecars$"}, []string{"testdata/port/retrieval/turboquant-rust-sidecars.json"}, false},
 }
 
 var fixtureGeneratorTargets = []fixtureCheckTarget{
@@ -123,7 +124,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"render export Markdown", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportMarkdownFixture$"}, []string{"testdata/port/render/export-markdown.json"}, false},
 	{"retrieval quant sidecar wire", []string{"run", "./scripts/rust-port/cmd/quant-sidecar-gen", "--check"}, []string{"testdata/port/retrieval/quant-sidecar-wire.json"}, false},
-	{"retrieval TurboQuant codec", []string{"run", "./scripts/rust-port/cmd/turboquant-gen", "--check"}, []string{"testdata/port/retrieval/turboquant-codec.json"}, false},
+	{"retrieval TurboQuant codec", []string{"run", "./scripts/rust-port/cmd/turboquant-gen", "--check"}, []string{"testdata/port/retrieval/turboquant-codec.json", "testdata/port/retrieval/turboquant-property.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},

@@ -110,7 +110,8 @@ type errorCase struct {
 
 func main() {
 	output := flag.String("output", "testdata/port/retrieval/turboquant-codec.json", "fixture path")
-	check := flag.Bool("check", false, "compare generated fixture bytes with the fixture path; never rewrite it")
+	propertyOutput := flag.String("property-output", "testdata/port/retrieval/turboquant-property.json", "property corpus path")
+	check := flag.Bool("check", false, "compare generated fixtures with committed ones; never rewrite them")
 	flag.Parse()
 	if flag.NArg() != 0 {
 		fatalf("unexpected positional arguments")
@@ -122,6 +123,10 @@ func main() {
 	if err != nil {
 		fatalf("generate fixture: %v", err)
 	}
+	property, err := generateProperty()
+	if err != nil {
+		fatalf("generate property corpus: %v", err)
+	}
 	if *check {
 		committed, err := os.ReadFile(*output)
 		if err != nil {
@@ -130,11 +135,21 @@ func main() {
 		if !bytes.Equal(generated, committed) {
 			fatalf("fixture differs from pinned Go output (%s/%s)", runtime.GOOS, runtime.GOARCH)
 		}
-		fmt.Fprintf(os.Stderr, "Go oracle fixture check passed: %s (%d bytes, %s/%s)\n", *output, len(generated), runtime.GOOS, runtime.GOARCH)
+		committedProperty, err := os.ReadFile(*propertyOutput)
+		if err != nil {
+			fatalf("read property corpus: %v", err)
+		}
+		if err := checkProperty(committedProperty, property); err != nil {
+			fatalf("property corpus differs from pinned Go output (%s/%s): %v", runtime.GOOS, runtime.GOARCH, err)
+		}
+		fmt.Fprintf(os.Stderr, "Go oracle fixture check passed: %s and %s (%s/%s)\n", *output, *propertyOutput, runtime.GOOS, runtime.GOARCH)
 		return
 	}
 	if err := os.WriteFile(*output, generated, 0o644); err != nil { //nolint:gosec // committed fixture
 		fatalf("write fixture: %v", err)
+	}
+	if err := os.WriteFile(*propertyOutput, property, 0o644); err != nil { //nolint:gosec // committed fixture
+		fatalf("write property corpus: %v", err)
 	}
 }
 

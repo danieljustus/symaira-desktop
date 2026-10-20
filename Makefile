@@ -623,10 +623,13 @@ retrieval-vector-differential:
 	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
 
-# Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, then Rust replay.
+# Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, Rust replay,
+# and the Go decoder reading Rust-written sidecars.
 retrieval-turboquant-differential:
 	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-gen --check
 	$(CARGO) test -p symdesk-index --locked --test turboquant_codec
+	$(CARGO) test -p symdesk-index --locked --test turboquant_property
+	GOTOOLCHAIN=go1.26.9 go test -count=1 -run '^TestGoReadsRustSidecars$$' ./scripts/rust-port/cmd/turboquant-gen
 
 # Go vs Rust p95/throughput; a Rust regression above 10% exits nonzero.
 TURBOQUANT_BENCH_REPORT ?= docs/rust-port/turboquant-benchmark.md

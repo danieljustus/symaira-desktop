@@ -229,14 +229,28 @@ zero/constant/extreme vectors), 21 metadata JSON cases and 21 error cases in
 
 Exact comparisons: packed codes, min/max, metadata bytes, metadata round-trip
 encodes (including Go's `uint32` seed truncation), sidecar blobs and JSON,
-rotations, scores and cosine scores. Rust-written sidecar blob and JSON bytes
-equal Go's, so the Go fallback reads them like its own; Go-written sidecars
-decode and score in Rust. **Declared tolerance:** Go fuses `min+(max-min)*mid`
-into FMA on arm64 but not amd64, so Go's own decoded bits differ by
-architecture (5 of 60 cases). Decode is recorded on a `max(|min|,|max|)/4096`
-grid that the generator check reproduces on darwin/arm64 and darwin/amd64
-(Rosetta); Rust must match the grid exactly. Rust never fuses (amd64
-semantics). Recorded scores were identical on both Go architectures.
+rotations, scores and cosine scores in the 60-case grid fixture.
+
+Property corpus (`testdata/port/retrieval/turboquant-property.json`): 200
+generated cases from the pinned CoreKit package, dimensions 1..128 plus one
+768-dim case, all five bit widths, full-range int64 seeds and scales from 1e-3
+to 1e6. Encoded bytes and min/max are exact in Rust. **Declared tolerances:**
+Go fuses `min+(max-min)*mid` and the score accumulation into FMA on arm64 but
+not amd64, so Go's own decode and score bits differ by architecture. The corpus
+records each decoded component and score with a bound derived from the exact
+min/max and rotation: decode within `2^-20 * max(|min|,|max|)` and score within
+`2^-16 * sum|rotated query| * max(|min|,|max|)`. Rust's worst decode is about 5%
+of its bound and its scores match exactly. The generator check verifies the
+same bounds on darwin/arm64 and darwin/amd64 (Rosetta).
+
+Go reads Rust-written sidecars: `turboquant-sidecar-writer` renders one
+`encode_sidecar` blob and metadata JSON per property case into
+`testdata/port/retrieval/turboquant-rust-sidecars.json`, and
+`TestGoReadsRustSidecars` decodes those bytes with the pinned CoreKit package.
+The decode and score of each Rust blob must match the Go decode and score of
+Go's own blob bit for bit on the same architecture, and the Go-serialised
+metadata JSON must equal Rust's. Corrupting one Rust metadata field fails the
+test. `make retrieval-turboquant-differential` runs all of these.
 
 Intentional differences: Go `Score`/`ScoreCosine` panic on short packed codes;
 Rust returns `0.0`. No Rust production caller is wired yet; DB backfill and

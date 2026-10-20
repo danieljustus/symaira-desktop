@@ -299,8 +299,8 @@ fn is_printable_yaml(c: char) -> bool {
     u == 0x0A
         || (0x20..=0x7E).contains(&u)
         || (0x00A0..=0xD7FF).contains(&u)
-        || (0xE000..=0xFFFD).contains(&u) && u != 0xFEFF && u != 0xFFFE && u != 0xFFFF
-        || (0x10000..=0x10FFFF).contains(&u) && (u & 0xFFFF) != 0xFFFE && (u & 0xFFFF) != 0xFFFF
+        || (0xE000..=0xFFFD).contains(&u) && u != 0xFEFF
+    // yaml.v3 is_printable admits no four-byte UTF-8 scalar.
 }
 
 fn is_yaml_keyword_or_number(s: &str) -> bool {
@@ -587,7 +587,7 @@ fn single_quote(value: &str, indent_spaces: usize) -> String {
     output
 }
 
-fn double_quote(value: &str) -> String {
+pub(super) fn double_quote(value: &str) -> String {
     let mut output = String::with_capacity(value.len() + 2);
     output.push('"');
     for character in value.chars() {
@@ -606,8 +606,14 @@ fn double_quote(value: &str) -> String {
             '\u{0085}' => output.push_str("\\N"),
             '\u{2028}' => output.push_str("\\L"),
             '\u{2029}' => output.push_str("\\P"),
-            character if (character as u32) < 32 || character as u32 == 127 => {
-                let _ = write!(output, "\\x{:02X}", character as u32);
+            // yaml.v3 escapes every non-printable scalar and the BOM by width.
+            character if !is_printable_yaml(character) => {
+                let code = character as u32;
+                let _ = match code {
+                    0..=0xFF => write!(output, "\\x{code:02X}"),
+                    0x100..=0xFFFF => write!(output, "\\u{code:04X}"),
+                    _ => write!(output, "\\U{code:08X}"),
+                };
             }
             character => output.push(character),
         }

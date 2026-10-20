@@ -2,6 +2,7 @@
 import importlib.util
 import os
 from pathlib import Path
+import shutil
 import stat
 import tempfile
 import unittest
@@ -109,6 +110,35 @@ class FrozenContractControls(unittest.TestCase):
                 runner.expected_counts(entry)
         finally:
             runner.sys.platform = original
+
+
+    @unittest.skipUnless(os.name == "posix", "POSIX ancestor modes")
+    def test_replay_parent_requires_owner_only_ancestors(self):
+        base = Path(tempfile.mkdtemp(dir=runner.replay_parent())).resolve()
+        try:
+            shared = base / "group-writable"
+            shared.mkdir()
+            os.chmod(shared, 0o775)
+            self.assertTrue(runner.secure_ancestry(base))
+            self.assertFalse(runner.secure_ancestry(shared))
+            nested = shared / "replay"
+            nested.mkdir()
+            self.assertFalse(runner.secure_ancestry(nested), "an insecure ancestor taints every child")
+            old = os.environ.get(runner.REPLAY_PARENT_ENV)
+            try:
+                os.environ[runner.REPLAY_PARENT_ENV] = str(nested)
+                with self.assertRaises(RuntimeError):
+                    runner.replay_parent()
+                os.chmod(shared, 0o700)
+                self.assertEqual(runner.replay_parent(), nested)
+            finally:
+                if old is None:
+                    os.environ.pop(runner.REPLAY_PARENT_ENV, None)
+                else:
+                    os.environ[runner.REPLAY_PARENT_ENV] = old
+        finally:
+            os.chmod(base / "group-writable", 0o700)
+            shutil.rmtree(base)
 
 
 if __name__ == "__main__":

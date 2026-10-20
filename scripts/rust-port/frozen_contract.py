@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,44 @@ def plan(targets, manifest):
     errors += [f"{command!r}: missing recorded counts" for command in commands if command not in replays]
     errors += [f"{command!r}: stale replay entry" for command in replays if command not in commands]
     return commands, errors
+
+
+REPLAY_PARENT_ENV = "SYMDESK_FROZEN_TMP"
+
+
+def secure_ancestry(path):
+    """Mirror symaira-core-fs: every directory from / down to path must be
+    writable only by its owner, except root-owned sticky system temp dirs."""
+    if os.name != "posix":
+        return True
+    for current in (path, *path.parents):
+        info = os.stat(current)
+        if info.st_mode & 0o022 and not (info.st_uid == 0 and info.st_mode & stat.S_ISVTX):
+            return False
+    return True
+
+
+def replay_parent():
+    """Pick a temporary parent that the Rust replays' secure-directory checks
+    accept. The build launcher points TMPDIR at external storage whose mount
+    root may be group-writable, which every nested replay root would inherit."""
+    explicit = os.environ.get(REPLAY_PARENT_ENV)
+    if explicit:
+        path = Path(explicit).resolve()
+        if not (path.is_dir() and secure_ancestry(path)):
+            raise RuntimeError(f"{REPLAY_PARENT_ENV}={explicit} is not a directory with owner-only ancestors")
+        return path
+    candidates = [tempfile.gettempdir()]
+    if sys.platform == "darwin":
+        user_temp = subprocess.run(["getconf", "DARWIN_USER_TEMP_DIR"], capture_output=True, text=True, check=False)
+        if user_temp.returncode == 0 and user_temp.stdout.strip():
+            candidates.append(user_temp.stdout.strip())
+    candidates.append("/tmp")
+    for candidate in candidates:
+        path = Path(candidate).resolve()
+        if path.is_dir() and secure_ancestry(path):
+            return path
+    raise RuntimeError(f"no temporary directory with owner-only ancestors among {candidates}; set {REPLAY_PARENT_ENV}")
 
 
 def go_free_env(root):
@@ -199,7 +238,7 @@ def main(argv=None):
         return 0
 
     total = live_total = 0
-    with tempfile.TemporaryDirectory(prefix="symdesk-frozen-contract-") as root:
+    with tempfile.TemporaryDirectory(prefix="symdesk-frozen-contract-", dir=replay_parent()) as root:
         env = go_free_env(root)
         for command in commands:
             entry = manifest["replays"][command]

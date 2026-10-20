@@ -180,7 +180,11 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 6
+      "passed": 8
+    },
+    "cargo test -p symdesk-render --locked export_markdown": {
+      "ignored": 0,
+      "passed": 2
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,

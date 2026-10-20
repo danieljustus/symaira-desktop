@@ -60,7 +60,7 @@ pub fn render_note_html(markdown: &str) -> String {
     html
 }
 
-fn trim_go_space(value: &str) -> &str {
+pub(crate) fn trim_go_space(value: &str) -> &str {
     value.trim_matches(is_go_space)
 }
 

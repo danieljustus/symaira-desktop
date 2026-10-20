@@ -107,6 +107,7 @@ fn defaults_loads_and_environment_match_go() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
     assert_config(&Config::default(), &fixture.cases.defaults);
+    assert_eq!(fixture.cases.loads.len(), 14);
     for case in fixture.cases.loads {
         let input = if case.missing {
             None

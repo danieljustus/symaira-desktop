@@ -1,1006 +1,1006 @@
 {
+  "schema_version": 1,
+  "writer": "symdesk-index turboquant-sidecar-writer",
   "cases": [
     {
-      "blob_hex": "5a5216ba7546623a6ca96ca5",
       "id": "prop_000_dim9_bw2",
+      "blob_hex": "5a5216ba7546623a6ca96ca5",
       "meta_json": "{\"codec_version\":1,\"dimension\":9,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":6506989335521479861}"
     },
     {
-      "blob_hex": "d099c4bf9dbca53fa42b912aede75e4b52ab5daada56b4de54b2eaea717ca975",
       "id": "prop_001_dim54_bw3",
+      "blob_hex": "d099c4bf9dbca53fa42b912aede75e4b52ab5daada56b4de54b2eaea717ca975",
       "meta_json": "{\"codec_version\":1,\"dimension\":54,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8465078608875641434}"
     },
     {
-      "blob_hex": "71128bc449da6a441d5e1a8697dca82b84cf597d6188af370b0906b57598a46a627a45bc4033ab66",
       "id": "prop_002_dim39_bw4",
+      "blob_hex": "71128bc449da6a441d5e1a8697dca82b84cf597d6188af370b0906b57598a46a627a45bc4033ab66",
       "meta_json": "{\"codec_version\":1,\"dimension\":39,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5980728785902119622}"
     },
     {
-      "blob_hex": "b8fc98c950309249a46249b956ea966bed76496416ecd316b716ba8e",
       "id": "prop_003_dim59_bw25",
+      "blob_hex": "b8fc98c950309249a46249b956ea966bed76496416ecd316b716ba8e",
       "meta_json": "{\"codec_version\":1,\"dimension\":59,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-9188716150127188804}"
     },
     {
-      "blob_hex": "419888ba5e80ca3a11517fcb34880bc999ab18aa77b8485868f66840a74136b357557896",
       "id": "prop_004_dim61_bw35",
+      "blob_hex": "419888ba5e80ca3a11517fcb34880bc999ab18aa77b8485868f66840a74136b357557896",
       "meta_json": "{\"codec_version\":1,\"dimension\":61,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":2173768260078273342}"
     },
     {
-      "blob_hex": "ea9297bfa2a1bd3f45d40467861499aa24152588495a6fa2",
       "id": "prop_005_dim63_bw2",
+      "blob_hex": "ea9297bfa2a1bd3f45d40467861499aa24152588495a6fa2",
       "meta_json": "{\"codec_version\":1,\"dimension\":63,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":3490789132491480253}"
     },
     {
-      "blob_hex": "fdeecbc47d335e44ed5eb5ee53b6a919d53f6768ee477c13e9a9742b8f4ddfb6",
       "id": "prop_006_dim62_bw3",
+      "blob_hex": "fdeecbc47d335e44ed5eb5ee53b6a919d53f6768ee477c13e9a9742b8f4ddfb6",
       "meta_json": "{\"codec_version\":1,\"dimension\":62,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-9051056667795286189}"
     },
     {
-      "blob_hex": "200aa9c9722f6f499d468a8578868caed68978c79898c98aab0b68666197588ea9bfaa93856d3eed5cd7bab6dab9c6f968d77ab6cd89d7936a9c9797c4cb93d93bfeac82ba5e4cf5",
       "id": "prop_007_dim84_bw4",
+      "blob_hex": "200aa9c9722f6f499d468a8578868caed68978c79898c98aab0b68666197588ea9bfaa93856d3eed5cd7bab6dab9c6f968d77ab6cd89d7936a9c9797c4cb93d93bfeac82ba5e4cf5",
       "meta_json": "{\"codec_version\":1,\"dimension\":84,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":993693967503681010}"
     },
     {
-      "blob_hex": "58fba2ba05e5953ab9b9ae537a7f99795199735a91ead6a4e4a6b15e38a99b078fdc98ba5ae98c5e45b7a0a9892db8b9",
       "id": "prop_008_dim115_bw25",
+      "blob_hex": "58fba2ba05e5953ab9b9ae537a7f99795199735a91ead6a4e4a6b15e38a99b078fdc98ba5ae98c5e45b7a0a9892db8b9",
       "meta_json": "{\"codec_version\":1,\"dimension\":115,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":9063895558043016499}"
     },
     {
-      "blob_hex": "e29886bffa4eb03f1737689a4eb6e95691d84a6e8b757210a9b3c1c78270683256746473",
       "id": "prop_009_dim52_bw35",
+      "blob_hex": "e29886bffa4eb03f1737689a4eb6e95691d84a6e8b757210a9b3c1c78270683256746473",
       "meta_json": "{\"codec_version\":1,\"dimension\":52,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":2319389086549097143}"
     },
     {
-      "blob_hex": "f4f2afc4407ca744a41966eac96be7aa65ae199b8d9edd4e",
       "id": "prop_010_dim56_bw2",
+      "blob_hex": "f4f2afc4407ca744a41966eac96be7aa65ae199b8d9edd4e",
       "meta_json": "{\"codec_version\":1,\"dimension\":56,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":2608659916686952951}"
     },
     {
-      "blob_hex": "ca95b4c972e5c1499a348d12a5362b574a594956e3a82d26394664d7b8ebb445ace94513bb6659534eeda8cc7b340a2adf524a5695e4be8d",
       "id": "prop_011_dim120_bw3",
+      "blob_hex": "ca95b4c972e5c1499a348d12a5362b574a594956e3a82d26394664d7b8ebb445ace94513bb6659534eeda8cc7b340a2adf524a5695e4be8d",
       "meta_json": "{\"codec_version\":1,\"dimension\":120,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-649233920178824673}"
     },
     {
-      "blob_hex": "9ab46abaaa24b43a21bf4ab6a67593a60896984496687d57",
       "id": "prop_012_dim32_bw4",
+      "blob_hex": "9ab46abaaa24b43a21bf4ab6a67593a60896984496687d57",
       "meta_json": "{\"codec_version\":1,\"dimension\":32,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":3551746733269040917}"
     },
     {
-      "blob_hex": "451734bf4da3563fb58c756f739f217beb12",
       "id": "prop_013_dim22_bw25",
+      "blob_hex": "451734bf4da3563fb58c756f739f217beb12",
       "meta_json": "{\"codec_version\":1,\"dimension\":22,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":3346478713390890868}"
     },
     {
-      "blob_hex": "b403a3c42e079f44a9388e92a385b353969426f1f3b49224759e2f445a24df9959909b7a47573ce3a91ab262caa97795789857068111c8921b685649b3aef977",
       "id": "prop_014_dim117_bw35",
+      "blob_hex": "b403a3c42e079f44a9388e92a385b353969426f1f3b49224759e2f445a24df9959909b7a47573ce3a91ab262caa97795789857068111c8921b685649b3aef977",
       "meta_json": "{\"codec_version\":1,\"dimension\":117,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":6427319119934569634}"
     },
     {
-      "blob_hex": "e548a3c9727d6449d8d6ea9a56e6586ae8d6a76756e6696b",
       "id": "prop_015_dim35_bw2",
+      "blob_hex": "e548a3c9727d6449d8d6ea9a56e6586ae8d6a76756e6696b",
       "meta_json": "{\"codec_version\":1,\"dimension\":35,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":794884091570933528}"
     },
     {
-      "blob_hex": "4a19b6baca55cb3aa348b1244952ebcb95e2b70d",
       "id": "prop_016_dim25_bw3",
+      "blob_hex": "4a19b6baca55cb3aa348b1244952ebcb95e2b70d",
       "meta_json": "{\"codec_version\":1,\"dimension\":25,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-935090479239631738}"
     },
     {
-      "blob_hex": "ec183ebfffdd8f3f40f72856",
       "id": "prop_017_dim7_bw4",
+      "blob_hex": "ec183ebfffdd8f3f40f72856",
       "meta_json": "{\"codec_version\":1,\"dimension\":7,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8493388874314641956}"
     },
     {
-      "blob_hex": "131a8fc49b5aab441a45805ab9b51a113aa62294696a46595536715aba710ac995d3b4f164e7b91e07add2d66e8bcaf2",
       "id": "prop_018_dim93_bw25",
+      "blob_hex": "131a8fc49b5aab441a45805ab9b51a113aa62294696a46595536715aba710ac995d3b4f164e7b91e07add2d66e8bcaf2",
       "meta_json": "{\"codec_version\":1,\"dimension\":93,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2315831160172075063}"
     },
     {
-      "blob_hex": "fc2896c963de8749e8b4b15ba790656b8e6b45ade3c2921cd97a19676eb34a52a24866ca87a942e89dba8ba7c87855f68a47a7ca89a6b8cc756a7c97d6d29699",
       "id": "prop_019_dim74_bw35",
+      "blob_hex": "fc2896c963de8749e8b4b15ba790656b8e6b45ade3c2921cd97a19676eb34a52a24866ca87a942e89dba8ba7c87855f68a47a7ca89a6b8cc756a7c97d6d29699",
       "meta_json": "{\"codec_version\":1,\"dimension\":74,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":7255605721612444463}"
     },
     {
-      "blob_hex": "349140ba42d1bf3a0959c94659948455645b454674860055",
       "id": "prop_020_dim48_bw2",
+      "blob_hex": "349140ba42d1bf3a0959c94659948455645b454674860055",
       "meta_json": "{\"codec_version\":1,\"dimension\":48,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":3770784787226444224}"
     },
     {
-      "blob_hex": "23767cbf84f6b03fe4558ae48a6454434d4ad932dcb62dcc16aec218850a2b70dbd369a388604c434d4ac932942629cb168ec21865ca2870",
       "id": "prop_021_dim65_bw3",
+      "blob_hex": "23767cbf84f6b03fe4558ae48a6454434d4ad932dcb62dcc16aec218850a2b70dbd369a388604c434d4ac932942629cb168ec21865ca2870",
       "meta_json": "{\"codec_version\":1,\"dimension\":65,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":2896172845918002271}"
     },
     {
-      "blob_hex": "6e228ac4b6ba9c4479565b55b328c5b89604e1257686987ca6267afbda248458c1b4aab2b68478cb27535434135aa5c5b40c771666bab549542264da3a565365d0bc4f93a6b88498",
       "id": "prop_022_dim96_bw4",
+      "blob_hex": "6e228ac4b6ba9c4479565b55b328c5b89604e1257686987ca6267afbda248458c1b4aab2b68478cb27535434135aa5c5b40c771666bab549542264da3a565365d0bc4f93a6b88498",
       "meta_json": "{\"codec_version\":1,\"dimension\":96,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5829943343537524197}"
     },
     {
-      "blob_hex": "be4741c912369d49318565a520a5a30d7646",
       "id": "prop_023_dim28_bw25",
+      "blob_hex": "be4741c912369d49318565a520a5a30d7646",
       "meta_json": "{\"codec_version\":1,\"dimension\":28,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6270197547253518197}"
     },
     {
-      "blob_hex": "05cd75baea379f3a9dd9c9560f4536",
       "id": "prop_024_dim12_bw35",
+      "blob_hex": "05cd75baea379f3a9dd9c9560f4536",
       "meta_json": "{\"codec_version\":1,\"dimension\":12,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":3552364377901161603}"
     },
     {
-      "blob_hex": "51f9a8bf86d0053f36",
       "id": "prop_025_dim4_bw2",
+      "blob_hex": "51f9a8bf86d0053f36",
       "meta_json": "{\"codec_version\":1,\"dimension\":4,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":1884338871165197083}"
     },
     {
-      "blob_hex": "d2ab8cc41e41dc4482a6e6e21089cb4a6f22ab94",
       "id": "prop_026_dim28_bw3",
+      "blob_hex": "d2ab8cc41e41dc4482a6e6e21089cb4a6f22ab94",
       "meta_json": "{\"codec_version\":1,\"dimension\":28,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":3020259713124796017}"
     },
     {
-      "blob_hex": "914b8dc98b9c9a4997b9528777041e3176a1094a584558296878dd48ac347a96269432485a574977479575d7755c6bb359926f08718da59a66297cda4835bb6a746824653056a759",
       "id": "prop_027_dim114_bw4",
+      "blob_hex": "914b8dc98b9c9a4997b9528777041e3176a1094a584558296878dd48ac347a96269432485a574977479575d7755c6bb359926f08718da59a66297cda4835bb6a746824653056a759",
       "meta_json": "{\"codec_version\":1,\"dimension\":114,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6448921209307346653}"
     },
     {
-      "blob_hex": "54444ababf448f3a5a2d4068635265a9eb2a57900ab6954bac5badfa",
       "id": "prop_028_dim36_bw25",
+      "blob_hex": "54444ababf448f3a5a2d4068635265a9eb2a57900ab6954bac5badfa",
       "meta_json": "{\"codec_version\":1,\"dimension\":36,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7293135440764295379}"
     },
     {
-      "blob_hex": "e7ddc5bf9ec99f3f6659d9b3c8a914e78e2c55a51a358a6c596a5dab752bb76d96aa98abb6b5789b65a7fc87a8a95aca7069d55578ab9a5b76fac47996c7778e",
       "id": "prop_029_dim84_bw35",
+      "blob_hex": "e7ddc5bf9ec99f3f6659d9b3c8a914e78e2c55a51a358a6c596a5dab752bb76d96aa98abb6b5789b65a7fc87a8a95aca7069d55578ab9a5b76fac47996c7778e",
       "meta_json": "{\"codec_version\":1,\"dimension\":84,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":8347868018673767077}"
     },
     {
-      "blob_hex": "f69699c4c7117e448c1a96b9996519a6ed19e7e9aa656aa6",
       "id": "prop_030_dim38_bw2",
+      "blob_hex": "f69699c4c7117e448c1a96b9996519a6ed19e7e9aa656aa6",
       "meta_json": "{\"codec_version\":1,\"dimension\":38,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1253381969977677428}"
     },
     {
-      "blob_hex": "3f0b27c9ba979d491246565c3e6d",
       "id": "prop_031_dim13_bw3",
+      "blob_hex": "3f0b27c9ba979d491246565c3e6d",
       "meta_json": "{\"codec_version\":1,\"dimension\":13,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":4420942410675571723}"
     },
     {
-      "blob_hex": "8e9c6abaf90a7f3af131d04897516569",
       "id": "prop_032_dim12_bw4",
+      "blob_hex": "8e9c6abaf90a7f3af131d04897516569",
       "meta_json": "{\"codec_version\":1,\"dimension\":12,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":8367552959303346524}"
     },
     {
-      "blob_hex": "b99f6fbf431c873fa2a08896e9b9565aa966acb78f28996e54a2af941a8e10396c55db4669d04f5bc77e5c2604a44d4f",
       "id": "prop_033_dim93_bw25",
+      "blob_hex": "b99f6fbf431c873fa2a08896e9b9565aa966acb78f28996e54a2af941a8e10396c55db4669d04f5bc77e5c2604a44d4f",
       "meta_json": "{\"codec_version\":1,\"dimension\":93,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":5097353332999155873}"
     },
     {
-      "blob_hex": "db1b7fc426764244f6f8e8e7a8b5e56d95630bcadc963ef29d9663ba99ce4b9a95ba80c3",
       "id": "prop_034_dim34_bw35",
+      "blob_hex": "db1b7fc426764244f6f8e8e7a8b5e56d95630bcadc963ef29d9663ba99ce4b9a95ba80c3",
       "meta_json": "{\"codec_version\":1,\"dimension\":34,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":5137224168408177673}"
     },
     {
-      "blob_hex": "8bb7e7c83cadab4900431103",
       "id": "prop_035_dim10_bw2",
+      "blob_hex": "8bb7e7c83cadab4900431103",
       "meta_json": "{\"codec_version\":1,\"dimension\":10,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":770021724686003568}"
     },
     {
-      "blob_hex": "6257eaba3f0ac23adbdab1e4b67aab3da6a559b25dc79a22474dbcc77633c985d315925d42b6dd57d2d5da726417aea554d1b3d4911b2a8e",
       "id": "prop_036_dim113_bw3",
+      "blob_hex": "6257eaba3f0ac23adbdab1e4b67aab3da6a559b25dc79a22474dbcc77633c985d315925d42b6dd57d2d5da726417aea554d1b3d4911b2a8e",
       "meta_json": "{\"codec_version\":1,\"dimension\":113,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":3835209009809148690}"
     },
     {
-      "blob_hex": "130e88bf2ba6583f65b9889447b39c8f51a6748134a0787c",
       "id": "prop_037_dim19_bw4",
+      "blob_hex": "130e88bf2ba6583f65b9889447b39c8f51a6748134a0787c",
       "meta_json": "{\"codec_version\":1,\"dimension\":19,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":931764506931341475}"
     },
     {
-      "blob_hex": "cbfe86c4c709844494a874ae9855555693aab69ae9d3e25a6ddde669",
       "id": "prop_038_dim36_bw25",
+      "blob_hex": "cbfe86c4c709844494a874ae9855555693aab69ae9d3e25a6ddde669",
       "meta_json": "{\"codec_version\":1,\"dimension\":36,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7091078902245040303}"
     },
     {
-      "blob_hex": "389180c9d0ffa64965459925854513db7df10466aa39577a2bc95b0865966a5e63c68b29",
       "id": "prop_039_dim48_bw35",
+      "blob_hex": "389180c9d0ffa64965459925854513db7df10466aa39577a2bc95b0865966a5e63c68b29",
       "meta_json": "{\"codec_version\":1,\"dimension\":48,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":2024859883395901800}"
     },
     {
-      "blob_hex": "03259cbafa08c83a369e55847ae855aa555514c74645596aa156d59915b99657a946a5cb465a6946",
       "id": "prop_040_dim105_bw2",
+      "blob_hex": "03259cbafa08c83a369e55847ae855aa555514c74645596aa156d59915b99657a946a5cb465a6946",
       "meta_json": "{\"codec_version\":1,\"dimension\":105,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":6625625652450124333}"
     },
     {
-      "blob_hex": "662b56bfceb6873fdca4c437d5ce0c0bc168336eee3032af4693dd9652e13436",
       "id": "prop_041_dim46_bw3",
+      "blob_hex": "662b56bfceb6873fdca4c437d5ce0c0bc168336eee3032af4693dd9652e13436",
       "meta_json": "{\"codec_version\":1,\"dimension\":46,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":1047525432799568728}"
     },
     {
-      "blob_hex": "ebc580c492298844a684692d8a48a13a228a845377a99476a6a78437983f481a87754604588746258cb2de4a4b72c157283da6b3797982e98cd6f954597968379d2879645a572497",
       "id": "prop_042_dim89_bw4",
+      "blob_hex": "ebc580c492298844a684692d8a48a13a228a845377a99476a6a78437983f481a87754604588746258cb2de4a4b72c157283da6b3797982e98cd6f954597968379d2879645a572497",
       "meta_json": "{\"codec_version\":1,\"dimension\":89,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":8524727703542079078}"
     },
     {
-      "blob_hex": "8de387c90472a749461d58699519191a2259b58559299d96b3aa2dd5b6aea32b65d8b725ebc48c86b4c52db328205761",
       "id": "prop_043_dim103_bw25",
+      "blob_hex": "8de387c90472a749461d58699519191a2259b58559299d96b3aa2dd5b6aea32b65d8b725ebc48c86b4c52db328205761",
       "meta_json": "{\"codec_version\":1,\"dimension\":103,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1198240650095841325}"
     },
     {
-      "blob_hex": "0c95a1bad6e28b3a5c37c64d2b0cdfc86d0c3b4d7639a9100b552db76e653875675b8ca65faa2d457798887a77d878a5bb7b5ca875b77a99b369b67bcaa389b9",
       "id": "prop_044_dim84_bw35",
+      "blob_hex": "0c95a1bad6e28b3a5c37c64d2b0cdfc86d0c3b4d7639a9100b552db76e653875675b8ca65faa2d457798887a77d878a5bb7b5ca875b77a99b369b67bcaa389b9",
       "meta_json": "{\"codec_version\":1,\"dimension\":84,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8544982286554668509}"
     },
     {
-      "blob_hex": "cef29bbfe4bd963faa9755756a9a994e968741759a86954a",
       "id": "prop_045_dim36_bw2",
+      "blob_hex": "cef29bbfe4bd963faa9755756a9a994e968741759a86954a",
       "meta_json": "{\"codec_version\":1,\"dimension\":36,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7826254311146384305}"
     },
     {
-      "blob_hex": "6b219dc4b5d7754493a97164d58de45a7823a752e35a556fb691f22808a5e3754ecbae233b8a9eecb4ea0c4f9eec912e2c8eadca44635972",
       "id": "prop_046_dim80_bw3",
+      "blob_hex": "6b219dc4b5d7754493a97164d58de45a7823a752e35a556fb691f22808a5e3754ecbae233b8a9eecb4ea0c4f9eec912e2c8eadca44635972",
       "meta_json": "{\"codec_version\":1,\"dimension\":80,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":6563679777948283188}"
     },
     {
-      "blob_hex": "545ba5c9db8b84497387779b45a2c599ad9c563a53a026c6dd93884b7cad9846ff88b52e729a36a9",
       "id": "prop_047_dim53_bw4",
+      "blob_hex": "545ba5c9db8b84497387779b45a2c599ad9c563a53a026c6dd93884b7cad9846ff88b52e729a36a9",
       "meta_json": "{\"codec_version\":1,\"dimension\":53,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":1361581617955638338}"
     },
     {
-      "blob_hex": "ca2b6bba09b68a3a1108b79662264995d557a350575b7622c20427563ba61447522a26aa926e690e1b69a7e44a9bb954",
       "id": "prop_048_dim67_bw25",
+      "blob_hex": "ca2b6bba09b68a3a1108b79662264995d557a350575b7622c20427563ba61447522a26aa926e690e1b69a7e44a9bb954",
       "meta_json": "{\"codec_version\":1,\"dimension\":67,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":2477411169699107128}"
     },
     {
-      "blob_hex": "4d2389bfe1c7a03fec7996c0356b4aa2ba1c55af9765976244a5e2f9616d825a949a549b",
       "id": "prop_049_dim57_bw35",
+      "blob_hex": "4d2389bfe1c7a03fec7996c0356b4aa2ba1c55af9765976244a5e2f9616d825a949a549b",
       "meta_json": "{\"codec_version\":1,\"dimension\":57,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6591001288053211618}"
     },
     {
-      "blob_hex": "a6e795c4e54881446a98bab3c0564965",
       "id": "prop_050_dim31_bw2",
+      "blob_hex": "a6e795c4e54881446a98bab3c0564965",
       "meta_json": "{\"codec_version\":1,\"dimension\":31,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3476498295770749972}"
     },
     {
-      "blob_hex": "1f90b0c93b1e954915376adbe4ae26516bd152d2436b8d1edb956eadc9dab532ed226b38b9692e3b7634b9f8846026dbbe89162d7155b9b1",
       "id": "prop_051_dim109_bw3",
+      "blob_hex": "1f90b0c93b1e954915376adbe4ae26516bd152d2436b8d1edb956eadc9dab532ed226b38b9692e3b7634b9f8846026dbbe89162d7155b9b1",
       "meta_json": "{\"codec_version\":1,\"dimension\":109,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7193942724339845806}"
     },
     {
-      "blob_hex": "727bb5bad0a4b53a890889665da38a85a88981d499738b953829878655325888ab7b7686a57879d8a8368a674af9a555b9857394768787345767888742977358bb786856739c7577",
       "id": "prop_052_dim83_bw4",
+      "blob_hex": "727bb5bad0a4b53a890889665da38a85a88981d499738b953829878655325888ab7b7686a57879d8a8368a674af9a555b9857394768787345767888742977358bb786856739c7577",
       "meta_json": "{\"codec_version\":1,\"dimension\":83,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":6828406882921923888}"
     },
     {
-      "blob_hex": "2e3da2bf23f6a03fa6955a9a5995554504abcfe3b48ce4bad35a4591",
       "id": "prop_053_dim49_bw25",
+      "blob_hex": "2e3da2bf23f6a03fa6955a9a5995554504abcfe3b48ce4bad35a4591",
       "meta_json": "{\"codec_version\":1,\"dimension\":49,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7468782805368353432}"
     },
     {
-      "blob_hex": "ca824ec404349844d1408c8da199c7756fa38c6aa899",
       "id": "prop_054_dim25_bw35",
+      "blob_hex": "ca824ec404349844d1408c8da199c7756fa38c6aa899",
       "meta_json": "{\"codec_version\":1,\"dimension\":25,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6926759985192777099}"
     },
     {
-      "blob_hex": "a17096c959b59e495f9179746a369ef45aee5b8f5466d796ed67a59676a342d6615b57c9148245b9",
       "id": "prop_055_dim118_bw2",
+      "blob_hex": "a17096c959b59e495f9179746a369ef45aee5b8f5466d796ed67a59676a342d6615b57c9148245b9",
       "meta_json": "{\"codec_version\":1,\"dimension\":118,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":4986602001633720640}"
     },
     {
-      "blob_hex": "d2ad67baa804513a1955930fc78d660aabb5a65f5a496deb8c4a1bae7519c7491955930fc78d660aabb5a65f5a496dec8c4a1bae7519c749",
       "id": "prop_056_dim65_bw3",
+      "blob_hex": "d2ad67baa804513a1955930fc78d660aabb5a65f5a496deb8c4a1bae7519c7491955930fc78d660aabb5a65f5a496dec8c4a1bae7519c749",
       "meta_json": "{\"codec_version\":1,\"dimension\":65,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1922732335300232165}"
     },
     {
-      "blob_hex": "f144cabf8c1c383fdab3c9bcaf40da8da3bb796d8cb68d9d",
       "id": "prop_057_dim28_bw4",
+      "blob_hex": "f144cabf8c1c383fdab3c9bcaf40da8da3bb796d8cb68d9d",
       "meta_json": "{\"codec_version\":1,\"dimension\":28,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6178036824879787087}"
     },
     {
-      "blob_hex": "e8c18fc4873ebc445ba799165a4a98819ac875e2c64598b62a1a4764",
       "id": "prop_058_dim50_bw25",
+      "blob_hex": "e8c18fc4873ebc445ba799165a4a98819ac875e2c64598b62a1a4764",
       "meta_json": "{\"codec_version\":1,\"dimension\":50,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":3905485919652268407}"
     },
     {
-      "blob_hex": "f141b3c9509ec749a336b205cc5972b18e2429af6ca82ddb38505cef551627b397b577e87647258a954687c4eb6b24786a35d29843778475555b448679597128",
       "id": "prop_059_dim120_bw35",
+      "blob_hex": "f141b3c9509ec749a336b205cc5972b18e2429af6ca82ddb38505cef551627b397b577e87647258a954687c4eb6b24786a35d29843778475555b448679597128",
       "meta_json": "{\"codec_version\":1,\"dimension\":120,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":3601436856735126438}"
     },
     {
-      "blob_hex": "ea19bcba140f5e3abee6afb1caa6faa979ea6ab585a676ad",
       "id": "prop_060_dim39_bw2",
+      "blob_hex": "ea19bcba140f5e3abee6afb1caa6faa979ea6ab585a676ad",
       "meta_json": "{\"codec_version\":1,\"dimension\":39,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":1507229249167874651}"
     },
     {
-      "blob_hex": "5cd2cabf215e913f93e69a7c39b363275223bd925c3bb25c4d9725a96eeeacb2b4d6756c89ad2ac5505d5576b6298d4c9b91f346892f479a",
       "id": "prop_061_dim92_bw3",
+      "blob_hex": "5cd2cabf215e913f93e69a7c39b363275223bd925c3bb25c4d9725a96eeeacb2b4d6756c89ad2ac5505d5576b6298d4c9b91f346892f479a",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7845756121969668844}"
     },
     {
-      "blob_hex": "0fe89dc41da7b1440a842687477776625873a799a566f774",
       "id": "prop_062_dim21_bw4",
+      "blob_hex": "0fe89dc41da7b1440a842687477776625873a799a566f774",
       "meta_json": "{\"codec_version\":1,\"dimension\":21,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2406759849776978430}"
     },
     {
-      "blob_hex": "239e1bc922d205494700",
       "id": "prop_063_dim3_bw25",
+      "blob_hex": "239e1bc922d205494700",
       "meta_json": "{\"codec_version\":1,\"dimension\":3,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7379189878410750483}"
     },
     {
-      "blob_hex": "93e48cba4957ae3ae9429911474b833225dda4646c24aed6e0a513856a252ab19559a8794295883ee989b6810617a42e66457557ad9527c7c67cc19458d3d09f",
       "id": "prop_064_dim110_bw35",
+      "blob_hex": "93e48cba4957ae3ae9429911474b833225dda4646c24aed6e0a513856a252ab19559a8794295883ee989b6810617a42e66457557ad9527c7c67cc19458d3d09f",
       "meta_json": "{\"codec_version\":1,\"dimension\":110,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":1744994572993515108}"
     },
     {
-      "blob_hex": "e36699bf091fa33f516abab9045d576a91a7be75599a99bd858d85aa85955b879a5e1a6a6a959d5a",
       "id": "prop_065_dim101_bw2",
+      "blob_hex": "e36699bf091fa33f516abab9045d576a91a7be75599a99bd858d85aa85955b879a5e1a6a6a959d5a",
       "meta_json": "{\"codec_version\":1,\"dimension\":101,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":6516417555116020001}"
     },
     {
-      "blob_hex": "f05147c408bb8e44542507564b9153b16599a231639923264dd262b5a6a1a46e",
       "id": "prop_066_dim34_bw3",
+      "blob_hex": "f05147c408bb8e44542507564b9153b16599a231639923264dd262b5a6a1a46e",
       "meta_json": "{\"codec_version\":1,\"dimension\":34,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2061795575747201417}"
     },
     {
-      "blob_hex": "ce7cacc9cccab1495a7069799987756797ab8d4b77896683f7f98965bc7684647b9f6c3a743a76a6536a77748497d255429948a9686395b2925c74555d843636256ff46c687beb88",
       "id": "prop_067_dim120_bw4",
+      "blob_hex": "ce7cacc9cccab1495a7069799987756797ab8d4b77896683f7f98965bc7684647b9f6c3a743a76a6536a77748497d255429948a9686395b2925c74555d843636256ff46c687beb88",
       "meta_json": "{\"codec_version\":1,\"dimension\":120,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8897618666761293836}"
     },
     {
-      "blob_hex": "a30cdcbafd20043b69655999552960e8a5566d567555a5550cb75514232995bea992b46c9a5672233b4aa44491a1b605",
       "id": "prop_068_dim117_bw25",
+      "blob_hex": "a30cdcbafd20043b69655999552960e8a5566d567555a5550cb75514232995bea992b46c9a5672233b4aa44491a1b605",
       "meta_json": "{\"codec_version\":1,\"dimension\":117,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2915563478211704809}"
     },
     {
-      "blob_hex": "94179bbfc51e7b3fe3b47d25b8598c8b587a7fc55958",
       "id": "prop_069_dim24_bw35",
+      "blob_hex": "94179bbfc51e7b3fe3b47d25b8598c8b587a7fc55958",
       "meta_json": "{\"codec_version\":1,\"dimension\":24,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3092280813406310759}"
     },
     {
-      "blob_hex": "c82fa8c408fe9444b8d935a6fa6aab5a",
       "id": "prop_070_dim26_bw2",
+      "blob_hex": "c82fa8c408fe9444b8d935a6fa6aab5a",
       "meta_json": "{\"codec_version\":1,\"dimension\":26,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":4288525940940409636}"
     },
     {
-      "blob_hex": "7f4ab9c92c0a4449f47d9bac57eb9e5db60e79da7c6d6f34c7a32dcd8e9ee6b2",
       "id": "prop_071_dim37_bw3",
+      "blob_hex": "7f4ab9c92c0a4449f47d9bac57eb9e5db60e79da7c6d6f34c7a32dcd8e9ee6b2",
       "meta_json": "{\"codec_version\":1,\"dimension\":37,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":3774845437888951997}"
     },
     {
-      "blob_hex": "df05c4baebfec53a6a4896859859878c8a9d7a6750e35b5385a2b67977aca67d56a871eb8079fa8e",
       "id": "prop_072_dim62_bw4",
+      "blob_hex": "df05c4baebfec53a6a4896859859878c8a9d7a6750e35b5385a2b67977aca67d56a871eb8079fa8e",
       "meta_json": "{\"codec_version\":1,\"dimension\":62,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":2171899280829791435}"
     },
     {
-      "blob_hex": "07548abf2cbd923f6409ad455a64291936995868559156a5e3c82e23bf6476b895d346521f45b3529a5d9ed8958db89c",
       "id": "prop_073_dim76_bw25",
+      "blob_hex": "07548abf2cbd923f6409ad455a64291936995868559156a5e3c82e23bf6476b895d346521f45b3529a5d9ed8958db89c",
       "meta_json": "{\"codec_version\":1,\"dimension\":76,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":1889091929359391255}"
     },
     {
-      "blob_hex": "9ca7aac452b23944a7d851074852f7977cde76a29aef",
       "id": "prop_074_dim24_bw35",
+      "blob_hex": "9ca7aac452b23944a7d851074852f7977cde76a29aef",
       "meta_json": "{\"codec_version\":1,\"dimension\":24,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":5443887200707346903}"
     },
     {
-      "blob_hex": "21cfaac9bbe6b449d559f6aa6aa999a5e96565969a9924a9a9a95796799a4a95a8a50795ad9a1499",
       "id": "prop_075_dim88_bw2",
+      "blob_hex": "21cfaac9bbe6b449d559f6aa6aa999a5e96565969a9924a9a9a95796799a4a95a8a50795ad9a1499",
       "meta_json": "{\"codec_version\":1,\"dimension\":88,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":191174200157863493}"
     },
     {
-      "blob_hex": "521167bab96e863a1a37d2edc7d52b6b75353729a9c7f4dbdb32d18b529b4e48d236eaa5c5d1e36871e5364561c5f0935b4a49896e535e44",
       "id": "prop_076_dim70_bw3",
+      "blob_hex": "521167bab96e863a1a37d2edc7d52b6b75353729a9c7f4dbdb32d18b529b4e48d236eaa5c5d1e36871e5364561c5f0935b4a49896e535e44",
       "meta_json": "{\"codec_version\":1,\"dimension\":70,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7254385614651112114}"
     },
     {
-      "blob_hex": "67c1adbf7e1d7c3f0855b9a8aa88866a3d9b2ad9b9cabbd85b5684bb87c9e7bc63e978af74d9d9a67a76fd68bd69565cafbc6d98ddba8bcacc77b77aaba9b7bed5faab5f98b9a8a8",
       "id": "prop_077_dim79_bw4",
+      "blob_hex": "67c1adbf7e1d7c3f0855b9a8aa88866a3d9b2ad9b9cabbd85b5684bb87c9e7bc63e978af74d9d9a67a76fd68bd69565cafbc6d98ddba8bcacc77b77aaba9b7bed5faab5f98b9a8a8",
       "meta_json": "{\"codec_version\":1,\"dimension\":79,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":3776713266980601280}"
     },
     {
-      "blob_hex": "1b4f6ac48af8be44555511199a960189159ba492561269569b346dca302aa4c8a94aa2658a708a51b9889c560c1b4569",
       "id": "prop_078_dim65_bw25",
+      "blob_hex": "1b4f6ac48af8be44555511199a960189159ba492561269569b346dca302aa4c8a94aa2658a708a51b9889c560c1b4569",
       "meta_json": "{\"codec_version\":1,\"dimension\":65,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":801511143056942556}"
     },
     {
-      "blob_hex": "d52d9dc9b2b58f492cb712ee58b655c49443689123b3766cdd70df94992665b1aacd9a09bcb4bc6ae8748cc442768948989d9b7aa8f84d2afc79d6c7c92c7979",
       "id": "prop_079_dim93_bw35",
+      "blob_hex": "d52d9dc9b2b58f492cb712ee58b655c49443689123b3766cdd70df94992665b1aacd9a09bcb4bc6ae8748cc442768948989d9b7aa8f84d2afc79d6c7c92c7979",
       "meta_json": "{\"codec_version\":1,\"dimension\":93,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":7685669574358337628}"
     },
     {
-      "blob_hex": "12a3eababdc5ae3a59aa69b96a9a5beaa27a6abeba9966a6ade999ad7aa65ab9e6ba9aae7aa9a5a9",
       "id": "prop_080_dim93_bw2",
+      "blob_hex": "12a3eababdc5ae3a59aa69b96a9a5beaa27a6abeba9966a6ade999ad7aa65ab9e6ba9aae7aa9a5a9",
       "meta_json": "{\"codec_version\":1,\"dimension\":93,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":1477157768773822746}"
     },
     {
-      "blob_hex": "9b3166bf3161b23fd238d954c0f0921c720e45b5",
       "id": "prop_081_dim27_bw3",
+      "blob_hex": "9b3166bf3161b23fd238d954c0f0921c720e45b5",
       "meta_json": "{\"codec_version\":1,\"dimension\":27,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":8519432176153131846}"
     },
     {
-      "blob_hex": "55b883c4adb87c447d9d8f675e996e888d79b5aa83a47d465757bb1856603de45a474db49a586ae769bfab765abb8b97899ce1b970c7a955537ae827428359f3576a6ac3967b96f6",
       "id": "prop_082_dim71_bw4",
+      "blob_hex": "55b883c4adb87c447d9d8f675e996e888d79b5aa83a47d465757bb1856603de45a474db49a586ae769bfab765abb8b97899ce1b970c7a955537ae827428359f3576a6ac3967b96f6",
       "meta_json": "{\"codec_version\":1,\"dimension\":71,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4186497169067390609}"
     },
     {
-      "blob_hex": "36bba4c94b21b24991675a6555a69d56a84256093a62469a9bfb319cd4861b590597bb41e1a6ad22576ee49251ce3b99",
       "id": "prop_083_dim112_bw25",
+      "blob_hex": "36bba4c94b21b24991675a6555a69d56a84256093a62469a9bfb319cd4861b590597bb41e1a6ad22576ee49251ce3b99",
       "meta_json": "{\"codec_version\":1,\"dimension\":112,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":635553292764680112}"
     },
     {
-      "blob_hex": "6ea091ba6d43b13a6e49a5a2b88d1c8369d2a64954840fb3869645ca43545c9678ab76da",
       "id": "prop_084_dim49_bw35",
+      "blob_hex": "6ea091ba6d43b13a6e49a5a2b88d1c8369d2a64954840fb3869645ca43545c9678ab76da",
       "meta_json": "{\"codec_version\":1,\"dimension\":49,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":8110862127288368005}"
     },
     {
-      "blob_hex": "54bfc7be5fc63b3f93d6",
       "id": "prop_085_dim6_bw2",
+      "blob_hex": "54bfc7be5fc63b3f93d6",
       "meta_json": "{\"codec_version\":1,\"dimension\":6,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":2075418337805034377}"
     },
     {
-      "blob_hex": "f1329ac4d208474485257e5419bf",
       "id": "prop_086_dim10_bw3",
+      "blob_hex": "f1329ac4d208474485257e5419bf",
       "meta_json": "{\"codec_version\":1,\"dimension\":10,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8763130473758464254}"
     },
     {
-      "blob_hex": "9f78f5c6e9c91349f1e0",
       "id": "prop_087_dim3_bw4",
+      "blob_hex": "9f78f5c6e9c91349f1e0",
       "meta_json": "{\"codec_version\":1,\"dimension\":3,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2222122439762864513}"
     },
     {
-      "blob_hex": "f45be8babccdb33afa2bf99b899eef9a95a6b9597fa9db29944b5f5c4d992da772133775dd56ca5cb9b4a4a993eab675",
       "id": "prop_088_dim128_bw25",
+      "blob_hex": "f45be8babccdb33afa2bf99b899eef9a95a6b9597fa9db29944b5f5c4d992da772133775dd56ca5cb9b4a4a993eab675",
       "meta_json": "{\"codec_version\":1,\"dimension\":128,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4192545808128611216}"
     },
     {
-      "blob_hex": "ad1ac4bffde0983febeca95dcd76ab56ae4ca5b15bcf6d75edf25cf77cf5a48e6877698aa34afb6a847ce8a47899c7f99eb07776d28bad658854ac75a9928431",
       "id": "prop_089_dim113_bw35",
+      "blob_hex": "ad1ac4bffde0983febeca95dcd76ab56ae4ca5b15bcf6d75edf25cf77cf5a48e6877698aa34afb6a847ce8a47899c7f99eb07776d28bad658854ac75a9928431",
       "meta_json": "{\"codec_version\":1,\"dimension\":113,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":3953274611332654488}"
     },
     {
-      "blob_hex": "cd6515c4ad98b24474a8216560451206",
       "id": "prop_090_dim25_bw2",
+      "blob_hex": "cd6515c4ad98b24474a8216560451206",
       "meta_json": "{\"codec_version\":1,\"dimension\":25,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3256859482864957500}"
     },
     {
-      "blob_hex": "a21a58c9c22c73496599cab224aafcaa659405bf2305b211092ee9c66f2338564ca7e96224a9acba648485bdd302b101192dd1c66a0b3851",
       "id": "prop_091_dim69_bw3",
+      "blob_hex": "a21a58c9c22c73496599cab224aafcaa659405bf2305b211092ee9c66f2338564ca7e96224a9acba648485bdd302b101192dd1c66a0b3851",
       "meta_json": "{\"codec_version\":1,\"dimension\":69,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":7892621073272539638}"
     },
     {
-      "blob_hex": "f977c5baf748a73aa5587d688c39999b74bf4bfa769886c96cc5485977958fc7487697b08784c9a9b996d491c8d8976d89b878a8f3816994df656569bab66ab998668868e66389c8",
       "id": "prop_092_dim119_bw4",
+      "blob_hex": "f977c5baf748a73aa5587d688c39999b74bf4bfa769886c96cc5485977958fc7487697b08784c9a9b996d491c8d8976d89b878a8f3816994df656569bab66ab998668868e66389c8",
       "meta_json": "{\"codec_version\":1,\"dimension\":119,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1203277096045510702}"
     },
     {
-      "blob_hex": "3e64aabf4f36933f6586a645a7996996f54e663565566b5f256789aebc61672bd6b34aca64eb4ea6c815624795af5aa7",
       "id": "prop_093_dim83_bw25",
+      "blob_hex": "3e64aabf4f36933f6586a645a7996996f54e663565566b5f256789aebc61672bd6b34aca64eb4ea6c815624795af5aa7",
       "meta_json": "{\"codec_version\":1,\"dimension\":83,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-9067984776234091095}"
     },
     {
-      "blob_hex": "9e107ec493e08544e2646af3bc713995ca224d6d4b315d54aab05656b834849568d12654",
       "id": "prop_094_dim42_bw35",
+      "blob_hex": "9e107ec493e08544e2646af3bc713995ca224d6d4b315d54aab05656b834849568d12654",
       "meta_json": "{\"codec_version\":1,\"dimension\":42,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":6428654595735238395}"
     },
     {
-      "blob_hex": "7bc37ac9a273c8491787442985994294450404854d2018261491514aa961511441450915a5d94525",
       "id": "prop_095_dim124_bw2",
+      "blob_hex": "7bc37ac9a273c8491787442985994294450404854d2018261491514aa961511441450915a5d94525",
       "meta_json": "{\"codec_version\":1,\"dimension\":124,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":483570091326608424}"
     },
     {
-      "blob_hex": "2de381ba8343783a324ab2f8b876e39cba7dd4badbdca1a1494a859d8d27e78d",
       "id": "prop_096_dim41_bw3",
+      "blob_hex": "2de381ba8343783a324ab2f8b876e39cba7dd4badbdca1a1494a859d8d27e78d",
       "meta_json": "{\"codec_version\":1,\"dimension\":41,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":7575837385639036904}"
     },
     {
-      "blob_hex": "3d49a0bf8082bd3f43b6b195659893619559f69e7689963641585a408897794394d36776898a974d67a98256b56778915608d834b96a3871584cb8479834a8975884c5549c3a93ac",
       "id": "prop_097_dim105_bw4",
+      "blob_hex": "3d49a0bf8082bd3f43b6b195659893619559f69e7689963641585a408897794394d36776898a974d67a98256b56778915608d834b96a3871584cb8479834a8975884c5549c3a93ac",
       "meta_json": "{\"codec_version\":1,\"dimension\":105,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":471572768646481623}"
     },
     {
-      "blob_hex": "60fabec42625d5449aa6529665595a5d6955665758599656ecd879d2b6951dc56d2d258f2ac74da1d76ddba471254751",
       "id": "prop_098_dim88_bw25",
+      "blob_hex": "60fabec42625d5449aa6529665595a5d6955665758599656ecd879d2b6951dc56d2d258f2ac74da1d76ddba471254751",
       "meta_json": "{\"codec_version\":1,\"dimension\":88,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":3520158572027672905}"
     },
     {
-      "blob_hex": "1ea774c9ef6f8049d49e8f29f77598ca914a6b2d389db2da6673231d6e238fac3ca9e6b873264da964565bb914582c55c48a96db5524bc858b7b76a8669610d5",
       "id": "prop_099_dim74_bw35",
+      "blob_hex": "1ea774c9ef6f8049d49e8f29f77598ca914a6b2d389db2da6673231d6e238fac3ca9e6b873264da964565bb914582c55c48a96db5524bc858b7b76a8669610d5",
       "meta_json": "{\"codec_version\":1,\"dimension\":74,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-488062122837528963}"
     },
     {
-      "blob_hex": "322de7bae216883abf6b7debab77a9de8e6767f6b27a9667eaaad69baea9a59a5f2bab1b9b9eaae9",
       "id": "prop_100_dim126_bw2",
+      "blob_hex": "322de7bae216883abf6b7debab77a9de8e6767f6b27a9667eaaad69baea9a59a5f2bab1b9b9eaae9",
       "meta_json": "{\"codec_version\":1,\"dimension\":126,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":4478882361522932852}"
     },
     {
-      "blob_hex": "6244e9bfadd4cf3f12d9a515379222bdb61cc9b5254ba9db36896b39712457b85c3b6f6dc94dcb564a0af3d11519968bcc8e2435261b5bf7",
       "id": "prop_101_dim117_bw3",
+      "blob_hex": "6244e9bfadd4cf3f12d9a515379222bdb61cc9b5254ba9db36896b39712457b85c3b6f6dc94dcb564a0af3d11519968bcc8e2435261b5bf7",
       "meta_json": "{\"codec_version\":1,\"dimension\":117,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":8429833722519907673}"
     },
     {
-      "blob_hex": "85148fc4fd8a9a4493283688eb4b1c5c2c7567125970479766477a6bc7378b86a7149548bd858bd386583275ea7b485f5deb7701508242485a777658c658b789d88ab438c4978683",
       "id": "prop_102_dim90_bw4",
+      "blob_hex": "85148fc4fd8a9a4493283688eb4b1c5c2c7567125970479766477a6bc7378b86a7149548bd858bd386583275ea7b485f5deb7701508242485a777658c658b789d88ab438c4978683",
       "meta_json": "{\"codec_version\":1,\"dimension\":90,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-725450079793036929}"
     },
     {
-      "blob_hex": "0de0abc9760e9449aae9df1e6eaa1b7aa52bab95a76baee989c9acadd39935655a7c5b8fed287695284d63076dab39ea",
       "id": "prop_103_dim128_bw25",
+      "blob_hex": "0de0abc9760e9449aae9df1e6eaa1b7aa52bab95a76baee989c9acadd39935655a7c5b8fed287695284d63076dab39ea",
       "meta_json": "{\"codec_version\":1,\"dimension\":128,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1508406580094243307}"
     },
     {
-      "blob_hex": "bedb9bba6f779b3a2db58e5af7968669c0c6608bc9d9",
       "id": "prop_104_dim22_bw35",
+      "blob_hex": "bedb9bba6f779b3a2db58e5af7968669c0c6608bc9d9",
       "meta_json": "{\"codec_version\":1,\"dimension\":22,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":7514471360815242238}"
     },
     {
-      "blob_hex": "38fdb1bfaa55cc3f5a555565a596da13a695695e98e95746559ead9a46696d7eb95529625ea5aad5",
       "id": "prop_105_dim127_bw2",
+      "blob_hex": "38fdb1bfaa55cc3f5a555565a596da13a695695e98e95746559ead9a46696d7eb95529625ea5aad5",
       "meta_json": "{\"codec_version\":1,\"dimension\":127,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2323721688238163099}"
     },
     {
-      "blob_hex": "297b93c4bc809f4408a42d23b3a9c5c8655512b1e2a64a68c8731b5511e2c89159d69a26d3cda4dca9dad0d09cc7b295d46e25354891638c",
       "id": "prop_106_dim102_bw3",
+      "blob_hex": "297b93c4bc809f4408a42d23b3a9c5c8655512b1e2a64a68c8731b5511e2c89159d69a26d3cda4dca9dad0d09cc7b295d46e25354891638c",
       "meta_json": "{\"codec_version\":1,\"dimension\":102,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1030735123678618010}"
     },
     {
-      "blob_hex": "589b6dc92cbc9e4947b6630336b78681580665321f15da8b7613026345a6895637065a400768227a9667273d262943e3446460ac4846787ef7151895577a88a155b6a7b452fb1156",
       "id": "prop_107_dim103_bw4",
+      "blob_hex": "589b6dc92cbc9e4947b6630336b78681580665321f15da8b7613026345a6895637065a400768227a9667273d262943e3446460ac4846787ef7151895577a88a155b6a7b452fb1156",
       "meta_json": "{\"codec_version\":1,\"dimension\":103,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":4481445976271349364}"
     },
     {
-      "blob_hex": "1610bebab595ca3a229aaad99518427623142d12a49954a6d45491ac3867963676e3385281be8c14789b09cb4e23377b",
       "id": "prop_108_dim117_bw25",
+      "blob_hex": "1610bebab595ca3a229aaad99518427623142d12a49954a6d45491ac3867963676e3385281be8c14789b09cb4e23377b",
       "meta_json": "{\"codec_version\":1,\"dimension\":117,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":5295751521733809094}"
     },
     {
-      "blob_hex": "d8fe6abf6119843f5c4b4e4de7c62d394a6e4116d5bc349b7d2e54442ec41a4e77d879874aa79ce2bac56584ab49772b4af4055a65fb5e565780795607e57377",
       "id": "prop_109_dim71_bw35",
+      "blob_hex": "d8fe6abf6119843f5c4b4e4de7c62d394a6e4116d5bc349b7d2e54442ec41a4e77d879874aa79ce2bac56584ab49772b4af4055a65fb5e565780795607e57377",
       "meta_json": "{\"codec_version\":1,\"dimension\":71,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1830199858395639380}"
     },
     {
-      "blob_hex": "c6056fc40a2a96445f9269e58e4645e659766552885a8266",
       "id": "prop_110_dim45_bw2",
+      "blob_hex": "c6056fc40a2a96445f9269e58e4645e659766552885a8266",
       "meta_json": "{\"codec_version\":1,\"dimension\":45,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":7142472448655072029}"
     },
     {
-      "blob_hex": "b2527ec953c26b492b09cb103694d16611a11f4c",
       "id": "prop_111_dim30_bw3",
+      "blob_hex": "b2527ec953c26b492b09cb103694d16611a11f4c",
       "meta_json": "{\"codec_version\":1,\"dimension\":30,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7065305844188866656}"
     },
     {
-      "blob_hex": "0c369cba9258743abca1f87bcda7c8978bc57ec68ceff8b79a80d759ab96a78569b45ca47adde696",
       "id": "prop_112_dim33_bw4",
+      "blob_hex": "0c369cba9258743abca1f87bcda7c8978bc57ec68ceff8b79a80d759ab96a78569b45ca47adde696",
       "meta_json": "{\"codec_version\":1,\"dimension\":33,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":6041340404125098716}"
     },
     {
-      "blob_hex": "bfdd87bfda279d3f176642552454566a59661691559e55599522cec08aadfc8934eb565ae8a8919993d0b6cb6ee0b64e",
       "id": "prop_113_dim93_bw25",
+      "blob_hex": "bfdd87bfda279d3f176642552454566a59661691559e55599522cec08aadfc8934eb565ae8a8919993d0b6cb6ee0b64e",
       "meta_json": "{\"codec_version\":1,\"dimension\":93,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7343407474942198756}"
     },
     {
-      "blob_hex": "9d9ca9c46e7fc244e3228611697eaa562ed3b67d1a2309d23832d1be311bc97d8366b6676e7a6d58eb287b58573654998287a8288f958860a9c78877989686e6",
       "id": "prop_114_dim101_bw35",
+      "blob_hex": "9d9ca9c46e7fc244e3228611697eaa562ed3b67d1a2309d23832d1be311bc97d8366b6676e7a6d58eb287b58573654998287a8288f958860a9c78877989686e6",
       "meta_json": "{\"codec_version\":1,\"dimension\":101,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1258032798778910757}"
     },
     {
-      "blob_hex": "0545a3c9e9ae91492ba565a4676697a96da961e7ab769e9e1a95ae54454baaa56d96aa9b85976d9a",
       "id": "prop_115_dim92_bw2",
+      "blob_hex": "0545a3c9e9ae91492ba565a4676697a96da961e7ab769e9e1a95ae54454baaa56d96aa9b85976d9a",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":3461551564132962638}"
     },
     {
-      "blob_hex": "8b7297ba55b2a53a64d52525336a3cef4507c9a69bba295eb7756328514ce4919457b6f3a64a2c6fd6cd3c87cc3ab62c3b529ca8dd1a5652",
       "id": "prop_116_dim79_bw3",
+      "blob_hex": "8b7297ba55b2a53a64d52525336a3cef4507c9a69bba295eb7756328514ce4919457b6f3a64a2c6fd6cd3c87cc3ab62c3b529ca8dd1a5652",
       "meta_json": "{\"codec_version\":1,\"dimension\":79,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":4920182215717975295}"
     },
     {
-      "blob_hex": "22e901c0cefaa63fb6ab7c803a96d7d9aba987e784c896c8bca59ba4c98893aa698d9596657e9bd96e43ab8b7dfaaaafa8a79d5898a3eca8765687ca8c7689a8987f74b8a8cbc799",
       "id": "prop_117_dim128_bw4",
+      "blob_hex": "22e901c0cefaa63fb6ab7c803a96d7d9aba987e784c896c8bca59ba4c98893aa698d9596657e9bd96e43ab8b7dfaaaafa8a79d5898a3eca8765687ca8c7689a8987f74b8a8cbc799",
       "meta_json": "{\"codec_version\":1,\"dimension\":128,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7522877412625989652}"
     },
     {
-      "blob_hex": "f0b3abc42156c344da7a56586a553665ae565657556465a2e3ca79d6389ad53ed21e57565d692514d74ec60c8ee32642",
       "id": "prop_118_dim109_bw25",
+      "blob_hex": "f0b3abc42156c344da7a56586a553665ae565657556465a2e3ca79d6389ad53ed21e57565d692514d74ec60c8ee32642",
       "meta_json": "{\"codec_version\":1,\"dimension\":109,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":3115739475845091498}"
     },
     {
-      "blob_hex": "85fedfc972b96d497449b1f576d6f359cf2ec976aaca7b7a6a458f7ba8cffc985d76990b",
       "id": "prop_119_dim43_bw35",
+      "blob_hex": "85fedfc972b96d497449b1f576d6f359cf2ec976aaca7b7a6a458f7ba8cffc985d76990b",
       "meta_json": "{\"codec_version\":1,\"dimension\":43,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5424829570379603557}"
     },
     {
-      "blob_hex": "fd658cba2b89973a475e41549e55ad25",
       "id": "prop_120_dim28_bw2",
+      "blob_hex": "fd658cba2b89973a475e41549e55ad25",
       "meta_json": "{\"codec_version\":1,\"dimension\":28,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":8672752148931756044}"
     },
     {
-      "blob_hex": "074afbbe5a4e2d3f88897136efcf",
       "id": "prop_121_dim13_bw3",
+      "blob_hex": "074afbbe5a4e2d3f88897136efcf",
       "meta_json": "{\"codec_version\":1,\"dimension\":13,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4640896800252091059}"
     },
     {
-      "blob_hex": "ac1496c4ebe1954484baa787376489a96144709a8a4bd3c6829d3368653bb68df53a98697995d7cc869799855871499573216297ab5893c1947b266686477678f7178b7799a297b8",
       "id": "prop_122_dim78_bw4",
+      "blob_hex": "ac1496c4ebe1954484baa787376489a96144709a8a4bd3c6829d3368653bb68df53a98697995d7cc869799855871499573216297ab5893c1947b266686477678f7178b7799a297b8",
       "meta_json": "{\"codec_version\":1,\"dimension\":78,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":2771655735179100123}"
     },
     {
-      "blob_hex": "922ea4c932348549999694d8689a8af7996a69a999e55669a4eaacd3d4412a59aa235fd9dce891a6e1212c3cd51b9b6e",
       "id": "prop_123_dim92_bw25",
+      "blob_hex": "922ea4c932348549999694d8689a8af7996a69a999e55669a4eaacd3d4412a59aa235fd9dce891a6e1212c3cd51b9b6e",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":6449794692189938782}"
     },
     {
-      "blob_hex": "86ea8dba0557e83aa2aa558b8875ba90ad92444aa2ac094927ae1c9369e4366e4514899763236429b6366882427285534545895240098666395b6a4196957385",
       "id": "prop_124_dim95_bw35",
+      "blob_hex": "86ea8dba0557e83aa2aa558b8875ba90ad92444aa2ac094927ae1c9369e4366e4514899763236429b6366882427285534545895240098666395b6a4196957385",
       "meta_json": "{\"codec_version\":1,\"dimension\":95,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7920408090636496758}"
     },
     {
-      "blob_hex": "546819bf7b9a2b3f4a06cd8a",
       "id": "prop_125_dim11_bw2",
+      "blob_hex": "546819bf7b9a2b3f4a06cd8a",
       "meta_json": "{\"codec_version\":1,\"dimension\":11,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":5035381410421259975}"
     },
     {
-      "blob_hex": "87b778c4d52277441dcf69ecf7928e278d4eb970fe4a499eb4711477a9674a6dd3ae89aa57938b87ad041991b3aa6d941496cac6cd1caa8d",
       "id": "prop_126_dim72_bw3",
+      "blob_hex": "87b778c4d52277441dcf69ecf7928e278d4eb970fe4a499eb4711477a9674a6dd3ae89aa57938b87ad041991b3aa6d941496cac6cd1caa8d",
       "meta_json": "{\"codec_version\":1,\"dimension\":72,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":8529328690520957659}"
     },
     {
-      "blob_hex": "ee45bac90be8bf49065359aa6a5846a958b57817977898964b6a89857a49487486878858a8b4b47454a8657b77a7586678b67335489c6aa9a8afa66686a85a31a797847549d88688",
       "id": "prop_127_dim92_bw4",
+      "blob_hex": "ee45bac90be8bf49065359aa6a5846a958b57817977898964b6a89857a49487486878858a8b4b47454a8657b77a7586678b67335489c6aa9a8afa66686a85a31a797847549d88688",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":7497111180111237874}"
     },
     {
-      "blob_hex": "9e08e6ba8709883a8a2d969fe7fd69aaaa2ab17b9eeaf77a34ca866dc9aededaa12dc5b22db99b29e9bbe4c8b5aefcb7",
       "id": "prop_128_dim115_bw25",
+      "blob_hex": "9e08e6ba8709883a8a2d969fe7fd69aaaa2ab17b9eeaf77a34ca866dc9aededaa12dc5b22db99b29e9bbe4c8b5aefcb7",
       "meta_json": "{\"codec_version\":1,\"dimension\":115,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7219013633896518235}"
     },
     {
-      "blob_hex": "3947b4bfccac8f3f7455be1a897264b5da1fcb95d225d624397646cbdace7b96bb679ebb6688a887b96685caeac5879a486b97e77c877e794ec697baa8ccadaa",
       "id": "prop_129_dim92_bw35",
+      "blob_hex": "3947b4bfccac8f3f7455be1a897264b5da1fcb95d225d624397646cbdace7b96bb679ebb6688a887b96685caeac5879a486b97e77c877e794ec697baa8ccadaa",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6039889322806805805}"
     },
     {
-      "blob_hex": "6b7b91c421d17944689e7675e69e756a386a2d16b695feab769e67a1e76d1589797a1e42b698add6",
       "id": "prop_130_dim84_bw2",
+      "blob_hex": "6b7b91c421d17944689e7675e69e756a386a2d16b695feab769e67a1e76d1589797a1e42b698add6",
       "meta_json": "{\"codec_version\":1,\"dimension\":84,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7015786414312567546}"
     },
     {
-      "blob_hex": "d21768c949d48149a09bd7",
       "id": "prop_131_dim7_bw3",
+      "blob_hex": "d21768c949d48149a09bd7",
       "meta_json": "{\"codec_version\":1,\"dimension\":7,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2788810446461786719}"
     },
     {
-      "blob_hex": "c39543ba1b69903a96561ba953c31778204597f971737633a9692ebb65d6298a3257a9fb84768835",
       "id": "prop_132_dim34_bw4",
+      "blob_hex": "c39543ba1b69903a96561ba953c31778204597f971737633a9692ebb65d6298a3257a9fb84768835",
       "meta_json": "{\"codec_version\":1,\"dimension\":34,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":101698940411187189}"
     },
     {
-      "blob_hex": "8c82d4bf7e67ff3f9a66967954616a59665525a556576995ec38661b27621237511a456d9a2291e4376da5466e6db774",
       "id": "prop_133_dim118_bw25",
+      "blob_hex": "8c82d4bf7e67ff3f9a66967954616a59665525a556576995ec38661b27621237511a456d9a2291e4376da5466e6db774",
       "meta_json": "{\"codec_version\":1,\"dimension\":118,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4448915833927765868}"
     },
     {
-      "blob_hex": "9e8547c4ca885144d42971f62597045067818911f6b2",
       "id": "prop_134_dim21_bw35",
+      "blob_hex": "9e8547c4ca885144d42971f62597045067818911f6b2",
       "meta_json": "{\"codec_version\":1,\"dimension\":21,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5669451344606238134}"
     },
     {
-      "blob_hex": "48cd85c91b7668496968669eab6459e458e9d8b9698555666968575f9fa50aa648e9c97a59890a6b",
       "id": "prop_135_dim75_bw2",
+      "blob_hex": "48cd85c91b7668496968669eab6459e458e9d8b9698555666968575f9fa50aa648e9c97a59890a6b",
       "meta_json": "{\"codec_version\":1,\"dimension\":75,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5264545935654195509}"
     },
     {
-      "blob_hex": "aba77fba87988e3a453764dc1675b3566a89ba280dcd2ccce669f4c96c543731053381e486d67b5087d03caad4c6491367cbfb438a9b2792",
       "id": "prop_136_dim76_bw3",
+      "blob_hex": "aba77fba87988e3a453764dc1675b3566a89ba280dcd2ccce669f4c96c543731053381e486d67b5087d03caad4c6491367cbfb438a9b2792",
       "meta_json": "{\"codec_version\":1,\"dimension\":76,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":2438992930991789492}"
     },
     {
-      "blob_hex": "8f1676bf0dd6863f550479989c24b66e025a52c98fd687457aeabd796b5a93fe52fde27989c8b0a5",
       "id": "prop_137_dim53_bw4",
+      "blob_hex": "8f1676bf0dd6863f550479989c24b66e025a52c98fd687457aeabd796b5a93fe52fde27989c8b0a5",
       "meta_json": "{\"codec_version\":1,\"dimension\":53,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":3982222043543272158}"
     },
     {
-      "blob_hex": "f06ba9c4bf6b9c44962a916656f59529a75188656acaa6a9d1d82a254b6d3097b9e3464edb4841fb28717837aaefd6c9",
       "id": "prop_138_dim95_bw25",
+      "blob_hex": "f06ba9c4bf6b9c44962a916656f59529a75188656acaa6a9d1d82a254b6d3097b9e3464edb4841fb28717837aaefd6c9",
       "meta_json": "{\"codec_version\":1,\"dimension\":95,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1679305066990065762}"
     },
     {
-      "blob_hex": "16a864c9c03e9049943f2bd558d18f3568b0c54964f1",
       "id": "prop_139_dim31_bw35",
+      "blob_hex": "16a864c9c03e9049943f2bd558d18f3568b0c54964f1",
       "meta_json": "{\"codec_version\":1,\"dimension\":31,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5208465123869270677}"
     },
     {
-      "blob_hex": "4356c9ba15279d3a6dbf4169aa0955b97276e9aaa1c469e9b9e6a3aeba2ab6ba69a1a96b98a95965",
       "id": "prop_140_dim108_bw2",
+      "blob_hex": "4356c9ba15279d3a6dbf4169aa0955b97276e9aaa1c469e9b9e6a3aeba2ab6ba69a1a96b98a95965",
       "meta_json": "{\"codec_version\":1,\"dimension\":108,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":7532386715425472525}"
     },
     {
-      "blob_hex": "3eed88bfd5108b3f6cfb15434d64",
       "id": "prop_141_dim14_bw3",
+      "blob_hex": "3eed88bfd5108b3f6cfb15434d64",
       "meta_json": "{\"codec_version\":1,\"dimension\":14,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-1263006519510888192}"
     },
     {
-      "blob_hex": "eceabec3eceabec300",
       "id": "prop_142_dim1_bw4",
+      "blob_hex": "eceabec3eceabec300",
       "meta_json": "{\"codec_version\":1,\"dimension\":1,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":7417929912306475347}"
     },
     {
-      "blob_hex": "c5cfa8c90234814961a5e4aaaaa8daad7a69e2aaa25b84da0b59d6abeb96de1aba2e4577a5c79ad7d7b205fd729b52ce",
       "id": "prop_143_dim84_bw25",
+      "blob_hex": "c5cfa8c90234814961a5e4aaaaa8daad7a69e2aaa25b84da0b59d6abeb96de1aba2e4577a5c79ad7d7b205fd729b52ce",
       "meta_json": "{\"codec_version\":1,\"dimension\":84,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":5386649346569479546}"
     },
     {
-      "blob_hex": "fd1ec0bae8adc83a9cb790243742e4569567d6bdad569156c66667b9a8eb268fbb925c789286617868b7056a686719b6965b5b7a9ac6d655e99b8478737a6d24",
       "id": "prop_144_dim123_bw35",
+      "blob_hex": "fd1ec0bae8adc83a9cb790243742e4569567d6bdad569156c66667b9a8eb268fbb925c789286617868b7056a686719b6965b5b7a9ac6d655e99b8478737a6d24",
       "meta_json": "{\"codec_version\":1,\"dimension\":123,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4977151614154247887}"
     },
     {
-      "blob_hex": "60a793bf9ad7523f01b33bb769b666f992e76a9aa6d28154",
       "id": "prop_145_dim50_bw2",
+      "blob_hex": "60a793bf9ad7523f01b33bb769b666f992e76a9aa6d28154",
       "meta_json": "{\"codec_version\":1,\"dimension\":50,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3426936998739895931}"
     },
     {
-      "blob_hex": "f21333c47a4eae441ba18f",
       "id": "prop_146_dim6_bw3",
+      "blob_hex": "f21333c47a4eae441ba18f",
       "meta_json": "{\"codec_version\":1,\"dimension\":6,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":6767651046672509380}"
     },
     {
-      "blob_hex": "21426ec94d828b49848832966338f7475483e757566498723853644260708a14565256504795a69786bb22a8655be85956a6d779578688833a76445362927a265885466249c896a9",
       "id": "prop_147_dim69_bw4",
+      "blob_hex": "21426ec94d828b49848832966338f7475483e757566498723853644260708a14565256504795a69786bb22a8655be85956a6d779578688833a76445362927a265885466249c896a9",
       "meta_json": "{\"codec_version\":1,\"dimension\":69,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-578248746796548020}"
     },
     {
-      "blob_hex": "73b49bbae2289a3ae8955aa8a45a97595a54609661625eb9ebca952b08b2a2f85616a86a76c671503691d564793ba69a",
       "id": "prop_148_dim77_bw25",
+      "blob_hex": "73b49bbae2289a3ae8955aa8a45a97595a54609661625eb9ebca952b08b2a2f85616a86a76c671503691d564793ba69a",
       "meta_json": "{\"codec_version\":1,\"dimension\":77,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2271780044980884577}"
     },
     {
-      "blob_hex": "416e5fbf32cef33fdcb21499468526771720c8a70f21",
       "id": "prop_149_dim32_bw35",
+      "blob_hex": "416e5fbf32cef33fdcb21499468526771720c8a70f21",
       "meta_json": "{\"codec_version\":1,\"dimension\":32,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8565150834986372841}"
     },
     {
-      "blob_hex": "dca26bc4fc57a544912ac561101d4455",
       "id": "prop_150_dim24_bw2",
+      "blob_hex": "dca26bc4fc57a544912ac561101d4455",
       "meta_json": "{\"codec_version\":1,\"dimension\":24,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3680305278491150564}"
     },
     {
-      "blob_hex": "9f1272c909f08149566df345d541540e31eb980e",
       "id": "prop_151_dim29_bw3",
+      "blob_hex": "9f1272c909f08149566df345d541540e31eb980e",
       "meta_json": "{\"codec_version\":1,\"dimension\":29,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6299469143734091119}"
     },
     {
-      "blob_hex": "3cc190ba9d17073acd9cab39890f95edecbbc948971eb4fb",
       "id": "prop_152_dim18_bw4",
+      "blob_hex": "3cc190ba9d17073acd9cab39890f95edecbbc948971eb4fb",
       "meta_json": "{\"codec_version\":1,\"dimension\":18,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6234151855397471570}"
     },
     {
-      "blob_hex": "88a68dbfac56863f68559aaa35a96edaec3a4d4fa492dcb4b526a1ca",
       "id": "prop_153_dim47_bw25",
+      "blob_hex": "88a68dbfac56863f68559aaa35a96edaec3a4d4fa492dcb4b526a1ca",
       "meta_json": "{\"codec_version\":1,\"dimension\":47,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3601937828891473044}"
     },
     {
-      "blob_hex": "f884a3c4f65698442455a2f2a48c6da6ed02bb155ba1639a9bef2a897115498e50588b9b99aa8c86a62898a94797a74a7315ca8867bdf796d737793988458785",
       "id": "prop_154_dim109_bw35",
+      "blob_hex": "f884a3c4f65698442455a2f2a48c6da6ed02bb155ba1639a9bef2a897115498e50588b9b99aa8c86a62898a94797a74a7315ca8867bdf796d737793988458785",
       "meta_json": "{\"codec_version\":1,\"dimension\":109,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2568328798075712219}"
     },
     {
-      "blob_hex": "f1f056c90a7a81491921ab842d226a261a66abc91a676aab",
       "id": "prop_155_dim38_bw2",
+      "blob_hex": "f1f056c90a7a81491921ab842d226a261a66abc91a676aab",
       "meta_json": "{\"codec_version\":1,\"dimension\":38,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3579536755058155029}"
     },
     {
-      "blob_hex": "3e7b9aba6398933a9af78accb88d1e874cdcc20a68e71a24fbb529bbb665a52ef268e6e22c93fdb835a9e69e2b3971173f6d73cd5a562979",
       "id": "prop_156_dim108_bw3",
+      "blob_hex": "3e7b9aba6398933a9af78accb88d1e874cdcc20a68e71a24fbb529bbb665a52ef268e6e22c93fdb835a9e69e2b3971173f6d73cd5a562979",
       "meta_json": "{\"codec_version\":1,\"dimension\":108,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2508611207923483187}"
     },
     {
-      "blob_hex": "8b547ebf7c3c8f3f3337a56dd08a2d8c772667cda03216aba7534a90b9093697bb7567b7609767df1569b62df2ad9a785858789eb25493a889755b50ca2ba3849d97687771b9d5cc",
       "id": "prop_157_dim78_bw4",
+      "blob_hex": "8b547ebf7c3c8f3f3337a56dd08a2d8c772667cda03216aba7534a90b9093697bb7567b7609767df1569b62df2ad9a785858789eb25493a889755b50ca2ba3849d97687771b9d5cc",
       "meta_json": "{\"codec_version\":1,\"dimension\":78,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5282170636960331727}"
     },
     {
-      "blob_hex": "f6e497c4f7f24844ab59aeaaba1d8e7a5e64748a05506cfdae630c7a",
       "id": "prop_158_dim50_bw25",
+      "blob_hex": "f6e497c4f7f24844ab59aeaaba1d8e7a5e64748a05506cfdae630c7a",
       "meta_json": "{\"codec_version\":1,\"dimension\":50,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":7182748971422393371}"
     },
     {
-      "blob_hex": "ad3d7bc90c9e9d49193d3fa4b42b96767c1d46704892",
       "id": "prop_159_dim28_bw35",
+      "blob_hex": "ad3d7bc90c9e9d49193d3fa4b42b96767c1d46704892",
       "meta_json": "{\"codec_version\":1,\"dimension\":28,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":2297830677524597047}"
     },
     {
-      "blob_hex": "b74587baef60a93aa515966116e52e616659b35a85a8e929",
       "id": "prop_160_dim56_bw2",
+      "blob_hex": "b74587baef60a93aa515966116e52e616659b35a85a8e929",
       "meta_json": "{\"codec_version\":1,\"dimension\":56,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":295167844761034396}"
     },
     {
-      "blob_hex": "e9adbdbf9074ea3f43b62ed39e8523b7711bc990",
       "id": "prop_161_dim29_bw3",
+      "blob_hex": "e9adbdbf9074ea3f43b62ed39e8523b7711bc990",
       "meta_json": "{\"codec_version\":1,\"dimension\":29,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3489688251757624585}"
     },
     {
-      "blob_hex": "6934d4c41458b04457aa7569ac864b9579797f7bb965e754e567b799c7d595787a59af798c94b9cb65663797a96a45a959675af945b8bb647aa88877acc8999c8e3a4092ac744cc5",
       "id": "prop_162_dim120_bw4",
+      "blob_hex": "6934d4c41458b04457aa7569ac864b9579797f7bb965e754e567b799c7d595787a59af798c94b9cb65663797a96a45a959675af945b8bb647aa88877acc8999c8e3a4092ac744cc5",
       "meta_json": "{\"codec_version\":1,\"dimension\":120,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2516218586969997517}"
     },
     {
-      "blob_hex": "80db9ac9ea2691496596915b24aa9aeaaf4d7d0ae576a7c8556dc8e6",
       "id": "prop_163_dim52_bw25",
+      "blob_hex": "80db9ac9ea2691496596915b24aa9aeaaf4d7d0ae576a7c8556dc8e6",
       "meta_json": "{\"codec_version\":1,\"dimension\":52,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3788321794089152717}"
     },
     {
-      "blob_hex": "92a788bae7f9a93af21696acb2b17b262ddc56af84a68ab96b330a97a29857491579688b",
       "id": "prop_164_dim52_bw35",
+      "blob_hex": "92a788bae7f9a93af21696acb2b17b262ddc56af84a68ab96b330a97a29857491579688b",
       "meta_json": "{\"codec_version\":1,\"dimension\":52,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-9095245317727824461}"
     },
     {
-      "blob_hex": "a1dd87bf375fb33f64669584b06baa548b99a2d5975d6755",
       "id": "prop_165_dim52_bw2",
+      "blob_hex": "a1dd87bf375fb33f64669584b06baa548b99a2d5975d6755",
       "meta_json": "{\"codec_version\":1,\"dimension\":52,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":6083112293578027394}"
     },
     {
-      "blob_hex": "29110ec4009e3744180f",
       "id": "prop_166_dim3_bw3",
+      "blob_hex": "29110ec4009e3744180f",
       "meta_json": "{\"codec_version\":1,\"dimension\":3,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":8151243878711941101}"
     },
     {
-      "blob_hex": "f30e99c9970e9b49887a76abc3817874b4868c88386617743d6a662187664a64676c5a3237f4587cc55864acc1f7747e754585c7706d4758d863a9677cc744759667a8b765d79767",
       "id": "prop_167_dim110_bw4",
+      "blob_hex": "f30e99c9970e9b49887a76abc3817874b4868c88386617743d6a662187664a64676c5a3237f4587cc55864acc1f7747e754585c7706d4758d863a9677cc744759667a8b765d79767",
       "meta_json": "{\"codec_version\":1,\"dimension\":110,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-5443561688826859907}"
     },
     {
-      "blob_hex": "3a6fb7ba342fe53a661aa659a9a6665055c6424799a88951d3a8b9ebb6ceebc865d9b26d14456a65a92ed93861a326ed",
       "id": "prop_168_dim126_bw25",
+      "blob_hex": "3a6fb7ba342fe53a661aa659a9a6665055c6424799a88951d3a8b9ebb6ceebc865d9b26d14456a65a92ed93861a326ed",
       "meta_json": "{\"codec_version\":1,\"dimension\":126,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6322423938579089542}"
     },
     {
-      "blob_hex": "dc7bacbf326df23fa40671946292a2d6b4cae6a514674d12398d0bb7884b296a87a6b6849ab0876303766417686678829669f96866a86615786b837a97548662",
       "id": "prop_169_dim123_bw35",
+      "blob_hex": "dc7bacbf326df23fa40671946292a2d6b4cae6a514674d12398d0bb7884b296a87a6b6849ab0876303766417686678829669f96866a86615786b837a97548662",
       "meta_json": "{\"codec_version\":1,\"dimension\":123,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":933285054187599205}"
     },
     {
-      "blob_hex": "cd8a95c4c02ea3446f1d4596411e1156691da18391a9665636565a2951496590655aaa13a589bf91",
       "id": "prop_170_dim102_bw2",
+      "blob_hex": "cd8a95c4c02ea3446f1d4596411e1156691da18391a9665636565a2951496590655aaa13a589bf91",
       "meta_json": "{\"codec_version\":1,\"dimension\":102,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":3778546509477426919}"
     },
     {
-      "blob_hex": "514bc3c9acbeb549aca87514b57233254a24a63c72bd69eb369269b38eeeb8b09d54bae4d8ad7de78ef2545a54c74dadb848ecd36eacd78d",
       "id": "prop_171_dim104_bw3",
+      "blob_hex": "514bc3c9acbeb549aca87514b57233254a24a63c72bd69eb369269b38eeeb8b09d54bae4d8ad7de78ef2545a54c74dadb848ecd36eacd78d",
       "meta_json": "{\"codec_version\":1,\"dimension\":104,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":3165169069180829420}"
     },
     {
-      "blob_hex": "1d06aebad3dad73a39bb72685612660776f7a4b4558299773c2345595272986676a5854578a34fd775794a448c6c1355395855986388857876845866557984643798514943668a86",
       "id": "prop_172_dim109_bw4",
+      "blob_hex": "1d06aebad3dad73a39bb72685612660776f7a4b4558299773c2345595272986676a5854578a34fd775794a448c6c1355395855986388857876845866557984643798514943668a86",
       "meta_json": "{\"codec_version\":1,\"dimension\":109,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":9217903839371003378}"
     },
     {
-      "blob_hex": "7fb19ebfe88fb43f556e255d69b969c496b9aa5965addba64ab0416ce86d5b62966b2bb1ee08ada8dce15cc67a91ba8d",
       "id": "prop_173_dim115_bw25",
+      "blob_hex": "7fb19ebfe88fb43f556e255d69b969c496b9aa5965addba64ab0416ce86d5b62966b2bb1ee08ada8dce15cc67a91ba8d",
       "meta_json": "{\"codec_version\":1,\"dimension\":115,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2673367322364938907}"
     },
     {
-      "blob_hex": "e0fa9dc4c58b9244e5e84da466263c4f56dd2ab61c998c934763a43e8c1d37aead893e66ac8359668b6be7385b89688bf7a7389bc8a8da988976ba6ac649cd8d",
       "id": "prop_174_dim102_bw35",
+      "blob_hex": "e0fa9dc4c58b9244e5e84da466263c4f56dd2ab61c998c934763a43e8c1d37aead893e66ac8359668b6be7385b89688bf7a7389bc8a8da988976ba6ac649cd8d",
       "meta_json": "{\"codec_version\":1,\"dimension\":102,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":2519286089437786066}"
     },
     {
-      "blob_hex": "1f03a5c9b4188b49a565a49ef5b7a5a8a0a6595755a56a69ae5565eefe9666a8a99a6aa75a852a55",
       "id": "prop_175_dim83_bw2",
+      "blob_hex": "1f03a5c9b4188b49a565a49ef5b7a5a8a0a6595755a56a69ae5565eefe9666a8a99a6aa75a852a55",
       "meta_json": "{\"codec_version\":1,\"dimension\":83,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":7593353736165558270}"
     },
     {
-      "blob_hex": "172dcdba17c7f13ad2c82de2347aa428919b3492d25e4ea13872db5665544591cc466d6b3a665cbc518bd852244b691db96de2300e16296e",
       "id": "prop_176_dim127_bw3",
+      "blob_hex": "172dcdba17c7f13ad2c82de2347aa428919b3492d25e4ea13872db5665544591cc466d6b3a665cbc518bd852244b691db96de2300e16296e",
       "meta_json": "{\"codec_version\":1,\"dimension\":127,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":3488328457364359543}"
     },
     {
-      "blob_hex": "13aa83bfa8bcee3f3583777430338985670520a643575315229308636400295ba395485750823393c2a2383b702955d5286563378817f60793517465559632633335453720923141",
       "id": "prop_177_dim120_bw4",
+      "blob_hex": "13aa83bfa8bcee3f3583777430338985670520a643575315229308636400295ba395485750823393c2a2383b702955d5286563378817f60793517465559632633335453720923141",
       "meta_json": "{\"codec_version\":1,\"dimension\":120,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":7222092085347928239}"
     },
     {
-      "blob_hex": "449b81c4700db44456ba391607a96466d1da151bb9415c544e51c871",
       "id": "prop_178_dim48_bw25",
+      "blob_hex": "449b81c4700db44456ba391607a96466d1da151bb9415c544e51c871",
       "meta_json": "{\"codec_version\":1,\"dimension\":48,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3297891369887691276}"
     },
     {
-      "blob_hex": "805d90c951cc9f49934a0a1c498d265961d24075364411de39524e262ada1682147c73355a693649a67cc6686b49da38b8961a70c76962af0aa77a457987a8d6",
       "id": "prop_179_dim117_bw35",
+      "blob_hex": "805d90c951cc9f49934a0a1c498d265961d24075364411de39524e262ada1682147c73355a693649a67cc6686b49da38b8961a70c76962af0aa77a457987a8d6",
       "meta_json": "{\"codec_version\":1,\"dimension\":117,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-502206878889587588}"
     },
     {
-      "blob_hex": "39cfa7ba6f3cdc3ad7a9599965090c6598561d567442a9891465269566886518b25509a74a9d6965",
       "id": "prop_180_dim125_bw2",
+      "blob_hex": "39cfa7ba6f3cdc3ad7a9599965090c6598561d567442a9891465269566886518b25509a74a9d6965",
       "meta_json": "{\"codec_version\":1,\"dimension\":125,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2143700312588189364}"
     },
     {
-      "blob_hex": "8ea386bf4fbf8e3fe4962daf168df27632dc3e97ea48ae2c6dc7a3375714cbd65c9449a68070ab726ed3a87a6b46ea23d5aa5b25930b23ba",
       "id": "prop_181_dim77_bw3",
+      "blob_hex": "8ea386bf4fbf8e3fe4962daf168df27632dc3e97ea48ae2c6dc7a3375714cbd65c9449a68070ab726ed3a87a6b46ea23d5aa5b25930b23ba",
       "meta_json": "{\"codec_version\":1,\"dimension\":77,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8695756708240101356}"
     },
     {
-      "blob_hex": "ebde8fc4902d51445087dd779170c89ac79bff46f895eb69",
       "id": "prop_182_dim21_bw4",
+      "blob_hex": "ebde8fc4902d51445087dd779170c89ac79bff46f895eb69",
       "meta_json": "{\"codec_version\":1,\"dimension\":21,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-34399698553272038}"
     },
     {
-      "blob_hex": "33a4b3c9628d5f49676869aacd3f589b7d51",
       "id": "prop_183_dim27_bw25",
+      "blob_hex": "33a4b3c9628d5f49676869aacd3f589b7d51",
       "meta_json": "{\"codec_version\":1,\"dimension\":27,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":8207354949176184831}"
     },
     {
-      "blob_hex": "b76ac6ba2fbb9a3a652db6242aabaa39796ab4cddbd7ccba2676dd24912a4578af68b6dc96957ba6658b56be598b8ddc96cf6e34747a694bc46be6ba9ac84aa5",
       "id": "prop_184_dim128_bw35",
+      "blob_hex": "b76ac6ba2fbb9a3a652db6242aabaa39796ab4cddbd7ccba2676dd24912a4578af68b6dc96957ba6658b56be598b8ddc96cf6e34747a694bc46be6ba9ac84aa5",
       "meta_json": "{\"codec_version\":1,\"dimension\":128,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":4106394110746484760}"
     },
     {
-      "blob_hex": "5fe540bfa5b68f3f419a639a65747775",
       "id": "prop_185_dim25_bw2",
+      "blob_hex": "5fe540bfa5b68f3f419a639a65747775",
       "meta_json": "{\"codec_version\":1,\"dimension\":25,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-2855853395782681040}"
     },
     {
-      "blob_hex": "ab2284c4fdfb9a44d54698d17e2957a83422c7925a3190194d7025a551bca5fd",
       "id": "prop_186_dim49_bw3",
+      "blob_hex": "ab2284c4fdfb9a44d54698d17e2957a83422c7925a3190194d7025a551bca5fd",
       "meta_json": "{\"codec_version\":1,\"dimension\":49,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-680505335450729843}"
     },
     {
-      "blob_hex": "7e66a7c9658c714988609277ab4af0ab",
       "id": "prop_187_dim14_bw4",
+      "blob_hex": "7e66a7c9658c714988609277ab4af0ab",
       "meta_json": "{\"codec_version\":1,\"dimension\":14,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":8372103814452547361}"
     },
     {
-      "blob_hex": "0ef360bae984753ae61235a9f47299691dcf6c6225cfa84f95732c73",
       "id": "prop_188_dim34_bw25",
+      "blob_hex": "0ef360bae984753ae61235a9f47299691dcf6c6225cfa84f95732c73",
       "meta_json": "{\"codec_version\":1,\"dimension\":34,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":5478509686035689913}"
     },
     {
-      "blob_hex": "4830a7bfbf307a3f63c59d5a575ab51793ccf458ad446aadaa2c697096a4702cb6f65886",
       "id": "prop_189_dim58_bw35",
+      "blob_hex": "4830a7bfbf307a3f63c59d5a575ab51793ccf458ad446aadaa2c697096a4702cb6f65886",
       "meta_json": "{\"codec_version\":1,\"dimension\":58,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8619515736770719179}"
     },
     {
-      "blob_hex": "41ad9ac49bf15f44a78909b9be9e1d3da714ae9aea7aa65b",
       "id": "prop_190_dim54_bw2",
+      "blob_hex": "41ad9ac49bf15f44a78909b9be9e1d3da714ae9aea7aa65b",
       "meta_json": "{\"codec_version\":1,\"dimension\":54,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":7408785534708758592}"
     },
     {
-      "blob_hex": "4a1a83c95b336649333b8ba342a9a54abce4a879c2c6ae6b3a4e8cecce9ed6b63c4b8feb54a9ee5cdc24a97903c9ce6cba5295eed2ded6da",
       "id": "prop_191_dim65_bw3",
+      "blob_hex": "4a1a83c95b336649333b8ba342a9a54abce4a879c2c6ae6b3a4e8cecce9ed6b63c4b8feb54a9ee5cdc24a97903c9ce6cba5295eed2ded6da",
       "meta_json": "{\"codec_version\":1,\"dimension\":65,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":-6794747355887915858}"
     },
     {
-      "blob_hex": "7e1ea5bafaf5873a878f7a83f0769b797a5bc9bb97aaa8e888e83a437158145d7bb4898b099c11bc",
       "id": "prop_192_dim47_bw4",
+      "blob_hex": "7e1ea5bafaf5873a878f7a83f0769b797a5bc9bb97aaa8e888e83a437158145d7bb4898b099c11bc",
       "meta_json": "{\"codec_version\":1,\"dimension\":47,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":3014258398565797114}"
     },
     {
-      "blob_hex": "c6bfdabf7fa8db3fa195a66ab6998a6a6a5456a4696a96aa15678ed6a3315841d5e148328c5d4de23aca12236d5cab4a",
       "id": "prop_193_dim123_bw25",
+      "blob_hex": "c6bfdabf7fa8db3fa195a66ab6998a6a6a5456a4696a96aa15678ed6a3315841d5e148328c5d4de23aca12236d5cab4a",
       "meta_json": "{\"codec_version\":1,\"dimension\":123,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":2765110518826446034}"
     },
     {
-      "blob_hex": "a979b5c45e8eaf44642392a74690a03caddb2eb12ca791a3bc52da36ce222865aa2a767abb8b3ac884951a6985ee77b8bb68557ab4dbe9885837698aa4886783",
       "id": "prop_194_dim83_bw35",
+      "blob_hex": "a979b5c45e8eaf44642392a74690a03caddb2eb12ca791a3bc52da36ce222865aa2a767abb8b3ac884951a6985ee77b8bb68557ab4dbe9885837698aa4886783",
       "meta_json": "{\"codec_version\":1,\"dimension\":83,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":-3961905575706447944}"
     },
     {
-      "blob_hex": "6f5397c928e58849f98a3b5e96ada48a99952aeca577f8ea",
       "id": "prop_195_dim57_bw2",
+      "blob_hex": "6f5397c928e58849f98a3b5e96ada48a99952aeca577f8ea",
       "meta_json": "{\"codec_version\":1,\"dimension\":57,\"bit_width\":2,\"quantizer_mode\":\"scalar\",\"projection_seed\":-4191717437312514152}"
     },
     {
-      "blob_hex": "fcaa86bae2553d3a33cc65fc2d2d1e6ed6e63f7d",
       "id": "prop_196_dim25_bw3",
+      "blob_hex": "fcaa86bae2553d3a33cc65fc2d2d1e6ed6e63f7d",
       "meta_json": "{\"codec_version\":1,\"dimension\":25,\"bit_width\":3,\"quantizer_mode\":\"scalar\",\"projection_seed\":1695265964028720238}"
     },
     {
-      "blob_hex": "a5f49ebf0370a53f6a6c0c7ac7588a8a9446826b636448437b9c7d6b066cc4c9ba399b9b7718a6a479f988876566fc85b6d2827504f94993667ef90c4765b987b83aab39bb883ab8",
       "id": "prop_197_dim111_bw4",
+      "blob_hex": "a5f49ebf0370a53f6a6c0c7ac7588a8a9446826b636448437b9c7d6b066cc4c9ba399b9b7718a6a479f988876566fc85b6d2827504f94993667ef90c4765b987b83aab39bb883ab8",
       "meta_json": "{\"codec_version\":1,\"dimension\":111,\"bit_width\":4,\"quantizer_mode\":\"scalar\",\"projection_seed\":-8970192174046449061}"
     },
     {
-      "blob_hex": "0ef397c42f23a14496619545691888976570a6ab5534a489e44665d44429ebd542ea68951a258d15755654457699b7ae",
       "id": "prop_198_dim92_bw25",
+      "blob_hex": "0ef397c42f23a14496619545691888976570a6ab5534a489e44665d44429ebd542ea68951a258d15755654457699b7ae",
       "meta_json": "{\"codec_version\":1,\"dimension\":92,\"bit_width\":25,\"quantizer_mode\":\"scalar\",\"projection_seed\":-7201045640961926264}"
     },
     {
-      "blob_hex": "f42be9c939b1d3491eb9521cb78a5c5b6eaec8b7dcd49623d9529cc9aea447929c4a9124b96e2b2976e33489cca6b1dcc88e25bbce4d594e633b6e143972f4168adc3a962db770a4568e523997a536782cd5cdedca52eac68de338552da5865a48b1e244bedbb8b12da751daa84eedb6526dc992db54729c4972233776654db2a2d8b62b5b7362c88eedd4691549951db78a1bd386533952e3ba499b2ab23429af9ca871d55c91a3b8cde24b96e3b8711b4792d4c66a2ba78923bb6d2337869d2899dbb4b625bb915798c8785f7779b866bc7d887594d777956a6a68b7b66a68479b9895686987785aa977978659668babaaa677688477a8699398ca667589c9aab7598aa978487847c778b649779975779856957897bbd8b857b76c867acc787a87a8e87956379c79787b96b9775b5c93a7a9986a686989ba8758687448799495579aa58783a889a57796895aa5787aa997978a547a9675948a595789c95898678776696ab987a8647ac8c8b6888b8d9ba5cb849b75aa899aa57abc675886b676485d26b679538a56c55895588397a475a998a6588589b567c5caad948aa8b9caba79d87578a5a82698986757277c8896aa95a66a8a8aa687984958994a65888746b7a0aab5a968",
       "id": "prop_199_dim768_bw35",
+      "blob_hex": "f42be9c939b1d3491eb9521cb78a5c5b6eaec8b7dcd49623d9529cc9aea447929c4a9124b96e2b2976e33489cca6b1dcc88e25bbce4d594e633b6e143972f4168adc3a962db770a4568e523997a536782cd5cdedca52eac68de338552da5865a48b1e244bedbb8b12da751daa84eedb6526dc992db54729c4972233776654db2a2d8b62b5b7362c88eedd4691549951db78a1bd386533952e3ba499b2ab23429af9ca871d55c91a3b8cde24b96e3b8711b4792d4c66a2ba78923bb6d2337869d2899dbb4b625bb915798c8785f7779b866bc7d887594d777956a6a68b7b66a68479b9895686987785aa977978659668babaaa677688477a8699398ca667589c9aab7598aa978487847c778b649779975779856957897bbd8b857b76c867acc787a87a8e87956379c79787b96b9775b5c93a7a9986a686989ba8758687448799495579aa58783a889a57796895aa5787aa997978a547a9675948a595789c95898678776696ab987a8647ac8c8b6888b8d9ba5cb849b75aa899aa57abc675886b676485d26b679538a56c55895588397a475a998a6588589b567c5caad948aa8b9caba79d87578a5a82698986757277c8896aa95a66a8a8aa687984958994a65888746b7a0aab5a968",
       "meta_json": "{\"codec_version\":1,\"dimension\":768,\"bit_width\":35,\"quantizer_mode\":\"scalar\",\"projection_seed\":5981579593160599533}"
     }
-  ],
-  "schema_version": 1,
-  "writer": "symdesk-index turboquant-sidecar-writer"
+  ]
 }

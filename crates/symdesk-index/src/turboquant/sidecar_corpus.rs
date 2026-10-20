@@ -5,7 +5,6 @@
 //! `TestGoReadsRustSidecars` then decodes those bytes with CoreKit.
 
 use serde::Deserialize;
-use serde_json::json;
 
 use super::Codec;
 
@@ -24,9 +23,12 @@ struct PropertyCase {
 }
 
 /// Renders the sidecar corpus for a property corpus JSON document.
+///
+/// Text is built by hand, not through `serde_json::Map`, so key order does not
+/// depend on serde_json feature unification.
 pub fn render_sidecar_corpus(property_json: &str) -> Result<String, String> {
     let file: PropertyFile = serde_json::from_str(property_json).map_err(|e| e.to_string())?;
-    let mut cases = Vec::with_capacity(file.cases.len());
+    let mut entries = Vec::with_capacity(file.cases.len());
     for case in &file.cases {
         let codec =
             Codec::new(case.dim, case.bit_width, case.seed, 0).map_err(|e| e.to_string())?;
@@ -35,20 +37,22 @@ pub fn render_sidecar_corpus(property_json: &str) -> Result<String, String> {
             .encode_sidecar(&vector, 0.0)
             .map_err(|e| e.to_string())?;
         let meta_json = meta.to_json().map_err(|e| e.to_string())?;
-        cases.push(json!({
-            "id": case.id,
-            "blob_hex": hex(&blob),
-            "meta_json": meta_json,
-        }));
+        entries.push(format!(
+            "    {{\n      \"id\": {},\n      \"blob_hex\": {},\n      \"meta_json\": {}\n    }}",
+            quote(&case.id)?,
+            quote(&hex(&blob))?,
+            quote(&meta_json)?,
+        ));
     }
-    let document = json!({
-        "schema_version": 1,
-        "writer": "symdesk-index turboquant-sidecar-writer",
-        "cases": cases,
-    });
-    let mut text = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
-    text.push('\n');
-    Ok(text)
+    Ok(format!(
+        "{{\n  \"schema_version\": 1,\n  \"writer\": {},\n  \"cases\": [\n{}\n  ]\n}}\n",
+        quote("symdesk-index turboquant-sidecar-writer")?,
+        entries.join(",\n"),
+    ))
+}
+
+fn quote(text: &str) -> Result<String, String> {
+    serde_json::to_string(text).map_err(|e| e.to_string())
 }
 
 fn f32s(hex_text: &str) -> Result<Vec<f32>, String> {

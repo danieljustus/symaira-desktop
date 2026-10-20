@@ -136,6 +136,96 @@
         "agent_max_iterations": 7,
         "storage_path_template": " "
       }
+    },
+    {
+      "id": "legacy-files-not-consulted",
+      "missing": true,
+      "global": true,
+      "files": {
+        "xdg-config/symingest/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symrelate/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symseek/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n"
+      },
+      "config": {
+        "ollama_url": "",
+        "recipe_runner": "",
+        "agent_max_iterations": 0,
+        "storage_path_template": ""
+      }
+    },
+    {
+      "id": "legacy-env-dirs-not-consulted",
+      "missing": true,
+      "environment": {
+        "SYMRELATE_CACHE_HOME": "{root}/legacy-cache",
+        "SYMRELATE_CONFIG_HOME": "{root}/legacy-config",
+        "SYMRELATE_DATA_HOME": "{root}/legacy-data"
+      },
+      "global": true,
+      "files": {
+        "legacy-config/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n"
+      },
+      "config": {
+        "ollama_url": "",
+        "recipe_runner": "",
+        "agent_max_iterations": 0,
+        "storage_path_template": ""
+      }
+    },
+    {
+      "id": "unified-file-beats-legacy-files",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "global": true,
+      "files": {
+        "xdg-config/symingest/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symrelate/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symseek/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n"
+      },
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "env-beats-unified-over-legacy",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_OLLAMA_URL": "http://env.example",
+        "SYMRELATE_CONFIG_HOME": "{root}/legacy-config"
+      },
+      "global": true,
+      "files": {
+        "xdg-config/symingest/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symrelate/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symseek/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n"
+      },
+      "config": {
+        "ollama_url": "http://env.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "env-without-unified-file-beats-legacy-files",
+      "missing": true,
+      "environment": {
+        "SYMDESK_OLLAMA_URL": "http://env.example"
+      },
+      "global": true,
+      "files": {
+        "xdg-config/symingest/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symrelate/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n",
+        "xdg-config/symseek/config.toml": "ollama_url = \"http://legacy.example\"\nrecipe_runner = \"legacy-runner\"\nagent_max_iterations = 9\nstorage_path_template = \"legacy/{title}\"\n"
+      },
+      "config": {
+        "ollama_url": "http://env.example",
+        "recipe_runner": "",
+        "agent_max_iterations": 0,
+        "storage_path_template": ""
+      }
     }
   ]
 }

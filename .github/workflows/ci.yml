@@ -238,6 +238,31 @@ jobs:
       - name: Fuzz frontmatter and room event smoke corpora
         run: make rust-fuzz-smoke
 
+  frozen-contract:
+    # Issue #1153: the Rust contract suite must keep protecting the port after
+    # Go is deleted, so this job deliberately installs no Go toolchain.
+    if: github.event_name != 'pull_request'
+    name: Rust frozen contract (no Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Remove any preinstalled Go toolchain
+        run: |
+          set -euo pipefail
+          for _ in 1 2 3 4 5 6 7 8; do
+            go_bin="$(command -v go)" || break
+            sudo rm -f "$(readlink -f "$go_bin")" "$go_bin"
+            hash -r
+          done
+          if command -v go; then exit 1; fi
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
+
+      - name: Replay frozen Go oracle fixtures without Go
+        run: make port-contract-frozen
+
   rust-native:
     name: Rust native (${{ matrix.os }})
     if: github.event_name != 'pull_request'
@@ -606,6 +631,10 @@ jobs:
       - name: Run native index build CLI differential
         shell: bash
         run: make index-build-cli-differential
+
+      - name: Run native index retrieval CLI differential
+        shell: bash
+        run: make index-retrieval-cli-differential
 
       - name: Run native index status CLI differential
         shell: bash

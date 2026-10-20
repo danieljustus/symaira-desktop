@@ -7,7 +7,7 @@ use std::{
     sync::Mutex,
 };
 
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, OptionalExtension, params};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
@@ -719,6 +719,24 @@ impl RetrievalDb {
         Ok(())
     }
 
+    /// Go's `GetDocument`: the stored document row, if any.
+    pub fn get_document(&self, path: &str) -> Result<Option<RetrievalDocument>, SidecarError> {
+        self.connection
+            .query_row(
+                "SELECT path, hash, CAST(updated_at AS TEXT) FROM documents WHERE path = ?1",
+                [path],
+                |row| {
+                    Ok(RetrievalDocument {
+                        path: row.get(0)?,
+                        hash: row.get(1)?,
+                        updated_at: row.get(2)?,
+                    })
+                },
+            )
+            .optional()
+            .map_err(Into::into)
+    }
+
     pub fn get_chunks_for_document(
         &self,
         document_path: &str,
@@ -1213,7 +1231,7 @@ fn insert_chunks(
         "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
          binary_signature, embedding_dim, embedding_model, char_start, char_end,
          embedding_pending, anchor_kind, anchor_value, content_norm)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
     )?;
     for chunk in chunks {
         let embedding = encode_embedding(&chunk.embedding);
@@ -1225,6 +1243,7 @@ fn insert_chunks(
             embedding,
             chunk.hash,
             embedding_norm(&chunk.embedding),
+            sign_binary_signature(&chunk.embedding),
             chunk.dim,
             chunk.model,
             chunk.char_start,
@@ -1264,6 +1283,21 @@ fn encode_embedding(values: &[f32]) -> Vec<u8> {
         .iter()
         .flat_map(|value| value.to_le_bytes())
         .collect()
+}
+
+/// Go's `SignBinarySignature`: one bit per non-negative component, packed
+/// into little-endian u64 words; empty vectors store NULL.
+fn sign_binary_signature(values: &[f32]) -> Option<Vec<u8>> {
+    if values.is_empty() {
+        return None;
+    }
+    let mut words = vec![0u64; values.len().div_ceil(64)];
+    for (index, value) in values.iter().enumerate() {
+        if *value >= 0.0 {
+            words[index / 64] |= 1 << (index % 64);
+        }
+    }
+    Some(words.iter().flat_map(|word| word.to_le_bytes()).collect())
 }
 
 fn decode_embedding(bytes: &[u8]) -> Vec<f32> {

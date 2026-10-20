@@ -13,8 +13,9 @@ use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
     StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_chunks,
-    parse_markdown_retrieval_sections, parse_text_retrieval_sections, relocate_index_for_vault,
-    restore_database, retrieval_embedding_config,
+    parse_markdown_body_retrieval_sections, parse_markdown_retrieval_sections,
+    parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
+    retrieval_embedding_config,
 };
 use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -260,6 +261,7 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
     };
     let mut indexed = 0usize;
     let mut skipped = 0usize;
+    let mut retrieval_documents = Vec::new();
     for relative in discovered {
         let path = root.join(&relative);
         let key = path.to_string_lossy().into_owned();
@@ -278,10 +280,17 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
             skipped += 1;
         } else {
             indexed += 1;
+            retrieval_documents.push((key, document));
         }
     }
 
-    if let Err(error) = sidecar.refresh_index_for_cli(&root) {
+    let refreshed = sidecar.refresh_index_for_cli(&root);
+    // Go writes the hybrid index for each document whose sidecar batch
+    // committed, including batches flushed before a later walk error.
+    let committed = indexed_paths(&root).unwrap_or_default();
+    retrieval_documents.retain(|(key, document)| committed.get(key) == Some(&document.sha256));
+    index_retrieval_documents(&sidecar, retrieval_documents);
+    if let Err(error) = refreshed {
         return super::emit_error(error.to_string(), json_output);
     }
     let pruned = if command.get_flag("prune") {
@@ -324,6 +333,197 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         };
         super::write_stdout(summary)
     }
+}
+
+/// Go's per-document `retrieval.IndexMarkdownWithMetadata` call in `symdesk
+/// index`: a retrieval failure marks the lifecycle row failed and warns, but
+/// the document still counts as indexed in the sidecar.
+fn index_retrieval_documents(
+    sidecar: &symdesk_index::Sidecar,
+    documents: Vec<(String, symdesk_vault::Document)>,
+) {
+    if documents.is_empty() {
+        return;
+    }
+    let context = open_retrieval_context();
+    for (key, document) in documents {
+        let result =
+            context
+                .as_ref()
+                .map_err(Clone::clone)
+                .and_then(|(config, database, runtime)| {
+                    index_markdown_retrieval(config, database, runtime, &key, &document)
+                });
+        if let Err(error) = result {
+            if let Err(status_error) = sidecar.set_index_status(&key, "failed", &error) {
+                eprintln!("Warning: failed to record index status for {key}: {status_error}");
+            }
+            eprintln!("Warning: failed to update hybrid index for {key}: {error}");
+        }
+    }
+}
+
+type RetrievalContext = (
+    RetrievalEmbeddingConfig,
+    RetrievalDb,
+    tokio::runtime::Runtime,
+);
+
+fn open_retrieval_context() -> Result<RetrievalContext, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
+    let config =
+        retrieval_embedding_config(&environment, &cwd).map_err(|error| error.to_string())?;
+    let path = index_location_for_vault("", &environment, &cwd, &std::env::temp_dir())
+        .map_err(|error| error.to_string())?;
+    let database = RetrievalDb::open_at(&path).map_err(|error| error.to_string())?;
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|error| format!("create local embedding runtime: {error}"))?;
+    Ok((config, database, runtime))
+}
+
+fn index_markdown_retrieval(
+    config: &RetrievalEmbeddingConfig,
+    database: &RetrievalDb,
+    runtime: &tokio::runtime::Runtime,
+    key: &str,
+    document: &symdesk_vault::Document,
+) -> Result<(), String> {
+    let source = canonical_local_source(key);
+    let body = document.body.as_bytes();
+    if body.len() > MAX_RETRIEVAL_SOURCE_BYTES {
+        return Err(format!(
+            "file {source} exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
+            body.len()
+        ));
+    }
+    let hash = symdesk_vault::sha256_hex(body);
+    let existing = database
+        .get_document(&source)
+        .map_err(|error| format!("failed to query document from DB: {error}"))?;
+    if existing.as_ref().is_some_and(|stored| stored.hash == hash)
+        && database
+            .count_pending_chunks_for_document(&source)
+            .is_ok_and(|pending| pending == 0)
+    {
+        return Ok(());
+    }
+    // Go's sidecar IndexDocuments fills an empty SimHash on the shared
+    // *vault.Document before the hybrid write reads its metadata.
+    let mut document = document.clone();
+    if document.simhash.is_empty() && !document.body.is_empty() {
+        document.simhash = symdesk_core::simhash::compute_hex(&document.body);
+    }
+    let metadata = symdesk_vault::format_search_metadata(
+        &symdesk_vault::search_metadata_from_document(&document),
+    );
+    let sections = parse_markdown_body_retrieval_sections(&document.body, metadata);
+    let chunks = materialize_chunks(&source, &sections);
+    let texts = chunks
+        .iter()
+        .map(|chunk| chunk.content.clone())
+        .collect::<Vec<_>>();
+    // Go opens a fresh client per document, so the learned dimension and the
+    // embedding cache never carry over between documents.
+    let mut expected_dimension = config.embedding_dim;
+    let embeddings = runtime.block_on(embed_chunks(config, &texts, &mut expected_dimension));
+    let stored = stored_chunks(&source, chunks, embeddings, &config.model);
+    let record = RetrievalDocument {
+        path: source.clone(),
+        hash,
+        updated_at: OffsetDateTime::now_utc()
+            .format(&Rfc3339)
+            .unwrap_or_default(),
+    };
+    if existing.is_some() {
+        database
+            .replace_document_chunks(&record, &stored)
+            .map_err(|error| error.to_string())?;
+    } else {
+        database
+            .save_document(&record)
+            .map_err(|error| format!("failed to save document metadata: {error}"))?;
+        database
+            .save_chunks(&stored)
+            .map_err(|error| format!("failed to save chunks: {error}"))?;
+    }
+    let pending = stored
+        .iter()
+        .filter(|chunk| chunk.embedding_pending)
+        .count();
+    if pending > 0 {
+        eprintln!(
+            "Indexed: {source} ({} chunks, {pending} pending — embedding backend unavailable, will re-embed when available)",
+            stored.len()
+        );
+    } else {
+        eprintln!("Indexed: {source} ({} chunks)", stored.len());
+    }
+    Ok(())
+}
+
+/// Go's `canonicalLocalSource`: resolve symlinks for absolute paths, falling
+/// back to the resolved parent for a path that no longer exists.
+fn canonical_local_source(path: &str) -> String {
+    let path = Path::new(path);
+    if !path.is_absolute() {
+        return path.to_string_lossy().into_owned();
+    }
+    let resolved = fs::canonicalize(path).ok().or_else(|| {
+        let parent = fs::canonicalize(path.parent()?).ok()?;
+        Some(parent.join(path.file_name()?))
+    });
+    resolved.map_or_else(
+        || path.to_string_lossy().into_owned(),
+        |resolved| {
+            super::strip_windows_verbatim_prefix(&resolved)
+                .to_string_lossy()
+                .into_owned()
+        },
+    )
+}
+
+fn stored_chunks(
+    document_path: &str,
+    chunks: Vec<symdesk_index::RetrievalChunk>,
+    embeddings: Vec<Option<Vec<f32>>>,
+    model: &str,
+) -> Vec<StoredRetrievalChunk> {
+    chunks
+        .into_iter()
+        .zip(embeddings)
+        .map(|(chunk, embedding)| {
+            let (embedding, model, pending) = match embedding {
+                Some(vector) => (vector, model.to_owned(), false),
+                None => (Vec::new(), "local-hash".to_owned(), true),
+            };
+            let dim = i64::try_from(embedding.len()).unwrap_or(0);
+            let norm = embedding
+                .iter()
+                .map(|value| f64::from(*value) * f64::from(*value))
+                .sum::<f64>()
+                .sqrt() as f32;
+            StoredRetrievalChunk {
+                id: 0,
+                uuid: chunk.uuid,
+                document_path: document_path.to_owned(),
+                chunk_index: i64::try_from(chunk.chunk_index).unwrap_or(i64::MAX),
+                content: chunk.content,
+                embedding,
+                hash: chunk.hash,
+                norm,
+                dim,
+                model,
+                char_start: chunk.char_start.and_then(|value| i64::try_from(value).ok()),
+                char_end: chunk.char_end.and_then(|value| i64::try_from(value).ok()),
+                anchor_kind: chunk.anchor_kind,
+                anchor_value: chunk.anchor_value,
+                embedding_pending: pending,
+            }
+        })
+        .collect()
 }
 
 #[derive(Clone, Copy)]
@@ -445,39 +645,7 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
             .map(|chunk| chunk.content.clone())
             .collect::<Vec<_>>();
         let embeddings = runtime.block_on(embed_chunks(&config, &texts, &mut expected_dimension));
-        let stored = chunks
-            .into_iter()
-            .zip(embeddings)
-            .map(|(chunk, embedding)| {
-                let (embedding, model, pending) = match embedding {
-                    Some(vector) => (vector, config.model.clone(), false),
-                    _ => (Vec::new(), "local-hash".to_owned(), true),
-                };
-                let dim = i64::try_from(embedding.len()).unwrap_or(0);
-                let norm = embedding
-                    .iter()
-                    .map(|value| f64::from(*value) * f64::from(*value))
-                    .sum::<f64>()
-                    .sqrt() as f32;
-                StoredRetrievalChunk {
-                    id: 0,
-                    uuid: chunk.uuid,
-                    document_path: document.path.clone(),
-                    chunk_index: i64::try_from(chunk.chunk_index).unwrap_or(i64::MAX),
-                    content: chunk.content,
-                    embedding,
-                    hash: chunk.hash,
-                    norm,
-                    dim,
-                    model,
-                    char_start: chunk.char_start.and_then(|value| i64::try_from(value).ok()),
-                    char_end: chunk.char_end.and_then(|value| i64::try_from(value).ok()),
-                    anchor_kind: chunk.anchor_kind,
-                    anchor_value: chunk.anchor_value,
-                    embedding_pending: pending,
-                }
-            })
-            .collect::<Vec<_>>();
+        let stored = stored_chunks(&document.path, chunks, embeddings, &config.model);
         let document = RetrievalDocument {
             path: document.path,
             hash: symdesk_vault::sha256_hex(&bytes),
@@ -542,11 +710,18 @@ async fn embed_chunks(
         batch_result => {
             if let Err(error) = &batch_result {
                 eprintln!(
-                    "Warning: batch embedding failed ({error}); falling back to per-text requests"
+                    "engine: batch embedding failed ({error}), falling back to per-text requests"
                 );
             }
             let mut vectors = Vec::with_capacity(texts.len());
+            // Go's per-text path consults the generator cache first, so a
+            // repeated chunk text is requested once and reuses its result.
+            let mut cache: BTreeMap<&String, Option<Vec<f32>>> = BTreeMap::new();
             for text in texts {
+                if let Some(cached) = cache.get(text) {
+                    vectors.push(cached.clone());
+                    continue;
+                }
                 let one = std::slice::from_ref(text);
                 let vector = match embed_with_retries(config, one).await {
                     Ok(mut result) if result.len() == 1 => {
@@ -559,10 +734,11 @@ async fn embed_chunks(
                     }
                     Ok(_) => None,
                     Err(error) => {
-                        eprintln!("Warning: embedding request failed: {error}");
+                        eprintln!("engine: embedding request failed: {error}");
                         None
                     }
                 };
+                cache.insert(text, vector.clone());
                 vectors.push(vector);
             }
             vectors

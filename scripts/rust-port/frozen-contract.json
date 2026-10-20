@@ -1,0 +1,365 @@
+{
+  "live_only": {
+    "dataset-cli-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
+    "history-differential": "history_live.py builds and runs the Go oracle live",
+    "http-differential": "httpdiff compares live Go and Rust HTTP servers",
+    "mcp-differential": "mcpdiff compares live Go and Rust MCP servers",
+    "mcp-initialize-differential": "mcpdiff compares live Go and Rust MCP servers",
+    "render-differential": "aggregate of render-pdfops-differential",
+    "render-pdfops-differential": "pdfops/verify.py builds and runs the Go oracle live",
+    "representative-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
+    "retention-cli-differential": "diffharness runs the Go and Rust binaries live; outputs not yet frozen",
+    "source-differential": "source-differential.py runs the Go and Rust binaries live",
+    "source-watch-differential": "source-differential.py runs the Go and Rust binaries live"
+  },
+  "mutation_controls": [
+    {
+      "append": "\n",
+      "command": "cargo test -p symdesk-index --locked --test fixture_identity",
+      "fixture": "testdata/port/core/config.json"
+    },
+    {
+      "command": "cargo test -p symroom-core --locked --test journal_contracts",
+      "fixture": "testdata/port/room/journal.json",
+      "increment": [
+        "stats_cases",
+        -1,
+        "max_lamport"
+      ]
+    }
+  ],
+  "replays": {
+    "cargo test -p symdesk-cli --locked --test ask_offline": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --locked --test index_build": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test index_maintenance": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test index_reembed_http": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --locked --test index_retrieval": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test mcp_ask_offline": {
+      "ignored": 0,
+      "passed": 6
+    },
+    "cargo test -p symdesk-cli --locked --test mcp_search_hybrid": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-cli --locked --test recipe_validate": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --locked --test search_hybrid": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --test ask_offline --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --test config_vault_selection --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --test history_tasks --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-core --all-features --locked": {
+      "ignored": 0,
+      "live_only_tests": [
+        "contacts_and_ingest_paths_match_native_go"
+      ],
+      "passed": 29
+    },
+    "cargo test -p symdesk-core --test config_precedence --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-core --test config_save_contracts --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --all-features --locked": {
+      "ignored": 0,
+      "live_only_tests": [
+        "every_recorded_service_rejection_executes_against_the_native_go_oracle"
+      ],
+      "passed": 99
+    },
+    "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test dataset_import_contracts": {
+      "ignored": 0,
+      "live_only_tests": [
+        "every_recorded_service_rejection_executes_against_the_native_go_oracle"
+      ],
+      "passed": 2
+    },
+    "cargo test -p symdesk-index --locked --test dataset_purge_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test dataset_service_contracts": {
+      "ignored": 0,
+      "passed": 13
+    },
+    "cargo test -p symdesk-index --locked --test history_service_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test index_backup": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test index_location": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-index --locked --test index_relocate": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test index_restore": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test metadata_contracts": {
+      "ignored": 0,
+      "passed": 6
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_bm25": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_chunks": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_embedding_state": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_hybrid_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_pending_rebuild --test retrieval_embedding_state": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_sections --test retrieval_chunks": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-index --locked --test retrieval_vector": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-index --locked local_hash_tests": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-protocol --locked --test retrieval_embedding": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-render --locked": {
+      "ignored": 0,
+      "passed": 6
+    },
+    "cargo test -p symdesk-vault --all-features --locked": {
+      "ignored": 3,
+      "live_only_tests": [
+        "test_pinned_source_hashes_match_canonical_git_blobs"
+      ],
+      "passed": 113
+    },
+    "cargo test -p symdesk-vault --locked --test dataset_contracts": {
+      "ignored": 0,
+      "passed": 5
+    },
+    "cargo test -p symdesk-vault --locked --test history_prune_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --locked --test history_purge_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --locked --test history_trash_purge_contracts": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-vault --test base_view_write_contracts --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --test filesystem_write_contracts --locked": {
+      "ignored": 1,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --test frontmatter_write_contracts --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-vault --test history_lifecycle_contracts --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --test note_operations_contracts --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-vault --test notebook_write_contracts --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-vault --test retention_contracts --locked": {
+      "ignored": 0,
+      "passed": 9
+    },
+    "cargo test -p symdesk-vault --test retention_rules_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-vault --test retention_state_contracts --locked": {
+      "ignored": 1,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test artifact_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test artifact_identity_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test brain_profile_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test checkpoint_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test decide_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test doctor_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test index_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test init_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test log_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test mcp": {
+      "ignored": 0,
+      "passed": 7
+    },
+    "cargo test -p symroom-cli --locked --test member_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test note_commands note_cli_matches_go_process_and_journal_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test run_approval_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test run_commands": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symroom-cli --locked --test run_commands run_request_start_cancel_match_go_process_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test run_commands run_wait_matches_go_process_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test verify_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test watch_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test index_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test journal_contracts": {
+      "ignored": 0,
+      "passed": 5
+    },
+    "cargo test -p symroom-core --locked --test log_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test merge_read_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test room_init_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test run_projection_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --locked --test verify_contracts": {
+      "by_platform": {
+        "darwin": {
+          "ignored": 0,
+          "passed": 1
+        },
+        "linux": {
+          "ignored": 0,
+          "passed": 2
+        }
+      }
+    },
+    "cargo test -p symroom-core --locked --test watch_stream_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-core --test identity_events_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    }
+  }
+}

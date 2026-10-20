@@ -71,6 +71,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"index location", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexLocationPortFixture$"}, []string{"testdata/port/retrieval/index-location.json"}, false},
 	{"index maintenance CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexMaintenanceProcessPortFixture$"}, []string{"testdata/port/cli/index-maintenance-process.json"}, false},
 	{"index build CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexBuildProcessPortFixture$"}, []string{"testdata/port/cli/index-build-process.json"}, false},
+	{"index retrieval CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetrievalProcessPortFixture$"}, []string{"testdata/port/cli/index-retrieval-process.json"}, false},
 	{"recipe validate CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeValidateCLIContract$"}, []string{"testdata/port/ai/recipe-validate.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json", "testdata/port/render/v2/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},

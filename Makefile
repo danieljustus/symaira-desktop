@@ -33,7 +33,7 @@
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
-.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
+.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
@@ -697,6 +697,13 @@ index-build-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_build
 
+index-retrieval-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+
+index-retrieval-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --locked --test index_retrieval
+
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
 
@@ -817,6 +824,15 @@ differential-go-selftest:
 		--symdesk-left "bin/symdesk" --symdesk-right "bin/symdesk" \
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
+
+# Issue #1153: Go-independent contract aggregate. Replays every committed Go
+# oracle fixture of each `*-differential` target through Rust with `go` removed
+# from PATH, requires the recorded case counts in
+# scripts/rust-port/frozen-contract.json, and checks that mutated fixtures fail.
+.PHONY: port-contract-frozen
+port-contract-frozen:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/rust-port/test_frozen_contract.py
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/frozen_contract.py
 
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential dataset-sync-differential retention-state-differential
 

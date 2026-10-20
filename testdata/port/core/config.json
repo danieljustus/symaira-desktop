@@ -81,6 +81,116 @@
         }
       },
       {
+        "id": "minimal-toml",
+        "toml": "vault = \"/minimal/vault\"\n",
+        "config": {
+          "vault": "/minimal/vault",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "toml-secret-configured",
+        "toml": "llm_api_key = \"fixture-placeholder-not-a-secret\"\n",
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": true,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "env-secret-configured",
+        "missing": true,
+        "environment": {
+          "SYMDESK_LLM_API_KEY": "fixture-placeholder-not-a-secret"
+        },
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": true,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "empty-env-secret-keeps-toml",
+        "toml": "llm_api_key = \"fixture-placeholder-not-a-secret\"\n",
+        "environment": {
+          "SYMDESK_LLM_API_KEY": ""
+        },
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": true,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
         "id": "supported-env-overrides",
         "missing": true,
         "environment": {

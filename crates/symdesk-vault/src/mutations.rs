@@ -191,6 +191,20 @@ pub fn render_go_yaml_double_quoted(value: &str) -> String {
     go_yaml::double_quote(value)
 }
 
+/// yaml.v3 `Marshal` of a string-keyed map, including the final newline Go
+/// writes. Callers that frame the block themselves add nothing else.
+pub fn render_go_yaml_map(
+    entries: &std::collections::BTreeMap<String, Value>,
+) -> Result<String, MutationError> {
+    let mut mapping = Mapping::new();
+    for (key, value) in entries {
+        mapping.insert(key.clone(), value.clone());
+    }
+    let mut rendered = render_go_yaml_mapping(&mapping)?;
+    rendered.push('\n');
+    Ok(rendered)
+}
+
 pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, MutationError> {
     go_yaml::render_mapping(mapping).map_err(|detail| MutationError::Marshal { detail })
 }

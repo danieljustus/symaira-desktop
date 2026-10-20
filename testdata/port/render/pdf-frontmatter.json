@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "addb0ba615a435b89dbd690e923bf28bbafbc0e3",
+    "go_version": "go1.26.9",
+    "source": "internal/export/export.go",
+    "source_sha256": "fb244cc8ce36b8e4e8199b1e9183cf009f107b3a3d4ec14bf7a5afe10ee60861"
+  },
+  "cases": [
+    {
+      "id": "empty-no-title",
+      "frontmatter": "",
+      "title": "",
+      "output": "",
+      "error": ""
+    },
+    {
+      "id": "empty-with-title",
+      "frontmatter": "",
+      "title": "Report",
+      "output": "---\ntitle: Report\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "explicit-title-wins",
+      "frontmatter": "title: Own\n",
+      "title": "Derived",
+      "output": "---\ntitle: Own\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "title-from-document",
+      "frontmatter": "tags: [a]\n",
+      "title": "Derived",
+      "output": "---\ntags:\n    - a\ntitle: Derived\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "report-profile-fields",
+      "frontmatter": "title: Angebot\nlanguage: de\nsubject: \"Re: Vertrag\"\n",
+      "title": "",
+      "output": "---\nlanguage: de\nsubject: 'Re: Vertrag'\ntitle: Angebot\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "behoerde-recipient",
+      "frontmatter": "recipient:\n  name: Amt\n  street: Hauptstraße 1\n",
+      "title": "Antrag",
+      "output": "---\nrecipient:\n    name: Amt\n    street: Hauptstraße 1\ntitle: Antrag\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "scalars",
+      "frontmatter": "count: 42\nratio: 0.5\nenabled: true\nnothing: null\nempty: \"\"\n",
+      "title": "S",
+      "output": "---\ncount: 42\nempty: \"\"\nenabled: true\nnothing: null\nratio: 0.5\ntitle: S\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "negative-and-exponent",
+      "frontmatter": "neg: -7\nexp: 1.5e3\nhex: 0x1F\noct: 0o17\n",
+      "title": "N",
+      "output": "---\nexp: 1500\nhex: 31\nneg: -7\noct: 15\ntitle: \"N\"\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "quoted-looking-strings",
+      "frontmatter": "a: \"true\"\nb: \"123\"\nc: \"null\"\nd: \"1e3\"\n",
+      "title": "Q",
+      "output": "---\na: \"true\"\nb: \"123\"\nc: \"null\"\nd: \"1e3\"\ntitle: Q\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "indicator-strings",
+      "frontmatter": "a: \"#hash\"\nb: \"- dash\"\nc: \"key: value\"\nd: \"trail \"\ne: \" lead\"\n",
+      "title": "I",
+      "output": "---\na: '#hash'\nb: '- dash'\nc: 'key: value'\nd: 'trail '\ne: ' lead'\ntitle: I\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "multiline-string",
+      "frontmatter": "note: |\n  first line\n  second line\n",
+      "title": "M",
+      "output": "---\nnote: |\n    first line\n    second line\ntitle: M\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "lists",
+      "frontmatter": "tags:\n  - alpha\n  - \"beta gamma\"\n  - 3\nempty: []\n",
+      "title": "L",
+      "output": "---\nempty: []\ntags:\n    - alpha\n    - beta gamma\n    - 3\ntitle: L\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "nested-maps",
+      "frontmatter": "outer:\n  inner:\n    deep: value\n  sibling: 2\nemptymap: {}\n",
+      "title": "Nest",
+      "output": "---\nemptymap: {}\nouter:\n    inner:\n        deep: value\n    sibling: 2\ntitle: Nest\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "list-of-maps",
+      "frontmatter": "items:\n  - name: a\n    qty: 1\n  - name: b\n    qty: 2\n",
+      "title": "LM",
+      "output": "---\nitems:\n    - name: a\n      qty: 1\n    - name: b\n      qty: 2\ntitle: LM\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "key-order-natural",
+      "frontmatter": "item10: x\nitem2: y\nItem1: z\nalpha: w\n_under: v\n",
+      "title": "Order",
+      "output": "---\n_under: v\nItem1: z\nalpha: w\nitem2: \"y\"\nitem10: x\ntitle: Order\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "unicode-and-escapes",
+      "frontmatter": "name: \"Grüße \\t tab\"\nemoji: \"\\U0001F600\"\n",
+      "title": "Ü",
+      "output": "---\nemoji: \"\\U0001F600\"\nname: \"Grüße \\t tab\"\ntitle: Ü\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "key-needs-quoting",
+      "frontmatter": "\"a: b\": 1\n\"yes\": 2\n",
+      "title": "K",
+      "output": "---\n'a: b': 1\ntitle: K\n\"yes\": 2\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "title-empty-string-in-frontmatter",
+      "frontmatter": "title: \"\"\n",
+      "title": "Filled",
+      "output": "---\ntitle: \"\"\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "property-shaped-keys",
+      "frontmatter": "type: text\ndefault: x\nlabel: L\noptions: [a]\ndescription: d\n",
+      "title": "P",
+      "output": "---\ndefault: x\ndescription: d\nlabel: L\noptions:\n    - a\ntitle: P\ntype: text\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "view-shaped-keys",
+      "frontmatter": "source: s\nname: n\nid: i\ntype: table\ncolumns: [c]\n",
+      "title": "V",
+      "output": "---\ncolumns:\n    - c\nid: i\nname: \"n\"\nsource: s\ntitle: V\ntype: table\n---\n\n",
+      "error": ""
+    },
+    {
+      "id": "title-with-crlf",
+      "frontmatter": "",
+      "title": "line one\nline two",
+      "output": "---\ntitle: |-\n    line one\n    line two\n---\n\n",
+      "error": ""
+    }
+  ]
+}

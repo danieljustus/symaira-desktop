@@ -97,7 +97,7 @@
       "live_only_tests": [
         "every_recorded_service_rejection_executes_against_the_native_go_oracle"
       ],
-      "passed": 105
+      "passed": 108
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,
@@ -173,6 +173,10 @@
     "cargo test -p symdesk-index --locked --test turboquant_codec": {
       "ignored": 0,
       "passed": 6
+    },
+    "cargo test -p symdesk-index --locked --test turboquant_property": {
+      "ignored": 0,
+      "passed": 3
     },
     "cargo test -p symdesk-index --locked local_hash_tests": {
       "ignored": 0,

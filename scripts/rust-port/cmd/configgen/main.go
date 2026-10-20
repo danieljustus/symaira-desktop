@@ -215,6 +215,14 @@ agent_max_iterations = 3
 storage_path_template = "toml/{title}"
 unknown_future_key = "preserved-by-file-but-ignored-by-model"
 `},
+		{ID: "minimal-toml", TOML: `vault = "/minimal/vault"
+`},
+		// Synthetic placeholder keys: the fixture records only the configured state.
+		{ID: "toml-secret-configured", TOML: `llm_api_key = "fixture-placeholder-not-a-secret"
+`},
+		{ID: "env-secret-configured", Missing: true, Environment: map[string]string{"SYMDESK_LLM_API_KEY": "fixture-placeholder-not-a-secret"}},
+		{ID: "empty-env-secret-keeps-toml", TOML: `llm_api_key = "fixture-placeholder-not-a-secret"
+`, Environment: map[string]string{"SYMDESK_LLM_API_KEY": ""}},
 		{ID: "supported-env-overrides", Missing: true, Environment: map[string]string{
 			"SYMDESK_AGENT_MAX_ITERATIONS":            "12",
 			"SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY":  "  CONFIDENTIAL  ",

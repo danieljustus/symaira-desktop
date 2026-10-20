@@ -47,7 +47,9 @@ fn four_environment_overrides_match_the_go_loader() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_commit, oracle_identity::commit());
-    assert_eq!(fixture.cases.len(), 10);
+    // Legacy-source cases carry only the unified TOML input: the Go loader never
+    // reads legacy config dirs or SYMRELATE_* overrides, so Rust replays without them.
+    assert_eq!(fixture.cases.len(), 15);
 
     for case in fixture.cases {
         let input = if case.missing {

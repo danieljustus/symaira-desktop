@@ -628,6 +628,10 @@ jobs:
         shell: bash
         run: make index-build-cli-differential
 
+      - name: Run native index retrieval CLI differential
+        shell: bash
+        run: make index-retrieval-cli-differential
+
       - name: Run native index status CLI differential
         shell: bash
         env:

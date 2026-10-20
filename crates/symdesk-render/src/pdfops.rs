@@ -529,7 +529,7 @@ impl Drop for Workspace {
 pub(crate) fn execute(ctx: &Context, path: &Path, args: &[String]) -> Result<String, String> {
     crate::pdfprocess::run(ctx, path, args)
 }
-fn quote(value: &str) -> String {
+pub(crate) fn quote(value: &str) -> String {
     let mut result = String::from("\"");
     for c in value.chars() {
         match c {

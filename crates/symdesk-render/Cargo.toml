@@ -10,3 +10,5 @@ publish = false
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+symdesk-vault.workspace = true
+time.workspace = true

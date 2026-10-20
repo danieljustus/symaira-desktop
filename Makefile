@@ -33,7 +33,7 @@
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
-.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
+.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
@@ -41,6 +41,7 @@
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
 .PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: retrieval-turboquant-differential retrieval-turboquant-benchmark
 .PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
 .PHONY: retrieval-pending-rebuild-fixtures-generate retrieval-pending-rebuild-differential
 .PHONY: retrieval-sections-fixtures-generate retrieval-sections-differential
@@ -54,6 +55,7 @@
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
 .PHONY: render-differential render-pdfops-differential
+.PHONY: render-export-fixtures-generate render-export-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -98,6 +100,7 @@ override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXT
 override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_DATASET_IMPORT_FIXTURE -u port_dataset_import_fixture -u PORT_DATASET_ERROR_FIXTURE -u port_dataset_error_fixture
 override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixture_source_commit -u PORTGEN_FIXTURE_SOURCE_RELEASE -u portgen_fixture_source_release
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_export_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -106,7 +109,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-pdfops-differential
+render-differential: render-export-differential render-pdfops-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -620,6 +623,17 @@ retrieval-vector-differential:
 	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
 
+# Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, then Rust replay.
+retrieval-turboquant-differential:
+	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-gen --check
+	$(CARGO) test -p symdesk-index --locked --test turboquant_codec
+
+# Go vs Rust p95/throughput; a Rust regression above 10% exits nonzero.
+TURBOQUANT_BENCH_REPORT ?= docs/rust-port/turboquant-benchmark.md
+retrieval-turboquant-benchmark:
+	$(CARGO) build --release --locked -p symdesk-index --bin turboquant-bench
+	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-bench --rust-bin "$(RUST_TARGET_DIR)/release/turboquant-bench" --report "$(TURBOQUANT_BENCH_REPORT)"
+
 render-ir-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/renderirgen
 
@@ -637,6 +651,14 @@ render-html-fixtures-check:
 
 render-html-differential: render-html-fixtures-check
 	$(CARGO) test -p symdesk-render --locked
+
+# Search-result Markdown, view tables and plain links (RENDER-002 pure core).
+render-export-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$'
+
+render-export-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked export_markdown
 
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
@@ -686,6 +708,13 @@ index-build-cli-fixtures-generate:
 index-build-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_build
+
+index-retrieval-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+
+index-retrieval-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --locked --test index_retrieval
 
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
@@ -807,6 +836,15 @@ differential-go-selftest:
 		--symdesk-left "bin/symdesk" --symdesk-right "bin/symdesk" \
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
+
+# Issue #1153: Go-independent contract aggregate. Replays every committed Go
+# oracle fixture of each `*-differential` target through Rust with `go` removed
+# from PATH, requires the recorded case counts in
+# scripts/rust-port/frozen-contract.json, and checks that mutated fixtures fail.
+.PHONY: port-contract-frozen
+port-contract-frozen:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts/rust-port/test_frozen_contract.py
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/frozen_contract.py
 
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential dataset-sync-differential retention-state-differential
 

@@ -175,13 +175,20 @@ fn quote_yaml(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\\\""))
 }
 
-pub(crate) fn render_go_yaml_string(
+/// yaml.v3 `Marshal` text for a string scalar at `indent_spaces`, using the
+/// style Go selects (plain, quoted or literal block).
+pub fn render_go_yaml_string(
     value: &str,
     indent_spaces: usize,
     key: bool,
 ) -> Result<String, MutationError> {
     go_yaml::render_string(value, indent_spaces, key)
         .map_err(|detail| MutationError::Marshal { detail })
+}
+
+/// yaml.v3 double-quoted text, as Go emits for `yaml.DoubleQuotedStyle` nodes.
+pub fn render_go_yaml_double_quoted(value: &str) -> String {
+    go_yaml::double_quote(value)
 }
 
 pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, MutationError> {

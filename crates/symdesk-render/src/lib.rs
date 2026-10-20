@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 pub mod export_html;
+pub mod export_markdown;
 mod go_print;
 pub mod pdfops;
 mod pdfprocess;

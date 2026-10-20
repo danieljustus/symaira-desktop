@@ -26,28 +26,40 @@ pub fn parse_markdown_retrieval_sections(
             error.valid_up_to()
         ))
     })?;
-    let (body, frontmatter_bytes) = strip_frontmatter(text);
-    let mut sections = parse_sections(body, frontmatter_bytes);
+    let metadata = symdesk_vault::parse_bytes(source_path, markdown)
+        .map(|document| {
+            symdesk_vault::format_search_metadata(&symdesk_vault::search_metadata_from_document(
+                &document,
+            ))
+        })
+        .unwrap_or_default();
+    Ok(parse_markdown_body_retrieval_sections(text, metadata))
+}
 
-    if let Ok(document) = symdesk_vault::parse_bytes(source_path, markdown) {
-        let metadata = symdesk_vault::search_metadata_from_document(&document);
-        let formatted = symdesk_vault::format_search_metadata(&metadata);
-        if !formatted.is_empty() {
-            sections.insert(
-                0,
-                RetrievalSection {
-                    text: formatted,
-                    start: 0,
-                    anchor: RetrievalAnchor {
-                        kind: "section".to_owned(),
-                        value: "metadata".to_owned(),
-                    },
-                    synthetic: true,
+/// Go's `ParseMarkdownSections` over already-parsed Markdown (as the CLI index
+/// passes `doc.Body`), prefixed by the formatted search metadata when it is
+/// non-empty, like `prependSearchMetadata`.
+pub fn parse_markdown_body_retrieval_sections(
+    markdown: &str,
+    formatted_metadata: String,
+) -> Vec<RetrievalSection> {
+    let (body, frontmatter_bytes) = strip_frontmatter(markdown);
+    let mut sections = parse_sections(body, frontmatter_bytes);
+    if !formatted_metadata.is_empty() {
+        sections.insert(
+            0,
+            RetrievalSection {
+                text: formatted_metadata,
+                start: 0,
+                anchor: RetrievalAnchor {
+                    kind: "section".to_owned(),
+                    value: "metadata".to_owned(),
                 },
-            );
-        }
+                synthetic: true,
+            },
+        );
     }
-    Ok(sections)
+    sections
 }
 
 /// Parses the generic text section used by Go's `ParseFileSections` fallback.

@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "3845a99e1581ab03d10c2e8715200725798c45fd",
+    "go_version": "go1.26.10",
+    "source": "internal/archive/archive.go",
+    "source_sha256": "d9f95ceb810f9a9b125066e35d446643d733e5dc32c4714d3a7f21860a2d56ab"
+  },
+  "cases": [
+    {
+      "id": "split-empty",
+      "op": "split_pages",
+      "input": "",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-whitespace-only",
+      "op": "split_pages",
+      "input": " \n\t ",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-single",
+      "op": "split_pages",
+      "input": "hello",
+      "want": {
+        "strings": [
+          "hello"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-markers",
+      "op": "split_pages",
+      "input": "one\n\n--- Page ---\n\ntwo\n\n--- Page ---\n\nthree",
+      "want": {
+        "strings": [
+          "one",
+          "two",
+          "three"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-marker-keeps-piece-spaces",
+      "op": "split_pages",
+      "input": "  a  \n\n--- Page ---\n\n  b  ",
+      "want": {
+        "strings": [
+          "a  ",
+          "  b"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-marker-not-exact",
+      "op": "split_pages",
+      "input": "x--- Page ---y",
+      "want": {
+        "strings": [
+          "x--- Page ---y"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-trailing-marker-trimmed",
+      "op": "split_pages",
+      "input": "a\n\n--- Page ---\n\n",
+      "want": {
+        "strings": [
+          "a\n\n--- Page ---"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-formfeeds",
+      "op": "split_pages",
+      "input": "a\fb\f\fc",
+      "want": {
+        "strings": [
+          "a",
+          "b",
+          "",
+          "c"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-marker-wins-over-formfeed",
+      "op": "split_pages",
+      "input": "a\f\n\n--- Page ---\n\nb",
+      "want": {
+        "strings": [
+          "a\f",
+          "b"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-outer-whitespace-trimmed",
+      "op": "split_pages",
+      "input": "\n\n a \n",
+      "want": {
+        "strings": [
+          "a"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "split-interior-unicode-space-kept",
+      "op": "split_pages",
+      "input": "Grüße \u2028x",
+      "want": {
+        "strings": [
+          "Grüße \u2028x"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-pdf",
+      "op": "archive_path",
+      "input": "dir/doc.pdf",
+      "want": {
+        "strings": [
+          "dir/doc_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-no-extension",
+      "op": "archive_path",
+      "input": "doc",
+      "want": {
+        "strings": [
+          "doc_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-dotfile",
+      "op": "archive_path",
+      "input": ".hidden",
+      "want": {
+        "strings": [
+          "_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-dot-in-directory",
+      "op": "archive_path",
+      "input": "dir.v2/noext",
+      "want": {
+        "strings": [
+          "dir.v2/noext_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-dot-directory-only",
+      "op": "archive_path",
+      "input": "a/b.c/d",
+      "want": {
+        "strings": [
+          "a/b.c/d_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-trailing-dot",
+      "op": "archive_path",
+      "input": "trailing.",
+      "want": {
+        "strings": [
+          "trailing_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-double-extension",
+      "op": "archive_path",
+      "input": "a.tar.gz",
+      "want": {
+        "strings": [
+          "a.tar_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "archive-path-hidden-with-extension",
+      "op": "archive_path",
+      "input": "dir/.x.md",
+      "want": {
+        "strings": [
+          "dir/.x_archive.pdf"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-empty",
+      "op": "has_text_layer",
+      "input": "",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-bt-and-et",
+      "op": "has_text_layer",
+      "input": "BT /F1 12 Tf ET",
+      "want": {
+        "strings": [],
+        "bool": true,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-bt-only",
+      "op": "has_text_layer",
+      "input": "BT only",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-reversed-order",
+      "op": "has_text_layer",
+      "input": "ET then BT",
+      "want": {
+        "strings": [],
+        "bool": true,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-lowercase-rejected",
+      "op": "has_text_layer",
+      "input": "bt et",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "text-layer-control-bytes",
+      "op": "has_text_layer",
+      "input": "\u0000BT\u0001ET",
+      "want": {
+        "strings": [],
+        "bool": true,
+        "error": ""
+      }
+    },
+    {
+      "id": "ocr-trims-spaces",
+      "op": "ocr_text",
+      "input": "  text \n",
+      "want": {
+        "strings": [
+          "text"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "ocr-only-whitespace",
+      "op": "ocr_text",
+      "input": "\t\n",
+      "want": {
+        "strings": [
+          ""
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "ocr-interior-newlines-kept",
+      "op": "ocr_text",
+      "input": "a\nb",
+      "want": {
+        "strings": [
+          "a\nb"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "ocr-trims-nbsp",
+      "op": "ocr_text",
+      "input": " x ",
+      "want": {
+        "strings": [
+          "x"
+        ],
+        "bool": false,
+        "error": ""
+      }
+    },
+    {
+      "id": "generate-unsupported-txt",
+      "op": "generate_unsupported",
+      "input": "scan.txt",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": "unsupported format for archive generation: .txt"
+      }
+    },
+    {
+      "id": "generate-unsupported-uppercase",
+      "op": "generate_unsupported",
+      "input": "SCAN.DOC",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": "unsupported format for archive generation: .doc"
+      }
+    },
+    {
+      "id": "generate-unsupported-no-extension",
+      "op": "generate_unsupported",
+      "input": "noext",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": "unsupported format for archive generation: "
+      }
+    },
+    {
+      "id": "generate-unsupported-dot-in-directory",
+      "op": "generate_unsupported",
+      "input": "dir.d/file",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": "unsupported format for archive generation: "
+      }
+    },
+    {
+      "id": "generate-unsupported-unicode-extension",
+      "op": "generate_unsupported",
+      "input": "x.Ü",
+      "want": {
+        "strings": [],
+        "bool": false,
+        "error": "unsupported format for archive generation: .ü"
+      }
+    }
+  ]
+}

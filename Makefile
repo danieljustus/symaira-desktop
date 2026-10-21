@@ -57,6 +57,7 @@
 .PHONY: render-differential render-pdfops-differential
 .PHONY: render-export-fixtures-generate render-export-differential
 .PHONY: render-pdf-frontmatter-fixtures-generate render-pdf-frontmatter-differential
+.PHONY: render-archive-fixtures-generate render-archive-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -103,6 +104,7 @@ override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixtur
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_export_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_PDF_FRONTMATTER_GENERATE -u port_render_pdf_frontmatter_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_GENERATE -u port_render_archive_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -111,7 +113,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-pdf-frontmatter-differential render-pdfops-differential
+render-differential: render-export-differential render-pdf-frontmatter-differential render-archive-differential render-pdfops-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -680,6 +682,15 @@ render-pdf-frontmatter-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked export_pdf
 
+# Pure archive contract (page split, naming, text-layer probe, format dispatch).
+# pdfcpu stamping is not covered by this target.
+render-archive-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$'
+
+render-archive-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked archive
+
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
 
@@ -737,10 +748,10 @@ index-retrieval-cli-differential:
 	$(CARGO) test -p symdesk-cli --locked --test index_retrieval
 
 index-retry-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
 
 index-retry-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_retry
 
 room-run-approval-cli-fixtures-generate:

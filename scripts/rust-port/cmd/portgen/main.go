@@ -114,6 +114,7 @@ var fixturePaths = []string{
 	"testdata/port/render/html-note.json",
 	"testdata/port/render/export-markdown.json",
 	"testdata/port/render/pdf-frontmatter.json",
+	"testdata/port/render/archive-contract.json",
 	"testdata/port/retrieval/quant-sidecar-wire.json",
 	"testdata/port/retrieval/turboquant-codec.json",
 	"testdata/port/retrieval/turboquant-property.json",

@@ -229,7 +229,7 @@ fn blockquote(value: &str) -> String {
 
 // Go strings.ToLower maps rune by rune; U+0130 is the only scalar whose
 // Unicode lowercase is not a single scalar, and Go maps it to 'i'.
-fn go_to_lower(value: &str) -> String {
+pub(crate) fn go_to_lower(value: &str) -> String {
     value
         .chars()
         .map(|c| match c {

@@ -28,8 +28,8 @@ type request struct {
 }
 
 func main() {
-	if runtime.Version() != "go1.26.9" {
-		panic("PDF oracle requires go1.26.9")
+	if runtime.Version() != "go1.26.10" {
+		panic("PDF oracle requires go1.26.10")
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--identity" {
 		emit(map[string]any{"oracle": reference.Current(), "compiler": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH})

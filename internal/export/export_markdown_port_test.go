@@ -78,7 +78,7 @@ type exportMarkdownOutcome struct {
 // helpers (search result sets, view tables, plain wikilinks) from Go itself.
 // Regenerate deliberately with:
 //
-//	PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$'
+//	PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$'
 func TestPortRenderExportMarkdownFixture(t *testing.T) {
 	fixture := buildExportMarkdownFixture(t)
 	encoded, err := encodeExportMarkdownFixture(fixture)

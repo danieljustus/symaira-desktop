@@ -1,0 +1,1245 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "3845a99e1581ab03d10c2e8715200725798c45fd",
+  "cases": [
+    {
+      "name": "no-args",
+      "args": [],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "symroom - room management and coordination tool\n\nUsage:\n  symroom \u003csubcommand\u003e [flags] [args]\n\nAvailable Subcommands:\n  init           Initialize a room\n  identity       Manage Ed25519 identities\n  member         Manage room members\n  note           Post a journal note\n  decide         Record a room decision\n  artifact       Manage room artifacts\n  log            Display room journal log\n  verify         Verify journal chains and signatures\n  index          Rebuild or manage derived SQLite index\n  run            Manage room runs\n  checkpoint     Manage run checkpoints\n  watch          Watch symdesk events stream\n  brain-profile  Emit a symbrain profile\n  doctor         Run system and environment checks\n  version        Print version information\n  mcp            Run MCP server mode\n\nUse \"symroom \u003csubcommand\u003e --help\" for more information about a subcommand.\n"
+    },
+    {
+      "name": "init",
+      "args": [
+        "init"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom init \u003cdir\u003e --identity \u003cname\u003e [--name \u003cdisplay_name\u003e]\n",
+      "stderr": ""
+    },
+    {
+      "name": "init --help",
+      "args": [
+        "init",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n"
+    },
+    {
+      "name": "init --bogus",
+      "args": [
+        "init",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n"
+    },
+    {
+      "name": "init bogus",
+      "args": [
+        "init",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n"
+    },
+    {
+      "name": "identity",
+      "args": [
+        "identity"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom identity \u003ccreate|list|show|export\u003e [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "identity --help",
+      "args": [
+        "identity",
+        "--help"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown identity action: --help\n"
+    },
+    {
+      "name": "identity --bogus",
+      "args": [
+        "identity",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown identity action: --bogus\n"
+    },
+    {
+      "name": "identity bogus",
+      "args": [
+        "identity",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown identity action: bogus\n"
+    },
+    {
+      "name": "identity export",
+      "args": [
+        "identity",
+        "export"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom identity export \u003cname\u003e --public\n"
+    },
+    {
+      "name": "identity export --help",
+      "args": [
+        "identity",
+        "export",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of identity export:\n  -public\n    \tExport public key only\n"
+    },
+    {
+      "name": "identity export --bogus",
+      "args": [
+        "identity",
+        "export",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of identity export:\n  -public\n    \tExport public key only\n"
+    },
+    {
+      "name": "identity list",
+      "args": [
+        "identity",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "identity list --help",
+      "args": [
+        "identity",
+        "list",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "identity list --bogus",
+      "args": [
+        "identity",
+        "list",
+        "--bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "identity show",
+      "args": [
+        "identity",
+        "show"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom identity show \u003cname\u003e\n"
+    },
+    {
+      "name": "identity show --help",
+      "args": [
+        "identity",
+        "show",
+        "--help"
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n"
+    },
+    {
+      "name": "identity show --bogus",
+      "args": [
+        "identity",
+        "show",
+        "--bogus"
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n"
+    },
+    {
+      "name": "member",
+      "args": [
+        "member"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom member \u003cadd|list|remove|role\u003e [flags] [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "member --help",
+      "args": [
+        "member",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom member \u003cadd|list|remove|role\u003e [flags] [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "member --bogus",
+      "args": [
+        "member",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown member action: --bogus\n"
+    },
+    {
+      "name": "member bogus",
+      "args": [
+        "member",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown member action: bogus\n"
+    },
+    {
+      "name": "member add",
+      "args": [
+        "member",
+        "add"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member add [--identity \u003cname\u003e] \u003cname\u003e \u003cpubkey\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e]\n       symroom member add --pubkey \u003chex\u003e --name \u003cname\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e] [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "member add --help",
+      "args": [
+        "member",
+        "add",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member add:\n  -identity string\n    \tCaller identity name (must be the room owner)\n  -kind string\n    \tMember kind (human|agent) (default \"human\")\n  -name string\n    \tMember display name\n  -pubkey string\n    \tMember public key (hex)\n  -role string\n    \tMember role (owner|member|agent|observer) (default \"member\")\n"
+    },
+    {
+      "name": "member add --bogus",
+      "args": [
+        "member",
+        "add",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of member add:\n  -identity string\n    \tCaller identity name (must be the room owner)\n  -kind string\n    \tMember kind (human|agent) (default \"human\")\n  -name string\n    \tMember display name\n  -pubkey string\n    \tMember public key (hex)\n  -role string\n    \tMember role (owner|member|agent|observer) (default \"member\")\n"
+    },
+    {
+      "name": "member list",
+      "args": [
+        "member",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "No members\n",
+      "stderr": ""
+    },
+    {
+      "name": "member list --help",
+      "args": [
+        "member",
+        "list",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member list:\n  -json\n    \tOutput members as JSON\n"
+    },
+    {
+      "name": "member list --bogus",
+      "args": [
+        "member",
+        "list",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of member list:\n  -json\n    \tOutput members as JSON\n"
+    },
+    {
+      "name": "member remove",
+      "args": [
+        "member",
+        "remove"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member remove [--identity \u003cname\u003e] \u003cmember_id\u003e\n"
+    },
+    {
+      "name": "member remove --help",
+      "args": [
+        "member",
+        "remove",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member remove:\n  -identity string\n    \tCaller identity name (must be the room owner)\n"
+    },
+    {
+      "name": "member remove --bogus",
+      "args": [
+        "member",
+        "remove",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of member remove:\n  -identity string\n    \tCaller identity name (must be the room owner)\n"
+    },
+    {
+      "name": "member role",
+      "args": [
+        "member",
+        "role"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member role [--identity \u003cname\u003e] \u003cmember_id\u003e \u003crole\u003e\n"
+    },
+    {
+      "name": "member role --help",
+      "args": [
+        "member",
+        "role",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member role:\n  -identity string\n    \tCaller identity name (must be the room owner)\n"
+    },
+    {
+      "name": "member role --bogus",
+      "args": [
+        "member",
+        "role",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of member role:\n  -identity string\n    \tCaller identity name (must be the room owner)\n"
+    },
+    {
+      "name": "note",
+      "args": [
+        "note"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom note \u003cmessage\u003e [--identity \u003cname\u003e] [--json]\n",
+      "stderr": ""
+    },
+    {
+      "name": "note --help",
+      "args": [
+        "note",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n"
+    },
+    {
+      "name": "note --bogus",
+      "args": [
+        "note",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n"
+    },
+    {
+      "name": "note bogus",
+      "args": [
+        "note",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n"
+    },
+    {
+      "name": "decide",
+      "args": [
+        "decide"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom decide \u003cdecision\u003e [--refs ref1,ref2] [--identity \u003cname\u003e] [--json]\n",
+      "stderr": ""
+    },
+    {
+      "name": "decide --help",
+      "args": [
+        "decide",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n"
+    },
+    {
+      "name": "decide --bogus",
+      "args": [
+        "decide",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n"
+    },
+    {
+      "name": "decide bogus",
+      "args": [
+        "decide",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n"
+    },
+    {
+      "name": "artifact",
+      "args": [
+        "artifact"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom artifact \u003clink|unlink|list\u003e [flags] [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "artifact --help",
+      "args": [
+        "artifact",
+        "--help"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown artifact action: --help\n"
+    },
+    {
+      "name": "artifact --bogus",
+      "args": [
+        "artifact",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown artifact action: --bogus\n"
+    },
+    {
+      "name": "artifact bogus",
+      "args": [
+        "artifact",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown artifact action: bogus\n"
+    },
+    {
+      "name": "artifact link",
+      "args": [
+        "artifact",
+        "link"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom artifact link \u003cpath\u003e [--title ...] [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "artifact link --help",
+      "args": [
+        "artifact",
+        "link",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of artifact link:\n  -identity string\n    \tAuthor identity name\n  -title string\n    \tArtifact title\n"
+    },
+    {
+      "name": "artifact link --bogus",
+      "args": [
+        "artifact",
+        "link",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of artifact link:\n  -identity string\n    \tAuthor identity name\n  -title string\n    \tArtifact title\n"
+    },
+    {
+      "name": "artifact list",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "artifact list --help",
+      "args": [
+        "artifact",
+        "list",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n"
+    },
+    {
+      "name": "artifact list --bogus",
+      "args": [
+        "artifact",
+        "list",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n"
+    },
+    {
+      "name": "artifact unlink",
+      "args": [
+        "artifact",
+        "unlink"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom artifact unlink \u003cartifact_id\u003e [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "artifact unlink --help",
+      "args": [
+        "artifact",
+        "unlink",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of artifact unlink:\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "artifact unlink --bogus",
+      "args": [
+        "artifact",
+        "unlink",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of artifact unlink:\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "log",
+      "args": [
+        "log"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "log --help",
+      "args": [
+        "log",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "log --bogus",
+      "args": [
+        "log",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "log bogus",
+      "args": [
+        "log",
+        "bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "verify",
+      "args": [
+        "verify"
+      ],
+      "exit_code": 0,
+      "stdout": "Journal verification PASSED: zero findings\n",
+      "stderr": ""
+    },
+    {
+      "name": "verify --help",
+      "args": [
+        "verify",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of verify:\n  -json\n    \tOutput verification findings as JSON\n"
+    },
+    {
+      "name": "verify --bogus",
+      "args": [
+        "verify",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n"
+    },
+    {
+      "name": "verify bogus",
+      "args": [
+        "verify",
+        "bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "Journal verification PASSED: zero findings\n",
+      "stderr": ""
+    },
+    {
+      "name": "index",
+      "args": [
+        "index"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr": ""
+    },
+    {
+      "name": "index --help",
+      "args": [
+        "index",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr": ""
+    },
+    {
+      "name": "index --bogus",
+      "args": [
+        "index",
+        "--bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr": ""
+    },
+    {
+      "name": "index bogus",
+      "args": [
+        "index",
+        "bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr": ""
+    },
+    {
+      "name": "run",
+      "args": [
+        "run"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom run \u003crequest|list|show|start|cancel\u003e [flags] [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "run --help",
+      "args": [
+        "run",
+        "--help"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown run action: --help\n"
+    },
+    {
+      "name": "run --bogus",
+      "args": [
+        "run",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown run action: --bogus\n"
+    },
+    {
+      "name": "run bogus",
+      "args": [
+        "run",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown run action: bogus\n"
+    },
+    {
+      "name": "run approve",
+      "args": [
+        "run",
+        "approve"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run approve \u003crun_id\u003e [--scope ...] [--ttl 30m] [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "run approve --help",
+      "args": [
+        "run",
+        "approve",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n"
+    },
+    {
+      "name": "run approve --bogus",
+      "args": [
+        "run",
+        "approve",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n"
+    },
+    {
+      "name": "run cancel",
+      "args": [
+        "run",
+        "cancel"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run cancel \u003crun_id\u003e [--reason ...] [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "run cancel --help",
+      "args": [
+        "run",
+        "cancel",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run cancel:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for cancellation\n"
+    },
+    {
+      "name": "run cancel --bogus",
+      "args": [
+        "run",
+        "cancel",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run cancel:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for cancellation\n"
+    },
+    {
+      "name": "run deny",
+      "args": [
+        "run",
+        "deny"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run deny \u003crun_id\u003e --reason ... [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "run deny --help",
+      "args": [
+        "run",
+        "deny",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run deny:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for denial\n"
+    },
+    {
+      "name": "run deny --bogus",
+      "args": [
+        "run",
+        "deny",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run deny:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for denial\n"
+    },
+    {
+      "name": "run request",
+      "args": [
+        "run",
+        "request"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --title is required\n"
+    },
+    {
+      "name": "run request --help",
+      "args": [
+        "run",
+        "request",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run request:\n  -adapter string\n    \tAdapter name\n  -identity string\n    \tAuthor identity name\n  -plan-file string\n    \tPlan file path\n  -title string\n    \tRun title\n"
+    },
+    {
+      "name": "run request --bogus",
+      "args": [
+        "run",
+        "request",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run request:\n  -adapter string\n    \tAdapter name\n  -identity string\n    \tAuthor identity name\n  -plan-file string\n    \tPlan file path\n  -title string\n    \tRun title\n"
+    },
+    {
+      "name": "run show",
+      "args": [
+        "run",
+        "show"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run show \u003crun_id\u003e [--json]\n"
+    },
+    {
+      "name": "run show --help",
+      "args": [
+        "run",
+        "show",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run show:\n  -json\n    \tOutput as JSON\n"
+    },
+    {
+      "name": "run show --bogus",
+      "args": [
+        "run",
+        "show",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run show:\n  -json\n    \tOutput as JSON\n"
+    },
+    {
+      "name": "run start",
+      "args": [
+        "run",
+        "start"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run start \u003crun_id\u003e [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "run start --help",
+      "args": [
+        "run",
+        "start",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run start:\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "run start --bogus",
+      "args": [
+        "run",
+        "start",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run start:\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "run wait",
+      "args": [
+        "run",
+        "wait"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run wait \u003crun_id\u003e [--timeout 15m] [--json]\n"
+    },
+    {
+      "name": "run wait --help",
+      "args": [
+        "run",
+        "wait",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "run wait --bogus",
+      "args": [
+        "run",
+        "wait",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "checkpoint",
+      "args": [
+        "checkpoint"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom checkpoint \u003crequest|resolve\u003e [flags] [args]\n",
+      "stderr": ""
+    },
+    {
+      "name": "checkpoint --help",
+      "args": [
+        "checkpoint",
+        "--help"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown checkpoint action: --help\n"
+    },
+    {
+      "name": "checkpoint --bogus",
+      "args": [
+        "checkpoint",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown checkpoint action: --bogus\n"
+    },
+    {
+      "name": "checkpoint bogus",
+      "args": [
+        "checkpoint",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown checkpoint action: bogus\n"
+    },
+    {
+      "name": "checkpoint request",
+      "args": [
+        "checkpoint",
+        "request"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom checkpoint request --run \u003cid\u003e --question \"...\" [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "checkpoint request --help",
+      "args": [
+        "checkpoint",
+        "request",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "checkpoint request --bogus",
+      "args": [
+        "checkpoint",
+        "request",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "checkpoint resolve",
+      "args": [
+        "checkpoint",
+        "resolve"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom checkpoint resolve \u003ccheckpoint_id\u003e --answer \"...\" [--identity \u003cname\u003e]\n"
+    },
+    {
+      "name": "checkpoint resolve --help",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of checkpoint resolve:\n  -answer string\n    \tAnswer string\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "checkpoint resolve --bogus",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of checkpoint resolve:\n  -answer string\n    \tAnswer string\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "watch",
+      "args": [
+        "watch"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom watch --desk \u003cvault\u003e [--identity \u003cname\u003e]\n",
+      "stderr": ""
+    },
+    {
+      "name": "watch --help",
+      "args": [
+        "watch",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of watch:\n  -desk string\n    \tSymdesk vault name to watch\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "watch --bogus",
+      "args": [
+        "watch",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of watch:\n  -desk string\n    \tSymdesk vault name to watch\n  -identity string\n    \tAuthor identity name\n"
+    },
+    {
+      "name": "watch bogus",
+      "args": [
+        "watch",
+        "bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom watch --desk \u003cvault\u003e [--identity \u003cname\u003e]\n",
+      "stderr": ""
+    },
+    {
+      "name": "brain-profile",
+      "args": [
+        "brain-profile"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom brain-profile --member \u003cid\u003e [--install]\n"
+    },
+    {
+      "name": "brain-profile --help",
+      "args": [
+        "brain-profile",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n"
+    },
+    {
+      "name": "brain-profile --bogus",
+      "args": [
+        "brain-profile",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n"
+    },
+    {
+      "name": "brain-profile bogus",
+      "args": [
+        "brain-profile",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom brain-profile --member \u003cid\u003e [--install]\n"
+    },
+    {
+      "name": "doctor",
+      "args": [
+        "doctor"
+      ],
+      "exit_code": 1,
+      "stdout": "[FAIL] room_manifest: room.toml is missing\n  remediation: Run `symroom init \u003cdirectory\u003e --identity \u003cname\u003e` in an empty room directory.\n[WARN] sync_folder: .symroom is missing; this may be a non-room directory\n  remediation: Run `symroom init` here, or run doctor from the room root.\n[FAIL] identity_presence: no default identity is configured\n  remediation: Set `default_identity` in symroom config or create/select an identity with `--identity \u003cname\u003e`.\n[OK] duplicate_identity: no duplicate stored member IDs detected\n  remediation: No action needed.\n[WARN] index: derived index is missing\n  remediation: Run `symroom index` to rebuild .symroom/index.sqlite.\n[OK] room_integrity: journal chains and signatures verify\n  remediation: No action needed.\n[WARN] symdesk: \n  remediation: Install symdesk and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symbrain: \n  remediation: Install symbrain and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symvault: \n  remediation: Install symvault and place it on PATH if this integration is needed; otherwise this warning is informational.\n",
+      "stderr": ""
+    },
+    {
+      "name": "doctor --help",
+      "args": [
+        "doctor",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n"
+    },
+    {
+      "name": "doctor --bogus",
+      "args": [
+        "doctor",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n"
+    },
+    {
+      "name": "doctor bogus",
+      "args": [
+        "doctor",
+        "bogus"
+      ],
+      "exit_code": 1,
+      "stdout": "[FAIL] room_manifest: room.toml is missing\n  remediation: Run `symroom init \u003cdirectory\u003e --identity \u003cname\u003e` in an empty room directory.\n[WARN] sync_folder: .symroom is missing; this may be a non-room directory\n  remediation: Run `symroom init` here, or run doctor from the room root.\n[FAIL] identity_presence: no default identity is configured\n  remediation: Set `default_identity` in symroom config or create/select an identity with `--identity \u003cname\u003e`.\n[OK] duplicate_identity: no duplicate stored member IDs detected\n  remediation: No action needed.\n[WARN] index: derived index is missing\n  remediation: Run `symroom index` to rebuild .symroom/index.sqlite.\n[OK] room_integrity: journal chains and signatures verify\n  remediation: No action needed.\n[WARN] symdesk: \n  remediation: Install symdesk and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symbrain: \n  remediation: Install symbrain and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symvault: \n  remediation: Install symvault and place it on PATH if this integration is needed; otherwise this warning is informational.\n",
+      "stderr": ""
+    },
+    {
+      "name": "version",
+      "args": [
+        "version"
+      ],
+      "exit_code": 0,
+      "stdout": "symroom dev\n",
+      "stderr": ""
+    },
+    {
+      "name": "version --help",
+      "args": [
+        "version",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of version:\n  -json\n    \tEmit version info in JSON format\n"
+    },
+    {
+      "name": "version --bogus",
+      "args": [
+        "version",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n"
+    },
+    {
+      "name": "version bogus",
+      "args": [
+        "version",
+        "bogus"
+      ],
+      "exit_code": 0,
+      "stdout": "symroom dev\n",
+      "stderr": ""
+    },
+    {
+      "name": "mcp",
+      "args": [
+        "mcp"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n"
+    },
+    {
+      "name": "mcp --help",
+      "args": [
+        "mcp",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n"
+    },
+    {
+      "name": "mcp --bogus",
+      "args": [
+        "mcp",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n"
+    },
+    {
+      "name": "mcp bogus",
+      "args": [
+        "mcp",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n"
+    }
+  ]
+}

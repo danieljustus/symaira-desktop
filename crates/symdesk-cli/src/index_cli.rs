@@ -68,6 +68,7 @@ pub fn cli() -> Command {
                         .action(clap::ArgAction::SetTrue),
                 ),
         )
+        .subcommand(Command::new("retry").about("Retry every failed document index update"))
         .subcommand(
             Command::new("maintenance")
                 .subcommand(Command::new("location"))
@@ -108,6 +109,9 @@ pub fn run(
 ) -> ExitCode {
     if let Some(("status", status)) = command.subcommand() {
         return status::run(status, vault, json_output);
+    }
+    if let Some(("retry", _)) = command.subcommand() {
+        return run_retry(vault, json_output);
     }
     let Some(("maintenance", maintenance)) = command.subcommand() else {
         return run_build(command, vault, json_output);
@@ -262,6 +266,7 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
     let mut indexed = 0usize;
     let mut skipped = 0usize;
     let mut retrieval_documents = Vec::new();
+    let mut parse_failure = None;
     for relative in discovered {
         let path = root.join(&relative);
         let key = path.to_string_lossy().into_owned();
@@ -271,7 +276,13 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         };
         let document = match symdesk_vault::parse_bytes(&key, &bytes) {
             Ok(document) => document,
-            Err(error) => return super::emit_error(error.to_string(), json_output),
+            Err(error) => {
+                // Go's walk stops at the first unparsable document after
+                // recording it as failed. refresh_index_for_cli repeats that
+                // walk, so earlier documents are committed the same way.
+                parse_failure = Some(format!("failed to parse {key}: {error}"));
+                break;
+            }
         };
         if document.derived {
             continue;
@@ -290,6 +301,9 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
     let committed = indexed_paths(&root).unwrap_or_default();
     retrieval_documents.retain(|(key, document)| committed.get(key) == Some(&document.sha256));
     index_retrieval_documents(&sidecar, retrieval_documents);
+    if let Some(message) = parse_failure {
+        return super::emit_error(message, json_output);
+    }
     if let Err(error) = refreshed {
         return super::emit_error(error.to_string(), json_output);
     }
@@ -338,6 +352,129 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
 /// Go's per-document `retrieval.IndexMarkdownWithMetadata` call in `symdesk
 /// index`: a retrieval failure marks the lifecycle row failed and warns, but
 /// the document still counts as indexed in the sidecar.
+/// Go's `symdesk index retry`: rebuilds every document whose lifecycle state
+/// is failed, in path order, reporting each outcome.
+fn run_retry(vault: Option<&str>, json_output: bool) -> ExitCode {
+    let root = match super::resolve_vault(vault) {
+        Ok(path) => path,
+        Err(error) => {
+            return super::emit_error(index_vault_error(vault, &error), json_output);
+        }
+    };
+    let mut sidecar = match symdesk_index::open_for_vault(&root) {
+        Ok(sidecar) => sidecar,
+        Err(error) => return super::emit_error(error.to_string(), json_output),
+    };
+    let failed = match sidecar.list_index_statuses() {
+        Ok(rows) => rows
+            .into_iter()
+            .filter(|row| row.state == b"failed")
+            .collect::<Vec<_>>(),
+        Err(error) => return super::emit_error(error.to_string(), json_output),
+    };
+    let attempted = failed.len();
+    let mut succeeded = 0usize;
+    let mut failures = Vec::new();
+    for row in failed {
+        let path = String::from_utf8_lossy(&row.path).into_owned();
+        if let Err(error) = fs::symlink_metadata(&path) {
+            // Go's stat wraps a missing file in the GetFileAttributesEx
+            // operation on Windows and lstat elsewhere.
+            let operation = if cfg!(windows) {
+                "GetFileAttributesEx"
+            } else {
+                "lstat"
+            };
+            let reason = format!(
+                "lstat vault file {path}: {}",
+                symdesk_vault::go_path_error(operation, Path::new(&path), &error)
+            );
+            record_index_status(&sidecar, &path, "failed", &reason);
+            failures.push((path, reason));
+            continue;
+        }
+        match index_one_file(&mut sidecar, &path) {
+            Ok(()) => succeeded += 1,
+            Err(reason) => failures.push((path, reason)),
+        }
+    }
+    if json_output {
+        let failure_items = failures
+            .iter()
+            .map(|(path, reason)| json!({"path": path, "reason": reason}))
+            .collect::<Vec<_>>();
+        let mut result = BTreeMap::from([
+            ("attempted", json!(attempted)),
+            ("failed", json!(failures.len())),
+            ("status", json!("ok")),
+            ("succeeded", json!(succeeded)),
+        ]);
+        if !failures.is_empty() {
+            result.insert("failures", json!(failure_items));
+        }
+        let mut rendered = serde_json::to_string(&result).unwrap_or_default();
+        rendered.push('\n');
+        super::write_stdout(rendered)
+    } else {
+        super::write_stdout(format!(
+            "Retried {attempted} failed document(s): {succeeded} succeeded, {} failed.\n",
+            failures.len()
+        ))
+    }
+}
+
+/// Go's `indexOneFile` with force set: parses one Markdown document, writes it
+/// to the sidecar and hybrid index, and records its lifecycle state. A hybrid
+/// index failure leaves the document failed but still counts as retried, like
+/// Go's `indexOneFile`.
+fn index_one_file(sidecar: &mut symdesk_index::Sidecar, path: &str) -> Result<(), String> {
+    record_index_status(sidecar, path, "indexing", "");
+    let document = match fs::read(path)
+        .map_err(|error| error.to_string())
+        .and_then(|bytes| {
+            symdesk_vault::parse_bytes(path, &bytes).map_err(|error| error.to_string())
+        }) {
+        Ok(document) => document,
+        Err(reason) => {
+            record_index_status(sidecar, path, "failed", &reason);
+            return Err(format!("failed to parse {path}: {reason}"));
+        }
+    };
+    let mtime_ns = fs::metadata(path)
+        .and_then(|metadata| metadata.modified())
+        .ok()
+        .and_then(|modified| modified.duration_since(std::time::UNIX_EPOCH).ok())
+        .and_then(|duration| i64::try_from(duration.as_nanos()).ok());
+    let indexed = symdesk_index::IndexedDocument::from_vault(&document, mtime_ns)
+        .map_err(|error| error.to_string())
+        .and_then(|indexed| {
+            sidecar
+                .index_document(&indexed)
+                .map_err(|error| error.to_string())
+        });
+    if let Err(reason) = indexed {
+        record_index_status(sidecar, path, "failed", &reason);
+        return Err(format!("failed to index {path}: {reason}"));
+    }
+    let retrieval = open_retrieval_context().and_then(|(config, database, runtime)| {
+        index_markdown_retrieval(&config, &database, &runtime, path, &document)
+    });
+    match retrieval {
+        Ok(()) => record_index_status(sidecar, path, "indexed", ""),
+        Err(reason) => {
+            record_index_status(sidecar, path, "failed", &reason);
+            eprintln!("Warning: failed to update hybrid index for {path}: {reason}");
+        }
+    }
+    Ok(())
+}
+
+fn record_index_status(sidecar: &symdesk_index::Sidecar, path: &str, state: &str, reason: &str) {
+    if let Err(error) = sidecar.set_index_status(path, state, reason) {
+        eprintln!("Warning: failed to record index status for {path}: {error}");
+    }
+}
+
 fn index_retrieval_documents(
     sidecar: &symdesk_index::Sidecar,
     documents: Vec<(String, symdesk_vault::Document)>,

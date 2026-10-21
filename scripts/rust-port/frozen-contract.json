@@ -49,6 +49,10 @@
       "ignored": 0,
       "passed": 2
     },
+    "cargo test -p symdesk-cli --locked --test index_retry": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-cli --locked --test mcp_ask_offline": {
       "ignored": 0,
       "passed": 6
@@ -198,10 +202,7 @@
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,
-      "live_only_tests": [
-        "test_pinned_source_hashes_match_canonical_git_blobs"
-      ],
-      "passed": 113
+      "passed": 114
     },
     "cargo test -p symdesk-vault --locked --test dataset_contracts": {
       "ignored": 0,
@@ -279,6 +280,10 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symroom-cli --locked --test grammar_process": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract": {
       "ignored": 0,
       "passed": 1
@@ -297,7 +302,7 @@
     },
     "cargo test -p symroom-cli --locked --test mcp": {
       "ignored": 0,
-      "passed": 7
+      "passed": 8
     },
     "cargo test -p symroom-cli --locked --test member_commands": {
       "ignored": 0,

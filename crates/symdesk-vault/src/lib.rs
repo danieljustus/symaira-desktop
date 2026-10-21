@@ -122,10 +122,14 @@ pub fn parse_bytes(path: &str, input: &[u8]) -> Result<Document, VaultError> {
     }
     let (frontmatter_bytes, body_bytes, frontmatter_found) = split_frontmatter(input);
     let frontmatter = if frontmatter_found && !frontmatter_bytes.is_empty() {
-        if let Some(key) = duplicate_top_level_key(&frontmatter_bytes) {
+        if let Some((key, first, second)) = duplicate_top_level_key(&frontmatter_bytes) {
+            // Go's YAML decoder reports duplicate top-level keys with its own
+            // unmarshal wording and both line numbers.
             return Err(VaultError::Frontmatter {
                 path: path.to_owned(),
-                detail: format!("mapping key {key:?} already defined"),
+                detail: format!(
+                    "yaml: unmarshal errors:\n  line {second}: mapping key {key:?} already defined at line {first}"
+                ),
             });
         }
         noyalib::from_slice::<BTreeMap<String, Value>>(&frontmatter_bytes).map_err(|error| {
@@ -294,10 +298,12 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
     result
 }
 
-fn duplicate_top_level_key(input: &[u8]) -> Option<String> {
+/// Returns the first repeated top-level key with its 1-based line numbers in
+/// the frontmatter block, first occurrence before the repeat.
+fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
     let text = String::from_utf8_lossy(input);
-    let mut seen = std::collections::BTreeSet::new();
-    for line in text.lines() {
+    let mut seen = std::collections::BTreeMap::new();
+    for (index, line) in text.lines().enumerate() {
         if line.starts_with([' ', '\t']) || line.trim_start().starts_with('#') {
             continue;
         }
@@ -305,9 +311,13 @@ fn duplicate_top_level_key(input: &[u8]) -> Option<String> {
             continue;
         };
         let key = key.trim();
-        if !key.is_empty() && !seen.insert(key.to_owned()) {
-            return Some(key.to_owned());
+        if key.is_empty() {
+            continue;
         }
+        if let Some(first) = seen.get(key) {
+            return Some((key.to_owned(), *first, index + 1));
+        }
+        seen.insert(key.to_owned(), index + 1);
     }
     None
 }

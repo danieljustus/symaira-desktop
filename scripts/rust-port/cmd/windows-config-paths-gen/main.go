@@ -29,8 +29,8 @@ type capture struct {
 func main() {
 	check := flag.String("check", "", "compare native Go cases without rewriting the recorded capture")
 	flag.Parse()
-	if flag.NArg() != 0 || runtime.GOOS != "windows" || runtime.Version() != "go1.26.9" {
-		fail("native Windows and Go 1.26.9 required")
+	if flag.NArg() != 0 || runtime.GOOS != "windows" || runtime.Version() != "go1.26.10" {
+		fail("native Windows and Go 1.26.10 required")
 	}
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -75,7 +75,7 @@ func main() {
 			fail(err.Error())
 		}
 		// Preserve the original native Go 1.26.6 capture metadata while replaying
-		// its path cases under the active Go 1.26.9 toolchain.
+		// its path cases under the active Go 1.26.10 toolchain.
 		if recorded.GoOS != observed.GoOS || recorded.GoVersion != "go1.26.6" {
 			fail("recorded capture identity is not the preserved Go 1.26.6 record")
 		}

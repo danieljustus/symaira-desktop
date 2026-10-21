@@ -46,7 +46,7 @@ fn property() -> Property {
     let property: Property =
         serde_json::from_str(PROPERTY).expect("committed property corpus must parse");
     assert_eq!(property.schema_version, 1);
-    assert_eq!(property.oracle.go_version, "go1.26.9");
+    assert_eq!(property.oracle.go_version, "go1.26.10");
     assert_eq!(
         property.oracle.corekit_module,
         "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e"

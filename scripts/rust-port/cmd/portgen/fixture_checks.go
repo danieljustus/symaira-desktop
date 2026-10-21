@@ -34,6 +34,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},
 	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json", "testdata/port/render/v2/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},
+	{"symroom grammar process CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortGrammarProcessContract$"}, []string{"testdata/port/cli/symroom-grammar-process.json"}, false},
 	{"symroom note CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortNoteCLIContract$"}, []string{"testdata/port/room/note-cli.json"}, false},
 	{"symroom identity CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortIdentityCLIContract$"}, []string{"testdata/port/room/identity-cli.json"}, false},
 	{"symroom member CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortMemberCLIContract$"}, []string{"testdata/port/room/member-cli.json"}, false},

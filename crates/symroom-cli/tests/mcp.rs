@@ -241,8 +241,24 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
     )
     .unwrap();
     let request = serde_json::to_vec(&fixture["cases"][0]["request"]).unwrap();
+    // Go `mcp` always resolves a signing identity before serving, so the
+    // subcommand needs one in a disposable data home.
+    let home = std::env::temp_dir().join(format!("symroom-mcp-serve-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&home);
+    std::fs::create_dir_all(&home).unwrap();
+    let created = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .args(["identity", "create", "owner"])
+        .env("HOME", &home)
+        .env("XDG_DATA_HOME", &home)
+        .env("XDG_CONFIG_HOME", &home)
+        .output()
+        .unwrap();
+    assert!(created.status.success(), "identity create: {created:?}");
     let mut child = Command::new(env!("CARGO_BIN_EXE_symroom"))
-        .arg("mcp")
+        .args(["mcp", "--identity", "owner"])
+        .env("HOME", &home)
+        .env("XDG_DATA_HOME", &home)
+        .env("XDG_CONFIG_HOME", &home)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -254,6 +270,7 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
         stdin.write_all(&request).unwrap();
     }
     let output = child.wait_with_output().unwrap();
+    let _ = std::fs::remove_dir_all(&home);
     assert!(output.status.success(), "stderr: {:?}", output.stderr);
     assert_eq!(
         decode_frames(&output.stdout),
@@ -389,5 +406,7 @@ fn room_status_is_not_queued_behind_four_run_waits() {
 #[test]
 fn mcp_cli_help_exits_successfully() {
     let args = [std::ffi::OsString::from("--help")];
-    let _ = mcp::run_cli(&args);
+    let _ = mcp::run_cli(&args, |_| {
+        unreachable!("help exits before identity resolution")
+    });
 }

@@ -279,6 +279,10 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symroom-cli --locked --test grammar_process": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract": {
       "ignored": 0,
       "passed": 1

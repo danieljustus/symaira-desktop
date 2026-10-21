@@ -25,6 +25,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/config-vault-selection.json",
 	"testdata/port/cli/history-tasks.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
+	"testdata/port/cli/symroom-grammar-process.json",
 	"testdata/port/core/config.json",
 	"testdata/port/core/config-precedence.json",
 	"testdata/port/config/windows-verbatim-paths.json",

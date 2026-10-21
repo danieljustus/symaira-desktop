@@ -107,7 +107,7 @@ func TestSymRoomMCPRepresentativeOracle(t *testing.T) {
 	if strings.Join(setups["fixture"].JournalLines, "\n") != strings.Join(doc.JournalLines, "\n") {
 		t.Fatal("scenario fixture setup must reproduce the representative journal bytes")
 	}
-	doc.Scenarios = runPortScenarios(t, parityScenarioSpecs(), setups)
+	doc.Scenarios = runPortScenarios(t, mcpParityFixture, parityScenarioSpecs(), setups)
 	doc.Setups = usedSetups(doc.Scenarios, setups)
 	content, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {

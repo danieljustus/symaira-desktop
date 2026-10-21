@@ -234,6 +234,72 @@ type portScenario struct {
 	SortArtifacts  bool                `json:"sort_artifact_lists"`
 	Steps          []portStep          `json:"steps"`
 	Journal        map[string][]string `json:"journal,omitempty"`
+
+	// fixtureRaw is set only for a scenario this platform cannot run (see
+	// skipFakeSymdesk): it carries the committed fixture scenario verbatim.
+	fixtureRaw json.RawMessage
+}
+
+// MarshalJSON emits a skipped scenario's committed fixture bytes unchanged
+// (MarshalIndent re-indents them identically) and any other scenario normally.
+func (s portScenario) MarshalJSON() ([]byte, error) {
+	if s.fixtureRaw != nil {
+		return s.fixtureRaw, nil
+	}
+	type plainScenario portScenario
+	return json.Marshal(plainScenario(s))
+}
+
+// skipFakeSymdesk is true where a `#!/bin/sh` fake `symdesk` cannot run: on
+// Windows exec.LookPath needs a PATHEXT extension and cannot execute a shell
+// script. Scenarios that install such a script are not executed there; check
+// mode takes them verbatim from the committed fixture (so the byte comparison
+// still covers every other scenario) and the Rust replay skips the same
+// scenarios. Scenarios without a script still run on Windows: PATH is confined
+// to an empty directory, so `symdesk` is not found and the document id is
+// empty, exactly as in the Rust replay.
+var skipFakeSymdesk = runtime.GOOS == "windows"
+
+func skipsScenario(spec scenarioSpec) bool {
+	return skipFakeSymdesk && spec.symdeskScript != ""
+}
+
+// committedScenario returns the fixture's recorded bytes for a scenario that
+// this platform skips, after checking that the recorded fake script is the one
+// the spec declares.
+func committedScenario(t *testing.T, fixturePath string, spec scenarioSpec) portScenario {
+	t.Helper()
+	if os.Getenv("PORT_GENERATE") == "1" {
+		t.Fatalf("scenario %s needs a fake symdesk script that cannot run on %s; generate fixtures on a Unix host", spec.name, runtime.GOOS)
+	}
+	content, err := os.ReadFile(fixturePath) //nolint:gosec // fixed repository fixture path
+	if err != nil {
+		t.Fatalf("read oracle fixture %s: %v", fixturePath, err)
+	}
+	var doc struct {
+		Scenarios []json.RawMessage `json:"scenarios"`
+	}
+	if err := json.Unmarshal(content, &doc); err != nil {
+		t.Fatalf("parse oracle fixture %s: %v", fixturePath, err)
+	}
+	for _, raw := range doc.Scenarios {
+		var probe struct {
+			Name          string `json:"name"`
+			SymdeskScript string `json:"symdesk_script"`
+		}
+		if err := json.Unmarshal(raw, &probe); err != nil {
+			t.Fatalf("parse scenario in %s: %v", fixturePath, err)
+		}
+		if probe.Name != spec.name {
+			continue
+		}
+		if probe.SymdeskScript != spec.symdeskScript {
+			t.Fatalf("scenario %s: fixture symdesk_script differs from the generator spec", spec.name)
+		}
+		return portScenario{Name: spec.name, Setup: spec.setup, fixtureRaw: raw}
+	}
+	t.Fatalf("scenario %s: missing from %s", spec.name, fixturePath)
+	return portScenario{}
 }
 
 // scenarioSpec is the generator-side description of a scenario.
@@ -598,10 +664,14 @@ func expandRepeat(s string) string {
 	}
 }
 
-func runPortScenarios(t *testing.T, specs []scenarioSpec, setups map[string]portSetup) []portScenario {
+func runPortScenarios(t *testing.T, fixturePath string, specs []scenarioSpec, setups map[string]portSetup) []portScenario {
 	t.Helper()
 	out := make([]portScenario, 0, len(specs))
 	for _, spec := range specs {
+		if skipsScenario(spec) {
+			out = append(out, committedScenario(t, fixturePath, spec))
+			continue
+		}
 		out = append(out, runPortScenario(t, spec, setups))
 	}
 	return out

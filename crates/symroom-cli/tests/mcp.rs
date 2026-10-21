@@ -796,9 +796,27 @@ fn identity_from_seed(seed: &[u8]) -> symroom_core::identity::Identity {
         .expect("fixed fixture identity")
 }
 
+/// A scenario that installs a fake `symdesk` is recorded from a `#!/bin/sh`
+/// script that neither Go's `exec.LookPath` nor Rust can run on Windows (a
+/// PATHEXT extension is required and there is no shell script loader), so it
+/// is replayed on Unix only. The Go oracle skips exactly the same scenarios
+/// (`skipFakeSymdesk` in internal/room/mcp/port_scenarios_test.go).
+fn needs_fake_symdesk(scenario: &Value) -> bool {
+    scenario["symdesk_script"]
+        .as_str()
+        .is_some_and(|script| !script.is_empty())
+}
+
+/// Whether this platform skips the fake-symdesk scenarios.
+fn skips_fake_symdesk() -> bool {
+    cfg!(windows)
+}
+
 /// Replays every scenario of a fixture file and returns the number of executed
-/// steps so a vacuous pass is rejected.
-fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
+/// steps so a vacuous pass is rejected. `fixture_steps` is the step count of
+/// the whole fixture on every platform; the count executed here is that total
+/// minus the fake-symdesk steps on Windows, derived from the fixture itself.
+fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
     let root = repo_root();
     let fixture: Value = serde_json::from_slice(
         &std::fs::read(root.join("testdata/port/room").join(fixture_name)).expect("fixture"),
@@ -808,9 +826,30 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
     let setups = fixture["setups"].as_object().expect("setups");
     let fixture_identity = identity_from_seed(b"symroom-mcp-fixture-signing-seed");
     let mutation_identity = identity_from_seed(b"symroom-mcp-mutation-seed");
+    let step_count = |scenario: &Value| scenario["steps"].as_array().expect("steps").len();
+    let total_steps: usize = scenarios.iter().map(step_count).sum();
+    assert_eq!(
+        total_steps, fixture_steps,
+        "{fixture_name}: fixture step count"
+    );
+    let fake_symdesk_steps: usize = scenarios
+        .iter()
+        .filter(|scenario| needs_fake_symdesk(scenario))
+        .map(step_count)
+        .sum();
+    // Independent of the skip decision below, so a skip that is wrongly
+    // active (or missing) on a platform changes `steps_run` away from this.
+    let expected_steps = if cfg!(windows) {
+        total_steps - fake_symdesk_steps
+    } else {
+        total_steps
+    };
     let mut steps_run = 0;
     for scenario in scenarios {
         let name = scenario["name"].as_str().expect("scenario name");
+        if skips_fake_symdesk() && needs_fake_symdesk(scenario) {
+            continue;
+        }
         let setup = &setups[scenario["setup"].as_str().expect("setup name")];
         let room = materialize(setup);
         // Every Go-signed setup line must verify under the Rust canonical form.
@@ -915,6 +954,10 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
         let _ = std::fs::remove_dir_all(path_dir);
     }
     assert_eq!(steps_run, expected_steps, "{fixture_name}: executed steps");
+    assert!(
+        steps_run > 0,
+        "{fixture_name}: scenario replay must not be vacuous"
+    );
     steps_run
 }
 

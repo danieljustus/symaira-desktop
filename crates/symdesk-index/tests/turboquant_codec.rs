@@ -105,7 +105,7 @@ struct ErrorCase {
 fn fixture() -> Fixture {
     let fixture: Fixture = serde_json::from_str(FIXTURE).expect("committed Go fixture must parse");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle.go_version, "go1.26.9");
+    assert_eq!(fixture.oracle.go_version, "go1.26.10");
     assert_eq!(
         fixture.oracle.corekit_module,
         "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e"

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "addb0ba615a435b89dbd690e923bf28bbafbc0e3",
+    "commit": "3845a99e1581ab03d10c2e8715200725798c45fd",
     "release": "renderer-pdf-safety-v2-local",
-    "go_version": "go1.26.9",
+    "go_version": "go1.26.10",
     "corekit_module": "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e",
     "corekit_sum": "h1:lEwB4izhkSVb8fREvaPOiXuVHx7CF6fymsYGC8O1bsc=",
     "scope": "Pinned CoreKit vectorkit/turboquant: math/rand rotation signs, Walsh-Hadamard, forward/inverse rotation, Encode/Decode/Score/ScoreCosine, 32-byte metadata, sidecar blob/JSON and error strings. Generator --check must pass on arm64 (Go fuses FMA) and amd64; encode bytes and scores are exact, decode is recorded on a scale/4096 grid because Go decode bits are architecture-dependent."

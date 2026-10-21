@@ -12,6 +12,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde::{Deserialize, Deserializer, Serialize};
 use symdesk_vault::{HistoryError, HistoryStore};
 use time::OffsetDateTime;
@@ -1059,33 +1060,80 @@ fn test_harness_mkdir_and_temp_vault_guard_collision() {
     let _ = fs::remove_dir_all(&foreign_dir);
 }
 
+/// Import the committed oracle bundle into a private object store. The store
+/// borrows this checkout's objects read-only through alternates, so only the
+/// bundle's verified source enters it. Nothing reaches the caller's refs, index
+/// or worktree, and no Go toolchain runs.
+fn import_recorded_oracle_source(root: &Path, store: &Path) -> String {
+    let provenance: serde_json::Value =
+        serde_json::from_str(include_str!("../../../testdata/port/provenance.json"))
+            .expect("canonical oracle provenance");
+    let bundle = &provenance["oracle_bundle"];
+    let raw = BASE64
+        .decode(bundle["data"].as_str().expect("recorded bundle data"))
+        .expect("decode recorded oracle bundle");
+    assert_eq!(
+        symdesk_vault::sha256_hex(&raw),
+        bundle["sha256"].as_str().expect("recorded bundle digest"),
+        "recorded oracle bundle must match its digest"
+    );
+    let bundle_path = store.with_extension("bundle");
+    fs::write(&bundle_path, &raw).expect("write recorded oracle bundle");
+    let git = |directory: &Path, args: &[&str]| {
+        let output = std::process::Command::new("git")
+            .current_dir(directory)
+            .args(args)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_OBJECT_DIRECTORY")
+            .output()
+            .expect("run git");
+        assert!(
+            output.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    };
+    fs::create_dir_all(store).expect("private oracle store");
+    git(store, &["init", "--bare", "--quiet", "."]);
+    // `--git-path` is relative to the directory git ran in, which is `root`.
+    let objects = root
+        .join(git(root, &["rev-parse", "--git-path", "objects"]))
+        .canonicalize()
+        .expect("checkout object directory");
+    fs::create_dir_all(store.join("objects/info")).expect("alternates directory");
+    fs::write(
+        store.join("objects/info/alternates"),
+        format!("{}\n", objects.display()),
+    )
+    .expect("borrow checkout objects read-only");
+    let oracle = oracle_identity::commit();
+    git(
+        store,
+        &[
+            "fetch",
+            "--quiet",
+            "--no-tags",
+            bundle_path.to_str().expect("UTF-8 bundle path"),
+            &format!("{oracle}:refs/heads/oracle"),
+        ],
+    );
+    assert_eq!(
+        git(store, &["rev-parse", "refs/heads/oracle"]),
+        oracle,
+        "imported oracle source must have the exact canonical identity"
+    );
+    oracle.to_owned()
+}
+
 #[test]
 fn test_pinned_source_hashes_match_canonical_git_blobs() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let temporary = TempVaultGuard::new("symdesk-history-source");
     let source = temporary.path.join("source");
-    // Reuse the strict source resolver: P may be bundled rather than ancestral
-    // after a squash. Import only into this disposable clone, never the caller.
-    let materialized = std::process::Command::new("go")
-        .current_dir(&root)
-        .args(["run", "./scripts/rust-port/cmd/portgen", "--oracle-commit"])
-        .arg(oracle_identity::commit())
-        .arg("--oracle-source-dir")
-        .arg(&source)
-        .output()
-        .expect("materialize verified canonical history source");
-    assert!(
-        materialized.status.success(),
-        "materialize history source: {}",
-        String::from_utf8_lossy(&materialized.stderr)
-    );
-    assert_eq!(
-        String::from_utf8_lossy(&materialized.stdout).trim(),
-        oracle_identity::commit(),
-        "materialized history source must have the exact canonical identity"
-    );
+    let oracle = import_recorded_oracle_source(&root, &source);
     for &(path, expected_hash) in PINNED_SOURCE_HASHES {
-        let object = format!("{}:{path}", oracle_identity::commit());
+        let object = format!("{oracle}:{path}");
         let output = std::process::Command::new("git")
             .current_dir(&source)
             .args(["--no-replace-objects", "--no-lazy-fetch", "show", &object])

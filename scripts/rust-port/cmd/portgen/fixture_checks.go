@@ -124,6 +124,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"render export Markdown", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportMarkdownFixture$"}, []string{"testdata/port/render/export-markdown.json"}, false},
 	{"render PDF frontmatter", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderPDFFrontmatterFixture$"}, []string{"testdata/port/render/pdf-frontmatter.json"}, false},
+	{"render archive contract", []string{"test", "-count=1", "./internal/archive", "-run", "^TestPortArchiveContractFixture$"}, []string{"testdata/port/render/archive-contract.json"}, false},
 	{"retrieval quant sidecar wire", []string{"run", "./scripts/rust-port/cmd/quant-sidecar-gen", "--check"}, []string{"testdata/port/retrieval/quant-sidecar-wire.json"}, false},
 	{"retrieval TurboQuant codec", []string{"run", "./scripts/rust-port/cmd/turboquant-gen", "--check"}, []string{"testdata/port/retrieval/turboquant-codec.json", "testdata/port/retrieval/turboquant-property.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},

@@ -608,6 +608,10 @@ jobs:
         shell: bash
         run: make render-pdf-frontmatter-differential
 
+      - name: Run native render archive contract differential
+        shell: bash
+        run: make render-archive-differential
+
       - name: Run native dataset aggregate differential
         shell: bash
         run: make dataset-aggregate-differential

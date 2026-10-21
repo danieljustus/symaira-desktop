@@ -89,7 +89,7 @@ fn main() -> ExitCode {
         return brain_profile_cli::run(&args[2..]);
     }
     if command == "mcp" {
-        return mcp::run_cli(&args[2..]);
+        return mcp::run_cli(&args[2..], member_cli::resolve_identity);
     }
     if command == "watch" {
         return watch_cli::run(&args[2..]);
@@ -118,6 +118,11 @@ fn main() -> ExitCode {
                 .to_string_lossy()
                 .trim_start_matches('-')
                 .to_owned();
+            // Go flag.ExitOnError: -h/-help prints usage to stderr and exits 0.
+            if name == "h" || name == "help" {
+                eprint!("Usage of version:\n  -json\n    \tEmit version info in JSON format\n");
+                return ExitCode::SUCCESS;
+            }
             return write_stderr(
                 &format!(
                     "flag provided but not defined: -{name}\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n"

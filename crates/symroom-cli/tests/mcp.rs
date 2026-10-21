@@ -1,5 +1,11 @@
 #[path = "../src/mcp.rs"]
 mod mcp;
+#[path = "../src/symdesk_inspect.rs"]
+#[allow(
+    dead_code,
+    reason = "shared with the binary; the test only uses the search-path variants"
+)]
+mod symdesk_inspect;
 
 use std::{
     io::{BufReader, Cursor, Write},
@@ -127,14 +133,18 @@ fn go_mcp_mutation_events_match_and_are_signed() {
         input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
         input.extend_from_slice(&body);
         let mut output = Vec::new();
-        mcp::serve_io_with_identity(
+        // No `symdesk` on PATH, so the recorded `symdesk_id` is deterministic.
+        let path_dir = temporary_room("no-symdesk-path");
+        mcp::serve_io_with_search_path(
             BufReader::new(Cursor::new(input)),
             &mut output,
             &room,
             &artifact_root,
             Some(&identity),
+            Some(path_dir.as_os_str()),
         )
         .expect("MCP serve");
+        let _ = std::fs::remove_dir_all(path_dir);
         actual.extend(decode_frames(&output));
     }
     assert_eq!(actual.len(), cases.len());
@@ -147,7 +157,13 @@ fn go_mcp_mutation_events_match_and_are_signed() {
         let raw: symroom_core::event::Event = serde_json::from_str(text).expect("typed event");
         raw.verify_signature(&identity.public_key)
             .expect("signature verifies");
-        event.as_object_mut().unwrap().remove("ts");
+        // Go stamps a wall-clock `ts` on note.posted only; the other three kinds
+        // keep Go's literal empty string, which stays in the comparison.
+        if event["kind"] == "note.posted" {
+            event.as_object_mut().unwrap().remove("ts");
+        } else {
+            assert_eq!(event["ts"], "", "{} must leave ts empty", event["kind"]);
+        }
         event.as_object_mut().unwrap().remove("sig");
         event.as_object_mut().unwrap().remove("prev");
         if event["kind"] == "note.posted" {
@@ -525,8 +541,8 @@ fn mcp_cli_help_exits_successfully() {
 // room-mcp-fixtures-generate target (internal/room/mcp/port_scenarios_test.go).
 // ---------------------------------------------------------------------------
 
-const PARITY_STEPS: usize = 178;
-const MUTATION_STEPS: usize = 92;
+const PARITY_STEPS: usize = 206;
+const MUTATION_STEPS: usize = 135;
 
 fn repo_root() -> PathBuf {
     let mut out = PathBuf::new();
@@ -613,6 +629,26 @@ fn expand_repeat(text: &str) -> String {
     out
 }
 
+// `{{hex:AABB}}` expands to raw bytes (invalid UTF-8 cannot live in a JSON
+// fixture string); everything else is copied byte for byte.
+fn expand_hex(text: &str) -> Vec<u8> {
+    let mut out = Vec::new();
+    let mut rest = text;
+    while let Some(start) = rest.find("{{hex:") {
+        out.extend_from_slice(rest[..start].as_bytes());
+        let after = &rest[start + "{{hex:".len()..];
+        let end = after.find("}}").expect("hex terminator");
+        out.extend(
+            (0..end)
+                .step_by(2)
+                .map(|index| u8::from_str_radix(&after[index..index + 2], 16).expect("hex byte")),
+        );
+        rest = &after[end + 2..];
+    }
+    out.extend_from_slice(rest.as_bytes());
+    out
+}
+
 fn mask_json_string_value(text: &str, key: &str, replacement: &str) -> String {
     let needle = format!("\"{key}\":\"");
     let mut out = String::new();
@@ -633,11 +669,38 @@ fn mask_json_string_value(text: &str, key: &str, replacement: &str) -> String {
     }
 }
 
+// Only note.posted carries a generated wall-clock `ts` in Go; run.requested,
+// checkpoint.requested and artifact.linked keep Go's literal `"ts":""`, which
+// therefore stays unmasked and is compared byte for byte.
+fn mask_generated_timestamps(text: &str) -> String {
+    let trimmed = text.trim();
+    if trimmed.starts_with('[')
+        && let Ok(items) = serde_json::from_str::<Vec<Box<serde_json::value::RawValue>>>(trimmed)
+    {
+        let masked = items
+            .iter()
+            .map(|item| mask_event_timestamp(item.get()))
+            .collect::<Vec<_>>();
+        return format!("[{}]", masked.join(","));
+    }
+    mask_event_timestamp(text)
+}
+
+fn mask_event_timestamp(text: &str) -> String {
+    let is_note =
+        serde_json::from_str::<Value>(text).is_ok_and(|event| event["kind"] == "note.posted");
+    if is_note {
+        mask_json_string_value(text, "ts", "<ts>")
+    } else {
+        text.to_owned()
+    }
+}
+
 fn normalize_event_text(text: &str) -> String {
     if !text.contains("\"kind\":\"") {
         return text.to_owned();
     }
-    let mut text = mask_json_string_value(text, "ts", "<ts>");
+    let mut text = mask_generated_timestamps(text);
     text = mask_json_string_value(&text, "sig", "<sig>");
     text = mask_json_string_value(&text, "prev", "<prev>");
     if text.contains("\"kind\":\"note.posted\"")
@@ -715,6 +778,18 @@ impl ScenarioContext<'_> {
     }
 }
 
+/// Installs the `symdesk` script the Go oracle ran as an executable in `dir`.
+fn install_fake_symdesk(dir: &Path, script: &str) {
+    let path = dir.join("symdesk");
+    std::fs::write(&path, format!("#!/bin/sh\n{script}\n")).expect("fake symdesk");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700))
+            .expect("fake symdesk mode");
+    }
+}
+
 fn identity_from_seed(seed: &[u8]) -> symroom_core::identity::Identity {
     let seed = sha2::Sha256::digest(seed);
     symroom_core::identity::identity_from_private_key("fixture", seed.as_slice())
@@ -759,6 +834,12 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
             artifact_root: artifact_root.clone(),
         };
         let identity = (scenario["identity"] == true).then_some(&mutation_identity);
+        // The scenario's own executable search path: empty, or holding exactly
+        // the fake `symdesk` script the Go oracle ran against.
+        let path_dir = temporary_room("scenario-path");
+        if let Some(script) = scenario["symdesk_script"].as_str() {
+            install_fake_symdesk(&path_dir, script);
+        }
         let replacements = [
             ("${ROOM}", room.to_string_lossy().into_owned()),
             (
@@ -778,12 +859,13 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
             if let Some(input) = step["input"].as_str() {
                 let input = substitute_text(input, &replacements);
                 let mut output = Vec::new();
-                let result = mcp::serve_io_with_identity(
-                    BufReader::new(Cursor::new(input.into_bytes())),
+                let result = mcp::serve_io_with_search_path(
+                    BufReader::new(Cursor::new(expand_hex(&input))),
                     &mut output,
                     &room,
                     &artifact_root,
                     identity,
+                    Some(path_dir.as_os_str()),
                 );
                 let error = result.err().map(|error| error.to_string());
                 assert_eq!(
@@ -804,12 +886,13 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
                 let mut input = format!("Content-Length: {}\r\n\r\n", body.len()).into_bytes();
                 input.extend_from_slice(&body);
                 let mut output = Vec::new();
-                mcp::serve_io_with_identity(
+                mcp::serve_io_with_search_path(
                     BufReader::new(Cursor::new(input)),
                     &mut output,
                     &room,
                     &artifact_root,
                     identity,
+                    Some(path_dir.as_os_str()),
                 )
                 .unwrap_or_else(|error| panic!("{label}: serve failed: {error}"));
                 let frames = decode_frames(&output);
@@ -820,8 +903,16 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
                 assert_eq!(actual, step["response"], "{label}: response");
             }
         }
-        verify_scenario_journal(name, scenario, &room, &fixture_identity, &mutation_identity);
+        verify_scenario_journal(
+            name,
+            scenario,
+            &context,
+            &room,
+            &fixture_identity,
+            &mutation_identity,
+        );
         let _ = std::fs::remove_dir_all(room);
+        let _ = std::fs::remove_dir_all(path_dir);
     }
     assert_eq!(steps_run, expected_steps, "{fixture_name}: executed steps");
     steps_run
@@ -830,6 +921,7 @@ fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
 fn verify_scenario_journal(
     name: &str,
     scenario: &Value,
+    context: &ScenarioContext<'_>,
     room: &Path,
     fixture_identity: &symroom_core::identity::Identity,
     mutation_identity: &symroom_core::identity::Identity,
@@ -876,7 +968,7 @@ fn verify_scenario_journal(
                 Value::Array(
                     lines
                         .iter()
-                        .map(|line| Value::String(normalize_event_text(line)))
+                        .map(|line| Value::String(context.normalize_output(line)))
                         .collect(),
                 ),
             );
@@ -938,4 +1030,71 @@ fn go_mcp_catalog_has_the_eight_room_tools_in_order_and_no_approval_tool() {
             .iter()
             .any(|word| name.contains(word))
     }));
+}
+
+// Go starts a goroutine per `tools/call`; the Rust server bounds the number of
+// calls executing at once (`MAX_IN_FLIGHT_CALLS`, small in the test build) and
+// stops reading while it is full, so a flood of long-running waits can never
+// exhaust the OS thread limit (a panic-abort in release builds). Every call is
+// still answered, in batches, and a later cheap request is not lost.
+#[test]
+fn tool_calls_in_flight_are_bounded_and_every_call_is_answered() {
+    let room = fixture_room("in-flight-cap", &[]);
+    let wait_seconds = 0.25;
+    let calls = mcp::MAX_IN_FLIGHT_CALLS * 4;
+    let mut input = Vec::new();
+    for id in 1..=calls {
+        let request = json!({
+            "jsonrpc":"2.0",
+            "id":id,
+            "method":"tools/call",
+            "params":{"name":"room_run_wait","arguments":{"run_id":"run_missing","timeout_seconds":wait_seconds}}
+        });
+        let body = serde_json::to_vec(&request).expect("wait request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+    let ping = serde_json::to_vec(&json!({"jsonrpc":"2.0","id":calls + 1,"method":"ping"}))
+        .expect("ping JSON");
+    input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", ping.len()).as_bytes());
+    input.extend_from_slice(&ping);
+
+    let started = std::time::Instant::now();
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("MCP serve");
+    let elapsed = started.elapsed();
+
+    let frames = decode_frames(&output);
+    assert_eq!(frames.len(), calls + 1, "every request is answered");
+    let ids = frames
+        .iter()
+        .map(|frame| frame["id"].as_u64().expect("numeric id"))
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(ids, (1..=calls as u64 + 1).collect());
+    for frame in &frames {
+        if frame["id"].as_u64() == Some(calls as u64 + 1) {
+            assert_eq!(frame["result"], json!({}));
+        } else {
+            assert_eq!(frame["result"]["isError"], true);
+            assert_eq!(
+                frame["result"]["content"][0]["text"],
+                "wait timed out before approval decision"
+            );
+        }
+    }
+    // With the cap each full batch takes a whole wait: four batches of eight.
+    // Unbounded, all calls would overlap and finish in about one wait.
+    let minimum = std::time::Duration::from_secs_f64(wait_seconds * 3.0);
+    assert!(
+        elapsed >= minimum,
+        "in-flight calls were not bounded: {calls} waits of {wait_seconds}s finished in {elapsed:?}"
+    );
+    let _ = std::fs::remove_dir_all(room);
 }

@@ -3912,6 +3912,212 @@
           }
         }
       ]
+    },
+    {
+      "name": "json_layer_streams",
+      "setup": "fixture",
+      "identity": false,
+      "artifact_root": "room",
+      "normalize_events": false,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "invalid_utf8_method_framed",
+          "response": null,
+          "input": "Content-Length: 39\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"x{{hex:ff}}y\"}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 84\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: x�y\"}}Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_truncated_sequence_method",
+          "response": null,
+          "input": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"x{{hex:e282}}y\"}",
+          "output": "Content-Length: 87\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: x��y\"}}",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_id_string",
+          "response": null,
+          "input": "Content-Length: 44\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"a{{hex:80}}b\",\"method\":\"ping\"}",
+          "output": "Content-Length: 42\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"a�b\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_method_line_mode",
+          "response": null,
+          "input": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"m{{hex:ff}}\"}\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}\n",
+          "output": "{\"jsonrpc\":\"2.0\",\"id\":2,\"error\":{\"code\":-32601,\"message\":\"Method not found: m�\"}}\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}\n",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_tool_name",
+          "response": null,
+          "input": "Content-Length: 89\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"room_{{hex:c0}}x\",\"arguments\":{}}}",
+          "output": "Content-Length: 84\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":3,\"error\":{\"code\":-32601,\"message\":\"Unknown tool: room_�x\"}}",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_tool_argument_ignored",
+          "response": null,
+          "input": "Content-Length: 122\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"room_journal_tail\",\"arguments\":{\"limit\":1,\"extra\":\"a{{hex:ff}}b\"}}}",
+          "output": "Content-Length: 531\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":{\"content\":[{\"text\":\"[{\\\"v\\\":1,\\\"id\\\":\\\"ev_run_denied\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":3,\\\"prev\\\":\\\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\\\",\\\"lamport\\\":3,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"run.denied\\\",\\\"body\\\":{\\\"run_id\\\":\\\"run_fixture\\\",\\\"reason\\\":\\\"outside policy\\\"},\\\"sig\\\":\\\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\\\"}]\",\"type\":\"text\"}],\"isError\":false}}",
+          "error": ""
+        },
+        {
+          "name": "invalid_utf8_outside_string",
+          "response": null,
+          "input": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}{{hex:ff}}",
+          "output": "Content-Length: 121\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character 'ÿ' after top-level value\"}}",
+          "error": ""
+        },
+        {
+          "name": "lone_high_surrogate_id",
+          "response": null,
+          "input": "Content-Length: 47\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"\\ud800\",\"method\":\"ping\"}",
+          "output": "Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"�\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "lone_low_surrogate_id",
+          "response": null,
+          "input": "Content-Length: 48\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"\\udc00x\",\"method\":\"ping\"}",
+          "output": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"�x\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "high_surrogate_then_non_low",
+          "response": null,
+          "input": "Content-Length: 53\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"\\ud800\\u0041\",\"method\":\"ping\"}",
+          "output": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"�A\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "high_surrogate_then_high_surrogate",
+          "response": null,
+          "input": "Content-Length: 59\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"\\ud800\\ud800\\ude00\",\"method\":\"ping\"}",
+          "output": "Content-Length: 44\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"�𐈀\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "valid_surrogate_pair_id",
+          "response": null,
+          "input": "Content-Length: 53\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"\\ud83d\\ude00\",\"method\":\"ping\"}",
+          "output": "Content-Length: 41\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"😀\",\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "lone_surrogate_method",
+          "response": null,
+          "input": "Content-Length: 43\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"m\\ud800\"}",
+          "output": "Content-Length: 83\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: m�\"}}",
+          "error": ""
+        },
+        {
+          "name": "lone_surrogate_tool_name",
+          "response": null,
+          "input": "Content-Length: 93\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"room_\\udfff\",\"arguments\":{}}}",
+          "output": "Content-Length: 83\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":5,\"error\":{\"code\":-32601,\"message\":\"Unknown tool: room_�\"}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_exactly_at_limit_10000",
+          "response": null,
+          "input": "Content-Length: 20048\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"params\":{{repeat:[:9999}}{{repeat:]:9999}}}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_over_limit_10001",
+          "response": null,
+          "input": "Content-Length: 20050\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"params\":{{repeat:[:10000}}{{repeat:]:10000}}}",
+          "output": "Content-Length: 117\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '[' exceeded max depth\"}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_over_limit_line_mode",
+          "response": null,
+          "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"params\":{{repeat:[:10000}}{{repeat:]:10000}}}\n",
+          "output": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error: invalid character '[' exceeded max depth\"}}\n",
+          "error": ""
+        },
+        {
+          "name": "nesting_200_in_tool_arguments",
+          "response": null,
+          "input": "Content-Length: 501\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"room_status\",\"arguments\":{\"extra\":{{repeat:[:200}}{{repeat:]:200}}}}}",
+          "output": "Content-Length: 265\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":6,\"result\":{\"content\":[{\"text\":\"{\\\"max_lamport\\\":3,\\\"room\\\":{\\\"schema_version\\\":0,\\\"id\\\":\\\"rm_fixture\\\",\\\"created\\\":\\\"2026-09-01T00:00:00Z\\\",\\\"root_pubkey\\\":\\\"ed25519:fixture\\\",\\\"root_event\\\":\\\"ev_fixture\\\"}}\",\"type\":\"text\"}],\"isError\":false}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_200_in_unused_member",
+          "response": null,
+          "input": "Content-Length: 449\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"extra\":{{repeat:[:200}}{{repeat:]:200}}}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_200_in_meta",
+          "response": null,
+          "input": "Content-Length: 493\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"room_status\",\"_meta\":{\"a\":{{repeat:[:200}}{{repeat:]:200}}}}}",
+          "output": "Content-Length: 265\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":7,\"result\":{\"content\":[{\"text\":\"{\\\"max_lamport\\\":3,\\\"room\\\":{\\\"schema_version\\\":0,\\\"id\\\":\\\"rm_fixture\\\",\\\"created\\\":\\\"2026-09-01T00:00:00Z\\\",\\\"root_pubkey\\\":\\\"ed25519:fixture\\\",\\\"root_event\\\":\\\"ev_fixture\\\"}}\",\"type\":\"text\"}],\"isError\":false}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_200_in_typed_argument",
+          "response": null,
+          "input": "Content-Length: 507\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":\"tools/call\",\"params\":{\"name\":\"room_journal_tail\",\"arguments\":{\"limit\":{{repeat:[:200}}{{repeat:]:200}}}}}",
+          "output": "Content-Length: 1509\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":8,\"result\":{\"content\":[{\"text\":\"[{\\\"v\\\":1,\\\"id\\\":\\\"ev_fixture\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":1,\\\"prev\\\":\\\"sha256:0000000000000000000000000000000000000000000000000000000000000000\\\",\\\"lamport\\\":1,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"artifact.linked\\\",\\\"body\\\":{\\\"artifact_id\\\":\\\"art_fixture\\\",\\\"path\\\":\\\"known.txt\\\",\\\"sha256\\\":\\\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\\\",\\\"title\\\":\\\"Known\\\"},\\\"sig\\\":\\\"ed25519:4POGOLP1hfJy/puzCkVyholOoW/x6tXy8XX91Ut3wj4MLoLffvYln/HBEo/wKxemVt88dktJc4qXTF4tGZURCg==\\\"},{\\\"v\\\":1,\\\"id\\\":\\\"ev_run_request\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":2,\\\"prev\\\":\\\"sha256:3eca991b8a0f82ab19bd1bd2881aa028d204a2ae2df8596bc4b5dbb3d3998ee9\\\",\\\"lamport\\\":2,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"run.requested\\\",\\\"body\\\":{\\\"run_id\\\":\\\"run_fixture\\\",\\\"title\\\":\\\"Fixture\\\"},\\\"sig\\\":\\\"ed25519:izXYxV3m8UTfdt5Obd7KsKGtcilN8QLrOsTbdhgRk2oFrVy1pjg1yYn8JEiRyOjSAdvhk/N6uM35NjaP/cN8DA==\\\"},{\\\"v\\\":1,\\\"id\\\":\\\"ev_run_denied\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":3,\\\"prev\\\":\\\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\\\",\\\"lamport\\\":3,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"run.denied\\\",\\\"body\\\":{\\\"run_id\\\":\\\"run_fixture\\\",\\\"reason\\\":\\\"outside policy\\\"},\\\"sig\\\":\\\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\\\"}]\",\"type\":\"text\"}],\"isError\":false}}",
+          "error": ""
+        },
+        {
+          "name": "nesting_200_in_id",
+          "response": null,
+          "input": "Content-Length: 439\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":{{repeat:[:200}}{{repeat:]:200}},\"method\":\"ping\"}",
+          "output": "Content-Length: 79\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}",
+          "error": ""
+        },
+        {
+          "name": "timeout_seconds_overflowing_float",
+          "response": null,
+          "input": "Content-Length: 142\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"tools/call\",\"params\":{\"name\":\"room_run_wait\",\"arguments\":{\"run_id\":\"run_missing\",\"timeout_seconds\":1e400}}}",
+          "output": "Content-Length: 107\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":10,\"result\":{\"content\":[{\"text\":\"run_id is required\",\"type\":\"text\"}],\"isError\":true}}",
+          "error": ""
+        },
+        {
+          "name": "limit_overflowing_float",
+          "response": null,
+          "input": "Content-Length: 113\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":11,\"method\":\"tools/call\",\"params\":{\"name\":\"room_journal_tail\",\"arguments\":{\"limit\":1e400}}}",
+          "output": "Content-Length: 1510\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":11,\"result\":{\"content\":[{\"text\":\"[{\\\"v\\\":1,\\\"id\\\":\\\"ev_fixture\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":1,\\\"prev\\\":\\\"sha256:0000000000000000000000000000000000000000000000000000000000000000\\\",\\\"lamport\\\":1,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"artifact.linked\\\",\\\"body\\\":{\\\"artifact_id\\\":\\\"art_fixture\\\",\\\"path\\\":\\\"known.txt\\\",\\\"sha256\\\":\\\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\\\",\\\"title\\\":\\\"Known\\\"},\\\"sig\\\":\\\"ed25519:4POGOLP1hfJy/puzCkVyholOoW/x6tXy8XX91Ut3wj4MLoLffvYln/HBEo/wKxemVt88dktJc4qXTF4tGZURCg==\\\"},{\\\"v\\\":1,\\\"id\\\":\\\"ev_run_request\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":2,\\\"prev\\\":\\\"sha256:3eca991b8a0f82ab19bd1bd2881aa028d204a2ae2df8596bc4b5dbb3d3998ee9\\\",\\\"lamport\\\":2,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"run.requested\\\",\\\"body\\\":{\\\"run_id\\\":\\\"run_fixture\\\",\\\"title\\\":\\\"Fixture\\\"},\\\"sig\\\":\\\"ed25519:izXYxV3m8UTfdt5Obd7KsKGtcilN8QLrOsTbdhgRk2oFrVy1pjg1yYn8JEiRyOjSAdvhk/N6uM35NjaP/cN8DA==\\\"},{\\\"v\\\":1,\\\"id\\\":\\\"ev_run_denied\\\",\\\"room\\\":\\\"rm_fixture\\\",\\\"author\\\":\\\"mem_2b5731693654b5d3\\\",\\\"seq\\\":3,\\\"prev\\\":\\\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\\\",\\\"lamport\\\":3,\\\"ts\\\":\\\"2026-09-01T00:00:00.000Z\\\",\\\"kind\\\":\\\"run.denied\\\",\\\"body\\\":{\\\"run_id\\\":\\\"run_fixture\\\",\\\"reason\\\":\\\"outside policy\\\"},\\\"sig\\\":\\\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\\\"}]\",\"type\":\"text\"}],\"isError\":false}}",
+          "error": ""
+        },
+        {
+          "name": "frame_exactly_1mib",
+          "response": null,
+          "input": "Content-Length: 1048576\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"pad\":\"{{repeat:a:1048527}}\"}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "line_exactly_1mib",
+          "response": null,
+          "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"pad\":\"{{repeat:a:1048526}}\"}\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}\n",
+          "output": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}\n",
+          "error": ""
+        },
+        {
+          "name": "line_one_byte_over_1mib",
+          "response": null,
+          "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"pad\":\"{{repeat:a:1048527}}\"}\n",
+          "output": "",
+          "error": "mcpserver: read error: line exceeds 1048576 bytes"
+        },
+        {
+          "name": "line_exactly_1mib_at_eof_without_newline",
+          "response": null,
+          "input": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"pad\":\"{{repeat:a:1048527}}\"}",
+          "output": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
+          "error": ""
+        }
+      ]
     }
   ]
 }

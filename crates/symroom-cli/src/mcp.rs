@@ -1,15 +1,16 @@
 #![deny(unsafe_code)]
 
 use std::{
+    borrow::Cow,
     collections::BTreeMap,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs,
     io::{self, BufRead, Write},
     panic::{self, AssertUnwindSafe},
     path::{Path, PathBuf},
     process::ExitCode,
     sync::{
-        Arc, Mutex,
+        Arc, Condvar, Mutex, PoisonError,
         atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc,
     },
@@ -17,10 +18,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use serde::{
-    Deserialize, Serialize,
-    de::{Deserializer, MapAccess, Visitor},
-};
+use serde::Serialize;
 use serde_json::{Value, json, value::RawValue};
 use sha2::{Digest, Sha256};
 
@@ -29,6 +27,18 @@ const MCP_USAGE: &str = "Usage of mcp:\n  -artifact-root string\n    \tArtifact 
 const MAX_FRAME_BYTES: usize = 1 << 20;
 const MAX_HEADER_BYTES: usize = 64 << 10;
 const MAX_HEADER_LINES: usize = 100;
+/// Go `encoding/json` `maxNestingDepth`: a scanner error past this many open
+/// containers.
+const MAX_NESTING_DEPTH: usize = 10_000;
+/// Upper bound on `tools/call` requests executing at once. Go starts one
+/// goroutine per call; an OS thread per call would exhaust the thread limit
+/// (a panic-abort in release builds) under a flood of long-running
+/// `room_run_wait` calls, so the reader blocks instead once this many are in
+/// flight. The test build uses a small cap to keep the regression test fast.
+#[cfg(not(test))]
+pub const MAX_IN_FLIGHT_CALLS: usize = 512;
+#[cfg(test)]
+pub const MAX_IN_FLIGHT_CALLS: usize = 8;
 /// Go's `json.Unmarshal` error for a `tools/call` params object that is not an
 /// object, with the anonymous struct type spelled exactly as `reflect` prints it.
 const GO_CALL_PARAMS_TYPE: &str = "struct { Name string \"json:\\\"name\\\"\"; Arguments json.RawMessage \"json:\\\"arguments\\\"\"; Meta map[string]interface {} \"json:\\\"_meta,omitempty\\\"\" }";
@@ -212,6 +222,16 @@ impl GoScanner {
         true
     }
 
+    /// Go `pushParseState`: more than `maxNestingDepth` open containers is a
+    /// syntax error at the opening byte.
+    fn check_depth(&mut self, c: u8) -> bool {
+        if self.stack.len() > MAX_NESTING_DEPTH {
+            self.fail(c, "exceeded max depth")
+        } else {
+            false
+        }
+    }
+
     fn pop(&mut self) {
         self.stack.pop();
         if self.stack.is_empty() {
@@ -265,12 +285,12 @@ impl GoScanner {
                     b'{' => {
                         self.step = BeginStringOrEmpty;
                         self.stack.push(ParseState::ObjectKey);
-                        false
+                        self.check_depth(c)
                     }
                     b'[' => {
                         self.step = BeginValueOrEmpty;
                         self.stack.push(ParseState::ArrayValue);
-                        false
+                        self.check_depth(c)
                     }
                     b'"' => {
                         self.step = InString;
@@ -525,25 +545,47 @@ fn go_check_valid(data: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-/// Go `strconv.Quote` for the `%q` verb in `invalid Content-Length: %q`.
-fn go_quote(text: &str) -> String {
+/// Go `strconv.Quote` for the `%q` verb in `invalid Content-Length: %q`; a
+/// byte that is not valid UTF-8 prints as `\xNN`.
+fn go_quote(bytes: &[u8]) -> String {
     let mut out = String::from("\"");
-    for ch in text.chars() {
-        match ch {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            '\u{7}' => out.push_str("\\a"),
-            '\u{8}' => out.push_str("\\b"),
-            '\u{b}' => out.push_str("\\v"),
-            '\u{c}' => out.push_str("\\f"),
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
-                out.push_str(&format!("\\x{:02x}", c as u32));
+    let mut rest = bytes;
+    loop {
+        let (text, invalid) = match std::str::from_utf8(rest) {
+            Ok(text) => (text, None),
+            Err(error) => {
+                let (valid, after) = rest.split_at(error.valid_up_to());
+                let width = error.error_len().unwrap_or(after.len());
+                (
+                    std::str::from_utf8(valid).unwrap_or_default(),
+                    Some((width, after)),
+                )
             }
-            c => out.push(c),
+        };
+        for ch in text.chars() {
+            match ch {
+                '"' => out.push_str("\\\""),
+                '\\' => out.push_str("\\\\"),
+                '\n' => out.push_str("\\n"),
+                '\r' => out.push_str("\\r"),
+                '\t' => out.push_str("\\t"),
+                '\u{7}' => out.push_str("\\a"),
+                '\u{8}' => out.push_str("\\b"),
+                '\u{b}' => out.push_str("\\v"),
+                '\u{c}' => out.push_str("\\f"),
+                c if (c as u32) < 0x20 || c as u32 == 0x7f => {
+                    out.push_str(&format!("\\x{:02x}", c as u32));
+                }
+                c => out.push(c),
+            }
         }
+        let Some((width, after)) = invalid else {
+            break;
+        };
+        for byte in &after[..width] {
+            out.push_str(&format!("\\x{byte:02x}"));
+        }
+        rest = &after[width..];
     }
     out.push('"');
     out
@@ -620,38 +662,198 @@ fn go_html_escape(rendered: &str) -> String {
         .replace('\u{2029}', "\\u2029")
 }
 
-fn json_kind(value: &Value) -> &'static str {
-    match value {
-        Value::Null => "null",
-        Value::Bool(_) => "bool",
-        Value::Number(_) => "number",
-        Value::String(_) => "string",
-        Value::Array(_) => "array",
-        Value::Object(_) => "object",
+/// Go's decoder turns every invalid UTF-8 byte inside a JSON string into one
+/// U+FFFD (it decodes rune by rune), unlike `String::from_utf8_lossy`, which
+/// collapses a truncated sequence into a single replacement character.
+fn go_lossy_utf8(bytes: &[u8]) -> Cow<'_, str> {
+    if let Ok(text) = std::str::from_utf8(bytes) {
+        return Cow::Borrowed(text);
+    }
+    let mut out = String::with_capacity(bytes.len() + 8);
+    let mut rest = bytes;
+    loop {
+        match std::str::from_utf8(rest) {
+            Ok(text) => {
+                out.push_str(text);
+                return Cow::Owned(out);
+            }
+            Err(error) => {
+                let (valid, after) = rest.split_at(error.valid_up_to());
+                out.push_str(std::str::from_utf8(valid).unwrap_or_default());
+                let invalid = error.error_len().unwrap_or(after.len());
+                for _ in 0..invalid {
+                    out.push('\u{fffd}');
+                }
+                rest = &after[invalid..];
+            }
+        }
     }
 }
 
-/// Ordered object members (duplicates kept) as raw JSON, so Go's
-/// case-insensitive "last match wins" field decoding can be replayed.
-struct Members(Vec<(String, Box<RawValue>)>);
+fn hex4(bytes: &[u8]) -> Option<u16> {
+    u16::from_str_radix(std::str::from_utf8(bytes.get(..4)?).ok()?, 16).ok()
+}
 
-impl<'de> Deserialize<'de> for Members {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct MembersVisitor;
-        impl<'de> Visitor<'de> for MembersVisitor {
-            type Value = Members;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("a JSON object")
-            }
-            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Members, A::Error> {
-                let mut members = Vec::new();
-                while let Some(entry) = map.next_entry::<String, Box<RawValue>>()? {
-                    members.push(entry);
-                }
-                Ok(Members(members))
-            }
+/// Go `unquote` replaces an unpaired `\uD800`-`\uDFFF` escape with U+FFFD and
+/// consumes only that escape; serde_json rejects the same input. Rewrite such
+/// escapes to `\uFFFD` in already-validated JSON text before handing it to
+/// serde_json.
+fn go_sanitize_surrogates(text: &str) -> Cow<'_, str> {
+    let bytes = text.as_bytes();
+    let mut out: Option<String> = None;
+    let mut copied = 0;
+    let mut index = 0;
+    let mut in_string = false;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        if !in_string {
+            in_string = byte == b'"';
+            index += 1;
+            continue;
         }
-        deserializer.deserialize_map(MembersVisitor)
+        match byte {
+            b'"' => {
+                in_string = false;
+                index += 1;
+            }
+            b'\\' if bytes.get(index + 1) == Some(&b'u') => {
+                let code = hex4(&bytes[index + 2..]);
+                let paired = matches!(code, Some(0xd800..=0xdbff))
+                    && bytes.get(index + 6) == Some(&b'\\')
+                    && bytes.get(index + 7) == Some(&b'u')
+                    && matches!(hex4(&bytes[index + 8..]), Some(0xdc00..=0xdfff));
+                if paired {
+                    index += 12;
+                } else {
+                    if matches!(code, Some(0xd800..=0xdfff)) {
+                        let buffer = out.get_or_insert_with(String::new);
+                        buffer.push_str(&text[copied..index]);
+                        buffer.push_str("\\ufffd");
+                        copied = index + 6;
+                    }
+                    index += 6;
+                }
+            }
+            b'\\' => index += 2,
+            _ => index += 1,
+        }
+    }
+    match out {
+        Some(mut buffer) => {
+            buffer.push_str(&text[copied..]);
+            Cow::Owned(buffer)
+        }
+        None => Cow::Borrowed(text),
+    }
+}
+
+/// The JSON kind of a raw, already validated value, named as Go's
+/// `UnmarshalTypeError` names it. Looks only at the first byte, so nesting
+/// depth never matters.
+fn raw_kind(raw: &str) -> &'static str {
+    match raw.trim_start().as_bytes().first() {
+        Some(b'{') => "object",
+        Some(b'[') => "array",
+        Some(b'"') => "string",
+        Some(b't' | b'f') => "bool",
+        Some(b'n') => "null",
+        _ => "number",
+    }
+}
+
+fn skip_space(bytes: &[u8], mut index: usize) -> usize {
+    while bytes.get(index).is_some_and(|byte| is_space(*byte)) {
+        index += 1;
+    }
+    index
+}
+
+/// Index just past the string literal that starts at `start`.
+fn string_end(bytes: &[u8], start: usize) -> Option<usize> {
+    let mut index = start + 1;
+    while let Some(byte) = bytes.get(index) {
+        match byte {
+            b'"' => return Some(index + 1),
+            b'\\' => index += 2,
+            _ => index += 1,
+        }
+    }
+    None
+}
+
+/// Index just past the JSON value that starts at `start`.
+fn value_end(bytes: &[u8], start: usize) -> Option<usize> {
+    match bytes.get(start)? {
+        b'"' => string_end(bytes, start),
+        b'{' | b'[' => {
+            let mut depth = 0_usize;
+            let mut index = start;
+            while let Some(byte) = bytes.get(index) {
+                match byte {
+                    b'"' => index = string_end(bytes, index)?,
+                    b'{' | b'[' => {
+                        depth += 1;
+                        index += 1;
+                    }
+                    b'}' | b']' => {
+                        depth -= 1;
+                        index += 1;
+                        if depth == 0 {
+                            return Some(index);
+                        }
+                    }
+                    _ => index += 1,
+                }
+            }
+            None
+        }
+        _ => {
+            let mut index = start;
+            while bytes
+                .get(index)
+                .is_some_and(|byte| !is_space(*byte) && !matches!(byte, b',' | b'}' | b']'))
+            {
+                index += 1;
+            }
+            Some(index)
+        }
+    }
+}
+
+/// Ordered members of a JSON object (duplicates kept) with each value as raw
+/// text, so Go's case-insensitive "last match wins" decoding can be replayed.
+/// It is a byte scanner over text that already passed `go_check_valid`, so
+/// unlike serde_json it has no recursion limit: Go accepts nesting up to
+/// `MAX_NESTING_DEPTH`.
+fn split_members(text: &str) -> Option<Vec<(String, &str)>> {
+    let bytes = text.as_bytes();
+    let mut index = skip_space(bytes, 0);
+    if bytes.get(index) != Some(&b'{') {
+        return None;
+    }
+    index += 1;
+    let mut members = Vec::new();
+    loop {
+        index = skip_space(bytes, index);
+        match bytes.get(index)? {
+            b'}' => return Some(members),
+            b',' => {
+                index += 1;
+                continue;
+            }
+            b'"' => {}
+            _ => return None,
+        }
+        let key_end = string_end(bytes, index)?;
+        let key: String = serde_json::from_str(&text[index..key_end]).ok()?;
+        index = skip_space(bytes, key_end);
+        if bytes.get(index) != Some(&b':') {
+            return None;
+        }
+        index = skip_space(bytes, index + 1);
+        let end = value_end(bytes, index)?;
+        members.push((key, &text[index..end]));
+        index = end;
     }
 }
 
@@ -675,23 +877,23 @@ impl GoObject {
             object.failed = true;
             return object;
         };
-        match serde_json::from_str::<Value>(raw) {
-            Ok(Value::Null) => {}
-            Ok(Value::Object(_)) => match serde_json::from_str::<Members>(raw) {
-                Ok(Members(members)) => {
+        match raw_kind(raw) {
+            "null" => {}
+            "object" => match split_members(raw) {
+                Some(members) => {
                     object.members = members
                         .into_iter()
                         .map(|(key, raw)| {
-                            // A literal serde cannot represent (for example an
-                            // overflowing exponent) is a Go decode error for
-                            // any typed field; a non-string sentinel models it.
-                            let value =
-                                serde_json::from_str(raw.get()).unwrap_or(Value::Bool(false));
+                            // A literal serde cannot represent (an overflowing
+                            // exponent, or nesting beyond serde's recursion
+                            // limit) is a Go decode error for any typed field;
+                            // a non-string sentinel models it.
+                            let value = serde_json::from_str(raw).unwrap_or(Value::Bool(false));
                             (key, value)
                         })
                         .collect();
                 }
-                Err(_) => object.failed = true,
+                None => object.failed = true,
             },
             _ => object.failed = true,
         }
@@ -737,7 +939,12 @@ impl GoObject {
         for (key, value) in &self.members {
             if key.eq_ignore_ascii_case(name) {
                 match value {
-                    Value::Number(number) => out = number.as_f64().unwrap_or(0.0),
+                    // Go reports a literal beyond float64's range (for example
+                    // `1e400`) as a decode error instead of storing infinity.
+                    Value::Number(number) => match number.as_f64() {
+                        Some(value) => out = value,
+                        None => self.failed = true,
+                    },
                     Value::Null => {}
                     _ => self.failed = true,
                 }
@@ -806,25 +1013,67 @@ fn go_trim_space(text: &str) -> &str {
     text.trim_matches(|c: char| c.is_whitespace())
 }
 
-fn looks_like_json_line(line: &str) -> bool {
-    if serde_json::from_str::<Value>(line).is_ok() && go_check_valid(line.as_bytes()).is_ok() {
-        return true;
+/// The first character of `bytes` when it starts with a complete, valid UTF-8
+/// sequence (Go's `utf8.DecodeRune` reports an invalid byte as RuneError,
+/// which is not a space).
+fn first_char(bytes: &[u8]) -> Option<(char, usize)> {
+    (1..=bytes.len().min(4)).find_map(|width| {
+        std::str::from_utf8(&bytes[..width])
+            .ok()
+            .and_then(|text| text.chars().next())
+            .map(|ch| (ch, width))
+    })
+}
+
+fn last_char(bytes: &[u8]) -> Option<(char, usize)> {
+    (1..=bytes.len().min(4)).find_map(|width| {
+        std::str::from_utf8(&bytes[bytes.len() - width..])
+            .ok()
+            .and_then(|text| text.chars().next_back())
+            .filter(|ch| ch.len_utf8() == width)
+            .map(|ch| (ch, width))
+    })
+}
+
+/// Go `strings.TrimSpace` over bytes that may not be valid UTF-8, so a line is
+/// trimmed without first replacing its invalid bytes.
+fn go_trim_space_bytes(mut bytes: &[u8]) -> &[u8] {
+    while let Some((ch, width)) = first_char(bytes) {
+        if !ch.is_whitespace() {
+            break;
+        }
+        bytes = &bytes[width..];
     }
-    match line.as_bytes().first() {
+    while let Some((ch, width)) = last_char(bytes) {
+        if !ch.is_whitespace() {
+            break;
+        }
+        bytes = &bytes[..bytes.len() - width];
+    }
+    bytes
+}
+
+/// Go `looksLikeJSONLine`. `json.Valid` implies the first-byte test below, so
+/// the first byte alone decides.
+fn looks_like_json_line(line: &[u8]) -> bool {
+    match line.first() {
         None => false,
         Some(b'{' | b'[' | b'"' | b'-' | b't' | b'f' | b'n') => true,
         Some(byte) => byte.is_ascii_digit(),
     }
 }
 
-fn content_length_value(rest: &str) -> Result<i64, ReadError> {
-    let value = go_trim_space(rest);
-    value.parse::<i64>().map_err(|_| {
-        fatal(
-            io::ErrorKind::InvalidData,
-            format!("invalid Content-Length: {}", go_quote(value)),
-        )
-    })
+fn content_length_value(rest: &[u8]) -> Result<i64, ReadError> {
+    let value = go_trim_space_bytes(rest);
+    std::str::from_utf8(value)
+        .ok()
+        .and_then(|text| text.parse::<i64>().ok())
+        .ok_or_else(|| {
+            fatal(
+                io::ErrorKind::InvalidData,
+                format!("invalid Content-Length: {}", go_quote(value)),
+            )
+        })
 }
 
 /// Go `readRequest`: a line of JSON or a `Content-Length` frame. `Ok(None)` is
@@ -834,21 +1083,20 @@ fn read_request<R: BufRead>(input: &mut R) -> Result<Option<(Request, Mode)>, Re
     let line = loop {
         let (raw, eof) = read_line_limited(input).map_err(ReadError::Fatal)?;
         total_bytes += raw.len();
-        let text = String::from_utf8_lossy(&raw);
-        let trimmed = go_trim_space(&text);
+        let trimmed = go_trim_space_bytes(&raw);
         if eof {
             if raw.is_empty() {
                 return Ok(None);
             }
-            break trimmed.to_owned();
+            break trimmed.to_vec();
         }
         if !trimmed.is_empty() {
-            break trimmed.to_owned();
+            break trimmed.to_vec();
         }
     };
 
     if looks_like_json_line(&line) {
-        return parse_json_request(line.as_bytes(), Mode::Line).map(Some);
+        return parse_json_request(&line, Mode::Line).map(Some);
     }
 
     let mut header_bytes = total_bytes;
@@ -860,7 +1108,7 @@ fn read_request<R: BufRead>(input: &mut R) -> Result<Option<(Request, Mode)>, Re
         ));
     }
     let mut content_length = None;
-    if let Some(rest) = line.strip_prefix("Content-Length:") {
+    if let Some(rest) = line.strip_prefix(b"Content-Length:") {
         content_length = Some(content_length_value(rest)?);
     }
     loop {
@@ -868,8 +1116,13 @@ fn read_request<R: BufRead>(input: &mut R) -> Result<Option<(Request, Mode)>, Re
         if eof {
             return Ok(None);
         }
-        let text = String::from_utf8_lossy(&raw);
-        let trimmed = text.trim_end_matches(['\r', '\n']);
+        let mut trimmed = raw.as_slice();
+        while let Some(stripped) = trimmed
+            .strip_suffix(b"\n")
+            .or_else(|| trimmed.strip_suffix(b"\r"))
+        {
+            trimmed = stripped;
+        }
         if trimmed.is_empty() {
             break;
         }
@@ -881,7 +1134,7 @@ fn read_request<R: BufRead>(input: &mut R) -> Result<Option<(Request, Mode)>, Re
                 "framed header limits exceeded",
             ));
         }
-        if let Some(rest) = trimmed.strip_prefix("Content-Length:") {
+        if let Some(rest) = trimmed.strip_prefix(b"Content-Length:") {
             content_length = Some(content_length_value(rest)?);
         }
     }
@@ -926,16 +1179,18 @@ fn parse_json_request(data: &[u8], mode: Mode) -> Result<(Request, Mode), ReadEr
     if let Err(message) = go_check_valid(data) {
         return Err(ReadError::Parse(message, mode));
     }
-    let Ok(text) = std::str::from_utf8(data) else {
-        return Err(ReadError::InvalidRequest(mode));
-    };
-    let Ok(Members(members)) = serde_json::from_str::<Members>(text) else {
+    // The scanner has accepted the bytes, so what remains is Go's decode:
+    // invalid UTF-8 and unpaired surrogate escapes inside strings become
+    // U+FFFD instead of failing.
+    let text = go_lossy_utf8(data);
+    let text = go_sanitize_surrogates(&text);
+    let Some(members) = split_members(&text) else {
         return Err(ReadError::InvalidRequest(mode));
     };
     let mut jsonrpc = String::new();
     let mut method = String::new();
-    let mut id_raw: Option<String> = None;
-    let mut params: Option<String> = None;
+    let mut id_raw: Option<&str> = None;
+    let mut params: Option<&str> = None;
     let mut type_error = false;
     let mut has_id = false;
     let mut has_params = false;
@@ -944,34 +1199,30 @@ fn parse_json_request(data: &[u8], mode: Mode) -> Result<(Request, Mode), ReadEr
         has_params |= key == "params";
         let lower = key.to_ascii_lowercase();
         match lower.as_str() {
-            "jsonrpc" | "method" => match serde_json::from_str::<Value>(raw.get()) {
-                Ok(Value::String(value)) => {
+            "jsonrpc" | "method" => match raw_kind(raw) {
+                "string" => {
+                    let value: String = serde_json::from_str(raw).unwrap_or_default();
                     if lower == "jsonrpc" {
                         jsonrpc = value;
                     } else {
                         method = value;
                     }
                 }
-                Ok(Value::Null) => {}
+                "null" => {}
                 _ => type_error = true,
             },
-            "id" => id_raw = Some(raw.get().to_owned()),
-            "params" => params = Some(raw.get().to_owned()),
+            "id" => id_raw = Some(*raw),
+            "params" => params = Some(*raw),
             _ => {}
         }
     }
-    let id_text = id_raw.unwrap_or_else(|| "null".to_owned());
-    let id_valid = match serde_json::from_str::<Value>(&id_text) {
-        Ok(Value::Null | Value::String(_) | Value::Number(_)) => true,
-        // Literals serde cannot hold (e.g. huge exponents) are still numbers.
-        Err(_) => id_text.starts_with(|c: char| c == '-' || c.is_ascii_digit()),
-        Ok(_) => false,
-    };
+    let id_text = id_raw.unwrap_or("null").to_owned();
+    let id_valid = matches!(raw_kind(&id_text), "null" | "string" | "number");
     if type_error
         || jsonrpc != "2.0"
         || method.is_empty()
         || (has_id && !id_valid)
-        || (has_params && !params.as_deref().is_some_and(valid_params))
+        || (has_params && !params.is_some_and(valid_params))
     {
         return Err(ReadError::InvalidRequest(mode));
     }
@@ -984,7 +1235,7 @@ fn parse_json_request(data: &[u8], mode: Mode) -> Result<(Request, Mode), ReadEr
             has_id,
             id,
             method,
-            params,
+            params: params.map(str::to_owned),
         },
         mode,
     ))
@@ -1025,14 +1276,79 @@ fn write_shared<W: Write>(output: &SharedOutput<W>, mode: Mode, body: &str) -> i
 }
 
 pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
-    mut input: R,
+    input: R,
     output: W,
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
 ) -> io::Result<()> {
+    serve_io_with_search_path(input, output, room_dir, artifact_root, identity, None)
+}
+
+/// Bounded count of `tools/call` requests executing at once.
+struct CallSlots {
+    in_flight: Mutex<usize>,
+    freed: Condvar,
+}
+
+/// A held slot; dropping it (including when its worker never started) frees it.
+struct CallSlot(Arc<CallSlots>);
+
+impl Drop for CallSlot {
+    fn drop(&mut self) {
+        let mut in_flight = self
+            .0
+            .in_flight
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        *in_flight -= 1;
+        self.0.freed.notify_one();
+    }
+}
+
+impl CallSlots {
+    /// Blocks until fewer than `MAX_IN_FLIGHT_CALLS` calls are running.
+    /// `abort` is polled while waiting so a failed response write still ends
+    /// the stream; it returns `None` then.
+    fn acquire(self: &Arc<Self>, abort: impl Fn() -> bool) -> Option<CallSlot> {
+        let mut in_flight = self
+            .in_flight
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        while *in_flight >= MAX_IN_FLIGHT_CALLS {
+            if abort() {
+                return None;
+            }
+            in_flight = self
+                .freed
+                .wait_timeout(in_flight, Duration::from_millis(50))
+                .unwrap_or_else(PoisonError::into_inner)
+                .0;
+        }
+        *in_flight += 1;
+        Some(CallSlot(Arc::clone(self)))
+    }
+}
+
+/// `serve_io_with_identity` with an explicit executable search path for the
+/// `symdesk` lookup of `room_artifact_link` (`None` uses the process `PATH`).
+/// Tests use it to make that lookup deterministic without touching the process
+/// environment.
+pub fn serve_io_with_search_path<R: BufRead, W: Write + Send>(
+    mut input: R,
+    output: W,
+    room_dir: &Path,
+    artifact_root: &Path,
+    identity: Option<&symroom_core::identity::Identity>,
+    search_path: Option<&OsStr>,
+) -> io::Result<()> {
     let output: SharedOutput<W> = Arc::new(Mutex::new(output));
     let cancelled = Arc::new(AtomicBool::new(false));
+    let worker_failed = Arc::new(AtomicBool::new(false));
+    let slots = Arc::new(CallSlots {
+        in_flight: Mutex::new(0),
+        freed: Condvar::new(),
+    });
     let (errors, worker_errors) = mpsc::channel::<io::Error>();
 
     thread::scope(|scope| {
@@ -1068,23 +1384,50 @@ pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
                     Ok(Some((request, mode))) => {
                         if request.method == "tools/call" {
                             in_flight.retain(|handle| !handle.is_finished());
-                            let output = Arc::clone(&output);
+                            let Some(slot) = slots.acquire(|| worker_failed.load(Ordering::SeqCst))
+                            else {
+                                return worker_errors.try_recv().map_or(Ok(()), Err);
+                            };
+                            let worker_output = Arc::clone(&output);
                             let errors = errors.clone();
                             let cancelled = Arc::clone(&cancelled);
-                            in_flight.push(scope.spawn(move || {
+                            let worker_failed = Arc::clone(&worker_failed);
+                            let (id, has_id) = (request.id.clone(), request.has_id);
+                            let spawned = thread::Builder::new().spawn_scoped(scope, move || {
+                                let _slot = slot;
                                 let response = guarded_call(
                                     &request,
                                     room_dir,
                                     artifact_root,
                                     identity,
+                                    search_path,
                                     &cancelled,
                                 );
                                 if request.has_id
-                                    && let Err(error) = write_shared(&output, mode, &response)
+                                    && let Err(error) =
+                                        write_shared(&worker_output, mode, &response)
                                 {
                                     let _ = errors.send(error);
+                                    worker_failed.store(true, Ordering::SeqCst);
                                 }
-                            }));
+                            });
+                            match spawned {
+                                Ok(handle) => in_flight.push(handle),
+                                // The OS refused another thread: answer this call
+                                // with an internal error instead of aborting.
+                                Err(error) => {
+                                    if has_id {
+                                        let body = render_error(
+                                            &id,
+                                            -32603,
+                                            &format!(
+                                                "Internal error: cannot start handler: {error}"
+                                            ),
+                                        );
+                                        write_shared(&output, mode, &body)?;
+                                    }
+                                }
+                            }
                         } else {
                             let response = handle_sync(&request);
                             if request.has_id {
@@ -1133,10 +1476,18 @@ fn guarded_call(
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
+    search_path: Option<&OsStr>,
     cancelled: &AtomicBool,
 ) -> String {
     let outcome = panic::catch_unwind(AssertUnwindSafe(|| {
-        call(request, room_dir, artifact_root, identity, cancelled)
+        call(
+            request,
+            room_dir,
+            artifact_root,
+            identity,
+            search_path,
+            cancelled,
+        )
     }));
     outcome
         .unwrap_or_else(|_| render_error(&request.id, -32603, "Internal error: handler panicked"))
@@ -1180,50 +1531,44 @@ fn decode_call_params(params: Option<&str>) -> Result<(String, Option<String>), 
     let Some(params) = params else {
         return Err("unexpected end of JSON input".to_owned());
     };
-    let Ok(value) = serde_json::from_str::<Value>(params) else {
-        return Err("unexpected end of JSON input".to_owned());
-    };
-    match &value {
-        Value::Null => return Ok((String::new(), None)),
-        Value::Object(_) => {}
+    match raw_kind(params) {
+        "null" => return Ok((String::new(), None)),
+        "object" => {}
         other => {
             return Err(format!(
-                "json: cannot unmarshal {} into Go value of type {GO_CALL_PARAMS_TYPE}",
-                json_kind(other)
+                "json: cannot unmarshal {other} into Go value of type {GO_CALL_PARAMS_TYPE}"
             ));
         }
     }
-    let Ok(Members(members)) = serde_json::from_str::<Members>(params) else {
+    let Some(members) = split_members(params) else {
         return Err("unexpected end of JSON input".to_owned());
     };
     let mut name = String::new();
     let mut arguments = None;
     let mut first_error: Option<String> = None;
     for (key, raw) in &members {
-        let value: Value = serde_json::from_str(raw.get()).unwrap_or(Value::Bool(false));
+        let kind = raw_kind(raw);
         if key.eq_ignore_ascii_case("name") {
-            match value {
-                Value::String(text) => name = text,
-                Value::Null => {}
+            match kind {
+                "string" => name = serde_json::from_str(raw).unwrap_or_default(),
+                "null" => {}
                 other => {
                     first_error.get_or_insert_with(|| {
                         format!(
-                            "json: cannot unmarshal {} into Go struct field .name of type string",
-                            json_kind(&other)
+                            "json: cannot unmarshal {other} into Go struct field .name of type string"
                         )
                     });
                 }
             }
         } else if key.eq_ignore_ascii_case("arguments") {
-            arguments = Some(raw.get().to_owned());
+            arguments = Some((*raw).to_owned());
         } else if key.eq_ignore_ascii_case("_meta") {
-            match value {
-                Value::Object(_) | Value::Null => {}
+            match kind {
+                "object" | "null" => {}
                 other => {
                     first_error.get_or_insert_with(|| {
                         format!(
-                            "json: cannot unmarshal {} into Go struct field ._meta of type map[string]interface {{}}",
-                            json_kind(&other)
+                            "json: cannot unmarshal {other} into Go struct field ._meta of type map[string]interface {{}}"
                         )
                     });
                 }
@@ -1238,6 +1583,7 @@ fn call(
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
+    search_path: Option<&OsStr>,
     cancelled: &AtomicBool,
 ) -> String {
     let id = request.id.as_str();
@@ -1260,7 +1606,9 @@ fn call(
         "room_artifact_list" => artifact_list(room_dir, artifact_root).map_err(Failure::Tool),
         "room_run_wait" => run_wait(room_dir, &mut args, cancelled),
         "room_note_post" => mutate_note(room_dir, &mut args, identity),
-        "room_artifact_link" => mutate_artifact(room_dir, artifact_root, &mut args, identity),
+        "room_artifact_link" => {
+            mutate_artifact(room_dir, artifact_root, &mut args, identity, search_path)
+        }
         "room_run_request" => mutate_run(room_dir, &mut args, identity),
         _ => mutate_checkpoint(room_dir, &mut args, identity),
     };
@@ -1434,6 +1782,7 @@ fn mutate_note(
         author.seq + 1,
         author.prev,
         stats.max_lamport + 1,
+        symroom_core::event::format_timestamp(time::OffsetDateTime::now_utc()),
     )?;
     Ok(event_text(&event))
 }
@@ -1476,6 +1825,7 @@ fn mutate_artifact(
     artifact_root: &Path,
     args: &mut GoObject,
     identity: Option<&symroom_core::identity::Identity>,
+    search_path: Option<&OsStr>,
 ) -> Result<String, Failure> {
     let path = args.string("path");
     let title = args.string("title");
@@ -1503,10 +1853,14 @@ fn mutate_artifact(
     } else {
         title
     };
+    // Go `artifact.Link` consults `symdesk inspect` (one second deadline) before
+    // it dereferences the identity, so the lookup also runs when there is none.
+    let symdesk_id = crate::symdesk_inspect::inspect_symdesk_in(&absolute, search_path);
     let identity = identity.ok_or(Failure::Panic)?;
     let body = go_body(
-        &json!({"artifact_id":artifact_id,"path":rel,"sha256":hash,"title":title,"symdesk_id":""}),
+        &json!({"artifact_id":artifact_id,"path":rel,"sha256":hash,"title":title,"symdesk_id":symdesk_id}),
     )?;
+    // Go leaves `ts` empty here: only `room.PostNote` stamps a time.
     let event = append_signed(
         room_dir,
         identity,
@@ -1517,6 +1871,7 @@ fn mutate_artifact(
         0,
         String::new(),
         0,
+        String::new(),
     )?;
     Ok(event_text(&event))
 }
@@ -1564,6 +1919,8 @@ fn mutate_checkpoint(
         0,
         String::new(),
         0,
+        // Go `run.RequestCheckpoint` leaves `ts` empty.
+        String::new(),
     )?;
     Ok(event_text(&event))
 }
@@ -1591,6 +1948,7 @@ fn append_signed(
     seq: u64,
     prev: String,
     lamport: u64,
+    ts: String,
 ) -> Result<symroom_core::event::Event, String> {
     let mut event = symroom_core::event::Event {
         v: symroom_core::event::CURRENT_VERSION,
@@ -1600,7 +1958,7 @@ fn append_signed(
         seq,
         prev,
         lamport,
-        ts: symroom_core::event::format_timestamp(time::OffsetDateTime::now_utc()),
+        ts,
         kind: kind.to_owned(),
         body,
         sig: None,

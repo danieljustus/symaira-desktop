@@ -163,6 +163,7 @@ func buildPortSetups(t *testing.T) map[string]portSetup {
 		rootEvent,
 		{"ev_mem", event.KindMemberAdded, fmt.Sprintf(`{"id":"%s","name":"mem","public_key":"%s","role":"member","kind":"agent"}`, mutationSigningIdentity().MemberID, mutationHex)},
 	})
+	setups["dotdot_file"] = signedSetup(t, &toml, map[string]string{"..name": "dotdot-content", ".name": "dot-content"}, nil)
 	setups["tail_30"] = signedSetup(t, &toml, nil, notes)
 	setups["artifacts"] = signedSetup(t, &toml, map[string]string{
 		"ok.txt":       "ok-content",
@@ -229,6 +230,7 @@ type portScenario struct {
 	Identity       bool                `json:"identity"`
 	ArtifactRoot   string              `json:"artifact_root"`
 	NormalizeEvent bool                `json:"normalize_events"`
+	SymdeskScript  string              `json:"symdesk_script,omitempty"`
 	SortArtifacts  bool                `json:"sort_artifact_lists"`
 	Steps          []portStep          `json:"steps"`
 	Journal        map[string][]string `json:"journal,omitempty"`
@@ -241,6 +243,7 @@ type scenarioSpec struct {
 	artifactRoot   string // "room" (default) or "testdata"
 	normalize      bool
 	sortArtifacts  bool
+	symdeskScript  string // body of a fake `symdesk` on PATH; empty means no symdesk on PATH
 	requests       []namedRequest
 	streams        []namedStream
 	recordJournal  bool
@@ -268,6 +271,13 @@ func callRawArgs(id int, tool string) any {
 
 func frame(body string) string {
 	return fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(body), body)
+}
+
+// frameExpanded frames a body that carries {{repeat:..}} / {{hex:..}} tokens:
+// Content-Length is the length of the body after both expansions, while the
+// fixture stores the compact token form.
+func frameExpanded(body string) string {
+	return fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(expandHexBytes(expandRepeat(body))), body)
 }
 
 func testdataRoomDir() string {
@@ -322,6 +332,38 @@ func maskJSONStringValue(text, key, replacement string) string {
 	}
 }
 
+// maskGeneratedTimestamps masks `ts` only for note.posted events, the one kind
+// whose Go writer stamps a wall-clock time (room.PostNote). Go leaves `ts` empty
+// for run.requested, checkpoint.requested and artifact.linked, so those events
+// keep their literal `"ts":""` (or the deterministic setup timestamp) in the
+// fixture: a Rust implementation that stamped a wall-clock time would diverge.
+// The text is an event, an array of events, or a journal line; element bytes are
+// preserved.
+func maskGeneratedTimestamps(text string) string {
+	trimmed := strings.TrimSpace(text)
+	if strings.HasPrefix(trimmed, "[") {
+		var items []json.RawMessage
+		if err := json.Unmarshal([]byte(trimmed), &items); err == nil {
+			parts := make([]string, len(items))
+			for i, item := range items {
+				parts[i] = maskEventTimestamp(string(item))
+			}
+			return "[" + strings.Join(parts, ",") + "]"
+		}
+	}
+	return maskEventTimestamp(text)
+}
+
+func maskEventTimestamp(text string) string {
+	var probe struct {
+		Kind string `json:"kind"`
+	}
+	if err := json.Unmarshal([]byte(text), &probe); err != nil || probe.Kind != event.KindNotePosted {
+		return text
+	}
+	return maskJSONStringValue(text, "ts", "<ts>")
+}
+
 // normalizeEventText masks the fields that differ per run (ts, sig, prev, and
 // the generated ids of note and checkpoint events) without re-marshalling, so
 // the byte order of the event JSON stays pinned.
@@ -329,7 +371,7 @@ func normalizeEventText(text string) string {
 	if !strings.Contains(text, `"kind":"`) {
 		return text
 	}
-	text = maskJSONStringValue(text, "ts", "<ts>")
+	text = maskGeneratedTimestamps(text)
 	text = maskJSONStringValue(text, "sig", "<sig>")
 	text = maskJSONStringValue(text, "prev", "<prev>")
 	if strings.Contains(text, `"kind":"note.posted"`) || strings.Contains(text, `"kind":"checkpoint.requested"`) {
@@ -435,7 +477,8 @@ func runPortScenario(t *testing.T, spec scenarioSpec, setups map[string]portSetu
 		"${ARTIFACT_ROOT}": artifactRoot,
 		"${ARTIFACT}":      filepath.Join(testdataRoomDir(), "mcp-artifact.txt"),
 	}
-	out := portScenario{Name: spec.name, Setup: spec.setup, Identity: spec.identity, ArtifactRoot: artifactRootName, NormalizeEvent: spec.normalize, SortArtifacts: spec.sortArtifacts}
+	out := portScenario{Name: spec.name, Setup: spec.setup, Identity: spec.identity, ArtifactRoot: artifactRootName, NormalizeEvent: spec.normalize, SortArtifacts: spec.sortArtifacts, SymdeskScript: spec.symdeskScript}
+	useScenarioPath(t, spec.symdeskScript)
 	for _, step := range spec.requests {
 		body, err := json.Marshal(substitutePlaceholders(step.req, replacements))
 		if err != nil {
@@ -463,7 +506,7 @@ func runPortScenario(t *testing.T, spec scenarioSpec, setups map[string]portSetu
 		out.Steps = append(out.Steps, portStep{Name: step.name, Request: requestJSON, Response: response})
 	}
 	for _, step := range spec.streams {
-		output, serveErr := serveRaw(roomDir, id, artifactRoot, []byte(substitutePlaceholdersString(step.input, replacements)))
+		output, serveErr := serveRaw(roomDir, id, artifactRoot, expandHexBytes(substitutePlaceholdersString(step.input, replacements)))
 		input := step.input
 		outputText := normalizeOutput(string(output), &spec, roomDir, artifactRoot)
 		errorText := normalizeOutput(serveErr, &spec, roomDir, artifactRoot)
@@ -483,7 +526,7 @@ func runPortScenario(t *testing.T, spec scenarioSpec, setups map[string]portSetu
 			}
 			var lines []string
 			for _, line := range strings.Split(strings.TrimSuffix(string(content), "\n"), "\n") {
-				lines = append(lines, normalizeEventText(line))
+				lines = append(lines, normalizeOutput(line, &spec, roomDir, artifactRoot))
 			}
 			out.Journal[entry.Name()] = lines
 		}
@@ -491,11 +534,48 @@ func runPortScenario(t *testing.T, spec scenarioSpec, setups map[string]portSetu
 	return out
 }
 
+// useScenarioPath confines PATH to a scenario-owned directory, so an installed
+// `symdesk` can never leak into a fixture. A non-empty script is installed as an
+// executable fake `symdesk`; the Rust replay recreates the identical script.
+func useScenarioPath(t *testing.T, script string) {
+	t.Helper()
+	dir := t.TempDir()
+	if script != "" {
+		body := "#!/bin/sh\n" + script + "\n"
+		if err := os.WriteFile(filepath.Join(dir, "symdesk"), []byte(body), 0o700); err != nil { //nolint:gosec // executable fake symdesk in a test-owned directory
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", dir)
+}
+
 func substitutePlaceholdersString(s string, replacements map[string]string) string {
 	for from, to := range replacements {
 		s = strings.ReplaceAll(s, from, to)
 	}
 	return expandRepeat(s)
+}
+
+// expandHexBytes expands {{hex:AABB}} tokens into raw bytes, so a stream input
+// can carry invalid UTF-8 that a JSON fixture string cannot store.
+func expandHexBytes(s string) []byte {
+	const open = "{{hex:"
+	var out []byte
+	for {
+		i := strings.Index(s, open)
+		if i < 0 {
+			return append(out, s...)
+		}
+		out = append(out, s[:i]...)
+		rest := s[i+len(open):]
+		end := strings.Index(rest, "}}")
+		raw, err := hex.DecodeString(rest[:end])
+		if err != nil {
+			panic(err)
+		}
+		out = append(out, raw...)
+		s = rest[end+2:]
+	}
 }
 
 // expandRepeat expands {{repeat:C:N}} tokens (single character C, N times) so
@@ -752,7 +832,70 @@ func parityScenarioSpecs() []scenarioSpec {
 			tool(1, "room_artifact_list", nil),
 			tool(2, "room_status", nil),
 		}},
+		{name: "json_layer_streams", setup: "fixture", streams: jsonLayerStreams()},
 	}
+}
+
+// jsonLayerStreams pins the encoding/json behaviour that sits under the JSON-RPC
+// layer: invalid UTF-8, lone surrogate escapes, the 10000 container nesting
+// limit (and valid input deeper than serde_json's recursion limit), and
+// requests exactly at the 1 MiB limits. Inputs use {{hex:..}}/{{repeat:..}}
+// tokens so the fixture can store them.
+func jsonLayerStreams() []namedStream {
+	ping := `{"jsonrpc":"2.0","id":9,"method":"ping"}`
+	deep := func(n int) string { return fmt.Sprintf("{{repeat:[:%d}}{{repeat:]:%d}}", n, n) }
+	const prefix = `{"jsonrpc":"2.0","id":1,"method":"ping","pad":"`
+	const suffix = `"}`
+	// A request of exactly n bytes: pad the fixed members with 'a'.
+	exact := func(n int) string { return prefix + fmt.Sprintf("{{repeat:a:%d}}", n-len(prefix)-len(suffix)) + suffix }
+	toolCall := func(id int, name, args string) string {
+		return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"tools/call","params":{"name":"%s","arguments":%s}}`, id, name, args)
+	}
+	return []namedStream{
+		{"invalid_utf8_method_framed", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"x{{hex:ff}}y"}`) + frame(ping)},
+		{"invalid_utf8_truncated_sequence_method", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"x{{hex:e282}}y"}`)},
+		{"invalid_utf8_id_string", frameExpanded(`{"jsonrpc":"2.0","id":"a{{hex:80}}b","method":"ping"}`)},
+		{"invalid_utf8_method_line_mode", `{"jsonrpc":"2.0","id":2,"method":"m{{hex:ff}}"}` + "\n" + ping + "\n"},
+		{"invalid_utf8_tool_name", frameExpanded(toolCall(3, "room_{{hex:c0}}x", `{}`))},
+		{"invalid_utf8_tool_argument_ignored", frameExpanded(toolCall(4, "room_journal_tail", `{"limit":1,"extra":"a{{hex:ff}}b"}`))},
+		{"invalid_utf8_outside_string", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"ping"}{{hex:ff}}`)},
+		{"lone_high_surrogate_id", frame(`{"jsonrpc":"2.0","id":"\ud800","method":"ping"}`)},
+		{"lone_low_surrogate_id", frame(`{"jsonrpc":"2.0","id":"\udc00x","method":"ping"}`)},
+		{"high_surrogate_then_non_low", frame(`{"jsonrpc":"2.0","id":"\ud800\u0041","method":"ping"}`)},
+		{"high_surrogate_then_high_surrogate", frame(`{"jsonrpc":"2.0","id":"\ud800\ud800\ude00","method":"ping"}`)},
+		{"valid_surrogate_pair_id", frame(`{"jsonrpc":"2.0","id":"\ud83d\ude00","method":"ping"}`)},
+		{"lone_surrogate_method", frame(`{"jsonrpc":"2.0","id":1,"method":"m\ud800"}`)},
+		{"lone_surrogate_tool_name", frame(toolCall(5, `room_\udfff`, `{}`))},
+		{"nesting_exactly_at_limit_10000", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"ping","params":` + deep(9999) + `}`)},
+		{"nesting_over_limit_10001", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"ping","params":` + deep(10000) + `}`)},
+		{"nesting_over_limit_line_mode", `{"jsonrpc":"2.0","id":1,"method":"ping","params":` + deep(10000) + `}` + "\n"},
+		{"nesting_200_in_tool_arguments", frameExpanded(toolCall(6, "room_status", `{"extra":`+deep(200)+`}`))},
+		{"nesting_200_in_unused_member", frameExpanded(`{"jsonrpc":"2.0","id":1,"method":"ping","extra":` + deep(200) + `}`)},
+		{"nesting_200_in_meta", frameExpanded(`{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"room_status","_meta":{"a":` + deep(200) + `}}}`)},
+		{"nesting_200_in_typed_argument", frameExpanded(toolCall(8, "room_journal_tail", `{"limit":`+deep(200)+`}`))},
+		{"nesting_200_in_id", frameExpanded(`{"jsonrpc":"2.0","id":` + deep(200) + `,"method":"ping"}`)},
+		{"timeout_seconds_overflowing_float", frame(toolCall(10, "room_run_wait", `{"run_id":"run_missing","timeout_seconds":1e400}`))},
+		{"limit_overflowing_float", frame(toolCall(11, "room_journal_tail", `{"limit":1e400}`))},
+		{"frame_exactly_1mib", frameExpanded(exact(1<<20)) + frame(ping)},
+		{"line_exactly_1mib", exact(1<<20-1) + "\n" + ping + "\n"},
+		{"line_one_byte_over_1mib", exact(1<<20) + "\n"},
+		{"line_exactly_1mib_at_eof_without_newline", exact(1 << 20)},
+	}
+}
+
+// symdeskScenario links the fixture artifact twice (the second time through a
+// lexically different spelling of the same path), then reads the result back,
+// with `script` installed as the only `symdesk` on PATH.
+func symdeskScenario(name, script string, spelledTwice bool) scenarioSpec {
+	tool := func(id int, tool string, args any) namedRequest {
+		return namedRequest{fmt.Sprintf("%s#%d", tool, id), call(id, tool, args)}
+	}
+	requests := []namedRequest{tool(1, "room_artifact_link", map[string]any{"path": "${ARTIFACT}", "title": "Desk linked"})}
+	if spelledTwice {
+		requests = append(requests, tool(2, "room_artifact_link", map[string]any{"path": "${ARTIFACT_ROOT}/sub/../mcp-artifact.txt"}))
+	}
+	requests = append(requests, tool(3, "room_artifact_list", nil), tool(4, "room_journal_tail", map[string]any{"limit": 3}))
+	return scenarioSpec{name: name, setup: "room_toml_only", identity: true, artifactRoot: "testdata", normalize: true, sortArtifacts: true, requests: requests, recordJournal: true, symdeskScript: script}
 }
 
 func mutationScenarioSpecs() []scenarioSpec {
@@ -871,6 +1014,36 @@ func mutationScenarioSpecs() []scenarioSpec {
 			tool(3, "room_artifact_link", map[string]any{"path": "${ROOM}/known.txt", "title": "Known again"}),
 			tool(4, "room_artifact_link", map[string]any{"path": "${ROOM}/room.toml"}),
 			tool(5, "room_artifact_list", nil),
+		}, recordJournal: true},
+		// Notifications (no id) execute without a response, so the signed journal
+		// is the only record of the generated events; the trailing ping proves
+		// the stream stayed healthy.
+		{name: "mutation_json_layer_streams", setup: "room_toml_only", identity: true, artifactRoot: "testdata", normalize: true, streams: []namedStream{
+			{"note_invalid_utf8_text", frameExpanded(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_note_post","arguments":{"text":"bad{{hex:ff}}utf8{{hex:e282}}!"}}}`) + frame(ping)},
+			{"note_lone_surrogate_text", frame(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_note_post","arguments":{"text":"lone \ud800 high, \udc00 low, \ud800\u0041 mismatch, \ud83d\ude00 pair"}}}`) + frame(ping)},
+			{"note_with_nesting_200_in_unused_argument", frameExpanded(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_note_post","arguments":{"extra":{{repeat:[:200}}{{repeat:]:200}},"text":"deep extra ignored"}}}`) + frame(ping)},
+			{"run_request_with_nesting_200_in_unused_argument", frameExpanded(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_run_request","arguments":{"title":"deep","extra":{{repeat:[:200}}{{repeat:]:200}}}}}`) + frame(ping)},
+			{"checkpoint_invalid_utf8_question", frameExpanded(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_checkpoint_request","arguments":{"run_id":"run_x","question":"q{{hex:ff}}?"}}}`) + frame(ping)},
+			{"checkpoint_lone_surrogate_run_id", frame(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_checkpoint_request","arguments":{"run_id":"run_\udfff","question":"q?"}}}`) + frame(ping)},
+		}, recordJournal: true},
+		symdeskScenario("mutation_artifact_symdesk_document_id", `case "$1:$3" in
+inspect:--json) printf '{"document_id":"doc|%s|%s|%s","vault_name":"vault","valid":true}\n' "$1" "$2" "$3" ;;
+*) exit 2 ;;
+esac`, true),
+		symdeskScenario("mutation_artifact_symdesk_exit_failure", `printf '{"document_id":"doc_ignored"}'; exit 3`, false),
+		symdeskScenario("mutation_artifact_symdesk_invalid_json", `printf 'not json'`, false),
+		symdeskScenario("mutation_artifact_symdesk_missing_document_id", `printf '{"vault_name":"v","valid":true}'`, false),
+		symdeskScenario("mutation_artifact_symdesk_wrong_field_type_discards_result", `printf '{"document_id":"doc_typeerr","valid":"yes"}'`, false),
+		symdeskScenario("mutation_artifact_symdesk_case_insensitive_key", `printf '{"DOCUMENT_ID":"doc_upper"}'`, false),
+		symdeskScenario("mutation_artifact_symdesk_duplicate_key_last_wins", `printf '{"document_id":"first","document_id":"last"}'`, false),
+		symdeskScenario("mutation_artifact_symdesk_trailing_garbage", `printf '{"document_id":"doc_trailing"} x'`, false),
+		symdeskScenario("mutation_artifact_symdesk_null_document", `printf 'null'`, false),
+		symdeskScenario("mutation_artifact_symdesk_null_document_id", `printf '{"document_id":null}'`, false),
+		symdeskScenario("mutation_artifact_symdesk_timeout_is_one_second", `exec sleep 3`, false),
+		{name: "mutation_artifact_dot_dot_prefixed_file_name", setup: "dotdot_file", identity: true, artifactRoot: "room", normalize: true, requests: []namedRequest{
+			tool(1, "room_artifact_link", map[string]any{"path": "${ROOM}/..name"}),
+			tool(2, "room_artifact_link", map[string]any{"path": "${ROOM}/.name"}),
+			tool(3, "room_artifact_list", nil),
 		}, recordJournal: true},
 		{name: "notification_tool_call_executes", setup: "room_toml_only", identity: true, artifactRoot: "testdata", normalize: true, streams: []namedStream{
 			{"note_notification_then_ping", frame(`{"jsonrpc":"2.0","method":"tools/call","params":{"name":"room_note_post","arguments":{"text":"sent as a notification"}}}`) + frame(ping)},

@@ -2,12 +2,9 @@
 
 use std::{
     ffi::OsString,
-    io::{self, Read, Write},
+    io::{self, Write},
     path::PathBuf,
-    process::{ExitCode, Stdio},
-    sync::mpsc,
-    thread,
-    time::{Duration, Instant},
+    process::ExitCode,
 };
 
 use symaira_core_exit::ExitCode as CoreExitCode;
@@ -64,7 +61,7 @@ fn link(args: &[OsString]) -> ExitCode {
             );
         }
     };
-    let symdesk_id = inspect_symdesk(&inspect_path);
+    let symdesk_id = crate::symdesk_inspect::inspect_symdesk(&inspect_path);
     match artifact::link(
         &room_dir(),
         &PathBuf::from(path),
@@ -326,63 +323,6 @@ fn merge_identity_config(
             }
         )),
     }
-}
-
-fn inspect_symdesk(path: &std::path::Path) -> String {
-    let Some(symdesk_path) = crate::doctor_cli::look_path("symdesk") else {
-        return String::new();
-    };
-    let mut child = match crate::symdesk_command(&symdesk_path)
-        .arg("inspect")
-        .arg(path)
-        .arg("--json")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-    {
-        Ok(child) => child,
-        Err(_) => return String::new(),
-    };
-    let Some(mut stdout) = child.stdout.take() else {
-        let _ = child.kill();
-        let _ = child.wait();
-        return String::new();
-    };
-    let (send, receive) = mpsc::channel();
-    thread::spawn(move || {
-        let mut output = Vec::new();
-        let _ = stdout.read_to_end(&mut output);
-        let _ = send.send(output);
-    });
-    let deadline = Instant::now() + Duration::from_secs(1);
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => {
-                if !status.success() {
-                    return String::new();
-                }
-                let Ok(output) = receive.recv_timeout(Duration::from_millis(100)) else {
-                    return String::new();
-                };
-                return serde_json::from_slice::<InspectResult>(&output)
-                    .ok()
-                    .map_or_else(String::new, |result| result.document_id);
-            }
-            Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(10)),
-            Ok(None) | Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = receive.recv_timeout(Duration::from_millis(100));
-                return String::new();
-            }
-        }
-    }
-}
-
-#[derive(serde::Deserialize)]
-struct InspectResult {
-    #[serde(default)]
-    document_id: String,
 }
 
 fn room_dir() -> PathBuf {

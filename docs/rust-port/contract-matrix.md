@@ -119,7 +119,7 @@ supplies a fresh disposable root and an output inside that root; an existing
 root is rejected without overwriting it. The ordinary frozen config fixture
 is unchanged.
 
-Every native host executes Go 1.26.9 to record 20 filesystem layouts and 19
+Every native host executes Go 1.26.10 to record 20 filesystem layouts and 19
 ingest names per layout. The Rust replay compares all four contacts paths,
 every exact ingest result/error, and before/after names, types, file bytes and
 native symlink targets without following links in the state snapshot.

@@ -313,7 +313,6 @@ type scenarioSpec struct {
 	requests       []namedRequest
 	streams        []namedStream
 	recordJournal  bool
-	notificationOK bool
 }
 
 type namedRequest struct {
@@ -329,10 +328,6 @@ func call(id int, tool string, args any) any {
 		params["arguments"] = args
 	}
 	return map[string]any{"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": params}
-}
-
-func callRawArgs(id int, tool string) any {
-	return map[string]any{"jsonrpc": "2.0", "id": id, "method": "tools/call", "params": map[string]any{"name": tool}}
 }
 
 func frame(body string) string {

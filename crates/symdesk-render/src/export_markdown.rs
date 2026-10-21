@@ -316,7 +316,7 @@ mod tests {
             Some(fixture.oracle.commit.as_str()),
             provenance["oracle"]["commit"].as_str()
         );
-        assert_eq!(fixture.oracle.go_version, "go1.26.9");
+        assert_eq!(fixture.oracle.go_version, "go1.26.10");
         assert_eq!(
             fixture.oracle.sources.keys().collect::<Vec<_>>(),
             [

@@ -12,9 +12,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use serde::{Deserialize, Deserializer, Serialize};
 use symdesk_vault::{HistoryError, HistoryStore};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
 
@@ -1106,7 +1106,7 @@ fn import_recorded_oracle_source(root: &Path, store: &Path) -> String {
         store.join("objects/info/alternates"),
         format!("{}\n", objects.display()),
     )
-        .expect("borrow checkout objects read-only");
+    .expect("borrow checkout objects read-only");
     let oracle = oracle_identity::commit();
     git(
         store,

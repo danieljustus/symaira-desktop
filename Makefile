@@ -397,10 +397,10 @@ room-member-cli-differential:
 	$(CARGO) test -p symroom-cli --locked --test member_commands
 
 room-grammar-process-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
 
 room-grammar-process-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
 	$(CARGO) test -p symroom-cli --locked --test grammar_process
 
 room-mcp-fixtures-generate:

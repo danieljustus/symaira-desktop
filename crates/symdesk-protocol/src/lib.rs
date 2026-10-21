@@ -38,7 +38,7 @@ use std::{
     process::Stdio,
     sync::{
         Arc, Mutex,
-        atomic::{AtomicU64, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
     },
     task::{Context, Poll},
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -85,6 +85,10 @@ const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
 const MAX_COMMAND_BODY_BYTES: usize = (2 << 20) + 1;
 const MAX_COMMAND_DRAIN_BYTES: usize = 256 << 10;
+/// Go's `rstAvoidanceDelay`: how long a connection with an unread request body
+/// stays half-closed after the response so the client can still read it.
+const CONNECTION_LINGER: Duration = Duration::from_millis(500);
+const CONNECTION_LINGER_MAX_BYTES: usize = 8 << 20;
 const MAX_AI_TRANSFORM_BODY_BYTES: usize = 256 << 10;
 const MAX_AI_ASK_BODY_BYTES: usize = 8 << 10;
 const MAX_AI_CONTEXT_DOCS: usize = 8;
@@ -384,7 +388,15 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     });
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
+    serve(listener, app, shutdown_signal()).await
+}
 
+/// Accepts connections until `shutdown` resolves, then drains active ones.
+async fn serve(
+    listener: tokio::net::TcpListener,
+    app: Router,
+    shutdown: impl std::future::Future<Output = ()>,
+) -> Result<(), String> {
     let mut make_service = app.into_make_service_with_connect_info::<SocketAddr>();
     let mut connection_builder = ConnectionBuilder::new();
     connection_builder
@@ -394,7 +406,6 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         .max_headers(HTTP_MAX_HEADER_FIELDS);
     let connection_builder = connection_builder;
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(());
-    let shutdown = shutdown_signal();
     tokio::pin!(shutdown);
     let mut active = tokio::task::JoinSet::new();
 
@@ -420,12 +431,39 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
             }
         };
 
+        // Keep a duplicate of the socket so it outlives hyper's connection
+        // (hyper drops the stream as soon as it gives up on an unread request
+        // body). Closing a socket that still has unread inbound data makes the
+        // kernel send RST, which can destroy the response the client has not
+        // read yet.
+        let (io, linger_socket) = match io.into_std() {
+            Ok(std_stream) => {
+                let linger_socket = std_stream.try_clone().ok();
+                match tokio::net::TcpStream::from_std(std_stream) {
+                    Ok(io) => (io, linger_socket),
+                    Err(error) => {
+                        eprintln!("register HTTP connection failed: {error}");
+                        continue;
+                    }
+                }
+            }
+            Err(error) => {
+                eprintln!("prepare HTTP connection failed: {error}");
+                continue;
+            }
+        };
         let io = TokioIo::new(io);
+        let unread_body = ConnectionLinger::default();
+        let request_linger = unread_body.clone();
         let tower_service = make_service
             .call(remote_addr)
             .await
             .unwrap_or_else(|error| match error {})
-            .map_request(|request: hyper::Request<hyper::body::Incoming>| request.map(Body::new));
+            .map_request(move |request: hyper::Request<hyper::body::Incoming>| {
+                let mut request = request.map(Body::new);
+                request.extensions_mut().insert(request_linger.clone());
+                request
+            });
         let hyper_service = TowerToHyperService::new(tower_service);
         let builder = connection_builder.clone();
         let mut connection_shutdown = shutdown_rx.clone();
@@ -443,9 +481,51 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
                     let _ = connection.await;
                 }
             }
+            if unread_body.is_set()
+                && let Some(socket) = linger_socket
+            {
+                linger_close(socket).await;
+            }
         });
     }
     Ok(())
+}
+
+/// Marks a connection whose handler answered without consuming the whole
+/// request body. Carried as a request extension by [`serve`].
+#[derive(Clone, Default)]
+struct ConnectionLinger(Arc<AtomicBool>);
+
+impl ConnectionLinger {
+    fn set(&self) {
+        self.0.store(true, Ordering::SeqCst);
+    }
+
+    fn is_set(&self) -> bool {
+        self.0.load(Ordering::SeqCst)
+    }
+}
+
+/// Mirrors Go's `closeWriteAndWait`: shut down the write half, then keep
+/// discarding inbound data for a bounded time before the socket is closed, so
+/// a client still uploading an over-limit body receives the response instead
+/// of a TCP reset.
+async fn linger_close(socket: std::net::TcpStream) {
+    let Ok(mut socket) = tokio::net::TcpStream::from_std(socket) else {
+        return;
+    };
+    let _ = socket.shutdown().await;
+    let mut sink = [0_u8; 16 << 10];
+    let _ = tokio::time::timeout(CONNECTION_LINGER, async {
+        let mut total = 0;
+        while total < CONNECTION_LINGER_MAX_BYTES {
+            match socket.read(&mut sink).await {
+                Ok(0) | Err(_) => break,
+                Ok(read) => total += read,
+            }
+        }
+    })
+    .await;
 }
 
 async fn drain_active_connections(
@@ -2259,20 +2339,25 @@ async fn handle_command_validation(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
-    let request =
-        match tokio::time::timeout(READ_TIMEOUT, read_command_request(request.into_body())).await {
-            Ok(Ok(request)) => request,
-            Ok(Err(CommandBodyError::TooLarge)) => {
-                return json_error(
-                    StatusCode::BAD_REQUEST,
-                    "invalid JSON: request body too large",
-                );
-            }
-            Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
-                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
-            }
-            Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
-        };
+    let linger = request.extensions().get::<ConnectionLinger>().cloned();
+    let request = match tokio::time::timeout(
+        READ_TIMEOUT,
+        read_command_request(request.into_body(), linger),
+    )
+    .await
+    {
+        Ok(Ok(request)) => request,
+        Ok(Err(CommandBodyError::TooLarge)) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "invalid JSON: request body too large",
+            );
+        }
+        Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
+            return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
+        }
+        Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+    };
     let arguments = request.arguments.unwrap_or_default();
     let stdin = request.stdin.unwrap_or_default();
     if let Some(message) = validate_remote_command(&arguments) {
@@ -2477,7 +2562,10 @@ enum CommandBodyError {
     Read,
 }
 
-async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, CommandBodyError> {
+async fn read_command_request(
+    body: Body,
+    linger: Option<ConnectionLinger>,
+) -> Result<RemoteCommandRequest, CommandBodyError> {
     let mut chunks = body.into_data_stream();
     let mut bytes = Vec::with_capacity(4096);
     loop {
@@ -2490,6 +2578,9 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
         bytes.extend_from_slice(&chunk[..chunk.len().min(available)]);
         match parse_command_request(&bytes) {
             Ok(request) => {
+                if let Some(linger) = &linger {
+                    linger.set();
+                }
                 // Go's HTTP server drains a bounded amount of unread request
                 // data after the handler returns. Keep the same allowance so
                 // an early response to a valid JSON prefix does not reset an
@@ -2513,10 +2604,23 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
                 return Ok(request);
             }
             Err(error) if error.is_eof() && bytes.len() < MAX_COMMAND_BODY_BYTES => {}
-            Err(error) if error.is_eof() => return Err(CommandBodyError::TooLarge),
-            Err(_) => return Err(CommandBodyError::Malformed),
+            Err(error) if error.is_eof() => {
+                if let Some(linger) = &linger {
+                    linger.set();
+                }
+                return Err(CommandBodyError::TooLarge);
+            }
+            Err(_) => {
+                if let Some(linger) = &linger {
+                    linger.set();
+                }
+                return Err(CommandBodyError::Malformed);
+            }
         }
         if chunk.len() > available {
+            if let Some(linger) = &linger {
+                linger.set();
+            }
             return Err(CommandBodyError::TooLarge);
         }
     }
@@ -7366,5 +7470,90 @@ mod tests {
         }
         cleanup.stop.store(true, Ordering::SeqCst);
         cleanup.writer.take().unwrap().join().unwrap();
+    }
+
+    /// Go's server keeps a connection with an unread request body half-open
+    /// (`closeWriteAndWait`) so a client that is still uploading can read the
+    /// early response. Closing a socket with unread data instead makes the
+    /// kernel send RST, which discards the already-delivered response on the
+    /// client (observed on macOS as `write: broken pipe` in #1202).
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn over_limit_command_body_response_survives_continued_upload() {
+        use std::io::{Read as _, Write as _};
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-over-limit-linger-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let token = "a sufficiently long test token";
+        let app = router(Arc::new(test_state(&root, token)));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
+        let server = tokio::spawn(serve(listener, app, async {
+            let _ = stop_rx.await;
+        }));
+
+        let client = tokio::task::spawn_blocking(move || {
+            let prefix = br#"{"arguments":["not-real"]}"#;
+            let total = MAX_COMMAND_BODY_BYTES;
+            let mut socket = std::net::TcpStream::connect(address).unwrap();
+            socket
+                .set_read_timeout(Some(Duration::from_secs(10)))
+                .unwrap();
+            socket
+                .set_write_timeout(Some(Duration::from_secs(10)))
+                .unwrap();
+            let head = format!(
+                "POST /api/v1/command HTTP/1.1\r\nHost: {address}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {total}\r\n\r\n"
+            );
+            // A valid JSON prefix plus more than the server's bounded drain
+            // allowance, so the handler answers early and stops reading.
+            let first = MAX_COMMAND_DRAIN_BYTES + (64 << 10);
+            let mut body = prefix.to_vec();
+            body.resize(first, b'a');
+            socket.write_all(head.as_bytes()).unwrap();
+            socket.write_all(&body).unwrap();
+
+            // Wait until the response is in our receive buffer, but do not
+            // read it yet; then give the server time to close its side.
+            let mut probe = [0_u8; 1];
+            socket.peek(&mut probe).unwrap();
+            std::thread::sleep(Duration::from_millis(150));
+
+            // Keep uploading the rest of the declared body. Go's client
+            // surfaces a failed body write (EPIPE/ECONNRESET) as the request
+            // error when it races the response, so the upload must succeed.
+            let rest = vec![b'a'; total - first];
+            let upload = socket.write_all(&rest);
+
+            let mut response = Vec::new();
+            let read = socket.read_to_end(&mut response);
+            (upload, read.map(|_| ()), response)
+        });
+        let (upload, read, response) = client.await.unwrap();
+        let _ = stop_tx.send(());
+        let _ = tokio::time::timeout(Duration::from_secs(20), server).await;
+        let _ = fs::remove_dir_all(&root);
+
+        let text = String::from_utf8_lossy(&response).into_owned();
+        assert!(
+            upload.is_ok(),
+            "continued upload failed after the early response: {upload:?}"
+        );
+        assert!(
+            read.is_ok(),
+            "reading the response failed: {read:?}; received {text:?}"
+        );
+        assert!(
+            text.starts_with("HTTP/1.1 403 "),
+            "complete early response expected, got {text:?}"
+        );
+        assert!(
+            text.ends_with('}') || text.ends_with("}\n"),
+            "response body truncated: {text:?}"
+        );
     }
 }

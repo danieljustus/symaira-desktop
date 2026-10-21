@@ -2,6 +2,7 @@
 
 pub mod export_html;
 pub mod export_markdown;
+pub mod export_pdf;
 mod go_print;
 pub mod pdfops;
 mod pdfprocess;

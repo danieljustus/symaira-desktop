@@ -57,8 +57,8 @@ pub use metadata::{
     search_metadata_from_document, strip_search_metadata,
 };
 pub use mutations::{
-    MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_string,
-    set_frontmatter_key, set_frontmatter_value, write_atomic,
+    MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_map,
+    render_go_yaml_string, set_frontmatter_key, set_frontmatter_value, write_atomic,
 };
 pub use notebook_write::{
     NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,

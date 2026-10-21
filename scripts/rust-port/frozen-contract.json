@@ -188,11 +188,15 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 8
+      "passed": 9
     },
     "cargo test -p symdesk-render --locked export_markdown": {
       "ignored": 0,
       "passed": 2
+    },
+    "cargo test -p symdesk-render --locked export_pdf": {
+      "ignored": 0,
+      "passed": 1
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,

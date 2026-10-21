@@ -497,7 +497,11 @@ pub(super) fn render_string(
         && !is_base60_float(value)
         && !is_yaml_keyword_or_number(value)
         && single_quoted_allowed
-        && (leading_space || trailing_space || line_breaks || has_indicator_start)
+        && (leading_space
+            || trailing_space
+            || line_breaks
+            || has_indicator_start
+            || has_inner_indicator)
     {
         return Ok(single_quote(value, indent_spaces));
     }

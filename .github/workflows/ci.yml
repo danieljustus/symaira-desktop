@@ -604,6 +604,10 @@ jobs:
         shell: bash
         run: make render-export-differential
 
+      - name: Run native render PDF frontmatter differential
+        shell: bash
+        run: make render-pdf-frontmatter-differential
+
       - name: Run native dataset aggregate differential
         shell: bash
         run: make dataset-aggregate-differential

@@ -18,11 +18,11 @@ from typing import Any
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[2]
-FOUNDATION = "ffa083487c60d669066fe6db0f07e77afa5f5a55"
+FOUNDATION = "6de1536543e70f21ff1485517c5a52751e1c0326"
 ORIGIN = "https://github.com/danieljustus/symaira-desktop.git"
 COREKIT = "github.com/danieljustus/symaira-corekit"
 COREKIT_VERSION = "v0.18.3-0.20261012110002-27d2daf8ec1e"
-GO_VERSION = "go1.26.9"
+GO_VERSION = "go1.26.10"
 RUST_VERSION = "1.98.0"
 CASE_COUNT = 75
 UNIX_CASE_COUNT = 16
@@ -322,7 +322,7 @@ def validate_capture_report(report: dict[str, Any], host_os: str, expected_head:
             raise GateFailure(f"producer {field} identity does not bind candidate HEAD and tree")
     go_binary = report.get("go_binary", {})
     if go_binary.get("go_version") != GO_VERSION or go_binary.get("vcs_revision") != FOUNDATION or go_binary.get("vcs_modified") != "false":
-        raise GateFailure("producer Go binary is not a clean Go 1.26.9 foundation build")
+        raise GateFailure("producer Go binary is not a clean Go 1.26.10 foundation build")
     harness_binary = report.get("harness_binary", {})
     if harness_binary.get("go_version") != GO_VERSION or harness_binary.get("vcs_revision") != expected_head or harness_binary.get("vcs_modified") != "false":
         raise GateFailure("differential harness binary is not a clean exact-HEAD Go build")

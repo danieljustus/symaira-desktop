@@ -3,7 +3,7 @@ mod mcp;
 
 use std::{
     io::{BufReader, Cursor, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
@@ -404,9 +404,23 @@ fn raw_frame_property_random_streams_keep_stdout_frames_only() {
                 .any(|window| window == SENTINEL),
             "case {case}: junk leaked to stdout"
         );
-        // Every byte written to stdout must belong to a complete, parseable frame.
+        // Every byte written to stdout must belong to a complete, parseable
+        // response: a Content-Length frame, or (as in Go, which answers a
+        // JSON line in kind) one newline-terminated JSON-RPC line.
         let mut rest = output.as_slice();
         while !rest.is_empty() {
+            if rest.starts_with(b"{") {
+                let end = rest
+                    .iter()
+                    .position(|byte| *byte == b'\n')
+                    .unwrap_or_else(|| panic!("case {case}: unterminated response line"));
+                let value: Value = serde_json::from_slice(&rest[..end])
+                    .unwrap_or_else(|_| panic!("case {case}: response line is not JSON"));
+                assert_eq!(value["jsonrpc"], "2.0", "case {case}");
+                responses += 1;
+                rest = &rest[end + 1..];
+                continue;
+            }
             let end = rest
                 .windows(4)
                 .position(|window| window == b"\r\n\r\n")
@@ -504,4 +518,424 @@ fn mcp_cli_help_exits_successfully() {
     let _ = mcp::run_cli(&args, |_| {
         unreachable!("help exits before identity resolution")
     });
+}
+
+// ---------------------------------------------------------------------------
+// MCP-004 scenario replay: every step below is real Go output recorded by the
+// room-mcp-fixtures-generate target (internal/room/mcp/port_scenarios_test.go).
+// ---------------------------------------------------------------------------
+
+const PARITY_STEPS: usize = 167;
+const MUTATION_STEPS: usize = 84;
+
+fn repo_root() -> PathBuf {
+    let mut out = PathBuf::new();
+    for component in PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .components()
+    {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+fn materialize(setup: &Value) -> PathBuf {
+    let room = temporary_room("scenario");
+    if let Some(toml) = setup["room_toml"].as_str() {
+        std::fs::write(room.join("room.toml"), toml).expect("room.toml");
+    }
+    if let Some(files) = setup["files"].as_object() {
+        for (name, content) in files {
+            std::fs::write(room.join(name), content.as_str().expect("file text")).expect("file");
+        }
+    }
+    if let Some(lines) = setup["journal_lines"].as_array() {
+        let journal = room.join("journal");
+        std::fs::create_dir_all(&journal).expect("journal dir");
+        if !lines.is_empty() {
+            let joined = lines
+                .iter()
+                .map(|line| line.as_str().expect("journal line"))
+                .collect::<Vec<_>>()
+                .join("\n");
+            std::fs::write(
+                journal.join(setup["journal_file"].as_str().expect("journal file")),
+                format!("{joined}\n"),
+            )
+            .expect("journal file");
+        }
+    }
+    room
+}
+
+fn substitute_value(value: &Value, replacements: &[(&str, String)]) -> Value {
+    match value {
+        Value::String(text) => Value::String(substitute_text(text, replacements)),
+        Value::Array(items) => Value::Array(
+            items
+                .iter()
+                .map(|item| substitute_value(item, replacements))
+                .collect(),
+        ),
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, item)| (key.clone(), substitute_value(item, replacements)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
+fn substitute_text(text: &str, replacements: &[(&str, String)]) -> String {
+    let mut out = text.to_owned();
+    for (from, to) in replacements {
+        out = out.replace(from, to);
+    }
+    expand_repeat(&out)
+}
+
+// `{{repeat:C:N}}` expands to the single character C repeated N times.
+fn expand_repeat(text: &str) -> String {
+    let mut out = text.to_owned();
+    while let Some(start) = out.find("{{repeat:") {
+        let rest = &out[start + "{{repeat:".len()..];
+        let end = rest.find("}}").expect("repeat terminator");
+        let (character, count) = rest[..end].split_once(':').expect("repeat spec");
+        let expanded = character.repeat(count.parse().expect("repeat count"));
+        out = format!("{}{expanded}{}", &out[..start], &rest[end + 2..]);
+    }
+    out
+}
+
+fn mask_json_string_value(text: &str, key: &str, replacement: &str) -> String {
+    let needle = format!("\"{key}\":\"");
+    let mut out = String::new();
+    let mut rest = text;
+    loop {
+        let Some(index) = rest.find(&needle) else {
+            out.push_str(rest);
+            return out;
+        };
+        let start = index + needle.len();
+        let Some(end) = rest[start..].find('"') else {
+            out.push_str(rest);
+            return out;
+        };
+        out.push_str(&rest[..start]);
+        out.push_str(replacement);
+        rest = &rest[start + end..];
+    }
+}
+
+fn normalize_event_text(text: &str) -> String {
+    if !text.contains("\"kind\":\"") {
+        return text.to_owned();
+    }
+    let mut text = mask_json_string_value(text, "ts", "<ts>");
+    text = mask_json_string_value(&text, "sig", "<sig>");
+    text = mask_json_string_value(&text, "prev", "<prev>");
+    if text.contains("\"kind\":\"note.posted\"")
+        || text.contains("\"kind\":\"checkpoint.requested\"")
+    {
+        text = mask_json_string_value(&text, "id", "ev_<generated>");
+        text = mask_json_string_value(&text, "checkpoint_id", "chk_<generated>");
+    }
+    text
+}
+
+// Go builds `room_artifact_list` from a map, so the oracle sorts it by id.
+fn sort_artifact_refs(text: &str) -> String {
+    let Ok(items) = serde_json::from_str::<Vec<Box<serde_json::value::RawValue>>>(text) else {
+        return text.to_owned();
+    };
+    if items.is_empty() {
+        return text.to_owned();
+    }
+    let mut keyed = Vec::new();
+    for item in &items {
+        let probe: Value = serde_json::from_str(item.get()).expect("artifact ref");
+        let (Some(id), Some(_)) = (probe["id"].as_str(), probe["status"].as_str()) else {
+            return text.to_owned();
+        };
+        keyed.push((id.to_owned(), item.get().to_owned()));
+    }
+    keyed.sort_by(|left, right| left.0.cmp(&right.0));
+    format!(
+        "[{}]",
+        keyed
+            .into_iter()
+            .map(|(_, raw)| raw)
+            .collect::<Vec<_>>()
+            .join(",")
+    )
+}
+
+struct ScenarioContext<'a> {
+    scenario: &'a Value,
+    room: PathBuf,
+    artifact_root: PathBuf,
+}
+
+impl ScenarioContext<'_> {
+    fn normalize_output(&self, text: &str) -> String {
+        let mut out = text.to_owned();
+        if self.scenario["sort_artifact_lists"] == true {
+            out = sort_artifact_refs(&out);
+        }
+        if self.scenario["normalize_events"] == true {
+            out = normalize_event_text(&out);
+        }
+        let room = self.room.to_string_lossy().into_owned();
+        let root = self.artifact_root.to_string_lossy().into_owned();
+        if root != room {
+            out = out.replace(&root, "${ARTIFACT_ROOT}");
+        }
+        out.replace(&room, "${ROOM}")
+    }
+
+    fn normalize_tree(&self, value: &Value) -> Value {
+        match value {
+            Value::String(text) => Value::String(self.normalize_output(text)),
+            Value::Array(items) => {
+                Value::Array(items.iter().map(|item| self.normalize_tree(item)).collect())
+            }
+            Value::Object(map) => Value::Object(
+                map.iter()
+                    .map(|(key, item)| (key.clone(), self.normalize_tree(item)))
+                    .collect(),
+            ),
+            other => other.clone(),
+        }
+    }
+}
+
+fn identity_from_seed(seed: &[u8]) -> symroom_core::identity::Identity {
+    let seed = sha2::Sha256::digest(seed);
+    symroom_core::identity::identity_from_private_key("fixture", seed.as_slice())
+        .expect("fixed fixture identity")
+}
+
+/// Replays every scenario of a fixture file and returns the number of executed
+/// steps so a vacuous pass is rejected.
+fn replay_scenarios(fixture_name: &str, expected_steps: usize) -> usize {
+    let root = repo_root();
+    let fixture: Value = serde_json::from_slice(
+        &std::fs::read(root.join("testdata/port/room").join(fixture_name)).expect("fixture"),
+    )
+    .expect("valid fixture");
+    let scenarios = fixture["scenarios"].as_array().expect("scenarios");
+    let setups = fixture["setups"].as_object().expect("setups");
+    let fixture_identity = identity_from_seed(b"symroom-mcp-fixture-signing-seed");
+    let mutation_identity = identity_from_seed(b"symroom-mcp-mutation-seed");
+    let mut steps_run = 0;
+    for scenario in scenarios {
+        let name = scenario["name"].as_str().expect("scenario name");
+        let setup = &setups[scenario["setup"].as_str().expect("setup name")];
+        let room = materialize(setup);
+        // Every Go-signed setup line must verify under the Rust canonical form.
+        for line in setup["journal_lines"].as_array().into_iter().flatten() {
+            let event = symroom_core::event::Event::unmarshal_json_line(
+                line.as_str().expect("line").as_bytes(),
+            )
+            .expect("setup line parses");
+            event
+                .verify_signature(&fixture_identity.public_key)
+                .unwrap_or_else(|error| panic!("{name}: Go-signed setup line rejected: {error}"));
+        }
+        let artifact_root = if scenario["artifact_root"] == "testdata" {
+            root.join("testdata/port/room")
+        } else {
+            room.clone()
+        };
+        let context = ScenarioContext {
+            scenario,
+            room: room.clone(),
+            artifact_root: artifact_root.clone(),
+        };
+        let identity = (scenario["identity"] == true).then_some(&mutation_identity);
+        let replacements = [
+            ("${ROOM}", room.to_string_lossy().into_owned()),
+            (
+                "${ARTIFACT_ROOT}",
+                artifact_root.to_string_lossy().into_owned(),
+            ),
+            (
+                "${ARTIFACT}",
+                root.join("testdata/port/room/mcp-artifact.txt")
+                    .to_string_lossy()
+                    .into_owned(),
+            ),
+        ];
+        for step in scenario["steps"].as_array().expect("steps") {
+            let label = format!("{name}/{}", step["name"].as_str().unwrap_or("?"));
+            steps_run += 1;
+            if let Some(input) = step["input"].as_str() {
+                let input = substitute_text(input, &replacements);
+                let mut output = Vec::new();
+                let result = mcp::serve_io_with_identity(
+                    BufReader::new(Cursor::new(input.into_bytes())),
+                    &mut output,
+                    &room,
+                    &artifact_root,
+                    identity,
+                );
+                let error = result.err().map(|error| error.to_string());
+                assert_eq!(
+                    context.normalize_output(&String::from_utf8(output).expect("UTF-8 output")),
+                    step["output"].as_str().expect("expected output"),
+                    "{label}: stream bytes"
+                );
+                assert_eq!(
+                    error
+                        .map(|text| context.normalize_output(&text))
+                        .unwrap_or_default(),
+                    step["error"].as_str().expect("expected error"),
+                    "{label}: stream error"
+                );
+            } else {
+                let request = substitute_value(&step["request"], &replacements);
+                let body = serde_json::to_vec(&request).expect("request JSON");
+                let mut input = format!("Content-Length: {}\r\n\r\n", body.len()).into_bytes();
+                input.extend_from_slice(&body);
+                let mut output = Vec::new();
+                mcp::serve_io_with_identity(
+                    BufReader::new(Cursor::new(input)),
+                    &mut output,
+                    &room,
+                    &artifact_root,
+                    identity,
+                )
+                .unwrap_or_else(|error| panic!("{label}: serve failed: {error}"));
+                let frames = decode_frames(&output);
+                assert!(frames.len() <= 1, "{label}: {} frames", frames.len());
+                let actual = frames
+                    .first()
+                    .map_or(Value::Null, |frame| context.normalize_tree(frame));
+                assert_eq!(actual, step["response"], "{label}: response");
+            }
+        }
+        verify_scenario_journal(name, scenario, &room, &fixture_identity, &mutation_identity);
+        let _ = std::fs::remove_dir_all(room);
+    }
+    assert_eq!(steps_run, expected_steps, "{fixture_name}: executed steps");
+    steps_run
+}
+
+fn verify_scenario_journal(
+    name: &str,
+    scenario: &Value,
+    room: &Path,
+    fixture_identity: &symroom_core::identity::Identity,
+    mutation_identity: &symroom_core::identity::Identity,
+) {
+    let mut actual = serde_json::Map::new();
+    let mut entries = std::fs::read_dir(room.join("journal"))
+        .map(|entries| entries.map(|entry| entry.expect("entry").path()).collect())
+        .unwrap_or_else(|_| Vec::<PathBuf>::new());
+    entries.sort();
+    for path in entries {
+        let content = std::fs::read_to_string(&path).expect("journal file");
+        let lines = content
+            .trim_end_matches('\n')
+            .split('\n')
+            .collect::<Vec<_>>();
+        for (index, line) in lines.iter().enumerate() {
+            let event = symroom_core::event::Event::unmarshal_json_line(line.as_bytes())
+                .expect("journal event parses");
+            let key = if event.author == mutation_identity.member_id {
+                &mutation_identity.public_key
+            } else {
+                &fixture_identity.public_key
+            };
+            event
+                .verify_signature(key)
+                .unwrap_or_else(|error| panic!("{name}: journal signature rejected: {error}"));
+            let expected_prev = if index == 0 {
+                format!("sha256:{}", "0".repeat(64))
+            } else {
+                format!(
+                    "sha256:{}",
+                    hex::encode(sha2::Sha256::digest(lines[index - 1].as_bytes()))
+                )
+            };
+            assert_eq!(event.prev, expected_prev, "{name}: hash chain");
+            assert_eq!(event.seq, index as u64 + 1, "{name}: author sequence");
+        }
+        if scenario["normalize_events"] == true {
+            actual.insert(
+                path.file_name()
+                    .expect("name")
+                    .to_string_lossy()
+                    .into_owned(),
+                Value::Array(
+                    lines
+                        .iter()
+                        .map(|line| Value::String(normalize_event_text(line)))
+                        .collect(),
+                ),
+            );
+        }
+    }
+    if scenario["normalize_events"] == true {
+        let expected = scenario
+            .get("journal")
+            .cloned()
+            .unwrap_or_else(|| json!({}));
+        assert_eq!(
+            Value::Object(actual),
+            expected,
+            "{name}: journal side effects"
+        );
+    }
+}
+
+#[test]
+fn go_mcp_read_and_protocol_scenarios_match() {
+    let steps = replay_scenarios("mcp-parity.json", PARITY_STEPS);
+    assert!(steps > 100, "scenario replay must not be vacuous");
+}
+
+#[test]
+fn go_mcp_mutation_scenarios_match_journal_side_effects() {
+    let steps = replay_scenarios("mcp-mutations.json", MUTATION_STEPS);
+    assert!(steps > 60, "scenario replay must not be vacuous");
+}
+
+#[test]
+fn go_mcp_catalog_has_the_eight_room_tools_in_order_and_no_approval_tool() {
+    let fixture: Value = serde_json::from_slice(
+        &std::fs::read(repo_root().join("testdata/port/room/mcp-parity.json")).expect("fixture"),
+    )
+    .expect("valid fixture");
+    let tools = fixture["cases"][0]["response"]["result"]["tools"]
+        .as_array()
+        .expect("tools");
+    let names = tools
+        .iter()
+        .map(|tool| tool["name"].as_str().expect("name"))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        names,
+        [
+            "room_status",
+            "room_journal_tail",
+            "room_note_post",
+            "room_artifact_list",
+            "room_artifact_link",
+            "room_run_request",
+            "room_run_wait",
+            "room_checkpoint_request",
+        ]
+    );
+    assert!(!names.iter().any(|name| {
+        ["approve", "grant", "deny", "resolve", "start"]
+            .iter()
+            .any(|word| name.contains(word))
+    }));
 }

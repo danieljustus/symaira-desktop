@@ -3727,7 +3727,7 @@
       "identity": true,
       "artifact_root": "testdata",
       "normalize_events": true,
-      "symdesk_script": "exec sleep 3",
+      "symdesk_script": "printf '{\"document_id\":\"late\"}'; exec /bin/sleep 3",
       "sort_artifact_lists": true,
       "steps": [
         {
@@ -3813,6 +3813,101 @@
       "journal": {
         "mem_e29883d4924ab762.jsonl": [
           "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_stdin_is_null_device",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "IFS= read -r line; printf '{\"document_id\":\"stdin:%s\"}' \"$line\"",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"symdesk_id\":\"stdin:\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
         ]
       }
     },

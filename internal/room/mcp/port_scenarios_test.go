@@ -1111,7 +1111,13 @@ esac`, true),
 		symdeskScenario("mutation_artifact_symdesk_trailing_garbage", `printf '{"document_id":"doc_trailing"} x'`, false),
 		symdeskScenario("mutation_artifact_symdesk_null_document", `printf 'null'`, false),
 		symdeskScenario("mutation_artifact_symdesk_null_document_id", `printf '{"document_id":null}'`, false),
-		symdeskScenario("mutation_artifact_symdesk_timeout_is_one_second", `exec sleep 3`, false),
+		// A deadline-less runner would wait out the 3 s sleep and then exit 0, so
+		// it would record "late"; the 1 s deadline kills the child instead and
+		// discards the output (an absolute /bin/sleep: PATH holds only the fake).
+		symdeskScenario("mutation_artifact_symdesk_timeout_is_one_second", `printf '{"document_id":"late"}'; exec /bin/sleep 3`, false),
+		// Go runs the child with a nil Stdin (the null device). A child that
+		// inherits the server's stdin would read the client stream instead.
+		symdeskScenario("mutation_artifact_symdesk_stdin_is_null_device", `IFS= read -r line; printf '{"document_id":"stdin:%s"}' "$line"`, false),
 		{name: "mutation_artifact_dot_dot_prefixed_file_name", setup: "dotdot_file", identity: true, artifactRoot: "room", normalize: true, requests: []namedRequest{
 			tool(1, "room_artifact_link", map[string]any{"path": "${ROOM}/..name"}),
 			tool(2, "room_artifact_link", map[string]any{"path": "${ROOM}/.name"}),

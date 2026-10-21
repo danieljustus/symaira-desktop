@@ -294,6 +294,115 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
     );
 }
 
+/// Go runs `symdesk inspect` with a nil `Stdin` (the null device). The in-process
+/// replay cannot prove this, because the JSON-RPC stream is a `Cursor` there, so
+/// the real server is started with the request on its piped stdin and the
+/// recorded fake-symdesk scenario decides what the child may have read.
+#[cfg(unix)]
+#[test]
+fn real_mcp_server_gives_the_symdesk_child_a_null_stdin() {
+    let root = repo_root();
+    let fixture: Value = serde_json::from_slice(
+        &std::fs::read(root.join("testdata/port/room/mcp-mutations.json")).expect("fixture"),
+    )
+    .expect("valid fixture");
+    let scenario = fixture["scenarios"]
+        .as_array()
+        .expect("scenarios")
+        .iter()
+        .find(|scenario| scenario["name"] == "mutation_artifact_symdesk_stdin_is_null_device")
+        .expect("stdin scenario");
+    let link = &scenario["steps"][0];
+    let recorded: Value = serde_json::from_str(
+        link["response"]["result"]["content"][0]["text"]
+            .as_str()
+            .expect("recorded event"),
+    )
+    .expect("recorded event JSON");
+    let expected_id = recorded["body"]["symdesk_id"].as_str().expect("symdesk_id");
+    assert_eq!(expected_id, "stdin:", "Go's child reads EOF from /dev/null");
+
+    let home = temporary_room("real-server-stdin-home");
+    let room = temporary_room("real-server-stdin-room");
+    let path_dir = temporary_room("real-server-stdin-path");
+    install_fake_symdesk(
+        &path_dir,
+        scenario["symdesk_script"].as_str().expect("script"),
+    );
+    let created = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .args(["identity", "create", "owner"])
+        .env("HOME", &home)
+        .env("XDG_DATA_HOME", &home)
+        .env("XDG_CONFIG_HOME", &home)
+        .output()
+        .expect("identity create");
+    assert!(created.status.success(), "identity create: {created:?}");
+    let artifact_root = root.join("testdata/port/room");
+    let mut child = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .arg("mcp")
+        .arg("--room")
+        .arg(&room)
+        .arg("--artifact-root")
+        .arg(&artifact_root)
+        .args(["--identity", "owner"])
+        .env("HOME", &home)
+        .env("XDG_DATA_HOME", &home)
+        .env("XDG_CONFIG_HOME", &home)
+        .env("PATH", &path_dir)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn symroom mcp");
+    let request = serde_json::to_vec(&json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {"name": "room_artifact_link", "arguments": {
+            "path": artifact_root.join("mcp-artifact.txt").to_string_lossy(),
+        }},
+    }))
+    .expect("request JSON");
+    // The client keeps its end of the pipe open until the response has been
+    // read: a child that inherited the server's stdin would block on this
+    // still-open stream until the one second deadline and record an empty id,
+    // instead of reading EOF from the null device immediately.
+    let mut stdin = child.stdin.take().expect("piped stdin");
+    write!(stdin, "Content-Length: {}\r\n\r\n", request.len()).expect("frame header");
+    stdin.write_all(&request).expect("frame body");
+    stdin.flush().expect("flush request");
+    let mut stdout = BufReader::new(child.stdout.take().expect("piped stdout"));
+    let mut content_length = 0_usize;
+    loop {
+        let mut line = String::new();
+        std::io::BufRead::read_line(&mut stdout, &mut line).expect("response header");
+        assert!(!line.is_empty(), "server closed stdout before responding");
+        let line = line.trim_end();
+        if line.is_empty() {
+            break;
+        }
+        if let Some(value) = line.strip_prefix("Content-Length: ") {
+            content_length = value.parse().expect("response length");
+        }
+    }
+    let mut body = vec![0_u8; content_length];
+    std::io::Read::read_exact(&mut stdout, &mut body).expect("response body");
+    drop(stdin);
+    let status = child.wait().expect("server exit");
+    let _ = std::fs::remove_dir_all(&home);
+    let _ = std::fs::remove_dir_all(&room);
+    let _ = std::fs::remove_dir_all(&path_dir);
+    assert!(status.success(), "server exit status: {status:?}");
+    let frame: Value = serde_json::from_slice(&body).expect("response frame");
+    let event: Value = serde_json::from_str(
+        frame["result"]["content"][0]["text"]
+            .as_str()
+            .expect("event text"),
+    )
+    .expect("event JSON");
+    assert_eq!(event["body"]["symdesk_id"], expected_id);
+}
+
 #[test]
 fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
     let room = temporary_room("stdio-hygiene");
@@ -542,7 +651,7 @@ fn mcp_cli_help_exits_successfully() {
 // ---------------------------------------------------------------------------
 
 const PARITY_STEPS: usize = 208;
-const MUTATION_STEPS: usize = 135;
+const MUTATION_STEPS: usize = 138;
 
 fn repo_root() -> PathBuf {
     let mut out = PathBuf::new();

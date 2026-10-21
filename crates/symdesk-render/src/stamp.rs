@@ -256,7 +256,7 @@ mod tests {
             Some(fixture.oracle.commit.as_str()),
             provenance["oracle"]["commit"].as_str()
         );
-        assert_eq!(fixture.oracle.go_version, "go1.26.9");
+        assert_eq!(fixture.oracle.go_version, "go1.26.10");
         assert_eq!(fixture.oracle.source, "internal/archive/archive.go");
         assert_eq!(fixture.oracle.source_sha256.len(), 64);
         for case in &fixture.cases {

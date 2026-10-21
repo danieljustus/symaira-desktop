@@ -61,7 +61,7 @@ type archiveStampPage struct {
 // and the error kind. It compares semantic facts, not bytes, because pdfcpu's
 // object layout cannot be reproduced exactly. Regenerate deliberately with:
 //
-//	PORT_RENDER_ARCHIVE_STAMP_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$'
+//	PORT_RENDER_ARCHIVE_STAMP_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$'
 //
 // Regeneration needs pdftotext. Windows has no Poppler in CI, so there the
 // test validates the stored oracle without regenerating it.
@@ -126,8 +126,8 @@ func TestPortArchiveStampFixture(t *testing.T) {
 
 func buildArchiveStampFixture(t *testing.T) archiveStampFixture {
 	t.Helper()
-	if runtime.Version() != "go1.26.9" {
-		t.Fatalf("archive stamp oracle requires Go go1.26.9, running %s", runtime.Version())
+	if runtime.Version() != "go1.26.10" {
+		t.Fatalf("archive stamp oracle requires Go go1.26.10, running %s", runtime.Version())
 	}
 	one := archiveStampInputPDF(t, 1)
 	two := archiveStampInputPDF(t, 2)

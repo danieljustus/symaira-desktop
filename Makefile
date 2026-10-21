@@ -697,10 +697,10 @@ render-archive-differential:
 # layout and geometry are not compared. Regeneration needs Poppler's pdftotext;
 # Windows validates the stored oracle without regenerating it.
 render-archive-stamp-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_STAMP_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_STAMP_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$'
 
 render-archive-stamp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked stamp
 
 dataset-aggregate-fixtures-generate:

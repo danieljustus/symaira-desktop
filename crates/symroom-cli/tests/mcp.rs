@@ -541,7 +541,7 @@ fn mcp_cli_help_exits_successfully() {
 // room-mcp-fixtures-generate target (internal/room/mcp/port_scenarios_test.go).
 // ---------------------------------------------------------------------------
 
-const PARITY_STEPS: usize = 206;
+const PARITY_STEPS: usize = 208;
 const MUTATION_STEPS: usize = 135;
 
 fn repo_root() -> PathBuf {

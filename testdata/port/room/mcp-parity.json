@@ -4090,6 +4090,20 @@
           "error": ""
         },
         {
+          "name": "error_invalid_content_length_invalid_utf8_first_header",
+          "response": null,
+          "input": "Content-Length: 1{{hex:ff}}2\r\n\r\n",
+          "output": "",
+          "error": "mcpserver: read error: invalid Content-Length: \"1\\xff2\""
+        },
+        {
+          "name": "error_invalid_content_length_invalid_utf8_later_header",
+          "response": null,
+          "input": "X-A: 1\r\nContent-Length: {{hex:e282}}\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "",
+          "error": "mcpserver: read error: invalid Content-Length: \"\\xe2\\x82\""
+        },
+        {
           "name": "frame_exactly_1mib",
           "response": null,
           "input": "Content-Length: 1048576\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\",\"pad\":\"{{repeat:a:1048527}}\"}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",

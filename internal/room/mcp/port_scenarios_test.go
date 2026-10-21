@@ -876,6 +876,8 @@ func jsonLayerStreams() []namedStream {
 		{"nesting_200_in_id", frameExpanded(`{"jsonrpc":"2.0","id":` + deep(200) + `,"method":"ping"}`)},
 		{"timeout_seconds_overflowing_float", frame(toolCall(10, "room_run_wait", `{"run_id":"run_missing","timeout_seconds":1e400}`))},
 		{"limit_overflowing_float", frame(toolCall(11, "room_journal_tail", `{"limit":1e400}`))},
+		{"error_invalid_content_length_invalid_utf8_first_header", "Content-Length: 1{{hex:ff}}2\r\n\r\n"},
+		{"error_invalid_content_length_invalid_utf8_later_header", "X-A: 1\r\nContent-Length: {{hex:e282}}\r\n\r\n" + ping},
 		{"frame_exactly_1mib", frameExpanded(exact(1<<20)) + frame(ping)},
 		{"line_exactly_1mib", exact(1<<20-1) + "\n" + ping + "\n"},
 		{"line_one_byte_over_1mib", exact(1<<20) + "\n"},

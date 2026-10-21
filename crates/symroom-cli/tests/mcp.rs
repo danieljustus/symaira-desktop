@@ -635,7 +635,7 @@ fn expand_hex(text: &str) -> Vec<u8> {
     let mut out = Vec::new();
     let mut rest = text;
     while let Some(start) = rest.find("{{hex:") {
-        out.extend_from_slice(rest[..start].as_bytes());
+        out.extend_from_slice(&rest.as_bytes()[..start]);
         let after = &rest[start + "{{hex:".len()..];
         let end = after.find("}}").expect("hex terminator");
         out.extend(

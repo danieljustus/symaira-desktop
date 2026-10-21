@@ -13,4 +13,5 @@ serde_json.workspace = true
 symdesk-vault.workspace = true
 noyalib.workspace = true
 lopdf = { version = "=0.46.0", default-features = false }
+base64.workspace = true
 time.workspace = true

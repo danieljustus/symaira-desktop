@@ -58,6 +58,7 @@
 .PHONY: render-export-fixtures-generate render-export-differential
 .PHONY: render-pdf-frontmatter-fixtures-generate render-pdf-frontmatter-differential
 .PHONY: render-archive-fixtures-generate render-archive-differential
+.PHONY: render-archive-stamp-fixtures-generate render-archive-stamp-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -105,6 +106,7 @@ override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_g
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_export_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_PDF_FRONTMATTER_GENERATE -u port_render_pdf_frontmatter_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_GENERATE -u port_render_archive_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_STAMP_GENERATE -u port_render_archive_stamp_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -113,7 +115,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-pdf-frontmatter-differential render-archive-differential render-pdfops-differential
+render-differential: render-export-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -683,6 +685,16 @@ render-archive-fixtures-generate:
 render-archive-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked archive
+
+# Text stamp semantics (page count, boxes, stamp recovery, error kinds). Byte
+# layout and geometry are not compared. Regeneration needs Poppler's pdftotext;
+# Windows validates the stored oracle without regenerating it.
+render-archive-stamp-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_STAMP_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$'
+
+render-archive-stamp-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked stamp
 
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'

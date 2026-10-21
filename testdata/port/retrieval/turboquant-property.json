@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "addb0ba615a435b89dbd690e923bf28bbafbc0e3",
+    "commit": "3845a99e1581ab03d10c2e8715200725798c45fd",
     "release": "renderer-pdf-safety-v2-local",
-    "go_version": "go1.26.9",
+    "go_version": "go1.26.10",
     "corekit_module": "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e",
     "corekit_sum": "h1:lEwB4izhkSVb8fREvaPOiXuVHx7CF6fymsYGC8O1bsc=",
     "scope": "Property corpus: 200 generated cases (dims 1..128 plus 768, all bit widths, full-range seeds, scales 1e-3..1e6). Encoded bytes and min/max are exact. Decoded components and scores are compared within the recorded tolerances, which bound the arm64 FMA-fusion difference against amd64 and any Rust rounding difference."

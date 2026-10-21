@@ -50,7 +50,7 @@ allow = ["ISC"]
 
 [[licenses.exceptions]]
 name = "rustls-webpki"
-version = "=0.103.15"
+version = "=0.103.16"
 allow = ["ISC"]
 
 [[licenses.exceptions]]
@@ -62,12 +62,12 @@ allow = ["ISC"]
 # these pinned root bundles retain the upstream license notice.
 [[licenses.exceptions]]
 name = "webpki-roots"
-version = "=1.0.9"
+version = "=1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 
 [[licenses.exceptions]]
 name = "webpki-root-certs"
-version = "=1.0.9"
+version = "=1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 
 [bans]

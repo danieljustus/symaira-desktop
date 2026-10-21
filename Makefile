@@ -177,20 +177,20 @@ docker-build:
 override PORTGEN_GENERATE_GO_ENV = env GOWORK=off GOENV=off GOFLAGS=-mod=readonly PORT_GENERATE=1 PORTGEN_FIXTURE_SOURCE_COMMIT=$(PORT_ORACLE_COMMIT) PORTGEN_FIXTURE_SOURCE_RELEASE=$(PORT_ORACLE_RELEASE)
 
 core-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/configgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/configgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/coregen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/coregen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/querygen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
 core-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/configgen --check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/coregen --check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/querygen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/configgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/coregen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen --check
 
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
@@ -199,10 +199,10 @@ core-differential: core-fixtures-check
 # Native Windows only: retain the recorded AMD64 bytes and compare fresh Go
 # observations on either architecture. Foreign hosts must not imply native PASS.
 config-verbatim-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/windows-config-paths-gen -check testdata/port/config/windows-verbatim-paths.json
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/windows-config-paths-gen -check testdata/port/config/windows-verbatim-paths.json
 
 config-verbatim-differential: config-verbatim-fixtures-check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/config
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/config
 	$(CARGO) test -p symdesk-core --all-features --locked
 	$(CARGO) test -p symdesk-cli --test ask_offline --locked
 
@@ -212,19 +212,19 @@ config-verbatim-differential: config-verbatim-fixtures-check
 # and the wrapped failure stage — and replays them in Rust. Regenerate the
 # fixture deliberately with `make config-save-fixtures-generate`.
 config-save-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/config -run TestPortConfigSaveContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/config -run TestPortConfigSaveContract
 
 config-save-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/config -run TestPortConfigSaveContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/config -run TestPortConfigSaveContract
 	$(CARGO) test -p symdesk-core --test config_save_contracts --locked
 
 # CFG-002 config precedence: replay the frozen Go loader results in Rust.
 config-precedence-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/config -run '^TestPortConfigPrecedenceContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/config -run '^TestPortConfigPrecedenceContract$$'
 	$(CARGO) test -p symdesk-core --test config_precedence --locked
 
 config-vault-selection-differential: port-fixtures-check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestPortVaultSelectionCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortVaultSelectionCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
 
 .PHONY: config-paths-native config-paths-native-test
@@ -239,34 +239,34 @@ config-paths-native:
 	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/config_paths_native.py --evidence-dir "$(CONFIG_PATHS_EVIDENCE_DIR)" $(if $(CONFIG_PATHS_BUILD_LAUNCHER),--build-launcher "$(CONFIG_PATHS_BUILD_LAUNCHER)") $(if $(CONFIG_PATHS_ORACLE_WORKTREE),--oracle-worktree "$(CONFIG_PATHS_ORACLE_WORKTREE)")
 
 vault-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/vaultgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultfsgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/vaultfsgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/typedvaultgen
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run TestVaultResolutionInventory
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/vault -run TestMobileWriterFixture
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/typedvaultgen
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run TestVaultResolutionInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/vault -run TestMobileWriterFixture
 
 vault-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultgen --check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultfsgen --check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/typedvaultgen --check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run TestVaultResolutionInventory
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/vault -run TestMobileWriterFixture
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/vaultgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/vaultfsgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/typedvaultgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run TestVaultResolutionInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/vault -run TestMobileWriterFixture
 
 vault-read-differential: vault-fixtures-check
 	$(CARGO) test -p symdesk-vault --all-features --locked
 
 frontmatter-write-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/vaultwritegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/vaultwritegen --check
 	$(CARGO) test -p symdesk-vault --test frontmatter_write_contracts --locked
 
 # VAULT-004 write stack: the Go-owned filesystem harness for atomic writes,
@@ -274,564 +274,564 @@ frontmatter-write-differential:
 # Rust byte-for-byte (bytes, modes, hashes, file set, trash entry).
 # Regenerate the fixtures deliberately with `make vault-write-fixtures-generate`.
 vault-write-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/vault -run TestPortVaultWriteFilesystemContract
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run TestPortNoteOperationContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/vault -run TestPortVaultWriteFilesystemContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run TestPortNoteOperationContract
 
 vault-write-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/vault -run TestPortVaultWriteFilesystemContract
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run TestPortNoteOperationContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/vault -run TestPortVaultWriteFilesystemContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run TestPortNoteOperationContract
 	$(CARGO) test -p symdesk-vault --test filesystem_write_contracts --locked
 	$(CARGO) test -p symdesk-vault --test note_operations_contracts --locked
 
 notebook-write-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/notebookwritegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/notebookwritegen --check
 	$(CARGO) test -p symdesk-vault --test notebook_write_contracts --locked
 
 base-view-write-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/baseviewwritegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/baseviewwritegen --check
 	$(CARGO) test -p symdesk-vault --test base_view_write_contracts --locked
 
 vault-history-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 
 # Checkpoints and the trash lifecycle against the pinned Go oracle. The fixture
 # is Go-owned and only regenerated through the target above.
 vault-history-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 	$(CARGO) test -p symdesk-vault --test history_lifecycle_contracts --locked
 
 history-tasks-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestPortHistoryTasksCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHistoryTasksCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test history_tasks --locked
 
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.
 retention-rules-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retention -run TestPortRetentionRulesContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retention -run TestPortRetentionRulesContract
 	$(CARGO) test -p symdesk-vault --test retention_rules_contracts --locked
 
 # RUST-007 authoritative Markdown/CSV state and post-mutation rereads.
 # Generation is explicit; acceptance checks never rewrite frozen expectations.
 retention-state-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$'
 
 retention-state-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$' -v
 	$(CARGO) test -p symdesk-vault --test retention_state_contracts --locked
 
 vault-retention-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retention -run TestPortRetentionContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retention -run TestPortRetentionContract
 
 # Retention rules, evaluation and the proposal/history state files against the
 # pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.
 vault-retention-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retention -run TestPortRetentionContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retention -run TestPortRetentionContract
 	$(CARGO) test -p symdesk-vault --test retention_contracts --locked
 
 room-journal-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run TestPortRoomJournalContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run TestPortRoomJournalContract
 
 # SymRoom journal append and read-back (ROOM-002): the Go oracle records the
 # per-author chain, the Lamport ceiling and the appended bytes; the Rust replay
 # reproduces them. The fixture is only regenerated through the target above.
 room-journal-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run 'TestPortRoomJournal(Contract|Modes)'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run 'TestPortRoomJournal(Contract|Modes)'
 	$(CARGO) test -p symroom-core --locked --test journal_contracts
 
 room-run-projection-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
 
 room-run-projection-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
 	$(CARGO) test -p symroom-core --locked --test run_projection_contracts
 
 room-run-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
 
 room-run-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands
 
 room-run-wait-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
 
 room-run-wait-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands run_wait_matches_go_process_contract
 
 room-run-mutations-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
 
 room-run-mutations-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands run_request_start_cancel_match_go_process_contract
 
 room-note-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
 
 room-note-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test note_commands note_cli_matches_go_process_and_journal_contract
 
 room-decide-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
 
 room-decide-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test decide_commands
 
 room-identity-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
 
 room-identity-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract
 
 room-member-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortMemberCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortMemberCLIContract$$'
 
 room-member-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortMemberCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortMemberCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test member_commands
 
 room-grammar-process-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
 
 room-grammar-process-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortGrammarProcessContract$$'
 	$(CARGO) test -p symroom-cli --locked --test grammar_process
 
 room-mcp-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
 
 room-mcp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/mcp -run '^Test(SymRoomMCP(Representative|Mutation)Oracle|StdioStreamHygiene)$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/mcp -run '^Test(SymRoomMCP(Representative|Mutation)Oracle|StdioStreamHygiene)$$'
 	$(CARGO) test -p symroom-cli --locked --test mcp
 
 room-merge-read-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
 
 room-merge-read-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
 	$(CARGO) test -p symroom-core --locked --test merge_read_contracts
 
 room-index-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
 
 room-index-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
 	$(CARGO) test -p symroom-core --locked --test index_contracts
 
 room-index-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
 
 room-index-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test index_commands
 
 room-verify-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomVerifyContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomVerifyContract$$'
 
 room-verify-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomVerifyContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomVerifyContract$$'
 	$(CARGO) test -p symroom-core --locked --test verify_contracts
 
 room-verify-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortVerifyCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortVerifyCLIContract$$'
 
 room-verify-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortVerifyCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortVerifyCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test verify_commands
 
 room-log-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomLogContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomLogContract$$'
 
 room-log-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/journal -run '^TestPortRoomLogContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/journal -run '^TestPortRoomLogContract$$'
 	$(CARGO) test -p symroom-core --locked --test log_contracts
 
 room-log-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortLogCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortLogCLIContract$$'
 
 room-log-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortLogCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortLogCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test log_commands
 
 room-artifact-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
 
 room-artifact-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test artifact_commands
 
 room-artifact-identity-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
 
 room-artifact-identity-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test artifact_identity_commands
 
 room-watch-stream-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
 
 room-watch-stream-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
 	$(CARGO) test -p symroom-core --locked --test watch_stream_contracts
 
 room-brain-profile-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
 
 room-brain-profile-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test brain_profile_commands
 
 room-init-core-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run '^TestPortRoomInitContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run '^TestPortRoomInitContract$$'
 
 room-init-core-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run '^TestPortRoomInitContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run '^TestPortRoomInitContract$$'
 	$(CARGO) test -p symroom-core --locked --test room_init_contracts
 
 room-init-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
 
 room-init-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test init_commands
 
 room-watch-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
 
 room-watch-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test watch_commands
 
 room-doctor-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
 
 room-doctor-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test doctor_commands
 
 room-checkpoint-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
 
 room-checkpoint-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test checkpoint_commands
 
 retrieval-chunks-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
 
 retrieval-chunks-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_chunks
 
 retrieval-bm25-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
 
 retrieval-bm25-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
 
 source-differential:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	python3 scripts/rust-port/source-differential.py "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
 
 source-watch-differential:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	python3 scripts/rust-port/source-differential.py --watch "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
 
 retrieval-embedding-state-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 
 retrieval-embedding-state-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
 
 retrieval-hybrid-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
 
 retrieval-hybrid-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalHybridFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_hybrid_contracts
 
 retrieval-pending-rebuild-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
 
 retrieval-pending-rebuild-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestPendingRebuildPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_pending_rebuild --test retrieval_embedding_state
 
 retrieval-sections-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
 
 retrieval-sections-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalSectionsFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_sections --test retrieval_chunks
 
 retrieval-embedding-http-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
 
 retrieval-embedding-http-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestEmbeddingHTTPPortFixture$$'
 	$(CARGO) test -p symdesk-protocol --locked --test retrieval_embedding
 
 retrieval-reembed-http-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
 
 retrieval-reembed-http-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestReembedHTTPPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_reembed_http
 
 retrieval-local-hash-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
 
 retrieval-local-hash-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked local_hash_tests
 
 retrieval-search-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
 
 retrieval-search-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestSearchCLIHybridOracle$$'
 	$(CARGO) test -p symdesk-cli --locked --test search_hybrid
 
 retrieval-search-mcp-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
 
 retrieval-search-mcp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/mcp -run '^TestSearchHybridMCPOracle$$'
 	$(CARGO) test -p symdesk-cli --locked --test mcp_search_hybrid
 
 retrieval-ask-offline-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
 
 retrieval-ask-offline-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestAskHybridOfflineOracle$$'
 	$(CARGO) test -p symdesk-cli --locked --test ask_offline
 
 retrieval-ask-mcp-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
 
 retrieval-ask-mcp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/mcp -run '^TestAskOfflineMCPOracle$$'
 	$(CARGO) test -p symdesk-cli --locked --test mcp_ask_offline
 
 retrieval-vector-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 
 retrieval-vector-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
 
 # Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, Rust replay,
 # and the Go decoder reading Rust-written sidecars.
 retrieval-turboquant-differential:
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-gen --check
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/turboquant-gen --check
 	$(CARGO) test -p symdesk-index --locked --test turboquant_codec
 	$(CARGO) test -p symdesk-index --locked --test turboquant_property
-	GOTOOLCHAIN=go1.26.9 go test -count=1 -run '^TestGoReadsRustSidecars$$' ./scripts/rust-port/cmd/turboquant-gen
+	GOTOOLCHAIN=go1.26.10 go test -count=1 -run '^TestGoReadsRustSidecars$$' ./scripts/rust-port/cmd/turboquant-gen
 
 # Go vs Rust p95/throughput; a Rust regression above 10% exits nonzero.
 TURBOQUANT_BENCH_REPORT ?= docs/rust-port/turboquant-benchmark.md
 retrieval-turboquant-benchmark:
 	$(CARGO) build --release --locked -p symdesk-index --bin turboquant-bench
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/turboquant-bench --rust-bin "$(RUST_TARGET_DIR)/release/turboquant-bench" --report "$(TURBOQUANT_BENCH_REPORT)"
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/turboquant-bench --rust-bin "$(RUST_TARGET_DIR)/release/turboquant-bench" --report "$(TURBOQUANT_BENCH_REPORT)"
 
 render-ir-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/renderirgen
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen
 
 render-ir-differential:
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/renderirgen --check
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	$(CARGO) test -p symdesk-render --locked
 
 # Pure noteToHTML parity is paired with the pinned production Go integrity
 # gate. Cargo alone compares HTML bytes and digest syntax, not digest values.
 render-html-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_HTML_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_HTML_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$'
 
 render-html-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderHTMLFixture$$' -v
 
 render-html-differential: render-html-fixtures-check
 	$(CARGO) test -p symdesk-render --locked
 
 # Search-result Markdown, view tables and plain links (RENDER-002 pure core).
 render-export-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_EXPORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$'
 
 render-export-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked export_markdown
 
 # PDF frontmatter block emitted before typesetting (RENDER-002 PDF path).
 render-pdf-frontmatter-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_PDF_FRONTMATTER_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_PDF_FRONTMATTER_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$$'
 
 render-pdf-frontmatter-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked export_pdf
 
 dataset-aggregate-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
 
 dataset-aggregate-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
 	$(CARGO) test -p symdesk-index --locked --test dataset_aggregate_contract
 
 index-backup-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
 
 index-backup-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_backup
 
 index-restore-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
 
 index-restore-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_restore
 
 index-relocate-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexRelocatePortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexRelocatePortFixture$$'
 
 index-relocate-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexRelocatePortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexRelocatePortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_relocate
 
 index-location-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
 
 index-location-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_location
 
 index-maintenance-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
 
 index-maintenance-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_maintenance
 
 index-build-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
 
 index-build-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_build
 
 index-retrieval-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
 
 index-retrieval-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_retrieval
 
 room-run-approval-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
 
 room-run-approval-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_approval_commands
 
 history-prune-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
 
 history-prune-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_prune_contracts
 
 history-service-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
 
 history-service-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
 	$(CARGO) test -p symdesk-index --locked --test history_service_contract
 
 history-purge-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
 
 history-purge-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_purge_contracts
 
 history-trash-purge-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrashPurgeContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrashPurgeContract$$'
 
 history-trash-purge-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrash(PurgeContract|MixedSelectorSafetyDelta)$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrash(PurgeContract|MixedSelectorSafetyDelta)$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_trash_purge_contracts
 
 dataset-purge-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
 
 dataset-purge-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
 	$(CARGO) test -p symdesk-index --locked --test dataset_purge_contract
 
 dataset-sync-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'
 
 dataset-sync-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/service -run '^TestPortDataset'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDataset'
 	$(CARGO) test -p symdesk-vault --locked --test dataset_contracts
 	$(CARGO) test -p symdesk-index --locked --test dataset_service_contracts
 	$(CARGO) test -p symdesk-index --locked --test dataset_import_contracts
 
 dataset-cli-differential:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/diffharness \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
 		--cases "testdata/port/dataset/cli.json" --stage dataset-cli
 
 symroom-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
 
 # Room identity and signed events against the pinned Go oracle (ROOM-001). The
 # fixture is Go-owned and only regenerated through the target above.
 symroom-differential:
-	GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
+	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
 	$(CARGO) test -p symroom-core --test identity_events_contracts --locked
 
 sidecar-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
-	$(PORTGEN_GENERATE_GO_ENV) PORTGEN_SIDECAR_ORACLE_COMMIT=$(PORTGEN_SIDECAR_ORACLE_COMMIT) PORTGEN_SIDECAR_ORACLE_RELEASE=$(PORTGEN_SIDECAR_ORACLE_RELEASE) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
+	$(PORTGEN_GENERATE_GO_ENV) PORTGEN_SIDECAR_ORACLE_COMMIT=$(PORTGEN_SIDECAR_ORACLE_COMMIT) PORTGEN_SIDECAR_ORACLE_RELEASE=$(PORTGEN_SIDECAR_ORACLE_RELEASE) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
 
 sidecar-metadata-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/sidecar -run TestPortSidecarMetadataContract
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/sidecar -run TestPortSidecarMetadataContract
 
 # Per-vault sidecar metadata side effects (issue #1006): the Go oracle records
 # `metadata.json`'s byte encoding and the durable directory contents, the Rust
 # replay reproduces both.
 sidecar-metadata-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/sidecar -run 'TestPortSidecarMetadata(Contract|Modes)'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/sidecar -run 'TestPortSidecarMetadata(Contract|Modes)'
 	$(CARGO) test -p symdesk-index --locked --test metadata_contracts
 
 sidecar-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract|MetadataContract|MetadataModes)'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract|MetadataContract|MetadataModes)'
 
 sidecar-differential: sidecar-fixtures-check
-	SIDECAR_NATIVE=0 GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/sidecar-roundtrip
+	SIDECAR_NATIVE=0 GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 	$(CARGO) test -p symdesk-index --all-features --locked
 
 # Full local/native gate. Lock and permission semantics are deliberately not
 # part of the routine Ubuntu PR lane; native CI invokes this target directly.
 sidecar-roundtrip:
-	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/sidecar-roundtrip
+	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
 port-fixtures-generate:
-	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/portgen \
+	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE) \
 		--fixture-oracle-commit $(PORT_ORACLE_COMMIT) \
@@ -841,17 +841,17 @@ port-fixtures-generate:
 # in a disposable worktree; the invoking checkout is not modified.
 port-fixtures-apply:
 	@test -n "$(PORT_FIXTURES_ARTIFACT)" || { echo "set PORT_FIXTURES_ARTIFACT to a reviewed port-fixture patch" >&2; exit 2; }
-	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/portgen \
+	@$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/portgen \
 		--apply-artifact "$(PORT_FIXTURES_ARTIFACT)"
 
 port-fixtures-check: core-fixtures-check vault-fixtures-check sidecar-fixtures-check
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/portgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/portgen --check
 
 differential-go-selftest:
 	@mkdir -p bin
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="$(ROOM_LDFLAGS)" -o bin/symroom ./cmd/symroom
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/diffharness \
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="$(ROOM_LDFLAGS)" -o bin/symroom ./cmd/symroom
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
 		--allow-same-binary \
 		--symdesk-left "bin/symdesk" --symdesk-right "bin/symdesk" \
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
@@ -869,19 +869,19 @@ port-contract-frozen:
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential dataset-sync-differential retention-state-differential retrieval-turboquant-differential
 
 representative-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/representativegen
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/representativegen
 
 representative-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/representativegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/representativegen --check
 
 # VAULT-006 CLI slice: the Go and Rust `symdesk retention` command trees are run
 # on the same synthetic vault and compared on stdout, stderr, exit code and the
 # written vault files.
 retention-cli-differential:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/diffharness \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
 		--cases "testdata/port/cli/retention-cases.json" --stage retention --show-mismatch-output
 
@@ -890,15 +890,15 @@ retention-cli-regressions-test:
 
 representative-differential: representative-fixtures-check
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/diffharness \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
 		--cases "testdata/port/representative/cases.json" --stage representative
 		$(MAKE) http-differential PORT_LEFT="bin/port/symdesk-go" PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
 
 http-differential: representative-fixtures-check
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/httpdiff \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/httpdiff \
 		--left "$(PORT_LEFT)" --right "$(PORT_RIGHT)" \
 		--fixture "testdata/port/http/representative.json"
 
@@ -963,24 +963,24 @@ value-001: value-runtime-dirs
 		--output "$(VALUE_OUTPUT)"
 
 mcp-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/mcpgen
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpgen
 
 mcp-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/mcpgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpgen --check
 
 mcp-differential: mcp-fixtures-check
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/mcpdiff \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff \
 		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk"
 
 .PHONY: mcp-initialize-differential
 mcp-initialize-differential: mcp-fixtures-check
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/mcpdiff \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/mcpdiff \
 		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk" --case-prefix mcp001-
 
 .PHONY: history-differential
@@ -1013,10 +1013,10 @@ rust-security:
 
 rust-version-contract:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
-	GOTOOLCHAIN=go1.26.9 go build -ldflags="-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go ./cmd/symroom
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go ./cmd/symroom
 	SYMDESK_VERSION=0.12.2 SYMROOM_VERSION=0.12.2 $(CARGO) build --release --workspace --locked
-	GOTOOLCHAIN=go1.26.9 go run ./scripts/rust-port/cmd/diffharness \
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/release/symdesk" \
 		--symroom-left "bin/port/symroom-go" --symroom-right "$(RUST_TARGET_DIR)/release/symroom" \
 		--cases "$(PORT_CASES)" --stage version
@@ -1042,8 +1042,8 @@ clean:
 	rm -rf vendor/
 
 recipe-validate-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 
 recipe-validate-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test recipe_validate

@@ -34,8 +34,8 @@ func Current() inventory.Oracle {
 	if err := json.Unmarshal(data, &ref); err != nil {
 		panic(err)
 	}
-	if ref.SchemaVersion != 2 || ref.Compiler != "go1.26.9" || runtime.Version() != ref.Compiler {
-		panic("renderer requires reference v2 and Go1.26.9")
+	if ref.SchemaVersion != 2 || ref.Compiler != "go1.26.10" || runtime.Version() != ref.Compiler {
+		panic("renderer requires reference v2 and Go1.26.10")
 	}
 	if err := fixtureoracle.ValidateSource(root, ref.Oracle); err != nil {
 		panic(fmt.Errorf("renderer corrected reference: %w", err))

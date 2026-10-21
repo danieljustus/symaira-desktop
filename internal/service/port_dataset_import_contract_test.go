@@ -27,7 +27,7 @@ import (
 const (
 	portDatasetImportFixtureRel = "testdata/port/dataset/import.json"
 
-	portDatasetImportGoVersion = "go1.26.9"
+	portDatasetImportGoVersion = "go1.26.10"
 )
 
 var portDatasetImportOracleCommit = func() string { return fixtureoracle.Current().Commit }

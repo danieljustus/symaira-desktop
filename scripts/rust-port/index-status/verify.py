@@ -38,7 +38,7 @@ def main() -> int:
     output.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ)
     env.update(PYTHONDONTWRITEBYTECODE="1", CARGO_TARGET_DIR=str(output / "cargo-target"),
-               GOTOOLCHAIN="go1.26.9", GOENV="off", GOWORK="off", GOFLAGS="-mod=readonly", CGO_ENABLED="0")
+               GOTOOLCHAIN="go1.26.10", GOENV="off", GOWORK="off", GOFLAGS="-mod=readonly", CGO_ENABLED="0")
     report = {"passed": False, "commands": [], "native_os": platform.system(),
               "native_arch": platform.machine(), "sources_before": source_manifest()}
 

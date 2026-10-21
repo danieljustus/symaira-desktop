@@ -21,7 +21,7 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "826373e4e4c071e6c5ad8333de40617f2935119cc5d0c53c7afbce3401e08e5f",
+        "3620f28f6905843fd98e7b0a8a9f74abb096f0613b52d898935dfbb3c05bf9fc",
     ),
     (
         "go.sum",

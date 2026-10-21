@@ -141,7 +141,7 @@ def main():
     # Resolve real compilers before HOME isolation; shims may consult user config.
     go_root = Path(subprocess.check_output(
         ['go', 'env', 'GOROOT'], text=True,
-        env=dict(os.environ, GOTOOLCHAIN='go1.26.9', GOENV='off', GOWORK='off'),
+        env=dict(os.environ, GOTOOLCHAIN='go1.26.10', GOENV='off', GOWORK='off'),
     ).strip()).resolve()
     rustc = Path(subprocess.check_output(
         ['rustup', 'which', '--toolchain', '1.98.0', 'rustc'], text=True,
@@ -188,7 +188,7 @@ def main():
     try:
         suffix = '.exe' if os.name == 'nt' else ''
         oracle = runtime / ('pdfops-go'+suffix)
-        assert run(['go','version'],'go-version',build=True).startswith(b'go version go1.26.9 ')
+        assert run(['go','version'],'go-version',build=True).startswith(b'go version go1.26.10 ')
         assert run(['rustc','--version'],'rust-version',build=True).startswith(b'rustc 1.98.0 ')
         run(['go','run','./scripts/rust-port/pdfops/print_ranges','--check'],'go-print-ranges',build=True)
         metadata = json.loads(run(['cargo','metadata','--manifest-path',str(ROOT/'Cargo.toml'),'--no-deps','--format-version','1'],'cargo-metadata',build=True))
@@ -200,7 +200,7 @@ def main():
         run(['cargo','build','--manifest-path',str(ROOT/'Cargo.toml'),'--locked','-p','symdesk-render','--examples'],'build-rust',build=True)
         identity = json.loads(run([str(oracle),'--identity'],'oracle-identity'))
         report['oracle'] = identity
-        assert identity['compiler'] == 'go1.26.9'
+        assert identity['compiler'] == 'go1.26.10'
         reference = json.loads((ROOT/'scripts/rust-port/pdfops/reference-v2.json').read_text())
         assert reference['schema_version'] == 2 and identity['oracle'] == reference['oracle']
         report['reference'] = reference

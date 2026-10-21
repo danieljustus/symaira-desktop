@@ -45,7 +45,7 @@ type pdfFrontmatterCase struct {
 // TestPortRenderPDFFrontmatterFixture captures pdfFrontmatter from Go itself.
 // Regenerate deliberately with:
 //
-//	PORT_RENDER_PDF_FRONTMATTER_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$'
+//	PORT_RENDER_PDF_FRONTMATTER_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderPDFFrontmatterFixture$'
 func TestPortRenderPDFFrontmatterFixture(t *testing.T) {
 	fixture := buildPDFFrontmatterFixture(t)
 	encoded, err := encodePDFFrontmatterFixture(fixture)

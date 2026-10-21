@@ -16,7 +16,7 @@ The live test-only Go driver calls the actual Go adapter and `internal/ingest`
 facade. Its `fixtureoracle.Current()` validates all Go production inputs against
 the central portgen source identity. The Python gate freezes all tracked and
 untracked build/harness inputs before execution, checks the actual Cargo root,
-pins Go 1.26.9/Rust 1.98.0, hashes the built executables and checks input identity
+pins Go 1.26.10/Rust 1.98.0, hashes the built executables and checks input identity
 again afterward. It never generates expected Go responses by hand or overwrites
 an older capture.
 
@@ -79,7 +79,7 @@ differences or claim that this proves a running deadline's exact timing.
 `pdfops-04` passed 111 PDF pairs, 13 press pairs, 23 Go PDF adapter tests, two
 facade tests, 12 Go press tests, four renderer tests (zero skipped), six comparator
 rejection controls, IR/HTML checks, strict all-target/all-feature Clippy and fmt.
-All 264 commands exited zero. The actual Go 1.26.9 and Rust 1.98.0 compiler paths
+All 264 commands exited zero. The actual Go 1.26.10 and Rust 1.98.0 compiler paths
 are resolved before HOME isolation; compiler hashes and the allowlisted build
 environment are included in the report. This is library/facade acceptance only,
 not shipped Rust CLI/MCP behavior or Typst rendering.

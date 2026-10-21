@@ -113,7 +113,7 @@ func buildPortDatasetQueryAggregateFixture(t *testing.T) (portDatasetQueryAggreg
 		SchemaVersion: 1,
 		Oracle: portDatasetQueryAggregateOracle{
 			Commit: portDatasetQueryAggregateOracleCommit(), Release: portDatasetQueryAggregateOracleRelease(),
-			ModuleGo: "1.26.9", Toolchain: "go1.26.9",
+			ModuleGo: "1.26.10", Toolchain: "go1.26.10",
 		},
 		Dataset: "orders", Rows: rows, Query: query, Result: result,
 	}

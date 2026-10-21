@@ -294,7 +294,7 @@
     },
     "cargo test -p symroom-cli --locked --test mcp": {
       "ignored": 0,
-      "passed": 7
+      "passed": 8
     },
     "cargo test -p symroom-cli --locked --test member_commands": {
       "ignored": 0,

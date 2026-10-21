@@ -146,7 +146,7 @@ fn contacts_and_ingest_paths_match_native_go() {
     let stderr = fs::File::create(root.join("go.stderr.log")).expect("retain producer stderr");
     let status = Command::new("go")
         .current_dir(crate_root)
-        .env("GOTOOLCHAIN", "go1.26.9")
+        .env("GOTOOLCHAIN", "go1.26.10")
         .env("CGO_ENABLED", "0")
         .arg("run")
         .arg(repository.join("scripts/rust-port/cmd/configgen"))
@@ -183,7 +183,7 @@ fn contacts_and_ingest_paths_match_native_go() {
         fixture.complete,
         "partial Go observations never certify parity"
     );
-    assert_eq!(fixture.go_version, "go1.26.9");
+    assert_eq!(fixture.go_version, "go1.26.10");
     assert_eq!(
         fixture.goos,
         if cfg!(target_os = "macos") {

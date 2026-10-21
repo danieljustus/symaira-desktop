@@ -119,7 +119,7 @@ func generateProperty() ([]byte, error) {
 		Oracle: oracleSource{
 			Commit:     fixtureoracle.Current().Commit,
 			Release:    fixtureoracle.Current().Release,
-			GoVersion:  "go1.26.9",
+			GoVersion:  "go1.26.10",
 			Corekit:    "github.com/danieljustus/symaira-corekit/v0.18.3-0.20261012110002-27d2daf8ec1e",
 			CorekitSum: "h1:lEwB4izhkSVb8fREvaPOiXuVHx7CF6fymsYGC8O1bsc=",
 			Scope: "Property corpus: 200 generated cases (dims 1..128 plus 768, all bit widths, full-range seeds, scales 1e-3..1e6). " +

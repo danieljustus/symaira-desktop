@@ -456,8 +456,10 @@ the Rust port after Go is deleted. It needs only Python 3 and Cargo:
   command as `live_only_tests`. The dataset service rejections are now frozen:
   Rust replays the committed `sync.json` ledger, which the Go gate
   (`TestPortDatasetImportServiceRejections`) checks against live Go. The store
-  paths capture and the history source materialization still run Go, because
-  they depend on per-OS native captures and oracle source import. Each skip must name exactly one listed test. The
+  paths capture still runs Go, because
+  they depend on per-OS native captures. The history source pin test now imports
+  the recorded oracle bundle through git, after checking its digest, so it no
+  longer runs Go. Each skip must name exactly one listed test. The
   output reports the frozen count and the corresponding live-mode count.
 - Mutation controls change one Go-recorded observation, such as a fixture byte
   covered by the provenance checksum or a recorded journal value. The runner

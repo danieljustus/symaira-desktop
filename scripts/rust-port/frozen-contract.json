@@ -194,10 +194,7 @@
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,
-      "live_only_tests": [
-        "test_pinned_source_hashes_match_canonical_git_blobs"
-      ],
-      "passed": 113
+      "passed": 114
     },
     "cargo test -p symdesk-vault --locked --test dataset_contracts": {
       "ignored": 0,

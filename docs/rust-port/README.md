@@ -453,7 +453,11 @@ the Rust port after Go is deleted. It needs only Python 3 and Cargo:
 - Targets without a Rust replay must be declared `live_only` with a reason.
   These targets compare two live binaries: diffharness, `mcpdiff`, `httpdiff`,
   source, history and pdfops. Rust tests that still execute Go are listed per
-  command as `live_only_tests`. Each skip must name exactly one listed test. The
+  command as `live_only_tests`. The dataset service rejections are now frozen:
+  Rust replays the committed `sync.json` ledger, which the Go gate
+  (`TestPortDatasetImportServiceRejections`) checks against live Go. The store
+  paths capture and the history source materialization still run Go, because
+  they depend on per-OS native captures and oracle source import. Each skip must name exactly one listed test. The
   output reports the frozen count and the corresponding live-mode count.
 - Mutation controls change one Go-recorded observation, such as a fixture byte
   covered by the provenance checksum or a recorded journal value. The runner
@@ -468,8 +472,8 @@ The CI job `Rust frozen contract (no Go)` deletes any preinstalled Go before it
 runs the target. The existing live targets (`port-contract` and the
 `*-differential` recipes) are unchanged and still verify fixtures against Go
 while Go remains in the tree. Freezing the live-only binary comparisons and the
-`live_only_tests` is a follow-up. Until then, they are named rather than
-silently skipped.
+`live_only_tests` that remain are follow-ups. Until then, they are named rather
+than silently skipped.
 
 ## Execution rule
 

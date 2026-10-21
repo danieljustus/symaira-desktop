@@ -37,6 +37,13 @@ pub(crate) fn look_path_in(name: &str, search_path: Option<&OsStr>) -> Option<Pa
         for candidate in names {
             let path = directory.join(candidate);
             if path.is_file() && is_executable(&path) {
+                // Go (>= 1.19) stops at the first executable hit and reports
+                // `ErrDot` for a relative one (`.`, an empty PATH element or
+                // any other relative directory); callers treat that as "not
+                // found" instead of running a binary from the cwd.
+                if !path.is_absolute() {
+                    return None;
+                }
                 return Some(path);
             }
         }
@@ -79,6 +86,9 @@ fn is_executable(path: &Path) -> bool {
 
 pub(crate) fn symdesk_command(path: &Path) -> Command {
     let mut command = Command::new(path);
+    // Go's `exec.Cmd` with a nil Stdin reads from the null device, so the child
+    // must never inherit the caller's stdin (the MCP JSON-RPC client stream).
+    command.stdin(Stdio::null());
     if let Some(path) = std::env::var_os("PATH") {
         command.env("PATH", path);
     }
@@ -149,6 +159,7 @@ pub(crate) fn inspect_symdesk_in(path: &Path, search_path: Option<&OsStr>) -> St
         .arg("inspect")
         .arg(path)
         .arg("--json")
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
@@ -187,5 +198,83 @@ pub(crate) fn inspect_symdesk_in(path: &Path, search_path: Option<&OsStr>) -> St
                 return String::new();
             }
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use std::{ffi::OsString, os::unix::fs::PermissionsExt};
+
+    use super::*;
+
+    fn write_executable(path: &Path) {
+        std::fs::write(path, "#!/bin/sh\nexit 0\n").expect("write fake tool");
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))
+            .expect("make fake tool executable");
+    }
+
+    /// Removes the probe file from the working directory even on a panic.
+    struct RemoveOnDrop(PathBuf);
+
+    impl Drop for RemoveOnDrop {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
+    #[test]
+    fn absolute_path_hit_is_found() {
+        let directory =
+            std::env::temp_dir().join(format!("symdesk-lookpath-abs-{}", std::process::id()));
+        std::fs::create_dir_all(&directory).expect("tool directory");
+        write_executable(&directory.join("symdesk"));
+        let found = look_path_in("symdesk", Some(directory.as_os_str()));
+        let _ = std::fs::remove_dir_all(&directory);
+        assert_eq!(found, Some(directory.join("symdesk")));
+    }
+
+    /// Go `exec.LookPath` returns `ErrDot` for a relative hit and does not keep
+    /// searching, which `desk.InspectPath` reports as "symdesk not found".
+    #[test]
+    fn dot_and_empty_path_elements_are_rejected_like_go_errdot() {
+        let name = format!("symdesk-relative-probe-{}", std::process::id());
+        let probe = std::env::current_dir().expect("cwd").join(&name);
+        let _guard = RemoveOnDrop(probe.clone());
+        write_executable(&probe);
+        for element in [".", ""] {
+            assert_eq!(
+                look_path_in(&name, Some(OsStr::new(element))),
+                None,
+                "PATH element {element:?} must not resolve to the working directory"
+            );
+        }
+        // The first hit decides: a later absolute directory is not consulted.
+        let absolute =
+            std::env::temp_dir().join(format!("symdesk-lookpath-later-{}", std::process::id()));
+        std::fs::create_dir_all(&absolute).expect("tool directory");
+        write_executable(&absolute.join(&name));
+        let mut joined = OsString::from(".");
+        joined.push(":");
+        joined.push(absolute.as_os_str());
+        let found = look_path_in(&name, Some(joined.as_os_str()));
+        let _ = std::fs::remove_dir_all(&absolute);
+        assert_eq!(found, None, "relative hit first: Go stops with ErrDot");
+    }
+
+    #[test]
+    fn other_relative_directories_are_rejected_too() {
+        let cwd = std::env::current_dir().expect("cwd");
+        let directory =
+            std::env::temp_dir().join(format!("symdesk-lookpath-rel-{}", std::process::id()));
+        std::fs::create_dir_all(&directory).expect("tool directory");
+        write_executable(&directory.join("symdesk"));
+        let mut relative = PathBuf::new();
+        for _ in cwd.components().skip(1) {
+            relative.push("..");
+        }
+        relative.push(directory.strip_prefix("/").expect("absolute temp dir"));
+        let found = look_path_in("symdesk", Some(relative.as_os_str()));
+        let _ = std::fs::remove_dir_all(&directory);
+        assert_eq!(found, None);
     }
 }

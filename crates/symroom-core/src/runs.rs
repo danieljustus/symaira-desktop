@@ -428,6 +428,7 @@ pub fn start(
         event_id,
         "run.started",
         body,
+        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
         now_timestamp(),
     )
 }
@@ -454,6 +455,7 @@ pub fn cancel(
         event_id,
         "run.cancelled",
         body,
+        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
         now_timestamp(),
     )
 }

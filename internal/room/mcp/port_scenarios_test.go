@@ -122,6 +122,47 @@ func buildPortSetups(t *testing.T) map[string]portSetup {
 		{"ev_html_1", event.KindNotePosted, `{"text":"<b>bold</b> & \"q\" \u00e9 \u2028 \u0008\u000c\u0001"}`},
 		{"ev_html_2", event.KindNotePosted, `{"text":"plain"}`},
 	})
+	ownerHex := hex.EncodeToString(fixtureSigningIdentity().PublicKey)
+	ownerToml := fmt.Sprintf("schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:%s\"\nroot_event = \"ev_root\"\n", ownerHex)
+	rootEvent := setupEvent{"ev_root", event.KindRoomCreated, fmt.Sprintf(`{"name":"Owner Room","public_key":"%s"}`, ownerHex)}
+	runRequest := func(id, title string) setupEvent {
+		return setupEvent{"ev_req_" + id, event.KindRunRequested, fmt.Sprintf(`{"run_id":"run_%s","title":"%s","plan_file":"plan.md","adapter":"local"}`, id, title)}
+	}
+	runEvent := func(kind, id, body string) setupEvent {
+		return setupEvent{fmt.Sprintf("ev_%s_%s", strings.ReplaceAll(kind, ".", "_"), id), kind, body}
+	}
+	setups["owner_room"] = signedSetup(t, &ownerToml, nil, []setupEvent{
+		rootEvent,
+		runRequest("ok", "Approved run"),
+		runEvent(event.KindRunApproved, "ok", `{"run_id":"run_ok","approval_id":"apr_1","scope":"run","expires_at":"2099-01-01T00:00:00Z"}`),
+		runRequest("cancel", "Cancelled run"),
+		runEvent(event.KindRunCancelled, "cancel", `{"run_id":"run_cancel","reason":"changed mind"}`),
+		runRequest("deny", "Denied run"),
+		runEvent(event.KindRunDenied, "deny", `{"run_id":"run_deny","reason":"not allowed <here> & now"}`),
+		runRequest("pending", "Pending run"),
+		runRequest("started", "Started run"),
+		runEvent(event.KindRunApproved, "started", `{"run_id":"run_started","approval_id":"apr_2","scope":"run"}`),
+		runEvent(event.KindRunStarted, "started", `{"run_id":"run_started"}`),
+		runRequest("done", "Finished run"),
+		runEvent(event.KindRunApproved, "done", `{"run_id":"run_done","approval_id":"apr_3","scope":"project"}`),
+		runEvent(event.KindRunStarted, "done", `{"run_id":"run_done"}`),
+		runEvent(event.KindRunFinished, "done", `{"run_id":"run_done","summary":"All <done>","artifacts":["a.txt","b.txt"]}`),
+		runRequest("failed", "Failed run"),
+		runEvent(event.KindRunApproved, "failed", `{"run_id":"run_failed","approval_id":"apr_4","scope":"run"}`),
+		runEvent(event.KindRunStarted, "failed", `{"run_id":"run_failed"}`),
+		runEvent(event.KindRunFailed, "failed", `{"run_id":"run_failed","error":"boom"}`),
+		runRequest("minimal", ""),
+		runEvent(event.KindRunApproved, "minimal", `{"run_id":"run_minimal"}`),
+	})
+	mutationHex := hex.EncodeToString(mutationSigningIdentity().PublicKey)
+	setups["observer_room"] = signedSetup(t, &ownerToml, nil, []setupEvent{
+		rootEvent,
+		{"ev_obs", event.KindMemberAdded, fmt.Sprintf(`{"id":"%s","name":"obs","public_key":"%s","role":"observer","kind":"human"}`, mutationSigningIdentity().MemberID, mutationHex)},
+	})
+	setups["member_room"] = signedSetup(t, &ownerToml, nil, []setupEvent{
+		rootEvent,
+		{"ev_mem", event.KindMemberAdded, fmt.Sprintf(`{"id":"%s","name":"mem","public_key":"%s","role":"member","kind":"agent"}`, mutationSigningIdentity().MemberID, mutationHex)},
+	})
 	setups["tail_30"] = signedSetup(t, &toml, nil, notes)
 	setups["artifacts"] = signedSetup(t, &toml, map[string]string{
 		"ok.txt":       "ok-content",
@@ -681,6 +722,19 @@ func parityScenarioSpecs() []scenarioSpec {
 		{name: "read_tools_empty_dir", setup: "empty_dir", requests: errorsOnly},
 		{name: "read_tools_room_toml_only", setup: "room_toml_only", requests: pick(0, 4, 5, 6, 18, 20, 27)},
 		{name: "read_tools_journal_only", setup: "journal_only", requests: pick(0, 4, 5, 6, 18, 20, 27)},
+		{name: "run_wait_projected_states", setup: "owner_room", requests: []namedRequest{
+			tool(1, "room_run_wait", map[string]any{"run_id": "run_ok", "timeout_seconds": 0.05}),
+			tool(2, "room_run_wait", map[string]any{"run_id": "run_cancel", "timeout_seconds": 0.05}),
+			tool(3, "room_run_wait", map[string]any{"run_id": "run_deny", "timeout_seconds": 0.05}),
+			tool(4, "room_run_wait", map[string]any{"run_id": "run_pending", "timeout_seconds": 0.05}),
+			tool(5, "room_run_wait", map[string]any{"run_id": "run_started", "timeout_seconds": 0.05}),
+			tool(6, "room_run_wait", map[string]any{"run_id": "run_done", "timeout_seconds": 0.05}),
+			tool(7, "room_run_wait", map[string]any{"run_id": "run_failed", "timeout_seconds": 0.05}),
+			tool(8, "room_run_wait", map[string]any{"run_id": "run_minimal", "timeout_seconds": 0.05}),
+			tool(9, "room_run_wait", map[string]any{"run_id": "run_unknown", "timeout_seconds": 0.05}),
+			tool(10, "room_run_wait", map[string]any{"run_id": "run_ok"}),
+			tool(11, "room_status", nil),
+		}},
 		{name: "html_escaping_in_signed_journal", setup: "html_notes", requests: []namedRequest{
 			tool(1, "room_journal_tail", nil),
 			tool(2, "room_journal_tail", map[string]any{"limit": 1}),
@@ -766,6 +820,18 @@ func mutationScenarioSpecs() []scenarioSpec {
 	return []scenarioSpec{
 		{name: "mutation_validation_errors", setup: "room_toml_only", identity: true, artifactRoot: "testdata", normalize: true, requests: validation, recordJournal: true},
 		{name: "mutation_success_sequence", setup: "room_toml_only", identity: true, artifactRoot: "testdata", normalize: true, requests: success, recordJournal: true},
+		{name: "mutation_observer_role", setup: "observer_room", identity: true, artifactRoot: "testdata", normalize: true, requests: []namedRequest{
+			tool(1, "room_note_post", map[string]any{"text": "observer note"}),
+			tool(2, "room_artifact_link", map[string]any{"path": "${ARTIFACT}"}),
+			tool(3, "room_run_request", map[string]any{"title": "observer run"}),
+			tool(4, "room_checkpoint_request", map[string]any{"run_id": "run_x", "question": "observer?"}),
+			tool(5, "room_status", nil),
+		}, recordJournal: true},
+		{name: "mutation_member_role", setup: "member_room", identity: true, artifactRoot: "testdata", normalize: true, requests: []namedRequest{
+			tool(1, "room_note_post", map[string]any{"text": "member note"}),
+			tool(2, "room_run_request", map[string]any{"title": "member run"}),
+			tool(3, "room_status", nil),
+		}, recordJournal: true},
 		{name: "mutation_after_existing_journal", setup: "fixture", identity: true, artifactRoot: "testdata", normalize: true, requests: []namedRequest{
 			tool(1, "room_note_post", map[string]any{"text": "joins existing room"}),
 			tool(2, "room_run_request", map[string]any{"title": "Second author run"}),

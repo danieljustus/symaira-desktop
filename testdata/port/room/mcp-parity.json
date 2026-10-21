@@ -353,6 +353,34 @@
         "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"id\":\"ev_run_denied\",\"kind\":\"run.denied\",\"lamport\":3,\"prev\":\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
       ]
     },
+    "owner_room": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"\nroot_event = \"ev_root\"\n",
+      "files": null,
+      "journal_file": "mem_2b5731693654b5d3.jsonl",
+      "journal_lines": [
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"name\":\"Owner Room\",\"public_key\":\"c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:RWPs3y5fQf0HMbVzNVn2bX0q6tNDhcM744VwSNoQElagg8rNB4DQWM/hoWPxFxXlfgEC7LlSOOCv3Pkhu85LBw==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_ok\",\"title\":\"Approved run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_ok\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"sha256:1dc3b035f3c72b7f83f29633f42d99e3fe437f0efba0c9be3afce0561a9b8106\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"ed25519:VzKBeDta8wRIq7hvmSpaC47jT0OxnjuOcXDA4TxoyPkOxcSXYv7IskB8jLAgeYimOJvV23PdNXmweeBbtMIdDg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_ok\",\"approval_id\":\"apr_1\",\"scope\":\"run\",\"expires_at\":\"2099-01-01T00:00:00Z\"},\"id\":\"ev_run_approved_ok\",\"kind\":\"run.approved\",\"lamport\":3,\"prev\":\"sha256:259d357cae0bfa3153503ad5bb827fd833260afbfe3bbf0274790887a1020ab7\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"ed25519:Yx9VGTmi7trXu4Vf+NthDmcUNL9xelPyNQXh2fazKiFO3BI3ojrSj8coIH6LfBeG5zlWLvRQHwws7GCM9omKAQ==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_cancel\",\"title\":\"Cancelled run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_cancel\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"sha256:681b4b67dde67574641abc9b32784aa05e00faacb1e34148ea600970e90c62a9\",\"room\":\"rm_fixture\",\"seq\":4,\"sig\":\"ed25519:iKT3jhsqLcxXtF0ThLft8PyVV0ev3it5gNMyUBMOs9aCJ6oPYnGyA8ruGu2YoqCeaAZNyqrKIwc+rvqumyqpDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_cancel\",\"reason\":\"changed mind\"},\"id\":\"ev_run_cancelled_cancel\",\"kind\":\"run.cancelled\",\"lamport\":5,\"prev\":\"sha256:029c6cc0837fef8acb2ae14ab7a26302e78b859373231deb2dd32ee3e4ac19d7\",\"room\":\"rm_fixture\",\"seq\":5,\"sig\":\"ed25519:vn6f2ZhylZnKwtmKbHjhceGG2WTljlUH5NftnPUSYpYYsXUaR0So3inuajxEc4R2+kmj3dOoY9ZInVgUbEVNDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_deny\",\"title\":\"Denied run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_deny\",\"kind\":\"run.requested\",\"lamport\":6,\"prev\":\"sha256:9f7049afc66ab61f4bf5405b0d050bd532ebcc9dc034b0318a1596ad95ca43f7\",\"room\":\"rm_fixture\",\"seq\":6,\"sig\":\"ed25519:99hn5C6G3k4VfbeHDO3x4AGBTEAs44BiVd1DRiCYZFCTaHxRUOpydHPvPg9ZAPQ6sKCw8X55wJUvlgtvxwllDQ==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_deny\",\"reason\":\"not allowed \\u003chere\\u003e \\u0026 now\"},\"id\":\"ev_run_denied_deny\",\"kind\":\"run.denied\",\"lamport\":7,\"prev\":\"sha256:34863924f863874bb7c9a7ac146c8de30a2028073bd65a268e6d99b92e3303fa\",\"room\":\"rm_fixture\",\"seq\":7,\"sig\":\"ed25519:sUwwCVCI9KZxSv2wHbtfA4sAsX2G+rVggtseM3Jmqh0iDcZrB61xQ2yT+idgb1paYS2WOfTgblvGQHhnZ/0pAA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_pending\",\"title\":\"Pending run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_pending\",\"kind\":\"run.requested\",\"lamport\":8,\"prev\":\"sha256:737d536ce0f246d84b7659288d7d07b7074d55892b2d69c5ea99f114e27dc2b1\",\"room\":\"rm_fixture\",\"seq\":8,\"sig\":\"ed25519:pSISgbqlYLaFHnnvEme1sM6+kOFQGwAXWL2RgEa7fTxjobboHrU/+ACx0g1ZurFHakLYUNJsLiR3Ki7xAWX+AA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_started\",\"title\":\"Started run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_started\",\"kind\":\"run.requested\",\"lamport\":9,\"prev\":\"sha256:f20e162d636e0099573ead71ab666cbb985b6502d7f8e9b8b549179364d94e67\",\"room\":\"rm_fixture\",\"seq\":9,\"sig\":\"ed25519:gmhPiSgBiDXW0T2ECKVHYV90sHoXsFp1MnBZGlxYp4duX2AG3QXmQMu3+v+SkoODw90PbUh+NF7oWeYtg/uyDg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_started\",\"approval_id\":\"apr_2\",\"scope\":\"run\"},\"id\":\"ev_run_approved_started\",\"kind\":\"run.approved\",\"lamport\":10,\"prev\":\"sha256:4690de7d31b1655bb6535c95a79a8aab6d5bd66ea72428cc1aa02cf76e591a17\",\"room\":\"rm_fixture\",\"seq\":10,\"sig\":\"ed25519:p3JYDA5FifjLq8/qEmS4brhlA00KrNNYHSL8sD1fXHTZzsPIUaa80HnmSAGmKsPyiTb2gsPVyKa7Pxte7xmYDw==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_started\"},\"id\":\"ev_run_started_started\",\"kind\":\"run.started\",\"lamport\":11,\"prev\":\"sha256:4069fc0cda1060d8cd4d7e26517a750566e3114176f0b91b2636784336de291b\",\"room\":\"rm_fixture\",\"seq\":11,\"sig\":\"ed25519:x5BLnoVsZtXRlh5fseZTfl0/6K9XtkxdM4EUXQoim2Z+EYx+9pQMRkogwfAJrRLBvCIzDRRQQAxTfrN3g/jSCA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_done\",\"title\":\"Finished run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_done\",\"kind\":\"run.requested\",\"lamport\":12,\"prev\":\"sha256:bcf68f8373711bd5c555d66c53ef02e5eb1441e422e599f53a78779dce767c57\",\"room\":\"rm_fixture\",\"seq\":12,\"sig\":\"ed25519:tNBR/u9dlNwLzJ5q2QLbkD056vvh2RlbeZMqgpqAK66fmmTH8IvIRl4dcj01MQnwFpKCS1N6OYZDY1nqXXlzCA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_done\",\"approval_id\":\"apr_3\",\"scope\":\"project\"},\"id\":\"ev_run_approved_done\",\"kind\":\"run.approved\",\"lamport\":13,\"prev\":\"sha256:01eb86401336b091296af9307cc72fe6ca13a76640191402bf06f713b60bdd54\",\"room\":\"rm_fixture\",\"seq\":13,\"sig\":\"ed25519:k7WpUQqHFz//D7QuC2C7CYMTAHF2gSIBZChVlgmrD5dWTjPdFtDTkIUhLlbX2CQNmCaj2iaoHM0Y+OM5FjObCA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_done\"},\"id\":\"ev_run_started_done\",\"kind\":\"run.started\",\"lamport\":14,\"prev\":\"sha256:dd8c957aaeeebada6d7c3c76b80a2ff947b9bc096c88a20a3652a7cd9e3f9d71\",\"room\":\"rm_fixture\",\"seq\":14,\"sig\":\"ed25519:KVOvUOIU8Efjx+92UJjokqIYKX+QqmT+ICdtSHq0EVvaRTyJ6O+PEyuP9RWATey6Pz2w35Q2nWxnx/kMJY+oBQ==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_done\",\"summary\":\"All \\u003cdone\\u003e\",\"artifacts\":[\"a.txt\",\"b.txt\"]},\"id\":\"ev_run_finished_done\",\"kind\":\"run.finished\",\"lamport\":15,\"prev\":\"sha256:df94df8c3eab73acc9075ba20a483f5d3a5f3a4efc234d2405633944db828a56\",\"room\":\"rm_fixture\",\"seq\":15,\"sig\":\"ed25519:BHTd2eVqQ7AK42tyG8uP+Z73vXTlLE8k7Vu/Nk3+XrGwEnUHxFOjEo7o2X6y6y2cFXeFaOX1+YyUTngH/f8kDg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_failed\",\"title\":\"Failed run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_failed\",\"kind\":\"run.requested\",\"lamport\":16,\"prev\":\"sha256:1e67e2bcbd89bd5a4eadece9c0ea7fdf3672fa3bc126ec478c54f8b44e400325\",\"room\":\"rm_fixture\",\"seq\":16,\"sig\":\"ed25519:W2XsFajFVHKyhe6fpQAO7oBfy36bX20BfJqwv1xNr5PvngMwLV+6YOTESxxp6OYdZgf2RnW7wBzXrB+VzisYBQ==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_failed\",\"approval_id\":\"apr_4\",\"scope\":\"run\"},\"id\":\"ev_run_approved_failed\",\"kind\":\"run.approved\",\"lamport\":17,\"prev\":\"sha256:9dfc6b0069ecda4816f3c27612753a37f55fb55e424a8f457d475fd3c1e38aad\",\"room\":\"rm_fixture\",\"seq\":17,\"sig\":\"ed25519:CJ/Q1Yt7vJZx+fqzLCDhG4CnqaBn1dBFLQcGanM/rgafxuiVify9H/QkrRCFpf3uMCAjMpmnVa1XL2HYycSrBg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_failed\"},\"id\":\"ev_run_started_failed\",\"kind\":\"run.started\",\"lamport\":18,\"prev\":\"sha256:c03c9eb8573f780577bfff4b5a84ca23604b47c8d8b32b083f1ca9cd708872c9\",\"room\":\"rm_fixture\",\"seq\":18,\"sig\":\"ed25519:521khmEJ5aZfVhE4k5cdLovy1xPWdrrkwi6mBX6a6UO1OdAJuh0eJh5CeuDYO1cBks3vmTMBx4D+P/z0cga0Ag==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_failed\",\"error\":\"boom\"},\"id\":\"ev_run_failed_failed\",\"kind\":\"run.failed\",\"lamport\":19,\"prev\":\"sha256:7277ebf640f221e9c9242e50c92d60f25ea3b91676b33effc4fe40f7313920e7\",\"room\":\"rm_fixture\",\"seq\":19,\"sig\":\"ed25519:OeappLqVyKlTP1Y+i5TsNWXHtslowJ/WxZlOiH+7kbdMQUrUbWgGXt2pDqAHjgUNzRJw2yNwLhEbLcmlL+GQAA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_minimal\",\"title\":\"\",\"plan_file\":\"plan.md\",\"adapter\":\"local\"},\"id\":\"ev_req_minimal\",\"kind\":\"run.requested\",\"lamport\":20,\"prev\":\"sha256:f72b5e6041b2a43e39bebd075bf7ca587bbc5b570b67d6113a0b84a9a18f0142\",\"room\":\"rm_fixture\",\"seq\":20,\"sig\":\"ed25519:BjpKUh1PF1CnLByPgeTRo/rLu9Tmpz9/zlYkQZpHcvJkHyPcQnafesIdKOWT7eelngct3EKVbf/67IAZMDFfAg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_minimal\"},\"id\":\"ev_run_approved_minimal\",\"kind\":\"run.approved\",\"lamport\":21,\"prev\":\"sha256:d4b72e3c027e15112ad60f02dcede201fa76ef6ba80db9f32fada6a0fd27991c\",\"room\":\"rm_fixture\",\"seq\":21,\"sig\":\"ed25519:E1KA1gDzkRXR/lZp4yDMa9bz1hAIN1t82BBp6b20xXB0RfNx4TIxCGcCBsPTcv1xu4Q2DI6I94TKk1S7e7vLCQ==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+      ]
+    },
     "room_toml_only": {
       "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n",
       "files": null,
@@ -3255,6 +3283,319 @@
                 }
               ],
               "isError": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "run_wait_projected_states",
+      "setup": "owner_room",
+      "identity": false,
+      "artifact_root": "room",
+      "normalize_events": false,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_run_wait#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_ok",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"id\":\"run_ok\",\"title\":\"Approved run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\",\"state\":\"approved\",\"author\":\"mem_2b5731693654b5d3\",\"created_at\":\"2026-09-01T00:00:00.000Z\",\"updated_at\":\"2026-09-01T00:00:00.000Z\",\"approval_id\":\"apr_1\",\"scope\":\"run\",\"expires_at\":\"2099-01-01T00:00:00Z\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_cancel",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run was denied: run cancelled",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_deny",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run was denied: not allowed \u003chere\u003e \u0026 now",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_pending",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "wait timed out before approval decision",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_started",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "wait timed out before approval decision",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#6",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_done",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "wait timed out before approval decision",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#7",
+          "request": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_failed",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "wait timed out before approval decision",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#8",
+          "request": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_minimal",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"id\":\"run_minimal\",\"title\":\"\",\"plan_file\":\"plan.md\",\"adapter\":\"local\",\"state\":\"approved\",\"author\":\"mem_2b5731693654b5d3\",\"created_at\":\"2026-09-01T00:00:00.000Z\",\"updated_at\":\"2026-09-01T00:00:00.000Z\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#9",
+          "request": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_unknown",
+                "timeout_seconds": 0.05
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "wait timed out before approval decision",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_wait#10",
+          "request": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_ok"
+              },
+              "name": "room_run_wait"
+            }
+          },
+          "response": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"id\":\"run_ok\",\"title\":\"Approved run\",\"plan_file\":\"plan.md\",\"adapter\":\"local\",\"state\":\"approved\",\"author\":\"mem_2b5731693654b5d3\",\"created_at\":\"2026-09-01T00:00:00.000Z\",\"updated_at\":\"2026-09-01T00:00:00.000Z\",\"approval_id\":\"apr_1\",\"scope\":\"run\",\"expires_at\":\"2099-01-01T00:00:00Z\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#11",
+          "request": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":21,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\",\"root_event\":\"ev_root\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
             }
           }
         }

@@ -16,6 +16,114 @@ use std::{
 use serde_json::{Value, json};
 use sha2::Digest;
 
+/// `<repo>/testdata/port/room` joined component by component. A single
+/// `join("testdata/port/room")` leaves `/` inside a Windows path, so the
+/// `${ARTIFACT_ROOT}` placeholder would not match the `\`-separated path the
+/// server reports in its errors.
+fn testdata_room_dir(root: &Path) -> PathBuf {
+    root.join("testdata").join("port").join("room")
+}
+
+/// The unix-recorded fixture error suffixes and the text Go's own Windows
+/// build prints for the same failure (`syscall.Errno.Error()`): a missing file
+/// is `ERROR_FILE_NOT_FOUND`, and reading a directory handle is
+/// `ERROR_INVALID_FUNCTION`.
+const GO_WINDOWS_ERROR_SUFFIXES: [(&str, &str); 2] = [
+    (
+        ": no such file or directory",
+        ": The system cannot find the file specified.",
+    ),
+    (": is a directory", ": Incorrect function."),
+];
+
+/// Rewrites exactly the fixture's recorded unix OS errors into Go's Windows
+/// wording, and the `/` separators of the `${...}` placeholder path directly
+/// in front of each, to `\`. Any other text is returned unchanged.
+fn windows_go_error_text(text: &str) -> String {
+    let mut out = text.to_owned();
+    for (unix, windows) in GO_WINDOWS_ERROR_SUFFIXES {
+        let mut rewritten = String::with_capacity(out.len());
+        let mut rest = out.as_str();
+        while let Some(index) = rest.find(unix) {
+            let head = &rest[..index];
+            let start = head
+                .char_indices()
+                .rev()
+                .find(|(_, c)| !(c.is_ascii_alphanumeric() || "._-/${}".contains(*c)))
+                .map_or(0, |(position, c)| position + c.len_utf8());
+            let (before, token) = head.split_at(start);
+            rewritten.push_str(before);
+            if token.starts_with("${") {
+                rewritten.push_str(&token.replace('/', "\\"));
+                rewritten.push_str(windows);
+            } else {
+                rewritten.push_str(token);
+                rewritten.push_str(unix);
+            }
+            rest = &rest[index + unix.len()..];
+        }
+        rewritten.push_str(rest);
+        out = rewritten;
+    }
+    out
+}
+
+/// The response a native run is expected to produce: the recorded fixture on
+/// Unix, the same fixture with Go's Windows error wording on Windows.
+fn expected_response(recorded: &Value) -> Value {
+    if cfg!(windows) {
+        translate_strings(recorded, &windows_go_error_text)
+    } else {
+        recorded.clone()
+    }
+}
+
+fn translate_strings(value: &Value, translate: &dyn Fn(&str) -> String) -> Value {
+    match value {
+        Value::String(text) => Value::String(translate(text)),
+        Value::Array(items) => Value::Array(
+            items
+                .iter()
+                .map(|item| translate_strings(item, translate))
+                .collect(),
+        ),
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, item)| (key.clone(), translate_strings(item, translate)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
+#[test]
+fn windows_wording_translation_is_narrow_and_runs_on_every_host() {
+    assert_eq!(
+        windows_go_error_text("read room.toml: open ${ROOM}/room.toml: no such file or directory"),
+        "read room.toml: open ${ROOM}\\room.toml: The system cannot find the file specified."
+    );
+    assert_eq!(
+        windows_go_error_text(
+            "compute sha256: open ${ARTIFACT_ROOT}/nonexistent.txt: no such file or directory"
+        ),
+        "compute sha256: open ${ARTIFACT_ROOT}\\nonexistent.txt: The system cannot find the file specified."
+    );
+    assert_eq!(
+        windows_go_error_text("compute sha256: read ${ARTIFACT_ROOT}: is a directory"),
+        "compute sha256: read ${ARTIFACT_ROOT}: Incorrect function."
+    );
+    // Only the known suffix after a `${...}` placeholder path changes; plain
+    // paths, unrelated slashes and other messages are left alone.
+    for untouched in [
+        "path is outside artifact root",
+        "open /tmp/x/y: no such file or directory",
+        "see ${ROOM}/a/b.txt for details",
+        "${ROOM}/room.toml",
+    ] {
+        assert_eq!(windows_go_error_text(untouched), untouched);
+    }
+}
+
 fn temporary_room(suffix: &str) -> PathBuf {
     let nonce = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -972,7 +1080,7 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
                 .unwrap_or_else(|error| panic!("{name}: Go-signed setup line rejected: {error}"));
         }
         let artifact_root = if scenario["artifact_root"] == "testdata" {
-            root.join("testdata/port/room")
+            testdata_room_dir(&root)
         } else {
             room.clone()
         };
@@ -996,7 +1104,8 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
             ),
             (
                 "${ARTIFACT}",
-                root.join("testdata/port/room/mcp-artifact.txt")
+                testdata_room_dir(&root)
+                    .join("mcp-artifact.txt")
                     .to_string_lossy()
                     .into_owned(),
             ),
@@ -1048,7 +1157,11 @@ fn replay_scenarios(fixture_name: &str, fixture_steps: usize) -> usize {
                 let actual = frames
                     .first()
                     .map_or(Value::Null, |frame| context.normalize_tree(frame));
-                assert_eq!(actual, step["response"], "{label}: response");
+                assert_eq!(
+                    actual,
+                    expected_response(&step["response"]),
+                    "{label}: response"
+                );
             }
         }
         verify_scenario_journal(

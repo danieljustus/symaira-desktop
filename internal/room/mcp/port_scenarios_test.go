@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
@@ -483,7 +484,63 @@ func normalizeOutput(s string, scenario *scenarioSpec, roomDir, artifactRoot str
 	if artifactRoot != roomDir {
 		s = strings.ReplaceAll(s, artifactRoot, "${ARTIFACT_ROOT}")
 	}
-	return strings.ReplaceAll(s, roomDir, "${ROOM}")
+	s = strings.ReplaceAll(s, roomDir, "${ROOM}")
+	return unixRecordedOSErrors(s, runtime.GOOS == "windows")
+}
+
+// windowsOSErrorSuffixes pairs the unix wording the fixtures were recorded with
+// against what Go's own Windows build prints for the same failure
+// (syscall.Errno.Error()): ERROR_FILE_NOT_FOUND for a missing file and
+// ERROR_INVALID_FUNCTION for reading a directory handle.
+var windowsOSErrorSuffixes = [...]struct{ unix, windows string }{
+	{": no such file or directory", ": The system cannot find the file specified."},
+	{": is a directory", ": Incorrect function."},
+}
+
+// unixRecordedOSErrors maps Go's Windows OS-error wording, and the `\`
+// separators of the `${...}` placeholder path in front of it, back to the unix
+// form the committed fixtures record, so the byte comparison stays meaningful
+// on Windows. Only the two known error suffixes that directly follow a
+// placeholder path are rewritten; all other text is untouched. The Rust replay
+// applies the inverse translation to the recorded fixture
+// (windows_go_error_text in crates/symroom-cli/tests/mcp.rs).
+func unixRecordedOSErrors(s string, windows bool) string {
+	if !windows {
+		return s
+	}
+	for _, suffix := range windowsOSErrorSuffixes {
+		var out strings.Builder
+		rest := s
+		for {
+			index := strings.Index(rest, suffix.windows)
+			if index < 0 {
+				break
+			}
+			head := rest[:index]
+			start := 0
+			if delimiter := strings.LastIndexFunc(head, func(r rune) bool { return !isPlaceholderPathRune(r) }); delimiter >= 0 {
+				_, width := utf8.DecodeRuneInString(head[delimiter:])
+				start = delimiter + width
+			}
+			out.WriteString(head[:start])
+			token := head[start:]
+			if strings.HasPrefix(token, "${") {
+				out.WriteString(strings.ReplaceAll(token, `\`, "/"))
+				out.WriteString(suffix.unix)
+			} else {
+				out.WriteString(token)
+				out.WriteString(suffix.windows)
+			}
+			rest = rest[index+len(suffix.windows):]
+		}
+		out.WriteString(rest)
+		s = out.String()
+	}
+	return s
+}
+
+func isPlaceholderPathRune(r rune) bool {
+	return r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune(`._-/\${}`, r)
 }
 
 func normalizeResponseTree(v any, scenario *scenarioSpec, roomDir, artifactRoot string) any {

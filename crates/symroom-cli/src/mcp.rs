@@ -1687,23 +1687,61 @@ fn run_wait(
     }
 }
 
-/// Go formats an OS error as `<op> <path>: <lower-case strerror>`.
+/// Go formats an OS error as `<op> <path>: <strerror>`. The wording is the
+/// host's: lower-case libc text on Unix, the Windows system message (capitalised,
+/// trailing period) on Windows. Go reports a directory read through the `read`
+/// operation, which `go_read_file` already reflects in `operation`.
 fn go_io_error(operation: &str, path: &Path, error: &io::Error) -> String {
+    format!(
+        "{operation} {}: {}",
+        path.display(),
+        go_os_message(error, cfg!(windows))
+    )
+}
+
+/// Go's `syscall.Errno.Error()` text for the OS errors this server surfaces.
+/// `windows` selects the host family so both wordings are unit-testable on any
+/// OS: Windows keeps FormatMessage text, everything else lower-cases libc's.
+fn go_os_message(error: &io::Error, windows: bool) -> String {
+    if windows {
+        match error.raw_os_error() {
+            Some(1) => return "Incorrect function.".to_owned(),
+            Some(2) => return "The system cannot find the file specified.".to_owned(),
+            Some(3) => return "The system cannot find the path specified.".to_owned(),
+            Some(5) => return "Access is denied.".to_owned(),
+            _ => {}
+        }
+    }
     let mut text = error.to_string();
     if let Some(index) = text.rfind(" (os error ") {
         text.truncate(index);
     }
+    if windows {
+        return text;
+    }
     let mut chars = text.chars();
-    let message = chars
+    chars
         .next()
         .map(|first| first.to_lowercase().collect::<String>() + chars.as_str())
-        .unwrap_or_default();
-    let operation = if error.raw_os_error() == Some(21) {
-        "read"
-    } else {
-        operation
-    };
-    format!("{operation} {}: {message}", path.display())
+        .unwrap_or_default()
+}
+
+/// Reads like Go's `os.ReadFile`, naming the failing operation. A directory
+/// opens (on Windows via backup semantics, as Go does) and then fails in
+/// `read`, so Go reports `read <dir>: ...` rather than an `open` failure.
+fn go_read_file(path: &Path) -> Result<Vec<u8>, (&'static str, io::Error)> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        options.custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
+    }
+    let mut file = options.open(path).map_err(|error| ("open", error))?;
+    let mut contents = Vec::new();
+    io::Read::read_to_end(&mut file, &mut contents).map_err(|error| ("read", error))?;
+    Ok(contents)
 }
 
 struct RoomConfig {
@@ -1716,16 +1754,12 @@ struct RoomConfig {
 /// Go `room.ReadRoomConfig`: line-based `key = value` parsing.
 fn read_room_config(room_dir: &Path) -> Result<RoomConfig, String> {
     let path = room_dir.join("room.toml");
-    let content = fs::read_to_string(&path)
-        .or_else(|error| {
-            // Go reads bytes, so invalid UTF-8 is not an error.
-            if error.kind() == io::ErrorKind::InvalidData {
-                fs::read(&path).map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
-            } else {
-                Err(error)
-            }
-        })
-        .map_err(|error| format!("read room.toml: {}", go_io_error("open", &path, &error)))?;
+    // Go reads bytes, so invalid UTF-8 is not an error.
+    let content = go_read_file(&path)
+        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+        .map_err(|(operation, error)| {
+            format!("read room.toml: {}", go_io_error(operation, &path, &error))
+        })?;
     let mut config = RoomConfig {
         id: String::new(),
         created: String::new(),
@@ -1839,8 +1873,12 @@ fn mutate_artifact(
     };
     let rel = make_relative_path(Path::new(&path), artifact_root)?;
     let absolute = join_under(artifact_root, &rel);
-    let contents = fs::read(&absolute)
-        .map_err(|error| format!("compute sha256: {}", go_io_error("open", &absolute, &error)))?;
+    let contents = go_read_file(&absolute).map_err(|(operation, error)| {
+        format!(
+            "compute sha256: {}",
+            go_io_error(operation, &absolute, &error)
+        )
+    })?;
     let hash = hex::encode(Sha256::digest(contents));
     let digest = hex::encode(Sha256::digest(format!("{rel}{hash}").as_bytes()));
     let artifact_id = format!("art_{}", &digest[..16]);
@@ -2121,4 +2159,72 @@ fn artifact_list(room_dir: &Path, artifact_root: &Path) -> Result<String, String
     Ok(go_html_escape(
         &serde_json::to_string(&refs).expect("artifact refs serialize"),
     ))
+}
+
+#[cfg(test)]
+mod go_io_tests {
+    use super::{go_io_error, go_os_message, go_read_file};
+    use std::io;
+
+    #[test]
+    fn os_messages_follow_the_go_wording_of_each_host_family() {
+        let not_found = io::Error::from_raw_os_error(2);
+        assert_eq!(
+            go_os_message(&not_found, true),
+            "The system cannot find the file specified."
+        );
+        assert_eq!(
+            go_os_message(&io::Error::from_raw_os_error(3), true),
+            "The system cannot find the path specified."
+        );
+        assert_eq!(
+            go_os_message(&io::Error::from_raw_os_error(5), true),
+            "Access is denied."
+        );
+        assert_eq!(
+            go_os_message(&io::Error::from_raw_os_error(1), true),
+            "Incorrect function."
+        );
+        #[cfg(unix)]
+        {
+            assert_eq!(
+                go_os_message(&not_found, false),
+                "no such file or directory"
+            );
+            assert_eq!(
+                go_os_message(&io::Error::from_raw_os_error(21), false),
+                "is a directory"
+            );
+        }
+    }
+
+    #[test]
+    fn missing_file_and_directory_reads_name_go_operations() {
+        let root = std::env::temp_dir().join(format!("symroom-go-io-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let missing = root.join("missing.txt");
+        let (operation, error) = go_read_file(&missing).unwrap_err();
+        assert_eq!(operation, "open");
+        let expected = if cfg!(windows) {
+            "The system cannot find the file specified."
+        } else {
+            "no such file or directory"
+        };
+        assert_eq!(
+            go_io_error(operation, &missing, &error),
+            format!("open {}: {expected}", missing.display())
+        );
+        let (operation, error) = go_read_file(&root).unwrap_err();
+        assert_eq!(operation, "read");
+        let expected = if cfg!(windows) {
+            "Incorrect function."
+        } else {
+            "is a directory"
+        };
+        assert_eq!(
+            go_io_error(operation, &root, &error),
+            format!("read {}: {expected}", root.display())
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }

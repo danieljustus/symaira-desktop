@@ -13,10 +13,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
@@ -48,12 +51,15 @@ type archiveStampWant struct {
 	Pages     []archiveStampPage `json:"pages"`
 }
 
-// Stamped means pdftotext recovers the page's stamp text. Width and height are
-// the MediaBox size from pdfcpu.
+// Stamped means pdftotext recovers the page's stamp text. Text is the sorted
+// letters and digits pdftotext recovers from the whole page, so it also pins
+// text that lands on a page it was not meant for. Width and height are the
+// MediaBox size from pdfcpu.
 type archiveStampPage struct {
 	Width   float64 `json:"width"`
 	Height  float64 `json:"height"`
 	Stamped bool    `json:"stamped"`
+	Text    string  `json:"text"`
 }
 
 // TestPortArchiveStampFixture captures Generate's stamp outcome for PDF inputs:
@@ -129,8 +135,10 @@ func buildArchiveStampFixture(t *testing.T) archiveStampFixture {
 	if runtime.Version() != "go1.26.10" {
 		t.Fatalf("archive stamp oracle requires Go go1.26.10, running %s", runtime.Version())
 	}
-	one := archiveStampInputPDF(t, 1)
-	two := archiveStampInputPDF(t, 2)
+	one := archiveStampInputPDF(t, 1, "")
+	two := archiveStampInputPDF(t, 2, "")
+	three := archiveStampInputPDF(t, 3, "")
+	a4 := archiveStampInputPDF(t, 1, "form:A4P, pos:c, sc:1")
 	fixture := archiveStampFixture{
 		SchemaVersion: 1,
 		Oracle: archiveContractOracle{
@@ -146,6 +154,17 @@ func buildArchiveStampFixture(t *testing.T) archiveStampFixture {
 			{ID: "two-pages-blank-text-no-stamp", InputPDF: two, OCRText: " \n\t "},
 			{ID: "two-pages-formfeed-text", InputPDF: two, OCRText: "fa\fbb"},
 			{ID: "two-pages-trailing-marker-single", InputPDF: two, OCRText: "x\n\n--- Page ---\n\n"},
+			// pdfcpu selects every page when a watermark names only pages the
+			// document does not have, so text for page 3 lands on both pages.
+			{ID: "two-pages-ocr-has-three-pages", InputPDF: two, OCRText: "a\n\n--- Page ---\n\nb\n\n--- Page ---\n\nc"},
+			{ID: "three-pages-blank-middle", InputPDF: three, OCRText: "a\n\n--- Page ---\n\n \n\n--- Page ---\n\nc"},
+			{ID: "two-pages-multiline-text", InputPDF: two, OCRText: "hello\nworld foo"},
+			{ID: "two-pages-latin1-text", InputPDF: two, OCRText: "Gr\u00fc\u00dfe"},
+			{ID: "two-pages-winansi-specials", InputPDF: two, OCRText: "5\u20ac \u201cq\u201d"},
+			{ID: "two-pages-tab-and-cr", InputPDF: two, OCRText: "a\tb\rc"},
+			{ID: "two-pages-unmappable-runes", InputPDF: two, OCRText: "\u65e5\u672c\u8a9e x \U0001F600"},
+			{ID: "two-pages-delimiters", InputPDF: two, OCRText: "a(b)c\\d"},
+			{ID: "a4-page-text", InputPDF: a4, OCRText: "hello world"},
 			{ID: "corrupt-input", InputPDF: base64.StdEncoding.EncodeToString([]byte("%PDF-1.4\ngarbage")), OCRText: "hello"},
 		},
 	}
@@ -161,7 +180,7 @@ func buildArchiveStampFixture(t *testing.T) archiveStampFixture {
 
 // archiveStampInputPDF builds an input with pdfcpu's own image import, the
 // tool the archive step uses, and returns its base64 bytes.
-func archiveStampInputPDF(t *testing.T, pages int) string {
+func archiveStampInputPDF(t *testing.T, pages int, importSpec string) string {
 	t.Helper()
 	dir := t.TempDir()
 	var images []string
@@ -177,7 +196,14 @@ func archiveStampInputPDF(t *testing.T, pages int) string {
 		images = append(images, path)
 	}
 	out := filepath.Join(dir, "input.pdf")
-	if err := api.ImportImagesFile(context.Background(), images, out, nil, nil); err != nil {
+	var imp *pdfcpu.Import
+	if importSpec != "" {
+		var err error
+		if imp, err = pdfcpu.ParseImportDetails(importSpec, types.POINTS); err != nil {
+			t.Fatalf("parse import details %q: %v", importSpec, err)
+		}
+	}
+	if err := api.ImportImagesFile(context.Background(), images, out, imp, nil); err != nil {
 		t.Fatalf("import input images: %v", err)
 	}
 	data, err := os.ReadFile(out) //nolint:gosec // disposable test output
@@ -226,6 +252,7 @@ func archiveStampObserve(c archiveStampCase) (archiveStampWant, error) {
 			Width:   dims[page-1].Width,
 			Height:  dims[page-1].Height,
 			Stamped: archiveStampPresent(text, c.OCRText, page),
+			Text:    sortedAlnum(text),
 		})
 	}
 	return want, nil
@@ -256,6 +283,18 @@ func archiveStampPresent(pageText, ocrText string, page int) bool {
 		}
 	}
 	return true
+}
+
+// sortedAlnum is the page's letters and digits in byte order.
+func sortedAlnum(text string) string {
+	var runes []rune
+	for r, n := range alnumCounts(text) {
+		for i := 0; i < n; i++ {
+			runes = append(runes, r)
+		}
+	}
+	sort.Slice(runes, func(i, j int) bool { return runes[i] < runes[j] })
+	return string(runes)
 }
 
 func alnumCounts(text string) map[rune]int {

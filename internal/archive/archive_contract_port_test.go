@@ -58,7 +58,7 @@ type archiveContractWant struct {
 // trimming and the unsupported-format error. Stamping through pdfcpu is not
 // covered here. Regenerate deliberately with:
 //
-//	PORT_RENDER_ARCHIVE_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$'
+//	PORT_RENDER_ARCHIVE_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$'
 func TestPortArchiveContractFixture(t *testing.T) {
 	fixture := buildArchiveContractFixture(t)
 	encoded, err := encodeArchiveContractFixture(fixture)
@@ -101,8 +101,8 @@ func TestPortArchiveContractFixture(t *testing.T) {
 
 func buildArchiveContractFixture(t *testing.T) archiveContractFixture {
 	t.Helper()
-	if runtime.Version() != "go1.26.9" {
-		t.Fatalf("archive fixture oracle requires Go go1.26.9, running %s", runtime.Version())
+	if runtime.Version() != "go1.26.10" {
+		t.Fatalf("archive fixture oracle requires Go go1.26.10, running %s", runtime.Version())
 	}
 	source, err := os.ReadFile(filepath.Join(archiveContractRepoRoot(t), filepath.FromSlash(archiveContractSourcePath))) //nolint:gosec // pinned source file
 	if err != nil {

@@ -685,10 +685,10 @@ render-pdf-frontmatter-differential:
 # Pure archive contract (page split, naming, text-layer probe, format dispatch).
 # pdfcpu stamping is not covered by this target.
 render-archive-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$'
 
 render-archive-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveContractFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked archive
 
 dataset-aggregate-fixtures-generate:
@@ -748,10 +748,10 @@ index-retrieval-cli-differential:
 	$(CARGO) test -p symdesk-cli --locked --test index_retrieval
 
 index-retry-cli-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
 
 index-retry-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.9 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_retry
 
 room-run-approval-cli-fixtures-generate:

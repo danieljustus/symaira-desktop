@@ -263,6 +263,21 @@ jobs:
       - name: Replay frozen Go oracle fixtures without Go
         run: make port-contract-frozen
 
+  rust-miri:
+    # CORE-002/003 Miri lane: runs only the core_contracts replay, scoped to the
+    # pinned nightly. Not a required check; the Rust lane stays advisory.
+    if: github.event_name != 'pull_request'
+    name: Miri CORE contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install pinned nightly with Miri
+        run: rustup toolchain install nightly-2026-09-03 --profile minimal --component miri,rust-src
+
+      - name: Run Miri on CORE contracts
+        run: make miri
+
   rust-native:
     name: Rust native (${{ matrix.os }})
     if: github.event_name != 'pull_request'

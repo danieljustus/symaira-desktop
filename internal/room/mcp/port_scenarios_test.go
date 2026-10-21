@@ -304,15 +304,15 @@ func committedScenario(t *testing.T, fixturePath string, spec scenarioSpec) port
 
 // scenarioSpec is the generator-side description of a scenario.
 type scenarioSpec struct {
-	name, setup    string
-	identity       bool
-	artifactRoot   string // "room" (default) or "testdata"
-	normalize      bool
-	sortArtifacts  bool
-	symdeskScript  string // body of a fake `symdesk` on PATH; empty means no symdesk on PATH
-	requests       []namedRequest
-	streams        []namedStream
-	recordJournal  bool
+	name, setup   string
+	identity      bool
+	artifactRoot  string // "room" (default) or "testdata"
+	normalize     bool
+	sortArtifacts bool
+	symdeskScript string // body of a fake `symdesk` on PATH; empty means no symdesk on PATH
+	requests      []namedRequest
+	streams       []namedStream
+	recordJournal bool
 }
 
 type namedRequest struct {

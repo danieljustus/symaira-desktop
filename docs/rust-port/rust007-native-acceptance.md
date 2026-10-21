@@ -15,6 +15,10 @@ in every job; the five native Go service rejection cases also executed.
 | Windows ARM64 | 111395214753 |
 | Windows AMD64 | 111395214735 |
 
+macOS AMD64 (`macos-15-intel`) is no longer run on every push to `main`; it runs
+in the nightly `schedule` and manual `workflow_dispatch` CI runs. Acceptance
+evidence for a SHA is the latest scheduled or dispatch run on that SHA.
+
 The immutable native candidate is
 `02ef9b35ffa509268c71a1a8355ea4082e0af047`. It differs from reviewed PR #1174's
 source `c50e2d39ea09168d84cae6f8ada22a791bd1107d` only in its diagnostic CI

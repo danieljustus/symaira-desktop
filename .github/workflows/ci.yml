@@ -13,9 +13,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '51 5 * * 1'  # weekly Monday 05:51 UTC — full suite incl. macOS + app
+    - cron: '17 2 * * *'  # nightly 02:17 UTC — main-equivalent suite incl. Intel macOS legs
 
+# Scheduled runs get a unique group so a main push cannot cancel the nightly
+# Intel evidence run (and vice versa); push/PR behaviour is unchanged.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && github.run_id || github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -158,7 +161,8 @@ jobs:
       fail-fast: false
       matrix:
         # Exercise the portable source and oracle contracts on every native runner.
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
+        # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
+        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -295,7 +299,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
+        # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
+        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

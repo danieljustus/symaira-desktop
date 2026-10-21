@@ -80,7 +80,7 @@ The measured Go baseline is in
 5. MCP stdout contains protocol frames only; diagnostics stay on stderr.
 6. Go remains buildable and testable until one stable Rust release has operated without unexplained parity defects. Go removal is a separate final change.
 7. `#![deny(unsafe_code)]` is the default. Exceptions need a written safety invariant, focused tests, Miri where applicable, and review.
-8. macOS arm64/amd64, Linux arm64/amd64, and Windows arm64/amd64 remain supported unless a separate compatibility decision removes a target.
+8. macOS arm64/amd64, Linux arm64/amd64, and Windows arm64/amd64 remain supported unless a separate compatibility decision removes a target. Intel macOS (amd64) native evidence is produced by the nightly `schedule` and manual `workflow_dispatch` runs of CI, not by every push to `main`; the acceptance evidence for a SHA is the latest scheduled or dispatch run on that SHA.
 9. SwiftUI macOS/iOS apps, `meet/`, and `room/client/` stay Swift. They are verified as consumers, not rewritten for language purity.
 10. Separate Symaira products remain runtime integrations. This repository does not become a cross-repository Rust workspace.
 11. No production vault, account, token, mail server, keychain, or external OCR/AI service is used by fixtures.

@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "config": "index_path = $INDEX_PATH\nollama_url = \"$SERVER/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+  "steps": [
+    {
+      "id": "fail-bad",
+      "writes": [
+        {
+          "path": "bad.md",
+          "body": "---\ntitle: first\ntitle: second\n---\n# Broken\n\nbroken retry oracle document.\n"
+        }
+      ],
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index"
+      ],
+      "result": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "failed to parse $ROOT/vault/bad.md: invalid frontmatter in $ROOT/vault/bad.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n"
+      },
+      "requests": [],
+      "state": {
+        "documents": [],
+        "chunks": [],
+        "generation": 0,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "failed"
+        },
+        "lifecycle_reasons": {
+          "bad.md": "invalid frontmatter in $ROOT/vault/bad.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1"
+        }
+      }
+    },
+    {
+      "id": "retry-still-broken",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":1,\"failed\":1,\"failures\":[{\"path\":\"$ROOT/vault/bad.md\",\"reason\":\"failed to parse $ROOT/vault/bad.md: invalid frontmatter in $ROOT/vault/bad.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"}],\"status\":\"ok\",\"succeeded\":0}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [],
+        "chunks": [],
+        "generation": 0,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "failed"
+        },
+        "lifecycle_reasons": {
+          "bad.md": "invalid frontmatter in $ROOT/vault/bad.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1"
+        }
+      }
+    },
+    {
+      "id": "repair-bad",
+      "writes": [
+        {
+          "path": "bad.md",
+          "body": "# Repaired\n\nrepaired retry oracle document.\n"
+        }
+      ],
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "Retried 1 failed document(s): 1 succeeded, 0 failed.\n",
+        "stderr": "Indexed: $ROOT/vault/bad.md (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Repaired\n\nrepaired retry oracle document."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          }
+        ],
+        "generation": 1,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "break-gone",
+      "writes": [
+        {
+          "path": "gone.md",
+          "body": "---\ntitle: first\ntitle: second\n---\n# Broken\n\nbroken retry oracle document.\n"
+        }
+      ],
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index"
+      ],
+      "result": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "failed to parse $ROOT/vault/gone.md: invalid frontmatter in $ROOT/vault/gone.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n"
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          }
+        ],
+        "generation": 1,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "indexed",
+          "gone.md": "failed"
+        },
+        "lifecycle_reasons": {
+          "gone.md": "invalid frontmatter in $ROOT/vault/gone.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1"
+        }
+      }
+    },
+    {
+      "id": "retry-after-stat-failure",
+      "removes": [
+        "gone.md"
+      ],
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "Retried 1 failed document(s): 0 succeeded, 1 failed.\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          }
+        ],
+        "generation": 1,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "indexed",
+          "gone.md": "failed"
+        },
+        "lifecycle_reasons": {
+          "gone.md": "lstat vault file $ROOT/vault/gone.md: lstat $ROOT/vault/gone.md: no such file or directory"
+        }
+      }
+    },
+    {
+      "id": "prune-vault",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "--prune"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"pruned\":1,\"skipped\":1,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          }
+        ],
+        "generation": 1,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "retry-nothing-failed",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":0,\"failed\":0,\"status\":\"ok\",\"succeeded\":0}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          }
+        ],
+        "generation": 1,
+        "index_storage": 0,
+        "lifecycle": {
+          "bad.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    }
+  ]
+}

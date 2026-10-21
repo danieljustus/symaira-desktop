@@ -643,6 +643,10 @@ jobs:
         shell: bash
         run: make index-retrieval-cli-differential
 
+      - name: Run native index retry CLI differential
+        shell: bash
+        run: make index-retry-cli-differential
+
       - name: Run native index status CLI differential
         shell: bash
         env:

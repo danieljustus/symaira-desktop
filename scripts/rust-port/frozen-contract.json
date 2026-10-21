@@ -49,6 +49,10 @@
       "ignored": 0,
       "passed": 2
     },
+    "cargo test -p symdesk-cli --locked --test index_retry": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-cli --locked --test mcp_ask_offline": {
       "ignored": 0,
       "passed": 6

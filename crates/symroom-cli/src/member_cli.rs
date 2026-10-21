@@ -281,7 +281,7 @@ fn parse_bool(value: &str) -> Option<bool> {
     }
 }
 
-fn resolve_identity(name: &str) -> Result<identity::Identity, ExitCode> {
+pub(crate) fn resolve_identity(name: &str) -> Result<identity::Identity, ExitCode> {
     let name = if name.is_empty() {
         match default_identity() {
             Ok(name) if !name.is_empty() => name,

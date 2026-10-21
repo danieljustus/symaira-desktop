@@ -22,18 +22,24 @@ use sha2::{Digest, Sha256};
 const INSTRUCTIONS: &str = "Use room_* tools to inspect and record the signed room work record. There is no approval-granting tool in this server.";
 const MCP_USAGE: &str = "Usage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n";
 
-pub fn run_cli(args: &[OsString]) -> ExitCode {
+// Mirrors Go `flag.ExitOnError` for the mcp FlagSet: -h/-help prints usage to
+// stderr and exits 0; an unknown flag is reported before its value is read;
+// the first positional argument ends flag parsing. The identity resolver is
+// injected so this module stays independent of the CLI config layer.
+pub fn run_cli(
+    args: &[OsString],
+    resolve_identity: impl FnOnce(&str) -> Result<symroom_core::identity::Identity, ExitCode>,
+) -> ExitCode {
     let mut room = PathBuf::from(".");
     let mut artifact_root = PathBuf::new();
-    let mut identity_name = None;
+    let mut identity_name = String::new();
     let mut i = 0;
     while i < args.len() {
         let raw = args[i].to_string_lossy();
-        if raw == "-h" || raw == "--help" {
-            print!("{MCP_USAGE}");
-            return ExitCode::SUCCESS;
+        if raw == "--" {
+            break;
         }
-        if !raw.starts_with('-') {
+        if !raw.starts_with('-') || raw == "-" {
             break;
         }
         let flag = raw.trim_start_matches('-');
@@ -41,6 +47,15 @@ pub fn run_cli(args: &[OsString]) -> ExitCode {
             .split_once('=')
             .map_or((flag, None), |(name, value)| (name, Some(value.to_owned())));
         i += 1;
+        if name == "h" || name == "help" {
+            eprint!("{MCP_USAGE}");
+            return ExitCode::SUCCESS;
+        }
+        if !matches!(name, "room" | "artifact-root" | "identity") {
+            eprintln!("flag provided but not defined: -{name}");
+            eprint!("{MCP_USAGE}");
+            return ExitCode::from(2);
+        }
         let value = if let Some(value) = inline_value {
             OsString::from(value)
         } else if let Some(value) = args.get(i) {
@@ -54,36 +69,20 @@ pub fn run_cli(args: &[OsString]) -> ExitCode {
         match name {
             "room" => room = PathBuf::from(value),
             "artifact-root" => artifact_root = PathBuf::from(value),
-            "identity" => identity_name = Some(value.to_string_lossy().into_owned()),
-            _ => {
-                eprintln!("flag provided but not defined: -{name}");
-                eprint!("{MCP_USAGE}");
-                return ExitCode::from(2);
-            }
+            _ => identity_name = value.to_string_lossy().into_owned(),
         }
     }
     if artifact_root.as_os_str().is_empty() {
         artifact_root.clone_from(&room);
     }
+    // Go `resolveIdentity` always runs, so a missing identity fails before serving.
+    let identity = match resolve_identity(&identity_name) {
+        Ok(identity) => identity,
+        Err(code) => return code,
+    };
     let stdin = io::stdin();
     let stdout = io::stdout();
-    let identity = match identity_name {
-        Some(name) => match symroom_core::identity::load(&name) {
-            Ok(identity) => Some(identity),
-            Err(error) => {
-                eprintln!("{error}");
-                return ExitCode::FAILURE;
-            }
-        },
-        None => None,
-    };
-    match serve_io_with_identity(
-        stdin.lock(),
-        stdout,
-        &room,
-        &artifact_root,
-        identity.as_ref(),
-    ) {
+    match serve_io_with_identity(stdin.lock(), stdout, &room, &artifact_root, Some(&identity)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");

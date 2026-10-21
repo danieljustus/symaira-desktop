@@ -156,7 +156,7 @@ remain required. CFG-001 and #1135 stay open; no release or cutover is implied.
 
 `make config-paths-native CONFIG_PATHS_EVIDENCE_DIR=<fresh external directory>`
 now builds the Go oracle from a clean immutable checkout of
-`ffa083487c60d669066fe6db0f07e77afa5f5a55`, builds the Rust CLI from the exact
+`6de1536543e70f21ff1485517c5a52751e1c0326`, builds the Rust CLI from the exact
 clean candidate HEAD, then invokes the existing `config-paths-diff` producer.
 Local builds pass `CONFIG_PATHS_BUILD_LAUNCHER=/Users/daniel/.local/bin/dev-external`
 and an explicit clean `CONFIG_PATHS_ORACLE_WORKTREE` at the pinned Go foundation

@@ -74,6 +74,20 @@ def native_step_bodies():
         yield name, count, "\n".join(body)
 
 
+NATIVE_OS_MATRIX = re.compile(
+    r"(?m)^        os: \$\{\{ github\.event_name == 'push' && fromJSON\('(?P<push>\[[^']*\])'\) "
+    r"\|\| fromJSON\('(?P<other>\[[^']*\])'\) \}\}$"
+)
+
+
+def native_os_matrix_branches(job_body):
+    """Return the (push, schedule/dispatch) runner lists of an event-conditional matrix."""
+    match = NATIVE_OS_MATRIX.search(job_body)
+    if match is None:
+        raise AssertionError("missing event-conditional native os matrix")
+    return json.loads(match.group("push")), json.loads(match.group("other"))
+
+
 def workflow_job_body(workflow, job):
     job_match = re.search(
         rf"(?ms)^  {job}:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
@@ -310,13 +324,15 @@ class NativeCIContracts(unittest.TestCase):
 
     def test_retention_state_differential_runs_on_all_native_targets(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
-        expected_native_os = (
-            "os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, "
-            "windows-latest, windows-11-arm]"
-        )
+        # Main pushes skip Intel macOS; schedule and workflow_dispatch run all six (#1311).
+        push_os = ["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]
+        full_os = push_os[:3] + ["macos-15-intel"] + push_os[3:]
         for job_name in ("port-contract", "rust-native"):
             with self.subTest(job=job_name):
-                self.assertIn(expected_native_os, workflow_job_body(workflow, job_name))
+                self.assertEqual(
+                    native_os_matrix_branches(workflow_job_body(workflow, job_name)),
+                    (push_os, full_os),
+                )
         job = workflow_job_body(workflow, "rust-native")
         self.assertIn(
             "      - name: Run native authoritative retention state differential\n"

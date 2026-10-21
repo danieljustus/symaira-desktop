@@ -2292,6 +2292,7 @@ dependencies = [
 name = "symdesk-render"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "lopdf",
  "noyalib",
  "serde",

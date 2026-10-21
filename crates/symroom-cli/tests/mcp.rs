@@ -347,6 +347,101 @@ fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
     let _ = std::fs::remove_dir_all(room);
 }
 
+// Seeded raw-frame property check (MCP-005): random mixes of valid frames,
+// malformed headers, truncated bodies, oversized claims and junk must never
+// leak junk to stdout, never emit a non-frame byte, and always end cleanly.
+#[test]
+fn raw_frame_property_random_streams_keep_stdout_frames_only() {
+    const SENTINEL: &[u8] = b"SYMROOM-LEAK-SENTINEL";
+    let room = temporary_room("raw-frame-property");
+    let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+    let mut next = move || {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        state
+    };
+    let mut responses = 0_usize;
+    for case in 0..200_u32 {
+        let mut input = Vec::new();
+        let pieces = 1 + next() % 6;
+        for _ in 0..pieces {
+            match next() % 5 {
+                0 => {
+                    let request = json!({"jsonrpc":"2.0","id":case,"method":"ping"});
+                    let body = serde_json::to_vec(&request).expect("request JSON");
+                    input.extend_from_slice(
+                        format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes(),
+                    );
+                    input.extend_from_slice(&body);
+                }
+                1 => input.extend_from_slice(b"Content-Length: 4\r\n\r\n{[]}"),
+                2 => {
+                    // Header claims more bytes than follow: truncated body at EOF.
+                    input.extend_from_slice(b"Content-Length: 64\r\n\r\n");
+                    input.extend_from_slice(SENTINEL);
+                }
+                3 => input.extend_from_slice(b"Content-Length: 1048577\r\n\r\n"),
+                _ => {
+                    for _ in 0..(next() % 48) {
+                        input.push((next() % 256) as u8);
+                    }
+                }
+            }
+        }
+
+        let mut output = Vec::new();
+        let result = mcp::serve_io_with_identity(
+            BufReader::new(Cursor::new(input)),
+            &mut output,
+            &room,
+            &room,
+            None,
+        );
+        assert!(
+            !output
+                .windows(SENTINEL.len())
+                .any(|window| window == SENTINEL),
+            "case {case}: junk leaked to stdout"
+        );
+        // Every byte written to stdout must belong to a complete, parseable frame.
+        let mut rest = output.as_slice();
+        while !rest.is_empty() {
+            let end = rest
+                .windows(4)
+                .position(|window| window == b"\r\n\r\n")
+                .unwrap_or_else(|| panic!("case {case}: stdout is not framed"));
+            let header = std::str::from_utf8(&rest[..end]).expect("ASCII header");
+            let length = header
+                .strip_prefix("Content-Length: ")
+                .and_then(|value| value.parse::<usize>().ok())
+                .unwrap_or_else(|| panic!("case {case}: bad response header {header:?}"));
+            let start = end + 4;
+            let body = rest
+                .get(start..start + length)
+                .unwrap_or_else(|| panic!("case {case}: truncated response frame"));
+            let value: Value = serde_json::from_slice(body)
+                .unwrap_or_else(|_| panic!("case {case}: response body is not JSON"));
+            assert_eq!(value["jsonrpc"], "2.0", "case {case}");
+            responses += 1;
+            rest = &rest[start + length..];
+        }
+        if let Err(error) = result {
+            assert!(
+                matches!(
+                    error.kind(),
+                    std::io::ErrorKind::InvalidData | std::io::ErrorKind::UnexpectedEof
+                ),
+                "case {case}: unexpected error kind {:?}",
+                error.kind()
+            );
+        }
+    }
+    // Guard against a vacuous pass: the valid-frame path must actually be exercised.
+    assert!(responses > 0, "no response frames were produced");
+    let _ = std::fs::remove_dir_all(room);
+}
+
 #[test]
 fn room_status_is_not_queued_behind_four_run_waits() {
     let room = fixture_room("parallel-status", &[]);

@@ -18,10 +18,11 @@ empty and the dataset's sidecar rows absent. A new shared path-error presenter
 retains the existing retention error behavior and supplies the missing-source
 import error's Go wrapper and OS text.
 
-This replay currently requires Go in the native test environment, consistent
-with the migration's live differential phase. The Go-free corpus work in
-#1153/#934 must replace that dependency with accepted immutable platform
-evidence before removing Go.
+This replay no longer executes Go. It replays the committed rejection ledger in
+`testdata/port/dataset/sync.json`, which the Go gate
+`TestPortDatasetImportServiceRejections` checks against live output in
+`dataset-sync-differential`. On Windows the missing-source text is not compared,
+matching that Go gate.
 
 ## Raw CSV bytes
 

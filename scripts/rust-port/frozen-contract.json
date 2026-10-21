@@ -94,10 +94,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "live_only_tests": [
-        "every_recorded_service_rejection_executes_against_the_native_go_oracle"
-      ],
-      "passed": 108
+      "passed": 109
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,
@@ -105,10 +102,7 @@
     },
     "cargo test -p symdesk-index --locked --test dataset_import_contracts": {
       "ignored": 0,
-      "live_only_tests": [
-        "every_recorded_service_rejection_executes_against_the_native_go_oracle"
-      ],
-      "passed": 2
+      "passed": 3
     },
     "cargo test -p symdesk-index --locked --test dataset_purge_contract": {
       "ignored": 0,

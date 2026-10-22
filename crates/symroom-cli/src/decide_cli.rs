@@ -134,16 +134,7 @@ fn record_decision(
     refs: &[String],
     signer: &identity::Identity,
 ) -> Result<Event, String> {
-    let config = symroom_core::goio::read_file(&room_dir.join("room.toml"))
-        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
-        .map_err(|error| format!("read room.toml: {error}"))?;
-    let room_id = config
-        .lines()
-        .find_map(|line| {
-            let (key, value) = line.split_once('=')?;
-            (key.trim() == "id").then(|| value.trim().trim_matches('"').to_owned())
-        })
-        .unwrap_or_default();
+    let room_id = symroom_core::room_config::read(room_dir)?.id;
     let stats = journal::read_journal_stats(room_dir).map_err(|error| error.to_string())?;
     if stats
         .member_state

@@ -125,7 +125,10 @@ pub fn read_all_segments(
         let Some(author) = name.strip_suffix(JOURNAL_SUFFIX) else {
             continue;
         };
-        let contents = goio::read_file(&entry.path())?;
+        // Go: `read segment <author>: <open|read> <path>: <strerror>`.
+        let contents = goio::read_file(&entry.path()).map_err(|error| {
+            std::io::Error::new(error.kind(), format!("read segment {author}: {error}"))
+        })?;
         let mut events = Vec::new();
         let mut reader = BufReader::new(Cursor::new(contents));
         // Go ReadSegment uses bufio.Scanner and suppresses Scanner.Err. Keep

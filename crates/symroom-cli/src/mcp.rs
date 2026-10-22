@@ -1010,10 +1010,6 @@ fn read_line_limited<R: BufRead>(input: &mut R) -> io::Result<(Vec<u8>, bool)> {
     }
 }
 
-fn go_trim_space(text: &str) -> &str {
-    text.trim_matches(|c: char| c.is_whitespace())
-}
-
 /// The first character of `bytes` when it starts with a complete, valid UTF-8
 /// sequence (Go's `utf8.DecodeRune` reports an invalid byte as RuneError,
 /// which is not a space).
@@ -1704,42 +1700,9 @@ fn go_read_file(path: &Path) -> Result<Vec<u8>, (&'static str, io::Error)> {
     Ok(contents)
 }
 
-struct RoomConfig {
-    id: String,
-    created: String,
-    root_pubkey: String,
-    root_event: String,
-}
-
-/// Go `room.ReadRoomConfig`: line-based `key = value` parsing.
-fn read_room_config(room_dir: &Path) -> Result<RoomConfig, String> {
-    let path = room_dir.join("room.toml");
-    // Go reads bytes, so invalid UTF-8 is not an error.
-    let content = go_read_file(&path)
-        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
-        .map_err(|(operation, error)| {
-            format!("read room.toml: {}", go_io_error(operation, &path, &error))
-        })?;
-    let mut config = RoomConfig {
-        id: String::new(),
-        created: String::new(),
-        root_pubkey: String::new(),
-        root_event: String::new(),
-    };
-    for line in content.split('\n') {
-        let Some((key, value)) = line.split_once('=') else {
-            continue;
-        };
-        let value = go_trim_space(value).trim_matches('"').to_owned();
-        match go_trim_space(key) {
-            "id" => config.id = value,
-            "created" => config.created = value,
-            "root_pubkey" => config.root_pubkey = value,
-            "root_event" => config.root_event = value,
-            _ => {}
-        }
-    }
-    Ok(config)
+/// Go `room.ReadRoomConfig`: the shared lenient scanner.
+fn read_room_config(room_dir: &Path) -> Result<symroom_core::room_config::RoomConfig, String> {
+    symroom_core::room_config::read(room_dir)
 }
 
 fn mutate_note(

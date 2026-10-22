@@ -450,16 +450,9 @@ fn append_member_event(
     kind: &str,
     body: String,
 ) -> Result<Event, MemberMutationError> {
-    let room_config = crate::goio::read_file(&room_dir.join("room.toml"))
-        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
-        .map_err(|error| MemberMutationError::Message(format!("read room.toml: {error}")))?;
-    let room_id = room_config
-        .lines()
-        .find_map(|line| {
-            let (key, value) = line.split_once('=')?;
-            (key.trim() == "id").then(|| value.trim().trim_matches('"').to_owned())
-        })
-        .unwrap_or_default();
+    let room_id = crate::room_config::read(room_dir)
+        .map_err(MemberMutationError::Message)?
+        .id;
     let author = journal::author_stats(room_dir, &signer.member_id)?;
     let mut event_id = [0_u8; 10];
     getrandom::fill(&mut event_id)

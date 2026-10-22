@@ -12,6 +12,10 @@ use std::{
 
 use serde::Deserialize;
 
+#[path = "support/replay_text.rs"]
+mod replay_text;
+use replay_text::{HOST_SEPARATOR, expand_separators};
+
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Deserialize)]
@@ -61,14 +65,17 @@ const fn host_errors() -> [(&'static str, &'static str); 4] {
     }
 }
 
-/// Expands the fixture's host-neutral text: `/` becomes the host separator,
-/// `<work>` the disposable directory and each OS-error token the host wording.
+/// Expands the fixture's host-neutral text: a path `/` becomes the host
+/// separator (a literal `<slash>` stays `/`), `<work>` the disposable directory
+/// and each OS-error token the host wording.
 fn expand(text: &str, work: &Path) -> String {
+    expand_with(text, work, HOST_SEPARATOR)
+}
+
+/// [`expand`] with an explicit separator so both hosts are testable anywhere.
+fn expand_with(text: &str, work: &Path, separator: &str) -> String {
     const WORK: &str = "\u{1}work\u{1}";
-    let mut text = text.replace("<work>", WORK);
-    if cfg!(windows) {
-        text = text.replace('/', "\\");
-    }
+    let mut text = expand_separators(&text.replace("<work>", WORK), separator);
     text = text.replace(WORK, &work.to_string_lossy());
     for (token, wording) in host_errors() {
         text = text.replace(token, wording);
@@ -329,6 +336,99 @@ fn flag_grammar_matches_go_process_contract() {
         fixture.cases.len(),
         mismatches.join("\n")
     );
+}
+
+fn load_fixture() -> Fixture {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../testdata/port/room/flag-grammar-cli.json");
+    serde_json::from_slice(&fs::read(path).expect("read fixture")).expect("parse fixture")
+}
+
+/// `\` is what Go's `filepath` prints on Windows, `/` everywhere else.
+const SEPARATORS: [&str; 2] = ["/", "\\"];
+
+/// Go prints doctor's remediation literals (`create/select`,
+/// `rebuild .symroom/index.sqlite`) unchanged on Windows, while a path from
+/// `filepath.Join` (the `index rebuild` success line) gets the host separator.
+/// Expanding for the Windows separator on any host must keep the former and
+/// rewrite only the latter.
+#[test]
+fn literal_slashes_stay_literal_and_path_separators_follow_the_host() {
+    let work = Path::new("W");
+    let doctor = "Run `symroom index` to rebuild .symroom<slash>index.sqlite.";
+    for separator in SEPARATORS {
+        assert_eq!(
+            expand_with(doctor, work, separator),
+            "Run `symroom index` to rebuild .symroom/index.sqlite.",
+            "doctor literal must not follow the host separator ({separator:?})"
+        );
+        assert_eq!(
+            expand_with("create<slash>select an identity", work, separator),
+            "create/select an identity"
+        );
+    }
+    // `index rebuild` success: dbPath = filepath.Join(".symroom", "index.sqlite").
+    let rebuilt = "Rebuilt derived index at .symroom/index.sqlite\n";
+    assert_eq!(
+        expand_with(rebuilt, work, "\\"),
+        "Rebuilt derived index at .symroom\\index.sqlite\n"
+    );
+    assert_eq!(expand_with(rebuilt, work, "/"), rebuilt);
+    // `<work>` is substituted after the separator pass, so its own separators survive.
+    assert_eq!(
+        expand_with("open <work>/journal:", Path::new("C:\\w\\work"), "\\"),
+        "open C:\\w\\work\\journal:"
+    );
+}
+
+/// The 38 `doctor` vectors (every state/flag spelling that reaches the doctor
+/// report) carry the two literals. Their expectation must be identical for both
+/// separators and must equal the plain Go literal text.
+#[test]
+fn doctor_vectors_expand_identically_on_every_host() {
+    let fixture = load_fixture();
+    let work = Path::new("W");
+    let doctor: Vec<&Case> = fixture
+        .cases
+        .iter()
+        .filter(|case| case.stdout.contains("<slash>"))
+        .collect();
+    assert_eq!(doctor.len(), 38, "doctor vectors in the fixture changed");
+    for case in doctor {
+        assert_eq!(case.args.first().map(String::as_str), Some("doctor"));
+        let unix = expand_with(&case.stdout, work, "/");
+        let windows = expand_with(&case.stdout, work, "\\");
+        assert_eq!(unix, windows, "{}: Windows expectation drifted", case.name);
+        assert!(
+            windows.contains("create/select") && windows.contains(".symroom/index.sqlite"),
+            "{}: literals lost",
+            case.name
+        );
+        // Go prints the literals verbatim: the Windows text is the recorded text
+        // with only the token resolved (JSON output keeps its own `\n` escapes).
+        assert_eq!(
+            windows,
+            case.stdout.replace("<slash>", "/"),
+            "{}: a literal slash became a path separator",
+            case.name
+        );
+    }
+}
+
+/// No flag grammar vector prints a host path: a raw `/` in a recorded stream
+/// would be an unclassified Go literal that the Windows replay corrupts. The Go
+/// generator refuses to record one; this is the replay-side mirror.
+#[test]
+fn recorded_streams_hold_no_unclassified_slash() {
+    for case in load_fixture().cases {
+        for (stream, text) in [("stdout", &case.stdout), ("stderr", &case.stderr)] {
+            assert!(
+                !text.contains('/'),
+                "{}: {stream} holds a raw '/': {text:?}",
+                case.name
+            );
+        }
+    }
 }
 
 /// Number of vectors in `flag-grammar-cli.json`; a change must be deliberate.

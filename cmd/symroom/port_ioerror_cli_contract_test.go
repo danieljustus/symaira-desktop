@@ -381,10 +381,28 @@ func runIOErrorCase(t *testing.T, oracle string, fixture ioErrorCLIContract, vec
 
 var ioErrorGeneratedID = regexp.MustCompile(`\b(ev|chk)_[0-9a-f]{16,}\b`)
 
+// ioErrorSlashLiterals are Go source string literals that contain a '/' which
+// is NOT a path separator: doctor's remediation text. Go prints them unchanged
+// on every host, so they must not be rewritten to the Windows separator on
+// replay. The fixture records each '/' of such a literal as slashToken, while a
+// plain '/' means "host path separator" (filepath.Join output). The first
+// element is the exact span in internal/room/doctor/doctor.go.
+var ioErrorSlashLiterals = []struct{ span, tokenized string }{
+	{"create/select", "create" + ioErrorSlashToken + "select"},
+	{"rebuild .symroom/index.sqlite", "rebuild .symroom" + ioErrorSlashToken + "index.sqlite"},
+}
+
+// ioErrorSlashToken stands for a literal '/' in a recorded stream.
+const ioErrorSlashToken = "<slash>"
+
 // normalizeIOError replaces the disposable directories, the generated ids and
 // the host wording of the OS errors the fixture provokes, and uses '/' in every
-// path.
+// path. A '/' inside a Go source literal (ioErrorSlashLiterals) is tokenised
+// first so that the replay can tell it from a host path separator.
 func normalizeIOError(text, work, link string) string {
+	for _, literal := range ioErrorSlashLiterals {
+		text = strings.ReplaceAll(text, literal.span, literal.tokenized)
+	}
 	// link is checked first: it is a sibling of work, never a prefix of it.
 	text = strings.ReplaceAll(text, link, "<link>")
 	text = strings.ReplaceAll(text, work, "<work>")
@@ -400,6 +418,25 @@ func normalizeIOError(text, work, link string) string {
 	text = strings.ReplaceAll(text, "not a directory", "<ENOTDIR>")
 	text = strings.ReplaceAll(text, "permission denied", "<EACCES>")
 	return strings.ReplaceAll(text, "is a directory", "<EISDIR>")
+}
+
+// TestIOErrorSlashLiteralsExistInGoSource keeps ioErrorSlashLiterals honest: each
+// tokenised span must still be a literal of the doctor source, so a reworded
+// message cannot leave a stale classification behind.
+func TestIOErrorSlashLiteralsExistInGoSource(t *testing.T) {
+	root := memberCLIRoot(t)
+	raw, err := os.ReadFile(filepath.Join(root, "internal", "room", "doctor", "doctor.go")) //nolint:gosec // fixed repository source path
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, literal := range ioErrorSlashLiterals {
+		if !strings.Contains(string(raw), literal.span) {
+			t.Errorf("slash literal %q is not in internal/room/doctor/doctor.go", literal.span)
+		}
+		if strings.Contains(literal.tokenized, "/") {
+			t.Errorf("tokenised span %q still contains '/'", literal.tokenized)
+		}
+	}
 }
 
 // listIOErrorRooms records the `room` of every event line a command appended.

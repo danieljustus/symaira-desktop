@@ -423,5 +423,14 @@ func runFlagGrammarCase(t *testing.T, oracle string, fixture flagGrammarCLIContr
 			c.UnixOnly = true
 		}
 	}
+	// No flag grammar case prints a path, so a '/' left after normalisation is
+	// a Go source literal that ioErrorSlashLiterals has not classified: the
+	// replay would turn it into a backslash on Windows. Fail instead of
+	// recording it.
+	for _, stream := range []string{c.Stdout, c.Stderr} {
+		if strings.Contains(stream, "/") {
+			t.Fatalf("%s prints an unclassified '/': add the Go literal to ioErrorSlashLiterals (host path separators belong in the io-error fixture)\n%s", c.Name, stream)
+		}
+	}
 	return c
 }

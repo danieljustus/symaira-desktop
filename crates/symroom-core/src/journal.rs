@@ -28,6 +28,7 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     event::{Event, EventError},
+    goio,
     members::State,
 };
 
@@ -94,7 +95,7 @@ pub fn read_all_segments(
         Err(error) if missing_journal(&error) => {
             return Ok(BTreeMap::new());
         }
-        Err(error) => return Err(error.into()),
+        Err(error) => return Err(goio::path_error("open", &journal_dir, &error).into()),
     };
 
     let mut entries = entries.collect::<Result<Vec<_>, _>>()?;
@@ -124,7 +125,10 @@ pub fn read_all_segments(
         let Some(author) = name.strip_suffix(JOURNAL_SUFFIX) else {
             continue;
         };
-        let contents = fs::read(entry.path())?;
+        // Go: `read segment <author>: <open|read> <path>: <strerror>`.
+        let contents = goio::read_file(&entry.path()).map_err(|error| {
+            std::io::Error::new(error.kind(), format!("read segment {author}: {error}"))
+        })?;
         let mut events = Vec::new();
         let mut reader = BufReader::new(Cursor::new(contents));
         // Go ReadSegment uses bufio.Scanner and suppresses Scanner.Err. Keep
@@ -333,7 +337,16 @@ pub fn read_journal_stats(room_dir: &Path) -> Result<JournalStats, std::io::Erro
         Err(error) if missing_journal(&error) => {
             return Ok(JournalStats::default());
         }
-        Err(error) => return Err(error),
+        Err(error) => {
+            // Go `ReadJournalStats` wraps the directory failure.
+            return Err(std::io::Error::new(
+                error.kind(),
+                format!(
+                    "read journal dir: {}",
+                    goio::path_error_text("open", &journal_dir, &error)
+                ),
+            ));
+        }
     };
 
     let mut entries: Vec<_> = entries.collect::<Result<_, _>>()?;
@@ -385,7 +398,7 @@ pub fn author_stats(room_dir: &Path, author: &str) -> Result<AuthorStats, std::i
                 prev: ZERO_HASH.to_owned(),
             });
         }
-        Err(error) => return Err(error),
+        Err(error) => return Err(goio::path_error("open", &path, &error)),
     };
 
     let mut count = 0_u64;
@@ -424,7 +437,7 @@ pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainErro
     let file = match fs::File::open(&path) {
         Ok(file) => file,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => return Err(error.into()),
+        Err(error) => return Err(goio::path_error("open", &path, &error).into()),
     };
     let mut reader = BufReader::new(file);
     let mut events = Vec::new();
@@ -439,7 +452,7 @@ pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainErro
         Err(error) if error.kind() == std::io::ErrorKind::NotFound && events.is_empty() => {
             return Ok(());
         }
-        Err(error) => return Err(error.into()),
+        Err(error) => return Err(goio::path_error("open", &path, &error).into()),
     };
     let mut reader = BufReader::new(file);
     let mut lines = Vec::new();

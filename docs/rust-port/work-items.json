@@ -282,7 +282,8 @@
         "make render-ir-differential",
         "cargo nextest run -p symdesk-render",
         "cargo +nightly fuzz run draw_parser"
-      ]
+      ],
+      "note": "RUST-011b slice 1 (#1143, RENDER-003): the SymDraw DSL parser (Mermaid flowchart/graph + sequenceDiagram subset, JSON IR with Go encoding/json error semantics, IR validation) is ported in symdesk_render::draw and replays the Go-generated dsl-parse.json (3305 cases, 807 accepted) byte-for-byte via make render-ir-differential. The parser has no dependency on the PDF ops/export slice (#1142). Open: layout, fonts/text metrics, SVG/PNG/GIF/Typst/PDF output, cargo fuzz draw_parser, native three-OS CI evidence; the item stays ready until those acceptance commands pass."
     },
     {
       "id": "RUST-012",

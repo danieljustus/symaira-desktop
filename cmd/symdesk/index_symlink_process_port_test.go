@@ -37,10 +37,10 @@ type indexSymlinkProcessFixture struct {
 	Steps         []indexSymlinkProcessStep `json:"steps"`
 }
 
-// indexSymlinkSecretMarker is the body of a document outside the vault. The
+// indexSymlinkOutsideBody is the body of a document outside the vault. The
 // fixture records every provider request and retrieval row, so a link that is
 // followed out of the vault would surface this marker.
-const indexSymlinkSecretMarker = "---\ntitle: Outside\n---\n# Outside\n\nOUTSIDE_SECRET_MARKER must never be indexed.\n"
+const indexSymlinkOutsideBody = "---\ntitle: Outside\n---\n# Outside\n\nOUTSIDE_SECRET_MARKER must never be indexed.\n"
 
 // TestIndexSymlinkProcessPortFixture runs the real Go `symdesk index` and
 // `symdesk index retry` processes over contained, external, broken and
@@ -193,8 +193,8 @@ func observeIndexSymlinkProcess(t *testing.T) indexSymlinkProcessFixture {
 	step("seed", []indexRetryProcessFile{
 		file("inside.md", "# Inside\n\ninside symlink oracle document.\n"),
 		file("sub/target.md", "# Target\n\ncontained symlink target document.\n"),
-		file("../outside/secret.md", indexSymlinkSecretMarker),
-		file("../outside/dirnote.md", indexSymlinkSecretMarker),
+		file("../outside/secret.md", indexSymlinkOutsideBody),
+		file("../outside/dirnote.md", indexSymlinkOutsideBody),
 	}, nil, []indexSymlinkProcessLink{
 		link("contained.md", "sub/target.md"),
 		link("external.md", "../outside/secret.md"),

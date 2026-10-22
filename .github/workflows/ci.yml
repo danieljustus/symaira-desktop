@@ -68,6 +68,17 @@ jobs:
       - name: Build
         run: go build ./...
 
+      # The archive stamp Go oracle (internal/archive) recovers stamps with
+      # pdftotext; without Poppler the test fails instead of skipping.
+      - name: Install Poppler for the archive stamp oracle
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y poppler-utils
+          else
+            brew install poppler
+          fi
+
       - name: Test
         if: matrix.os != 'ubuntu-latest'
         run: go test -race -count=1 ./...
@@ -180,6 +191,18 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
 
+      # The archive stamp Go oracle needs pdftotext; Windows validates the
+      # stored oracle without regenerating it, so it needs no Poppler.
+      - name: Install Poppler for the archive stamp oracle
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y poppler-utils
+          else
+            brew install poppler
+          fi
+
       - name: Verify frozen Go oracle fixtures and differential harness
         if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: make port-contract
@@ -220,6 +243,10 @@ jobs:
         run: |
           rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
           rustup toolchain install nightly-2026-09-03 --profile minimal
+
+      # The Rust archive stamp contract measures its own output with Poppler.
+      - name: Install Poppler for the archive stamp contract
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
       - name: Install Rust verification tools
         uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
@@ -267,6 +294,10 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal
 
+      # The Rust archive stamp contract measures its own output with Poppler.
+      - name: Install Poppler for the archive stamp contract
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
       - name: Replay frozen Go oracle fixtures without Go
         run: make port-contract-frozen
 
@@ -308,6 +339,18 @@ jobs:
 
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+
+      # The Rust archive stamp contract measures its own output with Poppler
+      # (pdftotext/pdftoppm); Windows skips only those measurements.
+      - name: Install Poppler for the archive stamp contract
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y poppler-utils
+          else
+            brew install poppler
+          fi
 
       - name: Run native config paths differential
         shell: bash
@@ -619,6 +662,10 @@ jobs:
       - name: Run native render archive contract differential
         shell: bash
         run: make render-archive-differential
+
+      - name: Run native render archive stamp differential
+        shell: bash
+        run: make render-archive-stamp-differential
 
       - name: Run native dataset aggregate differential
         shell: bash

@@ -186,11 +186,11 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 11
+      "passed": 26
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,
-      "passed": 2
+      "passed": 3
     },
     "cargo test -p symdesk-render --locked export_markdown": {
       "ignored": 0,
@@ -199,6 +199,10 @@
     "cargo test -p symdesk-render --locked export_pdf": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-render --locked stamp": {
+      "ignored": 0,
+      "passed": 17
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,

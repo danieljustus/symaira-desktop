@@ -196,7 +196,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 33
+      "passed": 34
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,

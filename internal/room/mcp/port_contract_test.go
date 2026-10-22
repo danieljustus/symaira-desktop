@@ -83,10 +83,12 @@ func TestSymRoomMCPRepresentativeOracle(t *testing.T) {
 		t.Fatal(err)
 	}
 	doc := struct {
-		SchemaVersion int              `json:"schema_version"`
-		Oracle        inventory.Oracle `json:"oracle"`
-		JournalLines  []string         `json:"journal_lines"`
-		Cases         []map[string]any `json:"cases"`
+		SchemaVersion int                  `json:"schema_version"`
+		Oracle        inventory.Oracle     `json:"oracle"`
+		JournalLines  []string             `json:"journal_lines"`
+		Cases         []map[string]any     `json:"cases"`
+		Setups        map[string]portSetup `json:"setups"`
+		Scenarios     []portScenario       `json:"scenarios"`
 	}{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}}
 	journalBytes, err := os.ReadFile(filepath.Join(journalDir, id.MemberID+".jsonl")) //nolint:gosec // deterministic identity under t.TempDir
 	if err != nil {
@@ -101,6 +103,12 @@ func TestSymRoomMCPRepresentativeOracle(t *testing.T) {
 	for i, request := range requests {
 		doc.Cases = append(doc.Cases, map[string]any{"request": request, "response": responseByID[i+1]})
 	}
+	setups := buildPortSetups(t)
+	if strings.Join(setups["fixture"].JournalLines, "\n") != strings.Join(doc.JournalLines, "\n") {
+		t.Fatal("scenario fixture setup must reproduce the representative journal bytes")
+	}
+	doc.Scenarios = runPortScenarios(t, mcpParityFixture, parityScenarioSpecs(), setups)
+	doc.Setups = usedSetups(doc.Scenarios, setups)
 	content, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		t.Fatal(err)

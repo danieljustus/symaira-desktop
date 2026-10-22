@@ -45,7 +45,7 @@
         "result": {
           "content": [
             {
-              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Fixture artifact\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":2,\"room\":\"rm_test\",\"seq\":2,\"v\":1}",
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Fixture artifact\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":2,\"room\":\"rm_test\",\"seq\":2,\"ts\":\"\",\"v\":1}",
               "type": "text"
             }
           ],
@@ -73,7 +73,7 @@
         "result": {
           "content": [
             {
-              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_20c8360ec381070a\",\"title\":\"Fixture run\"},\"id\":\"ev_20c8360ec381070a\",\"kind\":\"run.requested\",\"lamport\":3,\"room\":\"rm_fixture\",\"seq\":3,\"v\":1}",
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_20c8360ec381070a\",\"title\":\"Fixture run\"},\"id\":\"ev_20c8360ec381070a\",\"kind\":\"run.requested\",\"lamport\":3,\"room\":\"rm_fixture\",\"seq\":3,\"ts\":\"\",\"v\":1}",
               "type": "text"
             }
           ],
@@ -100,7 +100,7 @@
         "result": {
           "content": [
             {
-              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\\u003cgenerated\\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"room\":\"rm_fixture\",\"seq\":4,\"v\":1}",
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\\u003cgenerated\\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"room\":\"rm_fixture\",\"seq\":4,\"ts\":\"\",\"v\":1}",
               "type": "text"
             }
           ],
@@ -113,5 +113,3972 @@
     "commit": "3845a99e1581ab03d10c2e8715200725798c45fd",
     "release": "renderer-pdf-safety-v2-local"
   },
-  "schema_version": 1
+  "scenarios": [
+    {
+      "name": "mutation_validation_errors",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": ""
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": 5
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": null
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#6",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": "text",
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#7",
+          "request": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": [
+                "x"
+              ],
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_note_post#8",
+          "request": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "TEXT": "case-insensitive key"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"case-insensitive key\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#9",
+          "request": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#10",
+          "request": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#11",
+          "request": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": ""
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#12",
+          "request": {
+            "id": 12,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": 5
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 12,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#13",
+          "request": {
+            "id": 13,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": 5
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 13,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#14",
+          "request": {
+            "id": 14,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "/etc/hosts"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 14,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#15",
+          "request": {
+            "id": 15,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/../mcp-nonexistent.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 15,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#16",
+          "request": {
+            "id": 16,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/nonexistent.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 16,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "compute sha256: open ${ARTIFACT_ROOT}/nonexistent.txt: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#17",
+          "request": {
+            "id": 17,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 17,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "compute sha256: read ${ARTIFACT_ROOT}: is a directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#18",
+          "request": {
+            "id": 18,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/sub/../mcp-artifact.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 18,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":2,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#19",
+          "request": {
+            "id": 19,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "mcp-artifact.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 19,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#20",
+          "request": {
+            "id": 20,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/mcp-artifact.txt",
+                "title": ""
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 20,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":3,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#21",
+          "request": {
+            "id": 21,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}//mcp-artifact.txt",
+                "title": "Double slash"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 21,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":4,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Double slash\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#22",
+          "request": {
+            "id": 22,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 22,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#23",
+          "request": {
+            "id": 23,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 23,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#24",
+          "request": {
+            "id": 24,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": ""
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 24,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#25",
+          "request": {
+            "id": 25,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": 5
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 25,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#26",
+          "request": {
+            "id": 26,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "plan_file": 5,
+                "title": "ok"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 26,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#27",
+          "request": {
+            "id": 27,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "adapter": [],
+                "title": "ok"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 27,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#28",
+          "request": {
+            "id": 28,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": "title",
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 28,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#29",
+          "request": {
+            "id": 29,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 29,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#30",
+          "request": {
+            "id": 30,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 30,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#31",
+          "request": {
+            "id": 31,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 31,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#32",
+          "request": {
+            "id": 32,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 32,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#33",
+          "request": {
+            "id": 33,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q",
+                "run_id": ""
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 33,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#34",
+          "request": {
+            "id": 34,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "",
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 34,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#35",
+          "request": {
+            "id": 35,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q",
+                "run_id": 5
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 35,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#36",
+          "request": {
+            "id": 36,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": 5,
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 36,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"case-insensitive key\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Double slash\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":4,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_success_sequence",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "plain note"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"plain note\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_note_post#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "html \u003cb\u003ebold\u003c/b\u003e \u0026 \"quotes\" 'single' é 😀 \u2028 line\nbreak\ttab \\ slash \b\f\u0001 \u2029"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":2,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"html \\u003cb\\u003ebold\\u003c/b\\u003e \\u0026 \\\"quotes\\\" 'single' é 😀 \\u2028 line\\nbreak\\ttab \\\\ slash \\b\\f\\u0001 \\u2029\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_note_post#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "extra": 1,
+                "text": "extra args ignored"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":3,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"extra args ignored\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_note_post#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "TEXT": "case-insensitive key"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":4,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"case-insensitive key\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":5,\"prev\":\"\u003cprev\u003e\",\"lamport\":5,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#6",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Titled"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":6,\"prev\":\"\u003cprev\u003e\",\"lamport\":6,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Titled\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#7",
+          "request": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/sub/../mcp-artifact.txt",
+                "title": ""
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":7,\"prev\":\"\u003cprev\u003e\",\"lamport\":7,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#8",
+          "request": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "Title only"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_5334a0a302799ade\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":8,\"prev\":\"\u003cprev\u003e\",\"lamport\":8,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_5334a0a302799ade\",\"title\":\"Title only\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#9",
+          "request": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "adapter": "local",
+                "plan_file": "plan.md",
+                "title": "All fields"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_3cba20cc587e5d54\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":9,\"prev\":\"\u003cprev\u003e\",\"lamport\":9,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_3cba20cc587e5d54\",\"title\":\"All fields\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#10",
+          "request": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "Title only"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_202fc65eeb2f1f83\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":10,\"prev\":\"\u003cprev\u003e\",\"lamport\":10,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_202fc65eeb2f1f83\",\"title\":\"Title only\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#11",
+          "request": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "adapter": "a\u0026b",
+                "title": "Unicode é \u003ctag\u003e"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 11,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_c59e16cdd7f18df0\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":11,\"prev\":\"\u003cprev\u003e\",\"lamport\":11,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"a\\u0026b\",\"plan_file\":\"\",\"run_id\":\"run_c59e16cdd7f18df0\",\"title\":\"Unicode é \\u003ctag\\u003e\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#12",
+          "request": {
+            "id": 12,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "Proceed? \u003cyes\u003e \u0026 \"no\"",
+                "run_id": "run_unknown"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 12,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":12,\"prev\":\"\u003cprev\u003e\",\"lamport\":12,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed? \\u003cyes\\u003e \\u0026 \\\"no\\\"\",\"run_id\":\"run_unknown\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#13",
+          "request": {
+            "id": 13,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "Proceed?",
+                "run_id": "run_unknown"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 13,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":13,\"prev\":\"\u003cprev\u003e\",\"lamport\":13,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_unknown\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_note_post#14",
+          "request": {
+            "id": 14,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "after everything"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 14,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":14,\"prev\":\"\u003cprev\u003e\",\"lamport\":14,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"after everything\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#15",
+          "request": {
+            "id": 15,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 15,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":12,\"prev\":\"\u003cprev\u003e\",\"lamport\":12,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed? \\u003cyes\\u003e \\u0026 \\\"no\\\"\",\"run_id\":\"run_unknown\"},\"sig\":\"\u003csig\u003e\"},{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":13,\"prev\":\"\u003cprev\u003e\",\"lamport\":13,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_unknown\"},\"sig\":\"\u003csig\u003e\"},{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":14,\"prev\":\"\u003cprev\u003e\",\"lamport\":14,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"after everything\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#16",
+          "request": {
+            "id": 16,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 16,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":14,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:fixture\",\"root_event\":\"ev_fixture\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#17",
+          "request": {
+            "id": 17,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 17,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"mcp-artifact.txt\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"plain note\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"html \\u003cb\\u003ebold\\u003c/b\\u003e \\u0026 \\\"quotes\\\" 'single' é 😀 \\u2028 line\\nbreak\\ttab \\\\ slash \\b\\f\\u0001 \\u2029\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"extra args ignored\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"case-insensitive key\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":4,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":5,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":5,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Titled\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":6,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":6,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":7,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":7,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_5334a0a302799ade\",\"title\":\"Title only\"},\"id\":\"ev_5334a0a302799ade\",\"kind\":\"run.requested\",\"lamport\":8,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":8,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_3cba20cc587e5d54\",\"title\":\"All fields\"},\"id\":\"ev_3cba20cc587e5d54\",\"kind\":\"run.requested\",\"lamport\":9,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":9,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_202fc65eeb2f1f83\",\"title\":\"Title only\"},\"id\":\"ev_202fc65eeb2f1f83\",\"kind\":\"run.requested\",\"lamport\":10,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":10,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"a\\u0026b\",\"plan_file\":\"\",\"run_id\":\"run_c59e16cdd7f18df0\",\"title\":\"Unicode é \\u003ctag\\u003e\"},\"id\":\"ev_c59e16cdd7f18df0\",\"kind\":\"run.requested\",\"lamport\":11,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":11,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed? \\u003cyes\\u003e \\u0026 \\\"no\\\"\",\"run_id\":\"run_unknown\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":12,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":12,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_unknown\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":13,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":13,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"after everything\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":14,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":14,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_observer_role",
+      "setup": "observer_room",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "observer note"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "observer role has read-only access",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":3,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "observer run"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_198e8198bba44f55\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_198e8198bba44f55\",\"title\":\"observer run\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "observer?",
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":5,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"observer?\",\"run_id\":\"run_x\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":5,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\",\"root_event\":\"ev_root\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_2b5731693654b5d3.jsonl": [
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"name\":\"Owner Room\",\"public_key\":\"c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"id\":\"mem_e29883d4924ab762\",\"name\":\"obs\",\"public_key\":\"7bb253c68d1950e9b34cec1df34157d5c9e8381b82e68eedcf9607e85fb4577c\",\"role\":\"observer\",\"kind\":\"human\"},\"id\":\"ev_obs\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+        ],
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_198e8198bba44f55\",\"title\":\"observer run\"},\"id\":\"ev_198e8198bba44f55\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"observer?\",\"run_id\":\"run_x\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":5,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_member_role",
+      "setup": "member_room",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "member note"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":3,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"member note\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "member run"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_934d622dfea3f1d6\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_934d622dfea3f1d6\",\"title\":\"member run\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":4,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\",\"root_event\":\"ev_root\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_2b5731693654b5d3.jsonl": [
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"name\":\"Owner Room\",\"public_key\":\"c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"id\":\"mem_e29883d4924ab762\",\"name\":\"mem\",\"public_key\":\"7bb253c68d1950e9b34cec1df34157d5c9e8381b82e68eedcf9607e85fb4577c\",\"role\":\"member\",\"kind\":\"agent\"},\"id\":\"ev_mem\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+        ],
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"member note\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_934d622dfea3f1d6\",\"title\":\"member run\"},\"id\":\"ev_934d622dfea3f1d6\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_after_existing_journal",
+      "setup": "fixture",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "joins existing room"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"joins existing room\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_run_request#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "Second author run"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_1635cd49c29ca8db\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":5,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_1635cd49c29ca8db\",\"title\":\"Second author run\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "Continue?",
+                "run_id": "run_fixture"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":6,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\u003cts\u003e\",\"kind\":\"note.posted\",\"body\":{\"text\":\"joins existing room\"},\"sig\":\"\u003csig\u003e\"},{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":5,\"ts\":\"\",\"kind\":\"run.requested\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_1635cd49c29ca8db\",\"title\":\"Second author run\"},\"sig\":\"\u003csig\u003e\"},{\"v\":1,\"id\":\"ev_\u003cgenerated\u003e\",\"room\":\"rm_fixture\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":6,\"ts\":\"\",\"kind\":\"checkpoint.requested\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":6,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:fixture\",\"root_event\":\"ev_fixture\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_2b5731693654b5d3.jsonl": [
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"artifact_id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\"},\"id\":\"ev_fixture\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"title\":\"Fixture\"},\"id\":\"ev_run_request\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"id\":\"ev_run_denied\",\"kind\":\"run.denied\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+        ],
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"joins existing room\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_1635cd49c29ca8db\",\"title\":\"Second author run\"},\"id\":\"ev_1635cd49c29ca8db\",\"kind\":\"run.requested\",\"lamport\":5,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":6,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_no_identity",
+      "setup": "room_toml_only",
+      "identity": false,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "no signer"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "error": {
+              "code": -32603,
+              "message": "Internal error: handler panicked"
+            },
+            "id": 1,
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "error": {
+              "code": -32603,
+              "message": "Internal error: handler panicked"
+            },
+            "id": 2,
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "name": "room_run_request#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "no signer"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "error": {
+              "code": -32603,
+              "message": "Internal error: handler panicked"
+            },
+            "id": 3,
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "name": "room_checkpoint_request#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q",
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "error": {
+              "code": -32603,
+              "message": "Internal error: handler panicked"
+            },
+            "id": 4,
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "name": "room_note_post#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "text is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#6",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/nonexistent.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "compute sha256: open ${ARTIFACT_ROOT}/nonexistent.txt: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#7",
+          "request": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "/etc/hosts"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 7,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#8",
+          "request": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {},
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 8,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "title is required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#9",
+          "request": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 9,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "run_id and question are required",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_status#10",
+          "request": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"max_lamport\":0,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:fixture\",\"root_event\":\"ev_fixture\"}}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "mutation_no_identity_no_room",
+      "setup": "empty_dir",
+      "identity": false,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "no signer"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "error": {
+              "code": -32603,
+              "message": "Internal error: handler panicked"
+            },
+            "id": 2,
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "name": "room_run_request#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "no signer"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q",
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "mutation_no_room",
+      "setup": "empty_dir",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_note_post#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "text": "no room"
+              },
+              "name": "room_note_post"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_run_request#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "title": "no room"
+              },
+              "name": "room_run_request"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_checkpoint_request#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "question": "q",
+                "run_id": "run_x"
+              },
+              "name": "room_checkpoint_request"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Linked without room.toml"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Linked without room.toml\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_status#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_status"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "read room.toml: open ${ROOM}/room.toml: no such file or directory",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#6",
+          "request": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Linked without room.toml\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Linked without room.toml\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_root_defaults_to_room",
+      "setup": "fixture",
+      "identity": true,
+      "artifact_root": "room",
+      "normalize_events": true,
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ROOM}/known.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_634f78d0111733de\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":4,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_634f78d0111733de\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"symdesk_id\":\"\",\"title\":\"known.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ROOM}/known.txt",
+                "title": "Known again"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_634f78d0111733de\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":5,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_634f78d0111733de\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"symdesk_id\":\"\",\"title\":\"Known again\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ROOM}/room.toml"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_b5af77e740503c7a\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":3,\"prev\":\"\u003cprev\u003e\",\"lamport\":6,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_b5af77e740503c7a\",\"path\":\"room.toml\",\"sha256\":\"cc3b429016392cb27ba373515cf00253fabe63b99102b00a8cf91bb8233a0bbc\",\"symdesk_id\":\"\",\"title\":\"room.toml\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#5",
+          "request": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 5,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_634f78d0111733de\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known again\",\"status\":\"ok\"},{\"id\":\"art_b5af77e740503c7a\",\"path\":\"room.toml\",\"sha256\":\"cc3b429016392cb27ba373515cf00253fabe63b99102b00a8cf91bb8233a0bbc\",\"title\":\"room.toml\",\"status\":\"ok\"},{\"id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_2b5731693654b5d3.jsonl": [
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"artifact_id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\"},\"id\":\"ev_fixture\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"title\":\"Fixture\"},\"id\":\"ev_run_request\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+          "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"id\":\"ev_run_denied\",\"kind\":\"run.denied\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+        ],
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_634f78d0111733de\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"symdesk_id\":\"\",\"title\":\"known.txt\"},\"id\":\"ev_634f78d0111733de\",\"kind\":\"artifact.linked\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_634f78d0111733de\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"symdesk_id\":\"\",\"title\":\"Known again\"},\"id\":\"ev_634f78d0111733de\",\"kind\":\"artifact.linked\",\"lamport\":5,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_b5af77e740503c7a\",\"path\":\"room.toml\",\"sha256\":\"cc3b429016392cb27ba373515cf00253fabe63b99102b00a8cf91bb8233a0bbc\",\"symdesk_id\":\"\",\"title\":\"room.toml\"},\"id\":\"ev_b5af77e740503c7a\",\"kind\":\"artifact.linked\",\"lamport\":6,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_json_layer_streams",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "note_invalid_utf8_text",
+          "response": null,
+          "input": "Content-Length: 109\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_note_post\",\"arguments\":{\"text\":\"bad{{hex:ff}}utf8{{hex:e282}}!\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "note_lone_surrogate_text",
+          "response": null,
+          "input": "Content-Length: 168\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_note_post\",\"arguments\":{\"text\":\"lone \\ud800 high, \\udc00 low, \\ud800\\u0041 mismatch, \\ud83d\\ude00 pair\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "note_with_nesting_200_in_unused_argument",
+          "response": null,
+          "input": "Content-Length: 525\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_note_post\",\"arguments\":{\"extra\":{{repeat:[:200}}{{repeat:]:200}},\"text\":\"deep extra ignored\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "run_request_with_nesting_200_in_unused_argument",
+          "response": null,
+          "input": "Content-Length: 514\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_run_request\",\"arguments\":{\"title\":\"deep\",\"extra\":{{repeat:[:200}}{{repeat:]:200}}}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "checkpoint_invalid_utf8_question",
+          "response": null,
+          "input": "Content-Length: 131\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_checkpoint_request\",\"arguments\":{\"run_id\":\"run_x\",\"question\":\"q{{hex:ff}}?\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        },
+        {
+          "name": "checkpoint_lone_surrogate_run_id",
+          "response": null,
+          "input": "Content-Length: 135\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_checkpoint_request\",\"arguments\":{\"run_id\":\"run_\\udfff\",\"question\":\"q?\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"bad�utf8��!\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"lone � high, � low, �A mismatch, 😀 pair\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"deep extra ignored\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":3,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"\",\"plan_file\":\"\",\"run_id\":\"run_6a533274b9a92101\",\"title\":\"deep\"},\"id\":\"ev_6a533274b9a92101\",\"kind\":\"run.requested\",\"lamport\":4,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":4,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"q�?\",\"run_id\":\"run_x\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":5,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":5,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\u003cgenerated\u003e\",\"question\":\"q?\",\"run_id\":\"run_�\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":6,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":6,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_document_id",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "case \"$1:$3\" in\ninspect:--json) printf '{\"document_id\":\"doc|%s|%s|%s\",\"vault_name\":\"vault\",\"valid\":true}\\n' \"$1\" \"$2\" \"$3\" ;;\n*) exit 2 ;;\nesac",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT_ROOT}/sub/../mcp-artifact.txt"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":2,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"mcp-artifact.txt\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"},{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":2,\"prev\":\"\u003cprev\u003e\",\"lamport\":2,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"mcp-artifact.txt\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}",
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc|inspect|${ARTIFACT_ROOT}/mcp-artifact.txt|--json\",\"title\":\"mcp-artifact.txt\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":2,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_exit_failure",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":\"doc_ignored\"}'; exit 3",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_invalid_json",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf 'not json'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_missing_document_id",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"vault_name\":\"v\",\"valid\":true}'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_wrong_field_type_discards_result",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":\"doc_typeerr\",\"valid\":\"yes\"}'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_case_insensitive_key",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"DOCUMENT_ID\":\"doc_upper\"}'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc_upper\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"symdesk_id\":\"doc_upper\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc_upper\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"doc_upper\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_duplicate_key_last_wins",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":\"first\",\"document_id\":\"last\"}'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"last\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"symdesk_id\":\"last\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"last\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"last\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_trailing_garbage",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":\"doc_trailing\"} x'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_null_document",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf 'null'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_null_document_id",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":null}'",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_timeout_is_one_second",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "printf '{\"document_id\":\"late\"}'; exec /bin/sleep 3",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_symdesk_stdin_is_null_device",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "symdesk_script": "IFS= read -r line; printf '{\"document_id\":\"stdin:%s\"}' \"$line\"",
+      "sort_artifact_lists": true,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ARTIFACT}",
+                "title": "Desk linked"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"title\":\"Desk linked\",\"symdesk_id\":\"stdin:\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_journal_tail#4",
+          "request": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "limit": 3
+              },
+              "name": "room_journal_tail"
+            }
+          },
+          "response": {
+            "id": 4,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"v\":1,\"id\":\"ev_9bb27acffad29816\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"sig\":\"\u003csig\u003e\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"stdin:\",\"title\":\"Desk linked\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "mutation_artifact_dot_dot_prefixed_file_name",
+      "setup": "dotdot_file",
+      "identity": true,
+      "artifact_root": "room",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "room_artifact_link#1",
+          "request": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ROOM}/..name"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "path is outside artifact root",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+          }
+        },
+        {
+          "name": "room_artifact_link#2",
+          "request": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "arguments": {
+                "path": "${ROOM}/.name"
+              },
+              "name": "room_artifact_link"
+            }
+          },
+          "response": {
+            "id": 2,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "{\"v\":1,\"id\":\"ev_0ef69784cb72693d\",\"room\":\"rm_test\",\"author\":\"mem_e29883d4924ab762\",\"seq\":1,\"prev\":\"\u003cprev\u003e\",\"lamport\":1,\"ts\":\"\",\"kind\":\"artifact.linked\",\"body\":{\"artifact_id\":\"art_0ef69784cb72693d\",\"path\":\".name\",\"sha256\":\"a1d684fa73c60efb957a93ce906f76db2606ee290b0840f0cfa92ef5bb57be72\",\"symdesk_id\":\"\",\"title\":\".name\"},\"sig\":\"\u003csig\u003e\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        },
+        {
+          "name": "room_artifact_list#3",
+          "request": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+              "name": "room_artifact_list"
+            }
+          },
+          "response": {
+            "id": 3,
+            "jsonrpc": "2.0",
+            "result": {
+              "content": [
+                {
+                  "text": "[{\"id\":\"art_0ef69784cb72693d\",\"path\":\".name\",\"sha256\":\"a1d684fa73c60efb957a93ce906f76db2606ee290b0840f0cfa92ef5bb57be72\",\"title\":\".name\",\"status\":\"ok\"}]",
+                  "type": "text"
+                }
+              ],
+              "isError": false
+            }
+          }
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_0ef69784cb72693d\",\"path\":\".name\",\"sha256\":\"a1d684fa73c60efb957a93ce906f76db2606ee290b0840f0cfa92ef5bb57be72\",\"symdesk_id\":\"\",\"title\":\".name\"},\"id\":\"ev_0ef69784cb72693d\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\",\"v\":1}"
+        ]
+      }
+    },
+    {
+      "name": "notification_tool_call_executes",
+      "setup": "room_toml_only",
+      "identity": true,
+      "artifact_root": "testdata",
+      "normalize_events": true,
+      "sort_artifact_lists": false,
+      "steps": [
+        {
+          "name": "note_notification_then_ping",
+          "response": null,
+          "input": "Content-Length: 120\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"room_note_post\",\"arguments\":{\"text\":\"sent as a notification\"}}}Content-Length: 40\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"ping\"}",
+          "output": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}",
+          "error": ""
+        }
+      ],
+      "journal": {
+        "mem_e29883d4924ab762.jsonl": [
+          "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"sent as a notification\"},\"id\":\"ev_\u003cgenerated\u003e\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\u003cprev\u003e\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"\u003csig\u003e\",\"ts\":\"\u003cts\u003e\",\"v\":1}"
+        ]
+      }
+    }
+  ],
+  "schema_version": 1,
+  "setups": {
+    "dotdot_file": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n",
+      "files": {
+        "..name": "dotdot-content",
+        ".name": "dot-content"
+      },
+      "journal_file": "",
+      "journal_lines": null
+    },
+    "empty_dir": {
+      "room_toml": null,
+      "files": null,
+      "journal_file": "",
+      "journal_lines": null
+    },
+    "fixture": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n",
+      "files": {
+        "known.txt": "artifact-content"
+      },
+      "journal_file": "mem_2b5731693654b5d3.jsonl",
+      "journal_lines": [
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"artifact_id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\"},\"id\":\"ev_fixture\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:4POGOLP1hfJy/puzCkVyholOoW/x6tXy8XX91Ut3wj4MLoLffvYln/HBEo/wKxemVt88dktJc4qXTF4tGZURCg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"title\":\"Fixture\"},\"id\":\"ev_run_request\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"sha256:3eca991b8a0f82ab19bd1bd2881aa028d204a2ae2df8596bc4b5dbb3d3998ee9\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"ed25519:izXYxV3m8UTfdt5Obd7KsKGtcilN8QLrOsTbdhgRk2oFrVy1pjg1yYn8JEiRyOjSAdvhk/N6uM35NjaP/cN8DA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"id\":\"ev_run_denied\",\"kind\":\"run.denied\",\"lamport\":3,\"prev\":\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+      ]
+    },
+    "member_room": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"\nroot_event = \"ev_root\"\n",
+      "files": null,
+      "journal_file": "mem_2b5731693654b5d3.jsonl",
+      "journal_lines": [
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"name\":\"Owner Room\",\"public_key\":\"c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:RWPs3y5fQf0HMbVzNVn2bX0q6tNDhcM744VwSNoQElagg8rNB4DQWM/hoWPxFxXlfgEC7LlSOOCv3Pkhu85LBw==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"id\":\"mem_e29883d4924ab762\",\"name\":\"mem\",\"public_key\":\"7bb253c68d1950e9b34cec1df34157d5c9e8381b82e68eedcf9607e85fb4577c\",\"role\":\"member\",\"kind\":\"agent\"},\"id\":\"ev_mem\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1dc3b035f3c72b7f83f29633f42d99e3fe437f0efba0c9be3afce0561a9b8106\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"ed25519:ZWWpDI6r4cfsEj+GyDZY7FEm2pQ4c+QvSwSaLO6T29DEUMAJ6RcqJ69vDVDUMQZvOAo7e9bshE8anamk20CmDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+      ]
+    },
+    "observer_room": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"\nroot_event = \"ev_root\"\n",
+      "files": null,
+      "journal_file": "mem_2b5731693654b5d3.jsonl",
+      "journal_lines": [
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"name\":\"Owner Room\",\"public_key\":\"c285e46fbb98c0f0e5f5a0e72041b5b3ba6767574c6c471c97871c5f45058a02\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:RWPs3y5fQf0HMbVzNVn2bX0q6tNDhcM744VwSNoQElagg8rNB4DQWM/hoWPxFxXlfgEC7LlSOOCv3Pkhu85LBw==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+        "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"id\":\"mem_e29883d4924ab762\",\"name\":\"obs\",\"public_key\":\"7bb253c68d1950e9b34cec1df34157d5c9e8381b82e68eedcf9607e85fb4577c\",\"role\":\"observer\",\"kind\":\"human\"},\"id\":\"ev_obs\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1dc3b035f3c72b7f83f29633f42d99e3fe437f0efba0c9be3afce0561a9b8106\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"ed25519:KVBx2jT7APG+5lOl2Ur3XZYxiStbIxvisYlbgYGiv0Pcj2UxTtPEK0rmiWoTvq25M8F2UP3XlGtJQyDagc8lAg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+      ]
+    },
+    "room_toml_only": {
+      "room_toml": "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n",
+      "files": null,
+      "journal_file": "",
+      "journal_lines": null
+    }
+  }
 }

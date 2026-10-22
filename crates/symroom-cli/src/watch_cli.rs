@@ -101,7 +101,7 @@ async fn watch(vault: &str, signer: identity::Identity) -> ExitCode {
 
     let mut backoff = Duration::from_millis(100);
     loop {
-        let mut child = match crate::symdesk_command(&symdesk_path)
+        let mut child = match crate::symdesk_inspect::symdesk_command(&symdesk_path)
             .args(["events", vault])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

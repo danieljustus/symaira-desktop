@@ -537,54 +537,7 @@ fn check_tool(name: &str) -> Tool {
     tool
 }
 
-pub(crate) fn look_path(name: &str) -> Option<PathBuf> {
-    for directory in std::env::split_paths(&std::env::var_os("PATH")?) {
-        #[cfg(windows)]
-        let names = windows_tool_names(name);
-        #[cfg(not(windows))]
-        let names = vec![name.to_owned()];
-        for candidate in names {
-            let path = directory.join(candidate);
-            if path.is_file() && is_executable(&path) {
-                return Some(path);
-            }
-        }
-    }
-    None
-}
-
-#[cfg(windows)]
-fn windows_tool_names(name: &str) -> Vec<String> {
-    if Path::new(name).extension().is_some() {
-        return vec![name.to_owned()];
-    }
-    let extensions = std::env::var_os("PATHEXT")
-        .map(|value| {
-            value
-                .to_string_lossy()
-                .split(';')
-                .map(|extension| extension.to_ascii_lowercase())
-                .filter(|extension| !extension.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .filter(|extensions| !extensions.is_empty())
-        .unwrap_or_else(|| vec![".com".to_owned(), ".exe".to_owned()]);
-    extensions
-        .into_iter()
-        .map(|extension| format!("{name}{extension}"))
-        .collect()
-}
-
-#[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-    fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
-}
-
-#[cfg(not(unix))]
-fn is_executable(path: &Path) -> bool {
-    path.is_file()
-}
+pub(crate) use crate::symdesk_inspect::look_path;
 
 fn permissions_mode(metadata: &fs::Metadata) -> u32 {
     #[cfg(unix)]

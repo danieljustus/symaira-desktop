@@ -20,6 +20,8 @@ import (
 const mcpMutationFixture = "../../../testdata/port/room/mcp-mutations.json"
 
 func TestSymRoomMCPMutationOracle(t *testing.T) {
+	// Confine PATH so an installed symdesk cannot change the recorded symdesk_id.
+	useScenarioPath(t, "")
 	roomDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte("schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -77,7 +79,13 @@ func TestSymRoomMCPMutationOracle(t *testing.T) {
 		if err := json.Unmarshal([]byte(content["text"].(string)), &event); err != nil {
 			t.Fatalf("case %d event: %v", i, err)
 		}
-		delete(event, "ts")
+		// Only note.posted is stamped with a wall-clock time by Go; the other
+		// three kinds must keep Go's literal empty `ts` in the fixture.
+		if event["kind"] == "note.posted" {
+			delete(event, "ts")
+		} else if event["ts"] != "" {
+			t.Fatalf("case %d: Go stamped ts %q on %v", i, event["ts"], event["kind"])
+		}
 		delete(event, "sig")
 		delete(event, "prev")
 		if event["kind"] == "note.posted" {
@@ -93,6 +101,10 @@ func TestSymRoomMCPMutationOracle(t *testing.T) {
 		cases = append(cases, map[string]any{"request": fixtureRequests[i], "response": response})
 	}
 	doc["cases"] = cases
+	setups := buildPortSetups(t)
+	scenarios := runPortScenarios(t, mcpMutationFixture, mutationScenarioSpecs(), setups)
+	doc["setups"] = usedSetups(scenarios, setups)
+	doc["scenarios"] = scenarios
 	journalBytes, err := os.ReadFile(filepath.Join(roomDir, "journal", id.MemberID+".jsonl")) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)

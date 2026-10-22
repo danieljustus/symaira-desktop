@@ -392,6 +392,8 @@ pub fn request(
         format!("ev_{}", &run_id[4..]),
         "run.requested",
         body,
+        // Go `run.Request` builds the event without `TS`, so it stays empty.
+        String::new(),
     )?;
     Ok(event)
 }
@@ -420,7 +422,15 @@ pub fn start(
     }
     let body = go_json(&serde_json::json!({ "run_id": run_id }))?;
     let event_id = derived_event_id(run_id, "start");
-    append_run_event(room_dir, identity, event_id, "run.started", body)
+    append_run_event(
+        room_dir,
+        identity,
+        event_id,
+        "run.started",
+        body,
+        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
+        now_timestamp(),
+    )
 }
 
 /// Go: `run.Cancel` — append `run.cancelled` unless the run is terminal.
@@ -439,7 +449,19 @@ pub fn cancel(
     }
     let body = go_json(&serde_json::json!({ "reason": reason, "run_id": run_id }))?;
     let event_id = derived_event_id(run_id, "cancel");
-    append_run_event(room_dir, identity, event_id, "run.cancelled", body)
+    append_run_event(
+        room_dir,
+        identity,
+        event_id,
+        "run.cancelled",
+        body,
+        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
+        now_timestamp(),
+    )
+}
+
+fn now_timestamp() -> String {
+    event::format_timestamp(time::OffsetDateTime::now_utc())
 }
 
 fn derived_event_id(run_id: &str, action: &str) -> String {
@@ -453,6 +475,7 @@ fn append_run_event(
     id: String,
     kind: &str,
     body: String,
+    ts: String,
 ) -> Result<Event, RunMutationError> {
     let room_id = read_room_id(room_dir)?;
     let stats = journal::read_journal_stats(room_dir)?;
@@ -467,7 +490,7 @@ fn append_run_event(
         seq: author.seq.saturating_add(1),
         prev: author.prev,
         lamport: stats.max_lamport.saturating_add(1),
-        ts: event::format_timestamp(time::OffsetDateTime::now_utc()),
+        ts,
         kind: kind.to_owned(),
         body,
         sig: None,

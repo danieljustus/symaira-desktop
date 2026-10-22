@@ -8,6 +8,17 @@ linters:
     - gosec
   exclusions:
     rules:
+      # The SymDraw DSL fixture generator: the mermaid edge corpus is DSL
+      # text, not credentials, and its token-soup corpus uses a fixed-seed
+      # PCG on purpose so the generated fixture is reproducible.
+      - path: ^scripts/rust-port/cmd/renderdslgen/main\.go$
+        linters: [gosec]
+        text: 'G101:'
+        source: 'named\("mm-edge", "mermaid", map\[string\]string\{'
+      - path: ^scripts/rust-port/cmd/renderdslgen/main\.go$
+        linters: [gosec]
+        text: 'G404:'
+        source: 'rand\.New\(rand\.NewPCG\(0x5eed, 0xd5a\)\)'
       # This local-file copy API deliberately accepts caller-selected paths;
       # it is not a vault-confinement boundary. Staging is an exclusive 0600
       # file inside a fresh private MkdirTemp directory. Keep all other G304s.

@@ -28,6 +28,7 @@
     "testdata/port/cli/index-maintenance-process.json": "14d26a169f68dfad537da57979e77781c94b149bf9ce1f2d21d9c03b9badcbd0",
     "testdata/port/cli/index-retrieval-process.json": "8a2ef701daaacdd7f9e61ae6d6f944402922a548aea703c6356ae3ededcb3d37",
     "testdata/port/cli/index-retry-process.json": "0acac35a3c6cb1d72df18b2e67bf9fd0fb74efaf0f5119d7e64bba1ae24a3662",
+    "testdata/port/cli/index-symlink-process.json": "e82e9283407c1d49c4ec3989dbeae038912d8f1a9fc7fbb57ca424f86d6bb586",
     "testdata/port/cli/search-hybrid.json": "06a26de996ab59096db1169ef8b0edf2ca9170e605f071022b6a5d6a1d807178",
     "testdata/port/cli/symdesk-command-tree.json": "9b96668d1c0ae566b26d378ef7994391c89729db857af3c135d237c814fe6138",
     "testdata/port/cli/symroom-grammar-process.json": "7f3f082392d49961ad75502df0cdc3f549619278babcadaf7a32a20c3d6dc41c",

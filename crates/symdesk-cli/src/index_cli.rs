@@ -270,6 +270,13 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
     for relative in discovered {
         let path = root.join(&relative);
         let key = path.to_string_lossy().into_owned();
+        if symdesk_vault::is_external_symlink(&root, &path) {
+            // Go's indexDirectory counts a link that cannot be resolved below
+            // the vault root as skipped before it records any lifecycle row,
+            // so neither the target's bytes nor a parse failure surface.
+            skipped += 1;
+            continue;
+        }
         let bytes = match fs::read(&path) {
             Ok(bytes) => bytes,
             Err(error) => return super::emit_error(format!("{error}"), json_output),

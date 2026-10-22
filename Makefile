@@ -33,7 +33,7 @@
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
-.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential
+.PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential index-symlink-cli-fixtures-generate index-symlink-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
@@ -654,9 +654,11 @@ retrieval-turboquant-benchmark:
 
 render-ir-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen
 
 render-ir-differential:
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
 	$(CARGO) test -p symdesk-render --locked
 
 # Pure noteToHTML parity is paired with the pinned production Go integrity
@@ -767,6 +769,13 @@ index-retry-cli-fixtures-generate:
 index-retry-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexRetryProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_retry
+
+index-symlink-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexSymlinkProcessPortFixture$$'
+
+index-symlink-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexSymlinkProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --locked --test index_symlink
 
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'

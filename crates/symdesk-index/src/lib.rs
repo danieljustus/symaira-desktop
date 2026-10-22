@@ -1298,7 +1298,8 @@ impl Sidecar {
         record_lifecycle: bool,
     ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
-        let canonical_root = fs::canonicalize(vault_root)?;
+        // A vault root that cannot be resolved fails before any walk.
+        fs::canonicalize(vault_root)?;
         if record_lifecycle {
             for entry in symdesk_vault::walk_all(vault_root)? {
                 let Some(extension) = entry.path.extension().and_then(|value| value.to_str())
@@ -1321,10 +1322,7 @@ impl Sidecar {
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
             let candidate = vault_root.join(relative);
-            if fs::symlink_metadata(&candidate)?.file_type().is_symlink()
-                && fs::canonicalize(&candidate)
-                    .map_or(true, |target| !target.starts_with(&canonical_root))
-            {
+            if symdesk_vault::is_external_symlink(vault_root, &candidate) {
                 // Go's RefreshIndex skips links that cannot be opened through
                 // the vault root, while keeping contained symlinks indexable.
                 return Ok(());
@@ -1545,6 +1543,11 @@ impl Sidecar {
         let markdown = symdesk_vault::walk_markdown(vault_root)?;
         let mut valid_documents = std::collections::BTreeSet::new();
         for relative in markdown {
+            // Go drops a link that cannot be opened through the vault root from
+            // the valid set, so its stale index rows are pruned.
+            if symdesk_vault::is_external_symlink(vault_root, &vault_root.join(&relative)) {
+                continue;
+            }
             let storage_path = storage_path(vault_root, &relative)?;
             // Open before accepting the key, and parse from that same handle.
             let mut file = vault_dir.open(&relative)?;
@@ -1619,17 +1622,26 @@ impl Sidecar {
         let entries = symdesk_vault::walk_all(vault_root)?;
         let mut valid = std::collections::BTreeSet::new();
         for entry in entries {
-            let storage_path = storage_path(vault_root, &entry.path)?;
-            // Do not validate a lifecycle row from a path that was only seen
-            // by the ambient directory walker; open the discovered entry via
-            // the root capability first.
-            let _file = vault_dir.open(&entry.path)?;
+            let storage_path = if entry.entry_type == symdesk_vault::WalkEntryType::Symlink {
+                // Go's PruneIndexStatuses accepts every walked entry by name
+                // without resolving it, so a broken or external link keeps its
+                // lifecycle row. Only the lexical key is needed.
+                let key_path = absolute_non_verbatim(vault_root)?.join(&entry.path);
+                validate_utf8_path(&key_path, "storage key")?;
+                key_path
+            } else {
+                let storage_path = storage_path(vault_root, &entry.path)?;
+                // Do not validate a lifecycle row from a path that was only seen
+                // by the ambient directory walker; open the discovered entry via
+                // the root capability first.
+                let _file = vault_dir.open(&entry.path)?;
+                storage_path.key_path
+            };
             let key = storage_path
-                .key_path
                 .to_str()
                 .ok_or_else(|| SidecarError::NonUtf8Path {
                     context: "storage key",
-                    path: storage_path.key_path.clone(),
+                    path: storage_path.clone(),
                 })?;
             valid.insert(key.to_owned());
         }

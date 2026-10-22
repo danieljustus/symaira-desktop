@@ -19,74 +19,23 @@ const USAGE: &str =
 const FLAG_USAGE: &str = "Usage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
-    let mut identity_name = String::new();
-    let mut refs = String::new();
-    let mut json = false;
-    let mut decision = None;
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if parsing_flags && argument == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && argument.starts_with('-') {
-            let flag = argument.trim_start_matches('-');
-            if let Some(value) = flag.strip_prefix("identity=") {
-                identity_name = value.to_owned();
-                index += 1;
-                continue;
-            }
-            if flag == "identity" {
-                let Some(value) = args.get(index + 1) else {
-                    return flag_error("flag needs an argument: -identity\n");
-                };
-                identity_name = value.to_string_lossy().into_owned();
-                index += 2;
-                continue;
-            }
-            if let Some(value) = flag.strip_prefix("refs=") {
-                refs = value.to_owned();
-                index += 1;
-                continue;
-            }
-            if flag == "refs" {
-                let Some(value) = args.get(index + 1) else {
-                    return flag_error("flag needs an argument: -refs\n");
-                };
-                refs = value.to_string_lossy().into_owned();
-                index += 2;
-                continue;
-            }
-            if let Some(value) = flag.strip_prefix("json=") {
-                match parse_bool(value) {
-                    Some(value) => json = value,
-                    None => return invalid_bool(value),
-                }
-                index += 1;
-                continue;
-            }
-            if flag == "json" {
-                json = true;
-                index += 1;
-                continue;
-            }
-            if matches!(flag, "h" | "help") {
-                return stderr(FLAG_USAGE, CoreExitCode::Ok);
-            }
-            return stderr(
-                &format!("flag provided but not defined: -{flag}\n{FLAG_USAGE}"),
-                CoreExitCode::NoInput,
-            );
-        }
-        parsing_flags = false;
-        if decision.is_none() {
-            decision = Some(argument.into_owned());
-        }
-        index += 1;
-    }
+    use crate::goflag::Spec;
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[
+            Spec::string("identity"),
+            Spec::string("refs"),
+            Spec::boolean("json"),
+        ],
+        FLAG_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let identity_name = parsed.string("identity").to_owned();
+    let refs = parsed.string("refs").to_owned();
+    let json = parsed.boolean("json");
+    let decision = parsed.positionals.first().cloned();
 
     let Some(decision) = decision else {
         return stdout(USAGE, CoreExitCode::Ok);
@@ -176,25 +125,6 @@ fn record_decision(
         .map_err(|error| format!("sign decision event: {error}"))?;
     journal::append_event(room_dir, &event).map_err(|error| format!("append event: {error}"))?;
     Ok(event)
-}
-
-fn parse_bool(value: &str) -> Option<bool> {
-    match value {
-        "1" | "t" | "T" | "TRUE" | "True" | "true" => Some(true),
-        "0" | "f" | "F" | "FALSE" | "False" | "false" => Some(false),
-        _ => None,
-    }
-}
-
-fn invalid_bool(value: &str) -> ExitCode {
-    stderr(
-        &format!("invalid boolean value \"{value}\" for -json: parse error\n{FLAG_USAGE}"),
-        CoreExitCode::NoInput,
-    )
-}
-
-fn flag_error(message: &str) -> ExitCode {
-    stderr(&format!("{message}{FLAG_USAGE}"), CoreExitCode::NoInput)
 }
 
 fn generate_event_id() -> String {

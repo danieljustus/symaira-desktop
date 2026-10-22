@@ -6,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use crate::goflag::parse_go_duration;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symroom_core::{
     approval, identity,
@@ -135,6 +136,9 @@ fn parse_signed_duration(input: &str) -> Option<time::Duration> {
     } else {
         input.strip_prefix('+').unwrap_or(input)
     };
+    if positive.starts_with(['-', '+']) {
+        return None;
+    }
     let duration = parse_go_duration(positive)?;
     let nanos = i128::try_from(duration.as_nanos()).ok()?;
     let nanos = if negative {
@@ -296,54 +300,23 @@ fn parse_string_flags(
     allowed: &[&str],
     usage: &str,
 ) -> Result<ParsedStringFlags, ExitCode> {
-    let mut parsed = ParsedStringFlags {
-        values: std::collections::BTreeMap::new(),
-        positionals: Vec::new(),
-    };
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if parsing_flags && argument == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && argument.starts_with('-') {
-            let name_value = argument.trim_start_matches('-');
-            let (name, inline_value) = name_value
-                .split_once('=')
-                .map_or((name_value, None), |(name, value)| (name, Some(value)));
-            if is_help_flag(&argument) {
-                return Err(stderr(usage, CoreExitCode::Ok));
-            }
-            if !allowed.contains(&name) {
-                return Err(stderr(
-                    &format!("flag provided but not defined: -{name}\n{usage}"),
-                    CoreExitCode::NoInput,
-                ));
-            }
-            let value = if let Some(value) = inline_value {
-                value.to_owned()
-            } else if let Some(value) = args.get(index + 1) {
-                index += 1;
-                value.to_string_lossy().into_owned()
-            } else {
-                return Err(stderr(
-                    &format!("flag needs an argument: -{name}\n{usage}"),
-                    CoreExitCode::NoInput,
-                ));
-            };
-            parsed.values.insert(name.to_owned(), value);
-            index += 1;
-        } else {
-            parsing_flags = false;
-            parsed.positionals.push(argument.into_owned());
-            index += 1;
-        }
-    }
+    use crate::goflag::{Spec, check_go_duration};
     let _ = command;
-    Ok(parsed)
+    let specs: Vec<Spec> = allowed
+        .iter()
+        .map(|name| {
+            if *name == "ttl" {
+                Spec::checked(name, check_go_duration)
+            } else {
+                Spec::string(name)
+            }
+        })
+        .collect();
+    let parsed = crate::goflag::parse_or_exit(args, &specs, usage)?;
+    Ok(ParsedStringFlags {
+        values: parsed.values,
+        positionals: parsed.positionals,
+    })
 }
 
 fn resolve_identity_name(value: Option<&String>) -> Result<String, ExitCode> {
@@ -371,34 +344,18 @@ fn identity_error(name: &str, error: symroom_core::identity::IdentityError) -> E
 }
 
 fn list(args: &[OsString]) -> ExitCode {
-    let mut pending = false;
-    let mut json = false;
-    let mut parsing_flags = true;
-    for argument in args {
-        let value = argument.to_string_lossy();
-        if parsing_flags && value == "--" {
-            parsing_flags = false;
-            continue;
-        }
-        if parsing_flags && value.starts_with('-') {
-            match flag_value(&value, "pending") {
-                Some(Ok(value)) => pending = value,
-                Some(Err(invalid)) => {
-                    return invalid_bool("run list", "pending", invalid, true, false);
-                }
-                None => match flag_value(&value, "json") {
-                    Some(Ok(value)) => json = value,
-                    Some(Err(invalid)) => {
-                        return invalid_bool("run list", "json", invalid, true, false);
-                    }
-                    None if is_help_flag(&value) => return flag_help("run list", true, false),
-                    None => return unknown_flag("run list", &value, true, false),
-                },
-            }
-        } else {
-            parsing_flags = false;
-        }
-    }
+    use crate::goflag::Spec;
+    let usage = flag_usage("run list", true, false);
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[Spec::boolean("pending"), Spec::boolean("json")],
+        &usage,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let pending = parsed.boolean("pending");
+    let json = parsed.boolean("json");
 
     let room = room_dir();
     let records = match runs::list(&room, pending) {
@@ -432,29 +389,14 @@ fn list(args: &[OsString]) -> ExitCode {
 }
 
 fn show(args: &[OsString]) -> ExitCode {
-    let mut json = false;
-    let mut positional = Vec::new();
-    let mut parsing_flags = true;
-    for argument in args {
-        let value = argument.to_string_lossy();
-        if parsing_flags && value == "--" {
-            parsing_flags = false;
-            continue;
-        }
-        if parsing_flags && value.starts_with('-') {
-            match flag_value(&value, "json") {
-                Some(Ok(value)) => json = value,
-                Some(Err(invalid)) => {
-                    return invalid_bool("run show", "json", invalid, false, false);
-                }
-                None if is_help_flag(&value) => return flag_help("run show", false, false),
-                None => return unknown_flag("run show", &value, false, false),
-            }
-        } else {
-            parsing_flags = false;
-            positional.push(value.into_owned());
-        }
-    }
+    use crate::goflag::Spec;
+    let usage = flag_usage("run show", false, false);
+    let parsed = match crate::goflag::parse_or_exit(args, &[Spec::boolean("json")], &usage) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let json = parsed.boolean("json");
+    let positional = parsed.positionals;
     let Some(run_id) = positional.first() else {
         return stderr(
             "Usage: symroom run show <run_id> [--json]\n",
@@ -497,57 +439,27 @@ fn show(args: &[OsString]) -> ExitCode {
 }
 
 fn wait(args: &[OsString]) -> ExitCode {
-    let mut timeout = Duration::from_secs(15 * 60);
-    let mut json = false;
-    let mut positional = Vec::new();
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let value = args[index].to_string_lossy();
-        if parsing_flags && value == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && value.starts_with('-') {
-            let flag = value.trim_start_matches('-');
-            if flag == "timeout" {
-                let Some(argument) = args.get(index + 1) else {
-                    return flag_error("flag needs an argument: -timeout\n", true);
-                };
-                let duration = argument.to_string_lossy();
-                timeout = match parse_go_duration(&duration) {
-                    Some(timeout) => timeout,
-                    None => return invalid_duration(&duration),
-                };
-                index += 2;
-                continue;
-            }
-            if let Some(duration) = flag.strip_prefix("timeout=") {
-                timeout = match parse_go_duration(duration) {
-                    Some(timeout) => timeout,
-                    None => return invalid_duration(duration),
-                };
-                index += 1;
-                continue;
-            }
-            match flag_value(&value, "json") {
-                Some(Ok(value)) => json = value,
-                Some(Err(invalid)) => {
-                    return invalid_bool("run wait", "json", invalid, false, true);
-                }
-                None if is_help_flag(&value) => {
-                    return flag_help("run wait", false, true);
-                }
-                None => return unknown_flag("run wait", &value, false, true),
-            }
-            index += 1;
-        } else {
-            parsing_flags = false;
-            positional.push(value.into_owned());
-            index += 1;
-        }
-    }
+    use crate::goflag::{Spec, check_go_duration};
+    let usage = flag_usage("run wait", false, true);
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[
+            Spec::checked("timeout", check_go_duration),
+            Spec::boolean("json"),
+        ],
+        &usage,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let json = parsed.boolean("json");
+    let timeout = parsed
+        .values
+        .get("timeout")
+        .map_or(Duration::from_secs(15 * 60), |value| {
+            parse_go_duration(value).unwrap_or_default()
+        });
+    let positional = parsed.positionals;
     let Some(run_id) = positional.first() else {
         return stderr(
             "Usage: symroom run wait <run_id> [--timeout 15m] [--json]\n",
@@ -578,106 +490,6 @@ fn wait(args: &[OsString]) -> ExitCode {
     }
 }
 
-fn invalid_duration(value: &str) -> ExitCode {
-    let message = format!("invalid value \"{value}\" for flag -timeout: parse error\n");
-    flag_error(&message, true)
-}
-
-fn flag_error(message: &str, timeout: bool) -> ExitCode {
-    let usage = flag_usage("run wait", false, timeout);
-    stderr(&format!("{message}{usage}"), CoreExitCode::NoInput)
-}
-
-pub(crate) fn parse_go_duration(input: &str) -> Option<Duration> {
-    let (negative, input) = input
-        .strip_prefix('-')
-        .map_or((false, input), |rest| (true, rest));
-    let input = input.strip_prefix('+').unwrap_or(input);
-    if input == "0" {
-        return Some(Duration::ZERO);
-    }
-    if input.is_empty() {
-        return None;
-    }
-    let mut rest = input;
-    let mut total_nanos = 0_u128;
-    while !rest.is_empty() {
-        let count = rest
-            .bytes()
-            .take_while(|b| b.is_ascii_digit() || *b == b'.')
-            .count();
-        if count == 0 {
-            return None;
-        }
-        let amount = &rest[..count];
-        rest = &rest[count..];
-        let (unit, scale) = [
-            ("ns", 1_u128),
-            ("us", 1_000),
-            ("µs", 1_000),
-            ("μs", 1_000),
-            ("ms", 1_000_000),
-            ("s", 1_000_000_000),
-            ("m", 60_000_000_000),
-            ("h", 3_600_000_000_000),
-        ]
-        .into_iter()
-        .find(|(unit, _)| rest.starts_with(unit))?;
-        let (whole, fraction) = amount
-            .split_once('.')
-            .map_or((amount, ""), |(whole, fraction)| (whole, fraction));
-        if whole.is_empty() && fraction.is_empty()
-            || !whole.bytes().all(|byte| byte.is_ascii_digit())
-            || !fraction.bytes().all(|byte| byte.is_ascii_digit())
-        {
-            return None;
-        }
-        let whole = if whole.is_empty() {
-            0
-        } else {
-            whole.parse::<u128>().ok()?
-        };
-        total_nanos = total_nanos.checked_add(whole.checked_mul(scale)?)?;
-        let fractional_digits = fraction.len().min(19);
-        if fractional_digits > 0 {
-            let numerator = fraction[..fractional_digits].parse::<u128>().ok()?;
-            let denominator = 10_u128.checked_pow(fractional_digits as u32)?;
-            total_nanos = total_nanos.checked_add(numerator.checked_mul(scale)? / denominator)?;
-        }
-        rest = &rest[unit.len()..];
-    }
-    let maximum = i64::MAX as u128 + u128::from(negative);
-    if total_nanos > maximum {
-        return None;
-    }
-    Some(if negative || total_nanos == 0 {
-        Duration::ZERO
-    } else {
-        Duration::from_nanos(total_nanos as u64)
-    })
-}
-
-fn flag_value<'a>(argument: &'a str, name: &str) -> Option<Result<bool, &'a str>> {
-    let trimmed = argument.trim_start_matches('-');
-    if trimmed == name {
-        return Some(Ok(true));
-    }
-    let value = trimmed.strip_prefix(&format!("{name}="))?;
-    Some(match value {
-        "1" | "t" | "T" | "TRUE" | "True" | "true" => Ok(true),
-        "0" | "f" | "F" | "FALSE" | "False" | "false" => Ok(false),
-        _ => Err(value),
-    })
-}
-
-fn is_help_flag(argument: &str) -> bool {
-    matches!(argument.trim_start_matches('-'), "h" | "help")
-}
-
-fn flag_help(command: &str, pending: bool, timeout: bool) -> ExitCode {
-    stderr(&flag_usage(command, pending, timeout), CoreExitCode::Ok)
-}
-
 fn flag_usage(command: &str, pending: bool, timeout: bool) -> String {
     let mut usage = format!("Usage of {command}:\n  -json\n    \tOutput as JSON\n");
     if pending {
@@ -687,23 +499,6 @@ fn flag_usage(command: &str, pending: bool, timeout: bool) -> String {
         usage.push_str("  -timeout duration\n    \tTimeout duration (default 15m0s)\n");
     }
     usage
-}
-
-fn invalid_bool(command: &str, name: &str, value: &str, pending: bool, timeout: bool) -> ExitCode {
-    let usage = flag_usage(command, pending, timeout);
-    stderr(
-        &format!("invalid boolean value \"{value}\" for -{name}: parse error\n{usage}"),
-        CoreExitCode::NoInput,
-    )
-}
-
-fn unknown_flag(command: &str, argument: &str, pending_flag: bool, timeout: bool) -> ExitCode {
-    let name = argument.trim_start_matches('-');
-    let usage = flag_usage(command, pending_flag, timeout);
-    stderr(
-        &format!("flag provided but not defined: -{name}\n{usage}"),
-        CoreExitCode::NoInput,
-    )
 }
 
 fn pretty_go_json(value: &impl serde::Serialize) -> Result<String, serde_json::Error> {

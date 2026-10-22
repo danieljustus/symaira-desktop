@@ -587,6 +587,10 @@ jobs:
         shell: bash
         run: make room-io-error-cli-differential
 
+      - name: Run native room flag grammar CLI differential
+        shell: bash
+        run: make room-flag-grammar-cli-differential
+
       - name: Run native retrieval chunk differential
         shell: bash
         run: make retrieval-chunks-differential

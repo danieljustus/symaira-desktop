@@ -216,44 +216,16 @@ async fn interrupted_or_timeout(
 }
 
 fn parse(args: &[OsString]) -> Result<Parsed, ExitCode> {
-    let mut parsed = Parsed::default();
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if !argument.starts_with('-') {
-            break;
-        }
-        if matches!(argument.as_ref(), "-h" | "--help") {
-            return Err(stderr(FLAGS_USAGE, CoreExitCode::Ok));
-        }
-        let flag = argument.trim_start_matches('-');
-        let (name, inline) = flag
-            .split_once('=')
-            .map_or((flag, None), |(name, value)| (name, Some(value)));
-        let target = match name {
-            "desk" => &mut parsed.desk,
-            "identity" => &mut parsed.identity,
-            _ => {
-                return Err(stderr(
-                    &format!("flag provided but not defined: -{name}\n{FLAGS_USAGE}"),
-                    CoreExitCode::NoInput,
-                ));
-            }
-        };
-        if let Some(value) = inline {
-            *target = value.to_owned();
-        } else if let Some(value) = args.get(index + 1) {
-            index += 1;
-            *target = value.to_string_lossy().into_owned();
-        } else {
-            return Err(stderr(
-                &format!("flag needs an argument: -{name}\n{FLAGS_USAGE}"),
-                CoreExitCode::NoInput,
-            ));
-        }
-        index += 1;
-    }
-    Ok(parsed)
+    use crate::goflag::Spec;
+    let parsed = crate::goflag::parse_or_exit(
+        args,
+        &[Spec::string("desk"), Spec::string("identity")],
+        FLAGS_USAGE,
+    )?;
+    Ok(Parsed {
+        desk: parsed.string("desk").to_owned(),
+        identity: parsed.string("identity").to_owned(),
+    })
 }
 
 fn room_dir() -> PathBuf {

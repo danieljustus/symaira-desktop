@@ -101,46 +101,16 @@ fn show(name: Option<&OsString>) -> ExitCode {
 }
 
 fn export(args: &[OsString]) -> ExitCode {
-    let mut public = false;
-    let mut name = None;
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if parsing_flags && argument == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && argument.starts_with('-') {
-            let flag = argument.trim_start_matches('-');
-            if let Some(value) = flag.strip_prefix("public=") {
-                match parse_bool(value) {
-                    Some(value) => public = value,
-                    None => return invalid_bool(value),
-                }
-                index += 1;
-                continue;
-            }
-            if flag == "public" {
-                public = true;
-                index += 1;
-                continue;
-            }
-            if matches!(flag, "h" | "help") {
-                return stderr(EXPORT_USAGE, CoreExitCode::Ok);
-            }
-            return stderr(
-                &format!("flag provided but not defined: -{flag}\n{EXPORT_USAGE}"),
-                CoreExitCode::NoInput,
-            );
-        }
-        parsing_flags = false;
-        if name.is_none() {
-            name = Some(argument.into_owned());
-        }
-        index += 1;
-    }
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[crate::goflag::Spec::boolean("public")],
+        EXPORT_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let public = parsed.boolean("public");
+    let name = parsed.positionals.first().cloned();
     let Some(name) = name else {
         return stderr(
             "Usage: symroom identity export <name> --public\n",
@@ -165,21 +135,6 @@ fn export(args: &[OsString]) -> ExitCode {
     stdout(
         &format!("{}\n", hex::encode(id.public_key)),
         CoreExitCode::Ok,
-    )
-}
-
-fn parse_bool(value: &str) -> Option<bool> {
-    match value {
-        "1" | "t" | "T" | "TRUE" | "True" | "true" => Some(true),
-        "0" | "f" | "F" | "FALSE" | "False" | "false" => Some(false),
-        _ => None,
-    }
-}
-
-fn invalid_bool(value: &str) -> ExitCode {
-    stderr(
-        &format!("invalid boolean value \"{value}\" for -public: parse error\n{EXPORT_USAGE}"),
-        CoreExitCode::NoInput,
     )
 }
 

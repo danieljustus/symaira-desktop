@@ -87,15 +87,32 @@ func main() {
 	commit := flag.String("oracle-commit", fixtureoracle.Defaults().Commit, "Go oracle commit")
 	release := flag.String("oracle-release", fixtureoracle.Defaults().Release, "Go oracle release")
 	flag.Parse()
+	message, err := generate(options{output: *output, tables: *tables, check: *check, commit: *commit, release: *release})
+	if err != nil {
+		fatal("%v", err)
+	}
+	fmt.Println(message)
+}
+
+// options is the resolved command line of one generator run.
+type options struct {
+	output, tables  string
+	check           bool
+	commit, release string
+}
+
+// generate builds the fixture and Unicode tables and either verifies them
+// against the committed files (check) or writes them. It returns the PASS line.
+func generate(opts options) (string, error) {
 	root, err := fixtureoracle.FindRepositoryRoot(".")
 	if err != nil {
-		fatal("resolve fixture source: %v", err)
+		return "", fmt.Errorf("resolve fixture source: %w", err)
 	}
-	if err := fixtureoracle.ValidateSource(root, inventory.Oracle{Commit: *commit, Release: *release}); err != nil {
-		fatal("verify selected fixture source: %v", err)
+	if err := fixtureoracle.ValidateSource(root, inventory.Oracle{Commit: opts.commit, Release: opts.release}); err != nil {
+		return "", fmt.Errorf("verify selected fixture source: %w", err)
 	}
 
-	result := fixture{SchemaVersion: 1, Oracle: oracle{Commit: *commit, Release: *release}, Entries: []string{"source", "mermaid", "json"}}
+	result := fixture{SchemaVersion: 1, Oracle: oracle{Commit: opts.commit, Release: opts.release}, Entries: []string{"source", "mermaid", "json"}}
 	seen := map[string]bool{}
 	add := func(id, entry, input string) {
 		if !utf8.ValidString(input) {
@@ -122,38 +139,40 @@ func main() {
 	ids := map[string]bool{}
 	for _, c := range result.Cases {
 		if ids[c.ID] {
-			fatal("duplicate case id %s", c.ID)
+			return "", fmt.Errorf("duplicate case id %s", c.ID)
 		}
 		ids[c.ID] = true
 	}
 
 	content, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
-		fatal("marshal fixture: %v", err)
+		return "", fmt.Errorf("marshal fixture: %w", err)
 	}
 	content = append(content, '\n')
 	tableSource := renderTables()
-	if *check {
-		current, err := os.ReadFile(*output)
+	if opts.check {
+		current, err := os.ReadFile(opts.output)
 		if err != nil || !bytes.Equal(current, content) {
-			fatal("render DSL parse fixture is stale; regenerate deliberately")
+			return "", errors.New("render DSL parse fixture is stale; regenerate deliberately")
 		}
-		currentTables, err := os.ReadFile(*tables)
+		currentTables, err := os.ReadFile(opts.tables)
 		if err != nil || !bytes.Equal(currentTables, []byte(tableSource)) {
-			fatal("render DSL Go Unicode table is stale; regenerate deliberately")
+			return "", errors.New("render DSL Go Unicode table is stale; regenerate deliberately")
 		}
-		fmt.Printf("PASS render DSL parse fixture (%d cases)\n", len(result.Cases))
-		return
+		return fmt.Sprintf("PASS render DSL parse fixture (%d cases)", len(result.Cases)), nil
 	}
-	for path, data := range map[string][]byte{*output: content, *tables: []byte(tableSource)} {
-		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-			fatal("create directory: %v", err)
+	for _, target := range []struct {
+		path string
+		data []byte
+	}{{opts.output, content}, {opts.tables, []byte(tableSource)}} {
+		if err := os.MkdirAll(filepath.Dir(target.path), 0o750); err != nil {
+			return "", fmt.Errorf("create directory: %w", err)
 		}
-		if err := os.WriteFile(path, data, 0o600); err != nil {
-			fatal("write %s: %v", path, err)
+		if err := os.WriteFile(target.path, target.data, 0o600); err != nil {
+			return "", fmt.Errorf("write %s: %w", target.path, err)
 		}
 	}
-	fmt.Printf("PASS render DSL parse fixture generated (%d cases)\n", len(result.Cases))
+	return fmt.Sprintf("PASS render DSL parse fixture generated (%d cases)", len(result.Cases)), nil
 }
 
 func run(id, entry, input string) testCase {

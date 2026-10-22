@@ -123,6 +123,8 @@ pub fn deny(
     reason: &str,
     signer: &Identity,
 ) -> Result<Event, ApprovalError> {
+    // Go `Deny` reads the room config before it looks the run up.
+    runs::read_room_config(room_dir)?;
     let run = runs::get(room_dir, run_id)?;
     if run.state != "requested" {
         return Err(ApprovalError::InvalidTransition(format!(

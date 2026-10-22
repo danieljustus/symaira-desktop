@@ -2,7 +2,6 @@
 
 use std::{
     collections::BTreeMap,
-    fs,
     io::Read,
     path::{Component, Path, PathBuf},
 };
@@ -255,11 +254,13 @@ fn append_signed_event(
 }
 
 fn hash_file(path: &Path) -> Result<String, std::io::Error> {
-    let mut file = fs::File::open(path)?;
+    let mut file = crate::goio::open(path)?;
     let mut hash = Sha256::new();
     let mut buffer = [0_u8; 8192];
     loop {
-        let count = file.read(&mut buffer)?;
+        let count = file
+            .read(&mut buffer)
+            .map_err(|error| crate::goio::path_error("read", path, &error))?;
         if count == 0 {
             break;
         }

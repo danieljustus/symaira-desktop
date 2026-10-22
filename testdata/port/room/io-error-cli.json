@@ -1,0 +1,1290 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "3845a99e1581ab03d10c2e8715200725798c45fd",
+  "source_hashes": {
+    "cmd/symroom/cmd_artifact.go": "79405799847b23475088b8f63cfa363b37764443f02daac82d53596239c4becf",
+    "cmd/symroom/cmd_checkpoint.go": "9cd7bb1f8817b9eb22e5f908e9ec8d066b5d0596dd5acb188a43d66b68ce1cd4",
+    "cmd/symroom/cmd_decide.go": "547a61bcd41e81ce72168d4f03487ce5754d9c20f185e0fa65f939a17941ea3e",
+    "cmd/symroom/cmd_doctor.go": "3bf94a721a0c61a3ecac7ca58083dc09ea76e539bf44c6dcaf724a2153758b88",
+    "cmd/symroom/cmd_index.go": "3ed658d515284bc6d7473156e8db311366e3d5edbc23e405ae92235a18085494",
+    "cmd/symroom/cmd_log.go": "7c570fb10bb722a79c9bc654fd2bfa0ae2717c66d638fa9d5c4ddfedf0eed951",
+    "cmd/symroom/cmd_member.go": "8a747400b58bd3d06f61adef3da731cc848db225bdce935aacba9318c744c8de",
+    "cmd/symroom/cmd_note.go": "e3e7747b6f305a876017467030b04556129e623ba6a0392de0c4927b9d145358",
+    "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
+    "cmd/symroom/cmd_verify.go": "741ba93b1ecaf140c7219066506bf09735a004ea80ab60fea4cc0acc7c8828d0",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/artifact/artifact.go": "b0f4f52df50c7b07bfe058926e813082399fdaac58a8901ac1204de50419afc5",
+    "internal/room/doctor/doctor.go": "4ba52548510cce9102d867a276be3fcf491f8af608f0ba753bbeb9429c5ece6f",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/journal/verifier.go": "16c14a87ddbd34b233dd0dec7eaa6b34e1d97d333a5e1038ae31b1ff8cf91414",
+    "internal/room/room/journal_append.go": "83055869dfa95128d1eb5a01061b77f9424249abcacecf6b0b1c98365b1cbfa3",
+    "internal/room/room/members.go": "06d9fdc5fe75aa4a3783ba5c62a001876804ad175029e2a81f5543cca019483f",
+    "internal/room/run/checkpoint.go": "08005ebfa18c292dfca58e120721b0e215435cd0bf4ae97b10923f33bde53fdc",
+    "internal/room/run/run.go": "6559b3c23ce07a16dc1e024aa8ffc8759fe7646224a633621b95b05da071c8a5"
+  },
+  "identity_key": "b606b6c07da9da7e285e033b1a77544607ee774ace8882eaad2e7c898ddd870c",
+  "room_toml": "id = \"rm_io_error_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",
+  "cases": [
+    {
+      "name": "empty: run list",
+      "state": "empty",
+      "args": [
+        "run",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run show r1",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error showing run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run request --identity a --title t",
+      "state": "empty",
+      "args": [
+        "run",
+        "request",
+        "--identity",
+        "a",
+        "--title",
+        "t"
+      ],
+      "stdout": "",
+      "stderr": "Error requesting run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run start --identity a r1",
+      "state": "empty",
+      "args": [
+        "run",
+        "start",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error starting run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run cancel --identity a r1",
+      "state": "empty",
+      "args": [
+        "run",
+        "cancel",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error cancelling run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --identity a r1",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error approving run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: run deny --identity a --reason no r1",
+      "state": "empty",
+      "args": [
+        "run",
+        "deny",
+        "--identity",
+        "a",
+        "--reason",
+        "no",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error denying run: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint resolve --identity a --answer y c1",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "a",
+        "--answer",
+        "y",
+        "c1"
+      ],
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: note --identity a hi",
+      "state": "empty",
+      "args": [
+        "note",
+        "--identity",
+        "a",
+        "hi"
+      ],
+      "stdout": "",
+      "stderr": "Error posting note: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: decide --identity a d",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--identity",
+        "a",
+        "d"
+      ],
+      "stdout": "",
+      "stderr": "Error recording decision: read room.toml: open room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "empty: artifact link --identity a f.txt",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "a",
+        "f.txt"
+      ],
+      "stdout": "",
+      "stderr": "Error linking artifact: compute sha256: open f.txt: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run list",
+      "state": "nope",
+      "args": [
+        "run",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run list --json",
+      "state": "nope",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run show r1",
+      "state": "nope",
+      "args": [
+        "run",
+        "show",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error showing run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run request --identity a --title t",
+      "state": "nope",
+      "args": [
+        "run",
+        "request",
+        "--identity",
+        "a",
+        "--title",
+        "t"
+      ],
+      "stdout": "",
+      "stderr": "Error requesting run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run start --identity a r1",
+      "state": "nope",
+      "args": [
+        "run",
+        "start",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error starting run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run cancel --identity a r1",
+      "state": "nope",
+      "args": [
+        "run",
+        "cancel",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error cancelling run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run approve --identity a r1",
+      "state": "nope",
+      "args": [
+        "run",
+        "approve",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error approving run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: run deny --identity a --reason no r1",
+      "state": "nope",
+      "args": [
+        "run",
+        "deny",
+        "--identity",
+        "a",
+        "--reason",
+        "no",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error denying run: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: checkpoint resolve --identity a --answer y c1",
+      "state": "nope",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "a",
+        "--answer",
+        "y",
+        "c1"
+      ],
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: note --identity a hi",
+      "state": "nope",
+      "args": [
+        "note",
+        "--identity",
+        "a",
+        "hi"
+      ],
+      "stdout": "",
+      "stderr": "Error posting note: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "nope: decide --identity a d",
+      "state": "nope",
+      "args": [
+        "decide",
+        "--identity",
+        "a",
+        "d"
+      ],
+      "stdout": "",
+      "stderr": "Error recording decision: read room.toml: open nope/room.toml: \u003cENOENT\u003e\n",
+      "exit_code": 1,
+      "files": []
+    },
+    {
+      "name": "filedir: run list",
+      "state": "filedir",
+      "args": [
+        "run",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run list --json",
+      "state": "filedir",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run show r1",
+      "state": "filedir",
+      "args": [
+        "run",
+        "show",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error showing run: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: member list",
+      "state": "filedir",
+      "args": [
+        "member",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing members: read journal dir: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: artifact list",
+      "state": "filedir",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing artifacts: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: verify",
+      "state": "filedir",
+      "args": [
+        "verify"
+      ],
+      "stdout": "",
+      "stderr": "Error verifying journal: read all segments: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: verify --json",
+      "state": "filedir",
+      "args": [
+        "verify",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error verifying journal: read all segments: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: log",
+      "state": "filedir",
+      "args": [
+        "log"
+      ],
+      "stdout": "",
+      "stderr": "Error querying log: verify error: read all segments: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: log --json",
+      "state": "filedir",
+      "args": [
+        "log",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error querying log: verify error: read all segments: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: index rebuild",
+      "state": "filedir",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "stdout": "",
+      "stderr": "Error rebuilding index: merge all events: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        ".symroom/",
+        ".symroom/index.sqlite",
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run request --identity a --title t",
+      "state": "filedir",
+      "args": [
+        "run",
+        "request",
+        "--identity",
+        "a",
+        "--title",
+        "t"
+      ],
+      "stdout": "",
+      "stderr": "Error requesting run: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run start --identity a r1",
+      "state": "filedir",
+      "args": [
+        "run",
+        "start",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error starting run: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run cancel --identity a r1",
+      "state": "filedir",
+      "args": [
+        "run",
+        "cancel",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error cancelling run: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run approve --identity a r1",
+      "state": "filedir",
+      "args": [
+        "run",
+        "approve",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error approving run: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: run deny --identity a --reason no r1",
+      "state": "filedir",
+      "args": [
+        "run",
+        "deny",
+        "--identity",
+        "a",
+        "--reason",
+        "no",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error denying run: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: checkpoint resolve --identity a --answer y c1",
+      "state": "filedir",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "a",
+        "--answer",
+        "y",
+        "c1"
+      ],
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: note --identity a hi",
+      "state": "filedir",
+      "args": [
+        "note",
+        "--identity",
+        "a",
+        "hi"
+      ],
+      "stdout": "",
+      "stderr": "Error posting note: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: decide --identity a d",
+      "state": "filedir",
+      "args": [
+        "decide",
+        "--identity",
+        "a",
+        "d"
+      ],
+      "stdout": "",
+      "stderr": "Error recording decision: read room.toml: open afile/room.toml: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: member remove --identity a mem_x",
+      "state": "filedir",
+      "args": [
+        "member",
+        "remove",
+        "--identity",
+        "a",
+        "mem_x"
+      ],
+      "stdout": "",
+      "stderr": "Error: read journal dir: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: member role --identity a mem_x member",
+      "state": "filedir",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "a",
+        "mem_x",
+        "member"
+      ],
+      "stdout": "",
+      "stderr": "Error: read journal dir: open afile/journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "filedir: artifact unlink --identity a art_x",
+      "state": "filedir",
+      "args": [
+        "artifact",
+        "unlink",
+        "--identity",
+        "a",
+        "art_x"
+      ],
+      "stdout": "",
+      "stderr": "Error unlinking artifact: open afile/journal/mem_92fb0c69374fb171.jsonl: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "afile"
+      ]
+    },
+    {
+      "name": "tomldir: run list",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run list --json",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run show r1",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "show",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error showing run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run request --identity a --title t",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "request",
+        "--identity",
+        "a",
+        "--title",
+        "t"
+      ],
+      "stdout": "",
+      "stderr": "Error requesting run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run start --identity a r1",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "start",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error starting run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run cancel --identity a r1",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "cancel",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error cancelling run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run approve --identity a r1",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "approve",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error approving run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: run deny --identity a --reason no r1",
+      "state": "tomldir",
+      "args": [
+        "run",
+        "deny",
+        "--identity",
+        "a",
+        "--reason",
+        "no",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error denying run: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: checkpoint resolve --identity a --answer y c1",
+      "state": "tomldir",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "a",
+        "--answer",
+        "y",
+        "c1"
+      ],
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: note --identity a hi",
+      "state": "tomldir",
+      "args": [
+        "note",
+        "--identity",
+        "a",
+        "hi"
+      ],
+      "stdout": "",
+      "stderr": "Error posting note: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "tomldir: decide --identity a d",
+      "state": "tomldir",
+      "args": [
+        "decide",
+        "--identity",
+        "a",
+        "d"
+      ],
+      "stdout": "",
+      "stderr": "Error recording decision: read room.toml: read room.toml: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "room.toml/"
+      ]
+    },
+    {
+      "name": "journalfile: run list",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run list --json",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error listing runs: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run show r1",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "show",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error showing run: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: member list",
+      "state": "journalfile",
+      "args": [
+        "member",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing members: read journal dir: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: artifact list",
+      "state": "journalfile",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "stdout": "",
+      "stderr": "Error listing artifacts: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: verify",
+      "state": "journalfile",
+      "args": [
+        "verify"
+      ],
+      "stdout": "",
+      "stderr": "Error verifying journal: read all segments: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: verify --json",
+      "state": "journalfile",
+      "args": [
+        "verify",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error verifying journal: read all segments: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: log",
+      "state": "journalfile",
+      "args": [
+        "log"
+      ],
+      "stdout": "",
+      "stderr": "Error querying log: verify error: read all segments: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: log --json",
+      "state": "journalfile",
+      "args": [
+        "log",
+        "--json"
+      ],
+      "stdout": "",
+      "stderr": "Error querying log: verify error: read all segments: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: index rebuild",
+      "state": "journalfile",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "stdout": "",
+      "stderr": "Error rebuilding index: merge all events: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        ".symroom/",
+        ".symroom/index.sqlite",
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run request --identity a --title t",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "request",
+        "--identity",
+        "a",
+        "--title",
+        "t"
+      ],
+      "stdout": "",
+      "stderr": "Error requesting run: open journal/mem_92fb0c69374fb171.jsonl: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run start --identity a r1",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "start",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error starting run: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run cancel --identity a r1",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "cancel",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error cancelling run: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run approve --identity a r1",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "approve",
+        "--identity",
+        "a",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error approving run: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        ".symroom/",
+        ".symroom/authorization.lock",
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: run deny --identity a --reason no r1",
+      "state": "journalfile",
+      "args": [
+        "run",
+        "deny",
+        "--identity",
+        "a",
+        "--reason",
+        "no",
+        "r1"
+      ],
+      "stdout": "",
+      "stderr": "Error denying run: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: checkpoint resolve --identity a --answer y c1",
+      "state": "journalfile",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "a",
+        "--answer",
+        "y",
+        "c1"
+      ],
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: note --identity a hi",
+      "state": "journalfile",
+      "args": [
+        "note",
+        "--identity",
+        "a",
+        "hi"
+      ],
+      "stdout": "",
+      "stderr": "Error posting note: read journal dir: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: decide --identity a d",
+      "state": "journalfile",
+      "args": [
+        "decide",
+        "--identity",
+        "a",
+        "d"
+      ],
+      "stdout": "",
+      "stderr": "Error recording decision: read journal dir: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: member remove --identity a mem_x",
+      "state": "journalfile",
+      "args": [
+        "member",
+        "remove",
+        "--identity",
+        "a",
+        "mem_x"
+      ],
+      "stdout": "",
+      "stderr": "Error: read journal dir: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: member role --identity a mem_x member",
+      "state": "journalfile",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "a",
+        "mem_x",
+        "member"
+      ],
+      "stdout": "",
+      "stderr": "Error: read journal dir: open journal: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "journalfile: artifact unlink --identity a art_x",
+      "state": "journalfile",
+      "args": [
+        "artifact",
+        "unlink",
+        "--identity",
+        "a",
+        "art_x"
+      ],
+      "stdout": "",
+      "stderr": "Error unlinking artifact: open journal/mem_92fb0c69374fb171.jsonl: \u003cENOTDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "artdir: artifact link --identity a f.txt",
+      "state": "artdir",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "a",
+        "f.txt"
+      ],
+      "stdout": "",
+      "stderr": "Error linking artifact: compute sha256: read f.txt: \u003cEISDIR\u003e\n",
+      "exit_code": 1,
+      "files": [
+        "f.txt/",
+        "journal/",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "artdir: artifact link --identity a ../out",
+      "state": "artdir",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "a",
+        "../out"
+      ],
+      "stdout": "",
+      "stderr": "Error: path is outside artifact root\n",
+      "exit_code": 2,
+      "files": [
+        "f.txt/",
+        "journal/",
+        "room.toml"
+      ]
+    },
+    {
+      "name": "abs-journalfile: doctor",
+      "state": "abs-journalfile",
+      "args": [
+        "doctor"
+      ],
+      "stdout": "[OK] room_manifest: room.toml is present\n  remediation: No action needed.\n[WARN] sync_folder: .symroom is missing; this may be a non-room directory\n  remediation: Run `symroom init` here, or run doctor from the room root.\n[FAIL] identity_presence: no default identity is configured\n  remediation: Set `default_identity` in symroom config or create/select an identity with `--identity \u003cname\u003e`.\n[OK] duplicate_identity: no duplicate stored member IDs detected\n  remediation: No action needed.\n[WARN] index: derived index is missing\n  remediation: Run `symroom index` to rebuild .symroom/index.sqlite.\n[FAIL] room_integrity: journal verification could not run: read all segments: open \u003cwork\u003e/journal: \u003cENOTDIR\u003e\n  remediation: Restore the journal directory and run `symroom verify` for detailed errors.\n[WARN] symdesk: \n  remediation: Install symdesk and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symbrain: \n  remediation: Install symbrain and place it on PATH if this integration is needed; otherwise this warning is informational.\n[WARN] symvault: \n  remediation: Install symvault and place it on PATH if this integration is needed; otherwise this warning is informational.\n",
+      "stderr": "",
+      "exit_code": 1,
+      "files": [
+        "journal",
+        "room.toml"
+      ]
+    }
+  ]
+}

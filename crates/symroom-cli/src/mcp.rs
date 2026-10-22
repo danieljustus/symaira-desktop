@@ -21,6 +21,7 @@ use std::{
 use serde::Serialize;
 use serde_json::{Value, json, value::RawValue};
 use sha2::{Digest, Sha256};
+use symroom_core::goio;
 
 const INSTRUCTIONS: &str = "Use room_* tools to inspect and record the signed room work record. There is no approval-granting tool in this server.";
 const MCP_USAGE: &str = "Usage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n";
@@ -1687,58 +1688,17 @@ fn run_wait(
     }
 }
 
-/// Go formats an OS error as `<op> <path>: <strerror>`. The wording is the
-/// host's: lower-case libc text on Unix, the Windows system message (capitalised,
-/// trailing period) on Windows. Go reports a directory read through the `read`
-/// operation, which `go_read_file` already reflects in `operation`.
+/// Go formats an OS error as `<op> <path>: <strerror>`; the shared formatting
+/// lives in `symroom_core::goio`.
 fn go_io_error(operation: &str, path: &Path, error: &io::Error) -> String {
-    format!(
-        "{operation} {}: {}",
-        path.display(),
-        go_os_message(error, cfg!(windows))
-    )
-}
-
-/// Go's `syscall.Errno.Error()` text for the OS errors this server surfaces.
-/// `windows` selects the host family so both wordings are unit-testable on any
-/// OS: Windows keeps FormatMessage text, everything else lower-cases libc's.
-fn go_os_message(error: &io::Error, windows: bool) -> String {
-    if windows {
-        match error.raw_os_error() {
-            Some(1) => return "Incorrect function.".to_owned(),
-            Some(2) => return "The system cannot find the file specified.".to_owned(),
-            Some(3) => return "The system cannot find the path specified.".to_owned(),
-            Some(5) => return "Access is denied.".to_owned(),
-            _ => {}
-        }
-    }
-    let mut text = error.to_string();
-    if let Some(index) = text.rfind(" (os error ") {
-        text.truncate(index);
-    }
-    if windows {
-        return text;
-    }
-    let mut chars = text.chars();
-    chars
-        .next()
-        .map(|first| first.to_lowercase().collect::<String>() + chars.as_str())
-        .unwrap_or_default()
+    goio::path_error_text(operation, path, error)
 }
 
 /// Reads like Go's `os.ReadFile`, naming the failing operation. A directory
 /// opens (on Windows via backup semantics, as Go does) and then fails in
 /// `read`, so Go reports `read <dir>: ...` rather than an `open` failure.
 fn go_read_file(path: &Path) -> Result<Vec<u8>, (&'static str, io::Error)> {
-    let mut options = fs::OpenOptions::new();
-    options.read(true);
-    #[cfg(windows)]
-    {
-        use std::os::windows::fs::OpenOptionsExt;
-        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
-        options.custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
-    }
-    let mut file = options.open(path).map_err(|error| ("open", error))?;
+    let mut file = goio::open_raw(path).map_err(|error| ("open", error))?;
     let mut contents = Vec::new();
     io::Read::read_to_end(&mut file, &mut contents).map_err(|error| ("read", error))?;
     Ok(contents)
@@ -2163,8 +2123,9 @@ fn artifact_list(room_dir: &Path, artifact_root: &Path) -> Result<String, String
 
 #[cfg(test)]
 mod go_io_tests {
-    use super::{go_io_error, go_os_message, go_read_file};
+    use super::{go_io_error, go_read_file};
     use std::io;
+    use symroom_core::goio::os_message as go_os_message;
 
     #[test]
     fn os_messages_follow_the_go_wording_of_each_host_family() {

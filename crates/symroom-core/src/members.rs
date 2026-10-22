@@ -450,7 +450,8 @@ fn append_member_event(
     kind: &str,
     body: String,
 ) -> Result<Event, MemberMutationError> {
-    let room_config = std::fs::read_to_string(room_dir.join("room.toml"))
+    let room_config = crate::goio::read_file(&room_dir.join("room.toml"))
+        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
         .map_err(|error| MemberMutationError::Message(format!("read room.toml: {error}")))?;
     let room_id = room_config
         .lines()

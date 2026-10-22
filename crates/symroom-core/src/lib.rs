@@ -18,6 +18,7 @@ pub mod artifact;
 pub mod authorization;
 pub mod desk_watch;
 pub mod event;
+pub mod goio;
 pub mod identity;
 pub mod index;
 pub mod journal;

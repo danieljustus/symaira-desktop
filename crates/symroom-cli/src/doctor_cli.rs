@@ -619,10 +619,14 @@ fn home_dir() -> Option<PathBuf> {
 }
 
 fn room_dir() -> PathBuf {
-    std::env::var_os("SYMROOM_ROOM_DIR")
-        .filter(|value| !value.is_empty())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."))
+    // Go `doctor.Run` resolves the room with `filepath.Abs`, so every path in a
+    // diagnostic message is absolute.
+    symroom_core::goio::abs(
+        &std::env::var_os("SYMROOM_ROOM_DIR")
+            .filter(|value| !value.is_empty())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(".")),
+    )
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {

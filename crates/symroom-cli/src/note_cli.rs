@@ -113,7 +113,8 @@ fn post_note(
     text: &str,
     signer: &identity::Identity,
 ) -> Result<Event, String> {
-    let config = std::fs::read_to_string(room_dir.join("room.toml"))
+    let config = symroom_core::goio::read_file(&room_dir.join("room.toml"))
+        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
         .map_err(|error| format!("read room.toml: {error}"))?;
     let room_id = config
         .lines()
@@ -122,8 +123,7 @@ fn post_note(
             (key.trim() == "id").then(|| value.trim().trim_matches('"').to_owned())
         })
         .unwrap_or_default();
-    let stats = journal::read_journal_stats(room_dir)
-        .map_err(|error| format!("read journal dir: {error}"))?;
+    let stats = journal::read_journal_stats(room_dir).map_err(|error| error.to_string())?;
     if stats
         .member_state
         .members

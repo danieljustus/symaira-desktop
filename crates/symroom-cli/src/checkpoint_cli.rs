@@ -234,6 +234,8 @@ fn resolve_checkpoint(
     answer: &str,
     signer: &Identity,
 ) -> Result<Event, ResolveError> {
+    // Go `ResolveCheckpoint` reads the room id before it opens the journal.
+    runs::read_room_id(room).map_err(|error| ResolveError::Message(error.to_string()))?;
     let events =
         journal::merge_all(room).map_err(|error| ResolveError::Message(error.to_string()))?;
     let mut state = members::State::default();

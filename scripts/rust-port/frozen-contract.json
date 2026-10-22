@@ -286,7 +286,7 @@
     },
     "cargo test -p symroom-cli --locked --test flag_grammar_commands": {
       "ignored": 0,
-      "passed": 1
+      "passed": 4
     },
     "cargo test -p symroom-cli --locked --test grammar_process": {
       "ignored": 0,
@@ -306,7 +306,7 @@
     },
     "cargo test -p symroom-cli --locked --test io_error_commands": {
       "ignored": 0,
-      "passed": 1
+      "passed": 2
     },
     "cargo test -p symroom-cli --locked --test log_commands": {
       "ignored": 0,

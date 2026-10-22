@@ -53,6 +53,10 @@
       "ignored": 0,
       "passed": 2
     },
+    "cargo test -p symdesk-cli --locked --test index_symlink": {
+      "ignored": 0,
+      "passed": 3
+    },
     "cargo test -p symdesk-cli --locked --test mcp_ask_offline": {
       "ignored": 0,
       "passed": 6
@@ -206,7 +210,7 @@
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,
-      "passed": 114
+      "passed": 115
     },
     "cargo test -p symdesk-vault --locked --test dataset_contracts": {
       "ignored": 0,

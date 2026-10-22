@@ -707,6 +707,11 @@ jobs:
         shell: bash
         run: make index-retry-cli-differential
 
+      - name: Run native index symlink CLI differential
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make index-symlink-cli-differential
+
       - name: Run native index status CLI differential
         shell: bash
         env:

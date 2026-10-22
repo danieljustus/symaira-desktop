@@ -1,0 +1,737 @@
+{
+  "schema_version": 1,
+  "config": "index_path = $INDEX_PATH\nollama_url = \"$SERVER/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+  "steps": [
+    {
+      "id": "seed",
+      "writes": [
+        {
+          "path": "inside.md",
+          "body": "# Inside\n\ninside symlink oracle document.\n"
+        },
+        {
+          "path": "sub/target.md",
+          "body": "# Target\n\ncontained symlink target document.\n"
+        },
+        {
+          "path": "../outside/secret.md",
+          "body": "---\ntitle: Outside\n---\n# Outside\n\nOUTSIDE_SECRET_MARKER must never be indexed.\n"
+        },
+        {
+          "path": "../outside/dirnote.md",
+          "body": "---\ntitle: Outside\n---\n# Outside\n\nOUTSIDE_SECRET_MARKER must never be indexed.\n"
+        }
+      ],
+      "links": [
+        {
+          "path": "contained.md",
+          "target": "sub/target.md"
+        },
+        {
+          "path": "external.md",
+          "target": "../outside/secret.md"
+        },
+        {
+          "path": "broken.md",
+          "target": "missing-target.md"
+        },
+        {
+          "path": "dirlink",
+          "target": "../outside"
+        }
+      ],
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "Index complete. 3 new/updated files, 2 skipped.\n",
+        "stderr": "Indexed: $ROOT/vault/sub/target.md (2 chunks)\nIndexed: $ROOT/vault/inside.md (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Target\n\ncontained symlink target document."
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Inside\n\ninside symlink oracle document."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "unchanged",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"skipped\":5,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "retry-nothing-failed",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":0,\"failed\":0,\"status\":\"ok\",\"succeeded\":0}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "contained-retargeted-outside",
+      "removes": [
+        "contained.md"
+      ],
+      "links": [
+        {
+          "path": "contained.md",
+          "target": "../outside/secret.md"
+        }
+      ],
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"skipped\":5,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "prune-after-retarget",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "--prune"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"pruned\":1,\"skipped\":5,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "external-removed",
+      "removes": [
+        "external.md"
+      ],
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "--prune"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"pruned\":0,\"skipped\":4,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/inside.md",
+            "hash": "ef66760e445c1be1ba9ad72c45eda4758fcee81d7f58b7aeb2eedaeb8b097f65"
+          },
+          {
+            "path": "$ROOT/vault/sub/target.md",
+            "hash": "3d80a6f833b68b65677c473f82d8126e62331303aee8dd7161f8651eb6fcdd14"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: inside\ntitle: inside\ntitle: inside\ntype: note\nsimhash: 8947858794499604\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "0da2520e2b501a7961f47b95fc1769fee8c9c55dce021a853a962151170dfb90",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl insid type note simhash 8947858794499604 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/inside.md",
+            "chunk_index": 1,
+            "content": "# Inside\n\ninside symlink oracle document.",
+            "hash": "d08597a44978cf85b6494ed0101c17fef0340eef79e5ca58505f1b55b91f4419",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 41,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Inside",
+            "content_norm": "insid symlink oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: contained\ntitle: contained\ntitle: contained\ntype: note\nsimhash: 025284600162e308\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "ec7bedbc2849763ea898caec8f9b78cbca79106f70a787b9b1fb2467d3d64fa3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl contained type note simhash 025284600162e308 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/sub/target.md",
+            "chunk_index": 1,
+            "content": "# Target\n\ncontained symlink target document.",
+            "hash": "bfdba5d74f5c5c317fc1cce1c85b7ab77bec9ccb28423ab03df0e8cd7a7ac542",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 44,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Target",
+            "content_norm": "target contained symlink document"
+          }
+        ],
+        "generation": 2,
+        "index_storage": 0,
+        "lifecycle": {
+          "contained.md": "indexed",
+          "inside.md": "indexed",
+          "target.md": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    }
+  ]
+}

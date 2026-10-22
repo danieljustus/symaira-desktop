@@ -88,6 +88,7 @@ var fixturePaths = []string{
 	"testdata/port/room/doctor-cli.json",
 	"testdata/port/room/checkpoint-cli.json",
 	"testdata/port/room/run-approval-cli.json",
+	"testdata/port/room/io-error-cli.json",
 	"testdata/port/retrieval/retrieval-chunks.json",
 	"testdata/port/retrieval/retrieval-bm25.json",
 	"testdata/port/retrieval/embedding-state.json",

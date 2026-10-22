@@ -113,17 +113,8 @@ fn post_note(
     text: &str,
     signer: &identity::Identity,
 ) -> Result<Event, String> {
-    let config = std::fs::read_to_string(room_dir.join("room.toml"))
-        .map_err(|error| format!("read room.toml: {error}"))?;
-    let room_id = config
-        .lines()
-        .find_map(|line| {
-            let (key, value) = line.split_once('=')?;
-            (key.trim() == "id").then(|| value.trim().trim_matches('"').to_owned())
-        })
-        .unwrap_or_default();
-    let stats = journal::read_journal_stats(room_dir)
-        .map_err(|error| format!("read journal dir: {error}"))?;
+    let room_id = symroom_core::room_config::read(room_dir)?.id;
+    let stats = journal::read_journal_stats(room_dir).map_err(|error| error.to_string())?;
     if stats
         .member_state
         .members

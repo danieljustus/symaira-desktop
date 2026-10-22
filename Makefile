@@ -35,6 +35,7 @@
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
+.PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
@@ -774,6 +775,13 @@ room-run-approval-cli-fixtures-generate:
 room-run-approval-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_approval_commands
+
+room-io-error-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIOErrorCLIContract$$'
+
+room-io-error-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIOErrorCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test io_error_commands
 
 history-prune-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

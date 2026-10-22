@@ -7,7 +7,7 @@ use std::{
 };
 
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserializer, Serialize};
 use serde_json::Value;
 use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
@@ -375,6 +375,8 @@ pub fn request(
     adapter: &str,
     identity: &Identity,
 ) -> Result<Event, RunMutationError> {
+    // Go `run.Request` reads the room id before it touches the journal.
+    read_room_id(room_dir)?;
     let author = journal::author_stats(room_dir, &identity.member_id)?;
     let sequence = author.seq.saturating_add(1).max(1);
     let input = format!("{}:{title}:{sequence}", identity.member_id);
@@ -540,26 +542,17 @@ pub enum RunWaitError {
 pub enum RunQueryError {
     #[error(transparent)]
     Journal(#[from] journal::ReadSegmentsError),
-    #[error("room config: {0}")]
+    #[error("{0}")]
     RoomConfig(String),
     #[error("run not found")]
     NotFound,
 }
 
-#[derive(Deserialize)]
-pub(crate) struct RunRoomConfig {
-    pub id: String,
-    #[serde(default)]
-    pub root_event: String,
-    #[serde(default)]
-    pub root_pubkey: String,
-}
-
-pub(crate) fn read_room_config(room_dir: &std::path::Path) -> Result<RunRoomConfig, RunQueryError> {
-    let config = std::fs::read_to_string(room_dir.join("room.toml"))
-        .map_err(|error| RunQueryError::RoomConfig(format!("read room.toml: {error}")))?;
-    toml::from_str(&config)
-        .map_err(|error| RunQueryError::RoomConfig(format!("parse room.toml: {error}")))
+/// Go `room.ReadRoomConfig`, the same lenient scanner for every run command.
+pub(crate) fn read_room_config(
+    room_dir: &std::path::Path,
+) -> Result<crate::room_config::RoomConfig, RunQueryError> {
+    crate::room_config::read(room_dir).map_err(RunQueryError::RoomConfig)
 }
 
 pub fn read_room_id(room_dir: &std::path::Path) -> Result<String, RunQueryError> {

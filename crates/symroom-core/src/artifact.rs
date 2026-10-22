@@ -2,7 +2,6 @@
 
 use std::{
     collections::BTreeMap,
-    fs,
     io::Read,
     path::{Component, Path, PathBuf},
 };
@@ -78,7 +77,7 @@ pub fn link(
     signer: &Identity,
 ) -> Result<Event, ArtifactError> {
     let rel = make_relative_path(file_path, room_dir)?;
-    let abs_path = room_dir.join(&rel);
+    let abs_path = clean_path(&room_dir.join(&rel));
     let hash = hash_file(&abs_path)
         .map_err(|error| ArtifactError::Message(format!("compute sha256: {error}")))?;
     let digest = Sha256::digest(format!("{}{}", rel.to_string_lossy(), hash).as_bytes());
@@ -154,7 +153,7 @@ pub fn handle_desk_event(
         return Ok(());
     };
 
-    let path = root.join(&target.path);
+    let path = clean_path(&root.join(&target.path));
     let hash = match hash_file(&path) {
         Ok(hash) => hash,
         Err(_) if item.event == "file_removed" => String::new(),
@@ -209,7 +208,7 @@ pub fn list(room_dir: &Path) -> Result<Vec<ArtifactRef>, ArtifactError> {
     }
     let mut result = Vec::with_capacity(active.len());
     for mut artifact in active.into_values() {
-        match hash_file(&room_dir.join(&artifact.path)) {
+        match hash_file(&clean_path(&room_dir.join(&artifact.path))) {
             Ok(hash) if hash == artifact.sha256 => artifact.status = "ok".to_owned(),
             Ok(_) => artifact.status = "modified".to_owned(),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -255,11 +254,13 @@ fn append_signed_event(
 }
 
 fn hash_file(path: &Path) -> Result<String, std::io::Error> {
-    let mut file = fs::File::open(path)?;
+    let mut file = crate::goio::open(path)?;
     let mut hash = Sha256::new();
     let mut buffer = [0_u8; 8192];
     loop {
-        let count = file.read(&mut buffer)?;
+        let count = file
+            .read(&mut buffer)
+            .map_err(|error| crate::goio::path_error("read", path, &error))?;
         if count == 0 {
             break;
         }
@@ -306,18 +307,10 @@ fn normalize_absolute(path: PathBuf) -> PathBuf {
     normalized
 }
 
+/// Go `filepath.Clean` (a leading `..` is kept; `Join` cleans before any
+/// filesystem call).
 fn clean_path(path: &Path) -> PathBuf {
-    let mut clean = PathBuf::new();
-    for component in path.components() {
-        match component {
-            Component::CurDir => {}
-            Component::ParentDir => {
-                clean.pop();
-            }
-            other => clean.push(other.as_os_str()),
-        }
-    }
-    clean
+    PathBuf::from(crate::goio::clean(path))
 }
 
 fn json_body(value: &impl Serialize) -> Result<Box<RawValue>, ArtifactError> {

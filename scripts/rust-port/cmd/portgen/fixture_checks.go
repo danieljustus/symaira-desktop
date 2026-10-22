@@ -54,6 +54,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom doctor CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortDoctorCLIContract$"}, []string{"testdata/port/room/doctor-cli.json"}, false},
 	{"symroom checkpoint CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortCheckpointCLIContract$"}, []string{"testdata/port/room/checkpoint-cli.json"}, false},
 	{"symroom run approval CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortRunApprovalCLIContract$"}, []string{"testdata/port/room/run-approval-cli.json"}, false},
+	{"symroom I/O error CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortIOErrorCLIContract$"}, []string{"testdata/port/room/io-error-cli.json"}, false},
 	{"retrieval pending rebuild", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestPendingRebuildPortFixture$"}, []string{"testdata/port/retrieval/pending-rebuild.json"}, false},
 	{"retrieval Markdown sections", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalSectionsFixture$"}, []string{"testdata/port/retrieval/retrieval-sections.json"}, false},
 	{"retrieval embedding HTTP", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestEmbeddingHTTPPortFixture$"}, []string{"testdata/port/retrieval/embedding-http.json"}, false},

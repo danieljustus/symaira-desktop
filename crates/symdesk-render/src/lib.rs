@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 pub mod archive;
+pub mod draw;
 pub mod export_html;
 pub mod export_markdown;
 pub mod export_pdf;

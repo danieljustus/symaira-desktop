@@ -26,6 +26,16 @@
         -1,
         "max_lamport"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --test draw_dsl_contract",
+      "fixture": "testdata/port/render/dsl-parse.json",
+      "increment": [
+        "cases",
+        0,
+        "error",
+        "line"
+      ]
     }
   ],
   "replays": {
@@ -190,7 +200,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 26
+      "passed": 34
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,

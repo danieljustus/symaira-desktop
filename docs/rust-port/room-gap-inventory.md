@@ -9,18 +9,72 @@ not committed evidence until a fixture exists.
 
 ## Implemented in this slice
 
-`testdata/port/room/io-error-cli.json` (79 Go-recorded cases, Go test
+`testdata/port/room/io-error-cli.json` (143 Go-recorded cases, Go test
 `TestPortIOErrorCLIContract`, Rust replay `crates/symroom-cli/tests/io_error_commands.rs`,
 `make room-io-error-cli-differential`) pins the text, exit code and file effects
 of a command that fails on the filesystem: missing, directory-instead-of-file,
-file-instead-of-directory and unreadable `room.toml`/`journal`, across
-`run list|show|request|start|cancel|approve|deny`, `checkpoint resolve`, `note`,
-`decide`, `member list|remove|role`, `artifact link|unlink|list`, `verify`,
-`log`, `index rebuild` and `doctor`. The host wording of an OS error is the
-tokens `<ENOENT>`, `<ENOTDIR>`, `<EISDIR>` and the work directory is `<work>`,
-so one fixture serves every native OS. Rust gains `symroom_core::goio`
-(`filepath.Clean` display, `*fs.PathError` text) and uses it where Go surfaces a
-raw `os` error (`room.toml`, journal directory/segments, artifact hashing, MCP).
+file-instead-of-directory and unreadable (`segperm`: mode 000 segment)
+`room.toml`/`journal`, across `run list|show|request|start|cancel|approve|deny`,
+`checkpoint resolve`, `note`, `decide`, `member list|remove|role`,
+`artifact link|unlink|list`, `verify`, `log`, `index rebuild` and `doctor`. It
+also pins Go's lenient `room.toml` scanner (`toml-garbage`, `toml-noid`,
+`toml-lenient`: malformed, id-less and duplicate-id files are not errors; the
+resolved room id is recorded per event in `rooms`) and `$PWD` handling in
+`filepath.Abs` (`pwd-link`: the doctor prints the symlink name Go's `os.Getwd`
+returns).
+
+Rust gains `symroom_core::goio` (a string port of `filepath.Clean` with Go's
+Windows volume rules, `os.Getwd`'s `$PWD` rule, `*fs.PathError` text),
+`symroom_core::room_config` (the single lenient `ReadRoomConfig` scanner shared
+by run/approval/member/note/decide/MCP) and the `read segment <author>:`
+wrapper of `readAllSegmentsUnlocked`.
+
+### Windows handling (no single fixture for every OS)
+
+A case is recorded on Unix. The fixture's tokens (`<ENOENT>`, `<ENOTDIR>`,
+`<EISDIR>`, `<EACCES>`, `<work>`, `<link>`, masked `<ev_id>`/`<chk_id>`) cover the
+OS wording, but not the *semantics*: on Windows a missing parent directory or a
+file used as a directory is `ERROR_PATH_NOT_FOUND`, which Go's `syscall.Errno`
+also reports as "does not exist", so Go itself takes different code paths
+(`os.IsNotExist` branches, a journal that is a file can read as empty) and
+prints different text. Those expectations cannot be derived from the Go source
+without a Windows run, so each case carries `unix_only` and:
+
+- Go (`TestPortIOErrorCLIContract`) and Rust replay only the non-`unix_only`
+  cases on Windows (states `empty`, `tomldir`, `artdir`, `toml-*`: 66 cases);
+  the other 77 (`nope`, `filedir`, `journalfile`, `abs-journalfile`, `segperm`,
+  `pwd-link`) are logged `SKIP <name>: <reason>` and counted on both sides
+  (`I/O error cases: N total, M replayed, K SKIPPED`), and a run that skips
+  everything fails. On Windows the Go test substitutes the committed case for a
+  skipped one, so the whole-file byte comparison stays exact for the rest.
+- `segperm` is also skipped on Unix when the user can read a mode 000 file
+  (root), probed at run time.
+- Generation (`PORT_GENERATE=1`) refuses to run on a host that would skip.
+
+Residual: the Windows subset has been derived, not run natively; native
+Windows AMD64/ARM64 CI is the first real receipt. `filepath.Abs` on Windows is
+`GetFullPathName`, not `Clean(Getwd()+path)`; `goio::abs` models the Unix rule
+only (the Windows doctor path is not in the replayed subset).
+
+### Append-path wrapper divergences (probe-only, not fixture-pinned)
+
+Probed against the built Go and Rust binaries (168 cases over `segdir`,
+`segdir-other`, `journal-noperm`, `journal-xonly`, `toml-noperm`,
+`bad-utf8-toml`, `good+emptyjournal`; 9 differ), all on commands that append:
+
+| Divergence | Go | Rust |
+|---|---|---|
+| segment file is a directory, `run request`/`checkpoint request`/`artifact unlink` (`Journal.Append`) | `open segment file: open journal/<seg>.jsonl: is a directory` | `open journal/<seg>.jsonl: is a directory` |
+| same, `note`/`decide` (`room.AppendEvent`) | `append event: open journal file: open ...` | `open journal/<seg>.jsonl: is a directory` (no `append event: open journal file:` wrappers) |
+| journal directory not listable (mode `x`), appends | `PrepareEvent` ignores the list error and fails at `open segment file: ... permission denied` | `read journal dir: open journal: permission denied` |
+
+Cause: Go's `tailStatForLocked`/`PrepareEvent` ignore errors that Rust's
+`author_stats` reports, and the two Go append functions wrap differently
+(`room.AppendEvent` `open journal file:`/`mkdir journal:`, `Journal.Append`
+`open segment file:`/`mkdir journal dir:`) while Rust has one `append_event`.
+Not trivial: matching needs the tail-stat error semantics ported and a
+per-caller append function, plus a `segdir` state; left as a documented
+residual.
 
 ## Rows
 
@@ -54,6 +108,9 @@ larger than this slice.
 
 ## Evidence for this slice
 
-See the commit and `docs/rust-port/contract-matrix.md` (ROOMCLI-002). The
-negative control (mutating `goio::path_error_text` to print the raw path) makes
-43 of 79 cases fail; restoring it passes.
+See the commits and `docs/rust-port/contract-matrix.md` (ROOMCLI-002). Negative
+controls (each restored afterwards): printing the raw path from
+`goio::path_error_text` fails 43 of the first 79 cases; dropping the
+`read segment <author>:` wrapper fails 14 of 143; ignoring `$PWD` in
+`goio::getwd` fails 2; letting the first duplicate `id` win in `room_config`
+fails 3; requiring an `id` (the former `toml::from_str`) fails 22.

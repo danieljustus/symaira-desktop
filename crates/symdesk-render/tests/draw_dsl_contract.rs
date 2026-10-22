@@ -10,6 +10,13 @@ use symdesk_render::draw::{parse_json, parse_mermaid, parse_source};
 
 const FIXTURE: &str = include_str!("../../../testdata/port/render/dsl-parse.json");
 
+/// Exact shape of the Go-generated fixture (`make render-ir-fixtures-generate`).
+const FIXTURE_CASES: usize = 3316;
+const FIXTURE_ACCEPTED: usize = 811;
+const FIXTURE_REJECTED: usize = 2505;
+
+const STACK_1_MIB: usize = 1 << 20;
+
 fn run(entry: &str, input: &str) -> Result<String, symdesk_render::draw::ParseError> {
     match entry {
         "source" => parse_source(input),
@@ -85,16 +92,25 @@ fn clip(s: &str) -> String {
 fn go_dsl_parser_fixture_replays_byte_exact() {
     let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture JSON");
     assert_eq!(fixture["schema_version"], 1);
-    // Deeply nested custom values recurse; give the replay a generous stack.
+    let fixture_len = fixture["cases"].as_array().expect("cases").len();
+    // Custom values up to Go's depth limit are handled iteratively, so the
+    // replay runs on a 1 MiB stack (the Windows main-thread size) in a debug
+    // build, not on a stack sized to hide recursion.
     let (accepted, rejected, failures) = std::thread::Builder::new()
-        .stack_size(256 << 20)
+        .stack_size(STACK_1_MIB)
         .spawn(move || replay(&fixture))
         .expect("spawn")
         .join()
         .expect("replay thread");
-    // A zero-case or one-sided run is not a pass.
-    assert!(accepted >= 400, "only {accepted} accepted cases replayed");
-    assert!(rejected >= 700, "only {rejected} rejected cases replayed");
+    // A zero-case or one-sided run is not a pass: pin the regenerated
+    // fixture's exact accepted/rejected/total counts.
+    assert_eq!(accepted, FIXTURE_ACCEPTED, "accepted cases replayed");
+    assert_eq!(rejected, FIXTURE_REJECTED, "rejected cases replayed");
+    assert_eq!(accepted + rejected, FIXTURE_CASES, "total cases replayed");
+    assert_eq!(
+        fixture_len, FIXTURE_CASES,
+        "fixture case count changed; regenerate and update the pinned counts"
+    );
     assert!(
         failures.is_empty(),
         "{} Go/Rust divergences, first 12:\n{}",
@@ -201,4 +217,39 @@ fn parser_never_panics_on_input_prefixes_and_suffixes() {
         .join()
         .expect("parser panicked on a prefix/suffix");
     assert!(checked > 100_000, "only {checked} pieces checked");
+}
+
+/// Go accepts `custom` values nested up to depth 10 000. Parsing, JSON output,
+/// clone/compare and dropping must not consume native stack per level: run the
+/// deepest values the fixture accepts on a 1 MiB thread and compare the output
+/// with the Go bytes.
+#[test]
+fn deepest_custom_values_round_trip_on_a_1_mib_stack() {
+    let fixture: Value = serde_json::from_str(FIXTURE).expect("fixture JSON");
+    for id in ["json-depth-ok", "json-depth-ok-mixed"] {
+        let case = fixture["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["id"] == id)
+            .unwrap_or_else(|| panic!("fixture lacks {id}"));
+        assert_eq!(case["accepted"], true, "{id}");
+        let input = case["input"].as_str().unwrap().to_owned();
+        let want = case["diagram_json"].as_str().unwrap().to_owned();
+        let got = std::thread::Builder::new()
+            .stack_size(STACK_1_MIB)
+            .spawn(move || {
+                let diagram = parse_json(input.as_bytes()).expect("depth within Go's limit");
+                let json = diagram.to_json();
+                let cloned = diagram.clone();
+                assert!(cloned == diagram, "iterative clone/eq");
+                drop(cloned);
+                drop(diagram);
+                json
+            })
+            .expect("spawn")
+            .join()
+            .unwrap_or_else(|_| panic!("{id}: overflowed or panicked on a 1 MiB stack"));
+        assert!(got == want, "{id}: output differs from the Go bytes");
+    }
 }

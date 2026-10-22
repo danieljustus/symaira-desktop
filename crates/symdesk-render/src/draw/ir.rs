@@ -6,7 +6,10 @@ use std::collections::BTreeMap;
 use super::gotext::{quote, trim_space};
 
 /// Dynamically typed value of `Custom map[string]any`.
-#[derive(Debug, Clone, PartialEq)]
+///
+/// Go accepts `custom` values nested up to 10 000 levels, so every traversal
+/// of this type (`Drop`, `Clone`, `PartialEq`, `Debug`, JSON output) is
+/// iterative or depth-bounded: none consumes native stack per nesting level.
 pub enum Value {
     Null,
     Bool(bool),
@@ -18,6 +21,227 @@ pub enum Value {
     Map(BTreeMap<String, Value>),
     /// A Go struct without JSON tags: fields serialize in declaration order.
     Struct(Vec<(&'static str, Value)>),
+}
+
+/// Nesting level at which the `Debug` output elides a value.
+const DEBUG_MAX_DEPTH: usize = 64;
+
+impl Value {
+    fn fmt_depth(&self, f: &mut std::fmt::Formatter<'_>, depth: usize) -> std::fmt::Result {
+        if depth >= DEBUG_MAX_DEPTH {
+            return f.write_str("..");
+        }
+        let depth = depth + 1;
+        match self {
+            Value::Null => f.write_str("Null"),
+            Value::Bool(b) => f.debug_tuple("Bool").field(b).finish(),
+            Value::Num(n) => f.debug_tuple("Num").field(n).finish(),
+            Value::Int(n) => f.debug_tuple("Int").field(n).finish(),
+            Value::Str(s) => f.debug_tuple("Str").field(s).finish(),
+            Value::Arr(items) => f
+                .debug_tuple("Arr")
+                .field(&DebugList(items, depth))
+                .finish(),
+            Value::Map(map) => f.debug_tuple("Map").field(&DebugMap(map, depth)).finish(),
+            Value::Struct(fields) => f
+                .debug_tuple("Struct")
+                .field(&DebugFields(fields, depth))
+                .finish(),
+        }
+    }
+
+    /// Takes the direct children out of `self`, leaving it childless.
+    fn take_children(&mut self, out: &mut Vec<Value>) {
+        match self {
+            Value::Arr(items) => out.append(items),
+            Value::Map(map) => out.extend(std::mem::take(map).into_values()),
+            Value::Struct(fields) => out.extend(std::mem::take(fields).into_iter().map(|f| f.1)),
+            _ => {}
+        }
+    }
+}
+
+struct Nested<'a>(&'a Value, usize);
+
+impl std::fmt::Debug for Nested<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt_depth(f, self.1)
+    }
+}
+
+struct DebugList<'a>(&'a [Value], usize);
+
+impl std::fmt::Debug for DebugList<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list()
+            .entries(self.0.iter().map(|v| Nested(v, self.1)))
+            .finish()
+    }
+}
+
+struct DebugMap<'a>(&'a BTreeMap<String, Value>, usize);
+
+impl std::fmt::Debug for DebugMap<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map()
+            .entries(self.0.iter().map(|(k, v)| (k, Nested(v, self.1))))
+            .finish()
+    }
+}
+
+struct DebugFields<'a>(&'a [(&'static str, Value)], usize);
+
+impl std::fmt::Debug for DebugFields<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list()
+            .entries(self.0.iter().map(|(k, v)| (k, Nested(v, self.1))))
+            .finish()
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.fmt_depth(f, 0)
+    }
+}
+
+impl Drop for Value {
+    /// Iterative: dropping a 10 000-deep `Arr`/`Map` chain must not recurse.
+    fn drop(&mut self) {
+        let mut stack = Vec::new();
+        self.take_children(&mut stack);
+        while let Some(mut value) = stack.pop() {
+            value.take_children(&mut stack);
+        }
+    }
+}
+
+enum CloneFrame<'a> {
+    Arr(std::slice::Iter<'a, Value>, Vec<Value>),
+    Map(
+        std::collections::btree_map::Iter<'a, String, Value>,
+        BTreeMap<String, Value>,
+        Option<&'a String>,
+    ),
+    Struct(
+        std::slice::Iter<'a, (&'static str, Value)>,
+        Vec<(&'static str, Value)>,
+        Option<&'static str>,
+    ),
+}
+
+impl Clone for Value {
+    /// Iterative deep clone (explicit stack instead of native recursion).
+    fn clone(&self) -> Self {
+        let mut stack: Vec<CloneFrame<'_>> = Vec::new();
+        let mut next = Some(self);
+        let mut completed: Option<Value> = None;
+        loop {
+            if let Some(value) = next.take() {
+                match value {
+                    Value::Null => completed = Some(Value::Null),
+                    Value::Bool(b) => completed = Some(Value::Bool(*b)),
+                    Value::Num(n) => completed = Some(Value::Num(*n)),
+                    Value::Int(n) => completed = Some(Value::Int(*n)),
+                    Value::Str(s) => completed = Some(Value::Str(s.clone())),
+                    Value::Arr(items) => {
+                        stack.push(CloneFrame::Arr(
+                            items.iter(),
+                            Vec::with_capacity(items.len()),
+                        ));
+                    }
+                    Value::Map(map) => {
+                        stack.push(CloneFrame::Map(map.iter(), BTreeMap::new(), None));
+                    }
+                    Value::Struct(fields) => stack.push(CloneFrame::Struct(
+                        fields.iter(),
+                        Vec::with_capacity(fields.len()),
+                        None,
+                    )),
+                }
+            }
+            if let Some(done) = completed.take() {
+                match stack.last_mut() {
+                    None => return done,
+                    Some(CloneFrame::Arr(_, out)) => out.push(done),
+                    Some(CloneFrame::Map(_, out, key)) => {
+                        if let Some(key) = key.take() {
+                            out.insert(key.clone(), done);
+                        }
+                    }
+                    Some(CloneFrame::Struct(_, out, name)) => {
+                        if let Some(name) = name.take() {
+                            out.push((name, done));
+                        }
+                    }
+                }
+            }
+            let Some(top) = stack.last_mut() else {
+                return Value::Null;
+            };
+            match top {
+                CloneFrame::Arr(iter, out) => match iter.next() {
+                    Some(item) => next = Some(item),
+                    None => completed = Some(Value::Arr(std::mem::take(out))),
+                },
+                CloneFrame::Map(iter, out, key) => match iter.next() {
+                    Some((k, item)) => {
+                        *key = Some(k);
+                        next = Some(item);
+                    }
+                    None => completed = Some(Value::Map(std::mem::take(out))),
+                },
+                CloneFrame::Struct(iter, out, name) => match iter.next() {
+                    Some((k, item)) => {
+                        *name = Some(k);
+                        next = Some(item);
+                    }
+                    None => completed = Some(Value::Struct(std::mem::take(out))),
+                },
+            }
+            if completed.is_some() {
+                stack.pop();
+            }
+        }
+    }
+}
+
+impl PartialEq for Value {
+    /// Iterative structural equality (derived `PartialEq` semantics, `f64`
+    /// compared with `==`).
+    fn eq(&self, other: &Self) -> bool {
+        let mut stack = vec![(self, other)];
+        while let Some((a, b)) = stack.pop() {
+            match (a, b) {
+                (Value::Null, Value::Null) => {}
+                (Value::Bool(x), Value::Bool(y)) if x == y => {}
+                (Value::Num(x), Value::Num(y)) if x == y => {}
+                (Value::Int(x), Value::Int(y)) if x == y => {}
+                (Value::Str(x), Value::Str(y)) if x == y => {}
+                (Value::Arr(x), Value::Arr(y)) if x.len() == y.len() => {
+                    stack.extend(x.iter().zip(y));
+                }
+                (Value::Map(x), Value::Map(y)) if x.len() == y.len() => {
+                    for ((kx, vx), (ky, vy)) in x.iter().zip(y) {
+                        if kx != ky {
+                            return false;
+                        }
+                        stack.push((vx, vy));
+                    }
+                }
+                (Value::Struct(x), Value::Struct(y)) if x.len() == y.len() => {
+                    for ((nx, vx), (ny, vy)) in x.iter().zip(y) {
+                        if nx != ny {
+                            return false;
+                        }
+                        stack.push((vx, vy));
+                    }
+                }
+                _ => return false,
+            }
+        }
+        true
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -510,20 +734,25 @@ fn write_chart(out: &mut String, c: &ChartSpec) {
     o.end();
 }
 
-fn write_map(out: &mut String, map: &BTreeMap<String, Value>) {
-    out.push('{');
-    for (i, (key, value)) in map.iter().enumerate() {
-        if i > 0 {
-            out.push(',');
-        }
-        write_string(out, key);
-        out.push(':');
-        write_value(out, value);
-    }
-    out.push('}');
+enum WriteFrame<'a> {
+    Arr(std::slice::Iter<'a, Value>),
+    Map(std::collections::btree_map::Iter<'a, String, Value>),
+    Struct(std::slice::Iter<'a, (&'static str, Value)>),
 }
 
-fn write_value(out: &mut String, value: &Value) {
+enum WriteStep<'a> {
+    Item(Option<&'a str>, &'a Value),
+    Close(char),
+}
+
+fn write_map(out: &mut String, map: &BTreeMap<String, Value>) {
+    out.push('{');
+    let mut stack = vec![WriteFrame::Map(map.iter())];
+    write_frames(out, &mut stack);
+}
+
+/// Writes a scalar completely, or its opening bracket plus a pushed frame.
+fn open_value<'a>(out: &mut String, value: &'a Value, stack: &mut Vec<WriteFrame<'a>>) {
     match value {
         Value::Null => out.push_str("null"),
         Value::Bool(true) => out.push_str("true"),
@@ -533,26 +762,62 @@ fn write_value(out: &mut String, value: &Value) {
         Value::Str(s) => write_string(out, s),
         Value::Arr(items) => {
             out.push('[');
-            for (i, item) in items.iter().enumerate() {
-                if i > 0 {
-                    out.push(',');
-                }
-                write_value(out, item);
-            }
-            out.push(']');
+            stack.push(WriteFrame::Arr(items.iter()));
         }
-        Value::Map(map) => write_map(out, map),
+        Value::Map(map) => {
+            out.push('{');
+            stack.push(WriteFrame::Map(map.iter()));
+        }
         Value::Struct(fields) => {
             out.push('{');
-            for (i, (name, value)) in fields.iter().enumerate() {
-                if i > 0 {
-                    out.push(',');
+            stack.push(WriteFrame::Struct(fields.iter()));
+        }
+    }
+}
+
+/// Drives the frames to completion with an explicit stack: the nesting depth
+/// of `custom` values (up to 10 000 in Go) never reaches the native stack.
+fn write_frames<'a>(out: &mut String, stack: &mut Vec<WriteFrame<'a>>) {
+    // Whether the next item of each open frame is its first one.
+    let mut first: Vec<bool> = vec![true; stack.len()];
+    while let Some(top) = stack.last_mut() {
+        let step = match top {
+            WriteFrame::Arr(iter) => match iter.next() {
+                Some(item) => WriteStep::Item(None, item),
+                None => WriteStep::Close(']'),
+            },
+            WriteFrame::Map(iter) => match iter.next() {
+                Some((key, item)) => WriteStep::Item(Some(key.as_str()), item),
+                None => WriteStep::Close('}'),
+            },
+            WriteFrame::Struct(iter) => match iter.next() {
+                Some((name, item)) => WriteStep::Item(Some(name), item),
+                None => WriteStep::Close('}'),
+            },
+        };
+        match step {
+            WriteStep::Item(key, item) => {
+                if let Some(is_first) = first.last_mut() {
+                    if !*is_first {
+                        out.push(',');
+                    }
+                    *is_first = false;
                 }
-                write_string(out, name);
-                out.push(':');
-                write_value(out, value);
+                if let Some(key) = key {
+                    write_string(out, key);
+                    out.push(':');
+                }
+                let depth = stack.len();
+                open_value(out, item, stack);
+                if stack.len() > depth {
+                    first.push(true);
+                }
             }
-            out.push('}');
+            WriteStep::Close(bracket) => {
+                out.push(bracket);
+                stack.pop();
+                first.pop();
+            }
         }
     }
 }

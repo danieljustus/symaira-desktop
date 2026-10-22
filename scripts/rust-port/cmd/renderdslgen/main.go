@@ -344,7 +344,9 @@ func handCorpus() []corpusCase {
 		"case-insens-kind":    `{"KIND":"graph"}`,
 		"case-insens-nested":  `{"Kind":"graph","NODES":[{"ID":"a","Style":{"STROKE_WIDTH":3}}]}`,
 		"case-kelvin":         "{\"Kind\":\"graph\",\"\u212Aind\":\"tree\"}",
-		"case-long-s":         "{\"kind\":\"graph\",\"\u017Ftyle\":1}",
+		"case-long-s":         "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\",\"\u017Ftyle\":{\"fill\":\"x\"}}]}",
+		"case-long-s-sty":     "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\",\"style\":{\"\u017Ftroke\":\"y\"}}]}",
+		"case-long-s-top":     "{\"kind\":\"graph\",\"\u017Ftyle\":1}",
 		"dup-keys-last-wins":  `{"kind":"graph","kind":"tree","title":"a","title":"b"}`,
 		"dup-keys-obj-merge":  `{"kind":"graph","nodes":[{"id":"a","style":{"fill":"x"}}],"nodes":[{"width":2}]}`,
 		"dup-keys-chart":      `{"kind":"chart","chart":{"type":"bar","title":"t"},"chart":{"series":[{"name":"a","data":[]}]}}`,
@@ -356,6 +358,15 @@ func handCorpus() []corpusCase {
 		"surrogate-lone":      `{"kind":"graph","title":"\ud800x"}`,
 		"surrogate-pair":      `{"kind":"graph","title":"\ud83d\ude00"}`,
 		"surrogate-low-only":  `{"kind":"graph","title":"\udc00"}`,
+		"sur-high-eos":        `{"kind":"graph","title":"a\ud83d"}`,
+		"sur-high-bmp":        `{"kind":"graph","title":"\ud83d\u0041"}`,
+		"sur-high-high":       `{"kind":"graph","title":"\ud83d\ud83d\ude00"}`,
+		"sur-high-high-x":     `{"kind":"graph","title":"\ud83d\ud83dx"}`,
+		"sur-high-low-up":     `{"kind":"graph","title":"\ud83d\uDE00!"}`,
+		"sur-high-esc":        `{"kind":"graph","title":"\ud83d\n"}`,
+		"sur-high-badhex":     `{"kind":"graph","title":"\ud83d\u00zz"}`,
+		"sur-high-short":      `{"kind":"graph","title":"\ud83d\u00"}`,
+		"sur-high-key":        `{"kind":"graph","\ud83d\u0041":1}`,
 		"escapes":             `{"kind":"graph","title":"a\"b\\c\/d\b\f\n\r\t\u0001\u007f"}`,
 		"html-chars":          `{"kind":"graph","title":"<a href='x'>&amp;</a>\u2028\u2029"}`,
 		"unicode-title":       `{"kind":"graph","title":"Größe 日本語 😀 é"}`,
@@ -408,6 +419,8 @@ func handCorpus() []corpusCase {
 		"crlf":                "{\r\n\"kind\":\r\n\"graph\"\r\n}\r\n",
 	})
 	add("json-depth-ok", "json", `{"kind":"custom","custom":{"a":`+strings.Repeat("[", 9998)+strings.Repeat("]", 9998)+`}}`)
+	add("json-depth-ok-mixed", "json", `{"kind":"custom","custom":`+strings.Repeat(`{"a":[`, 4999)+`{"a":1}`+strings.Repeat(`]}`, 4999)+`}`)
+	add("json-depth-exceeded-mixed", "json", `{"kind":"custom","custom":`+strings.Repeat(`{"a":[`, 4999)+`{"a":{}}`+strings.Repeat(`]}`, 4999)+`}`)
 	add("json-depth-exceeded", "json", `{"kind":"custom","custom":{"a":`+strings.Repeat("[", 9999)+strings.Repeat("]", 9999)+`}}`)
 	add("json-long-title", "json", `{"kind":"graph","title":"`+strings.Repeat("x", 20000)+`"}`)
 	{

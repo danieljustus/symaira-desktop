@@ -9,7 +9,6 @@ use super::ir::{AxisSpec, ChartSpec, DataPoint, Diagram, Edge, Group, Node, Seri
 
 const MAX_NESTING_DEPTH: usize = 10_000;
 
-#[derive(Debug, Clone, PartialEq)]
 enum Json {
     Null,
     Bool(bool),
@@ -19,7 +18,27 @@ enum Json {
     Obj(Vec<(String, Json)>),
 }
 
+impl Drop for Json {
+    /// Iterative: dropping a 10 000-deep array/object chain must not recurse.
+    fn drop(&mut self) {
+        let mut stack = Vec::new();
+        self.take_children(&mut stack);
+        while let Some(mut value) = stack.pop() {
+            value.take_children(&mut stack);
+        }
+    }
+}
+
 impl Json {
+    /// Takes the direct children out of `self`, leaving it childless.
+    fn take_children(&mut self, out: &mut Vec<Json>) {
+        match self {
+            Json::Arr(items) => out.append(items),
+            Json::Obj(entries) => out.extend(std::mem::take(entries).into_iter().map(|e| e.1)),
+            _ => {}
+        }
+    }
+
     fn kind(&self) -> &'static str {
         match self {
             Json::Null => "null",
@@ -576,26 +595,65 @@ impl Context {
         }
     }
 
+    /// Converts a decoded JSON value into `interface{}` semantics with an
+    /// explicit stack (nesting up to Go's 10 000 limit must not use native
+    /// stack). Number errors surface in document order, as in Go.
     fn any(&self, j: &Json) -> Result<Value, String> {
-        Ok(match j {
-            Json::Null => Value::Null,
-            Json::Bool(b) => Value::Bool(*b),
-            Json::Num(raw) => Value::Num(self.parse_number(raw)?),
-            Json::Str(s) => Value::Str(s.clone()),
-            Json::Arr(items) => Value::Arr(
-                items
-                    .iter()
-                    .map(|item| self.any(item))
-                    .collect::<Result<_, _>>()?,
+        enum AnyFrame<'a> {
+            Arr(std::slice::Iter<'a, Json>, Vec<Value>),
+            Obj(
+                std::slice::Iter<'a, (String, Json)>,
+                BTreeMap<String, Value>,
+                Option<&'a str>,
             ),
-            Json::Obj(entries) => {
-                let mut map = BTreeMap::new();
-                for (key, value) in entries {
-                    map.insert(key.clone(), self.any(value)?);
+        }
+        let mut stack: Vec<AnyFrame<'_>> = Vec::new();
+        let mut next = Some(j);
+        let mut completed: Option<Value> = None;
+        loop {
+            if let Some(json) = next.take() {
+                match json {
+                    Json::Null => completed = Some(Value::Null),
+                    Json::Bool(b) => completed = Some(Value::Bool(*b)),
+                    Json::Num(raw) => completed = Some(Value::Num(self.parse_number(raw)?)),
+                    Json::Str(s) => completed = Some(Value::Str(s.clone())),
+                    Json::Arr(items) => stack.push(AnyFrame::Arr(items.iter(), Vec::new())),
+                    Json::Obj(entries) => {
+                        stack.push(AnyFrame::Obj(entries.iter(), BTreeMap::new(), None));
+                    }
                 }
-                Value::Map(map)
             }
-        })
+            if let Some(done) = completed.take() {
+                match stack.last_mut() {
+                    None => return Ok(done),
+                    Some(AnyFrame::Arr(_, out)) => out.push(done),
+                    Some(AnyFrame::Obj(_, out, key)) => {
+                        if let Some(key) = key.take() {
+                            out.insert(key.to_owned(), done);
+                        }
+                    }
+                }
+            }
+            let Some(top) = stack.last_mut() else {
+                return Ok(Value::Null);
+            };
+            match top {
+                AnyFrame::Arr(iter, out) => match iter.next() {
+                    Some(item) => next = Some(item),
+                    None => completed = Some(Value::Arr(std::mem::take(out))),
+                },
+                AnyFrame::Obj(iter, out, key) => match iter.next() {
+                    Some((k, item)) => {
+                        *key = Some(k.as_str());
+                        next = Some(item);
+                    }
+                    None => completed = Some(Value::Map(std::mem::take(out))),
+                },
+            }
+            if completed.is_some() {
+                stack.pop();
+            }
+        }
     }
 
     fn decode_node(&mut self, j: &Json, n: &mut Node) -> Res {

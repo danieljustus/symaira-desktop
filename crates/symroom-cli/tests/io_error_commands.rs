@@ -309,6 +309,12 @@ fn io_errors_match_go_process_contract() {
             .env("USERPROFILE", temp.path.join("home"))
             .env("XDG_DATA_HOME", temp.path.join("data"))
             .env("TMPDIR", temp.path.join("tmp"))
+            // Coverage builds write profiles into the cwd by default, which
+            // would show up in the compared file listing.
+            .env(
+                "LLVM_PROFILE_FILE",
+                temp.path.join("tmp/symroom-%p.profraw"),
+            )
             .env("PATH", temp.path.join("tmp"))
             .env("TZ", "UTC")
             .env("LC_ALL", "C")

@@ -42,6 +42,20 @@ pub fn walk_all(root: &Path) -> io::Result<Vec<WalkEntry>> {
     Ok(output)
 }
 
+/// Go's `vault.IsExternalSymlink`: `path` is a symlink whose target is missing
+/// or resolves outside the canonical `vault_root`. Contained links, regular
+/// files and paths that cannot be inspected report `false`.
+#[must_use]
+pub fn is_external_symlink(vault_root: &Path, path: &Path) -> bool {
+    if !fs::symlink_metadata(path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+        return false;
+    }
+    let Ok(canonical_root) = fs::canonicalize(vault_root) else {
+        return true;
+    };
+    fs::canonicalize(path).map_or(true, |target| !target.starts_with(canonical_root))
+}
+
 /// Returns only entries whose extension is exactly lowercase `.md`.
 ///
 /// # Errors
@@ -132,4 +146,39 @@ where
         })?;
     }
     Ok(())
+}
+
+#[cfg(all(test, unix))]
+mod external_symlink_tests {
+    use std::{fs, os::unix::fs::symlink};
+
+    use super::is_external_symlink;
+
+    #[test]
+    fn classifies_contained_external_broken_and_regular_paths() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time")
+            .as_nanos();
+        let base = std::env::temp_dir().join(format!(
+            "symdesk-external-symlink-{}-{nonce}",
+            std::process::id()
+        ));
+        let vault = base.join("vault");
+        let outside = base.join("outside");
+        fs::create_dir_all(vault.join("sub")).expect("vault directory");
+        fs::create_dir_all(&outside).expect("outside directory");
+        fs::write(vault.join("sub/target.md"), "# T\n").expect("contained target");
+        fs::write(outside.join("secret.md"), "# S\n").expect("outside target");
+        symlink("sub/target.md", vault.join("contained.md")).expect("contained link");
+        symlink("../outside/secret.md", vault.join("external.md")).expect("external link");
+        symlink("missing.md", vault.join("broken.md")).expect("broken link");
+
+        assert!(!is_external_symlink(&vault, &vault.join("sub/target.md")));
+        assert!(!is_external_symlink(&vault, &vault.join("contained.md")));
+        assert!(is_external_symlink(&vault, &vault.join("external.md")));
+        assert!(is_external_symlink(&vault, &vault.join("broken.md")));
+        assert!(!is_external_symlink(&vault, &vault.join("absent.md")));
+        fs::remove_dir_all(&base).expect("remove fixture");
+    }
 }

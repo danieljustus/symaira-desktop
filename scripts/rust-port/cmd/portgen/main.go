@@ -111,6 +111,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/index-build-process.json",
 	"testdata/port/cli/index-retrieval-process.json",
 	"testdata/port/cli/index-retry-process.json",
+	"testdata/port/cli/index-symlink-process.json",
 	"testdata/port/ai/recipe-validate.json",
 	"testdata/port/render/html-note.json",
 	"testdata/port/render/export-markdown.json",

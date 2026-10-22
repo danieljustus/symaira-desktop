@@ -8,6 +8,7 @@ mod go_print;
 pub mod pdfops;
 mod pdfprocess;
 pub mod press;
+pub mod stamp;
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};

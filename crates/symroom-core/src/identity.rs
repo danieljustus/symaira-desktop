@@ -90,27 +90,29 @@ pub fn identities_dir() -> PathBuf {
 }
 
 /// Build an identity from raw private key bytes (32-byte seed or 64-byte key).
+///
+/// A 64-byte key is taken as Go's `ed25519.PrivateKey(keyBytes)` conversion
+/// does: the public half is whatever the last 32 bytes say, with no check that
+/// it belongs to the seed (`Public()` returns those bytes verbatim). Go only
+/// notices the mismatch, as an unverifiable signature, when it signs; Rust
+/// refuses to sign with such a key (see [`sign`]).
 pub fn identity_from_private_key(name: &str, private_key: &[u8]) -> Option<Identity> {
-    let signing_key = match private_key.len() {
-        SEED_SIZE => SigningKey::from_bytes(
-            &<[u8; SEED_SIZE]>::try_from(private_key).expect("length checked above"),
-        ),
-        PRIVATE_KEY_SIZE => {
-            // Go stores seed || public key; verify the public half matches.
-            let seed: [u8; SEED_SIZE] = private_key[..SEED_SIZE].try_into().ok()?;
-            let candidate = SigningKey::from_bytes(&seed);
-            if candidate.verifying_key().to_bytes().as_slice() != &private_key[SEED_SIZE..] {
-                return None;
-            }
-            candidate
+    let (public_key, private_key) = match private_key.len() {
+        SEED_SIZE => {
+            let signing_key = SigningKey::from_bytes(
+                &<[u8; SEED_SIZE]>::try_from(private_key).expect("length checked above"),
+            );
+            let public_key = signing_key.verifying_key().to_bytes().to_vec();
+            // Go's ed25519.PrivateKey is seed || public key (64 bytes);
+            // ed25519-dalek keeps only the seed, so the public half is
+            // appended here.
+            let mut expanded = signing_key.to_bytes().to_vec();
+            expanded.extend_from_slice(&public_key);
+            (public_key, expanded)
         }
+        PRIVATE_KEY_SIZE => (private_key[SEED_SIZE..].to_vec(), private_key.to_vec()),
         _ => return None,
     };
-    let public_key = signing_key.verifying_key().to_bytes().to_vec();
-    // Go's ed25519.PrivateKey is seed || public key (64 bytes); ed25519-dalek
-    // keeps only the seed, so the public half is appended here.
-    let mut private_key = signing_key.to_bytes().to_vec();
-    private_key.extend_from_slice(&public_key);
     Some(Identity {
         name: name.to_owned(),
         member_id: compute_member_id(&public_key),
@@ -130,6 +132,12 @@ pub fn generate(name: &str) -> Result<Identity, IdentityError> {
 }
 
 /// Go: `identity.Sign`.
+///
+/// Documented deviation: a 64-byte key whose public half does not belong to its
+/// seed is refused (`None`). Go signs it anyway, hashing the *stored* public
+/// half into the signature, which yields a signature that verifies against
+/// neither key; Rust returns an error instead of journaling an unverifiable
+/// event.
 pub fn sign(private_key: &[u8], message: &[u8]) -> Option<Signature> {
     let signing_key = signing_key_from(private_key)?;
     Some(signing_key.sign(message))
@@ -239,7 +247,7 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
         Err(err) => return Err(IdentityError::Message(format!("read identity file: {err}"))),
     };
 
-    let stored: StoredIdentity = serde_json::from_slice(&data)
+    let stored = decode_stored(&data)
         .map_err(|err| IdentityError::Message(format!("unmarshal identity file: {err}")))?;
 
     let private_key = hex::decode(&stored.private_key).map_err(|_| IdentityError::InvalidKey)?;
@@ -256,6 +264,24 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
         member_id: stored.member_id,
         public_key,
         private_key,
+    })
+}
+
+/// Go: `json.Unmarshal(data, &StoredIdentity)` (see [`crate::gojson`]).
+fn decode_stored(data: &[u8]) -> Result<StoredIdentity, String> {
+    let mut fields = crate::gojson::decode_string_struct(
+        data,
+        "StoredIdentity",
+        "identity.StoredIdentity",
+        &["name", "member_id", "public_key", "private_key"],
+    )?
+    .into_iter()
+    .map(Option::unwrap_or_default);
+    Ok(StoredIdentity {
+        name: fields.next().unwrap_or_default(),
+        member_id: fields.next().unwrap_or_default(),
+        public_key: fields.next().unwrap_or_default(),
+        private_key: fields.next().unwrap_or_default(),
     })
 }
 
@@ -302,4 +328,34 @@ fn restrict_mode(path: &std::path::Path, mode: u32) {
 #[cfg(not(unix))]
 fn restrict_mode(_path: &std::path::Path, _mode: u32) {
     // Windows carries no Unix permission bits; Go writes the same bytes there.
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mismatched_public_half_loads_like_go_but_refuses_to_sign() {
+        let seed = [7_u8; SEED_SIZE];
+        let other = identity_from_private_key("other", &[9_u8; SEED_SIZE]).expect("other");
+        let mut key = seed.to_vec();
+        key.extend_from_slice(&other.public_key);
+
+        let loaded = identity_from_private_key("probe", &key).expect("Go accepts the key");
+        assert_eq!(loaded.public_key, other.public_key);
+        assert_eq!(loaded.member_id, other.member_id);
+        // Documented deviation: Go would sign with the stored public half and
+        // emit a signature that verifies against neither key.
+        assert!(sign(&loaded.private_key, b"message").is_none());
+
+        let consistent = identity_from_private_key("seed", &seed).expect("seed");
+        assert!(sign(&consistent.private_key, b"message").is_some());
+    }
+
+    #[test]
+    fn other_key_lengths_are_rejected() {
+        for length in [0, 16, 31, 33, 63, 65] {
+            assert!(identity_from_private_key("x", &vec![1_u8; length]).is_none());
+        }
+    }
 }

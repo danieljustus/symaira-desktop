@@ -882,6 +882,71 @@
       "reembedded_documents": 1,
       "remaining_pending": 0,
       "generation": 3
+    },
+    {
+      "id": "provider-resolves-pending-csv",
+      "document_path": "doc.csv",
+      "document_body": "id,note\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "id\tnote\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "7b3dd2b3-8b8c-5c85-9d46-e03d3d60b5f6",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "old,pending\nold,state\n",
+          "embedding": [],
+          "hash": "7e6f9dc3c36b421945dbdc20fbba1dde045b5e40ca73381eec2ebcdff4a4be82",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 22,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "ccba0323-718e-5c3b-8672-045d3b7b4224",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "id\tnote\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line\nrow, one\tlocal embedding \"contract\" text\nsecond line",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "7f0050a709df365e9041f0abbe45947ddc97c9dc8b19690913b088b52823eeec",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 749,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "17065303ea1e8dc60193fdeaec88dd11e840a77f9573f1df4ce6ca5b7512d47a",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
     }
   ]
 }

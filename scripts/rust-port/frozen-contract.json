@@ -36,6 +36,17 @@
         "error",
         "line"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-index --locked retrieval_csv",
+      "fixture": "testdata/port/retrieval/csv-sections.json",
+      "increment": [
+        "cases",
+        2,
+        "sections",
+        0,
+        "start"
+      ]
     }
   ],
   "replays": {
@@ -193,6 +204,10 @@
     "cargo test -p symdesk-index --locked local_hash_tests": {
       "ignored": 0,
       "passed": 3
+    },
+    "cargo test -p symdesk-index --locked retrieval_csv": {
+      "ignored": 0,
+      "passed": 4
     },
     "cargo test -p symdesk-protocol --locked --test retrieval_embedding": {
       "ignored": 0,

@@ -298,7 +298,7 @@ fn stored(path: &str, chunk: &FixtureChunk) -> StoredRetrievalChunk {
 fn reembed_cli_replays_go_http_success_and_failure_cases() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 6);
+    assert_eq!(fixture.cases.len(), 7);
     for case in fixture.cases {
         let root = TempRoot::new();
         let document_path = if case.document_path.is_empty() {

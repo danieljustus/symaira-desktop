@@ -19,7 +19,7 @@ use std::{
     collections::BTreeMap,
     fs,
     io::Read as _,
-    path::{Component, MAIN_SEPARATOR, Path, PathBuf},
+    path::{Component, MAIN_SEPARATOR_STR, Path, PathBuf},
 };
 
 use symdesk_vault::{Document, go_path_error, parse_bytes, secure_path};
@@ -318,7 +318,7 @@ fn go_rel(base: &Path, target: &Path) -> Option<String> {
     if parts.is_empty() {
         return Some(".".to_owned());
     }
-    Some(parts.join(&MAIN_SEPARATOR.to_string()))
+    Some(parts.join(MAIN_SEPARATOR_STR))
 }
 
 /// Lexically clean path components, `filepath.Clean` style: `.` dropped,

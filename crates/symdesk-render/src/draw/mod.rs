@@ -1,15 +1,19 @@
 //! SymDraw DSL parser: byte-exact port of Go `internal/draw/parse`
 //! (`Source`, `ParseMermaid`, `ParseJSON`) and the `internal/draw/ir`
-//! model/validation it feeds. Layout, fonts and SVG/PDF output are not part
-//! of this module.
+//! model/validation it feeds, plus the `internal/draw/measure` text
+//! measurement layer (`measure`, backed by the minimal `sfnt` reader) that
+//! layout and emit depend on. Layout and SVG/PDF output are not part of this
+//! module.
 
 mod gotext;
 #[rustfmt::skip]
 mod go_unicode;
 pub mod ir;
 mod json;
+pub mod measure;
 mod mermaid;
 mod sequence;
+pub mod sfnt;
 
 pub use ir::{Diagram, ValidationError, Value, validate};
 pub use mermaid::DIALECT_VERSION;

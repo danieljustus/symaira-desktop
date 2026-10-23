@@ -134,6 +134,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"retrieval TurboQuant codec", []string{"run", "./scripts/rust-port/cmd/turboquant-gen", "--check"}, []string{"testdata/port/retrieval/turboquant-codec.json", "testdata/port/retrieval/turboquant-property.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json", "testdata/port/render/v2/json-ir.json"}, false},
 	{"render DSL parse", []string{"run", "./scripts/rust-port/cmd/renderdslgen", "--check"}, []string{"testdata/port/render/dsl-parse.json"}, false},
+	{"render text measure", []string{"run", "./scripts/rust-port/cmd/rendermeasuregen", "--check"}, []string{"testdata/port/render/text-measure.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},

@@ -344,7 +344,8 @@ and `consumers-night-desktop-sqlite-patch-20260914T220549.373289Z/run.json`
 
 The staged Rust `symdesk transform` command delegates only the Anthropic
 streaming transport to `symaira-core-llm`, pinned to CoreKit revision
-`04d1411adb57aa602b992509121011aa7666ff1a` (`0.0.0`, private upstream). The
+`7515add9acd865fa56f908643d0b3b689a70946b` (`0.0.0`, private upstream; moved
+from `04d1411a` for the tokio 1.53.3 fix of RUSTSEC-2026-0386). The
 consumer keeps its Go-compatible intent prompt, language rule, configured
 model/max-token values, five-minute timeout, secret resolution order, chunk
 output format, and visible credential/configuration errors. Provider base URL

@@ -823,7 +823,7 @@ fn write_frames<'a>(out: &mut String, stack: &mut Vec<WriteFrame<'a>>) {
 }
 
 /// Go `encodeState.string` with `escapeHTML = true`.
-fn write_string(out: &mut String, s: &str) {
+pub(crate) fn write_string(out: &mut String, s: &str) {
     out.push('"');
     for c in s.chars() {
         match c {
@@ -844,7 +844,7 @@ fn write_string(out: &mut String, s: &str) {
 }
 
 /// Go `floatEncoder` for float64.
-fn write_f64(out: &mut String, value: f64) {
+pub(crate) fn write_f64(out: &mut String, value: f64) {
     let abs = value.abs();
     if value.is_sign_negative() {
         out.push('-');

@@ -125,6 +125,7 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/turboquant-rust-sidecars.json",
 	"testdata/port/render/json-ir.json",
 	"testdata/port/render/dsl-parse.json",
+	"testdata/port/render/text-measure.json",
 	"testdata/port/render/v2/html-note.json",
 	"testdata/port/render/v2/json-ir.json",
 	"testdata/port/render/v2/symdesk-command-tree.json",

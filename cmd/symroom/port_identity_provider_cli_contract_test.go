@@ -51,7 +51,7 @@ type identityProviderFile struct {
 // directory; the base name selects the stub (`symvault` or `security`).
 type identityProviderPlant struct {
 	Path string `json:"path"`
-	Mode int    `json:"mode,omitempty"`
+	Mode uint32 `json:"mode,omitempty"`
 }
 
 func (p identityProviderPlant) mode() os.FileMode {

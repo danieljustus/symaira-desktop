@@ -81,7 +81,7 @@ residual.
 | Row | Missing | Implementable now | Go reference | Notes |
 |---|---|---|---|---|
 | ROOMCLI-000 | 0 local; Linux/Windows native receipts | no (CI) | `cmd/symroom/cmd_version.go:14-19` | Only native CI evidence is outstanding. |
-| ROOMCLI-001 | Flag grammar: 104 probe divergences in 5 classes (below); aggregate #1153; Linux receipt | yes | `cmd/symroom/main.go:65` (dispatch); one `flag.NewFlagSet(..., ExitOnError)` + `fs.Parse` per command, e.g. `cmd_run.go:26-31,48-51,70-72,107-109,130-133,154-157,191-195,216-219`, `cmd_member.go:30-36,62-64,110-112,128-130`, `cmd_artifact.go:23-26,48-50,68-70`, `cmd_checkpoint.go:25-30,64-67`, `cmd_note.go:16-19`, `cmd_decide.go:17-21`, `cmd_verify.go:16-18`, `cmd_log.go:15-23`, `cmd_index.go`, `cmd_identity.go:62-64`, `cmd_init.go:15-18`, `cmd_doctor.go:16-18`, `cmd_watch.go:20-23`, `cmd_brainprofile.go:14-17`, `cmd_mcp.go:15-19`, `cmd_version.go:14-16` | The 122-case grammar fixture covers usage, `--help` and unknown `-flag`; the classes below are not in it. |
+| ROOMCLI-001 | Linux/Windows native receipts for the flag-grammar replay; aggregate #1153. Residuals of the fixture: `run wait` and `identity create` are pinned only for shapes that fail while parsing (a successful `run wait` polls up to 15 minutes, `identity create` mints a random member id); `index rebuild <args>` is pinned through its usage path only (its success depends on the host temporary-directory permissions, see ROOM-002); non-UTF-8 argv is lossy in the Rust parser (including separate `mcp` path values, previously passed as `OsString`); Go `%q` escaping of non-printable runes outside ASCII/`is_control` (e.g. U+00A0, U+200B, U+FEFF) in flag error messages is not ported, #1322 | no (CI) | `cmd/symroom/main.go:65` (dispatch); one `flag.NewFlagSet(..., ExitOnError)` + `fs.Parse` per command, e.g. `cmd_run.go:26-31,48-51,70-72,107-109,130-133,154-157,191-195,216-219`, `cmd_member.go:30-36,62-64,110-112,128-130`, `cmd_artifact.go:23-26,48-50,68-70`, `cmd_checkpoint.go:25-30,64-67`, `cmd_note.go:16-19`, `cmd_decide.go:17-21`, `cmd_verify.go:16-18`, `cmd_log.go:15-23`, `cmd_identity.go:62-64`, `cmd_init.go:15-18`, `cmd_doctor.go:16-18`, `cmd_watch.go:20-23`, `cmd_brainprofile.go:14-17`, `cmd_mcp.go:15-19`, `cmd_version.go:14-16` | Closed locally by `testdata/port/room/flag-grammar-cli.json` (2231 Go-recorded process results, `make room-flag-grammar-cli-differential`); every command parser now goes through `crates/symroom-cli/src/goflag.rs`. |
 | ROOMCLI-002 | `index rebuild` success path prints the host separator (`.symroom\index.sqlite` on Windows); `identity create` prints a random member id (shape only); native Windows replay of the new I/O fixture | partly (separator/random id are native-only or shape-only) | `cmd/symroom/cmd_index.go`, `cmd_identity.go` | `run list` and every other missing-`room.toml` path is now pinned (79 cases). |
 | ROOM-001 | The `symvault` shell-out and macOS Keychain `security` chains have no Go-owned fixture | yes (fake `symvault`/`security` on a scoped PATH) | `internal/room/identity/identity.go:100` (`Load`), `:122` symvault, `:141` `security find-generic-password` | Rust implements both chains (`crates/symroom-core/src/identity.rs:197-240`); only the file/env paths are replayed. The matrix text "the journal remain open" is stale: ROOM-002 owns it. |
 | ROOM-002 | Exact-current native Linux/macOS/Windows matrix | no (CI) | `internal/room/journal/journal.go:224-259,302`, `merge.go:31`, `verifier.go:36` | Harness note: `index_commands` and `index_contracts` need a TMPDIR whose ancestors are not group-writable; they fail under `dev-external`'s `.worktrees/*/tmp` and pass with a private TMPDIR. Not a product gap. |
@@ -89,22 +89,37 @@ residual.
 | ROOM-004 | Native Windows replay; exact native matrix | no (CI) | `internal/room/artifact/artifact.go:35,66,124,153,216`, `internal/room/desk/watch.go:21,51` | No local gap found; I/O hashing errors are now pinned by the new fixture. |
 | MCP-004 | Native Linux/macOS/Windows replay; 12 `/bin/sh` scenarios are Unix-only; in-flight cap 512 vs Go's unbounded goroutines (observable only above 512 concurrent calls) | no (CI; cap is a recorded deviation) | `cmd/symroom/cmd_mcp.go:15-19`; `crates/symroom-cli/src/mcp.rs:40` | MCP file errors now use the same Go-shaped text (`goio`). |
 
-### ROOMCLI-001 flag-grammar divergences (probe, `room`-less state)
+### ROOMCLI-001 flag grammar (closed locally)
 
-Go uses the standard `flag` package; the Rust hand-parsers differ for these
-argv shapes (104 of the permutations probed across 29 command paths):
+Go parses every command with the standard `flag` package (`flag.ExitOnError`);
+the hand-written Rust parsers differed in 104 probed argv shapes in 5 classes
+(`--flag=value` on an undefined flag kept the value in the name, 52; a lone `-`
+treated as a flag, 36; `--json=<bool>` forms on `version`, 6; `identity export`
+with `--json=`/`--identity=`, 6; the `--` terminator, 4). Every Rust command now
+parses through one port of `FlagSet.parseOne` (`goflag.rs`):
 
-| Class | Count | Go | Rust |
-|---|---|---|---|
-| `--flag=value` on an undefined flag | 52 | `flag provided but not defined: -identity` | `... -identity=a` (value kept in the name) |
-| lone `-` argument | 36 | positional; command proceeds | `flag provided but not defined: -` |
-| `--json=false/1/x` on a defined bool flag (`version`) | 6 | accepted or `invalid boolean value "x" for -json: parse error` | `flag provided but not defined: -json=...` |
-| `--json=...` / `--identity=a` on `identity export` | 6 | `flag provided but not defined: -json` | name includes `=value` |
-| `--` terminator | 4 | ends flags; command proceeds | `flag provided but not defined: -` |
+- parsing stops at the first non-flag (`""`, a lone `-`, anything not starting
+  with `-`); a later flag is positional; `--` ends the flags and is consumed;
+- `-x`/`--x` are equivalent, `---x`, `-=x`, `--=x` are `bad flag syntax`;
+- `-name=value` splits at the first `=`, the name of an undefined flag excludes
+  the value; a bool takes no separate value and `=value` goes through
+  `strconv.ParseBool`; any other flag takes the next argument, even `--`/`-`;
+- ints use `strconv.ParseInt(s, 0, 64)` (base prefixes, underscore rule,
+  `parse error` vs `value out of range`), durations `time.ParseDuration`;
+  messages quote values with `%q`;
+- `-h`/`-help` (any `=value`) that is not a defined flag prints the usage and
+  exits 0; every other failure prints the message and the usage and exits 2.
 
-Fixing this needs one Go-`flag`-compatible parser shared by the ~16 Rust
-command files plus a Go-owned fixture; that is the next-largest gap and is
-larger than this slice.
+`testdata/port/room/flag-grammar-cli.json` is derived from
+`symroom-parser-grammar.json`: for each of the 43 command paths it replays the
+shapes above plus every flag's type-specific value forms (bool: `=x`, `=`,
+`=T`, `=TRUE`, `=0`, `=f`, `--b false`, repeated; int: `=0x10`, `=1_0`, `=+3`,
+`=010`, `=1.5`, an overflow; duration: `=1h30m`, `=-5s`, `=5`; string: `=`,
+`--s --`, `--s -`, repeated) in an empty directory and in a room (2231 cases,
+47 of them Unix-only because they print a host OS error). The Go test records
+exit code, both streams and the files and journal rooms left behind; the Rust
+replay compares all five. Generation was run twice with Go 1.26.10 and
+produced byte-identical output.
 
 ## Evidence for this slice
 
@@ -114,3 +129,8 @@ controls (each restored afterwards): printing the raw path from
 `read segment <author>:` wrapper fails 14 of 143; ignoring `$PWD` in
 `goio::getwd` fails 2; letting the first duplicate `id` win in `room_config`
 fails 3; requiring an `id` (the former `toml::from_str`) fails 22.
+
+ROOMCLI-001 negative controls on `goflag.rs` (each restored afterwards): an
+undefined flag keeping `=value` in its name fails 112 of 2231 cases; treating a
+lone `-` as a flag fails 134; not consuming the `--` terminator fails 40;
+accepting misplaced int underscores (`1__0`, `1_`) fails 2.

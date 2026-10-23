@@ -15,58 +15,22 @@ const USAGE: &str = "Usage: symroom init <dir> --identity <name> [--name <displa
 const FLAG_USAGE: &str = "Usage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
-    let mut identity_name = String::new();
-    let mut name = "Default Room".to_owned();
-    let mut directory = None;
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if parsing_flags && argument == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && argument.starts_with('-') {
-            let flag = argument.trim_start_matches('-');
-            if matches!(flag, "h" | "help") {
-                return stderr(FLAG_USAGE, CoreExitCode::Ok);
-            }
-            let (key, inline) = flag
-                .split_once('=')
-                .map_or((flag, None), |(key, value)| (key, Some(value)));
-            if !matches!(key, "identity" | "name") {
-                return stderr(
-                    &format!("flag provided but not defined: -{key}\n{FLAG_USAGE}"),
-                    CoreExitCode::NoInput,
-                );
-            }
-            let value = match inline {
-                Some(value) => value.to_owned(),
-                None => match args.get(index + 1) {
-                    Some(value) => {
-                        index += 1;
-                        value.to_string_lossy().into_owned()
-                    }
-                    None => {
-                        return flag_error(&format!("flag needs an argument: -{key}\n"));
-                    }
-                },
-            };
-            match key {
-                "identity" => identity_name = value,
-                "name" => name = value,
-                _ => unreachable!("validated flag name"),
-            }
-            index += 1;
-            continue;
-        }
-        parsing_flags = false;
-        if directory.is_none() {
-            directory = Some(argument.into_owned());
-        }
-        index += 1;
-    }
+    use crate::goflag::Spec;
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[Spec::string("name"), Spec::string("identity")],
+        FLAG_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let mut identity_name = parsed.string("identity").to_owned();
+    let name = if parsed.is_set("name") {
+        parsed.string("name").to_owned()
+    } else {
+        "Default Room".to_owned()
+    };
+    let directory = parsed.positionals.first().cloned();
 
     if identity_name.is_empty() {
         identity_name = match member_cli::default_identity() {
@@ -151,10 +115,6 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
     write(io::stderr(), value, code)
-}
-
-fn flag_error(message: &str) -> ExitCode {
-    stderr(&format!("{message}{FLAG_USAGE}"), CoreExitCode::NoInput)
 }
 
 fn write(mut output: impl Write, value: &str, code: CoreExitCode) -> ExitCode {

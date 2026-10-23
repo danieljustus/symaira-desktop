@@ -12,80 +12,32 @@ use symroom_core::log::{self, LogFilter};
 const FLAG_USAGE: &str = "Usage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
-    let mut filter = LogFilter::default();
-    let mut json = false;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if argument == "--" || !argument.starts_with('-') || argument == "-" {
-            break;
-        }
-        let name = argument.trim_start_matches('-');
-        let (name, inline) = name
-            .split_once('=')
-            .map_or((name, None), |(name, value)| (name, Some(value)));
-        if matches!(name, "h" | "help") {
-            return stderr(FLAG_USAGE, 0);
-        }
-        if name == "json" {
-            json = match inline {
-                None => true,
-                Some("1" | "t" | "T" | "TRUE" | "True" | "true") => true,
-                Some("0" | "f" | "F" | "FALSE" | "False" | "false") => false,
-                Some(value) => {
-                    return stderr(
-                        &format!(
-                            "invalid boolean value \"{value}\" for -json: parse error\n{FLAG_USAGE}"
-                        ),
-                        2,
-                    );
-                }
-            };
-            index += 1;
-            continue;
-        }
-        if !matches!(
-            name,
-            "since" | "until" | "kind" | "author" | "run" | "limit"
-        ) {
-            return stderr(
-                &format!("flag provided but not defined: -{name}\n{FLAG_USAGE}"),
-                2,
-            );
-        }
-        let value = match inline {
-            Some(value) => value.to_owned(),
-            None => match args.get(index + 1) {
-                Some(value) => {
-                    index += 1;
-                    value.to_string_lossy().into_owned()
-                }
-                None => {
-                    return stderr(&format!("flag needs an argument: -{name}\n{FLAG_USAGE}"), 2);
-                }
-            },
-        };
-        match name {
-            "since" => filter.since = value,
-            "until" => filter.until = value,
-            "kind" => filter.kind = value,
-            "author" => filter.author = value,
-            "run" => filter.run = value,
-            "limit" => match value.parse::<i64>() {
-                Ok(limit) => filter.limit = limit,
-                Err(_) => {
-                    return stderr(
-                        &format!(
-                            "invalid value \"{value}\" for flag -limit: parse error\n{FLAG_USAGE}"
-                        ),
-                        2,
-                    );
-                }
-            },
-            _ => unreachable!(),
-        }
-        index += 1;
-    }
+    use crate::goflag::{Spec, check_go_int};
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[
+            Spec::string("since"),
+            Spec::string("until"),
+            Spec::string("kind"),
+            Spec::string("author"),
+            Spec::string("run"),
+            Spec::checked("limit", check_go_int),
+            Spec::boolean("json"),
+        ],
+        FLAG_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let json = parsed.boolean("json");
+    let filter = LogFilter {
+        since: parsed.string("since").to_owned(),
+        until: parsed.string("until").to_owned(),
+        kind: parsed.string("kind").to_owned(),
+        author: parsed.string("author").to_owned(),
+        run: parsed.string("run").to_owned(),
+        limit: crate::goflag::parse_go_int(parsed.string("limit")).unwrap_or_default(),
+    };
     let room = std::env::var_os("SYMROOM_ROOM_DIR")
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)

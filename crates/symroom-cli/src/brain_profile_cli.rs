@@ -97,59 +97,16 @@ pub fn run(args: &[OsString]) -> ExitCode {
 }
 
 fn parse(args: &[OsString]) -> Result<Parsed, ExitCode> {
-    let mut parsed = Parsed::default();
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if !argument.starts_with('-') {
-            break;
-        }
-        if matches!(argument.as_ref(), "-h" | "--help") {
-            return Err(stderr(FLAGS_USAGE, CoreExitCode::Ok));
-        }
-        let flag = argument.trim_start_matches('-');
-        let (name, inline) = flag
-            .split_once('=')
-            .map_or((flag, None), |(name, value)| (name, Some(value)));
-        match name {
-            "install" => {
-                parsed.install = match inline {
-                    Some("true" | "TRUE" | "True" | "T" | "t" | "1") => true,
-                    Some("false" | "FALSE" | "False" | "F" | "f" | "0") => false,
-                    Some(value) => {
-                        return Err(stderr(
-                            &format!(
-                                "invalid boolean value \"{value}\" for -install: parse error\n{FLAGS_USAGE}"
-                            ),
-                            CoreExitCode::NoInput,
-                        ));
-                    }
-                    None => true,
-                };
-            }
-            "member" => {
-                if let Some(value) = inline {
-                    parsed.member = value.to_owned();
-                } else if let Some(value) = args.get(index + 1) {
-                    index += 1;
-                    parsed.member = value.to_string_lossy().into_owned();
-                } else {
-                    return Err(stderr(
-                        &format!("flag needs an argument: -member\n{FLAGS_USAGE}"),
-                        CoreExitCode::NoInput,
-                    ));
-                }
-            }
-            _ => {
-                return Err(stderr(
-                    &format!("flag provided but not defined: -{name}\n{FLAGS_USAGE}"),
-                    CoreExitCode::NoInput,
-                ));
-            }
-        }
-        index += 1;
-    }
-    Ok(parsed)
+    use crate::goflag::Spec;
+    let parsed = crate::goflag::parse_or_exit(
+        args,
+        &[Spec::string("member"), Spec::boolean("install")],
+        FLAGS_USAGE,
+    )?;
+    Ok(Parsed {
+        member: parsed.string("member").to_owned(),
+        install: parsed.boolean("install"),
+    })
 }
 
 fn install(name: &str, content: &[u8]) -> Result<String, String> {

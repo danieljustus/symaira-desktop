@@ -12,37 +12,15 @@ use symroom_core::journal;
 const FLAG_USAGE: &str = "Usage of verify:\n  -json\n    \tOutput verification findings as JSON\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
-    let mut json = false;
-    for arg in args {
-        let value = arg.to_string_lossy();
-        if value == "--" || !value.starts_with('-') {
-            break;
-        }
-        let flag = value.trim_start_matches('-');
-        if flag == "json" {
-            json = true;
-        } else if let Some(value) = flag.strip_prefix("json=") {
-            json = match value {
-                "1" | "t" | "T" | "TRUE" | "True" | "true" => true,
-                "0" | "f" | "F" | "FALSE" | "False" | "false" => false,
-                _ => {
-                    return stderr(
-                        &format!(
-                            "invalid boolean value \"{value}\" for -json: parse error\n{FLAG_USAGE}"
-                        ),
-                        2,
-                    );
-                }
-            };
-        } else if matches!(flag, "h" | "help") {
-            return stderr(FLAG_USAGE, 0);
-        } else {
-            return stderr(
-                &format!("flag provided but not defined: -{flag}\n{FLAG_USAGE}"),
-                2,
-            );
-        }
-    }
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[crate::goflag::Spec::boolean("json")],
+        FLAG_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let json = parsed.boolean("json");
     let room = std::env::var_os("SYMROOM_ROOM_DIR")
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)

@@ -52,48 +52,26 @@ pub fn run_cli(
     args: &[OsString],
     resolve_identity: impl FnOnce(&str) -> Result<symroom_core::identity::Identity, ExitCode>,
 ) -> ExitCode {
-    let mut room = PathBuf::from(".");
-    let mut artifact_root = PathBuf::new();
-    let mut identity_name = String::new();
-    let mut i = 0;
-    while i < args.len() {
-        let raw = args[i].to_string_lossy();
-        if raw == "--" {
-            break;
-        }
-        if !raw.starts_with('-') || raw == "-" {
-            break;
-        }
-        let flag = raw.trim_start_matches('-');
-        let (name, inline_value) = flag
-            .split_once('=')
-            .map_or((flag, None), |(name, value)| (name, Some(value.to_owned())));
-        i += 1;
-        if name == "h" || name == "help" {
-            eprint!("{MCP_USAGE}");
-            return ExitCode::SUCCESS;
-        }
-        if !matches!(name, "room" | "artifact-root" | "identity") {
-            eprintln!("flag provided but not defined: -{name}");
-            eprint!("{MCP_USAGE}");
-            return ExitCode::from(2);
-        }
-        let value = if let Some(value) = inline_value {
-            OsString::from(value)
-        } else if let Some(value) = args.get(i) {
-            i += 1;
-            value.clone()
-        } else {
-            eprintln!("flag needs an argument: -{name}");
-            eprint!("{MCP_USAGE}");
-            return ExitCode::from(2);
-        };
-        match name {
-            "room" => room = PathBuf::from(value),
-            "artifact-root" => artifact_root = PathBuf::from(value),
-            _ => identity_name = value.to_string_lossy().into_owned(),
-        }
-    }
+    use crate::goflag::Spec;
+    let parsed = match crate::goflag::parse_or_exit(
+        args,
+        &[
+            Spec::string("room"),
+            Spec::string("identity"),
+            Spec::string("artifact-root"),
+        ],
+        MCP_USAGE,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let room = if parsed.is_set("room") {
+        PathBuf::from(parsed.string("room"))
+    } else {
+        PathBuf::from(".")
+    };
+    let mut artifact_root = PathBuf::from(parsed.string("artifact-root"));
+    let identity_name = parsed.string("identity").to_owned();
     if artifact_root.as_os_str().is_empty() {
         artifact_root.clone_from(&room);
     }

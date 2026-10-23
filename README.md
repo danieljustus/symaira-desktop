@@ -24,7 +24,7 @@ A local-first and self-hostable, **agent-native** workspace that unifies documen
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; Obsidian Canvas/whiteboards → Obsidian; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
-![SymDesk architecture](assets/symdesk-architecture.svg)
+[![SymDesk architecture](assets/symdesk-architecture.png)](assets/symdesk-architecture.svg)
 
 ## Status and stability
 

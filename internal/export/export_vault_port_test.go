@@ -112,6 +112,10 @@ func TestPortRenderExportVaultFixture(t *testing.T) {
 	if err := validateExportVaultFixture(t, current, fixture); err != nil {
 		t.Fatalf("Go oracle fixture is stale; regenerate deliberately: %v", err)
 	}
+	if runtime.GOOS == "windows" {
+		t.Logf("PASS %s: metadata checked; %d Unix-only cases not executed", exportVaultFixturePath, len(fixture.Cases))
+		return
+	}
 	t.Logf("PASS %s: %d Go %s cases executed", exportVaultFixturePath, len(fixture.Cases), runtime.Version())
 }
 
@@ -316,17 +320,17 @@ func validateExportVaultFixture(t *testing.T, encoded []byte, expected exportVau
 			return fmt.Errorf("pinned source %s digest differs from the checked-out production source", rel)
 		}
 	}
+	if runtime.GOOS == "windows" {
+		// Windows checks metadata without replaying Unix cases; its in-memory
+		// fixture is labelled "windows", not a recorded Unix capture.
+		return nil
+	}
 	// generated_on records the Unix platform that produced the capture. The
 	// per-case outputs below are re-executed on the host and compared exactly,
 	// so the label is provenance and may name the other Unix platform; it must
 	// still be one the Rust contract replays.
 	if !slices.Contains(exportVaultUnixPlatforms, actual.GeneratedOn) {
 		return fmt.Errorf("generated_on %q is not a recorded Unix platform %v", actual.GeneratedOn, exportVaultUnixPlatforms)
-	}
-	if runtime.GOOS == "windows" {
-		// Error texts carry Unix syscall wording and symlinks need privileges:
-		// Windows validates the stored oracle without re-executing it.
-		return nil
 	}
 	for i, c := range actual.Cases {
 		want := expected.Cases[i]
@@ -357,7 +361,7 @@ func withoutOutcome(c exportVaultCase) exportVaultCase {
 }
 
 // assertExportVaultMutationControls proves the validator rejects drift: a
-// changed output, a changed error and a changed input must each be refused.
+// changed output, error, input or notes must each be refused.
 func assertExportVaultMutationControls(t *testing.T, fixture exportVaultFixture, encoded []byte) {
 	t.Helper()
 	if runtime.GOOS == "windows" {
@@ -374,6 +378,7 @@ func assertExportVaultMutationControls(t *testing.T, fixture exportVaultFixture,
 			}
 		},
 		"input": func(f *exportVaultFixture) { f.Cases[0].Files[0].Content += "\nmutated" },
+		"notes": func(f *exportVaultFixture) { f.Notes.Platform += "mutated" },
 	}
 	for name, mutate := range mutations {
 		var mutated exportVaultFixture
@@ -389,7 +394,7 @@ func assertExportVaultMutationControls(t *testing.T, fixture exportVaultFixture,
 			t.Fatalf("%s mutation control was accepted", name)
 		}
 	}
-	t.Log("PASS mutation controls: output, error and input drift rejected")
+	t.Log("PASS mutation controls: output, error, input and notes drift rejected")
 }
 
 // assertExportVaultCrossPlatformReplay proves that a fixture recorded on the

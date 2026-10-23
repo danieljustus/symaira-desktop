@@ -1,3 +1,9 @@
+#[path = "../src/goflag.rs"]
+#[allow(
+    dead_code,
+    reason = "shared with the binary; the MCP server only uses the flag parser"
+)]
+mod goflag;
 #[path = "../src/mcp.rs"]
 mod mcp;
 #[path = "../src/symdesk_inspect.rs"]

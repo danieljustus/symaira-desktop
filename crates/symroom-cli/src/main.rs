@@ -14,6 +14,7 @@ mod brain_profile_cli;
 mod checkpoint_cli;
 mod decide_cli;
 mod doctor_cli;
+mod goflag;
 mod identity_cli;
 mod index_cli;
 mod init_cli;
@@ -100,31 +101,13 @@ fn main() -> ExitCode {
         );
     }
 
-    let mut json = false;
-    for argument in args.iter().skip(2) {
-        if argument == "-json" || argument == "--json" {
-            json = true;
-            continue;
-        }
-        if argument.to_string_lossy().starts_with('-') {
-            let name = argument
-                .to_string_lossy()
-                .trim_start_matches('-')
-                .to_owned();
-            // Go flag.ExitOnError: -h/-help prints usage to stderr and exits 0.
-            if name == "h" || name == "help" {
-                eprint!("Usage of version:\n  -json\n    \tEmit version info in JSON format\n");
-                return ExitCode::SUCCESS;
-            }
-            return write_stderr(
-                &format!(
-                    "flag provided but not defined: -{name}\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n"
-                ),
-                2,
-            );
-        }
-        break;
-    }
+    const VERSION_USAGE: &str =
+        "Usage of version:\n  -json\n    \tEmit version info in JSON format\n";
+    let json =
+        match goflag::parse_or_exit(&args[2..], &[goflag::Spec::boolean("json")], VERSION_USAGE) {
+            Ok(parsed) => parsed.boolean("json"),
+            Err(code) => return code,
+        };
     let rendered = if json {
         match render_version_json("symroom", VERSION) {
             Ok(value) => value,

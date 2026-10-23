@@ -564,50 +564,8 @@ fn permissions_mode(metadata: &fs::Metadata) -> u32 {
 }
 
 fn parse_flags(args: &[OsString]) -> Result<bool, ExitCode> {
-    let mut json = false;
-    for argument in args {
-        let argument = argument.to_string_lossy();
-        if !argument.starts_with('-') {
-            break;
-        }
-        if matches!(argument.as_ref(), "-h" | "--help") {
-            return Err(stderr(FLAG_USAGE, CoreExitCode::Ok));
-        }
-        let flag = argument.trim_start_matches('-');
-        let (name, inline) = flag
-            .split_once('=')
-            .map_or((flag, None), |(name, value)| (name, Some(value)));
-        if name != "json" {
-            return Err(stderr(
-                &format!("flag provided but not defined: -{name}\n{FLAG_USAGE}"),
-                CoreExitCode::NoInput,
-            ));
-        }
-        if let Some(value) = inline {
-            json = match parse_bool(value) {
-                Some(value) => value,
-                None => {
-                    return Err(stderr(
-                        &format!(
-                            "invalid boolean value \"{value}\" for -json: parse error\n{FLAG_USAGE}"
-                        ),
-                        CoreExitCode::NoInput,
-                    ));
-                }
-            };
-        } else {
-            json = true;
-        }
-    }
-    Ok(json)
-}
-
-fn parse_bool(value: &str) -> Option<bool> {
-    match value {
-        "1" | "t" | "T" | "TRUE" | "True" | "true" => Some(true),
-        "0" | "f" | "F" | "FALSE" | "False" | "false" => Some(false),
-        _ => None,
-    }
+    crate::goflag::parse_or_exit(args, &[crate::goflag::Spec::boolean("json")], FLAG_USAGE)
+        .map(|parsed| parsed.boolean("json"))
 }
 
 fn home_dir() -> Option<PathBuf> {
@@ -631,10 +589,6 @@ fn room_dir() -> PathBuf {
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
     write(io::stdout(), value, code)
-}
-
-fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    write(io::stderr(), value, code)
 }
 
 fn write(mut output: impl Write, value: &str, code: CoreExitCode) -> ExitCode {

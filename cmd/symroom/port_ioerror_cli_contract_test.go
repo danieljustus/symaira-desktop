@@ -381,16 +381,34 @@ func runIOErrorCase(t *testing.T, oracle string, fixture ioErrorCLIContract, vec
 
 var ioErrorGeneratedID = regexp.MustCompile(`\b(ev|chk)_[0-9a-f]{16,}\b`)
 
+// ioErrorSlashLiterals are Go source string literals that contain a '/' which
+// is NOT a path separator: doctor's remediation text. Go prints them unchanged
+// on every host, so they must not be rewritten to the Windows separator on
+// replay. The fixture records each '/' of such a literal as slashToken, while a
+// plain '/' means "host path separator" (filepath.Join output). The first
+// element is the exact span in internal/room/doctor/doctor.go.
+var ioErrorSlashLiterals = []struct{ span, tokenized string }{
+	{"create/select", "create" + ioErrorSlashToken + "select"},
+	{"rebuild .symroom/index.sqlite", "rebuild .symroom" + ioErrorSlashToken + "index.sqlite"},
+}
+
+// ioErrorSlashToken stands for a literal '/' in a recorded stream.
+const ioErrorSlashToken = "<slash>"
+
 // normalizeIOError replaces the disposable directories, the generated ids and
 // the host wording of the OS errors the fixture provokes, and uses '/' in every
-// path.
+// path. A '/' inside a Go source literal (ioErrorSlashLiterals) is tokenised
+// first so that the replay can tell it from a host path separator.
 func normalizeIOError(text, work, link string) string {
+	for _, literal := range ioErrorSlashLiterals {
+		text = strings.ReplaceAll(text, literal.span, literal.tokenized)
+	}
 	// link is checked first: it is a sibling of work, never a prefix of it.
 	text = strings.ReplaceAll(text, link, "<link>")
 	text = strings.ReplaceAll(text, work, "<work>")
 	text = ioErrorGeneratedID.ReplaceAllString(text, "<${1}_id>")
 	if runtime.GOOS == "windows" {
-		text = strings.ReplaceAll(text, `\`, "/")
+		text = windowsPathSlashes(text)
 		text = strings.ReplaceAll(text, "The system cannot find the file specified.", "<ENOENT>")
 		text = strings.ReplaceAll(text, "The system cannot find the path specified.", "<ENOTDIR>")
 		text = strings.ReplaceAll(text, "Incorrect function.", "<EISDIR>")
@@ -400,6 +418,62 @@ func normalizeIOError(text, work, link string) string {
 	text = strings.ReplaceAll(text, "not a directory", "<ENOTDIR>")
 	text = strings.ReplaceAll(text, "permission denied", "<EACCES>")
 	return strings.ReplaceAll(text, "is a directory", "<EISDIR>")
+}
+
+// ioErrorJSONHTMLEscape matches the escapes encoding/json writes for '<', '>',
+// '&' and the two JS line separators. `doctor --json` prints `\u003cname\u003e`
+// on every host; the backslash is JSON syntax, never a Windows path separator.
+var ioErrorJSONHTMLEscape = regexp.MustCompile(`\\u(?:003c|003e|0026|2028|2029)`)
+
+// windowsPathSlashes rewrites the Windows path separator to '/', leaving the
+// JSON escapes of ioErrorJSONHTMLEscape untouched. Rewriting them turned
+// `\u003c` into `/u003c`, which the flag grammar generator then refused as an
+// unclassified '/' (and which would have recorded a host-dependent fixture).
+func windowsPathSlashes(text string) string {
+	var out strings.Builder
+	last := 0
+	for _, span := range ioErrorJSONHTMLEscape.FindAllStringIndex(text, -1) {
+		out.WriteString(strings.ReplaceAll(text[last:span[0]], `\`, "/"))
+		out.WriteString(text[span[0]:span[1]])
+		last = span[1]
+	}
+	out.WriteString(strings.ReplaceAll(text[last:], `\`, "/"))
+	return out.String()
+}
+
+// TestWindowsPathSlashesKeepsJSONEscapes runs on every host: the Windows
+// normaliser must turn path separators into '/' and nothing else.
+func TestWindowsPathSlashesKeepsJSONEscapes(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"path", `open C:\w\work\journal:`, `open C:/w/work/journal:`},
+		{"json html escapes", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029"},
+		{"mixed", `\u003c\w\work\u003e\x`, `\u003c/w/work\u003e/x`},
+		{"other json escape is not special", `a\nb`, `a/nb`},
+		{"none", "plain", "plain"},
+	} {
+		if got := windowsPathSlashes(tc.in); got != tc.want {
+			t.Errorf("%s: windowsPathSlashes(%q) = %q, want %q", tc.name, tc.in, got, tc.want)
+		}
+	}
+}
+
+// TestIOErrorSlashLiteralsExistInGoSource keeps ioErrorSlashLiterals honest: each
+// tokenised span must still be a literal of the doctor source, so a reworded
+// message cannot leave a stale classification behind.
+func TestIOErrorSlashLiteralsExistInGoSource(t *testing.T) {
+	root := memberCLIRoot(t)
+	raw, err := os.ReadFile(filepath.Join(root, "internal", "room", "doctor", "doctor.go")) //nolint:gosec // fixed repository source path
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, literal := range ioErrorSlashLiterals {
+		if !strings.Contains(string(raw), literal.span) {
+			t.Errorf("slash literal %q is not in internal/room/doctor/doctor.go", literal.span)
+		}
+		if strings.Contains(literal.tokenized, "/") {
+			t.Errorf("tokenised span %q still contains '/'", literal.tokenized)
+		}
+	}
 }
 
 // listIOErrorRooms records the `room` of every event line a command appended.

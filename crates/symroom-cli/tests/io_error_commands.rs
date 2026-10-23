@@ -12,6 +12,10 @@ use std::{
 
 use serde::Deserialize;
 
+#[path = "support/replay_text.rs"]
+mod replay_text;
+use replay_text::{HOST_SEPARATOR, expand_separators};
+
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Deserialize)]
@@ -62,17 +66,14 @@ const fn host_errors() -> [(&'static str, &'static str); 4] {
     }
 }
 
-/// Expands the fixture's host-neutral text: `/` becomes the host separator,
-/// `<work>` and `<link>` the disposable directories and each OS-error token the
-/// host wording.
+/// Expands the fixture's host-neutral text: a path `/` becomes the host
+/// separator (a literal `<slash>` stays `/`), `<work>` and `<link>` the
+/// disposable directories and each OS-error token the host wording.
 fn expand(text: &str, work: &Path, link: &Path) -> String {
     const WORK: &str = "\u{1}work\u{1}";
     const LINK: &str = "\u{1}link\u{1}";
-    let mut text = text.replace("<work>", WORK).replace("<link>", LINK);
-    if cfg!(windows) {
-        text = text.replace('/', "\\");
-    }
-    text = text
+    let text = text.replace("<work>", WORK).replace("<link>", LINK);
+    let mut text = expand_separators(&text, HOST_SEPARATOR)
         .replace(WORK, &work.to_string_lossy())
         .replace(LINK, &link.to_string_lossy());
     for (token, wording) in host_errors() {
@@ -376,6 +377,42 @@ fn io_errors_match_go_process_contract() {
         mismatches.len(),
         fixture.cases.len(),
         mismatches.join("\n")
+    );
+}
+
+/// Doctor's Go literals keep their `/` for the Windows separator too, while the
+/// `filepath` paths of the failing opens take it (the `<work>`-relative ones
+/// are Unix-only vectors today, so only this check covers them off Unix).
+#[test]
+fn recorded_literal_slashes_survive_the_windows_separator() {
+    let path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/room/io-error-cli.json");
+    let fixture: Fixture = serde_json::from_slice(&fs::read(&path).expect("read fixture"))
+        .expect("parse io error fixture");
+    let mut literal_cases = 0;
+    for case in &fixture.cases {
+        for text in [&case.stdout, &case.stderr] {
+            let windows = expand_separators(text, "\\");
+            if text.contains("<slash>") {
+                literal_cases += 1;
+                assert!(
+                    windows.contains("create/select") || windows.contains("index.sqlite"),
+                    "{}: literal slash lost",
+                    case.name
+                );
+            }
+            // Every raw `/` left is a path separator and must have become `\`.
+            assert!(
+                !windows.contains('/') || text.contains("<slash>"),
+                "{}: a path separator survived: {windows:?}",
+                case.name
+            );
+        }
+    }
+    assert_eq!(literal_cases, 3, "doctor literal streams changed");
+    assert_eq!(
+        expand_separators("open nope/room.toml: <ENOENT>", "\\"),
+        "open nope\\room.toml: <ENOENT>"
     );
 }
 

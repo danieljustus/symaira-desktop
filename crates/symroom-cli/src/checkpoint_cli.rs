@@ -54,7 +54,7 @@ fn request(args: &[OsString]) -> ExitCode {
         Err(code) => return code,
     };
     let timeout = match parsed.values.get("timeout") {
-        Some(value) => match crate::run_cli::parse_go_duration(value) {
+        Some(value) => match crate::goflag::parse_go_duration(value) {
             Some(duration) => duration,
             None => {
                 return stderr(
@@ -160,54 +160,22 @@ fn resolve(args: &[OsString]) -> ExitCode {
 }
 
 fn parse(args: &[OsString], allowed: &[&str], usage: &str) -> Result<Parsed, ExitCode> {
-    let mut parsed = Parsed::default();
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if argument == "--" {
-            parsed.positionals.extend(
-                args[index + 1..]
-                    .iter()
-                    .map(|arg| arg.to_string_lossy().into_owned()),
-            );
-            break;
-        }
-        if !argument.starts_with('-') || argument == "-" {
-            parsed.positionals.extend(
-                args[index..]
-                    .iter()
-                    .map(|arg| arg.to_string_lossy().into_owned()),
-            );
-            break;
-        }
-        let flag = argument.trim_start_matches('-');
-        let (name, inline) = flag
-            .split_once('=')
-            .map_or((flag, None), |(name, value)| (name, Some(value)));
-        if matches!(name, "h" | "help") && inline.is_none() {
-            return Err(stderr(usage, CoreExitCode::Ok));
-        }
-        if !allowed.contains(&name) {
-            return Err(stderr(
-                &format!("flag provided but not defined: -{name}\n{usage}"),
-                CoreExitCode::NoInput,
-            ));
-        }
-        let value = if let Some(value) = inline {
-            value.to_owned()
-        } else if let Some(value) = args.get(index + 1) {
-            index += 1;
-            value.to_string_lossy().into_owned()
-        } else {
-            return Err(stderr(
-                &format!("flag needs an argument: -{name}\n{usage}"),
-                CoreExitCode::NoInput,
-            ));
-        };
-        parsed.values.insert(name.to_owned(), value);
-        index += 1;
-    }
-    Ok(parsed)
+    use crate::goflag::Spec;
+    let specs: Vec<Spec> = allowed
+        .iter()
+        .map(|name| {
+            if *name == "timeout" {
+                Spec::checked(name, crate::goflag::check_go_duration)
+            } else {
+                Spec::string(name)
+            }
+        })
+        .collect();
+    let parsed = crate::goflag::parse_or_exit(args, &specs, usage)?;
+    Ok(Parsed {
+        values: parsed.values,
+        positionals: parsed.positionals,
+    })
 }
 
 fn request_checkpoint(

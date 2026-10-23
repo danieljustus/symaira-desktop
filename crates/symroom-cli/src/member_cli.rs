@@ -103,7 +103,7 @@ fn list(args: &[OsString]) -> ExitCode {
     let json = parsed
         .values
         .get("json")
-        .is_some_and(|value| parse_bool(value).unwrap_or(false));
+        .is_some_and(|value| crate::goflag::parse_go_bool(value).unwrap_or(false));
     let state = match members::list_members(&room_dir()) {
         Ok(state) => state,
         Err(error) => {
@@ -208,77 +208,17 @@ fn parse_flags(
     bool_flags: &[&str],
     usage: &str,
 ) -> Result<Parsed, ExitCode> {
-    let mut parsed = Parsed::default();
-    let mut parsing_flags = true;
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].to_string_lossy();
-        if parsing_flags && argument == "--" {
-            parsing_flags = false;
-            index += 1;
-            continue;
-        }
-        if parsing_flags && argument.starts_with('-') {
-            let flag = argument.trim_start_matches('-');
-            if matches!(flag, "h" | "help") {
-                return Err(stderr(usage, CoreExitCode::Ok));
-            }
-            let (name, inline_value) = flag
-                .split_once('=')
-                .map_or((flag, None), |(name, value)| (name, Some(value)));
-            if string_flags.contains(&name) {
-                let value = if let Some(value) = inline_value {
-                    value.to_owned()
-                } else if let Some(value) = args.get(index + 1) {
-                    index += 1;
-                    value.to_string_lossy().into_owned()
-                } else {
-                    return Err(stderr(
-                        &format!("flag needs an argument: -{name}\n{usage}"),
-                        CoreExitCode::NoInput,
-                    ));
-                };
-                parsed.values.insert(name.to_owned(), value);
-                index += 1;
-                continue;
-            }
-            if bool_flags.contains(&name) {
-                let value = match inline_value {
-                    Some(value) => match parse_bool(value) {
-                        Some(value) => value,
-                        None => {
-                            return Err(stderr(
-                                &format!(
-                                    "invalid boolean value \"{value}\" for -{name}: parse error\n{usage}"
-                                ),
-                                CoreExitCode::NoInput,
-                            ));
-                        }
-                    },
-                    None => true,
-                };
-                parsed.values.insert(name.to_owned(), value.to_string());
-                index += 1;
-                continue;
-            }
-            return Err(stderr(
-                &format!("flag provided but not defined: -{name}\n{usage}"),
-                CoreExitCode::NoInput,
-            ));
-        }
-        parsing_flags = false;
-        parsed.positionals.push(argument.into_owned());
-        index += 1;
-    }
-    Ok(parsed)
-}
-
-fn parse_bool(value: &str) -> Option<bool> {
-    match value {
-        "1" | "t" | "T" | "TRUE" | "True" | "true" => Some(true),
-        "0" | "f" | "F" | "FALSE" | "False" | "false" => Some(false),
-        _ => None,
-    }
+    use crate::goflag::Spec;
+    let specs: Vec<Spec> = string_flags
+        .iter()
+        .map(|name| Spec::string(name))
+        .chain(bool_flags.iter().map(|name| Spec::boolean(name)))
+        .collect();
+    let parsed = crate::goflag::parse_or_exit(args, &specs, usage)?;
+    Ok(Parsed {
+        values: parsed.values,
+        positionals: parsed.positionals,
+    })
 }
 
 pub(crate) fn resolve_identity(name: &str) -> Result<identity::Identity, ExitCode> {

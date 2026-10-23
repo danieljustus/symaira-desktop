@@ -24,6 +24,7 @@ pub mod identity;
 pub mod index;
 pub mod journal;
 pub mod log;
+pub mod lookpath;
 pub mod members;
 pub mod room_config;
 pub mod room_init;

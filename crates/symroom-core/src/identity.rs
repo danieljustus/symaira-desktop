@@ -6,6 +6,7 @@
 use std::fmt;
 use std::{fs, path::PathBuf, process::Command};
 
+use crate::lookpath::look_path;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 
@@ -41,7 +42,10 @@ impl fmt::Display for IdentityError {
 impl std::error::Error for IdentityError {}
 
 /// Go: `identity.Identity`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// `Debug` is written by hand so a stray `{:?}` or a failed `assert_eq!` never
+/// prints the private key.
+#[derive(Clone, PartialEq, Eq)]
 pub struct Identity {
     pub name: String,
     pub member_id: String,
@@ -49,13 +53,26 @@ pub struct Identity {
     pub private_key: Vec<u8>,
 }
 
+impl fmt::Debug for Identity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Identity")
+            .field("name", &self.name)
+            .field("member_id", &self.member_id)
+            .field("public_key", &hex::encode(&self.public_key))
+            .field("private_key", &REDACTED)
+            .finish()
+    }
+}
+
+const REDACTED: &str = "<redacted>";
+
 /// Go: `identity.StoredIdentity`. Field order matters: Go marshals structs in
 /// declaration order, and the identity file is compared byte for byte.
 ///
 /// Every field defaults on read, like Go's `json.Unmarshal` into a struct: a
 /// file missing `member_id` is not a decode error there, it reaches the key
 /// validation and reports `invalid key data`.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct StoredIdentity {
     #[serde(default)]
     pub name: String,
@@ -65,6 +82,17 @@ pub struct StoredIdentity {
     pub public_key: String,
     #[serde(default)]
     pub private_key: String,
+}
+
+impl fmt::Debug for StoredIdentity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("StoredIdentity")
+            .field("name", &self.name)
+            .field("member_id", &self.member_id)
+            .field("public_key", &self.public_key)
+            .field("private_key", &REDACTED)
+            .finish()
+    }
 }
 
 /// Go: `identity.ComputeMemberID` — the first eight bytes of the SHA-256 of the
@@ -131,16 +159,40 @@ pub fn generate(name: &str) -> Result<Identity, IdentityError> {
     identity_from_private_key(name, &seed).ok_or(IdentityError::InvalidKey)
 }
 
+/// Why [`sign`] refused a key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SignError {
+    /// Neither a 32-byte seed nor a 64-byte key (Go's `ed25519.Sign` panics).
+    BadKeyLength,
+    /// A 64-byte key whose public half does not belong to its seed.
+    MismatchedPublicHalf,
+}
+
+impl fmt::Display for SignError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BadKeyLength => {
+                f.write_str("refusing to sign: private key must be a 32-byte seed or a 64-byte key")
+            }
+            Self::MismatchedPublicHalf => f.write_str(
+                "refusing to sign: the private key's public half does not match its seed",
+            ),
+        }
+    }
+}
+
+impl std::error::Error for SignError {}
+
 /// Go: `identity.Sign`.
 ///
 /// Documented deviation: a 64-byte key whose public half does not belong to its
-/// seed is refused (`None`). Go signs it anyway, hashing the *stored* public
-/// half into the signature, which yields a signature that verifies against
-/// neither key; Rust returns an error instead of journaling an unverifiable
-/// event.
-pub fn sign(private_key: &[u8], message: &[u8]) -> Option<Signature> {
+/// seed is refused ([`SignError::MismatchedPublicHalf`]). Go signs it anyway,
+/// hashing the *stored* public half into the signature, which yields a
+/// signature that verifies against neither key; Rust returns an error instead
+/// of journaling an unverifiable event.
+pub fn sign(private_key: &[u8], message: &[u8]) -> Result<Signature, SignError> {
     let signing_key = signing_key_from(private_key)?;
-    Some(signing_key.sign(message))
+    Ok(signing_key.sign(message))
 }
 
 /// Go: `identity.Verify`. Uses the permissive RFC 8032 check, like
@@ -158,20 +210,22 @@ pub fn verify(public_key: &[u8], message: &[u8], signature: &[u8]) -> bool {
     key.verify(message, &signature).is_ok()
 }
 
-fn signing_key_from(private_key: &[u8]) -> Option<SigningKey> {
+fn signing_key_from(private_key: &[u8]) -> Result<SigningKey, SignError> {
     match private_key.len() {
-        SEED_SIZE => Some(SigningKey::from_bytes(
+        SEED_SIZE => Ok(SigningKey::from_bytes(
             &<[u8; SEED_SIZE]>::try_from(private_key).expect("length checked above"),
         )),
         PRIVATE_KEY_SIZE => {
-            let seed: [u8; SEED_SIZE] = private_key[..SEED_SIZE].try_into().ok()?;
+            let seed: [u8; SEED_SIZE] = private_key[..SEED_SIZE]
+                .try_into()
+                .map_err(|_| SignError::BadKeyLength)?;
             let key = SigningKey::from_bytes(&seed);
             if key.verifying_key().to_bytes().as_slice() != &private_key[SEED_SIZE..] {
-                return None;
+                return Err(SignError::MismatchedPublicHalf);
             }
-            Some(key)
+            Ok(key)
         }
-        _ => None,
+        _ => Err(SignError::BadKeyLength),
     }
 }
 
@@ -211,10 +265,14 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
         return Ok(identity);
     }
 
+    // Go resolves both providers with `exec.LookPath`, which refuses a hit found
+    // through a relative or empty PATH entry (`ErrDot`); the chain then simply
+    // falls through, so the spawn below only ever runs an absolute path.
     let vault_key = format!("symroom/identities/{name}");
-    if let Ok(output) = Command::new("symvault")
-        .args(["get", vault_key.as_str()])
-        .output()
+    if let Some(symvault) = look_path("symvault")
+        && let Ok(output) = Command::new(symvault)
+            .args(["get", vault_key.as_str()])
+            .output()
         && output.status.success()
         && let Some(identity) = identity_from_provider_output(name, &output.stdout)
     {
@@ -222,16 +280,17 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
     }
 
     #[cfg(target_os = "macos")]
-    if let Ok(output) = Command::new("security")
-        .args([
-            "find-generic-password",
-            "-s",
-            "symroom-identity",
-            "-a",
-            name,
-            "-w",
-        ])
-        .output()
+    if let Some(security) = look_path("security")
+        && let Ok(output) = Command::new(security)
+            .args([
+                "find-generic-password",
+                "-s",
+                "symroom-identity",
+                "-a",
+                name,
+                "-w",
+            ])
+            .output()
         && output.status.success()
         && let Some(identity) = identity_from_provider_output(name, &output.stdout)
     {
@@ -346,10 +405,37 @@ mod tests {
         assert_eq!(loaded.member_id, other.member_id);
         // Documented deviation: Go would sign with the stored public half and
         // emit a signature that verifies against neither key.
-        assert!(sign(&loaded.private_key, b"message").is_none());
+        assert_eq!(
+            sign(&loaded.private_key, b"message"),
+            Err(SignError::MismatchedPublicHalf)
+        );
 
         let consistent = identity_from_private_key("seed", &seed).expect("seed");
-        assert!(sign(&consistent.private_key, b"message").is_some());
+        assert!(sign(&consistent.private_key, b"message").is_ok());
+        assert_eq!(sign(&[1_u8; 5], b"message"), Err(SignError::BadKeyLength));
+    }
+
+    #[test]
+    fn debug_output_never_contains_the_private_key() {
+        let identity = identity_from_private_key("probe", &[7_u8; SEED_SIZE]).expect("identity");
+        let private_hex = hex::encode(&identity.private_key);
+        let seed_hex = hex::encode([7_u8; SEED_SIZE]);
+        let stored = StoredIdentity {
+            name: identity.name.clone(),
+            member_id: identity.member_id.clone(),
+            public_key: hex::encode(&identity.public_key),
+            private_key: private_hex.clone(),
+        };
+        for text in [
+            format!("{identity:?}"),
+            format!("{stored:?}"),
+            format!("{identity:#?}"),
+        ] {
+            assert!(!text.contains(&private_hex), "{text}");
+            assert!(!text.contains(&seed_hex), "{text}");
+            assert!(text.contains("<redacted>"), "{text}");
+            assert!(text.contains("probe"), "{text}");
+        }
     }
 
     #[test]

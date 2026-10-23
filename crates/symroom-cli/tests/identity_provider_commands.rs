@@ -16,6 +16,11 @@ use std::{
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
+/// Cases in the committed fixture (macOS-only and Unix-only ones included).
+const EXPECTED_CASES: usize = 119;
+const EXPECTED_DARWIN_ONLY: usize = 10;
+const EXPECTED_UNIX_ONLY: usize = 2;
+
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Deserialize)]
@@ -56,6 +61,14 @@ impl File {
     }
 }
 
+/// A provider executable planted below the working directory.
+#[derive(Deserialize)]
+struct Plant {
+    path: String,
+    #[serde(default)]
+    mode: u32,
+}
+
 #[derive(Deserialize)]
 struct Case {
     name: String,
@@ -65,6 +78,18 @@ struct Case {
     security: Option<Stub>,
     #[serde(default)]
     darwin_only: bool,
+    /// Outcome depends on Unix lookup rules (Go searches the working directory
+    /// implicitly on Windows).
+    #[serde(default)]
+    unix_only: bool,
+    /// PATH directories in order; `$TOOLS` is the provider directory and `""`
+    /// an empty entry. Absent means just the provider directory.
+    path_entries: Option<Vec<String>>,
+    /// The provider directory holds no executables.
+    #[serde(default)]
+    tools_empty: bool,
+    #[serde(default)]
+    planted: Vec<Plant>,
     #[serde(default)]
     identity_files: Vec<File>,
     exit_code: i32,
@@ -83,6 +108,11 @@ fn identity_provider_chain_matches_go_process_contract() {
     )
     .expect("parse Go fixture");
     assert_eq!(fixture.schema_version, 1);
+    assert_eq!(
+        fixture.cases.len(),
+        EXPECTED_CASES,
+        "the recorded case count is pinned; regenerate the fixture and update EXPECTED_CASES together"
+    );
     assert_eq!(fixture.source_hashes.len(), 2);
     for (path, hash) in &fixture.source_hashes {
         assert_eq!(
@@ -113,6 +143,11 @@ fn identity_provider_chain_matches_go_process_contract() {
             skipped += 1;
             continue;
         }
+        if case.unix_only && cfg!(windows) {
+            println!("SKIP {}: Unix lookup rules", case.name);
+            skipped += 1;
+            continue;
+        }
         replayed += 1;
         if let Err(message) = replay(case, &temp.path, &helper) {
             failures.push(format!("{}: {message}", case.name));
@@ -123,6 +158,19 @@ fn identity_provider_chain_matches_go_process_contract() {
         fixture.cases.len()
     );
     assert!(replayed > 0, "no identity provider case replayed");
+    assert_eq!(replayed + skipped, EXPECTED_CASES);
+    assert_eq!(
+        fixture.cases.iter().filter(|case| case.darwin_only).count(),
+        EXPECTED_DARWIN_ONLY
+    );
+    assert_eq!(
+        fixture.cases.iter().filter(|case| case.unix_only).count(),
+        EXPECTED_UNIX_ONLY
+    );
+    if cfg!(target_os = "macos") {
+        // The Keychain chain must run where it exists: nothing skipped.
+        assert_eq!(skipped, 0, "macOS must replay every case");
+    }
     assert!(
         failures.is_empty(),
         "{} of {replayed} identity provider cases differ from Go:\n{}",
@@ -148,6 +196,15 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
         fs::write(identities.join(&file.name), file.bytes()).map_err(|error| error.to_string())?;
     }
     let log = trace.join("calls.log");
+    let path = case_path(case, &tools);
+    // `env_clear` plus a forgotten PATH would make every provider lookup fail
+    // for the wrong reason; only a case that spells out an empty PATH may have one.
+    assert!(
+        !path.is_empty() || case.path_entries.is_some(),
+        "{}: harness PATH is empty",
+        case.name
+    );
+    let mut skipped_files = Vec::new();
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(&case.args)
@@ -159,7 +216,7 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
         .env("TMPDIR", &tmp)
         .env("TMP", &tmp)
         .env("TEMP", &tmp)
-        .env("PATH", &tools)
+        .env("PATH", &path)
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")
@@ -174,16 +231,30 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
     }
     for (tool, stub) in [("symvault", &case.symvault), ("security", &case.security)] {
         let Some(stub) = stub else { continue };
-        fs::copy(
-            helper,
-            tools.join(format!("{tool}{}", std::env::consts::EXE_SUFFIX)),
-        )
-        .map_err(|error| error.to_string())?;
+        if !case.tools_empty {
+            fs::copy(
+                helper,
+                tools.join(format!("{tool}{}", std::env::consts::EXE_SUFFIX)),
+            )
+            .map_err(|error| error.to_string())?;
+        }
         let upper = tool.to_uppercase();
         command
             .env(format!("PROVIDER_STDOUT_{upper}"), &stub.stdout)
             .env(format!("PROVIDER_STDERR_{upper}"), &stub.stderr)
             .env(format!("PROVIDER_EXIT_{upper}"), stub.exit.to_string());
+    }
+    for plant in &case.planted {
+        let relative = format!("{}{}", plant.path, std::env::consts::EXE_SUFFIX);
+        let destination = cwd.join(&relative);
+        fs::create_dir_all(destination.parent().expect("planted parent"))
+            .map_err(|error| error.to_string())?;
+        fs::copy(helper, &destination).map_err(|error| error.to_string())?;
+        set_mode(
+            &destination,
+            if plant.mode == 0 { 0o755 } else { plant.mode },
+        )?;
+        skipped_files.push(format!("cwd/{relative}"));
     }
     let output = command.output().map_err(|error| error.to_string())?;
 
@@ -217,7 +288,8 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
             case.tool_calls
         ));
     }
-    let after = snapshot(&work);
+    let mut after = snapshot(&work);
+    after.retain(|file| !skipped_files.contains(&file.name));
     if after != case.final_files {
         problems.push(format!(
             "on-disk state {:?} != {:?}",
@@ -233,6 +305,36 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
     } else {
         Err(problems.join("; "))
     }
+}
+
+/// The PATH of a case: its entries joined, `$TOOLS` replaced by the provider
+/// directory.
+fn case_path(case: &Case, tools: &Path) -> std::ffi::OsString {
+    let Some(entries) = &case.path_entries else {
+        return tools.as_os_str().to_owned();
+    };
+    let resolved = entries
+        .iter()
+        .map(|entry| {
+            if entry == "$TOOLS" {
+                tools.to_path_buf()
+            } else {
+                PathBuf::from(entry)
+            }
+        })
+        .collect::<Vec<_>>();
+    std::env::join_paths(resolved).expect("fixture PATH entries")
+}
+
+#[cfg(unix)]
+fn set_mode(path: &Path, mode: u32) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(path, fs::Permissions::from_mode(mode)).map_err(|error| error.to_string())
+}
+
+#[cfg(not(unix))]
+fn set_mode(_path: &Path, _mode: u32) -> Result<(), String> {
+    Ok(())
 }
 
 /// Every file below the case root except the provider executables and the call

@@ -171,28 +171,95 @@ impl<'a> Syntax<'a> {
         Err("unexpected end of JSON input".to_owned())
     }
 
+    /// Validate one JSON value like Go's scanner. `depth` is the nesting that
+    /// already encloses the value.
+    ///
+    /// Containers are tracked on an explicit stack, not by recursion: the limit
+    /// is 10 000 levels and the identity file is untrusted, while a Windows
+    /// main thread has 1 MiB of stack.
     fn value(&mut self, depth: usize) -> Result<(), String> {
+        let mut open: Vec<u8> = Vec::new();
+        loop {
+            if self.value_start(depth, &mut open)? {
+                // A complete value (scalar or empty container): close the
+                // containers it finishes before reading the next element.
+                while let Some(&container) = open.last() {
+                    self.skip_space();
+                    match (container, self.next()) {
+                        (b'{', Some(b'}')) | (b'[', Some(b']')) => {
+                            open.pop();
+                        }
+                        (b'{', Some(b',')) => {
+                            self.skip_space();
+                            self.object_key()?;
+                            break;
+                        }
+                        (b'[', Some(b',')) => {
+                            self.skip_space();
+                            break;
+                        }
+                        (_, Some(character)) => {
+                            let context = if container == b'{' {
+                                "after object key:value pair"
+                            } else {
+                                "after array element"
+                            };
+                            return Err(format!(
+                                "invalid character {} {context}",
+                                quote_char(character)
+                            ));
+                        }
+                        (_, None) => return Self::end(),
+                    }
+                }
+                if open.is_empty() {
+                    return Ok(());
+                }
+            }
+        }
+    }
+
+    /// Read the first byte of a value. Returns `true` when the value is
+    /// already complete, `false` when it opened a container whose first element
+    /// is still to be read.
+    fn value_start(&mut self, depth: usize, open: &mut Vec<u8>) -> Result<bool, String> {
         let Some(character) = self.next() else {
             return Self::end();
         };
         match character {
-            b'{' => self.object(depth + 1),
-            b'[' => self.array(depth + 1),
-            b'"' => self.string(),
-            b't' => self.literal(b"rue", "true"),
-            b'f' => self.literal(b"alse", "false"),
-            b'n' => self.literal(b"ull", "null"),
+            b'{' | b'[' => {
+                open.push(character);
+                Self::depth(depth + open.len(), character)?;
+                self.skip_space();
+                let (empty_close, is_object) = (
+                    if character == b'{' { b'}' } else { b']' },
+                    character == b'{',
+                );
+                if self.peek() == Some(empty_close) {
+                    self.offset += 1;
+                    open.pop();
+                    return Ok(true);
+                }
+                if is_object {
+                    self.object_key()?;
+                }
+                Ok(false)
+            }
+            b'"' => self.string().map(|()| true),
+            b't' => self.literal(b"rue", "true").map(|()| true),
+            b'f' => self.literal(b"alse", "false").map(|()| true),
+            b'n' => self.literal(b"ull", "null").map(|()| true),
             b'-' => match self.next() {
-                Some(b'0') => self.fraction_or_exponent(),
-                Some(b'1'..=b'9') => self.integer(),
+                Some(b'0') => self.fraction_or_exponent().map(|()| true),
+                Some(b'1'..=b'9') => self.integer().map(|()| true),
                 Some(other) => Err(format!(
                     "invalid character {} in numeric literal",
                     quote_char(other)
                 )),
                 None => Self::end(),
             },
-            b'0' => self.fraction_or_exponent(),
-            b'1'..=b'9' => self.integer(),
+            b'0' => self.fraction_or_exponent().map(|()| true),
+            b'1'..=b'9' => self.integer().map(|()| true),
             other => Err(format!(
                 "invalid character {} looking for beginning of value",
                 quote_char(other)
@@ -210,74 +277,31 @@ impl<'a> Syntax<'a> {
         Ok(())
     }
 
-    fn object(&mut self, depth: usize) -> Result<(), String> {
-        Self::depth(depth, b'{')?;
-        self.skip_space();
-        if self.peek() == Some(b'}') {
-            self.offset += 1;
-            return Ok(());
+    /// An object key, its colon and the whitespace before the member value.
+    fn object_key(&mut self) -> Result<(), String> {
+        let Some(character) = self.next() else {
+            return Self::end();
+        };
+        if character != b'"' {
+            return Err(format!(
+                "invalid character {} looking for beginning of object key string",
+                quote_char(character)
+            ));
         }
-        loop {
-            let Some(character) = self.next() else {
-                return Self::end();
-            };
-            if character != b'"' {
+        self.string()?;
+        self.skip_space();
+        match self.next() {
+            Some(b':') => {}
+            Some(character) => {
                 return Err(format!(
-                    "invalid character {} looking for beginning of object key string",
+                    "invalid character {} after object key",
                     quote_char(character)
                 ));
             }
-            self.string()?;
-            self.skip_space();
-            match self.next() {
-                Some(b':') => {}
-                Some(character) => {
-                    return Err(format!(
-                        "invalid character {} after object key",
-                        quote_char(character)
-                    ));
-                }
-                None => return Self::end(),
-            }
-            self.skip_space();
-            self.value(depth)?;
-            self.skip_space();
-            match self.next() {
-                Some(b'}') => return Ok(()),
-                Some(b',') => self.skip_space(),
-                Some(character) => {
-                    return Err(format!(
-                        "invalid character {} after object key:value pair",
-                        quote_char(character)
-                    ));
-                }
-                None => return Self::end(),
-            }
+            None => return Self::end(),
         }
-    }
-
-    fn array(&mut self, depth: usize) -> Result<(), String> {
-        Self::depth(depth, b'[')?;
         self.skip_space();
-        if self.peek() == Some(b']') {
-            self.offset += 1;
-            return Ok(());
-        }
-        loop {
-            self.value(depth)?;
-            self.skip_space();
-            match self.next() {
-                Some(b']') => return Ok(()),
-                Some(b',') => self.skip_space(),
-                Some(character) => {
-                    return Err(format!(
-                        "invalid character {} after array element",
-                        quote_char(character)
-                    ));
-                }
-                None => return Self::end(),
-            }
-        }
+        Ok(())
     }
 
     fn string(&mut self) -> Result<(), String> {
@@ -529,5 +553,83 @@ mod tests {
         assert_eq!(quote_char(0x80), "'\\u0080'");
         assert_eq!(quote_char(0xa0), "'\\u00a0'");
         assert_eq!(quote_char(0x01), "'\\x01'");
+    }
+
+    /// Run `work` on a thread with the 1 MiB stack of a Windows main thread.
+    fn on_small_stack<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static) -> T {
+        std::thread::Builder::new()
+            .name("gojson-1mib-stack".to_owned())
+            .stack_size(1 << 20)
+            .spawn(work)
+            .expect("spawn 1 MiB thread")
+            .join()
+            .expect("decode must not panic or overflow the stack")
+    }
+
+    /// Go 1.26.10 `encoding/json` (scanner.go `maxNestingDepth`): the 10001st
+    /// open bracket fails with `invalid character '<c>' exceeded max depth`;
+    /// the same input at 10000 levels is accepted (or, truncated, ends early).
+    /// The wording is what the pinned `symroom` process prints for the identity
+    /// file (fixture cases `file-depth-*`).
+    #[test]
+    fn nesting_limit_is_exact_and_survives_a_one_mib_stack() {
+        const FIELDS: [&str; 2] = ["name", "private_key"];
+        let exceeded = |bracket: char| format!("invalid character '{bracket}' exceeded max depth");
+        for depth in [9_999_usize, 10_000, 10_001] {
+            let nested_arrays = format!(
+                "{{\"x\":{}{}}}",
+                "[".repeat(depth - 1),
+                "]".repeat(depth - 1)
+            );
+            let nested_objects = format!(
+                "{{\"x\":{}1{}}}",
+                "{\"a\":".repeat(depth - 1),
+                "}".repeat(depth - 1)
+            );
+            let open_arrays = "[".repeat(depth);
+            let closed_arrays = format!("{}{}", "[".repeat(depth), "]".repeat(depth));
+            let open_objects = "{\"a\":".repeat(depth);
+            let (nested_arrays, nested_objects, open_arrays, closed_arrays, open_objects) =
+                on_small_stack(move || {
+                    let run =
+                        |text: &str| decode_string_struct(text.as_bytes(), "S", "pkg.S", &FIELDS);
+                    (
+                        run(&nested_arrays),
+                        run(&nested_objects),
+                        run(&open_arrays),
+                        run(&closed_arrays),
+                        run(&open_objects),
+                    )
+                });
+            if depth <= 10_000 {
+                assert_eq!(nested_arrays, Ok(vec![None, None]), "arrays {depth}");
+                assert_eq!(nested_objects, Ok(vec![None, None]), "objects {depth}");
+                assert_eq!(
+                    open_arrays,
+                    Err("unexpected end of JSON input".to_owned()),
+                    "open arrays {depth}"
+                );
+                assert_eq!(
+                    closed_arrays,
+                    Err("json: cannot unmarshal array into Go value of type pkg.S".to_owned()),
+                    "closed arrays {depth}"
+                );
+                assert_eq!(
+                    open_objects,
+                    Err("unexpected end of JSON input".to_owned()),
+                    "open objects {depth}"
+                );
+            } else {
+                for (label, outcome, bracket) in [
+                    ("arrays", &nested_arrays, '['),
+                    ("objects", &nested_objects, '{'),
+                    ("open arrays", &open_arrays, '['),
+                    ("closed arrays", &closed_arrays, '['),
+                    ("open objects", &open_objects, '{'),
+                ] {
+                    assert_eq!(outcome, &Err(exceeded(bracket)), "{label} {depth}");
+                }
+            }
+        }
     }
 }

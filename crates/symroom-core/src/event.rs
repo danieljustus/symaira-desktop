@@ -233,9 +233,9 @@ impl Event {
         }
         let canonical = canonical_bytes(self)
             .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
-        let signature = identity::sign(&signer.private_key, &canonical).ok_or_else(|| {
-            EventError::Message("canonical encoding: invalid private key".to_owned())
-        })?;
+        // Documented deviation (see `identity::sign`): Go has no refusal here.
+        let signature = identity::sign(&signer.private_key, &canonical)
+            .map_err(|err| EventError::Message(err.to_string()))?;
         self.sig = Some(format!(
             "{SIG_PREFIX}{}",
             base64_encode(signature.to_bytes().as_slice())

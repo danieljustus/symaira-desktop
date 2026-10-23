@@ -47,6 +47,20 @@ type identityProviderFile struct {
 	ContentHex string `json:"content_hex,omitempty"`
 }
 
+// identityProviderPlant is a provider executable placed below the working
+// directory; the base name selects the stub (`symvault` or `security`).
+type identityProviderPlant struct {
+	Path string `json:"path"`
+	Mode int    `json:"mode,omitempty"`
+}
+
+func (p identityProviderPlant) mode() os.FileMode {
+	if p.Mode == 0 {
+		return 0o755
+	}
+	return os.FileMode(p.Mode)
+}
+
 func newIdentityProviderFile(name string, data []byte) identityProviderFile {
 	if utf8.Valid(data) {
 		return identityProviderFile{Name: name, Content: string(data)}
@@ -63,18 +77,29 @@ func (f identityProviderFile) bytes() []byte {
 }
 
 type identityProviderCLICaseData struct {
-	Name       string                 `json:"name"`
-	Args       []string               `json:"args"`
-	EnvKey     *string                `json:"env_key,omitempty"`
-	Symvault   *identityProviderStub  `json:"symvault,omitempty"`
-	Security   *identityProviderStub  `json:"security,omitempty"`
-	DarwinOnly bool                   `json:"darwin_only,omitempty"`
-	Files      []identityProviderFile `json:"identity_files,omitempty"`
-	ExitCode   int                    `json:"exit_code"`
-	Stdout     string                 `json:"stdout"`
-	Stderr     string                 `json:"stderr"`
-	ToolCalls  string                 `json:"tool_calls"`
-	FinalFiles []identityProviderFile `json:"final_files"`
+	Name       string                `json:"name"`
+	Args       []string              `json:"args"`
+	EnvKey     *string               `json:"env_key,omitempty"`
+	Symvault   *identityProviderStub `json:"symvault,omitempty"`
+	Security   *identityProviderStub `json:"security,omitempty"`
+	DarwinOnly bool                  `json:"darwin_only,omitempty"`
+	// UnixOnly marks cases whose outcome depends on Unix lookup rules (Go
+	// resolves the current directory implicitly on Windows).
+	UnixOnly bool `json:"unix_only,omitempty"`
+	// PathEntries lists the PATH directories in order; "$TOOLS" is the case's
+	// provider directory and "" is an empty entry. Nil means ["$TOOLS"].
+	PathEntries []string `json:"path_entries,omitempty"`
+	// ToolsEmpty leaves the provider directory without executables, so the
+	// stubs are reachable only through Planted.
+	ToolsEmpty bool `json:"tools_empty,omitempty"`
+	// Planted places provider executables below the working directory.
+	Planted    []identityProviderPlant `json:"planted,omitempty"`
+	Files      []identityProviderFile  `json:"identity_files,omitempty"`
+	ExitCode   int                     `json:"exit_code"`
+	Stdout     string                  `json:"stdout"`
+	Stderr     string                  `json:"stderr"`
+	ToolCalls  string                  `json:"tool_calls"`
+	FinalFiles []identityProviderFile  `json:"final_files"`
 }
 
 func TestPortIdentityProviderCLIContract(t *testing.T) {
@@ -115,7 +140,7 @@ func TestPortIdentityProviderCLIContract(t *testing.T) {
 		}
 		replayed := 0
 		for i, c := range fixture.Cases {
-			if committed.Cases[i].DarwinOnly {
+			if committed.Cases[i].DarwinOnly || (committed.Cases[i].UnixOnly && runtime.GOOS == "windows") {
 				t.Logf("SKIP %s: macOS Keychain chain", c.Name)
 				continue
 			}
@@ -166,6 +191,13 @@ func (k providerKey) storedFile(name, storedName string) identityProviderFile {
 }
 
 func strPtr(s string) *string { return &s }
+
+// deepUnknownValue is a valid identity file whose unknown "x" key nests arrays
+// so the whole document is exactly depth levels deep (the object counts as one).
+func deepUnknownValue(depth int, key providerKey) string {
+	return `{"x":` + strings.Repeat("[", depth-1) + strings.Repeat("]", depth-1) +
+		`,"name":"deep","private_key":"` + key.privateHex() + `","public_key":"` + hex.EncodeToString(key.public) + `"}`
+}
 
 func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProviderCLIContract, error) {
 	t.Helper()
@@ -236,6 +268,18 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 		{Name: "symvault-name-with-dashes", Args: []string{"identity", "show", "--"}, Symvault: vaultOK},
 		{Name: "symvault-wins-over-file-name-field", Args: show, Symvault: vaultOK, Files: one(fileKey.storedFile("probe", "stored-name"))},
 
+		// Chain 2 lookup: `exec.LookPath` rejects an executable found through a
+		// relative or empty PATH entry (ErrDot), so Load silently skips the chain.
+		{Name: "symvault-path-dot-entry-skipped", Args: show, PathEntries: []string{"."}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-empty-trailing-entry-skipped", Args: show, PathEntries: []string{"$TOOLS", ""}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-empty-leading-entry-skipped", Args: show, PathEntries: []string{"", "$TOOLS"}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-relative-dir-entry-skipped", Args: show, PathEntries: []string{"bin"}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "bin/symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-dot-entry-shadows-absolute", Args: show, PathEntries: []string{".", "$TOOLS"}, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-dot-entry-without-symvault-not-found", Args: show, PathEntries: []string{"."}, Symvault: nil, Files: one(fileOK)},
+		{Name: "symvault-path-empty-string-not-found", Args: show, PathEntries: []string{""}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK, Files: one(fileOK)},
+		{Name: "symvault-path-absolute-before-dot-used", Args: show, UnixOnly: true, PathEntries: []string{"$TOOLS", "."}, Planted: []identityProviderPlant{{Path: "symvault"}}, Symvault: vaultOK},
+		{Name: "symvault-path-dot-nonexecutable-then-absolute-used", Args: show, UnixOnly: true, PathEntries: []string{".", "$TOOLS"}, Planted: []identityProviderPlant{{Path: "symvault", Mode: 0o644}}, Symvault: vaultOK},
+
 		// Chain 3: macOS Keychain (`security`), only exercised on darwin.
 		{Name: "security-valid-private64", Args: show, Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, Files: one(fileOK), DarwinOnly: true},
 		{Name: "security-after-failing-symvault", Args: show, Symvault: &identityProviderStub{Stdout: "nope\n"}, Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, DarwinOnly: true},
@@ -245,6 +289,9 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 		{Name: "security-garbage-no-file-not-found", Args: show, Security: &identityProviderStub{Stdout: "xx\n"}, DarwinOnly: true},
 		{Name: "security-name-with-space", Args: []string{"identity", "show", "my id"}, Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, DarwinOnly: true},
 		{Name: "env-wins-over-security", Args: show, EnvKey: strPtr(envKey.seedHex()), Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, DarwinOnly: true},
+
+		{Name: "security-path-dot-entry-skipped", Args: show, PathEntries: []string{"."}, ToolsEmpty: true, Planted: []identityProviderPlant{{Path: "security"}}, Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, Files: one(fileOK), DarwinOnly: true},
+		{Name: "security-path-dot-entry-then-absolute-skipped", Args: show, PathEntries: []string{".", "$TOOLS"}, Planted: []identityProviderPlant{{Path: "security"}}, Security: &identityProviderStub{Stdout: secKey.privateHex() + "\n"}, Files: one(fileOK), DarwinOnly: true},
 
 		// Chain 4: identity file.
 		{Name: "file-valid-stored-name-differs", Args: show, Files: one(fileKey.storedFile("probe", "stored-name"))},
@@ -312,6 +359,10 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 		{Name: "file-nbsp-garbage", Args: show, Files: raw("{\"x\":1}\u00a0")},
 		{Name: "file-nul-garbage", Args: show, Files: raw("{\"x\":1}\x00")},
 		{Name: "file-deep-unknown-value-skipped", Args: show, Files: raw(`{"x":[[[{"y":[null,true,-1.5E+2,"s"]}]]],"name":"deep","private_key":"` + fileKey.privateHex() + `","public_key":"` + hex.EncodeToString(fileKey.public) + `"}`)},
+		{Name: "file-depth-10000-open-arrays-truncated", Args: show, Files: raw(strings.Repeat("[", 10000))},
+		{Name: "file-depth-10001-open-arrays-exceeded", Args: show, Files: raw(strings.Repeat("[", 10001))},
+		{Name: "file-depth-10000-nested-unknown-value-ok", Args: show, Files: raw(deepUnknownValue(10000, fileKey))},
+		{Name: "file-depth-10001-nested-unknown-value-exceeded", Args: show, Files: raw(deepUnknownValue(10001, fileKey))},
 	}
 
 	goBinary := buildIdentityCLIOracle(t, root)
@@ -342,7 +393,7 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 		logPath := filepath.Join(trace, "calls.log")
 		env := []string{
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome,
-			"TMPDIR=" + tmp, "TMP=" + tmp, "TEMP=" + tmp, "PATH=" + tools,
+			"TMPDIR=" + tmp, "TMP=" + tmp, "TEMP=" + tmp, "PATH=" + identityProviderPath(vector.PathEntries, tools),
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "PROVIDER_LOG=" + logPath,
 		}
 		if runtime.GOOS == "windows" {
@@ -355,11 +406,20 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 			if stub == nil {
 				continue
 			}
-			if err := installIdentityProviderTool(tools, tool, helper); err != nil {
-				return fixture, err
+			if !vector.ToolsEmpty {
+				if err := installIdentityProviderTool(tools, tool, helper); err != nil {
+					return fixture, err
+				}
 			}
 			upper := strings.ToUpper(tool)
 			env = append(env, "PROVIDER_STDOUT_"+upper+"="+stub.Stdout, "PROVIDER_STDERR_"+upper+"="+stub.Stderr, fmt.Sprintf("PROVIDER_EXIT_%s=%d", upper, stub.Exit))
+		}
+		skipped := map[string]bool{}
+		for _, plant := range vector.Planted {
+			if err := plantIdentityProviderTool(cwd, plant, helper); err != nil {
+				return fixture, err
+			}
+			skipped["cwd/"+plant.Path+executableSuffix()] = true
 		}
 		cmd := exec.Command(goBinary, vector.Args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = cwd
@@ -376,7 +436,7 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 			code = exitErr.ExitCode()
 		}
 		calls, _ := os.ReadFile(logPath) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
-		final, err := snapshotIdentityProviderTree(work)
+		final, err := snapshotIdentityProviderTree(work, skipped)
 		if err != nil {
 			return fixture, err
 		}
@@ -385,6 +445,44 @@ func makeIdentityProviderCLIContract(t *testing.T, root string) (identityProvide
 		fixture.Cases = append(fixture.Cases, vector)
 	}
 	return fixture, nil
+}
+
+func executableSuffix() string {
+	if runtime.GOOS == "windows" {
+		return ".exe"
+	}
+	return ""
+}
+
+// identityProviderPath joins the PATH entries of a case; "$TOOLS" stands for
+// the case's provider directory.
+func identityProviderPath(entries []string, tools string) string {
+	if entries == nil {
+		return tools
+	}
+	resolved := make([]string, len(entries))
+	for i, entry := range entries {
+		if entry == "$TOOLS" {
+			entry = tools
+		}
+		resolved[i] = entry
+	}
+	return strings.Join(resolved, string(os.PathListSeparator))
+}
+
+func plantIdentityProviderTool(cwd string, plant identityProviderPlant, helper string) error {
+	dest := filepath.Join(cwd, filepath.FromSlash(plant.Path)+executableSuffix())
+	if err := os.MkdirAll(filepath.Dir(dest), 0o700); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(helper) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(dest, data, plant.mode()); err != nil { //nolint:gosec // planted test helper must be executable
+		return err
+	}
+	return os.Chmod(dest, plant.mode()) //nolint:gosec // umask-independent mode for the planted test helper
 }
 
 func installIdentityProviderTool(dir, tool, helper string) error {
@@ -402,7 +500,7 @@ func installIdentityProviderTool(dir, tool, helper string) error {
 // snapshotIdentityProviderTree lists every file below the case root except the
 // installed provider executables and the call trace, so a stray write by the
 // command (HOME, XDG, TMPDIR, cwd) would show up as a difference.
-func snapshotIdentityProviderTree(work string) ([]identityProviderFile, error) {
+func snapshotIdentityProviderTree(work string, skipped map[string]bool) ([]identityProviderFile, error) {
 	files := []identityProviderFile{}
 	err := filepath.Walk(work, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -417,6 +515,9 @@ func snapshotIdentityProviderTree(work string) ([]identityProviderFile, error) {
 			if rel == "tools" || rel == "trace" {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+		if skipped[rel] {
 			return nil
 		}
 		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs

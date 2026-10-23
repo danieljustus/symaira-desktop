@@ -128,6 +128,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"render export Markdown", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportMarkdownFixture$"}, []string{"testdata/port/render/export-markdown.json"}, false},
+	{"render export vault", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportVaultFixture$"}, []string{"testdata/port/render/export-vault.json"}, false},
 	{"render PDF frontmatter", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderPDFFrontmatterFixture$"}, []string{"testdata/port/render/pdf-frontmatter.json"}, false},
 	{"render archive contract", []string{"test", "-count=1", "./internal/archive", "-run", "^TestPortArchiveContractFixture$"}, []string{"testdata/port/render/archive-contract.json"}, false},
 	{"render archive stamp", []string{"test", "-count=1", "./internal/archive", "-run", "^TestPortArchiveStampFixture$"}, []string{"testdata/port/render/archive-stamp.json"}, false},

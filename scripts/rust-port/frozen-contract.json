@@ -200,7 +200,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 34
+      "passed": 40
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,
@@ -213,6 +213,10 @@
     "cargo test -p symdesk-render --locked export_pdf": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-render --locked export_vault": {
+      "ignored": 0,
+      "passed": 6
     },
     "cargo test -p symdesk-render --locked stamp": {
       "ignored": 0,

@@ -122,6 +122,14 @@ func exportVaultCorpus() []exportVaultCase {
 		noteCase("embed-joins-with-preceding-bracket-pair", "host.md", "", vaultFile("host.md", "![![[c]]"), vaultFile("c.md", "[d]]"), vaultFile("d.md", "D")),
 		noteCase("embed-joins-with-preceding-bracket", "host.md", "", vaultFile("host.md", "!?![[c]]"), vaultFile("c.md", "[[d]]"), vaultFile("d.md", "D")),
 		noteCase("embed-replacement-opens-later-embed", "host.md", "", vaultFile("host.md", "![[c]]d]]"), vaultFile("c.md", "![[x"), vaultFile("x]]d.md", "joined")),
+		// A replacement that starts with (or is empty before) "]" completes a
+		// "![[x]" candidate that began earlier: Go rescans from 0 every iteration.
+		noteCase("embed-replacement-closes-earlier-candidate", "host.md", "", vaultFile("host.md", "![[a]![[c]]"), vaultFile("a.md", "A"), vaultFile("c.md", "]x")),
+		noteCase("embed-empty-replacement-closes-earlier-candidate", "host.md", "", vaultFile("host.md", "![[a]![[c]]]"), vaultFile("a.md", "A"), vaultFile("c.md", "")),
+		noteCase("embed-bracket-only-replacement-closes-earlier-candidate", "host.md", "", vaultFile("host.md", "![[a]![[c]]"), vaultFile("a.md", "A"), vaultFile("c.md", "]")),
+		noteCase("embed-closing-replacement-with-later-embed", "host.md", "", vaultFile("host.md", "![[a]![[c]]![[d]]"), vaultFile("a.md", "A"), vaultFile("c.md", "]"), vaultFile("d.md", "D")),
+		noteCase("embed-closing-replacement-after-prefix-text", "host.md", "", vaultFile("host.md", "pre ![[a]mid ![[c]] post"), vaultFile("a.md", "A"), vaultFile("c.md", "]")),
+		noteCase("embed-closing-replacement-without-earlier-candidate", "host.md", "", vaultFile("host.md", "a]![[c]]"), vaultFile("c.md", "]x")),
 		noteCase("embed-unterminated-before-real-embed", "host.md", "", vaultFile("host.md", "![[open ![[c]]"), vaultFile("c.md", "C")),
 		noteCase("embed-single-bracket-before-real-embed", "host.md", "", vaultFile("host.md", "![[a]b ![[c]]"), vaultFile("c.md", "C")),
 		noteCase("embed-through-file-component", "host.md", "", vaultFile("host.md", "![[a/b]]"), vaultFile("a", "plain file")),

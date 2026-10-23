@@ -884,6 +884,132 @@
       "error": ""
     },
     {
+      "id": "embed-replacement-closes-earlier-candidate",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "![[a]![[c]]"
+        },
+        {
+          "path": "a.md",
+          "content": "A"
+        },
+        {
+          "path": "c.md",
+          "content": "]x"
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\nAx",
+      "error": ""
+    },
+    {
+      "id": "embed-empty-replacement-closes-earlier-candidate",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "![[a]![[c]]]"
+        },
+        {
+          "path": "a.md",
+          "content": "A"
+        },
+        {
+          "path": "c.md",
+          "content": ""
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\nA",
+      "error": ""
+    },
+    {
+      "id": "embed-bracket-only-replacement-closes-earlier-candidate",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "![[a]![[c]]"
+        },
+        {
+          "path": "a.md",
+          "content": "A"
+        },
+        {
+          "path": "c.md",
+          "content": "]"
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\nA",
+      "error": ""
+    },
+    {
+      "id": "embed-closing-replacement-with-later-embed",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "![[a]![[c]]![[d]]"
+        },
+        {
+          "path": "a.md",
+          "content": "A"
+        },
+        {
+          "path": "c.md",
+          "content": "]"
+        },
+        {
+          "path": "d.md",
+          "content": "D"
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\nAD",
+      "error": ""
+    },
+    {
+      "id": "embed-closing-replacement-after-prefix-text",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "pre ![[a]mid ![[c]] post"
+        },
+        {
+          "path": "a.md",
+          "content": "A"
+        },
+        {
+          "path": "c.md",
+          "content": "]"
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\npre ![[a]mid ] post",
+      "error": ""
+    },
+    {
+      "id": "embed-closing-replacement-without-earlier-candidate",
+      "files": [
+        {
+          "path": "host.md",
+          "content": "a]![[c]]"
+        },
+        {
+          "path": "c.md",
+          "content": "]x"
+        }
+      ],
+      "note": "host.md",
+      "format": "",
+      "output": "# host\n\na]]x",
+      "error": ""
+    },
+    {
       "id": "embed-unterminated-before-real-embed",
       "files": [
         {

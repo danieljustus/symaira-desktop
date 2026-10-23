@@ -20,11 +20,12 @@ use std::{
 };
 
 use symdesk_render::export_vault::{
-    ViewSpec, export_note, export_view, resolve_transclusions_bounded,
+    MAX_EMBED_EXPANSIONS, ViewSpec, export_note, export_view, resolve_transclusions,
+    resolve_transclusions_bounded,
 };
 
 /// The recorded corpus size: a shrunken or truncated fixture must fail.
-const EXPECTED_CASES: usize = 112;
+const EXPECTED_CASES: usize = 118;
 
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -368,5 +369,115 @@ fn export_vault_embed_cycles_are_bounded_instead_of_hanging() {
     assert!(
         error.contains("exceeds 50 embeds (embed cycle?)"),
         "{error}"
+    );
+}
+
+/// Go rescans from offset 0 after every replacement, so a replacement that
+/// starts with (or is empty before) `]` completes a `![[x]` candidate that
+/// began earlier. Both repros are recorded in the Go corpus as well.
+#[test]
+fn export_vault_replacement_can_complete_an_earlier_candidate() {
+    let scratch = Scratch::new();
+    let root = scratch.0.join("vault");
+    fs::create_dir_all(&root).unwrap();
+    fs::write(root.join("a.md"), "A").unwrap();
+    fs::write(root.join("c.md"), "]x").unwrap();
+    fs::write(root.join("e.md"), "").unwrap();
+    assert_eq!(resolve_transclusions(&root, "![[a]![[c]]").unwrap(), "Ax");
+    assert_eq!(resolve_transclusions(&root, "![[a]![[e]]]").unwrap(), "A");
+    // Text before the candidate and a later embed are left alone.
+    assert_eq!(
+        resolve_transclusions(&root, "p ![[a]![[c]] ![[a]]").unwrap(),
+        "p Ax A"
+    );
+}
+
+/// The expansion cap is a declared limit (RENDER-002): a document that needs
+/// exactly the cap succeeds, one embed more fails, and only a remaining embed
+/// is an error.
+#[test]
+fn export_vault_expansion_cap_rejects_only_a_remaining_embed() {
+    let scratch = Scratch::new();
+    let root = scratch.0.join("vault");
+    fs::create_dir_all(&root).unwrap();
+    fs::write(root.join("x.md"), "x").unwrap();
+    fs::write(root.join("outer.md"), "![[x]]").unwrap();
+    let ok = |body: &str, cap| resolve_transclusions_bounded(&root, body, cap, 64 << 20);
+    assert_eq!(ok("![[x]]![[x]]![[x]]", 3).unwrap(), "xxx");
+    let error = ok("![[x]]![[x]]![[x]]![[x]]", 3).unwrap_err();
+    assert!(error.contains("exceeds 3 embeds (embed cycle?)"), "{error}");
+    // Nested: the second expansion is the last one and leaves nothing.
+    assert_eq!(ok("![[outer]]", 2).unwrap(), "x");
+    assert!(ok("![[outer]]", 1).is_err());
+    assert_eq!(ok("no embeds", 0).unwrap(), "no embeds");
+    assert!(ok("![[x]]", 0).is_err());
+
+    // The real cap, through the public entry point.
+    let at_cap = "![[x]]".repeat(MAX_EMBED_EXPANSIONS);
+    let expanded = resolve_transclusions(&root, &at_cap).unwrap();
+    assert_eq!(expanded, "x".repeat(MAX_EMBED_EXPANSIONS));
+    let over_cap = "![[x]]".repeat(MAX_EMBED_EXPANSIONS + 1);
+    let error = resolve_transclusions(&root, &over_cap).unwrap_err();
+    assert!(
+        error.contains(&format!(
+            "exceeds {MAX_EMBED_EXPANSIONS} embeds (embed cycle?)"
+        )),
+        "{error}"
+    );
+}
+
+/// Declared divergence (RENDER-002): the vault parser decodes a body that is
+/// not valid UTF-8 lossily, so invalid bytes become U+FFFD where Go keeps the
+/// raw bytes. The JSON oracle cannot carry such bytes; this pins the port.
+#[test]
+fn export_vault_invalid_utf8_body_is_decoded_lossily() {
+    let scratch = Scratch::new();
+    let root = scratch.0.join("vault");
+    fs::create_dir_all(&root).unwrap();
+    fs::write(root.join("bad.md"), b"head \xff\xfe tail\n").unwrap();
+    fs::write(root.join("host.md"), "![[bad]]").unwrap();
+    let direct = export_note(&root, "bad.md", "").unwrap();
+    assert_eq!(
+        String::from_utf8(direct).unwrap(),
+        "# bad\n\nhead \u{FFFD}\u{FFFD} tail\n"
+    );
+    let embedded = export_note(&root, "host.md", "").unwrap();
+    assert_eq!(
+        String::from_utf8(embedded).unwrap(),
+        "# host\n\nhead \u{FFFD}\u{FFFD} tail\n"
+    );
+}
+
+/// A FIFO (swapped in after path resolution, or simply present) must be
+/// refused without blocking on the open.
+#[test]
+fn export_vault_fifo_is_refused_without_blocking() {
+    let scratch = Scratch::new();
+    let root = scratch.0.join("vault");
+    fs::create_dir_all(&root).unwrap();
+    let fifo = std::ffi::CString::new(root.join("pipe.md").to_str().unwrap()).unwrap();
+    // SAFETY: `fifo` is a valid NUL-terminated path for the call's duration.
+    assert_eq!(unsafe { libc::mkfifo(fifo.as_ptr(), 0o600) }, 0);
+    fs::write(root.join("host.md"), "![[pipe]]").unwrap();
+
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let thread_root = root.clone();
+    std::thread::spawn(move || {
+        let note = export_note(&thread_root, "pipe.md", "");
+        let embed = export_note(&thread_root, "host.md", "");
+        let _ = sender.send((note, embed));
+    });
+    let (note, embed) = receiver
+        .recv_timeout(std::time::Duration::from_secs(20))
+        .expect("reading a FIFO must not block");
+    let error = note.expect_err("a FIFO is not a regular file");
+    assert!(
+        error.contains("vault path is not a regular file"),
+        "{error}"
+    );
+    let embed = String::from_utf8(embed.unwrap()).unwrap();
+    assert!(
+        embed.contains("*embed error: vault path is not a regular file"),
+        "{embed}"
     );
 }

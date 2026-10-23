@@ -12,8 +12,17 @@
 //!
 //! Deliberate divergence: Go's `resolveTransclusions` never terminates on an
 //! embed cycle (a note that embeds itself). The port stops with an error after
-//! [`MAX_EMBED_EXPANSIONS`] expansions or when the body passes
-//! [`MAX_EXPANDED_BYTES`]. No Go-recorded case can exist for that input.
+//! [`MAX_EMBED_EXPANSIONS`] expansions while an embed still remains, or when
+//! the body passes [`MAX_EXPANDED_BYTES`]. No Go-recorded case can exist for
+//! that input. A document that needs exactly [`MAX_EMBED_EXPANSIONS`]
+//! expansions and then has no embed left still succeeds; the cap is a
+//! declared limit (RENDER-002), not a Go behavior.
+//!
+//! Second declared divergence: a note body that is not valid UTF-8 is decoded
+//! lossily by `symdesk_vault::parse_bytes` (invalid bytes become U+FFFD) while
+//! Go keeps the raw bytes. The Go oracle fixture is JSON and cannot carry
+//! such bytes, so no recorded case exists; the behavior is pinned by a Rust
+//! unit test instead.
 
 use std::{
     collections::BTreeMap,
@@ -33,6 +42,7 @@ use crate::{
 /// `vault.maxRootReadBytes`.
 pub const MAX_ROOT_READ_BYTES: u64 = 64 << 20;
 /// Bound on `![[..]]` expansions per document (Go has none, see module docs).
+/// Exactly this many expansions succeed when no embed remains afterwards.
 pub const MAX_EMBED_EXPANSIONS: usize = 10_000;
 /// Bound on the expanded body size (Go has none, see module docs).
 pub const MAX_EXPANDED_BYTES: usize = 64 << 20;
@@ -153,8 +163,8 @@ pub fn resolve_transclusions(root: &Path, body: &str) -> Result<String, String> 
 ///
 /// # Errors
 ///
-/// Fails when more than `max_expansions` embeds were replaced or the body
-/// grew past `max_bytes`.
+/// Fails when an embed is still left after `max_expansions` replacements or
+/// the body grew past `max_bytes`.
 pub fn resolve_transclusions_bounded(
     root: &Path,
     body: &str,
@@ -162,9 +172,11 @@ pub fn resolve_transclusions_bounded(
     max_bytes: usize,
 ) -> Result<String, String> {
     let mut body = body.to_owned();
-    let mut from = 0usize;
-    for _ in 0..=max_expansions {
-        let Some((start, inner_start, inner_end)) = find_embed(&body, from) else {
+    for _ in 0..max_expansions {
+        // Go rescans the whole body every iteration: a replacement may start
+        // with (or be empty before) `]` and complete a `![[x]` that began
+        // arbitrarily far earlier, so the scan restarts at 0.
+        let Some((start, inner_start, inner_end)) = find_embed(&body, 0) else {
             return Ok(body);
         };
         let inner = &body[inner_start..inner_end];
@@ -184,12 +196,10 @@ pub fn resolve_transclusions_bounded(
                 "embed expansion exceeds {max_bytes} bytes (embed cycle?)"
             ));
         }
-        // Text before the match cannot start an embed, except that the
-        // replacement may complete a `![[` that began up to two bytes earlier.
-        from = start.saturating_sub(2);
-        while !body.is_char_boundary(from) {
-            from -= 1;
-        }
+    }
+    // The cap is spent: only an embed that is still there is an error.
+    if find_embed(&body, 0).is_none() {
+        return Ok(body);
     }
     Err(format!(
         "embed expansion exceeds {max_expansions} embeds (embed cycle?)"
@@ -263,15 +273,16 @@ fn read_in_root(root: &Path, path: &Path) -> Result<Vec<u8>, String> {
             go_path_error("openat", &relative, error)
         )
     };
-    // Checking the type first keeps a FIFO or device from being opened.
-    let metadata = fs::metadata(path).map_err(|error| open_error(&error))?;
+    // Open without blocking, then judge the type on the opened handle: a FIFO
+    // swapped in after `secure_path` must neither block the open nor be read.
+    let file = open_nonblocking(path).map_err(|error| open_error(&error))?;
+    let metadata = file.metadata().map_err(|error| open_error(&error))?;
     if !metadata.is_file() {
         return Err(format!("vault path is not a regular file: {shown}"));
     }
     if metadata.len() > MAX_ROOT_READ_BYTES {
         return Err(too_large(path));
     }
-    let file = fs::File::open(path).map_err(|error| open_error(&error))?;
     let mut data = Vec::new();
     file.take(MAX_ROOT_READ_BYTES + 1)
         .read_to_end(&mut data)
@@ -287,6 +298,18 @@ fn read_in_root(root: &Path, path: &Path) -> Result<Vec<u8>, String> {
         return Err(too_large(path));
     }
     Ok(data)
+}
+
+fn open_nonblocking(path: &Path) -> std::io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        // Opening a FIFO for reading would otherwise wait for a writer.
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    options.open(path)
 }
 
 fn too_large(path: &Path) -> String {

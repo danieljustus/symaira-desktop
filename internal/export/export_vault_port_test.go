@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -16,6 +17,10 @@ import (
 )
 
 const exportVaultFixturePath = "testdata/port/render/export-vault.json"
+
+// exportVaultUnixPlatforms are the platforms a replayable capture may record in
+// generated_on; the Rust contract accepts the same set.
+var exportVaultUnixPlatforms = []string{"darwin", "linux"}
 
 // Path tokens inside case inputs and recorded errors. {ROOT} is the disposable
 // vault root, {OUTSIDE} a sibling directory that holds a secret the vault must
@@ -90,6 +95,7 @@ func TestPortRenderExportVaultFixture(t *testing.T) {
 		t.Fatalf("generated Go oracle fixture failed its own validator: %v", err)
 	}
 	assertExportVaultMutationControls(t, fixture, encoded)
+	assertExportVaultCrossPlatformReplay(t, fixture, encoded)
 
 	path := filepath.Join(exportMarkdownRepoRoot(t), filepath.FromSlash(exportVaultFixturePath))
 	if os.Getenv("PORT_RENDER_EXPORT_VAULT_GENERATE") == "1" || os.Getenv("PORT_GENERATE") == "1" {
@@ -310,6 +316,13 @@ func validateExportVaultFixture(t *testing.T, encoded []byte, expected exportVau
 			return fmt.Errorf("pinned source %s digest differs from the checked-out production source", rel)
 		}
 	}
+	// generated_on records the Unix platform that produced the capture. The
+	// per-case outputs below are re-executed on the host and compared exactly,
+	// so the label is provenance and may name the other Unix platform; it must
+	// still be one the Rust contract replays.
+	if !slices.Contains(exportVaultUnixPlatforms, actual.GeneratedOn) {
+		return fmt.Errorf("generated_on %q is not a recorded Unix platform %v", actual.GeneratedOn, exportVaultUnixPlatforms)
+	}
 	if runtime.GOOS == "windows" {
 		// Error texts carry Unix syscall wording and symlinks need privileges:
 		// Windows validates the stored oracle without re-executing it.
@@ -325,6 +338,9 @@ func validateExportVaultFixture(t *testing.T, encoded []byte, expected exportVau
 			return fmt.Errorf("case %q output differs from Go", c.ID)
 		}
 	}
+	// Every other byte, including the oracle identity, the pinned digests and
+	// the notes, must equal this host's deterministic encoding.
+	expected.GeneratedOn = actual.GeneratedOn
 	canonical, err := encodeExportVaultFixture(expected)
 	if err != nil {
 		return err
@@ -374,6 +390,41 @@ func assertExportVaultMutationControls(t *testing.T, fixture exportVaultFixture,
 		}
 	}
 	t.Log("PASS mutation controls: output, error and input drift rejected")
+}
+
+// assertExportVaultCrossPlatformReplay proves that a fixture recorded on the
+// other Unix platform replays here: generated_on is recorded provenance, so a
+// darwin capture must validate on linux and vice versa, while every case, the
+// oracle identity and the pinned source digests stay byte-compared. An unknown
+// platform label is not a recorded Unix capture and must be refused.
+func assertExportVaultCrossPlatformReplay(t *testing.T, fixture exportVaultFixture, encoded []byte) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		return
+	}
+	recorded := func(goos string) []byte {
+		var other exportVaultFixture
+		if err := json.Unmarshal(encoded, &other); err != nil {
+			t.Fatal(err)
+		}
+		other.GeneratedOn = goos
+		raw, err := encodeExportVaultFixture(other)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
+	for _, goos := range exportVaultUnixPlatforms {
+		if err := validateExportVaultFixture(t, recorded(goos), fixture); err != nil {
+			t.Fatalf("fixture recorded on %s was rejected on %s: %v", goos, runtime.GOOS, err)
+		}
+	}
+	for _, goos := range []string{"", "windows", "plan9", "Darwin"} {
+		if err := validateExportVaultFixture(t, recorded(goos), fixture); err == nil {
+			t.Fatalf("generated_on %q was accepted", goos)
+		}
+	}
+	t.Log("PASS cross-platform replay: darwin and linux captures accepted, other platform labels rejected")
 }
 
 func strPtr(value string) *string { return &value }

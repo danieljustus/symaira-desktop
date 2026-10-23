@@ -220,7 +220,10 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")
-        .env("PROVIDER_LOG", &log);
+        .env("PROVIDER_LOG", &log)
+        // Coverage builds write profiles into the cwd by default, which would
+        // show up in the compared file listing; `trace` is not snapshotted.
+        .env("LLVM_PROFILE_FILE", trace.join("symroom-%p.profraw"));
     if cfg!(windows)
         && let Some(system_root) = std::env::var_os("SystemRoot")
     {

@@ -122,6 +122,8 @@ fn run_note(scratch: &Path, room: &Path, key: &str) -> Output {
         .env("LANG", "C")
         .env("SYMROOM_ROOM_DIR", room)
         .env("SYMROOM_IDENTITY_KEY", key)
+        // Keep coverage profiles out of the test cwd.
+        .env("LLVM_PROFILE_FILE", tmp.join("symroom-%p.profraw"))
         .output()
         .expect("run symroom note")
 }

@@ -795,7 +795,7 @@ room-flag-grammar-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortFlagGrammarCLIContract$$'
 
 room-flag-grammar-cli-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortFlagGrammarCLIContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^(TestPortFlagGrammarCLIContract|TestWindowsPathSlashesKeepsJSONEscapes)$$'
 	$(CARGO) test -p symroom-cli --locked --test flag_grammar_commands
 
 history-prune-fixtures-generate:

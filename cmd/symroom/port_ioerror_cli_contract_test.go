@@ -408,7 +408,7 @@ func normalizeIOError(text, work, link string) string {
 	text = strings.ReplaceAll(text, work, "<work>")
 	text = ioErrorGeneratedID.ReplaceAllString(text, "<${1}_id>")
 	if runtime.GOOS == "windows" {
-		text = strings.ReplaceAll(text, `\`, "/")
+		text = windowsPathSlashes(text)
 		text = strings.ReplaceAll(text, "The system cannot find the file specified.", "<ENOENT>")
 		text = strings.ReplaceAll(text, "The system cannot find the path specified.", "<ENOTDIR>")
 		text = strings.ReplaceAll(text, "Incorrect function.", "<EISDIR>")
@@ -418,6 +418,43 @@ func normalizeIOError(text, work, link string) string {
 	text = strings.ReplaceAll(text, "not a directory", "<ENOTDIR>")
 	text = strings.ReplaceAll(text, "permission denied", "<EACCES>")
 	return strings.ReplaceAll(text, "is a directory", "<EISDIR>")
+}
+
+// ioErrorJSONHTMLEscape matches the escapes encoding/json writes for '<', '>',
+// '&' and the two JS line separators. `doctor --json` prints `\u003cname\u003e`
+// on every host; the backslash is JSON syntax, never a Windows path separator.
+var ioErrorJSONHTMLEscape = regexp.MustCompile(`\\u(?:003c|003e|0026|2028|2029)`)
+
+// windowsPathSlashes rewrites the Windows path separator to '/', leaving the
+// JSON escapes of ioErrorJSONHTMLEscape untouched. Rewriting them turned
+// `\u003c` into `/u003c`, which the flag grammar generator then refused as an
+// unclassified '/' (and which would have recorded a host-dependent fixture).
+func windowsPathSlashes(text string) string {
+	var out strings.Builder
+	last := 0
+	for _, span := range ioErrorJSONHTMLEscape.FindAllStringIndex(text, -1) {
+		out.WriteString(strings.ReplaceAll(text[last:span[0]], `\`, "/"))
+		out.WriteString(text[span[0]:span[1]])
+		last = span[1]
+	}
+	out.WriteString(strings.ReplaceAll(text[last:], `\`, "/"))
+	return out.String()
+}
+
+// TestWindowsPathSlashesKeepsJSONEscapes runs on every host: the Windows
+// normaliser must turn path separators into '/' and nothing else.
+func TestWindowsPathSlashesKeepsJSONEscapes(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"path", `open C:\w\work\journal:`, `open C:/w/work/journal:`},
+		{"json html escapes", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029"},
+		{"mixed", `\u003c\w\work\u003e\x`, `\u003c/w/work\u003e/x`},
+		{"other json escape is not special", `a\nb`, `a/nb`},
+		{"none", "plain", "plain"},
+	} {
+		if got := windowsPathSlashes(tc.in); got != tc.want {
+			t.Errorf("%s: windowsPathSlashes(%q) = %q, want %q", tc.name, tc.in, got, tc.want)
+		}
+	}
 }
 
 // TestIOErrorSlashLiteralsExistInGoSource keeps ioErrorSlashLiterals honest: each

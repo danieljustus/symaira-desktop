@@ -320,10 +320,12 @@ fn too_large(path: &Path) -> String {
 }
 
 /// Go `filepath.Rel(base, target)` for the lexical case. Go returns an error
-/// (and `export.View` then uses the empty path) when one side is absolute and
-/// the other is not, or when `base` still needs `..` to be reached.
+/// (and `export.View` then uses the empty path) when the volumes differ, when
+/// one side starts with a separator and the other does not, or when `base`
+/// still needs `..` to be reached. Go deliberately does not use `IsAbs` here:
+/// on Windows `\a` is rooted but relative, so rootedness is `has_root`.
 fn go_rel(base: &Path, target: &Path) -> Option<String> {
-    if base.is_absolute() != target.is_absolute() {
+    if base.has_root() != target.has_root() || !same_word(&volume(base), &volume(target)) {
         return None;
     }
     let base = clean_components(base);
@@ -331,7 +333,7 @@ fn go_rel(base: &Path, target: &Path) -> Option<String> {
     let common = base
         .iter()
         .zip(&target)
-        .take_while(|(left, right)| left == right)
+        .take_while(|(left, right)| same_word(left, right))
         .count();
     if base[common..].iter().any(|part| part == "..") {
         return None;
@@ -342,6 +344,28 @@ fn go_rel(base: &Path, target: &Path) -> Option<String> {
         return Some(".".to_owned());
     }
     Some(parts.join(MAIN_SEPARATOR_STR))
+}
+
+/// Go `filepath.VolumeName`: the Windows prefix (`C:`, `\\\\host\\share`), empty elsewhere.
+fn volume(path: &Path) -> String {
+    match path.components().next() {
+        Some(Component::Prefix(prefix)) => prefix.as_os_str().to_string_lossy().into_owned(),
+        _ => String::new(),
+    }
+}
+
+/// Go `filepath.sameWord`: exact on Unix, `strings.EqualFold` on Windows.
+// ponytail: char::to_lowercase approximates Go's simple case folding; they
+// differ only for a handful of special code points (e.g. U+0130). Port
+// unicode.SimpleFold if a Windows fixture ever exercises one.
+fn same_word(left: &str, right: &str) -> bool {
+    if cfg!(windows) {
+        left.chars()
+            .flat_map(char::to_lowercase)
+            .eq(right.chars().flat_map(char::to_lowercase))
+    } else {
+        left == right
+    }
 }
 
 /// Lexically clean path components, `filepath.Clean` style: `.` dropped,
@@ -396,6 +420,15 @@ mod tests {
             assert_eq!(rel("/v/x", "/v/a.md").as_deref(), Some("../a.md"));
             assert_eq!(rel("/v", "/o/s.md").as_deref(), Some("../o/s.md"));
             assert_eq!(rel("/v", "/v/sub/../b.md").as_deref(), Some("b.md"));
+        }
+        if cfg!(windows) {
+            // Expected values follow Go 1.26 path/filepath.Rel on Windows.
+            assert_eq!(rel(r"C:\v", r"C:\v\a.md").as_deref(), Some("a.md"));
+            assert_eq!(rel(r"C:\v", r"c:\V\a.md").as_deref(), Some("a.md"));
+            assert_eq!(rel(r"C:\v\x", r"C:\v\a.md").as_deref(), Some(r"..\a.md"));
+            assert_eq!(rel(r"\v", r"\v\a.md").as_deref(), Some("a.md"));
+            assert_eq!(rel(r"C:\v", r"D:\v\a.md"), None);
+            assert_eq!(rel(r"C:\v", r"\v\a.md"), None);
         }
         assert_eq!(rel("v", "/v/a.md"), None);
     }

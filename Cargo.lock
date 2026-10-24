@@ -2138,7 +2138,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-exit"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?rev=04d1411adb57aa602b992509121011aa7666ff1a#04d1411adb57aa602b992509121011aa7666ff1a"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=7515add9acd865fa56f908643d0b3b689a70946b#7515add9acd865fa56f908643d0b3b689a70946b"
 
 [[package]]
 name = "symaira-core-exit"
@@ -2162,12 +2162,12 @@ dependencies = [
 [[package]]
 name = "symaira-core-llm"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?rev=04d1411adb57aa602b992509121011aa7666ff1a#04d1411adb57aa602b992509121011aa7666ff1a"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=7515add9acd865fa56f908643d0b3b689a70946b#7515add9acd865fa56f908643d0b3b689a70946b"
 dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "symaira-core-exit 0.0.0 (git+https://github.com/danieljustus/symaira-corekit?rev=04d1411adb57aa602b992509121011aa7666ff1a)",
+ "symaira-core-exit 0.0.0 (git+https://github.com/danieljustus/symaira-corekit?rev=7515add9acd865fa56f908643d0b3b689a70946b)",
  "symaira-core-secretref",
  "tokio",
  "tokio-util",
@@ -2177,7 +2177,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-secretref"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?rev=04d1411adb57aa602b992509121011aa7666ff1a#04d1411adb57aa602b992509121011aa7666ff1a"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=7515add9acd865fa56f908643d0b3b689a70946b#7515add9acd865fa56f908643d0b3b689a70946b"
 dependencies = [
  "rustix",
  "serde",
@@ -2487,9 +2487,9 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "tokio"
-version = "1.53.1"
+version = "1.53.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed"
+checksum = "ce3335fa71841cda333a58d7615b03901380ecf09d59b3296d21f8bbac0dde4e"
 dependencies = [
  "bytes",
  "libc",

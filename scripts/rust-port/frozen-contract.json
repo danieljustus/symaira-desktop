@@ -319,6 +319,10 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symroom-cli --locked --test identity_provider_commands": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symroom-cli --locked --test index_commands": {
       "ignored": 0,
       "passed": 1

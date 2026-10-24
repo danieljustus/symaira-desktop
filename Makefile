@@ -37,6 +37,7 @@
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
+.PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
@@ -799,6 +800,13 @@ room-flag-grammar-cli-fixtures-generate:
 room-flag-grammar-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^(TestPortFlagGrammarCLIContract|TestWindowsPathSlashesKeepsJSONEscapes)$$'
 	$(CARGO) test -p symroom-cli --locked --test flag_grammar_commands
+
+room-identity-provider-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIdentityProviderCLIContract$$'
+
+room-identity-provider-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 -v ./cmd/symroom -run '^TestPortIdentityProviderCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test identity_provider_commands
 
 history-prune-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

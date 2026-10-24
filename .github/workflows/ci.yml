@@ -591,6 +591,10 @@ jobs:
         shell: bash
         run: make room-flag-grammar-cli-differential
 
+      - name: Run native room identity provider CLI differential
+        shell: bash
+        run: make room-identity-provider-cli-differential
+
       - name: Run native retrieval chunk differential
         shell: bash
         run: make retrieval-chunks-differential

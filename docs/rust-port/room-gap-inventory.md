@@ -83,7 +83,7 @@ residual.
 | ROOMCLI-000 | 0 local; Linux/Windows native receipts | no (CI) | `cmd/symroom/cmd_version.go:14-19` | Only native CI evidence is outstanding. |
 | ROOMCLI-001 | Linux/Windows native receipts for the flag-grammar replay; aggregate #1153. Residuals of the fixture: `run wait` and `identity create` are pinned only for shapes that fail while parsing (a successful `run wait` polls up to 15 minutes, `identity create` mints a random member id); `index rebuild <args>` is pinned through its usage path only (its success depends on the host temporary-directory permissions, see ROOM-002); non-UTF-8 argv is lossy in the Rust parser (including separate `mcp` path values, previously passed as `OsString`); Go `%q` escaping of non-printable runes outside ASCII/`is_control` (e.g. U+00A0, U+200B, U+FEFF) in flag error messages is not ported, #1322 | no (CI) | `cmd/symroom/main.go:65` (dispatch); one `flag.NewFlagSet(..., ExitOnError)` + `fs.Parse` per command, e.g. `cmd_run.go:26-31,48-51,70-72,107-109,130-133,154-157,191-195,216-219`, `cmd_member.go:30-36,62-64,110-112,128-130`, `cmd_artifact.go:23-26,48-50,68-70`, `cmd_checkpoint.go:25-30,64-67`, `cmd_note.go:16-19`, `cmd_decide.go:17-21`, `cmd_verify.go:16-18`, `cmd_log.go:15-23`, `cmd_identity.go:62-64`, `cmd_init.go:15-18`, `cmd_doctor.go:16-18`, `cmd_watch.go:20-23`, `cmd_brainprofile.go:14-17`, `cmd_mcp.go:15-19`, `cmd_version.go:14-16` | Closed locally by `testdata/port/room/flag-grammar-cli.json` (2231 Go-recorded process results, `make room-flag-grammar-cli-differential`); every command parser now goes through `crates/symroom-cli/src/goflag.rs`. |
 | ROOMCLI-002 | `index rebuild` success path prints the host separator (`.symroom\index.sqlite` on Windows); `identity create` prints a random member id (shape only); native Windows replay of the new I/O fixture | partly (separator/random id are native-only or shape-only) | `cmd/symroom/cmd_index.go`, `cmd_identity.go` | `run list` and every other missing-`room.toml` path is now pinned (79 cases). |
-| ROOM-001 | The `symvault` shell-out and macOS Keychain `security` chains have no Go-owned fixture | yes (fake `symvault`/`security` on a scoped PATH) | `internal/room/identity/identity.go:100` (`Load`), `:122` symvault, `:141` `security find-generic-password` | Rust implements both chains (`crates/symroom-core/src/identity.rs:197-240`); only the file/env paths are replayed. The matrix text "the journal remain open" is stale: ROOM-002 owns it. |
+| ROOM-001 | Native Linux/Windows replay of `make room-identity-provider-cli-differential` (local PASS on Darwin ARM64, 104 cases); the 8 Keychain cases are macOS-only. Deviation: signing with a 64-byte key whose public half mismatches its seed is refused (Go signs an unverifiable signature). Non-UTF-8 identity *names* in argv are lossy in Rust (`identity show`, see ROOMCLI-001 residual) | no (CI) | `internal/room/identity/identity.go:100` (`Load`), `:122` symvault, `:141` `security find-generic-password` | Closed locally in slice 3: `testdata/port/room/identity-provider-cli.json` (Go test `TestPortIdentityProviderCLIContract`, Rust `identity_provider_commands.rs`). Found and fixed two Rust divergences (public-half consistency check, `serde_json` identity-file decoding). |
 | ROOM-002 | Exact-current native Linux/macOS/Windows matrix | no (CI) | `internal/room/journal/journal.go:224-259,302`, `merge.go:31`, `verifier.go:36` | Harness note: `index_commands` and `index_contracts` need a TMPDIR whose ancestors are not group-writable; they fail under `dev-external`'s `.worktrees/*/tmp` and pass with a private TMPDIR. Not a product gap. |
 | ROOM-003 | `run.Finish`, `run.Fail`, `run.ExecuteAdapter` have no Rust port; exact native matrix | yes, library level only | `internal/room/run/run.go:182` (`Finish`), `:228` (`Fail`), `internal/room/run/adapter.go:22` (`ExecuteAdapter`, fails the run via `Fail` at `:105`) | No Go CLI or MCP path calls them (only `adapter_test.go`), so there is no process fixture to replay; the projection of `run.finished`/`run.failed` is already covered. |
 | ROOM-004 | Native Windows replay; exact native matrix | no (CI) | `internal/room/artifact/artifact.go:35,66,124,153,216`, `internal/room/desk/watch.go:21,51` | No local gap found; I/O hashing errors are now pinned by the new fixture. |
@@ -134,3 +134,44 @@ ROOMCLI-001 negative controls on `goflag.rs` (each restored afterwards): an
 undefined flag keeping `=value` in its name fails 112 of 2231 cases; treating a
 lone `-` as a flag fails 134; not consuming the `--` terminator fails 40;
 accepting misplaced int underscores (`1__0`, `1_`) fails 2.
+
+## Slice 3: identity provider chain (ROOM-001)
+
+`testdata/port/room/identity-provider-cli.json` pins `identity.Load` through
+the real Go process (`identity show`/`export --public`) in a disposable
+HOME/XDG root per case with fake `symvault`/`security` executables (Go-built
+helper for the oracle, `rustc`-built helper for the replay; both log argv and
+print configured stdout/stderr/exit). Each case records exit code, both
+streams, the provider call trace and the full on-disk tree (a stray write by
+the command would show up).
+
+Probe result before the fix: 16 of the first 70 cases differed.
+
+| Class | Go | Rust before |
+|---|---|---|
+| 64-byte key with a foreign public half (env or `symvault`) | accepted; member id and public key come from the stored half | rejected, fell through to the next chain |
+| identity file with duplicate keys | last wins | `duplicate field` error |
+| identity file keys differing in case, Kelvin sign | folded match | ignored the key (`invalid key data`) |
+| identity file `null` values / array, number, string root | no-op / `json: cannot unmarshal ... into Go value of type identity.StoredIdentity` | serde type error or accepted |
+| syntax and type error text | Go wording (`unexpected end of JSON input`, `invalid character 'x' ...`, `json: cannot unmarshal number into Go struct field StoredIdentity.private_key of type string`) | serde wording |
+
+Negative controls on the Rust sources (each restored afterwards, run against the
+final 104-case fixture unless noted): restoring the seed/public-half check
+fails 3 (of 97), ignoring the `symvault` exit status 1, accepting a 32-byte
+provider seed 2, not trimming provider output 1, a different `symvault` key
+path 27, not trimming the env key 1, file-before-symvault ordering 17,
+exact-case-only keys 1, first-duplicate-wins 1, dropping the root type error 4,
+raw (unescaped) high bytes in error quoting 3, `String::from_utf8_lossy`
+instead of Go's per-byte U+FFFD 1, a lone surrogate not becoming U+FFFD 1,
+dropping the Kelvin fold 1, folding long s to K 1. An "accept any env key
+length" mutant survives because `identity_from_private_key` independently
+rejects other lengths (equivalent mutant, not counted).
+
+Windows: the provider helper is compiled with `rustc` (Rust) / `go build`
+(Go oracle) and installed as `symvault{EXE_SUFFIX}`; `PATH` is the scratch
+tools directory only; `HOME`, `USERPROFILE`, `XDG_DATA_HOME`, `TMP`, `TEMP`
+and `TMPDIR` point into the scratch root; tree names are `/`-normalised.
+Residuals: native Windows/Linux receipts; identity files containing invalid
+UTF-8 are covered at the unit level (`gojson` tests) and for syntax errors, not
+for field values (the fixture is JSON and cannot carry them except via
+`content_hex`, which the cases use only for error positions).

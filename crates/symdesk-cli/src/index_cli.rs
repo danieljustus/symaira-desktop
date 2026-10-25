@@ -13,9 +13,9 @@ use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
     StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_chunks,
-    parse_markdown_body_retrieval_sections, parse_markdown_retrieval_sections,
-    parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
-    retrieval_embedding_config,
+    parse_csv_retrieval_sections, parse_markdown_body_retrieval_sections,
+    parse_markdown_retrieval_sections, parse_text_retrieval_sections, relocate_index_for_vault,
+    restore_database, retrieval_embedding_config,
 };
 use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -748,14 +748,15 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
         let markdown =
             extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown");
         let plain_text = extension.eq_ignore_ascii_case("txt");
-        if !markdown && !plain_text {
+        let csv = extension.eq_ignore_ascii_case("csv");
+        if !markdown && !plain_text && !csv {
             eprintln!(
-                "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown and UTF-8 plain text only",
+                "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown, UTF-8 plain text and CSV only",
                 document.path
             );
             continue;
         }
-        let bytes = match if plain_text {
+        let bytes = match if plain_text || csv {
             read_limited_plain_text(&document.path)
         } else {
             fs::read(&document.path).map_err(|error| error.to_string())
@@ -769,7 +770,9 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 continue;
             }
         };
-        let sections = match if plain_text {
+        let sections = match if csv {
+            parse_csv_retrieval_sections(&document.path, &bytes)
+        } else if plain_text {
             parse_text_retrieval_sections(&document.path, &bytes)
         } else {
             parse_markdown_retrieval_sections(&document.path, &bytes)

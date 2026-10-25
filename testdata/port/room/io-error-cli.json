@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "3845a99e1581ab03d10c2e8715200725798c45fd",
+  "oracle_revision": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
   "source_hashes": {
     "cmd/symroom/cmd_artifact.go": "79405799847b23475088b8f63cfa363b37764443f02daac82d53596239c4becf",
     "cmd/symroom/cmd_checkpoint.go": "9cd7bb1f8817b9eb22e5f908e9ec8d066b5d0596dd5acb188a43d66b68ce1cd4",

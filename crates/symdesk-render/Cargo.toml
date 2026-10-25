@@ -16,3 +16,6 @@ lopdf = { version = "=0.46.0", default-features = false }
 base64.workspace = true
 time.workspace = true
 sha2.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"

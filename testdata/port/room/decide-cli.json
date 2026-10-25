@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "3845a99e1581ab03d10c2e8715200725798c45fd",
+  "oracle_revision": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
   "source_hashes": {
     "cmd/symroom/cmd_decide.go": "547a61bcd41e81ce72168d4f03487ce5754d9c20f185e0fa65f939a17941ea3e",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",

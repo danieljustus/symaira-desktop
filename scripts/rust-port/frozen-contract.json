@@ -86,6 +86,13 @@
         "steps",
         1,
         "exit_code"
+        ]
+      },
+      {
+      "command": "cargo test -p symdesk-core --locked --test template_path_contracts",
+      "fixture": "testdata/port/core/template-path.json",
+      "increment": [
+        "schema_version"
       ]
     }
   ],
@@ -155,7 +162,11 @@
       "live_only_tests": [
         "contacts_and_ingest_paths_match_native_go"
       ],
-      "passed": 29
+      "passed": 32
+    },
+    "cargo test -p symdesk-core --locked --test template_path_contracts": {
+      "ignored": 0,
+      "passed": 3
     },
     "cargo test -p symdesk-core --test config_precedence --locked": {
       "ignored": 0,

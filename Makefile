@@ -197,14 +197,27 @@ core-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen \
+		--oracle-commit $(PORT_ORACLE_COMMIT) \
+		--oracle-release $(PORT_ORACLE_RELEASE)
 
 core-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/configgen --check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/coregen --check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen --check
 
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
+
+# INGEST-006 storage-path templates: the Go-owned fixture records Compile
+# acceptance/error text, Eval over field maps and Disambiguate from the
+# production internal/templatepath package; Rust replays all of it.
+.PHONY: template-path-differential
+template-path-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/templatepath ./scripts/rust-port/cmd/templatepathgen
+	$(CARGO) test -p symdesk-core --locked --test template_path_contracts
 
 .PHONY: config-verbatim-fixtures-check config-verbatim-differential
 # Native Windows only: retain the recorded AMD64 bytes and compare fresh Go

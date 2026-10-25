@@ -104,7 +104,7 @@ func TestMakePortFixtureGenerationUsesArtifactFlow(t *testing.T) {
 	if strings.Count(text, "./scripts/rust-port/cmd/portgen") != 1 {
 		t.Fatalf("port-fixtures-generate must invoke only the isolated portgen flow:\n%s", text)
 	}
-	for _, direct := range []string{"cmd/configgen", "cmd/coregen", "cmd/querygen", "cmd/vaultgen", "cmd/vaultfsgen", "cmd/typedvaultgen"} {
+	for _, direct := range []string{"cmd/configgen", "cmd/coregen", "cmd/querygen", "cmd/templatepathgen", "cmd/vaultgen", "cmd/vaultfsgen", "cmd/typedvaultgen"} {
 		if strings.Contains(text, direct) {
 			t.Fatalf("port-fixtures-generate still invokes in-place prerequisite %s:\n%s", direct, text)
 		}

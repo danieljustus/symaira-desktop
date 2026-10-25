@@ -49,11 +49,12 @@ pub use metadata::{
     record_sidecar_metadata,
 };
 pub use retrieval::{
-    RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
-    RetrievalHybridSearchChunk, RetrievalHybridSearchResponse, RetrievalHybridSearchResult,
-    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalStatusSnapshot,
-    RetrievalVectorSearchChunk, RetrievalVectorSearchResult, SearchSource, SourceRegistry,
-    StoredRetrievalChunk, go_simple_lowercase, local_hash_embedding, materialize_chunks,
+    RetrievalAnchor, RetrievalByteSection, RetrievalChunk, RetrievalDb, RetrievalDocument,
+    RetrievalEmbeddingSpaceCount, RetrievalHybridSearchChunk, RetrievalHybridSearchResponse,
+    RetrievalHybridSearchResult, RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection,
+    RetrievalStatusSnapshot, RetrievalVectorSearchChunk, RetrievalVectorSearchResult, SearchSource,
+    SourceRegistry, StoredRetrievalChunk, go_simple_lowercase, local_hash_embedding,
+    materialize_byte_chunks, materialize_chunks,
 };
 pub use retrieval_config::{
     RetrievalEmbeddingConfig, index_location_for_vault, open_retrieval_for_vault,

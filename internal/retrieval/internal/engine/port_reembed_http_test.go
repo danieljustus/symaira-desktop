@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
@@ -22,20 +24,26 @@ type reembedHTTPFixture struct {
 }
 
 type reembedHTTPFixtureCase struct {
-	ID                  string                      `json:"id"`
-	DocumentPath        string                      `json:"document_path,omitempty"`
-	DocumentBody        string                      `json:"document_body"`
-	ResponseStatus      int                         `json:"response_status"`
-	EmbeddingDim        int                         `json:"embedding_dim"`
-	ResponseDimension   int                         `json:"response_dimension"`
-	TransientOnce       bool                        `json:"transient_once,omitempty"`
-	Requests            []reembedHTTPFixtureRequest `json:"requests"`
-	PendingChunks       []pendingRebuildChunk       `json:"pending_chunks"`
-	ResolvedChunks      []pendingRebuildChunk       `json:"resolved_chunks"`
-	DocumentHash        string                      `json:"document_hash"`
-	ReembeddedDocuments int                         `json:"reembedded_documents"`
-	RemainingPending    int                         `json:"remaining_pending"`
-	Generation          int64                       `json:"generation"`
+	ID           string `json:"id"`
+	DocumentPath string `json:"document_path,omitempty"`
+	DocumentBody string `json:"document_body"`
+	// DocumentBodyBase64 carries bodies that are not valid UTF-8 (JSON strings
+	// would silently replace the bytes); DocumentBody is empty then.
+	DocumentBodyBase64 string                      `json:"document_body_base64,omitempty"`
+	ResponseStatus     int                         `json:"response_status"`
+	EmbeddingDim       int                         `json:"embedding_dim"`
+	ResponseDimension  int                         `json:"response_dimension"`
+	TransientOnce      bool                        `json:"transient_once,omitempty"`
+	Requests           []reembedHTTPFixtureRequest `json:"requests"`
+	PendingChunks      []pendingRebuildChunk       `json:"pending_chunks"`
+	ResolvedChunks     []pendingRebuildChunk       `json:"resolved_chunks"`
+	// ResolvedContentBase64 holds the exact stored chunk bytes for cases whose
+	// chunk text is not valid UTF-8 (resolved_chunks content is JSON-lossy).
+	ResolvedContentBase64 []string `json:"resolved_content_base64,omitempty"`
+	DocumentHash          string   `json:"document_hash"`
+	ReembeddedDocuments   int      `json:"reembedded_documents"`
+	RemainingPending      int      `json:"remaining_pending"`
+	Generation            int64    `json:"generation"`
 }
 
 type reembedHTTPFixtureRequest struct {
@@ -69,6 +77,8 @@ func TestReembedHTTPPortFixture(t *testing.T) {
 		{ID: "provider-resolves-pending-dotfile-csv", DocumentPath: ".csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 		{ID: "provider-resolves-pending-dotfile-txt", DocumentPath: ".txt", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 		{ID: "provider-resolves-pending-dotfile-markdown", DocumentPath: ".md", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		{ID: "provider-resolves-pending-csv-invalid-utf8", DocumentPath: "invalid.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		{ID: "provider-resolves-pending-csv-split-multibyte", DocumentPath: "split.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 	}
 	fixture := reembedHTTPFixture{SchemaVersion: 1}
 	for index := range cases {
@@ -157,13 +167,28 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 		// tab-joined CSV extraction from the raw bytes.
 		documentBody = "id,note\r\n" + strings.Repeat("\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n", 14)
 	}
+	switch documentPath {
+	case "invalid.csv":
+		// Latin-1 and lone continuation bytes are not UTF-8: Go keeps them in
+		// the stored chunk while the embedding request is JSON-escaped.
+		documentBody = "id,note\r\n" + strings.Repeat("1,\"caf\xe9 contract \xff text\"\r\n", 3)
+	case "split.csv":
+		// One valid two-byte-rune field without separators (after an odd-width
+		// prefix) is hard-split on byte offsets, so chunk boundaries cut through
+		// a rune.
+		documentBody = "id,contract\r\nx" + strings.Repeat("ü", 1500) + ",x\r\n"
+	}
 	testCase.DocumentPath = documentPath
 	testCase.DocumentBody = documentBody
+	if !utf8.ValidString(documentBody) {
+		testCase.DocumentBodyBase64 = base64.StdEncoding.EncodeToString([]byte(documentBody))
+		testCase.DocumentBody = ""
+	}
 	oldBody := "# Old pending content\n\nold state"
 	if documentPath == "doc.txt" || documentPath == ".txt" {
 		oldBody = "Old pending content\n\nold state"
 	}
-	if documentPath == "doc.csv" || documentPath == ".csv" {
+	if strings.HasSuffix(documentPath, ".csv") {
 		oldBody = "old,pending\nold,state\n"
 	}
 	if err := os.WriteFile(documentPath, []byte(oldBody), 0o600); err != nil {
@@ -263,6 +288,14 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	testCase.ReembeddedDocuments = reembedded
 	testCase.RemainingPending = pendingCount
 	testCase.ResolvedChunks = portPendingRebuildChunks(resolved)
+	for _, chunk := range resolved {
+		if !utf8.ValidString(chunk.Content) {
+			for _, every := range resolved {
+				testCase.ResolvedContentBase64 = append(testCase.ResolvedContentBase64, base64.StdEncoding.EncodeToString([]byte(every.Content)))
+			}
+			break
+		}
+	}
 	testCase.Requests = requests
 	if testCase.ResponseStatus == http.StatusNotFound {
 		// Go counts a committed fallback replacement as re-embedded even though

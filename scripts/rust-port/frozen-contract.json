@@ -143,7 +143,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 113
+      "passed": 115
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,
@@ -227,7 +227,7 @@
     },
     "cargo test -p symdesk-index --locked retrieval_csv": {
       "ignored": 0,
-      "passed": 4
+      "passed": 5
     },
     "cargo test -p symdesk-protocol --locked --test retrieval_embedding": {
       "ignored": 0,

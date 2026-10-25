@@ -67,6 +67,15 @@
         "a",
         "width"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --test draw_layout_contract",
+      "fixture": "testdata/port/render/layout.json",
+      "increment": [
+        "cases",
+        256,
+        "crossings"
+      ]
     }
   ],
   "replays": {
@@ -235,7 +244,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 69
+      "passed": 72
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,

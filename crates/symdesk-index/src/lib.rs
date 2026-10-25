@@ -31,6 +31,7 @@ pub mod index_status;
 mod metadata;
 mod retrieval;
 mod retrieval_config;
+mod retrieval_csv;
 mod retrieval_markdown;
 pub mod retrieval_quant_sidecar;
 mod search_plan;
@@ -59,6 +60,7 @@ pub use retrieval_config::{
     relocate_index_for_vault, retrieval_embedding_config, store_retrieval_path_for_vault,
     symseek_config_path,
 };
+pub use retrieval_csv::parse_csv_retrieval_sections;
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_body_retrieval_sections,
     parse_markdown_retrieval_sections, parse_text_retrieval_sections,

@@ -63,6 +63,7 @@ func TestReembedHTTPPortFixture(t *testing.T) {
 		{ID: "provider-auto-detects-response-dimension", ResponseStatus: http.StatusOK, ResponseDimension: 3},
 		{ID: "provider-dimension-mismatch-keeps-pending-markdown", ResponseStatus: http.StatusOK, EmbeddingDim: 3, ResponseDimension: 2},
 		{ID: "provider-resolves-pending-plain-text", DocumentPath: "doc.txt", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		{ID: "provider-resolves-pending-csv", DocumentPath: "doc.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 	}
 	fixture := reembedHTTPFixture{SchemaVersion: 1}
 	for index := range cases {
@@ -146,11 +147,19 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	if documentPath == "doc.txt" {
 		documentBody = "Re-embed oracle\n\n" + strings.Repeat("local embedding contract text ", 62)
 	}
+	if documentPath == "doc.csv" {
+		// Quoted commas, doubled quotes and a quoted newline distinguish the
+		// tab-joined CSV extraction from the raw bytes.
+		documentBody = "id,note\r\n" + strings.Repeat("\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n", 14)
+	}
 	testCase.DocumentPath = documentPath
 	testCase.DocumentBody = documentBody
 	oldBody := "# Old pending content\n\nold state"
 	if documentPath == "doc.txt" {
 		oldBody = "Old pending content\n\nold state"
+	}
+	if documentPath == "doc.csv" {
+		oldBody = "old,pending\nold,state\n"
 	}
 	if err := os.WriteFile(documentPath, []byte(oldBody), 0o600); err != nil {
 		t.Fatal(err)

@@ -643,6 +643,10 @@ jobs:
         shell: bash
         run: make retrieval-local-hash-differential
 
+      - name: Run native CSV retrieval sections differential
+        shell: bash
+        run: make retrieval-csv-sections-differential
+
       - name: Run native hybrid search CLI differential
         shell: bash
         run: make retrieval-search-cli-differential

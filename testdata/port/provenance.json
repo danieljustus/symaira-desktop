@@ -63,6 +63,7 @@
     "testdata/port/render/export-vault.json": "3ee54e2d1efd3ee1205c8e27e39400dc9dff3ed94f7ef04ea2330bc8169ea1bc",
     "testdata/port/render/html-note.json": "319c1c92591ea7bee792e609c5b6555a6f83aaf58567a0da7967d0f3a793d3a9",
     "testdata/port/render/json-ir.json": "7f48d058bbce4c2d500d423af33476191a04a83056f0a288a81191947feb5142",
+    "testdata/port/render/layout.json": "0620e54ef57a905a15d9dfececab3b338b362901d11f0238fa5b462fe36e7093",
     "testdata/port/render/pdf-frontmatter.json": "d865a88b2e0ab099a1c4013d0bb874f393a553b69417121d35a2747751e3ff59",
     "testdata/port/render/scene-bounds.json": "8bf8c00e897fdafc8095d859e9ee975f85eddac5d316b57a65461a8b07b15089",
     "testdata/port/render/text-measure.json": "e795b303de4b2ee6fabe2f45f3599b9161b40bbd77e89eaaf8680247ff94a0f7",

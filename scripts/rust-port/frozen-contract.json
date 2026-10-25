@@ -56,6 +56,17 @@
         0,
         "size"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --test draw_scene_contract",
+      "fixture": "testdata/port/render/scene-bounds.json",
+      "increment": [
+        "cases",
+        39,
+        "input",
+        "a",
+        "width"
+      ]
     }
   ],
   "replays": {
@@ -224,7 +235,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 59
+      "passed": 69
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,

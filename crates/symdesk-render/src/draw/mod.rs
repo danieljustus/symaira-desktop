@@ -2,8 +2,9 @@
 //! (`Source`, `ParseMermaid`, `ParseJSON`) and the `internal/draw/ir`
 //! model/validation it feeds, plus the `internal/draw/measure` text
 //! measurement layer (`measure`, backed by the minimal `sfnt` reader) that
-//! layout and emit depend on. Layout and SVG/PDF output are not part of this
-//! module.
+//! layout and emit depend on, the `internal/draw/theme` registry and the
+//! `internal/draw/scene` graph (primitives, bounds, JSON). Layout and
+//! SVG/PDF output are not part of this module.
 
 mod gotext;
 #[rustfmt::skip]
@@ -12,8 +13,10 @@ pub mod ir;
 mod json;
 pub mod measure;
 mod mermaid;
+pub mod scene;
 mod sequence;
 pub mod sfnt;
+pub mod theme;
 
 pub use ir::{Diagram, ValidationError, Value, validate};
 pub use mermaid::DIALECT_VERSION;

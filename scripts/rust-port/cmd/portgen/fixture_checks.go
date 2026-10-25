@@ -120,6 +120,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"configuration corpus", []string{"run", "./scripts/rust-port/cmd/configgen", "--check"}, []string{"testdata/port/core/config.json"}, false},
 	{"core corpus", []string{"run", "./scripts/rust-port/cmd/coregen", "--check"}, []string{"testdata/port/core/document-formats.json", "testdata/port/core/german-search.json", "testdata/port/core/simhash.json", "testdata/port/core/textnorm.json"}, false},
 	{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--check"}, []string{"testdata/port/core/search-query.json"}, false},
+	{"template-path corpus", []string{"run", "./scripts/rust-port/cmd/templatepathgen", "--check"}, []string{"testdata/port/core/template-path.json"}, false},
 	{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--check"}, []string{"testdata/port/vault/parse.json"}, false},
 	{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--check"}, []string{"testdata/port/vault/filesystem.json"}, false},
 	{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen", "--check"}, []string{"testdata/port/vault/frontmatter-write.json"}, false},
@@ -170,7 +171,7 @@ func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, er
 		return target.args, nil
 	}
 	switch target.args[1] {
-	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
+	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/templatepathgen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
 	default:
 		return target.args, nil
 	}

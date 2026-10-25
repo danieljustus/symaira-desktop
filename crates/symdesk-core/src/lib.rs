@@ -9,6 +9,7 @@ pub mod document_format;
 pub mod german;
 pub mod query;
 pub mod simhash;
+pub mod template_path;
 pub mod textnorm;
 
 /// Renders the stable plain-text version response.

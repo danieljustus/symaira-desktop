@@ -763,7 +763,7 @@ fn clean_store_path(path: &Path) -> std::path::PathBuf {
 }
 
 // strconv.Quote, not Rust Debug or JSON: control escapes differ in diagnostics.
-fn quote_artifact(value: &str) -> String {
+pub(crate) fn quote_artifact(value: &str) -> String {
     use std::{fmt::Write as _, sync::LazyLock};
     static PRINTABLE: LazyLock<regex::Regex> = LazyLock::new(|| {
         regex::Regex::new(r"^[\pL\pM\pN\pP\pS]$").expect("static Unicode categories")

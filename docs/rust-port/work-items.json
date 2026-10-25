@@ -263,7 +263,8 @@
         "make ingest-differential",
         "cargo nextest run -p symdesk-ingest",
         "cargo +nightly fuzz run mime_input"
-      ]
+      ],
+      "note": "RUST-010 slice 1 (INGEST-006): storage-path templates are ported as symdesk_core::template_path (Template::compile/eval, disambiguate) and replay the Go-generated testdata/port/core/template-path.json (82 compile, 1184 eval, 24 disambiguate cases; 22 map-order-dependent strftime cases withheld by the generator) via make template-path-differential. The item stays blocked on RUST-008; extraction, OCR, mail, importers, classification rules and the ingest queue remain unported."
     },
     {
       "id": "RUST-011",

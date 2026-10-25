@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "3845a99e1581ab03d10c2e8715200725798c45fd",
+  "oracle_revision": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
   "root_event": "cli-room-created",
   "root_pubkey": "ed25519:b5ff2ca1a706eaad7057a6ee27a070a21bd844d4a947a1f1d5038952a42a0907",
   "source_hashes": {

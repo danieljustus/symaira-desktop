@@ -47,6 +47,15 @@
         0,
         "start"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-render --locked --test draw_measure_contract",
+      "fixture": "testdata/port/render/text-measure.json",
+      "increment": [
+        "cases",
+        0,
+        "size"
+      ]
     }
   ],
   "replays": {
@@ -215,7 +224,7 @@
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 34
+      "passed": 59
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,
@@ -228,6 +237,10 @@
     "cargo test -p symdesk-render --locked export_pdf": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-render --locked export_vault": {
+      "ignored": 0,
+      "passed": 10
     },
     "cargo test -p symdesk-render --locked stamp": {
       "ignored": 0,
@@ -322,6 +335,10 @@
       "passed": 1
     },
     "cargo test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symroom-cli --locked --test identity_provider_commands": {
       "ignored": 0,
       "passed": 1
     },

@@ -37,6 +37,7 @@
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
+.PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
@@ -59,6 +60,7 @@
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
 .PHONY: render-differential render-pdfops-differential
 .PHONY: render-export-fixtures-generate render-export-differential
+.PHONY: render-export-vault-fixtures-generate render-export-vault-differential
 .PHONY: render-pdf-frontmatter-fixtures-generate render-pdf-frontmatter-differential
 .PHONY: render-archive-fixtures-generate render-archive-differential
 .PHONY: render-archive-stamp-fixtures-generate render-archive-stamp-differential
@@ -107,6 +109,7 @@ override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_
 override PORTGEN_CHECK_ENV += -u PORTGEN_FIXTURE_SOURCE_COMMIT -u portgen_fixture_source_commit -u PORTGEN_FIXTURE_SOURCE_RELEASE -u portgen_fixture_source_release
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_HTML_GENERATE -u port_render_html_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_export_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_VAULT_GENERATE -u port_render_export_vault_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_PDF_FRONTMATTER_GENERATE -u port_render_pdf_frontmatter_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_GENERATE -u port_render_archive_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_STAMP_GENERATE -u port_render_archive_stamp_generate
@@ -118,7 +121,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential
+render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -663,10 +666,12 @@ retrieval-turboquant-benchmark:
 render-ir-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen
 
 render-ir-differential:
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen --check
 	$(CARGO) test -p symdesk-render --locked
 
 # Pure noteToHTML parity is paired with the pinned production Go integrity
@@ -687,6 +692,16 @@ render-export-fixtures-generate:
 render-export-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportMarkdownFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked export_markdown
+
+# Vault note/view export: transclusion expansion, embed error lines, path
+# confinement and the Markdown/HTML/PDF-source shapes, over real Go-built
+# disposable vaults (RENDER-002). Unix-only replay.
+render-export-vault-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_EXPORT_VAULT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportVaultFixture$$'
+
+render-export-vault-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/export -run '^TestPortRenderExportVaultFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked export_vault
 
 # PDF frontmatter block emitted before typesetting (RENDER-002 PDF path).
 render-pdf-frontmatter-fixtures-generate:
@@ -805,6 +820,13 @@ room-flag-grammar-cli-fixtures-generate:
 room-flag-grammar-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^(TestPortFlagGrammarCLIContract|TestWindowsPathSlashesKeepsJSONEscapes)$$'
 	$(CARGO) test -p symroom-cli --locked --test flag_grammar_commands
+
+room-identity-provider-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortIdentityProviderCLIContract$$'
+
+room-identity-provider-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 -v ./cmd/symroom -run '^TestPortIdentityProviderCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test identity_provider_commands
 
 history-prune-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

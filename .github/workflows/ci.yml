@@ -591,6 +591,10 @@ jobs:
         shell: bash
         run: make room-flag-grammar-cli-differential
 
+      - name: Run native room identity provider CLI differential
+        shell: bash
+        run: make room-identity-provider-cli-differential
+
       - name: Run native retrieval chunk differential
         shell: bash
         run: make retrieval-chunks-differential
@@ -666,6 +670,11 @@ jobs:
       - name: Run native render Markdown export differential
         shell: bash
         run: make render-export-differential
+
+      - name: Run native render vault export differential
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make render-export-vault-differential
 
       - name: Run native render PDF frontmatter differential
         shell: bash

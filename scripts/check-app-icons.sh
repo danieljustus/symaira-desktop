@@ -66,7 +66,8 @@ expected_iconset = {
     "icon_256x256.png", "icon_256x256@2x.png",
     "icon_512x512.png", "icon_512x512@2x.png",
 }
-required = [icon_json, icon_assets / "signet.png", icon_assets / "S.png", opaque, icns]
+layers = ("signet.png", "top.png", "bot.png", "lines.png", "index.png")  # K1v2 layer images
+required = [icon_json, *(icon_assets / name for name in layers), opaque, icns]
 missing = [str(p.relative_to(root)) for p in required if not p.is_file()]
 if missing:
     raise SystemExit("missing canonical icon assets: " + ", ".join(missing))
@@ -87,7 +88,7 @@ if "features" in document or any(
 ):
     raise SystemExit("icon.json uses Xcode 27-only features; keep the AppIcon source Xcode 26-compatible")
 serialized = json.dumps(document)
-for image_name in ("signet.png", "S.png"):
+for image_name in layers:
     if image_name not in serialized:
         raise SystemExit(f"canonical icon.json does not reference {image_name}")
 if icns.read_bytes()[:4] != b"icns":
@@ -104,7 +105,7 @@ def png_dimensions(path: Path) -> tuple[int, int]:
 def digest(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
-for image in (icon_assets / "signet.png", icon_assets / "S.png", opaque):
+for image in (*(icon_assets / name for name in layers), opaque):
     if png_dimensions(image) != (1024, 1024):
         raise SystemExit(f"{image.relative_to(root)} must be 1024x1024")
 

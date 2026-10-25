@@ -162,7 +162,7 @@
       "live_only_tests": [
         "contacts_and_ingest_paths_match_native_go"
       ],
-      "passed": 32
+      "passed": 36
     },
     "cargo test -p symdesk-core --locked --test template_path_contracts": {
       "ignored": 0,

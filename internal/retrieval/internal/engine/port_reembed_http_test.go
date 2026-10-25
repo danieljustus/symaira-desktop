@@ -64,6 +64,11 @@ func TestReembedHTTPPortFixture(t *testing.T) {
 		{ID: "provider-dimension-mismatch-keeps-pending-markdown", ResponseStatus: http.StatusOK, EmbeddingDim: 3, ResponseDimension: 2},
 		{ID: "provider-resolves-pending-plain-text", DocumentPath: "doc.txt", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 		{ID: "provider-resolves-pending-csv", DocumentPath: "doc.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		// Go routes by filepath.Ext, which treats a leading dot as an extension
+		// ("." + name), unlike Rust's Path::extension.
+		{ID: "provider-resolves-pending-dotfile-csv", DocumentPath: ".csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		{ID: "provider-resolves-pending-dotfile-txt", DocumentPath: ".txt", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
+		{ID: "provider-resolves-pending-dotfile-markdown", DocumentPath: ".md", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 	}
 	fixture := reembedHTTPFixture{SchemaVersion: 1}
 	for index := range cases {
@@ -144,10 +149,10 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	if documentPath == "" {
 		documentPath = "doc.md"
 	}
-	if documentPath == "doc.txt" {
+	if documentPath == "doc.txt" || documentPath == ".txt" {
 		documentBody = "Re-embed oracle\n\n" + strings.Repeat("local embedding contract text ", 62)
 	}
-	if documentPath == "doc.csv" {
+	if documentPath == "doc.csv" || documentPath == ".csv" {
 		// Quoted commas, doubled quotes and a quoted newline distinguish the
 		// tab-joined CSV extraction from the raw bytes.
 		documentBody = "id,note\r\n" + strings.Repeat("\"row, one\",\"local embedding \"\"contract\"\" text\nsecond line\"\r\n", 14)
@@ -155,10 +160,10 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 	testCase.DocumentPath = documentPath
 	testCase.DocumentBody = documentBody
 	oldBody := "# Old pending content\n\nold state"
-	if documentPath == "doc.txt" {
+	if documentPath == "doc.txt" || documentPath == ".txt" {
 		oldBody = "Old pending content\n\nold state"
 	}
-	if documentPath == "doc.csv" {
+	if documentPath == "doc.csv" || documentPath == ".csv" {
 		oldBody = "old,pending\nold,state\n"
 	}
 	if err := os.WriteFile(documentPath, []byte(oldBody), 0o600); err != nil {

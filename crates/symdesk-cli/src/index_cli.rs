@@ -741,14 +741,11 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
     let mut resolved_documents = 0;
     let mut expected_dimension = config.embedding_dim;
     for document in documents {
-        let extension = Path::new(&document.path)
-            .extension()
-            .and_then(|value| value.to_str())
-            .unwrap_or_default();
+        let extension = go_path_extension(&document.path);
         let markdown =
-            extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown");
-        let plain_text = extension.eq_ignore_ascii_case("txt");
-        let csv = extension.eq_ignore_ascii_case("csv");
+            extension.eq_ignore_ascii_case(".md") || extension.eq_ignore_ascii_case(".markdown");
+        let plain_text = extension.eq_ignore_ascii_case(".txt");
+        let csv = extension.eq_ignore_ascii_case(".csv");
         if !markdown && !plain_text && !csv {
             eprintln!(
                 "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown, UTF-8 plain text and CSV only",
@@ -816,6 +813,19 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
         resolved_documents,
         pending_documents,
     })
+}
+
+/// Go's `filepath.Ext`: the suffix from the last dot in the final path
+/// element, including a leading dot (`.csv` has the extension `.csv`), or an
+/// empty string. Rust's `Path::extension` returns `None` for such dotfile
+/// names, which would route them differently from Go.
+fn go_path_extension(path: &str) -> &str {
+    let element_start = path
+        .rfind(std::path::is_separator)
+        .map_or(0, |index| index + 1);
+    path[element_start..]
+        .rfind('.')
+        .map_or("", |index| &path[element_start + index..])
 }
 
 fn read_limited_plain_text(path: &str) -> Result<Vec<u8>, String> {
@@ -1074,5 +1084,31 @@ mod plain_text_read_tests {
             .expect_err("over-limit text is rejected");
         let _ = fs::remove_file(path);
         assert!(error.contains("exceeds 10485760 byte limit (10485761 bytes)"));
+    }
+}
+
+#[cfg(test)]
+mod go_path_extension_tests {
+    use super::go_path_extension;
+
+    /// Expected values were produced by Go's `filepath.Ext` (go1.26.10).
+    #[test]
+    fn matches_go_filepath_ext_for_dotfiles_and_edge_names() {
+        for (path, expected) in [
+            ("a.csv", ".csv"),
+            (".csv", ".csv"),
+            ("dir/.csv", ".csv"),
+            ("dir.d/file", ""),
+            ("a.tar.gz", ".gz"),
+            ("noext", ""),
+            ("a.", "."),
+            ("..", "."),
+            ("dir/.md/", ""),
+            ("x/.txt", ".txt"),
+            (".a.b", ".b"),
+            ("", ""),
+        ] {
+            assert_eq!(go_path_extension(path), expected, "{path:?}");
+        }
     }
 }

@@ -83,7 +83,13 @@ final class MobileScanTests: XCTestCase {
         XCTAssertTrue(try FileManager.default.fileExists(atPath: target.path), "scan must be written into the consume folder")
         let written = try Data(contentsOf: target)
         XCTAssertEqual(written, pdf, "uploaded bytes must match the rendered PDF")
-        let remaining = await coordinator.entries()
+        // drain() writes the file before it removes the outbox entry, so the
+        // file can be visible while the entry is still queued.
+        var remaining = await coordinator.entries()
+        for _ in 0..<250 where !remaining.isEmpty {
+            try? await Task.sleep(for: .milliseconds(20))
+            remaining = await coordinator.entries()
+        }
         XCTAssertTrue(remaining.isEmpty, "applied upload must leave the queue")
     }
 

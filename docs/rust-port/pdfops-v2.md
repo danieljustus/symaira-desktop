@@ -75,6 +75,15 @@ qpdf and exclusive-output behavior. Canonical renderer outputs equal the retaine
 v2 bytes. Original provenance/bundle, fixtures and failed captures remain in Git
 and the retained pre-composition source archives.
 
+The corrected reference in `reference-v2.json` follows the central port oracle
+(`testdata/port/provenance.json`): it was repointed from the retained
+`3845a99e` to `459223b3` (same release `renderer-pdf-safety-v2-local`, anchored
+in the recorded oracle bundle) when the port fixtures were refrozen there, so
+`renderirgen --check` compares `v2/json-ir.json` under the identity it was
+generated with and no longer depends on a non-main oracle branch being fetched.
+The production-source verifier is unchanged and still accepts only bytes equal
+to the named commit; the historical `d0092bb1` identity stays rejected.
+
 The two original global-pin failures, `TestPortVaultSelectionCLIContract` and
 `TestCurrentUsesCompiledSourceBeforeTestLocalEnvironmentChanges`, now pass, as
 does the complete affected Go caller/producer union. No source verifier or test

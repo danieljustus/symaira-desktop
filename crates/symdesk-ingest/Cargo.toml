@@ -12,6 +12,12 @@ rusqlite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 symaira-core-sqlite.workspace = true
+symdesk-core.workspace = true
+regex.workspace = true
+scraper = "0.29.0"
+quick-xml = "=0.38.3"
+zip = { version = "=6.0.0", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
+base64.workspace = true
 rusqlite = { workspace = true, features = ["functions"] }

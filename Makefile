@@ -223,6 +223,11 @@ core-differential: core-fixtures-check
 # acceptance/error text, Eval over field maps and Disambiguate from the
 # production internal/templatepath package; Rust replays all of it.
 CONTACTS_GO ?= go
+.PHONY: contacts-keyprovider-differential
+contacts-keyprovider-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsKeyProviderContract$$' -v
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test keyprovider_contracts
+
 .PHONY: contacts-erase-differential
 contacts-erase-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsEraseContract$$' -v

@@ -21,6 +21,7 @@ const (
 )
 
 var fixturePaths = []string{
+	"testdata/port/contacts/keyprovider.json",
 	"testdata/port/contacts/erase.json",
 	"testdata/port/contacts/relationship.json",
 	"testdata/port/contacts/crud.json",

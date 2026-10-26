@@ -29,6 +29,12 @@ production implementation; this crate is not wired into `symdesk` yet.
   audit rollback, missing parents, import/memory-link cascades, shared-tag
   preservation and count-only audit details (`erase.json`). Audit clock and
   OS username are normalized; Rust receives an injected actor.
+- Injected key-provider policy: 40 Go cases cover static/environment/default
+  precedence, chain fallback versus fatal errors, empty-success semantics,
+  non-TTY refusal and SymVault command arguments/stdout/error handling. The Go
+  oracle copies its own test executable as a fake `symvault` into an isolated
+  PATH; neither implementation reads real credentials. Rust's interactive
+  terminal adapter policy is implemented but real-TTY parity is still open.
 - Contact-point normalization: 36 Go-generated cases, including simple Unicode
   case mapping and non-ASCII decimal digits.
 - Duplicate planning (exact source, normalized email/phone, SQLite NOCASE names)
@@ -64,8 +70,9 @@ cargo test -p symdesk-contacts --locked
 Set `PORT_GENERATE=1` only for deliberate fixture generation; ordinary tests
 recompute the real Go result and compare without writing. Make targets are
 `contacts-schema-differential`, `contacts-import-differential`,
-`contacts-vcard-differential`, `contacts-crud-differential` and
-`contacts-relationship-differential` and `contacts-erase-differential`. Build-volume
+`contacts-vcard-differential`, `contacts-crud-differential`,
+`contacts-relationship-differential`, `contacts-erase-differential` and
+`contacts-keyprovider-differential`. Build-volume
 runners can override `CONTACTS_GO` and `CARGO` with their approved launchers.
 Fixtures are registered in portgen; its shared provenance manifest must be
 refreshed by the integration owner when adding these fixtures.
@@ -73,7 +80,9 @@ refreshed by the integration owner when adding these fixtures.
 ## Not complete
 
 - Memberships, quick-add, opaque-reference facade, combined timeline,
-  meeting/memory adapters, keyprovider and encrypted backup/restore remain Go-only.
+  meeting/memory adapters and encrypted backup/restore remain Go-only.
+- Concrete Rust environment/process/terminal key-provider adapters and
+  real-TTY password/confirmation behavior need native verification.
 - UUID/time defaults, stream I/O failures and non-UTF-8 CSV inputs need adapters.
 - Planning currently uses per-row queries rather than Go's batched queries;
   batch-scale performance/concurrency are not certified.

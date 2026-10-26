@@ -2607,14 +2607,20 @@ name = "symdesk-ingest"
 version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
+ "noyalib",
  "quick-xml",
  "regex",
  "rusqlite",
  "scraper",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "symaira-core-sqlite",
  "symdesk-core",
+ "symdesk-vault",
+ "time",
+ "ureq",
+ "url",
  "zip",
 ]
 
@@ -3075,6 +3081,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af5546be8f5378d5414f83733f5c9a2526f4645829edbc1c41790aeef1b38e8b"
 dependencies = [
  "base64 0.23.1",
+ "flate2",
  "log",
  "percent-encoding",
  "rustls",

@@ -357,7 +357,15 @@ func observeDuplicatesProcess(t *testing.T) duplicatesPortFixture {
 
 func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) duplicatesPortCase {
 	t.Helper()
+	// The service canonicalizes the vault root but the index stores the path
+	// as given, so a root behind a symlink (macOS /var -> /private/var) or a
+	// Windows 8.3 short name makes every printed path a long "../.." walk
+	// between the two spellings. Observe from the canonical spelling so the
+	// recorded bytes do not depend on the runner's temp directory.
 	root := t.TempDir()
+	if resolved, err := filepath.EvalSymlinks(root); err == nil {
+		root = resolved
+	}
 	home := filepath.Join(root, "home")
 	vault := filepath.Join(root, "vault")
 	cwd := filepath.Join(root, "cwd")

@@ -1,0 +1,1537 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "reads",
+      "files": {
+        "notebooks/broken.md": "---\ntype: notebook\nsources: {bad: shape}\n---\n",
+        "notebooks/empty.md": "---\ntype: notebook\nnotebook_id: empty\ntitle: Alpha\ncreated: fixed\nsources: []\n---\n",
+        "notebooks/ordinary.md": "# Not a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\nnotebook_id: research\ntitle: Research \u0026 notes\ncreated: fixed\ndescription: Context \u003chere\u003e\nsources: [notes/source.md, missing.md, notes/source.md]\nquery: old query\n---\n# Research\n",
+        "notes/source.md": "---\ntitle: Source title\n---\nBody\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "notebook",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[$PTR $PTR $PTR]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"empty\",\"path\":\"notebooks/empty.md\",\"title\":\"Alpha\",\"created\":\"fixed\",\"sources\":[]},{\"id\":\"broken\",\"path\":\"notebooks/broken.md\",\"title\":\"broken\",\"created\":\"\",\"sources\":[]},{\"id\":\"research\",\"path\":\"notebooks/research.md\",\"title\":\"Research \\u0026 notes\",\"description\":\"Context \\u003chere\\u003e\",\"created\":\"fixed\",\"sources\":[\"missing.md\",\"notes/source.md\",\"notes/source.md\"],\"query\":\"old query\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "list",
+            "ignored"
+          ],
+          "exit_code": 0,
+          "stdout": "[$PTR $PTR $PTR]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "list",
+            "ignored"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"empty\",\"path\":\"notebooks/empty.md\",\"title\":\"Alpha\",\"created\":\"fixed\",\"sources\":[]},{\"id\":\"broken\",\"path\":\"notebooks/broken.md\",\"title\":\"broken\",\"created\":\"\",\"sources\":[]},{\"id\":\"research\",\"path\":\"notebooks/research.md\",\"title\":\"Research \\u0026 notes\",\"description\":\"Context \\u003chere\\u003e\",\"created\":\"fixed\",\"sources\":[\"missing.md\",\"notes/source.md\",\"notes/source.md\"],\"query\":\"old query\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "research"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description:Context \u003chere\u003e id:research path:notebooks/research.md sources:[{Path:missing.md Title: Missing:true} {Path:notes/source.md Title:Source title Missing:false} {Path:notes/source.md Title:Source title Missing:false}] title:Research \u0026 notes]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "research"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"Context \\u003chere\\u003e\",\"id\":\"research\",\"path\":\"notebooks/research.md\",\"sources\":[{\"path\":\"missing.md\",\"missing\":true},{\"path\":\"notes/source.md\",\"title\":\"Source title\"},{\"path\":\"notes/source.md\",\"title\":\"Source title\"}],\"title\":\"Research \\u0026 notes\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "notebooks/research"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description:Context \u003chere\u003e id:research path:notebooks/research.md sources:[{Path:missing.md Title: Missing:true} {Path:notes/source.md Title:Source title Missing:false} {Path:notes/source.md Title:Source title Missing:false}] title:Research \u0026 notes]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "notebooks/research"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"Context \\u003chere\\u003e\",\"id\":\"research\",\"path\":\"notebooks/research.md\",\"sources\":[{\"path\":\"missing.md\",\"missing\":true},{\"path\":\"notes/source.md\",\"title\":\"Source title\"},{\"path\":\"notes/source.md\",\"title\":\"Source title\"}],\"title\":\"Research \\u0026 notes\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "notebooks/research.md"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description:Context \u003chere\u003e id:research path:notebooks/research.md sources:[{Path:missing.md Title: Missing:true} {Path:notes/source.md Title:Source title Missing:false} {Path:notes/source.md Title:Source title Missing:false}] title:Research \u0026 notes]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "notebooks/research.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"Context \\u003chere\\u003e\",\"id\":\"research\",\"path\":\"notebooks/research.md\",\"sources\":[{\"path\":\"missing.md\",\"missing\":true},{\"path\":\"notes/source.md\",\"title\":\"Source title\"},{\"path\":\"notes/source.md\",\"title\":\"Source title\"}],\"title\":\"Research \\u0026 notes\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "other/research"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description:Context \u003chere\u003e id:research path:notebooks/research.md sources:[{Path:missing.md Title: Missing:true} {Path:notes/source.md Title:Source title Missing:false} {Path:notes/source.md Title:Source title Missing:false}] title:Research \u0026 notes]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "other/research"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"Context \\u003chere\\u003e\",\"id\":\"research\",\"path\":\"notebooks/research.md\",\"sources\":[{\"path\":\"missing.md\",\"missing\":true},{\"path\":\"notes/source.md\",\"title\":\"Source title\"},{\"path\":\"notes/source.md\",\"title\":\"Source title\"}],\"title\":\"Research \\u0026 notes\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "empty"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description: id:empty path:notebooks/empty.md sources:[] title:Alpha]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "empty"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"\",\"id\":\"empty\",\"path\":\"notebooks/empty.md\",\"sources\":[],\"title\":\"Alpha\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "notebook not found\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebook not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "notebook reference is required\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebook reference is required\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "ordinary"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "notebooks/ordinary.md is not a notebook note (type=\"\")\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "ordinary"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebooks/ordinary.md is not a notebook note (type=\\\"\\\")\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "--output",
+            "json",
+            "show",
+            "research"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"Context \\u003chere\\u003e\",\"id\":\"research\",\"path\":\"notebooks/research.md\",\"sources\":[{\"path\":\"missing.md\",\"missing\":true},{\"path\":\"notes/source.md\",\"title\":\"Source title\"},{\"path\":\"notes/source.md\",\"title\":\"Source title\"}],\"title\":\"Research \\u0026 notes\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "empty",
+            "--output=yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description: id:empty path:notebooks/empty.md sources:[] title:Alpha]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "--json",
+            "empty"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"created\":\"fixed\",\"description\":\"\",\"id\":\"empty\",\"path\":\"notebooks/empty.md\",\"sources\":[],\"title\":\"Alpha\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "show",
+            "--",
+            "research"
+          ],
+          "exit_code": 0,
+          "stdout": "map[created:fixed description:Context \u003chere\u003e id:research path:notebooks/research.md sources:[{Path:missing.md Title: Missing:true} {Path:notes/source.md Title:Source title Missing:false} {Path:notes/source.md Title:Source title Missing:false}] title:Research \u0026 notes]\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/broken.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a736f75726365733a207b6261643a2073686170657d0a2d2d2d0a",
+            "vault/notebooks/empty.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20656d7074790a7469746c653a20416c7068610a637265617465643a2066697865640a736f75726365733a205b5d0a2d2d2d0a",
+            "vault/notebooks/ordinary.md": "23204e6f742061206e6f7465626f6f6b0a",
+            "vault/notebooks/research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a2072657365617263680a7469746c653a2052657365617263682026206e6f7465730a637265617465643a2066697865640a6465736372697074696f6e3a20436f6e74657874203c686572653e0a736f75726365733a205b6e6f7465732f736f757263652e6d642c206d697373696e672e6d642c206e6f7465732f736f757263652e6d645d0a71756572793a206f6c642071756572790a2d2d2d0a232052657365617263680a",
+            "vault/notes/source.md": "2d2d2d0a7469746c653a20536f75726365207469746c650a2d2d2d0a426f64790a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "notebook",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {},
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {},
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "notebook",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "show",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {},
+          "databases": {}
+        },
+        {
+          "files": {},
+          "databases": {}
+        }
+      ]
+    }
+  ]
+}

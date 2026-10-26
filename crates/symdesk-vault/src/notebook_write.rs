@@ -21,17 +21,17 @@ pub enum NotebookWriteError {
     Mutation(#[from] MutationError),
     #[error(transparent)]
     Contract(#[from] TypedVaultError),
-    #[error("invalid source path {path:?}: {source}")]
-    InvalidSource {
-        path: String,
-        source: crate::SecurePathError,
-    },
     #[error("source path is required")]
     EmptySource,
     #[error("title is required")]
     TitleRequired,
     #[error("write notebook: {0}")]
     Write(std::io::Error),
+    #[error("invalid source path {path}: {source}")]
+    InvalidSource {
+        path: String,
+        source: crate::SecurePathError,
+    },
     #[error("a notebook cannot be a source of itself")]
     SourceIsSelf,
 }
@@ -182,8 +182,8 @@ fn change_notebook_source(
     let notebook_rel = relative_slash_path(&root, &notebook_file)?;
     let mut notebook = parse_notebook(&notebook_rel, &notebook_data)?;
 
-    // Go trims and validates additions, but removal uses the path verbatim
-    // and permits removing even a legacy self-reference.
+    // Go validates and trims additions, but removal uses the literal path
+    // (including empty/self references, both legitimate absent-source no-ops).
     let source_path = if add { source_path.trim() } else { source_path };
     if add && source_path.is_empty() {
         return Err(NotebookWriteError::EmptySource);
@@ -191,7 +191,7 @@ fn change_notebook_source(
     let source_file = secure_path(vault_root, source_path).map_err(|source| {
         if add {
             NotebookWriteError::InvalidSource {
-                path: source_path.to_owned(),
+                path: crate::go_quote(source_path),
                 source,
             }
         } else {

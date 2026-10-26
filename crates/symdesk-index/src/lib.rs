@@ -30,6 +30,7 @@ pub mod docs;
 mod duplicates;
 mod history_sync;
 pub mod index_status;
+mod links;
 mod metadata;
 mod retrieval;
 mod retrieval_archive;
@@ -54,6 +55,7 @@ pub use duplicates::{
     resolve_duplicate_threshold,
 };
 pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
+pub use links::InverseRelation;
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,

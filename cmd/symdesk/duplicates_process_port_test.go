@@ -15,10 +15,11 @@ import (
 const duplicatesFixturePath = "../../testdata/port/cli/duplicates-process.json"
 
 type duplicatesPortStep struct {
-	Args     []string `json:"args"`
-	ExitCode int      `json:"exit_code"`
-	Stdout   string   `json:"stdout"`
-	Stderr   string   `json:"stderr"`
+	Args     []string              `json:"args"`
+	ExitCode int                   `json:"exit_code"`
+	Stdout   string                `json:"stdout"`
+	Stderr   string                `json:"stderr"`
+	State    map[string][][]string `json:"state,omitempty"`
 }
 
 type duplicatesPortCase struct {
@@ -356,6 +357,7 @@ func observeDuplicatesProcess(t *testing.T) duplicatesPortFixture {
 }
 
 func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, afterStep ...func(*testing.T, string)) duplicatesPortCase {
+func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, afterStep ...func(string, string)) duplicatesPortCase {
 	t.Helper()
 	// The service canonicalizes the vault root but the index stores the path
 	// as given, so a root behind a symlink (macOS /var -> /private/var) or a
@@ -442,6 +444,8 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, af
 		code, stdout, stderr := run(args)
 		for _, verify := range afterStep {
 			verify(t, vault)
+		for _, check := range afterStep {
+			check(vault, home)
 		}
 		observed.Steps = append(observed.Steps, duplicatesPortStep{
 			Args:     step.Args,

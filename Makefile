@@ -431,6 +431,14 @@ history-tasks-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHistoryTasksCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test history_tasks --locked
 
+.PHONY: views-cli-fixtures-generate views-cli-differential
+views-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+
+views-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test views --locked
+
 duplicates-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortDuplicatesProcessContract$$'
 

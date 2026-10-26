@@ -13,6 +13,7 @@ mod recipe;
 mod retention;
 mod search_cli;
 mod source_cli;
+mod views_cli;
 
 use std::{
     ffi::OsString,
@@ -171,6 +172,11 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
+        ),
+        Some(("views", command)) => views_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
         ),
         Some(("dataset", command)) => dataset::run(
             command,
@@ -518,6 +524,7 @@ fn cli() -> Command {
         .subcommand(retention::cli())
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
+        .subcommand(views_cli::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())

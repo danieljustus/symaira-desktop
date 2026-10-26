@@ -7,6 +7,8 @@ use symaira_core_version::new as version_info;
 pub mod ai;
 #[cfg(unix)]
 pub mod compose;
+#[cfg(unix)]
+pub mod compose_probe;
 pub mod config;
 pub mod document_format;
 pub mod german;

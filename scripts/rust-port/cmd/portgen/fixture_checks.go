@@ -87,6 +87,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"index retry CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetryProcessPortFixture$"}, []string{"testdata/port/cli/index-retry-process.json"}, false},
 	{"index symlink CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexSymlinkProcessPortFixture$"}, []string{"testdata/port/cli/index-symlink-process.json"}, false},
 	{"AI providers", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIProviderContract$"}, []string{"testdata/port/ai/providers.json"}, false},
+	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
 	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},
 	{"recipe validate CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeValidateCLIContract$"}, []string{"testdata/port/ai/recipe-validate.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json", "testdata/port/render/v2/symdesk-tools.json"}, false},

@@ -65,9 +65,9 @@ func TestPortContactsImportContract(t *testing.T) {
 	queries := []string{
 		`SELECT display_name,given_name,family_name,notes,source,source_ref FROM persons ORDER BY display_name,id`,
 		`SELECT name,notes,source,source_ref FROM organizations ORDER BY name`,
-		`SELECT p.display_name,cp.kind,cp.raw_value,cp.normalized_value,cp.label,cp.is_preferred,cp.is_verified FROM contact_points cp JOIN persons p ON p.id=cp.person_id ORDER BY p.display_name,cp.kind,cp.normalized_value`,
-		`SELECT p.display_name,o.name,m.role,m.title,m.valid_from,m.valid_to FROM organization_memberships m JOIN persons p ON p.id=m.person_id JOIN organizations o ON o.id=m.organization_id ORDER BY p.display_name,o.name`,
-		`SELECT s.source_kind,s.source_ref,p.display_name FROM import_sources s JOIN persons p ON p.id=s.person_id ORDER BY s.source_kind,s.source_ref`,
+		`SELECT p.display_name,p.source,p.given_name,cp.kind,cp.raw_value,cp.normalized_value,cp.label,cp.is_preferred,cp.is_verified FROM contact_points cp JOIN persons p ON p.id=cp.person_id ORDER BY p.display_name,cp.kind,cp.normalized_value`,
+		`SELECT p.display_name,p.source,p.given_name,o.name,m.role,m.title,m.valid_from,m.valid_to FROM organization_memberships m JOIN persons p ON p.id=m.person_id JOIN organizations o ON o.id=m.organization_id ORDER BY p.display_name,o.name`,
+		`SELECT s.source_kind,s.source_ref,p.display_name,p.source,p.given_name FROM import_sources s JOIN persons p ON p.id=s.person_id ORDER BY s.source_kind,s.source_ref`,
 		`SELECT source_kind,created,merged,skipped,failed FROM import_runs ORDER BY rowid`,
 	}
 	snapshots := make([][][]any, 0, len(queries))

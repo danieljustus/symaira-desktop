@@ -3,6 +3,7 @@
 
 pub mod import;
 pub mod pipeline;
+pub mod vcard;
 
 use rusqlite::Connection;
 use std::path::Path;

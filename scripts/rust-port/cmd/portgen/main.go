@@ -21,6 +21,7 @@ const (
 )
 
 var fixturePaths = []string{
+	"testdata/port/contacts/vcard.json",
 	"testdata/port/contacts/csv.json",
 	"testdata/port/contacts/import.json",
 	"testdata/port/contacts/schema.json",

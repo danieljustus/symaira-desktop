@@ -17,6 +17,7 @@ mod mutations;
 mod notebook_write;
 pub mod notes;
 mod paths;
+pub mod permissions;
 mod resolver;
 pub mod retention;
 pub mod retention_state;

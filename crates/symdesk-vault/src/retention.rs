@@ -13,7 +13,7 @@
 
 use crate::go_path_error;
 
-mod json_decoder;
+pub(crate) mod json_decoder;
 
 use std::path::{Path, PathBuf};
 

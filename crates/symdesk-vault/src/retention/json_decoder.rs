@@ -23,7 +23,7 @@ pub(super) fn decode_history(data: &[u8]) -> Result<Option<Vec<HistoryEntry>>, S
     cursor.history()
 }
 
-fn validate_syntax(data: &[u8]) -> Result<(), String> {
+pub(crate) fn validate_syntax(data: &[u8]) -> Result<(), String> {
     let mut parser = SyntaxParser::new(data);
     parser.skip_space();
     parser.value(0)?;
@@ -822,6 +822,11 @@ fn quote_json_character(character: u8) -> String {
         b'\t' => "'\\t'".to_owned(),
         b'\x0b' => "'\\v'".to_owned(),
         b' '..=b'~' => format!("'{}'", char::from(character)),
+        // Go quotes `string(rune(c))`, so a byte >= 0x80 is the Latin-1 rune:
+        // printable ones appear verbatim, controls, NBSP and the soft hyphen
+        // as `\u00XX`.
+        0x80..=0xa0 | 0xad => format!("'\\u{:04x}'", u32::from(character)),
+        0xa1..=0xff => format!("'{}'", char::from(character)),
         other => format!("'\\x{other:02x}'"),
     }
 }

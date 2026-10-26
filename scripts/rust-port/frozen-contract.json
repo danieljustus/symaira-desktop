@@ -76,6 +76,17 @@
         256,
         "crossings"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test duplicates --locked",
+      "fixture": "testdata/port/cli/duplicates-process.json",
+      "increment": [
+        "cases",
+        0,
+        "steps",
+        1,
+        "exit_code"
+      ]
     }
   ],
   "replays": {
@@ -156,7 +167,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 115
+      "passed": 116
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,

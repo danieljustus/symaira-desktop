@@ -1,0 +1,2781 @@
+{
+  "actions": [
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "create",
+      "entity": "person",
+      "id": "bad",
+      "input": {
+        "DisplayName": " \t"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "DisplayName": " Ada_% ",
+        "FamilyName": "Lovelace",
+        "GivenName": "Ada",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "person",
+      "id": "person-2",
+      "input": {
+        "DisplayName": "bob"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "person",
+      "id": "person-3",
+      "input": {
+        "DisplayName": "BOB"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "  "
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "alpha"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "  "
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "alpha"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "unknown"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "personal"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "business"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "customer"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "lead"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "partner"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "business"
+      }
+    },
+    {
+      "op": "unclassify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "unknown"
+      }
+    },
+    {
+      "op": "unclassify",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "personal"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "Kind": "unknown"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "Kind": "email"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "email",
+        "Label": "work",
+        "RawValue": " ADA@Example.com "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "phone",
+        "Label": "work",
+        "RawValue": "+49 (123)"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "address",
+        "Label": "work",
+        "RawValue": " Main Street "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "url",
+        "Label": "work",
+        "RawValue": "HTTPS://Example.com/"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "handle",
+        "Label": "work",
+        "RawValue": " @Ada "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "Kind": "email",
+        "RawValue": "ada@example.com"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "Kind": "email",
+        "RawValue": "other@example.com"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "value": "orphan"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "value": "rolled-back"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "value": "lead"
+      }
+    },
+    {
+      "op": "get",
+      "entity": "person",
+      "id": "person",
+      "input": null
+    },
+    {
+      "op": "remove_point",
+      "entity": "person",
+      "id": "person-2",
+      "input": {
+        "value": "point-person"
+      }
+    },
+    {
+      "op": "remove_point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "point-person"
+      }
+    },
+    {
+      "op": "remove_point",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "value": "point-person"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Limit": 1
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Limit": 1,
+        "Offset": 1
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Limit": 999,
+        "Offset": -2
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Query": "_%"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Query": "  Ada  "
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Query": "\\"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Classification": "business"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Classification": "missing"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "Limit": 1,
+        "Query": "bob"
+      }
+    },
+    {
+      "op": "update",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "DisplayName": " \n"
+      }
+    },
+    {
+      "op": "update",
+      "entity": "person",
+      "id": "person",
+      "input": {
+        "DisplayName": "Changed",
+        "FamilyName": "Byron",
+        "GivenName": "",
+        "Notes": ""
+      }
+    },
+    {
+      "op": "update",
+      "entity": "person",
+      "id": "person",
+      "input": null
+    },
+    {
+      "op": "get",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "update",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "Notes": "x"
+      }
+    },
+    {
+      "op": "delete",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "delete",
+      "entity": "person",
+      "id": "person",
+      "input": null
+    },
+    {
+      "op": "get",
+      "entity": "person",
+      "id": "person",
+      "input": null
+    },
+    {
+      "op": "delete",
+      "entity": "person",
+      "id": "person",
+      "input": null
+    },
+    {
+      "op": "list",
+      "entity": "person",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "create",
+      "entity": "organization",
+      "id": "bad",
+      "input": {
+        "Name": " \t"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "FamilyName": "Lovelace",
+        "GivenName": "Ada",
+        "Name": " Ada_% ",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "organization",
+      "id": "organization-2",
+      "input": {
+        "Name": "bob"
+      }
+    },
+    {
+      "op": "create",
+      "entity": "organization",
+      "id": "organization-3",
+      "input": {
+        "Name": "BOB"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "  "
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "alpha"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "  "
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "alpha"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "zeta"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "unknown"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "personal"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "business"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "customer"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "lead"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "partner"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "business"
+      }
+    },
+    {
+      "op": "unclassify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "unknown"
+      }
+    },
+    {
+      "op": "unclassify",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "personal"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "Kind": "unknown"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "Kind": "email"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "email",
+        "Label": "work",
+        "RawValue": " ADA@Example.com "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "phone",
+        "Label": "work",
+        "RawValue": "+49 (123)"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "address",
+        "Label": "work",
+        "RawValue": " Main Street "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "url",
+        "Label": "work",
+        "RawValue": "HTTPS://Example.com/"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "handle",
+        "Label": "work",
+        "RawValue": " @Ada "
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "Kind": "email",
+        "RawValue": "ada@example.com"
+      }
+    },
+    {
+      "op": "point",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "Kind": "email",
+        "RawValue": "other@example.com"
+      }
+    },
+    {
+      "op": "alias",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "value": "orphan"
+      }
+    },
+    {
+      "op": "tag",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "value": "rolled-back"
+      }
+    },
+    {
+      "op": "classify",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "value": "lead"
+      }
+    },
+    {
+      "op": "get",
+      "entity": "organization",
+      "id": "organization",
+      "input": null
+    },
+    {
+      "op": "remove_point",
+      "entity": "organization",
+      "id": "organization-2",
+      "input": {
+        "value": "point-organization"
+      }
+    },
+    {
+      "op": "remove_point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "point-organization"
+      }
+    },
+    {
+      "op": "remove_point",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "value": "point-organization"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Limit": 1
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Limit": 1,
+        "Offset": 1
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Limit": 999,
+        "Offset": -2
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Query": "_%"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Query": "  Ada  "
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Query": "\\"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Classification": "business"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Classification": "missing"
+      }
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": {
+        "Limit": 1,
+        "Query": "bob"
+      }
+    },
+    {
+      "op": "update",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "Name": " \n"
+      }
+    },
+    {
+      "op": "update",
+      "entity": "organization",
+      "id": "organization",
+      "input": {
+        "FamilyName": "Byron",
+        "GivenName": "",
+        "Name": "Changed",
+        "Notes": ""
+      }
+    },
+    {
+      "op": "update",
+      "entity": "organization",
+      "id": "organization",
+      "input": null
+    },
+    {
+      "op": "get",
+      "entity": "organization",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "update",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "Notes": "x"
+      }
+    },
+    {
+      "op": "delete",
+      "entity": "organization",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "delete",
+      "entity": "organization",
+      "id": "organization",
+      "input": null
+    },
+    {
+      "op": "get",
+      "entity": "organization",
+      "id": "organization",
+      "input": null
+    },
+    {
+      "op": "delete",
+      "entity": "organization",
+      "id": "organization",
+      "input": null
+    },
+    {
+      "op": "list",
+      "entity": "organization",
+      "id": "",
+      "input": null
+    }
+  ],
+  "ids": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005",
+    "00000000-0000-4000-8000-000000000006",
+    "00000000-0000-4000-8000-000000000007",
+    "00000000-0000-4000-8000-000000000008",
+    "00000000-0000-4000-8000-000000000009",
+    "00000000-0000-4000-8000-00000000000a",
+    "00000000-0000-4000-8000-00000000000b",
+    "00000000-0000-4000-8000-00000000000c",
+    "00000000-0000-4000-8000-00000000000d",
+    "00000000-0000-4000-8000-00000000000e",
+    "00000000-0000-4000-8000-00000000000f",
+    "00000000-0000-4000-8000-000000000010",
+    "00000000-0000-4000-8000-000000000011",
+    "00000000-0000-4000-8000-000000000012",
+    "00000000-0000-4000-8000-000000000013",
+    "00000000-0000-4000-8000-000000000014",
+    "00000000-0000-4000-8000-000000000015",
+    "00000000-0000-4000-8000-000000000016",
+    "00000000-0000-4000-8000-000000000017",
+    "00000000-0000-4000-8000-000000000018",
+    "00000000-0000-4000-8000-000000000019",
+    "00000000-0000-4000-8000-00000000001a",
+    "00000000-0000-4000-8000-00000000001b",
+    "00000000-0000-4000-8000-00000000001c",
+    "00000000-0000-4000-8000-00000000001d",
+    "00000000-0000-4000-8000-00000000001e",
+    "00000000-0000-4000-8000-00000000001f",
+    "00000000-0000-4000-8000-000000000020",
+    "00000000-0000-4000-8000-000000000021",
+    "00000000-0000-4000-8000-000000000022",
+    "00000000-0000-4000-8000-000000000023",
+    "00000000-0000-4000-8000-000000000024",
+    "00000000-0000-4000-8000-000000000025",
+    "00000000-0000-4000-8000-000000000026",
+    "00000000-0000-4000-8000-000000000027",
+    "00000000-0000-4000-8000-000000000028",
+    "00000000-0000-4000-8000-000000000029",
+    "00000000-0000-4000-8000-00000000002a",
+    "00000000-0000-4000-8000-00000000002b",
+    "00000000-0000-4000-8000-00000000002c",
+    "00000000-0000-4000-8000-00000000002d",
+    "00000000-0000-4000-8000-00000000002e",
+    "00000000-0000-4000-8000-00000000002f",
+    "00000000-0000-4000-8000-000000000030",
+    "00000000-0000-4000-8000-000000000031",
+    "00000000-0000-4000-8000-000000000032",
+    "00000000-0000-4000-8000-000000000033",
+    "00000000-0000-4000-8000-000000000034",
+    "00000000-0000-4000-8000-000000000035",
+    "00000000-0000-4000-8000-000000000036"
+  ],
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "queries": [
+    "SELECT * FROM persons ORDER BY id",
+    "SELECT * FROM organizations ORDER BY id",
+    "SELECT * FROM aliases ORDER BY id",
+    "SELECT * FROM tags ORDER BY id",
+    "SELECT * FROM entity_tags ORDER BY id",
+    "SELECT * FROM entity_classifications ORDER BY id",
+    "SELECT * FROM contact_points ORDER BY id"
+  ],
+  "results": [
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "contact.CreatePerson: display name must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": " Ada_% ",
+        "FamilyName": "Lovelace",
+        "GivenName": "Ada",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "bob",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000002",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "BOB",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000003",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.AddPersonAlias: alias must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.AddPersonTag: tag must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.setClassification: unknown classification: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.addContactPoint: unknown contact point kind: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "contact.addContactPoint: contact point value must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000012",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "email",
+        "Label": "work",
+        "NormalizedValue": "ada@example.com",
+        "RawValue": " ADA@Example.com ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000013",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "phone",
+        "Label": "work",
+        "NormalizedValue": "+49123",
+        "RawValue": "+49 (123)",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000014",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "address",
+        "Label": "work",
+        "NormalizedValue": "main street",
+        "RawValue": " Main Street ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000015",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "url",
+        "Label": "work",
+        "NormalizedValue": "https://example.com",
+        "RawValue": "HTTPS://Example.com/",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000016",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "handle",
+        "Label": "work",
+        "NormalizedValue": "ada",
+        "RawValue": " @Ada ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.addContactPoint: an identical contact point already exists on this entity: constraint failed: UNIQUE constraint failed: contact_points.person_id, contact_points.kind, contact_points.normalized_value (2067)",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "contact.AddPersonAlias: failed to add alias: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000012",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000013",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000016",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "handle",
+            "Label": "work",
+            "NormalizedValue": "ada",
+            "RawValue": " @Ada ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": " Ada_% ",
+        "FamilyName": "Lovelace",
+        "GivenName": "Ada",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.removeContactPoint: contact point not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.removeContactPoint: contact point not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "bob",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "BOB",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000003",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "bob",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "bob",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "BOB",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000003",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": " Ada_% ",
+            "FamilyName": "Lovelace",
+            "GivenName": "Ada",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "bob",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "contact.UpdatePerson: display name must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000012",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000013",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Changed",
+        "FamilyName": "Byron",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Notes": "",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000012",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000013",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Changed",
+        "FamilyName": "Byron",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Notes": "",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.GetPerson: person not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.UpdatePerson: person not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.DeletePerson: person not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.GetPerson: person not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.DeletePerson: person not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "bob",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "BOB",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000003",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "contact.CreateOrganization: name must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Name": " Ada_% ",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001e",
+        "Name": "bob",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001f",
+        "Name": "BOB",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.AddOrganizationAlias: alias must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.AddOrganizationTag: tag must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.setClassification: unknown classification: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.addContactPoint: unknown contact point kind: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "contact.addContactPoint: contact point value must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000002c",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "email",
+        "Label": "work",
+        "NormalizedValue": "ada@example.com",
+        "RawValue": " ADA@Example.com ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000002d",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "phone",
+        "Label": "work",
+        "NormalizedValue": "+49123",
+        "RawValue": "+49 (123)",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000002e",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "address",
+        "Label": "work",
+        "NormalizedValue": "main street",
+        "RawValue": " Main Street ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000002f",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "url",
+        "Label": "work",
+        "NormalizedValue": "https://example.com",
+        "RawValue": "HTTPS://Example.com/",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000030",
+        "IsPreferred": true,
+        "IsVerified": true,
+        "Kind": "handle",
+        "Label": "work",
+        "NormalizedValue": "ada",
+        "RawValue": " @Ada ",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.addContactPoint: an identical contact point already exists on this entity: constraint failed: UNIQUE constraint failed: contact_points.organization_id, contact_points.kind, contact_points.normalized_value (2067)",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "contact.AddOrganizationAlias: failed to add alias: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "internal",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002c",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002d",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002e",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002f",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000030",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "handle",
+            "Label": "work",
+            "NormalizedValue": "ada",
+            "RawValue": " @Ada ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Name": " Ada_% ",
+        "Notes": "private",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.removeContactPoint: contact point not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.removeContactPoint: contact point not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Name": "bob",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001f",
+            "Name": "BOB",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Name": "bob",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Name": "bob",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001f",
+            "Name": "BOB",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Name": " Ada_% ",
+            "Notes": "private",
+            "Source": "manual",
+            "SourceRef": "source-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": true,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Name": "bob",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "contact.UpdateOrganization: name must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002c",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002d",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002e",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002f",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Name": "Changed",
+        "Notes": "",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": [
+          "zeta",
+          "alpha",
+          "zeta"
+        ],
+        "Classifications": [
+          "business",
+          "customer",
+          "lead",
+          "partner"
+        ],
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002c",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "email",
+            "Label": "work",
+            "NormalizedValue": "ada@example.com",
+            "RawValue": " ADA@Example.com ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002d",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "phone",
+            "Label": "work",
+            "NormalizedValue": "+49123",
+            "RawValue": "+49 (123)",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002e",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "address",
+            "Label": "work",
+            "NormalizedValue": "main street",
+            "RawValue": " Main Street ",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000002f",
+            "IsPreferred": true,
+            "IsVerified": true,
+            "Kind": "url",
+            "Label": "work",
+            "NormalizedValue": "https://example.com",
+            "RawValue": "HTTPS://Example.com/",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Name": "Changed",
+        "Notes": "",
+        "Source": "manual",
+        "SourceRef": "source-1",
+        "Tags": [
+          "alpha",
+          "zeta"
+        ],
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.GetOrganization: organization not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.UpdateOrganization: organization not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.DeleteOrganization: organization not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.GetOrganization: organization not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.DeleteOrganization: organization not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Name": "bob",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001f",
+            "Name": "BOB",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    }
+  ],
+  "snapshots": [
+    [
+      [
+        "00000000-0000-4000-8000-000000000002",
+        "bob",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000003",
+        "BOB",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-00000000001e",
+        "bob",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001f",
+        "BOB",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [],
+    [
+      [
+        "00000000-0000-4000-8000-000000000007",
+        "zeta"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000009",
+        "alpha"
+      ]
+    ],
+    [],
+    [],
+    []
+  ],
+  "source_hashes": {
+    "internal/contacts/internal/domain/contact/types.go": "80f90a6db99de7dc4da803f4129568dbcce02bd23f5b111f8279bb93eeb8e9d6",
+    "internal/contacts/internal/domain/page/page.go": "7e8410f5905e256efd76f2637ab4f726d11dfde57bfb349a0fe5749730fb650c",
+    "internal/contacts/internal/errs/errors.go": "cc52b683298dc32deec618f82982ac0b6b2b4b2fb6b4b41955578f49ad6fab2c",
+    "internal/contacts/internal/service/contact/childtables.go": "24fff5eb19a093dcb04f478ade30e5a719bc21e49d97243a3b74d181915cee38",
+    "internal/contacts/internal/service/contact/organizations.go": "ab9aaf31e782b35d3583e62b3757e11fa2f170833ec3514dc1446901bca671bc",
+    "internal/contacts/internal/service/contact/persons.go": "d16f0486af5628c6cda350ef4dbde63745dbeff3b3ea6b4b75ef2e18abb1b54d",
+    "internal/contacts/internal/service/contact/service.go": "ee9129f58fbc430ae9fe79ae8795358c8fcb8bc1baae631c81d09122a1b748ae"
+  },
+  "timestamp": "2026-01-02T03:04:05Z"
+}

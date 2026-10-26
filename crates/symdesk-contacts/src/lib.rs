@@ -1,6 +1,7 @@
 //! The absorbed SymRelate contact store. Go remains the production oracle.
 #![deny(unsafe_code)]
 
+pub mod contact;
 pub mod import;
 pub mod pipeline;
 pub mod vcard;

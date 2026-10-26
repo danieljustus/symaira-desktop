@@ -24,6 +24,11 @@ production implementation; this crate is not wired into `symdesk` yet.
   retries, self-link/date/FK errors; follow-up creation/filtering and terminal
   state transitions; immutable interactions, ordering and most-recent lookup:
   95 Go operations with three ordered DB snapshots (`relationship.json`).
+- Person/organization privacy erasure and audit listing: six Go cases check
+  exact summaries/errors and all fourteen affected tables, including failed
+  audit rollback, missing parents, import/memory-link cascades, shared-tag
+  preservation and count-only audit details (`erase.json`). Audit clock and
+  OS username are normalized; Rust receives an injected actor.
 - Contact-point normalization: 36 Go-generated cases, including simple Unicode
   case mapping and non-ASCII decimal digits.
 - Duplicate planning (exact source, normalized email/phone, SQLite NOCASE names)
@@ -60,7 +65,7 @@ Set `PORT_GENERATE=1` only for deliberate fixture generation; ordinary tests
 recompute the real Go result and compare without writing. Make targets are
 `contacts-schema-differential`, `contacts-import-differential`,
 `contacts-vcard-differential`, `contacts-crud-differential` and
-`contacts-relationship-differential`. Build-volume
+`contacts-relationship-differential` and `contacts-erase-differential`. Build-volume
 runners can override `CONTACTS_GO` and `CARGO` with their approved launchers.
 Fixtures are registered in portgen; its shared provenance manifest must be
 refreshed by the integration owner when adding these fixtures.
@@ -68,7 +73,7 @@ refreshed by the integration owner when adding these fixtures.
 ## Not complete
 
 - Memberships, quick-add, opaque-reference facade, combined timeline,
-  meeting/memory adapters, keyprovider, backup and erase remain Go-only.
+  meeting/memory adapters, keyprovider and encrypted backup/restore remain Go-only.
 - UUID/time defaults, stream I/O failures and non-UTF-8 CSV inputs need adapters.
 - Planning currently uses per-row queries rather than Go's batched queries;
   batch-scale performance/concurrency are not certified.

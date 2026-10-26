@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/templatepath"
@@ -40,6 +41,8 @@ import (
 const (
 	defaultOutput = "testdata/port/core/template-path.json"
 	stabilityRuns = 64
+	// maxDriftReports bounds the diagnostic printed when --check finds drift.
+	maxDriftReports = 5
 )
 
 type document struct {
@@ -120,6 +123,9 @@ func main() {
 			fatal("read fixture: %v", err)
 		}
 		if !bytes.Equal(existing, content) {
+			for _, line := range describeDrift(existing, content, maxDriftReports) {
+				fmt.Fprintln(os.Stderr, line)
+			}
 			fatal("template-path fixture drift; regenerate deliberately")
 		}
 		fmt.Println("PASS template-path fixture")
@@ -594,6 +600,66 @@ func manyKnown(base, ext string, count int) []string {
 		known = append(known, fmt.Sprintf("%s_%d%s", base, i, ext))
 	}
 	return known
+}
+
+// describeDrift explains why the committed fixture bytes differ from the freshly
+// generated ones: header counters first, then the first differing cases in
+// fixture order, at most limit lines in total. It is deterministic and never
+// writes anything, so --check stays strict while a failing host reports the
+// observed value next to the expected one.
+func describeDrift(existing, fresh []byte, limit int) []string {
+	var want, got document
+	if err := json.Unmarshal(existing, &want); err != nil {
+		return []string{fmt.Sprintf("drift: committed fixture is not decodable: %v", err)}
+	}
+	if err := json.Unmarshal(fresh, &got); err != nil {
+		return []string{fmt.Sprintf("drift: observed fixture is not decodable: %v", err)}
+	}
+	var lines []string
+	add := func(format string, args ...any) {
+		if len(lines) < limit {
+			lines = append(lines, fmt.Sprintf("drift: "+format, args...))
+		}
+	}
+	if want.Oracle != got.Oracle {
+		add("oracle expected %+v observed %+v", want.Oracle, got.Oracle)
+	}
+	if want.NondeterministicSkipped != got.NondeterministicSkipped {
+		add("nondeterministic_skipped expected %d observed %d", want.NondeterministicSkipped, got.NondeterministicSkipped)
+	}
+	if want.HostDependentSkipped != got.HostDependentSkipped {
+		add("host_dependent_skipped expected %d observed %d", want.HostDependentSkipped, got.HostDependentSkipped)
+	}
+	diffCases(add, "compile", len(want.Cases.Compile), len(got.Cases.Compile), func(i int) (string, string, string, bool) {
+		w, g := want.Cases.Compile[i], got.Cases.Compile[i]
+		return w.ID, fmt.Sprintf("%+v", w), fmt.Sprintf("%+v", g), w == g
+	})
+	diffCases(add, "eval", len(want.Cases.Eval), len(got.Cases.Eval), func(i int) (string, string, string, bool) {
+		w, g := want.Cases.Eval[i], got.Cases.Eval[i]
+		return w.ID, fmt.Sprintf("%+v", w), fmt.Sprintf("%+v", g), reflect.DeepEqual(w, g)
+	})
+	diffCases(add, "disambiguate", len(want.Cases.Disambiguate), len(got.Cases.Disambiguate), func(i int) (string, string, string, bool) {
+		w, g := want.Cases.Disambiguate[i], got.Cases.Disambiguate[i]
+		return w.ID, fmt.Sprintf("%+v", w), fmt.Sprintf("%+v", g), reflect.DeepEqual(w, g)
+	})
+	if len(lines) == 0 {
+		add("bytes differ but decoded fixtures are equal (formatting or line endings)")
+	}
+	return lines
+}
+
+// diffCases reports a length mismatch and then every index at which the
+// expected and observed case differ.
+func diffCases(add func(string, ...any), kind string, wantLen, gotLen int, at func(int) (string, string, string, bool)) {
+	if wantLen != gotLen {
+		add("%s case count expected %d observed %d", kind, wantLen, gotLen)
+	}
+	for i := 0; i < min(wantLen, gotLen); i++ {
+		id, want, got, same := at(i)
+		if !same {
+			add("%s case %s expected %s observed %s", kind, id, want, got)
+		}
+	}
 }
 
 func fatal(format string, args ...any) {

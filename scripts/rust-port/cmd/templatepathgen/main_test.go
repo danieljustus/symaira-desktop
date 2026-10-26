@@ -95,3 +95,43 @@ func TestRecordedOutputsAreHostIndependent(t *testing.T) {
 		}
 	}
 }
+
+// TestDescribeDriftNamesFirstDifferingCases proves the --check diagnostic is
+// bounded, deterministic and points at the differing case.
+func TestDescribeDriftNamesFirstDifferingCases(t *testing.T) {
+	root, err := fixtureoracle.FindRepositoryRoot(".")
+	if err != nil {
+		t.Fatalf("find repository root: %v", err)
+	}
+	content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(defaultOutput))) // #nosec G304 -- committed fixture
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	if lines := describeDrift(content, content, maxDriftReports); len(lines) != 1 || !strings.Contains(lines[0], "decoded fixtures are equal") {
+		t.Fatalf("identical fixtures reported %v", lines)
+	}
+	var doc document
+	if err := json.Unmarshal(content, &doc); err != nil {
+		t.Fatalf("decode fixture: %v", err)
+	}
+	doc.HostDependentSkipped++
+	for i := range doc.Cases.Eval {
+		doc.Cases.Eval[i].Output += "!"
+	}
+	doc.Cases.Compile = doc.Cases.Compile[:len(doc.Cases.Compile)-1]
+	mutated, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	lines := describeDrift(content, mutated, maxDriftReports)
+	if len(lines) != maxDriftReports {
+		t.Fatalf("expected %d bounded lines, got %d: %v", maxDriftReports, len(lines), lines)
+	}
+	if !strings.Contains(lines[0], "host_dependent_skipped") || !strings.Contains(lines[1], "compile case count") ||
+		!strings.Contains(lines[2], "eval case "+doc.Cases.Eval[0].ID) {
+		t.Fatalf("unexpected diagnostic order: %v", lines)
+	}
+	if again := describeDrift(content, mutated, maxDriftReports); !reflect.DeepEqual(lines, again) {
+		t.Fatal("diagnostic is not deterministic")
+	}
+}

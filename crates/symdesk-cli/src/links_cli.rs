@@ -23,7 +23,7 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
             index += 1;
             continue;
         }
-        selected = token == "backlinks";
+        selected = matches!(token, "backlinks" | "graph");
         if token == "relations" {
             index += 1;
             while index < args.len() {

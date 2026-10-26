@@ -36,7 +36,45 @@ fn references(value: &str, target: &str) -> bool {
     false
 }
 
+/// Indexed documents and raw edges, retaining SQLite's production query order.
+pub type GraphInputs = (Vec<symdesk_vault::ResolveDocument>, Vec<(String, String)>);
+
 impl Sidecar {
+    /// Read the local graph without re-parsing potentially changed vault files.
+    ///
+    /// # Errors
+    /// Returns errors reading the derived index.
+    pub fn graph_inputs(&self) -> Result<GraphInputs, SidecarError> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT path, title FROM files ORDER BY path ASC")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        let mut documents = Vec::new();
+        for row in rows {
+            let (path, title) = row?;
+            let aliases = self
+                .link_properties(&path)
+                .ok()
+                .and_then(|p| p.get("aliases").map(|v| aliases(v)))
+                .unwrap_or_default();
+            documents.push(symdesk_vault::ResolveDocument {
+                path,
+                title,
+                aliases,
+                links: Vec::new(),
+            });
+        }
+        let mut statement = self
+            .connection
+            .prepare("SELECT from_path, to_path FROM links")?;
+        let edges = statement
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok((documents, edges))
+    }
+
     fn link_properties(
         &self,
         path: &str,

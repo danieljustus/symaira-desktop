@@ -36,7 +36,7 @@ fn text(
         ..Default::default()
     }));
 }
-/// Unsupported chart lowering remains explicit rather than silently emitting a graph.
+/// Validate and lower an IR diagram into its positioned scene.
 pub fn build_scene(d: &ir::Diagram) -> Result<Scene, String> {
     ir::validate(d).map_err(|e| {
         format!(
@@ -46,7 +46,7 @@ pub fn build_scene(d: &ir::Diagram) -> Result<Scene, String> {
         )
     })?;
     if d.kind == "chart" || d.chart.is_some() {
-        return Err("chart scene lowering is not ported".into());
+        return super::chart::build_chart_scene(d);
     }
     if d.kind == "sequence" {
         return sequence_scene(d);

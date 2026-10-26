@@ -7,8 +7,8 @@
 //! metrics (`Ascent`, `Descent`, `Height`, `XHeight`, `CapHeight`) at
 //! `font.HintingNone`, including `fixed.Int26_6` (int32) arithmetic.
 //!
-//! Not covered (the embedded Inter fonts never need them): glyph outlines
-//! (`glyf`/`loca` parsing, `LoadGlyph`), kerning, `post`, CFF/OpenType-PostScript
+//! Unhinted TrueType glyph outlines (`glyf`/`loca`, `LoadGlyph`) are implemented
+//! by `sfnt_outline.rs`. Not covered: kerning, `post`, CFF/OpenType-PostScript
 //! fonts, `cmap` format 0 and `OS/2` versions below 2. Fonts needing those are
 //! rejected with [`FontError::Unsupported`] instead of being measured wrongly.
 //! Go additionally validates the `glyf`/`loca`/`post`/`kern`/`GPOS` tables at
@@ -16,6 +16,10 @@
 //! files is not frozen (only the embedded fonts are).
 
 use std::fmt;
+
+#[path = "sfnt_outline.rs"]
+mod outline;
+pub use outline::GlyphSegment;
 
 const MAX_NUM_TABLES: usize = 256;
 const MAX_TABLE_OFFSET: u32 = 1 << 29;

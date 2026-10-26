@@ -13,21 +13,32 @@ GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderemitgen --check
 make render-emit-differential
 ```
 
-The fixture has 1,290 cases: 815 source inputs, 471 raw IR inputs and four
-primitive scenes; 48 cases pin exact lowering errors. All successful SVG
+The fixture has 7,344 cases: the 1,350 scene/SVG cases include 59 accepted chart
+inputs spanning all six
+chart kinds, empty and ragged series, explicit bounds, colors, titles and legends;
+49 cases pin exact lowering errors. All successful SVG
 strings compare byte-for-byte, including whitespace, XML escaping, metadata
 order, embedded font hashes, linked groups, markers and measured text lengths.
 No output normalization is applied. Rounded SVG coordinates, rather than raw
 scene-bound JSON floats, are the output contract: existing scene/layout
 fixtures retain their own documented FMA/hypotenuse exclusions.
 
+Three input cases are withheld because `axisMin + i*step` has distinct fused
+and unfused results, changing visible tick text. `chartFMAAmbiguous` checks both
+forms independent of the host. Scatter deliberately retains Go's shadowed
+nice-axis behavior (grid uses nice bounds; points use raw bounds).
+
+The other 5,994 cases cover glyph output: all 5,874 glyphs across embedded Inter
+Regular/Bold at 13.25px (SHA-256 of every exact fixed-point operation/coordinate),
+and 120 complete TextAsPaths SVGs covering both weights, three anchors, five
+baselines, Unicode/compound glyphs, unsupported-character fallback, whitespace,
+empty text and linked nested groups. Empty outlines fall back to text elements
+exactly as Go does. Go's unusual outline Y inversion is retained, not corrected.
+General corrupted-font acceptance parity and CFF fonts remain outside the frozen
+embedded-font contract.
+
 ## Remaining work (not accepted by this gate)
 
-- Chart lowering (`internal/draw/chart.go`): 15 chart inputs are counted and
-  withheld, not passed. Rust returns an explicit unsupported error for a valid
-  chart; a regression pins that deliberate temporary divergence.
-- SVG `TextAsPaths` and glyph outlines: `SvgOptions` deliberately exposes only
-  font hash and generator options. No text-as-path parity is claimed.
 - Typst serialization/compilation, PDF and raster PNG/GIF emitters are not ported
   here. In particular Go PNG/GIF include pure-Go raster work; their omission is
   remaining implementation, not an assertion that every format requires an

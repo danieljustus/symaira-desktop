@@ -1,10 +1,11 @@
 //! Deterministic SVG serialization of the production scene graph.
-//! Text outlines are a separate, not-yet-ported font operation.
+//! Supports text elements and unhinted embedded-Inter text outlines.
 use super::measure::{FontWeight, Measurer};
 use super::scene::*;
 
 #[derive(Debug, Default, Clone)]
 pub struct SvgOptions {
+    pub text_as_paths: bool,
     pub font_hash: String,
     pub generator: String,
 }
@@ -131,21 +132,21 @@ fn link(p: &Primitive) -> &str {
         _ => "",
     }
 }
-fn linked(out: &mut String, p: &Primitive, indent: &str, m: &Measurer) {
+fn linked(out: &mut String, p: &Primitive, indent: &str, m: &Measurer, paths: bool) {
     out.push_str(indent);
     if !link(p).is_empty() {
         out.push_str("<a");
         attr(out, "href", link(p));
         out.push_str(">\n");
-        primitive(out, p, &format!("{indent}  "), m);
+        primitive(out, p, &format!("{indent}  "), m, paths);
         out.push('\n');
         out.push_str(indent);
         out.push_str("</a>");
     } else {
-        primitive(out, p, indent, m);
+        primitive(out, p, indent, m, paths);
     }
 }
-fn primitive(out: &mut String, p: &Primitive, indent: &str, m: &Measurer) {
+fn primitive(out: &mut String, p: &Primitive, indent: &str, m: &Measurer, paths: bool) {
     macro_rules! common {
         ($e:expr,$dash:expr) => {
             common(
@@ -248,13 +249,58 @@ fn primitive(out: &mut String, p: &Primitive, indent: &str, m: &Measurer) {
             optional(out, "transform", &e.transform);
             out.push_str(">\n");
             for child in e.children.as_deref().unwrap_or_default() {
-                linked(out, child, &format!("{indent}  "), m);
+                linked(out, child, &format!("{indent}  "), m, paths);
                 out.push('\n');
             }
             out.push_str(indent);
             out.push_str("</g>");
         }
         Primitive::Text(e) => {
+            if paths {
+                let size = if e.font_size <= 0.0 {
+                    14.0
+                } else {
+                    e.font_size
+                };
+                let weight = FontWeight::from_go(&e.font_weight);
+                let width = if e.text_length <= 0.0 {
+                    m.measure_text(&e.text, size, weight).0
+                } else {
+                    e.text_length
+                };
+                let x = match e.anchor.as_str() {
+                    "middle" => e.x - width / 2.0,
+                    "end" => e.x - width,
+                    _ => e.x,
+                };
+                let metrics = m
+                    .measure_text_detailed("Ag", size, weight)
+                    .expect("embedded font metrics");
+                let y = match e.baseline.as_str() {
+                    "middle" | "central" => e.y + metrics.line_height / 2.0 - metrics.descent,
+                    "hanging" | "top" => e.y + metrics.ascent,
+                    _ => e.y,
+                };
+                let segments = m.outlines(&e.text, size, weight, x, y);
+                if !segments.is_empty() {
+                    out.push_str("<path");
+                    attr(
+                        out,
+                        "fill",
+                        if e.fill.is_empty() {
+                            "#F5F4F0"
+                        } else {
+                            &e.fill
+                        },
+                    );
+                    attr(out, "d", &segments_to_svg_path(&segments));
+                    optional(out, "id", &e.id);
+                    optional(out, "class", &e.class);
+                    opacity(out, e.opacity);
+                    out.push_str(" />");
+                    return;
+                }
+            }
             out.push_str("<text");
             optional(out, "id", &e.id);
             optional(out, "class", &e.class);
@@ -374,7 +420,7 @@ pub fn emit_svg(scene: Option<&Scene>, opts: &SvgOptions) -> Result<String, Stri
             out.push_str(">\n");
             if let Some(p) = &e.path {
                 out.push_str("      ");
-                primitive(&mut out, p, "      ", m);
+                primitive(&mut out, p, "      ", m, opts.text_as_paths);
                 out.push('\n');
             }
             out.push_str("    </marker>\n");
@@ -391,7 +437,7 @@ pub fn emit_svg(scene: Option<&Scene>, opts: &SvgOptions) -> Result<String, Stri
         out.push_str(" />\n");
     }
     for p in &sc.primitives {
-        linked(&mut out, p, "  ", m);
+        linked(&mut out, p, "  ", m, opts.text_as_paths);
         out.push('\n');
     }
     out.push_str("</svg>\n");

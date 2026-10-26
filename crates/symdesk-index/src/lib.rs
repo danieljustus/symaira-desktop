@@ -26,6 +26,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 mod backup;
 mod dataset_purge;
 mod dataset_sync;
+pub mod docs;
 mod duplicates;
 mod history_sync;
 pub mod index_status;

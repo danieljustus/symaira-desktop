@@ -4,6 +4,7 @@ mod ai_cli;
 mod ai_secrets;
 mod config_paths;
 mod dataset;
+mod docs_cli;
 mod duplicates_cli;
 mod history;
 mod http;
@@ -56,6 +57,9 @@ fn main() -> ExitCode {
     }
     rewrite_index_output_flag(&mut args);
     rewrite_config_paths_repeated_flags(&mut args);
+    if let Some(exit) = docs_cli::preprocess(&mut args) {
+        return exit;
+    }
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -201,6 +205,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("similar", command)) => duplicates_cli::run_similar(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("docs", command)) => docs_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -521,6 +530,7 @@ fn cli() -> Command {
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
+        .subcommand(docs_cli::cli())
         .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")

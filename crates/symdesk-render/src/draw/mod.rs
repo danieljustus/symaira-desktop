@@ -3,14 +3,16 @@
 //! model/validation it feeds, plus the `internal/draw/measure` text
 //! measurement layer (`measure`, backed by the minimal `sfnt` reader) that
 //! layout and emit depend on, the `internal/draw/theme` registry and the
-//! `internal/draw/scene` graph (primitives, bounds, JSON). Layout and
-//! SVG/PDF output are not part of this module.
+//! `internal/draw/scene` graph (primitives, bounds, JSON) and the
+//! `internal/draw/layout` engines (layered graph layout, closed-form sequence
+//! layout). Builder lowering and SVG/PDF output are not part of this module.
 
 mod gotext;
 #[rustfmt::skip]
 mod go_unicode;
 pub mod ir;
 mod json;
+pub mod layout;
 pub mod measure;
 mod mermaid;
 pub mod scene;
@@ -22,6 +24,13 @@ pub use ir::{Diagram, ValidationError, Value, validate};
 pub use mermaid::DIALECT_VERSION;
 
 use gotext::{quote, trim_space};
+
+/// The `parse.ParseJSON` decoder (strict, unknown fields rejected) without
+/// `ir.Validate`: the input of the layout engines' own rejections, which the
+/// validator makes unreachable through `parse_source`.
+pub fn decode_unvalidated(data: &[u8]) -> Result<Diagram, String> {
+    json::decode_diagram(data)
+}
 
 /// Go `parse.ParseError`: stage is `parse`, `schema` or `contract`.
 #[derive(Debug, Clone, PartialEq, Eq)]

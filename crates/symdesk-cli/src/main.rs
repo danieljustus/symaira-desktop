@@ -4,6 +4,7 @@ mod ai_cli;
 mod ai_secrets;
 mod config_paths;
 mod dataset;
+mod duplicates_cli;
 mod history;
 mod http;
 mod index_cli;
@@ -194,6 +195,16 @@ fn main() -> ExitCode {
             ),
             _ => process_exit(CoreExitCode::Ok),
         },
+        Some(("duplicates", command)) => duplicates_cli::run_duplicates(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("similar", command)) => duplicates_cli::run_similar(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("recipe", command)) => recipe::run(command, output_json),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
@@ -505,6 +516,8 @@ fn cli() -> Command {
                 .subcommand(Command::new("tasks")),
         )
         .subcommand(retention::cli())
+        .subcommand(duplicates_cli::duplicates_cli())
+        .subcommand(duplicates_cli::similar_cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())

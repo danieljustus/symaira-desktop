@@ -435,6 +435,10 @@ jobs:
         shell: bash
         run: make history-tasks-cli-differential
 
+      - name: Run native duplicates CLI differential
+        shell: bash
+        run: make duplicates-cli-differential
+
       - name: Run native retention differential
         shell: bash
         run: make vault-retention-differential

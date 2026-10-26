@@ -1,0 +1,1896 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "groups-mixed",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "b.md": "---\ntitle: Beta\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river today\n",
+        "badstore.md": "---\ntitle: Bad Stored\nsimhash: zz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river badstore\n",
+        "blank.md": "---\ntitle: Blank\n---\n   \n\t\n",
+        "c.md": "---\ntitle: Gamma\n---\ncompletely different text about rust and go ports of markdown vault tools, with sqlite fts and simhash similarity across a very long document body\n",
+        "empty.md": "---\ntitle: Empty\n---\n",
+        "hexstore.md": "---\ntitle: Hex Stored\nsimhash: zzzzzzzzzzzzzzzz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river hexstore\n",
+        "long/ref.md": "---\ntitle: Ref\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "preset.md": "---\ntitle: Preset\nsimhash: 0000000000000000\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river preset\n",
+        "short.md": "---\ntitle: Short\n---\nshort\n",
+        "short2.md": "---\ntitle: Short Two\n---\nshort\n",
+        "sub/nest.md": "---\ntitle: Nested\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river nested\n",
+        "title-only.md": "---\ntitle: Only\n---\nx\n",
+        "unicode.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river ünï\n",
+        "w-dup.md": "---\ntitle: Dup\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100}]},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"members\":[{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":100}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100}]} {Path:sub/nest.md Title:Nested Members:[{Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:100}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold=60"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93},{\"path\":\"c.md\",\"title\":\"Gamma\",\"similarity\":60}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold=60"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93} {Path:c.md Title:Gamma Similarity:60}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93},{\"path\":\"c.md\",\"title\":\"Gamma\",\"similarity\":60},{\"path\":\"short.md\",\"title\":\"Short\",\"similarity\":50},{\"path\":\"short2.md\",\"title\":\"Short Two\",\"similarity\":50},{\"path\":\"title-only.md\",\"title\":\"Only\",\"similarity\":43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93} {Path:c.md Title:Gamma Similarity:60} {Path:short.md Title:Short Similarity:50} {Path:short2.md Title:Short Two Similarity:50} {Path:title-only.md Title:Only Similarity:43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "100"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100}]},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"members\":[{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":100}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "100"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100}]} {Path:sub/nest.md Title:Nested Members:[{Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:100}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "-7"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "-7"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "0x32"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93},{\"path\":\"c.md\",\"title\":\"Gamma\",\"similarity\":60},{\"path\":\"short.md\",\"title\":\"Short\",\"similarity\":50},{\"path\":\"short2.md\",\"title\":\"Short Two\",\"similarity\":50},{\"path\":\"title-only.md\",\"title\":\"Only\",\"similarity\":43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "0x32"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93} {Path:c.md Title:Gamma Similarity:60} {Path:short.md Title:Short Similarity:50} {Path:short2.md Title:Short Two Similarity:50} {Path:title-only.md Title:Only Similarity:43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "1_0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93},{\"path\":\"c.md\",\"title\":\"Gamma\",\"similarity\":60},{\"path\":\"short.md\",\"title\":\"Short\",\"similarity\":50},{\"path\":\"short2.md\",\"title\":\"Short Two\",\"similarity\":50},{\"path\":\"title-only.md\",\"title\":\"Only\",\"similarity\":43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "1_0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93} {Path:c.md Title:Gamma Similarity:60} {Path:short.md Title:Short Similarity:50} {Path:short2.md Title:Short Two Similarity:50} {Path:title-only.md Title:Only Similarity:43}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "60",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100}]} {Path:sub/nest.md Title:Nested Members:[{Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:100}]}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "groups-chain",
+      "files": {
+        "chain-0.md": "---\ntitle: Chain 0\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-1.md": "---\ntitle: Chain 1\n---\nw0 w1 w2 fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-2.md": "---\ntitle: Chain 2\n---\nw0 w1 w2 w3 w4 w5 the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-3.md": "---\ntitle: Chain 3\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-4.md": "---\ntitle: Chain 4\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-5.md": "---\ntitle: Chain 5\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-6.md": "---\ntitle: Chain 6\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-7.md": "---\ntitle: Chain 7\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 grey afternoon beside the river\n",
+        "other.md": "---\ntitle: Other\n---\nan unrelated essay on sourdough starters, hydration ratios, oven spring, scoring patterns and the patience required to bake good bread at home every weekend\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "95"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"members\":[{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":95}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "95"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-3.md Title:Chain 3 Members:[{Path:chain-4.md Title:Chain 4 Similarity:95}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "90"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92}]},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"members\":[{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":95}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "90"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92}]} {Path:chain-3.md Title:Chain 3 Members:[{Path:chain-4.md Title:Chain 4 Similarity:95}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92},{\"path\":\"chain-2.md\",\"title\":\"Chain 2\",\"similarity\":78}]},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"members\":[{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":95},{\"path\":\"chain-5.md\",\"title\":\"Chain 5\",\"similarity\":89}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92} {Path:chain-2.md Title:Chain 2 Similarity:78}]} {Path:chain-3.md Title:Chain 3 Members:[{Path:chain-4.md Title:Chain 4 Similarity:95} {Path:chain-5.md Title:Chain 5 Similarity:89}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "80"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92},{\"path\":\"chain-2.md\",\"title\":\"Chain 2\",\"similarity\":78},{\"path\":\"chain-5.md\",\"title\":\"Chain 5\",\"similarity\":67},{\"path\":\"chain-6.md\",\"title\":\"Chain 6\",\"similarity\":67},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"similarity\":65},{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":60}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "80"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92} {Path:chain-2.md Title:Chain 2 Similarity:78} {Path:chain-5.md Title:Chain 5 Similarity:67} {Path:chain-6.md Title:Chain 6 Similarity:67} {Path:chain-3.md Title:Chain 3 Similarity:65} {Path:chain-4.md Title:Chain 4 Similarity:60}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "70"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92},{\"path\":\"chain-2.md\",\"title\":\"Chain 2\",\"similarity\":78},{\"path\":\"chain-5.md\",\"title\":\"Chain 5\",\"similarity\":67},{\"path\":\"chain-6.md\",\"title\":\"Chain 6\",\"similarity\":67},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"similarity\":65},{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":60},{\"path\":\"chain-7.md\",\"title\":\"Chain 7\",\"similarity\":56}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "70"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92} {Path:chain-2.md Title:Chain 2 Similarity:78} {Path:chain-5.md Title:Chain 5 Similarity:67} {Path:chain-6.md Title:Chain 6 Similarity:67} {Path:chain-3.md Title:Chain 3 Similarity:65} {Path:chain-4.md Title:Chain 4 Similarity:60} {Path:chain-7.md Title:Chain 7 Similarity:56}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92},{\"path\":\"chain-2.md\",\"title\":\"Chain 2\",\"similarity\":78},{\"path\":\"chain-5.md\",\"title\":\"Chain 5\",\"similarity\":67},{\"path\":\"chain-6.md\",\"title\":\"Chain 6\",\"similarity\":67},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"similarity\":65},{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":60},{\"path\":\"chain-7.md\",\"title\":\"Chain 7\",\"similarity\":56},{\"path\":\"other.md\",\"title\":\"Other\",\"similarity\":56}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92} {Path:chain-2.md Title:Chain 2 Similarity:78} {Path:chain-5.md Title:Chain 5 Similarity:67} {Path:chain-6.md Title:Chain 6 Similarity:67} {Path:chain-3.md Title:Chain 3 Similarity:65} {Path:chain-4.md Title:Chain 4 Similarity:60} {Path:chain-7.md Title:Chain 7 Similarity:56} {Path:other.md Title:Other Similarity:56}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"chain-0.md\",\"title\":\"Chain 0\",\"members\":[{\"path\":\"chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92},{\"path\":\"chain-2.md\",\"title\":\"Chain 2\",\"similarity\":78},{\"path\":\"chain-5.md\",\"title\":\"Chain 5\",\"similarity\":67},{\"path\":\"chain-6.md\",\"title\":\"Chain 6\",\"similarity\":67},{\"path\":\"chain-3.md\",\"title\":\"Chain 3\",\"similarity\":65},{\"path\":\"chain-4.md\",\"title\":\"Chain 4\",\"similarity\":60},{\"path\":\"chain-7.md\",\"title\":\"Chain 7\",\"similarity\":56},{\"path\":\"other.md\",\"title\":\"Other\",\"similarity\":56}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:chain-0.md Title:Chain 0 Members:[{Path:chain-1.md Title:Chain 1 Similarity:92} {Path:chain-2.md Title:Chain 2 Similarity:78} {Path:chain-5.md Title:Chain 5 Similarity:67} {Path:chain-6.md Title:Chain 6 Similarity:67} {Path:chain-3.md Title:Chain 3 Similarity:65} {Path:chain-4.md Title:Chain 4 Similarity:60} {Path:chain-7.md Title:Chain 7 Similarity:56} {Path:other.md Title:Other Similarity:56}]}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "groups-none",
+      "files": {
+        "one.md": "---\ntitle: One\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "two.md": "---\ntitle: Two\n---\nan unrelated essay on sourdough starters, hydration ratios, oven spring, scoring patterns and the patience required to bake good bread at home every weekend\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "groups-unindexed",
+      "files": {
+        "one.md": "---\ntitle: One\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "two.md": "---\ntitle: Two\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "similar-mixed",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "b.md": "---\ntitle: Beta\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river today\n",
+        "badstore.md": "---\ntitle: Bad Stored\nsimhash: zz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river badstore\n",
+        "blank.md": "---\ntitle: Blank\n---\n   \n\t\n",
+        "c.md": "---\ntitle: Gamma\n---\ncompletely different text about rust and go ports of markdown vault tools, with sqlite fts and simhash similarity across a very long document body\n",
+        "empty.md": "---\ntitle: Empty\n---\n",
+        "hexstore.md": "---\ntitle: Hex Stored\nsimhash: zzzzzzzzzzzzzzzz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river hexstore\n",
+        "long/ref.md": "---\ntitle: Ref\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "preset.md": "---\ntitle: Preset\nsimhash: 0000000000000000\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river preset\n",
+        "short.md": "---\ntitle: Short\n---\nshort\n",
+        "short2.md": "---\ntitle: Short Two\n---\nshort\n",
+        "sub/nest.md": "---\ntitle: Nested\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river nested\n",
+        "title-only.md": "---\ntitle: Only\n---\nx\n",
+        "unicode.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river ünï\n",
+        "w-dup.md": "---\ntitle: Dup\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "a.md",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/blank.md\",\"title\":\"Blank\",\"similarity\":46,\"simhash\":\"0000000000000000\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":60,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":43,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "a.md",
+            "--threshold",
+            "10"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/blank.md Title:Blank Similarity:46 Simhash:0000000000000000 Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:60 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/short.md Title:Short Similarity:54 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/short2.md Title:Short Two Similarity:54 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:43 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold=1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/blank.md\",\"title\":\"Blank\",\"similarity\":46,\"simhash\":\"0000000000000000\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":60,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":43,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold=1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/blank.md Title:Blank Similarity:46 Simhash:0000000000000000 Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:60 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/short.md Title:Short Similarity:54 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/short2.md Title:Short Two Similarity:54 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:43 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "-4"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold",
+            "-4"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "c.md",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "c.md",
+            "--threshold",
+            "99"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "sub/nest.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":96,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "sub/nest.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:96 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:96 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:96 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:96 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "./sub/../a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "./sub/../a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "short.md",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":53,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":59,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":51,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":54,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":57,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":54,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "short.md",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:54 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:53 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:59 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:54 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:51 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:54 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:57 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:54 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:54 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "empty.md",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":64,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":53,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":50,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":53,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":50,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "empty.md",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/c.md Title:Gamma Similarity:64 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:53 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:50 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:53 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:50 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "unicode.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":96,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":96,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "unicode.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:96 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:96 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:96 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:96 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "preset.md",
+            "--threshold",
+            "40"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":95,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/blank.md\",\"title\":\"Blank\",\"similarity\":53,\"simhash\":\"0000000000000000\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":60,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":51,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":51,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":40,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "preset.md",
+            "--threshold",
+            "40"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:93 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:95 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/blank.md Title:Blank Similarity:53 Simhash:0000000000000000 Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:60 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:93 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/short.md Title:Short Similarity:51 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/short2.md Title:Short Two Similarity:51 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:40 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:93 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "title-only.md",
+            "--threshold",
+            "30"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":43,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":42,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/blank.md\",\"title\":\"Blank\",\"similarity\":53,\"simhash\":\"0000000000000000\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":70,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":43,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":40,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":57,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":57,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":43,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":43,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":43,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "title-only.md",
+            "--threshold",
+            "30"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:43 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:42 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/blank.md Title:Blank Similarity:53 Simhash:0000000000000000 Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:70 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:43 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:40 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/short.md Title:Short Similarity:57 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/short2.md Title:Short Two Similarity:57 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:43 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:43 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:43 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "50"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":60,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "--threshold",
+            "50",
+            "a.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":60,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":54,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "duplicates",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":98,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":93,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "yaml",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "text",
+            "similar",
+            "a.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/b.md Title:Beta Similarity:98 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:93 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "similar-chain",
+      "files": {
+        "chain-0.md": "---\ntitle: Chain 0\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-1.md": "---\ntitle: Chain 1\n---\nw0 w1 w2 fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-2.md": "---\ntitle: Chain 2\n---\nw0 w1 w2 w3 w4 w5 the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-3.md": "---\ntitle: Chain 3\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-4.md": "---\ntitle: Chain 4\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-5.md": "---\ntitle: Chain 5\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-6.md": "---\ntitle: Chain 6\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 and everyone sleeps through the long grey afternoon beside the river\n",
+        "chain-7.md": "---\ntitle: Chain 7\n---\nw0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 grey afternoon beside the river\n",
+        "other.md": "---\ntitle: Other\n---\nan unrelated essay on sourdough starters, hydration ratios, oven spring, scoring patterns and the patience required to bake good bread at home every weekend\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "chain-0.md",
+            "--threshold",
+            "90"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/chain-1.md\",\"title\":\"Chain 1\",\"similarity\":92,\"simhash\":\"4af1c1195465f15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "chain-0.md",
+            "--threshold",
+            "90"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/chain-1.md Title:Chain 1 Similarity:92 Simhash:4af1c1195465f15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "chain-3.md",
+            "--threshold",
+            "80"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/chain-2.md\",\"title\":\"Chain 2\",\"similarity\":84,\"simhash\":\"48f1c10f3565715c\"},{\"path\":\"$ROOT/vault/chain-4.md\",\"title\":\"Chain 4\",\"similarity\":95,\"simhash\":\"08c38107b56d7014\"},{\"path\":\"$ROOT/vault/chain-5.md\",\"title\":\"Chain 5\",\"similarity\":89,\"simhash\":\"4ad38307356d7057\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "chain-3.md",
+            "--threshold",
+            "80"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/chain-2.md Title:Chain 2 Similarity:84 Simhash:48f1c10f3565715c Body:} {Path:$ROOT/vault/chain-4.md Title:Chain 4 Similarity:95 Simhash:08c38107b56d7014 Body:} {Path:$ROOT/vault/chain-5.md Title:Chain 5 Similarity:89 Simhash:4ad38307356d7057 Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "chain-7.md",
+            "--threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/chain-0.md\",\"title\":\"Chain 0\",\"similarity\":56,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/chain-1.md\",\"title\":\"Chain 1\",\"similarity\":60,\"simhash\":\"4af1c1195465f15e\"},{\"path\":\"$ROOT/vault/chain-2.md\",\"title\":\"Chain 2\",\"similarity\":53,\"simhash\":\"48f1c10f3565715c\"},{\"path\":\"$ROOT/vault/chain-3.md\",\"title\":\"Chain 3\",\"similarity\":59,\"simhash\":\"08e38107b56d7056\"},{\"path\":\"$ROOT/vault/chain-4.md\",\"title\":\"Chain 4\",\"similarity\":60,\"simhash\":\"08c38107b56d7014\"},{\"path\":\"$ROOT/vault/chain-5.md\",\"title\":\"Chain 5\",\"similarity\":67,\"simhash\":\"4ad38307356d7057\"},{\"path\":\"$ROOT/vault/chain-6.md\",\"title\":\"Chain 6\",\"similarity\":73,\"simhash\":\"4ad18313056d5412\"},{\"path\":\"$ROOT/vault/other.md\",\"title\":\"Other\",\"similarity\":43,\"simhash\":\"08b410076746c504\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "chain-7.md",
+            "--threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/chain-0.md Title:Chain 0 Similarity:56 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/chain-1.md Title:Chain 1 Similarity:60 Simhash:4af1c1195465f15e Body:} {Path:$ROOT/vault/chain-2.md Title:Chain 2 Similarity:53 Simhash:48f1c10f3565715c Body:} {Path:$ROOT/vault/chain-3.md Title:Chain 3 Similarity:59 Simhash:08e38107b56d7056 Body:} {Path:$ROOT/vault/chain-4.md Title:Chain 4 Similarity:60 Simhash:08c38107b56d7014 Body:} {Path:$ROOT/vault/chain-5.md Title:Chain 5 Similarity:67 Simhash:4ad38307356d7057 Body:} {Path:$ROOT/vault/chain-6.md Title:Chain 6 Similarity:73 Simhash:4ad18313056d5412 Body:} {Path:$ROOT/vault/other.md Title:Other Similarity:43 Simhash:08b410076746c504 Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "other.md",
+            "--threshold",
+            "40"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/chain-0.md\",\"title\":\"Chain 0\",\"similarity\":56,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/chain-1.md\",\"title\":\"Chain 1\",\"similarity\":57,\"simhash\":\"4af1c1195465f15e\"},{\"path\":\"$ROOT/vault/chain-2.md\",\"title\":\"Chain 2\",\"similarity\":65,\"simhash\":\"48f1c10f3565715c\"},{\"path\":\"$ROOT/vault/chain-3.md\",\"title\":\"Chain 3\",\"similarity\":62,\"simhash\":\"08e38107b56d7056\"},{\"path\":\"$ROOT/vault/chain-4.md\",\"title\":\"Chain 4\",\"similarity\":64,\"simhash\":\"08c38107b56d7014\"},{\"path\":\"$ROOT/vault/chain-5.md\",\"title\":\"Chain 5\",\"similarity\":57,\"simhash\":\"4ad38307356d7057\"},{\"path\":\"$ROOT/vault/chain-6.md\",\"title\":\"Chain 6\",\"similarity\":60,\"simhash\":\"4ad18313056d5412\"},{\"path\":\"$ROOT/vault/chain-7.md\",\"title\":\"Chain 7\",\"similarity\":43,\"simhash\":\"5f43a619496d5497\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "other.md",
+            "--threshold",
+            "40"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/chain-0.md Title:Chain 0 Similarity:56 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/chain-1.md Title:Chain 1 Similarity:57 Simhash:4af1c1195465f15e Body:} {Path:$ROOT/vault/chain-2.md Title:Chain 2 Similarity:65 Simhash:48f1c10f3565715c Body:} {Path:$ROOT/vault/chain-3.md Title:Chain 3 Similarity:62 Simhash:08e38107b56d7056 Body:} {Path:$ROOT/vault/chain-4.md Title:Chain 4 Similarity:64 Simhash:08c38107b56d7014 Body:} {Path:$ROOT/vault/chain-5.md Title:Chain 5 Similarity:57 Simhash:4ad38307356d7057 Body:} {Path:$ROOT/vault/chain-6.md Title:Chain 6 Similarity:60 Simhash:4ad18313056d5412 Body:} {Path:$ROOT/vault/chain-7.md Title:Chain 7 Similarity:43 Simhash:5f43a619496d5497 Body:}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "similar-stored-simhash-errors",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "b.md": "---\ntitle: Beta\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river today\n",
+        "badstore.md": "---\ntitle: Bad Stored\nsimhash: zz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river badstore\n",
+        "blank.md": "---\ntitle: Blank\n---\n   \n\t\n",
+        "c.md": "---\ntitle: Gamma\n---\ncompletely different text about rust and go ports of markdown vault tools, with sqlite fts and simhash similarity across a very long document body\n",
+        "empty.md": "---\ntitle: Empty\n---\n",
+        "hexstore.md": "---\ntitle: Hex Stored\nsimhash: zzzzzzzzzzzzzzzz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river hexstore\n",
+        "long/ref.md": "---\ntitle: Ref\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "preset.md": "---\ntitle: Preset\nsimhash: 0000000000000000\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river preset\n",
+        "short.md": "---\ntitle: Short\n---\nshort\n",
+        "short2.md": "---\ntitle: Short Two\n---\nshort\n",
+        "sub/nest.md": "---\ntitle: Nested\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river nested\n",
+        "title-only.md": "---\ntitle: Only\n---\nx\n",
+        "unicode.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river ünï\n",
+        "w-dup.md": "---\ntitle: Dup\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "post_index_files": {
+        "dupkey.md": "---\ntitle: first\ntitle: second\n---\nbody\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "badstore.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid reference simhash: simhash hex must be 16 characters, got 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "badstore.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid reference simhash: simhash hex must be 16 characters, got 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "hexstore.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid reference simhash: invalid simhash hex: encoding/hex: invalid byte: U+007A 'z'\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "hexstore.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid reference simhash: invalid simhash hex: encoding/hex: invalid byte: U+007A 'z'\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "dupkey.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid frontmatter in $ROOT/vault/dupkey.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "dupkey.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid frontmatter in $ROOT/vault/dupkey.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n"
+        }
+      ]
+    },
+    {
+      "name": "similar-disk-drift",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "b.md": "---\ntitle: Beta\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river today\n",
+        "badstore.md": "---\ntitle: Bad Stored\nsimhash: zz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river badstore\n",
+        "blank.md": "---\ntitle: Blank\n---\n   \n\t\n",
+        "c.md": "---\ntitle: Gamma\n---\ncompletely different text about rust and go ports of markdown vault tools, with sqlite fts and simhash similarity across a very long document body\n",
+        "empty.md": "---\ntitle: Empty\n---\n",
+        "hexstore.md": "---\ntitle: Hex Stored\nsimhash: zzzzzzzzzzzzzzzz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river hexstore\n",
+        "long/ref.md": "---\ntitle: Ref\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "preset.md": "---\ntitle: Preset\nsimhash: 0000000000000000\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river preset\n",
+        "short.md": "---\ntitle: Short\n---\nshort\n",
+        "short2.md": "---\ntitle: Short Two\n---\nshort\n",
+        "sub/nest.md": "---\ntitle: Nested\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river nested\n",
+        "title-only.md": "---\ntitle: Only\n---\nx\n",
+        "unicode.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river ünï\n",
+        "w-dup.md": "---\ntitle: Dup\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "post_index_files": {
+        "a.md": "---\ntitle: Alpha\n---\nnow a completely different body about gardening, soil acidity, compost heaps and the long slow work of growing tomatoes through a cold wet summer\n",
+        "late.md": "---\ntitle: Late\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river late\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "30"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":53,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/blank.md\",\"title\":\"Blank\",\"similarity\":70,\"simhash\":\"0000000000000000\"},{\"path\":\"$ROOT/vault/c.md\",\"title\":\"Gamma\",\"similarity\":75,\"simhash\":\"ec62d50c0611e004\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":54,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/short.md\",\"title\":\"Short\",\"similarity\":50,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/short2.md\",\"title\":\"Short Two\",\"similarity\":50,\"simhash\":\"f6915548f781cd55\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":54,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/title-only.md\",\"title\":\"Only\",\"similarity\":70,\"simhash\":\"af63f54c86021707\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":54,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":54,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold",
+            "30"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:54 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:53 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/blank.md Title:Blank Similarity:70 Simhash:0000000000000000 Body:} {Path:$ROOT/vault/c.md Title:Gamma Similarity:75 Simhash:ec62d50c0611e004 Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:54 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:54 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/short.md Title:Short Similarity:50 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/short2.md Title:Short Two Similarity:50 Simhash:f6915548f781cd55 Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:54 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/title-only.md Title:Only Similarity:70 Simhash:af63f54c86021707 Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:54 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:54 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "late.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/a.md\",\"title\":\"Alpha\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/b.md\",\"title\":\"Beta\",\"similarity\":95,\"simhash\":\"4ef5c9195475e05e\"},{\"path\":\"$ROOT/vault/long/ref.md\",\"title\":\"Ref\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"},{\"path\":\"$ROOT/vault/preset.md\",\"title\":\"Preset\",\"similarity\":96,\"simhash\":\"4af5c9195055e05e\"},{\"path\":\"$ROOT/vault/sub/nest.md\",\"title\":\"Nested\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96,\"simhash\":\"4ef5c9195455e05e\"},{\"path\":\"$ROOT/vault/w-dup.md\",\"title\":\"Dup\",\"similarity\":93,\"simhash\":\"4ef5c9195475e15e\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "late.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/a.md Title:Alpha Similarity:93 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/b.md Title:Beta Similarity:95 Simhash:4ef5c9195475e05e Body:} {Path:$ROOT/vault/long/ref.md Title:Ref Similarity:93 Simhash:4ef5c9195475e15e Body:} {Path:$ROOT/vault/preset.md Title:Preset Similarity:96 Simhash:4af5c9195055e05e Body:} {Path:$ROOT/vault/sub/nest.md Title:Nested Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96 Simhash:4ef5c9195455e05e Body:} {Path:$ROOT/vault/w-dup.md Title:Dup Similarity:93 Simhash:4ef5c9195475e15e Body:}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"a.md\",\"title\":\"Alpha\",\"members\":[{\"path\":\"long/ref.md\",\"title\":\"Ref\",\"similarity\":100},{\"path\":\"w-dup.md\",\"title\":\"Dup\",\"similarity\":100},{\"path\":\"b.md\",\"title\":\"Beta\",\"similarity\":98},{\"path\":\"sub/nest.md\",\"title\":\"Nested\",\"similarity\":96},{\"path\":\"unicode.md\",\"title\":\"Ünï \\u003c\\u0026\\u003e “quoted”\",\"similarity\":96},{\"path\":\"hexstore.md\",\"title\":\"Hex Stored\",\"similarity\":95},{\"path\":\"badstore.md\",\"title\":\"Bad Stored\",\"similarity\":93},{\"path\":\"preset.md\",\"title\":\"Preset\",\"similarity\":93}]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:a.md Title:Alpha Members:[{Path:long/ref.md Title:Ref Similarity:100} {Path:w-dup.md Title:Dup Similarity:100} {Path:b.md Title:Beta Similarity:98} {Path:sub/nest.md Title:Nested Similarity:96} {Path:unicode.md Title:Ünï \u003c\u0026\u003e “quoted” Similarity:96} {Path:hexstore.md Title:Hex Stored Similarity:95} {Path:badstore.md Title:Bad Stored Similarity:93} {Path:preset.md Title:Preset Similarity:93}]}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "similar-path-errors",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "b.md": "---\ntitle: Beta\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river today\n",
+        "badstore.md": "---\ntitle: Bad Stored\nsimhash: zz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river badstore\n",
+        "blank.md": "---\ntitle: Blank\n---\n   \n\t\n",
+        "c.md": "---\ntitle: Gamma\n---\ncompletely different text about rust and go ports of markdown vault tools, with sqlite fts and simhash similarity across a very long document body\n",
+        "empty.md": "---\ntitle: Empty\n---\n",
+        "hexstore.md": "---\ntitle: Hex Stored\nsimhash: zzzzzzzzzzzzzzzz\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river hexstore\n",
+        "long/ref.md": "---\ntitle: Ref\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "preset.md": "---\ntitle: Preset\nsimhash: 0000000000000000\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river preset\n",
+        "short.md": "---\ntitle: Short\n---\nshort\n",
+        "short2.md": "---\ntitle: Short Two\n---\nshort\n",
+        "sub/nest.md": "---\ntitle: Nested\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river nested\n",
+        "title-only.md": "---\ntitle: Only\n---\nx\n",
+        "unicode.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river ünï\n",
+        "w-dup.md": "---\ntitle: Dup\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../outside.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../outside.md is outside vault\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "sub/../../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: sub/../../outside.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "sub/../../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: sub/../../outside.md is outside vault\n"
+        }
+      ]
+    },
+    {
+      "name": "arguments",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "b.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "b.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "a.md",
+            "b.md",
+            "c.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 3\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "a.md",
+            "b.md",
+            "c.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 3\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk duplicates\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk duplicates\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "extra",
+            "more"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk duplicates\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "extra",
+            "more"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk duplicates\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"abc\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"abc\" for \"--threshold\" flag: strconv.ParseInt: parsing \"abc\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"\" for \"--threshold\" flag: strconv.ParseInt: parsing \"\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "1.5"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"1.5\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"1.5\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "1.5"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"1.5\" for \"--threshold\" flag: strconv.ParseInt: parsing \"1.5\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            " 7"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\" 7\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\" 7\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            " 7"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \" 7\" for \"--threshold\" flag: strconv.ParseInt: parsing \" 7\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "08"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"08\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"08\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "08"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"08\" for \"--threshold\" flag: strconv.ParseInt: parsing \"08\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "1__0"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"1__0\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"1__0\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "1__0"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"1__0\" for \"--threshold\" flag: strconv.ParseInt: parsing \"1__0\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "99999999999999999999"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"99999999999999999999\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"99999999999999999999\\\": value out of range\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "99999999999999999999"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"99999999999999999999\" for \"--threshold\" flag: strconv.ParseInt: parsing \"99999999999999999999\": value out of range\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "--threshold",
+            "-99999999999999999999"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"-99999999999999999999\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"-99999999999999999999\\\": value out of range\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "--threshold",
+            "-99999999999999999999"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"-99999999999999999999\" for \"--threshold\" flag: strconv.ParseInt: parsing \"-99999999999999999999\": value out of range\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md",
+            "--threshold",
+            "x\"y\\z"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"x\\\\\\\"y\\\\\\\\z\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"x\\\\\\\"y\\\\\\\\z\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md",
+            "--threshold",
+            "x\"y\\z"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"x\\\"y\\\\z\" for \"--threshold\" flag: strconv.ParseInt: parsing \"x\\\"y\\\\z\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "a.md",
+            "--threshold",
+            "0b2"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"0b2\\\" for \\\"--threshold\\\" flag: strconv.ParseInt: parsing \\\"0b2\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "a.md",
+            "--threshold",
+            "0b2"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"0b2\" for \"--threshold\" flag: strconv.ParseInt: parsing \"0b2\": invalid syntax\n"
+        }
+      ]
+    },
+    {
+      "name": "unreadable-targets",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n",
+        "sub/inner.md": "---\ntitle: Inner\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "sparse_files": {
+        "big.md": 67108865,
+        "max.md": 67108864
+      },
+      "unix_only": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "similar",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "sub/missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/sub/missing.md: openat sub/missing.md: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "sub/missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/sub/missing.md: openat sub/missing.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "missing/deep/none.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing/deep/none.md: openat missing/deep/none.md: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "missing/deep/none.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing/deep/none.md: openat missing/deep/none.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "sub"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a regular file: $ROOT/vault/sub\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "sub"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a regular file: $ROOT/vault/sub\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "."
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a regular file: $ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "."
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a regular file: $ROOT/vault\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a regular file: $ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a regular file: $ROOT/vault\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "big.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault file exceeds 67108864 byte read limit: $ROOT/vault/big.md\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "big.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault file exceeds 67108864 byte read limit: $ROOT/vault/big.md\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "big.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault file exceeds 67108864 byte read limit: $ROOT/vault/big.md\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "big.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault file exceeds 67108864 byte read limit: $ROOT/vault/big.md\n"
+        },
+        {
+          "args": [
+            "--json",
+            "duplicates",
+            "similar",
+            "/etc/passwd"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/etc/passwd: openat etc/passwd: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates",
+            "similar",
+            "/etc/passwd"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/etc/passwd: openat etc/passwd: no such file or directory\n"
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        }
+      ]
+    },
+    {
+      "name": "bad-vault",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nthe quick brown fox jumps over the lazy dog while the rain falls softly on the quiet town and everyone sleeps through the long grey afternoon beside the river\n"
+      },
+      "no_vault": true,
+      "unix_only": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/nope",
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/nope: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/nope",
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/nope: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/vault/a.md",
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/vault/a.md",
+            "duplicates"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/nope",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/nope: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/nope",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/nope: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/vault/a.md",
+            "duplicates",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/vault/a.md",
+            "duplicates",
+            "similar",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a directory\n"
+        }
+      ]
+    }
+  ]
+}

@@ -312,6 +312,7 @@
       "id": "RUST-013",
       "title": "Complete SymDesk service and all CLI paths",
       "status": "blocked",
+      "note": "Partial local progress while blocked: `symdesk duplicates`, `duplicates similar` and hidden `similar` replay 162 Go process steps over 13 vault cases (CLI-005, `make duplicates-cli-differential`); clap-generated flag errors (CLI-003) and native Linux/Windows replay stay open.",
       "depends_on": [
         "RUST-009",
         "RUST-010",

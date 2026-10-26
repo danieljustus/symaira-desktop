@@ -131,6 +131,10 @@
       "ignored": 0,
       "passed": 2
     },
+    "cargo test -p symdesk-cli --test duplicates --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-cli --test history_tasks --locked": {
       "ignored": 0,
       "passed": 1

@@ -15,7 +15,7 @@ struct Documents {
 fn documents() -> &'static Documents {
     static DOCUMENTS: OnceLock<Documents> = OnceLock::new();
     DOCUMENTS.get_or_init(|| {
-        serde_json::from_str(include_str!("../assets/cobra-help.json"))
+        serde_json::from_str(include_str!("../../../testdata/port/cli/cobra-help.json"))
             .expect("Go-generated Cobra documents")
     })
 }

@@ -111,7 +111,7 @@ func TestPortHelpProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	encoded = append(encoded, '\n')
-	paths := []string{"../../testdata/port/cli/help-process.json", "../../crates/symdesk-cli/assets/cobra-help.json"}
+	paths := []string{"../../testdata/port/cli/help-process.json", "../../testdata/port/cli/cobra-help.json"}
 	for _, path := range paths {
 		if os.Getenv("PORT_GENERATE") == "1" {
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

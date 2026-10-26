@@ -894,8 +894,10 @@ where
         output,
         mode,
         id,
+        // Key order is written in Go's sorted map order so the bytes do not
+        // depend on whether serde_json's `preserve_order` is unified on.
         json!({
-            "content": [{"type": "text", "text": text}],
+            "content": [{"text": text, "type": "text"}],
             "isError": is_error,
         }),
     )

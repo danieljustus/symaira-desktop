@@ -376,7 +376,26 @@ fn run_ai(
 }
 
 fn encode(value: Value) -> Result<String, String> {
-    serde_json::to_string(&value)
+    // Go encodes these maps with sorted keys. Sort explicitly: workspace
+    // feature unification may enable serde_json `preserve_order`.
+    serde_json::to_string(&sort_keys(value))
         .map(|s| format!("{}\n", crate::go_escape_json(s)))
         .map_err(|e| e.to_string())
+}
+
+fn sort_keys(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let mut entries: Vec<_> = map.into_iter().collect();
+            entries.sort_by(|left, right| left.0.cmp(&right.0));
+            Value::Object(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, sort_keys(value)))
+                    .collect(),
+            )
+        }
+        Value::Array(items) => Value::Array(items.into_iter().map(sort_keys).collect()),
+        other => other,
+    }
 }

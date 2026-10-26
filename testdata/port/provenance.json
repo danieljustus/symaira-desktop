@@ -20,7 +20,7 @@
     "selfhost_http_routes": 21
   },
   "fixture_checksums": {
-    "crates/symdesk-cli/assets/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
+    "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
     "testdata/port/ai/compose-probe.json": "9e912ce51b8564095e54cc674c5c394bb78948bd17cbf3dc6dc8a9c3dffab960",
     "testdata/port/ai/compose-resolve.json": "b41134c74bc73a911b45ad107aa021055484a17494c4040f073ce65faec2e766",
     "testdata/port/ai/providers.json": "4a8d5434c0a7fe43c110e44073c2a05885202f9ab8f815316d1fab5aabc8aee3",

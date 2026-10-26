@@ -33,7 +33,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/config-vault-selection.json",
 	"testdata/port/cli/config-process.json",
 	"testdata/port/cli/help-process.json",
-	"crates/symdesk-cli/assets/cobra-help.json",
+	"testdata/port/cli/cobra-help.json",
 	"testdata/port/cli/duplicates-process.json",
 	"testdata/port/cli/docs-read-process.json",
 	"testdata/port/cli/views-process.json",

@@ -25,7 +25,7 @@ fn every_command_help_and_completion_match_go_process() {
     let fixture_bytes = include_bytes!("../../../testdata/port/cli/help-process.json");
     assert_eq!(
         fixture_bytes.as_slice(),
-        include_bytes!("../assets/cobra-help.json").as_slice(),
+        include_bytes!("../../../testdata/port/cli/cobra-help.json").as_slice(),
         "embedded release asset drift"
     );
     let fixture: Fixture = serde_json::from_slice(fixture_bytes).expect("Go process fixture");

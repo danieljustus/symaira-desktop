@@ -55,6 +55,7 @@ var fixturePaths = []string{
 	"testdata/port/mcp/symdesk-tools.json",
 	"testdata/port/mcp/representative.json",
 	"testdata/port/mcp/tools-process.json",
+	"testdata/port/mcp/read-process.json",
 	"testdata/port/mcp/symroom-tools.json",
 	"testdata/port/http/routes.json",
 	"testdata/port/http/representative.json",

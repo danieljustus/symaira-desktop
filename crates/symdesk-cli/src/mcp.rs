@@ -3,6 +3,7 @@
 mod pdf;
 #[cfg(test)]
 mod pdf_tests;
+mod read;
 
 use std::{
     collections::BTreeMap,
@@ -415,7 +416,10 @@ where
         }
     };
     let name = name.as_str();
-    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask")
+    if !matches!(
+        name,
+        "desk_status" | "desk_ls" | "desk_search" | "desk_ask" | "search_documents"
+    ) && !read::supports(name)
         && !(config.allow_write && pdf::canonical_name(name).is_some())
     {
         if !request.has_id {
@@ -489,7 +493,7 @@ fn call_tool(
                 .map_err(|error| error.to_string())?,
             ))
         }
-        "desk_search" => {
+        "desk_search" | "search_documents" => {
             let (query, _) = go_string_arguments(raw_arguments, false)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
@@ -556,6 +560,7 @@ fn call_tool(
             let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
             Ok(json!({"answer": answer}))
         }
+        _ if read::supports(name) => read::call(name, raw_arguments, config),
         _ if config.allow_write && pdf::canonical_name(name).is_some() => {
             pdf::call(name, raw_arguments, &config.pdf_context)
         }
@@ -768,7 +773,13 @@ fn go_string_field_type_error(value_type: &str, field: &str) -> String {
 }
 
 fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
-    let vault = super::resolve_vault(config.vault.as_deref())?;
+    let vault = super::resolve_vault(config.vault.as_deref()).map_err(|error| {
+        if error == "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)" {
+            "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned()
+        } else {
+            error
+        }
+    })?;
     {
         // The first call sets the database up once and keeps that connection;
         // later calls block here only until it exists. Calls still run

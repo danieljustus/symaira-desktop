@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 type extractionInput struct {
@@ -59,7 +60,7 @@ func extractionInputs() []extractionInput {
 func TestRetrievalExtractionFixture(t *testing.T) {
 	dir := t.TempDir()
 	cases := []extractionCase{}
-	for _, in := range extractionInputs() {
+	for _, in := range append(append(extractionInputs(), archiveExtractionInputs(t)...), pdfExtractionInputs()...) {
 		path := filepath.Join(dir, in.id)
 		if err := os.WriteFile(path, in.data, 0600); err != nil {
 			t.Fatal(err)
@@ -78,7 +79,7 @@ func TestRetrievalExtractionFixture(t *testing.T) {
 			c.SectionsError = strings.ReplaceAll(err.Error(), path, "$PATH")
 		}
 		for _, s := range sections {
-			c.Sections = append(c.Sections, csvSectionsFixtureResult{TextBase64: base64.StdEncoding.EncodeToString([]byte(s.Text)), Start: s.Start, AnchorKind: s.Anchor.Kind, AnchorValue: s.Anchor.Value, Synthetic: s.Synthetic})
+			c.Sections = append(c.Sections, csvSectionsFixtureResult{TextBase64: base64.StdEncoding.EncodeToString([]byte(s.Text)), ValidUTF8: utf8.ValidString(s.Text), Start: s.Start, AnchorKind: s.Anchor.Kind, AnchorValue: s.Anchor.Value, Synthetic: s.Synthetic})
 		}
 		cases = append(cases, c)
 	}

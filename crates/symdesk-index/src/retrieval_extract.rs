@@ -2,10 +2,10 @@
 use crate::retrieval_markdown::MAX_RETRIEVAL_SOURCE_BYTES;
 use crate::{RetrievalAnchor, RetrievalByteSection, SidecarError};
 
-fn contract(message: impl Into<String>) -> SidecarError {
+pub(super) fn contract(message: impl Into<String>) -> SidecarError {
     SidecarError::Contract(message.into())
 }
-fn normalize(text: &str) -> String {
+pub(super) fn normalize(text: &str) -> String {
     let mut result = String::new();
     let mut newlines = 0;
     for ch in text.chars() {
@@ -20,7 +20,7 @@ fn normalize(text: &str) -> String {
     }
     result.trim().to_owned()
 }
-fn html_text(bytes: &[u8]) -> String {
+pub(super) fn html_text(bytes: &[u8]) -> String {
     use scraper::node::Node;
     let html = scraper::Html::parse_document(&String::from_utf8_lossy(bytes));
     fn walk(node: scraper::ElementRef<'_>, out: &mut String) {
@@ -143,6 +143,19 @@ pub fn extract_retrieval_text(
     extension: &str,
     bytes: &[u8],
 ) -> Result<Vec<u8>, SidecarError> {
+    if extension.eq_ignore_ascii_case(".pdf") {
+        return crate::retrieval_pdf::text(bytes);
+    }
+    if matches!(
+        extension.to_ascii_lowercase().as_str(),
+        ".docx" | ".xlsx" | ".pptx" | ".odt" | ".ods" | ".odp" | ".epub"
+    ) {
+        return crate::retrieval_archive::archive_text(
+            source_path,
+            &extension.to_ascii_lowercase(),
+            bytes,
+        );
+    }
     if bytes.len() > MAX_RETRIEVAL_SOURCE_BYTES {
         return Err(contract(format!(
             "file {source_path} exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
@@ -163,6 +176,9 @@ pub fn parse_document_retrieval_sections(
     extension: &str,
     bytes: &[u8],
 ) -> Result<Vec<RetrievalByteSection>, SidecarError> {
+    if extension.eq_ignore_ascii_case(".pdf") {
+        return crate::retrieval_pdf::sections(bytes);
+    }
     let text = extract_retrieval_text(source_path, extension, bytes)?;
     if crate::retrieval_csv::trim_space(&text).is_empty() {
         return Ok(Vec::new());
@@ -263,7 +279,7 @@ mod tests {
     fn retrieval_extract_go_fixture() {
         let f = fixture();
         assert_eq!(f.schema_version, 1);
-        assert!(f.cases.len() >= 19);
+        assert_eq!(f.cases.len(), 60, "all Go extraction cases must execute");
         for c in &f.cases {
             assert!(compare(c), "{} sections drift", c.id);
         }

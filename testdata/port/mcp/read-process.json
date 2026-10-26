@@ -1234,6 +1234,645 @@
       "after_index": {}
     },
     {
+      "id": "backlinks-{\"file\":\"target.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"target.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"a.md\\\",\\\"b.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"nested/target.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"nested/target.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"a.md\\\",\\\"b.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"Target Title\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"Target Title\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"a.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"missing.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"missing.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"c.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"unknown.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"unknown.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"../outside\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"../outside\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path traversal denied: ../outside is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"contact:relate:person:123\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"contact:relate:person:123\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"contacts.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":\"contact:broken\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"contact:broken\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"contacts.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-null",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":null}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-[]",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":[]}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { File string \\\"json:\\\\\\\"file\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":7}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":7}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal number into Go struct field .file of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"FILE\":\"nested/target.md\",\"file\":null}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"FILE\":\"nested/target.md\",\"file\":null}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"a.md\\\",\\\"b.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-{\"file\":false,\"file\":\"target.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":false,\"file\":\"target.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal bool into Go struct field .file of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+        "b.md": "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+        "c.md": "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+        "contacts.md": "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+        "nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "title": "Link A"
+        },
+        "b.md": {
+          "title": "Link B"
+        },
+        "c.md": {
+          "title": "Link C"
+        },
+        "contacts.md": {
+          "title": "Contact Links"
+        },
+        "nested/target.md": {
+          "aliases": "- Alias Name\n- Another Alias",
+          "title": "Target Title"
+        }
+      }
+    },
+    {
+      "id": "backlinks-external-source",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"alpha.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[\\\"../external/link.md\\\"]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "indexed": true,
+      "external_link": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "../external/link.md": {},
+        "alpha.md": {
+          "created": "2026-01-02 00:00:00 +0000 UTC",
+          "number": "42",
+          "offset_time": "2026-01-02 03:04:05.12 +0530 +0530",
+          "quoted_date": "2026-01-02",
+          "status": "open",
+          "tags": "[one two]",
+          "title": "Alpha \u003c\u0026\u003e",
+          "utc_time": "2026-01-02 03:04:05.123456789 +0000 UTC"
+        },
+        "notebooks/empty.md": {
+          "created": "2026-01-02 00:00:00 +0000 UTC",
+          "sources": "[]",
+          "title": "AAA Empty",
+          "type": "notebook"
+        },
+        "notebooks/ignored.MD": {
+          "title": "Ignored",
+          "type": "notebook"
+        },
+        "notebooks/nested/hidden.md": {
+          "title": "Hidden",
+          "type": "notebook"
+        },
+        "notebooks/ordinary.md": {
+          "title": "Ordinary"
+        },
+        "notebooks/research.md": {
+          "created": "2026-01-02 00:00:00 +0000 UTC",
+          "description": "My notebook",
+          "notebook_id": "research-id",
+          "query": "needle",
+          "sources": "[alpha.md missing.md ../outside.md alpha.md]",
+          "title": "Research \u003c\u0026\u003e",
+          "type": "notebook"
+        }
+      }
+    },
+    {
       "id": "props-unindexed",
       "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_props\",\"arguments\":{\"file\":\"alpha.md\"}}}",
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{}\",\"type\":\"text\"}],\"isError\":false}}\n",

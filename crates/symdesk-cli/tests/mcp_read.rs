@@ -37,6 +37,8 @@ struct Case {
     #[serde(default)]
     indexed: bool,
     #[serde(default)]
+    external_link: bool,
+    #[serde(default)]
     no_vault: bool,
     after_files: BTreeMap<String, String>,
     sidecar_exists: bool,
@@ -54,7 +56,7 @@ fn read_tools_match_go_stdio_calls_and_authoritative_files() {
     )
     .expect("decode Go process transcript");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 44);
+    assert_eq!(fixture.cases.len(), 59);
     for case in fixture.cases {
         replay(&case);
     }
@@ -79,6 +81,18 @@ fn replay(case: &Case) {
                 symdesk_vault::parse_bytes(&path.to_string_lossy(), body.as_bytes()).unwrap();
             let indexed = symdesk_index::IndexedDocument::from_vault(&document, None).unwrap();
             sidecar.index_document(&indexed).unwrap();
+        }
+        if case.external_link {
+            let path = root.join("external/link.md");
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(&path, "[[alpha]]\n").unwrap();
+            let document =
+                symdesk_vault::parse_bytes(&path.to_string_lossy(), b"[[alpha]]\n").unwrap();
+            sidecar
+                .index_document(
+                    &symdesk_index::IndexedDocument::from_vault(&document, None).unwrap(),
+                )
+                .unwrap();
         }
     }
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
@@ -161,8 +175,10 @@ fn replay(case: &Case) {
             let path = PathBuf::from(&file.path);
             let relative = path
                 .strip_prefix(root.join("vault"))
-                .unwrap()
-                .to_string_lossy()
+                .map_or_else(
+                    |_| format!("../{}", path.strip_prefix(&root).unwrap().to_string_lossy()),
+                    |relative| relative.to_string_lossy().into_owned(),
+                )
                 .replace(std::path::MAIN_SEPARATOR, "/");
             after_index.insert(relative, sidecar.get_properties(&file.path).unwrap());
         }
@@ -172,6 +188,12 @@ fn replay(case: &Case) {
         "{} derived index state",
         case.id
     );
+    if case.external_link {
+        assert_eq!(
+            fs::read_to_string(root.join("external/link.md")).unwrap(),
+            "[[alpha]]\n"
+        );
+    }
     let mut after = BTreeMap::new();
     collect_files(&root.join("vault"), &root.join("vault"), &mut after);
     let stdout = String::from_utf8(stdout)

@@ -325,6 +325,9 @@ fn go_property_timestamp(value: OffsetDateTime) -> String {
     text
 }
 
+mod links_read;
+pub use links_read::is_contact_reference;
+
 pub struct Sidecar {
     connection: Connection,
     closed: bool,

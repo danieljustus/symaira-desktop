@@ -20,6 +20,7 @@ type mcpReadCase struct {
 	mcpSurfaceCase
 	Files         map[string]string                 `json:"files,omitempty"`
 	Indexed       bool                              `json:"indexed,omitempty"`
+	ExternalLink  bool                              `json:"external_link,omitempty"`
 	NoVault       bool                              `json:"no_vault,omitempty"`
 	AfterFiles    map[string]string                 `json:"after_files"`
 	SidecarExists bool                              `json:"sidecar_exists"`
@@ -74,6 +75,25 @@ func mcpReadCases() []mcpReadCase {
 		add("notebook-legacy-"+body, "notebook_get", `{"notebook":"legacy"}`)
 		cases[len(cases)-1].Files = map[string]string{"notebooks/legacy.md": body, "alpha.md": files["alpha.md"]}
 	}
+	for _, args := range []string{
+		`{"file":"target.md"}`, `{"file":"nested/target.md"}`, `{"file":"Target Title"}`,
+		`{"file":"missing.md"}`, `{"file":"unknown.md"}`, `{"file":"../outside"}`, `{"file":"contact:relate:person:123"}`,
+		`{"file":"contact:broken"}`, `{}`, `null`, `[]`, `{"file":7}`,
+		`{"FILE":"nested/target.md","file":null}`, `{"file":false,"file":"target.md"}`,
+	} {
+		add("backlinks-"+args, "desk_backlinks", args)
+		cases[len(cases)-1].Indexed = true
+		cases[len(cases)-1].Files = map[string]string{
+			"nested/target.md": "---\ntitle: Target Title\naliases: [Alias Name, Another Alias]\n---\nbody\n",
+			"a.md":             "---\ntitle: Link A\n---\n[[Target Title]] [[Alias Name]]\n",
+			"b.md":             "---\ntitle: Link B\n---\n[[target]] [[target.md]] [[Another Alias]]\n",
+			"c.md":             "---\ntitle: Link C\n---\n[[nested/target.md]] [[missing]]\n",
+			"contacts.md":      "---\ntitle: Contact Links\n---\n[[contact:relate:person:123]] [[contact:broken]]\n",
+		}
+	}
+	add("backlinks-external-source", "desk_backlinks", `{"file":"alpha.md"}`)
+	cases[len(cases)-1].Indexed = true
+	cases[len(cases)-1].ExternalLink = true
 	add("props-unindexed", "desk_props", `{"file":"alpha.md"}`)
 	add("notebook-no-vault", "notebook_get", `{"notebook":"research"}`)
 	cases[len(cases)-1].NoVault = true
@@ -120,6 +140,22 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			sort.Strings(paths)
 			for _, p := range paths {
 				doc, err := vault.ParseBytes(filepath.Join(vaultRoot, filepath.FromSlash(p)), []byte(c.Files[p]))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := db.IndexDocument(doc); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if c.ExternalLink {
+				path := filepath.Join(root, "external", "link.md")
+				if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte("[[alpha]]\n"), 0o600); err != nil {
+					t.Fatal(err)
+				}
+				doc, err := vault.ParseBytes(path, []byte("[[alpha]]\n"))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -181,7 +217,7 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			documents, err := db.ListFiles(vaultRoot)
+			documents, err := db.ListFiles("")
 			if err != nil {
 				t.Fatal(err)
 			}

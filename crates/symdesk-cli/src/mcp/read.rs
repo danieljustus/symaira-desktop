@@ -10,7 +10,7 @@ use super::{ServerConfig, go_string_fields, open_sidecar};
 pub(super) fn supports(name: &str) -> bool {
     matches!(
         name,
-        "desk_props" | "notebook_list" | "notebook_get" | "notebook_ask"
+        "desk_props" | "desk_backlinks" | "notebook_list" | "notebook_get" | "notebook_ask"
     )
 }
 
@@ -34,6 +34,33 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
                     .get_properties(&absolute.to_string_lossy())
                     .map_err(|error| error.to_string())?,
             )
+        }
+        "desk_backlinks" => {
+            let args =
+                go_string_fields(raw, &["file"], r#"struct { File string "json:\"file\"" }"#)?;
+            if args[0].is_empty() {
+                return Err("file is required".to_owned());
+            }
+            let (root, sidecar) = open_sidecar(config)?;
+            let target = if symdesk_index::is_contact_reference(&args[0]) {
+                args[0].clone()
+            } else {
+                secure_path(&root, &args[0])
+                    .map_err(|error| error.to_string())?
+                    .to_string_lossy()
+                    .into_owned()
+            };
+            let links = sidecar
+                .get_backlinks(&target)
+                .map_err(|error| error.to_string())?;
+            let relative = links
+                .into_iter()
+                .map(|path| {
+                    let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.into());
+                    backlink_relative_path(&root, &canonical)
+                })
+                .collect::<Vec<_>>();
+            encoded(&relative)
         }
         "notebook_list" => {
             // Go ignores arguments for this tool, including malformed types.
@@ -90,4 +117,31 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
         }
         _ => Err(format!("Unknown tool: {name}")),
     }
+}
+
+// Unlike citation paths, Go backlinks uses filepath.Rel even for indexed
+// sources outside the vault. Different volumes retain the original path.
+fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
+    use std::path::{Component, PathBuf};
+    let root = root.components().collect::<Vec<_>>();
+    let target = path.components().collect::<Vec<_>>();
+    if !path.is_absolute() || root.first() != target.first() {
+        return path.to_string_lossy().into_owned();
+    }
+    let common = root.iter().zip(&target).take_while(|(a, b)| a == b).count();
+    let mut relative = PathBuf::new();
+    for component in &root[common..] {
+        if matches!(component, Component::Normal(_)) {
+            relative.push("..");
+        }
+    }
+    for component in &target[common..] {
+        relative.push(component.as_os_str());
+    }
+    if relative.as_os_str().is_empty() {
+        relative.push(".");
+    }
+    relative
+        .to_string_lossy()
+        .replace(std::path::MAIN_SEPARATOR, "/")
 }

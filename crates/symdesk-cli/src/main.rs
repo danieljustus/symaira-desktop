@@ -4,6 +4,7 @@ mod ai_cli;
 mod ai_secrets;
 mod config_cli;
 mod config_paths;
+mod conflict_cli;
 mod dataset;
 mod docs_cli;
 mod duplicates_cli;
@@ -236,6 +237,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("docs", command)) => docs_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("conflict", command)) => conflict_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -570,6 +576,7 @@ fn cli() -> Command {
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
         .subcommand(docs_cli::cli())
+        .subcommand(conflict_cli::cli())
         .subcommand(graph_cli::cli())
         .subcommand(links_cli::backlinks_cli())
         .subcommand(relations_cli::cli())

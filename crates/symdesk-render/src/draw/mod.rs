@@ -10,6 +10,8 @@
 mod gotext;
 #[rustfmt::skip]
 mod go_unicode;
+pub mod builder;
+pub mod emit;
 pub mod ir;
 mod json;
 pub mod layout;

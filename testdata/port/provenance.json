@@ -23,6 +23,7 @@
     "testdata/port/ai/recipe-validate.json": "3353919da849ede0ef00042149a06040798356b76d1d1b99371a8a18c3eeb8af",
     "testdata/port/cli/ask-offline.json": "808c3c602cefdfc7fd02f682484b6b571657aa6dcb14c6ac694f1bd32ecb65bf",
     "testdata/port/cli/config-vault-selection.json": "8a0b2810896e38e329f81648bc59a8cac022d84cc9730ca14c057f680261ad5f",
+    "testdata/port/cli/duplicates-process.json": "99aac78a2b136a30a78cfec99ca7c55fa1d1c83f943caa2961d77579a36a03c4",
     "testdata/port/cli/history-tasks.json": "e11d42c6fe7e1f1adf54e14951bf2d0abf340d8761c90168df5c8e93f6663037",
     "testdata/port/cli/index-build-process.json": "a09cd53b3c5ee5dbbb8810c1815936ec19a4d884370242c724f83b90cffcb78e",
     "testdata/port/cli/index-maintenance-process.json": "14d26a169f68dfad537da57979e77781c94b149bf9ce1f2d21d9c03b9badcbd0",

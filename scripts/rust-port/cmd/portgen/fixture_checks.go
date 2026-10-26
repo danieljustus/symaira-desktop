@@ -144,6 +144,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},
+	{"permissions manager", []string{"run", "./scripts/rust-port/cmd/permissionsgen", "--check"}, []string{"testdata/port/vault/permissions.json"}, false},
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {

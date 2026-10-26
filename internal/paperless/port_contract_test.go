@@ -15,7 +15,8 @@ import (
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
 
-func TestPortPaperlessExportContract(t *testing.T) {
+func paperlessExportContract(t *testing.T, unicodeBoundary bool) map[string]any {
+	t.Helper()
 	root := t.TempDir()
 	t.Setenv("HOME", root)
 	t.Setenv("USERPROFILE", root)
@@ -33,7 +34,9 @@ func TestPortPaperlessExportContract(t *testing.T) {
  {"id":2,"title":"","archive_serial_number":77,"original_file_name":"missing.txt","notes":[]},
  {"id":3,"title":"Odd:*? title...  ","checksum":"","archived_file_name":"third.png","tags":[]}
 ]`
-	manifest = strings.TrimSuffix(manifest, "]") + fmt.Sprintf(",{\"id\":4,\"title\":%q,\"checksum\":\"unicode-boundary\"}]", strings.Repeat("x", 119)+"α")
+	if unicodeBoundary {
+		manifest = fmt.Sprintf(`[{"id":4,"title":%q,"checksum":"unicode-boundary"}]`, strings.Repeat("x", 119)+"α")
+	}
 	inputs := map[string]string{"export/manifest.json": manifest, "export/first.PDF": "synthetic-pdf", "export/third.png": "synthetic-image"}
 	for name, body := range inputs {
 		if e := os.WriteFile(filepath.Join(root, filepath.FromSlash(name)), []byte(body), 0600); e != nil {
@@ -65,7 +68,11 @@ func TestPortPaperlessExportContract(t *testing.T) {
 		return out
 	}
 	steps := []any{}
-	for _, op := range []string{"dry-run", "import", "rerun", "move", "rerun", "collision", "rerun"} {
+	ops := []string{"dry-run", "import", "rerun", "move", "rerun", "collision", "rerun"}
+	if unicodeBoundary {
+		ops = ops[:3]
+	}
+	for _, op := range ops {
 		if op == "move" {
 			if e := os.Rename(filepath.Join(vault, "paperless", "Paperless_1_Invoice _ α.md"), filepath.Join(vault, "Moved.md")); e != nil {
 				t.Fatal(e)
@@ -105,24 +112,89 @@ func TestPortPaperlessExportContract(t *testing.T) {
 		}
 		hashes[name] = fmt.Sprintf("%x", sha256.Sum256(bytes.ReplaceAll(b, []byte("\r\n"), []byte("\n"))))
 	}
-	b, e := json.MarshalIndent(map[string]any{"schema_version": 1, "oracle": fixtureoracle.Current(), "source_hashes": hashes, "input_files": inputs, "steps": steps, "normalizations": []string{"disposable root -> $ROOT; paths -> slash", "top-level created wall clock -> fixed UTC; hashes cover normalized bytes"}, "db_mode": "nil (filesystem-only export importer contract)"}, "", "  ")
-	if e != nil {
-		t.Fatal(e)
+	t.Logf("replayed %d Paperless export steps (unicode=%v, GOOS=%s)", len(steps), unicodeBoundary, runtime.GOOS)
+	return map[string]any{"schema_version": 1, "oracle": fixtureoracle.Current(), "source_hashes": hashes, "input_files": inputs, "steps": steps, "normalizations": []string{"disposable root -> $ROOT; paths -> slash", "top-level created wall clock -> fixed UTC; hashes cover normalized bytes"}, "db_mode": "nil (filesystem-only export importer contract)"}
+}
+
+const paperlessWindowsNotCovered = "Windows Unicode-boundary filename behavior is not covered; requires a native Windows oracle"
+
+func TestPortPaperlessExportContract(t *testing.T) {
+	checkPaperlessExportFixture(t, "paperless-export.json", paperlessExportContract(t, false), false)
+}
+
+func TestPortPaperlessExportUnicodeContract(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		if !strings.Contains(paperlessWindowsNotCovered, "not covered") {
+			t.Fatal("Windows skip must explicitly record missing coverage")
+		}
+		t.Skip(paperlessWindowsNotCovered)
+	}
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+		t.Skip("Unicode-boundary oracle covers darwin and linux only")
+	}
+	checkPaperlessExportFixture(t, "paperless-export-unicode.json", paperlessExportContract(t, true), true)
+}
+
+func checkPaperlessExportFixture(t *testing.T, name string, actual map[string]any, platform bool) {
+	t.Helper()
+	_, file, _, _ := runtime.Caller(0)
+	out := filepath.Join(filepath.Dir(file), "../../testdata/port/ingest", name)
+	old, err := os.ReadFile(out)
+	if err != nil && !(os.IsNotExist(err) && os.Getenv("PORT_GENERATE") == "1") {
+		t.Fatal(err)
+	}
+	expected := map[string]any{}
+	if len(old) != 0 {
+		if err := json.Unmarshal(old, &expected); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if platform {
+		// Preserve raw platform JSON, including Go's escaped replacement for invalid
+		// UTF-8 path bytes, when updating only the current native entry.
+		var saved struct {
+			Platforms map[string]json.RawMessage `json:"platforms"`
+		}
+		if len(old) != 0 {
+			if err := json.Unmarshal(old, &saved); err != nil {
+				t.Fatal(err)
+			}
+		}
+		platforms := saved.Platforms
+		if platforms == nil {
+			platforms = map[string]json.RawMessage{}
+		}
+		entry, err := json.Marshal(map[string]any{"input_files": actual["input_files"], "steps": actual["steps"]})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if os.Getenv("PORT_GENERATE") != "1" {
+			want, ok := platforms[runtime.GOOS]
+			if !ok {
+				t.Fatalf("missing Paperless Unicode oracle for %s", runtime.GOOS)
+			}
+			a, _ := json.Marshal(json.RawMessage(entry))
+			b, _ := json.Marshal(want)
+			if !bytes.Equal(a, b) {
+				t.Fatal("Paperless Unicode platform fixture drift; regenerate deliberately")
+			}
+		}
+		platforms[runtime.GOOS] = entry
+		delete(actual, "input_files")
+		delete(actual, "steps")
+		actual["platforms"] = platforms
+		actual["not_covered"] = map[string]string{"windows": paperlessWindowsNotCovered}
+	}
+	b, err := json.MarshalIndent(actual, "", "  ")
+	if err != nil {
+		t.Fatal(err)
 	}
 	b = append(b, '\n')
-	out := filepath.Join(dir, "../../testdata/port/ingest/paperless-export.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if e := os.WriteFile(out, b, 0600); e != nil {
-			t.Fatal(e)
+		if err := os.WriteFile(out, b, 0600); err != nil {
+			t.Fatal(err)
 		}
-	} else {
-		old, e := os.ReadFile(out)
-		if e != nil {
-			t.Fatal(e)
-		}
-		if !bytes.Equal(old, b) {
-			t.Fatal("Paperless export fixture drift; regenerate deliberately")
-		}
+	} else if !bytes.Equal(old, b) {
+		t.Fatal("Paperless export fixture drift; regenerate deliberately")
 	}
-	t.Logf("replayed %d Paperless export steps", len(steps))
 }

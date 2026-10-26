@@ -33,11 +33,12 @@ impl Drop for Root {
         fs::remove_dir_all(&self.0).unwrap();
     }
 }
-fn fixture() -> Value {
+fn named_fixture(name: &str) -> Value {
     serde_json::from_slice(
         &fs::read(
             Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("../../testdata/port/ingest/paperless-export.json"),
+                .join("../../testdata/port/ingest")
+                .join(name),
         )
         .unwrap(),
     )
@@ -134,14 +135,51 @@ fn replay(f: &Value) -> Result<(), String> {
 }
 #[test]
 fn paperless_export_go_contract() {
-    let f = fixture();
+    let f = named_fixture("paperless-export.json");
     assert_eq!(f["steps"].as_array().unwrap().len(), 7);
     replay(&f).unwrap();
 }
 #[test]
 fn paperless_export_negative_control() {
-    let mut f = fixture();
+    let mut f = named_fixture("paperless-export.json");
     replay(&f).unwrap();
     f["steps"][1]["summary"]["created"] = json!(99);
     assert!(replay(&f).unwrap_err().contains("step 1 summary"));
+}
+
+fn unicode_fixture() -> Option<Value> {
+    let f = named_fixture("paperless-export-unicode.json");
+    let os = match std::env::consts::OS {
+        "macos" => "darwin",
+        "windows" => {
+            let reason = f["not_covered"]["windows"].as_str().unwrap();
+            assert!(reason.contains("not covered"));
+            eprintln!("SKIP: {reason}");
+            return None;
+        }
+        os => os,
+    };
+    let entry = f["platforms"]
+        .get(os)
+        .expect("missing native Unicode-boundary oracle")
+        .clone();
+    assert_eq!(entry["steps"].as_array().unwrap().len(), 3);
+    eprintln!("replaying 3 Paperless Unicode-boundary steps for {os}");
+    Some(entry)
+}
+
+#[test]
+fn paperless_export_unicode_go_contract() {
+    if let Some(f) = unicode_fixture() {
+        replay(&f).unwrap();
+    }
+}
+
+#[test]
+fn paperless_export_unicode_negative_control() {
+    if let Some(mut f) = unicode_fixture() {
+        replay(&f).unwrap();
+        f["steps"][1]["summary"]["created"] = json!(99);
+        assert!(replay(&f).unwrap_err().contains("step 1 summary"));
+    }
 }

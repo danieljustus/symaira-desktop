@@ -16,11 +16,11 @@ paperless-state-fixtures-generate:
 
 .PHONY: paperless-export-differential paperless-export-fixtures-generate
 paperless-export-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
 	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_export_contracts --locked
 
 paperless-export-fixtures-generate:
-	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
 
 .PHONY: paperless-http-differential paperless-http-fixtures-generate
 paperless-http-differential:

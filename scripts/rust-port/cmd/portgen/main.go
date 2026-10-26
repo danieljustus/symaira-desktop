@@ -49,6 +49,7 @@ var fixturePaths = []string{
 	"testdata/port/ingest/notion.json",
 	"testdata/port/ingest/paperless-http.json",
 	"testdata/port/ingest/paperless-export.json",
+	"testdata/port/ingest/paperless-export-unicode.json",
 	"testdata/port/ingest/paperless-state.json",
 	"testdata/port/ingest/paperless-mapping.json",
 	"testdata/port/core/textnorm.json",

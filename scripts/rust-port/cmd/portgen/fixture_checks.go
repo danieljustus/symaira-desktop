@@ -34,6 +34,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"Paperless mapping audit", []string{"test", "-count=1", "./internal/ingest/internal/paperlessimport", "-run", "^TestPortPaperlessMappingContract$"}, []string{"testdata/port/ingest/paperless-mapping.json"}, false},
 	{"Paperless target state", []string{"test", "-count=1", "./internal/ingest/internal/store", "-run", "^TestPortPaperlessStateContract$", "-args", "-port-paperless-state"}, []string{"testdata/port/ingest/paperless-state.json"}, false},
 	{"Paperless export", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportContract$"}, []string{"testdata/port/ingest/paperless-export.json"}, false},
+	{"Paperless export Unicode", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportUnicodeContract$"}, []string{"testdata/port/ingest/paperless-export-unicode.json"}, false},
 	{"Paperless HTTP", []string{"test", "-count=1", "./internal/ingest/internal/paperless", "-run", "^TestPortPaperlessHTTPContract$"}, []string{"testdata/port/ingest/paperless-http.json"}, false},
 	{"Notion import", []string{"test", "-count=1", "./internal/ingest/internal/notionimport", "-run", "^TestPortNotionContract$"}, []string{"testdata/port/ingest/notion.json"}, false},
 	{"contacts vCard", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsVCardContract$"}, []string{"testdata/port/contacts/vcard.json"}, false},

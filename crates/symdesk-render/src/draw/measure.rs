@@ -2,8 +2,8 @@
 //! intrinsic node sizing against the embedded Inter fonts) and of the
 //! `internal/draw/fonts` embedding/hash helpers it depends on.
 //!
-//! Glyph outline extraction (`Measurer.Outlines`) and SVG path formatting are
-//! not part of this module.
+//! Glyph outlines use the unhinted TrueType decoder; SVG path formatting lives
+//! in `draw::emit`.
 //!
 //! Floating point: every product that feeds a sum in the Go source is exact
 //! (multiples of 1/64 times small integers, or times 2/0.5), so Go's optional
@@ -260,6 +260,46 @@ pub struct Measurer {
 }
 
 impl Measurer {
+    /// Go `Measurer.Outlines`: fixed-point placement, no shaping or kerning.
+    pub fn outlines(
+        &self,
+        text: &str,
+        font_size: f64,
+        weight: FontWeight,
+        start_x: f64,
+        start_y: f64,
+    ) -> Vec<super::scene::PathSegment> {
+        use super::scene::{PathSegment, Point};
+        let f = self.font(weight);
+        let ppem = (font_size * 64.0).round() as i32;
+        let mut x = (start_x * 64.0).round() as i32;
+        let y = (start_y * 64.0).round() as i32;
+        let mut result = Vec::new();
+        for r in text.chars() {
+            let index = f.glyph_index(r).unwrap_or(0);
+            if let Ok(segments) = f.load_glyph(index, ppem) {
+                result.extend(segments.into_iter().map(|s| {
+                    PathSegment {
+                        op: s.op.into(),
+                        args: s
+                            .args
+                            .into_iter()
+                            .map(|p| Point {
+                                x: f64::from(x.wrapping_add(p.0)) / 64.0,
+                                y: f64::from(y.wrapping_sub(p.1)) / 64.0,
+                            })
+                            .collect(),
+                    }
+                }));
+            }
+            x = x.wrapping_add(
+                f.glyph_advance(index, ppem)
+                    .unwrap_or((font_size * 0.6 * 64.0) as i32),
+            );
+        }
+        result
+    }
+
     /// Go `NewMeasurer`: the embedded Inter-Regular and Inter-Bold fonts.
     pub fn new() -> Result<Measurer, FontError> {
         Measurer::with_fonts(INTER_REGULAR, INTER_BOLD)

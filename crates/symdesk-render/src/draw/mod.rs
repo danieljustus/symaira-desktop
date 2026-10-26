@@ -6,8 +6,8 @@
 //! `internal/draw/scene` graph (primitives, bounds, JSON) and the
 //! `internal/draw/layout` engines (layered graph layout, closed-form sequence
 //! layout). The builder lowers graph, sequence and chart diagrams into scenes;
-//! the SVG emitter serializes text elements (font outlines and raster/PDF output remain
-//! outside this port).
+//! the SVG emitter serializes text elements or glyph outlines. Raster/PDF output
+//! remain outside this port.
 
 mod gotext;
 #[rustfmt::skip]

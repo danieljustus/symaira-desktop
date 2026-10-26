@@ -125,6 +125,11 @@ func run() error {
 		return err
 	}
 	f.Cases = append(f.Cases, extra...)
+	outlines, err := outlineCases()
+	if err != nil {
+		return err
+	}
+	f.Cases = append(f.Cases, outlines...)
 	if err = parserSeeds(root, *check); err != nil {
 		return err
 	}

@@ -12,10 +12,76 @@ fn go_scene_lowering_svg_contract() {
     assert_eq!(fixture["schema_version"], 1);
     assert_eq!(fixture["chart_residual"], 0);
     assert_eq!(fixture["fma_withheld"], 3);
-    assert_eq!(cases.len(), 1350);
+    assert_eq!(cases.len(), 7344);
     for c in cases {
         let id = c["id"].as_str().unwrap();
         let input = c["input"].as_str().unwrap();
+        if c["mode"] == "glyph" {
+            use sha2::{Digest, Sha256};
+            use symdesk_render::draw::{
+                measure::{INTER_BOLD, INTER_REGULAR},
+                sfnt::Font,
+            };
+            let v: Vec<i32> = serde_json::from_str(input).unwrap();
+            let f = Font::parse(if v[0] == 0 { INTER_REGULAR } else { INTER_BOLD }).unwrap();
+            let segments = f.load_glyph(v[1] as u16, v[2]).unwrap();
+            let mut canonical = String::new();
+            for s in segments {
+                canonical.push_str(match s.op {
+                    "M" => "0",
+                    "L" => "1",
+                    "Q" => "2",
+                    "C" => "3",
+                    _ => panic!("unknown op"),
+                });
+                for (x, y) in s.args {
+                    canonical.push_str(&format!(" {x} {y}"));
+                }
+                canonical.push('\n');
+            }
+            assert_eq!(
+                format!("{:x}", Sha256::digest(canonical.as_bytes())),
+                c["expected"].as_str().unwrap(),
+                "{id}"
+            );
+            continue;
+        }
+        if c["mode"] == "outline" {
+            use symdesk_render::draw::{scene::*, theme};
+            let v: serde_json::Value = serde_json::from_str(input).unwrap();
+            let str_field = |key: &str| v[key].as_str().unwrap_or_default().to_owned();
+            let e = TextElement {
+                id: str_field("id"),
+                class: str_field("class"),
+                x: v["x"].as_f64().unwrap(),
+                y: v["y"].as_f64().unwrap(),
+                text: str_field("text"),
+                font_size: v["font_size"].as_f64().unwrap(),
+                font_weight: str_field("font_weight"),
+                anchor: str_field("anchor"),
+                baseline: str_field("baseline"),
+                text_length: v["text_length"].as_f64().unwrap(),
+                opacity: v["opacity"].as_f64().unwrap(),
+                link: str_field("link"),
+                ..Default::default()
+            };
+            let mut sc = Scene::new(160.0, 90.0, &theme::resolve("symaira-light"));
+            sc.add(Primitive::Group(GroupElement {
+                transform: "translate(1,2)".into(),
+                children: Some(vec![Primitive::Text(e)]),
+                ..Default::default()
+            }));
+            let svg = emit_svg(
+                Some(&sc),
+                &SvgOptions {
+                    text_as_paths: true,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+            assert_eq!(svg, c["expected"].as_str().unwrap(), "{id}");
+            continue;
+        }
         if c["mode"] == "primitives" {
             let input: serde_json::Value = serde_json::from_str(input).unwrap();
             let s = direct_scene(input["background"].as_str().unwrap_or_default());
@@ -26,6 +92,7 @@ fn go_scene_lowering_svg_contract() {
                 &SvgOptions {
                     font_hash: "override<&".into(),
                     generator: "generator\"".into(),
+                    ..Default::default()
                 },
             )
             .unwrap();

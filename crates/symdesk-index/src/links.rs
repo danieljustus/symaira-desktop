@@ -5,6 +5,138 @@ use rusqlite::{OptionalExtension, params, params_from_iter};
 
 use crate::{Sidecar, SidecarError};
 
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct InverseRelation {
+    pub source: String,
+    pub title: String,
+    pub property: String,
+}
+
+fn references(value: &str, target: &str) -> bool {
+    if value.trim().to_lowercase() == target.to_lowercase() {
+        return true;
+    }
+    let mut rest = value;
+    while let Some((_, after)) = rest.split_once("[[") {
+        let Some((link, after)) = after.split_once("]]") else {
+            return false;
+        };
+        if link
+            .split('|')
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .to_lowercase()
+            == target.to_lowercase()
+        {
+            return true;
+        }
+        rest = after;
+    }
+    false
+}
+
+impl Sidecar {
+    fn link_properties(
+        &self,
+        path: &str,
+    ) -> Result<std::collections::BTreeMap<String, String>, SidecarError> {
+        let mut stmt = self.connection.prepare("SELECT p.key, p.value FROM file_properties p JOIN files f ON f.id = p.file_id WHERE f.path = ?")?;
+        Ok(stmt
+            .query_map([path], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<_, _>>()?)
+    }
+
+    /// Typed frontmatter references followed by body backlinks, in Go order.
+    ///
+    /// # Errors
+    /// Returns database errors while reading indexed notes.
+    pub fn inverse_relations(
+        &self,
+        root: &Path,
+        target: &str,
+    ) -> Result<Vec<InverseRelation>, SidecarError> {
+        let base = Path::new(target)
+            .file_name()
+            .and_then(|v| v.to_str())
+            .unwrap_or(target);
+        let mut targets = vec![without_extension(base).to_owned(), base.to_owned()];
+        if let Ok(props) = self.link_properties(target) {
+            if let Some(title) = props.get("title").filter(|v| !v.is_empty()) {
+                targets.push(title.clone());
+            }
+            if let Some(raw) = props.get("aliases") {
+                if let Ok(list) = noyalib::from_str::<Vec<String>>(raw)
+                    && !list.is_empty()
+                {
+                    targets.extend(
+                        list.into_iter()
+                            .map(|v| v.trim().to_owned())
+                            .filter(|v| !v.is_empty()),
+                    );
+                } else {
+                    let trimmed = raw.strip_suffix(']').unwrap_or(raw);
+                    let trimmed = trimmed.strip_prefix('[').unwrap_or(trimmed);
+                    targets.extend(
+                        trimmed
+                            .split(',')
+                            .map(|v| v.trim().trim_matches(['\'', '"']).to_owned())
+                            .filter(|v| !v.is_empty()),
+                    );
+                }
+            }
+        }
+        let mut stmt = self
+            .connection
+            .prepare("SELECT path, title FROM files ORDER BY path ASC")?;
+        let docs = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut seen = BTreeSet::new();
+        let mut results = Vec::new();
+        let mut add = |source: &str, title: &str, property: &str| {
+            let rel = Path::new(source)
+                .strip_prefix(root)
+                .map(|v| v.to_string_lossy().replace(std::path::MAIN_SEPARATOR, "/"))
+                .unwrap_or_else(|_| source.to_owned());
+            if seen.insert((rel.clone(), property.to_owned())) {
+                results.push(InverseRelation {
+                    source: rel,
+                    title: title.to_owned(),
+                    property: property.to_owned(),
+                });
+            }
+        };
+        for (path, title) in &docs {
+            if path == target {
+                continue;
+            }
+            if let Ok(props) = self.link_properties(path) {
+                for (key, value) in props {
+                    if targets.iter().any(|target| references(&value, target)) {
+                        add(path, title, &key);
+                    }
+                }
+            }
+        }
+        let mut backlinks = self.backlinks(target, false)?;
+        backlinks.sort();
+        for path in backlinks {
+            if path == target {
+                continue;
+            }
+            let title = docs
+                .iter()
+                .find(|(p, _)| p == &path)
+                .map_or("", |(_, title)| title.as_str());
+            add(&path, title, "_link");
+        }
+        Ok(results)
+    }
+}
+
 fn without_extension(value: &str) -> &str {
     Path::new(value)
         .extension()

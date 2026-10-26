@@ -1,0 +1,6753 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "indexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "beta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:alpha.md Title:Alpha Title Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "beta.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"alpha.md\",\"title\":\"Alpha Title\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "beta.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"alpha.md\",\"title\":\"Alpha Title\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "beta.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:alpha.md Title:Alpha Title Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "beta.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:alpha.md Title:Alpha Title Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "missing.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "missing.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "missing.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "missing.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "missing.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "nested/third.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "nested/third.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "nested/third.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "nested/third.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "nested/third.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:relate:person:123"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:relate:person:123",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:relate:person:123",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:relate:person:123",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:relate:person:123",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:bad"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:bad",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:bad",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:bad",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "contact:bad",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "../escape.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "../escape.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "../escape.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "../escape.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "../escape.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "inverse"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "inverse",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--output=json",
+            "relations",
+            "inverse",
+            "--",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "--json",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output=invalid"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid --output value \"invalid\" (want text|json|yaml)\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json",
+            "--output=text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output=text",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json=false"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json=false",
+            "--json=true"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json=wat"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"wat\" for \"--json\" flag: strconv.ParseBool: parsing \"wat\": invalid syntax\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --unknown\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--output"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --output\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--vault=$ROOT/nope",
+            "--vault=$ROOT/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Source:beta.md Title:Beta Property:parent} {Source:beta.md Title:Beta Property:scalar} {Source:beta.md Title:Beta Property:_link} {Source:nested/third.md Title:Third Property:_link}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "--json",
+            "inverse",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "--output=text",
+            "relations",
+            "--output=json",
+            "inverse",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"parent\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"scalar\"},{\"source\":\"beta.md\",\"title\":\"Beta\",\"property\":\"_link\"},{\"source\":\"nested/third.md\",\"title\":\"Third\",\"property\":\"_link\"}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "--",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/alpha.md",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "Third"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/alpha.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "beta",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "Alpha Title",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "First",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "alpha.md",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "One",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "alpha",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "contact:relate:person:123",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/alpha.md",
+                "aliases",
+                "- First\n- One"
+              ],
+              [
+                "$ROOT/vault/alpha.md",
+                "title",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "array",
+                "[alpha something]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "parent",
+                "[[Alpha Title|display]]"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "scalar",
+                "Alpha Title"
+              ],
+              [
+                "$ROOT/vault/beta.md",
+                "title",
+                "Beta"
+              ],
+              [
+                "$ROOT/vault/nested/third.md",
+                "title",
+                "Third"
+              ]
+            ],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "unindexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "override",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "relations",
+            "inverse",
+            "alpha.md",
+            "--vault=$ROOT/vault",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                "alpha.md",
+                "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n"
+              ],
+              [
+                "beta.md",
+                "---\ntitle: Beta\nparent: '[[Alpha Title|display]]'\nscalar: Alpha Title\narray: [alpha, something]\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n"
+              ],
+              [
+                "nested/third.md",
+                "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

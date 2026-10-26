@@ -15,10 +15,11 @@ import (
 const duplicatesFixturePath = "../../testdata/port/cli/duplicates-process.json"
 
 type duplicatesPortStep struct {
-	Args     []string `json:"args"`
-	ExitCode int      `json:"exit_code"`
-	Stdout   string   `json:"stdout"`
-	Stderr   string   `json:"stderr"`
+	Args     []string              `json:"args"`
+	ExitCode int                   `json:"exit_code"`
+	Stdout   string                `json:"stdout"`
+	Stderr   string                `json:"stderr"`
+	State    map[string][][]string `json:"state,omitempty"`
 }
 
 type duplicatesPortCase struct {

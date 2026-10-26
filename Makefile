@@ -431,6 +431,14 @@ history-tasks-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHistoryTasksCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test history_tasks --locked
 
+.PHONY: relations-inverse-cli-fixtures-generate relations-inverse-cli-differential
+relations-inverse-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
+
+relations-inverse-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test relations_inverse --locked
+
 .PHONY: backlinks-cli-fixtures-generate backlinks-cli-differential
 backlinks-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortBacklinksProcessContract$$'

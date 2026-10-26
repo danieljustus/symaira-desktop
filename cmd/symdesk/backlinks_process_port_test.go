@@ -34,6 +34,18 @@ func TestPortBacklinksProcessContract(t *testing.T) {
 		duplicatesPortStep{Args: []string{"backlinks", "alpha.md", "--json", "--output=text"}},
 		duplicatesPortStep{Args: []string{"--json", "backlinks", "alpha.md", "--output=json"}},
 	)
+	for _, args := range [][]string{
+		{"backlinks", "alpha.md", "--output=text", "--output=json"},
+		{"--json", "backlinks", "alpha.md", "--json=false"},
+		{"backlinks", "alpha.md", "--json=false", "--json=true"},
+		{"backlinks", "alpha.md", "--json=wat"},
+		{"--json", "backlinks", "alpha.md", "--unknown"},
+		{"backlinks", "alpha.md", "--unknown"},
+		{"backlinks", "alpha.md", "--output"},
+		{"backlinks", "alpha.md", "--vault=$ROOT/nope", "--vault=$ROOT/vault"},
+	} {
+		steps = append(steps, duplicatesPortStep{Args: args})
+	}
 	cases := []duplicatesPortCase{
 		{Name: "indexed", Files: files, Steps: steps},
 		{Name: "unindexed", Files: files, SkipIndex: true, Steps: []duplicatesPortStep{{Args: []string{"backlinks", "alpha.md", "--json"}}}},
@@ -42,14 +54,20 @@ func TestPortBacklinksProcessContract(t *testing.T) {
 	}
 	fixture := duplicatesPortFixture{SchemaVersion: 1}
 	for _, c := range cases {
-		fixture.Cases = append(fixture.Cases, observeDuplicatesCase(t, binary, c, func(vault, _ string) {
+		var states []map[string][][]string
+		observed := observeDuplicatesCase(t, binary, c, func(vault, home string) {
+			states = append(states, linkProcessState(t, vault, home))
 			for name, expected := range c.Files {
 				actual, err := os.ReadFile(filepath.Join(vault, filepath.FromSlash(name)))
 				if err != nil || string(actual) != expected {
 					t.Fatalf("backlinks changed vault file %s: %v", name, err)
 				}
 			}
-		}))
+		})
+		for i := range observed.Steps {
+			observed.Steps[i].State = states[i]
+		}
+		fixture.Cases = append(fixture.Cases, observed)
 	}
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {

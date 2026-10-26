@@ -11,8 +11,11 @@ use std::{
 
 use serde::Deserialize;
 
+#[path = "support/link_state.rs"]
+mod link_state;
+
 const EXPECTED_CASES: usize = 4;
-const EXPECTED_STEPS: usize = 48;
+const EXPECTED_STEPS: usize = 56;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -44,6 +47,7 @@ struct Step {
     exit_code: i32,
     stdout: String,
     stderr: String,
+    state: BTreeMap<String, Vec<Vec<String>>>,
 }
 
 fn fixture() -> Fixture {
@@ -207,6 +211,13 @@ fn backlinks_match_go_process_contract() {
             let root_text = root.to_string_lossy().into_owned();
             args.extend(step.args.iter().map(|arg| arg.replace("$ROOT", &root_text)));
             let observed = run(binary, &home, &cwd, &args);
+            assert_eq!(
+                link_state::snapshot(&vault, &home, &root, &canonical_root),
+                step.state,
+                "{} {:?} persisted state",
+                case.name,
+                step.args
+            );
             for (name, expected) in &case.files {
                 assert_eq!(
                     fs::read_to_string(vault.join(name)).expect("vault file preserved"),

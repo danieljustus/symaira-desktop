@@ -11,6 +11,7 @@ mod index_cli;
 mod links_cli;
 mod mcp;
 mod recipe;
+mod relations_cli;
 mod retention;
 mod search_cli;
 mod source_cli;
@@ -56,6 +57,9 @@ fn main() -> ExitCode {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
     rewrite_index_output_flag(&mut args);
+    if let Some(exit) = links_cli::prepare_args(&mut args) {
+        return exit;
+    }
     rewrite_config_paths_repeated_flags(&mut args);
 
     let matches = match cli().try_get_matches_from(args) {
@@ -207,6 +211,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("backlinks", command)) => links_cli::run_backlinks(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("relations", command)) => relations_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -528,6 +537,7 @@ fn cli() -> Command {
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
         .subcommand(links_cli::backlinks_cli())
+        .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")

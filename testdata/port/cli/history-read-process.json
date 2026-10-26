@@ -1,0 +1,1783 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "read",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"timestamp\":\"2021-01-02T03:04:05Z\",\"size\":13},{\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\"timestamp\":\"2020-01-02T03:04:05Z\",\"size\":17}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "missing.md"
+          ],
+          "exit_code": 0,
+          "stdout": "no snapshots recorded for missing.md\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "missing.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "./nested/../note.md",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"timestamp\":\"2021-01-02T03:04:05Z\",\"size\":13},{\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\"timestamp\":\"2020-01-02T03:04:05Z\",\"size\":17}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5"
+          ],
+          "exit_code": 0,
+          "stdout": "old \u003c\u0026\u003e snapshot\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"content\":\"old \\u003c\\u0026\\u003e snapshot\\n\",\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"content\":\"new snapshot\\n\",\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "bad",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid snapshot id: \\\"bad\\\"\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "bad"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid snapshot id: \"bad\"\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "../escape.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json=false",
+            "--json=true"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"timestamp\":\"2021-01-02T03:04:05Z\",\"size\":13},{\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\"timestamp\":\"2020-01-02T03:04:05Z\",\"size\":17}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--output=text",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"timestamp\":\"2021-01-02T03:04:05Z\",\"size\":13},{\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\"timestamp\":\"2020-01-02T03:04:05Z\",\"size\":17}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "prune",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-per-file=1",
+            "--max-age-days=0",
+            "--checkpoint-age-days=0",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":1,\"status\":\"pruned\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"timestamp\":\"2021-01-02T03:04:05Z\",\"size\":13}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-per-file",
+            "0x2",
+            "--max-age-days",
+            "0",
+            "--checkpoint-age-days",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "map[removed:0 status:pruned]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-per-file=0",
+            "--max-per-file=2",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"pruned\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-age-days=-1",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"pruned\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "purge",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--older-than-days=1",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid trash inventory: payload/metadata count mismatch\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "old-note.md  old.md  (deleted 2020-01-01 00:00:00)\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--all"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid trash inventory: payload/metadata count mismatch\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--older-than-days=-1",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid trash inventory: payload/metadata count mismatch\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "steps": [
+        {
+          "args": [
+            "history",
+            "note.md"
+          ],
+          "exit_code": 0,
+          "stdout": "no snapshots recorded for note.md\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"pruned\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune"
+          ],
+          "exit_code": 0,
+          "stdout": "map[removed:0 status:pruned]\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "trash is empty\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"purged\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--all"
+          ],
+          "exit_code": 0,
+          "stdout": "map[removed:0 status:purged]\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "a",
+            "b",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "show",
+            "a",
+            "b",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-per-file=nope",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"nope\" for \"--max-per-file\" flag: strconv.ParseInt: parsing \"nope\": invalid syntax\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--older-than-days=nope",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"nope\" for \"--older-than-days\" flag: strconv.ParseInt: parsing \"nope\": invalid syntax\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk trash list\"\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "extra",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk history prune\\\"\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "tasks",
+            "extra",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk history tasks\\\"\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--all=false",
+            "--all=TRUE",
+            "--all=false",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"purged\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "purge",
+            "--all=wat"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"wat\" for \"--all\" flag: strconv.ParseBool: parsing \"wat\": invalid syntax\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "history",
+            "prune",
+            "--max-age-days=nope"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"nope\\\" for \\\"--max-age-days\\\" flag: strconv.ParseInt: parsing \\\"nope\\\": invalid syntax\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-age-days=9223372036854775807",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0,\"status\":\"pruned\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--max-per-file"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --max-per-file\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json=wat"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"wat\" for \"--json\" flag: strconv.ParseBool: parsing \"wat\": invalid syntax\n",
+          "state": {
+            "files": [],
+            "links": [],
+            "properties": [],
+            "vault": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "history",
+            "note.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "history",
+            "prune",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        }
+      ]
+    }
+  ]
+}

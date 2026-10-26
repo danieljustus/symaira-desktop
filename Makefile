@@ -478,6 +478,20 @@ relations-inverse-cli-fixtures-generate:
 relations-inverse-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test relations_inverse --locked
+.PHONY: history-read-cli-fixtures-generate history-read-cli-differential
+history-read-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+history-read-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test history_read --locked
+
+.PHONY: graph-cli-fixtures-generate graph-cli-differential
+graph-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortGraphProcessContract$$'
+graph-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortGraphProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test graph --locked
+
 .PHONY: backlinks-cli-fixtures-generate backlinks-cli-differential
 backlinks-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortBacklinksProcessContract$$'
@@ -1368,3 +1382,17 @@ note-doc-cli-fixtures-generate:
 note-doc-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test note_doc --locked
+
+.PHONY: conflict-cli-fixtures-generate conflict-cli-differential
+conflict-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConflictProcessContract$$'
+conflict-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConflictProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test conflict --locked
+
+.PHONY: restore-cli-fixtures-generate restore-cli-differential
+restore-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRestoreProcessContract$$'
+restore-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRestoreProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test restore --locked

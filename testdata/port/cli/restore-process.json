@@ -1,0 +1,1825 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "snapshot",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/occupied.md": "copy",
+        ".symdesk/trash/occupied.md.trashinfo.json": "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/text-item": "text",
+        ".symdesk/trash/text-item.trashinfo.json": "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"file\":\"note.md\",\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"status\":\"restored\",\"timestamp\":\"2021-01-02T03:04:05Z\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "new snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at",
+            "c3fc6d4b34ea",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"file\":\"note.md\",\"id\":\"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\"status\":\"restored\",\"timestamp\":\"2020-01-02T03:04:05Z\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at=f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "snapshot id prefix \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\" is ambiguous for note.md\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at=nope",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no snapshot \\\"nope\\\" for note.md\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "missing.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no snapshots recorded for missing.md\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "../outside.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../outside.md is outside vault\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "graph",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"note.md\",\"label\":\"note\"}],\"edges\":[]}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot c3fc6d4b34ea\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "old \u003c\u0026\u003e snapshot\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "latest-empty",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/occupied.md": "copy",
+        ".symdesk/trash/occupied.md.trashinfo.json": "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/text-item": "text",
+        ".symdesk/trash/text-item.trashinfo.json": "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at=",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"file\":\"note.md\",\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"status\":\"restored\",\"timestamp\":\"2021-01-02T03:04:05Z\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "new snapshot\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at=nope",
+            "--at=f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"file\":\"note.md\",\"id\":\"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\"status\":\"restored\",\"timestamp\":\"2021-01-02T03:04:05Z\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "note"
+              ]
+            ],
+            "links": [],
+            "properties": [],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7\",\n    \"timestamp\": \"$NOW\",\n    \"size\": 31\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  },\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/b0aee919308e46e46ca482f5aba1970575b67b87f9811f0b359b964c516d06c7",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot \"}\n{\"ts\":\"$NOW\",\"event\":\"file_changed\",\"path\":\"note.md\",\"details\":\"restored snapshot f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "new snapshot\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "trash-text",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/occupied.md": "copy",
+        ".symdesk/trash/occupied.md.trashinfo.json": "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/text-item": "text",
+        ".symdesk/trash/text-item.trashinfo.json": "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "trash",
+            "restore",
+            "text-item"
+          ],
+          "exit_code": 0,
+          "stdout": "map[file:sub/plain.txt status:restored]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"sub/plain.txt\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "sub/plain.txt",
+                "text"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "restore",
+            "occupied.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"cannot restore occupied.md: note.md already exists\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"sub/plain.txt\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "sub/plain.txt",
+                "text"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4},{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"sub/plain.txt\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "sub/plain.txt",
+                "text"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "trash",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/occupied.md": "copy",
+        ".symdesk/trash/occupied.md.trashinfo.json": "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/text-item": "text",
+        ".symdesk/trash/text-item.trashinfo.json": "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "trash",
+            "restore",
+            "old-note.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"file\":\"old.md\",\"status\":\"restored\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ],
+              [
+                "$ROOT/vault/old.md",
+                "old"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"old.md\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "old.md",
+                "old\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4},{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ],
+              [
+                "$ROOT/vault/old.md",
+                "old"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"old.md\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "old.md",
+                "old\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "graph",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"note.md\",\"label\":\"Current\"},{\"id\":\"old.md\",\"label\":\"old\"}],\"edges\":[]}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ],
+              [
+                "$ROOT/vault/old.md",
+                "old"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"old.md\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "old.md",
+                "old\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "restore",
+            "../bad",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid trash item name: \\\"../bad\\\"\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ],
+              [
+                "$ROOT/vault/old.md",
+                "old"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/journal/$DATE.ndjson",
+                "{\"ts\":\"$NOW\",\"event\":\"file_added\",\"path\":\"old.md\",\"details\":\"restored from trash\"}\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ],
+              [
+                "old.md",
+                "old\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "errors",
+      "files": {
+        ".symdesk/history/manifest/note.md.json": "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]",
+        ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5": "old \u003c\u0026\u003e snapshot\n",
+        ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7": "new snapshot\n",
+        ".symdesk/trash/broken.trashinfo.json": "not-json",
+        ".symdesk/trash/occupied.md": "copy",
+        ".symdesk/trash/occupied.md.trashinfo.json": "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/old-note.md": "old\n",
+        ".symdesk/trash/old-note.md.trashinfo.json": "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        ".symdesk/trash/text-item": "text",
+        ".symdesk/trash/text-item.trashinfo.json": "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}",
+        "note.md": "---\ntitle: Current\n---\ncurrent\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "restore"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "a",
+            "b",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--at"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --at\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--json=wat"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"wat\" for \"--json\" flag: strconv.ParseBool: parsing \"wat\": invalid syntax\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "restore"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "restore",
+            "a",
+            "b",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/note.md",
+                "Current"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Current"
+              ]
+            ],
+            "vault": [
+              [
+                ".symdesk/history/manifest/note.md.json",
+                "[\n  {\n    \"id\": \"c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5\",\n    \"timestamp\": \"2020-01-02T03:04:05Z\",\n    \"size\": 17\n  },\n  {\n    \"id\": \"f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7\",\n    \"timestamp\": \"2021-01-02T03:04:05Z\",\n    \"size\": 13\n  }\n]"
+              ],
+              [
+                ".symdesk/history/objects/c3fc6d4b34ea45695fd9a4f8c77bbb077b5e855e49ffb3b2a79dea5327451fa5",
+                "old \u003c\u0026\u003e snapshot\n"
+              ],
+              [
+                ".symdesk/history/objects/f94385ba9d84ada5b1eac2b7cbdadd6f4c2f6f1a2fc6457b574d0332f662e2d7",
+                "new snapshot\n"
+              ],
+              [
+                ".symdesk/trash/broken.trashinfo.json",
+                "not-json"
+              ],
+              [
+                ".symdesk/trash/occupied.md",
+                "copy"
+              ],
+              [
+                ".symdesk/trash/occupied.md.trashinfo.json",
+                "{\"name\":\"occupied.md\",\"original_path\":\"note.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/old-note.md",
+                "old\n"
+              ],
+              [
+                ".symdesk/trash/old-note.md.trashinfo.json",
+                "{\"name\":\"old-note.md\",\"original_path\":\"old.md\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                ".symdesk/trash/text-item",
+                "text"
+              ],
+              [
+                ".symdesk/trash/text-item.trashinfo.json",
+                "{\"name\":\"text-item\",\"original_path\":\"sub/plain.txt\",\"deleted_at\":\"2020-01-01T00:00:00Z\",\"size\":4}"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Current\n---\ncurrent\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "restore",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "trash",
+            "restore",
+            "old-note.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        }
+      ]
+    }
+  ]
+}

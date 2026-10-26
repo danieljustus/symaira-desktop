@@ -10,6 +10,7 @@ use symdesk_vault::{go_quote, secure_path};
 pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
     let mut index = 1;
     let mut selected = false;
+    let mut family = String::new();
     while index < args.len() {
         let token = args[index].to_str()?;
         if token == "--" {
@@ -23,7 +24,11 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
             index += 1;
             continue;
         }
-        selected = token == "backlinks";
+        family = token.to_owned();
+        selected = matches!(
+            token,
+            "backlinks" | "graph" | "history" | "trash" | "conflict" | "restore"
+        );
         if token == "relations" {
             index += 1;
             while index < args.len() {
@@ -52,6 +57,7 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
     let mut output = None;
     let mut vault = None;
     let mut json = false;
+    let mut all = false;
     index = 1;
     while index < args.len() {
         let token = args[index].to_str()?;
@@ -98,6 +104,63 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
             } else {
                 output = Some(value);
             }
+        } else if (family == "history"
+            && matches!(
+                flag,
+                "--max-per-file" | "--max-age-days" | "--checkpoint-age-days"
+            ))
+            || (family == "trash" && flag == "--older-than-days")
+        {
+            let raw = if let Some((_, value)) = token.split_once('=') {
+                value
+            } else {
+                index += 1;
+                let Some(value) = args.get(index) else {
+                    return Some(emit_error(format!("flag needs an argument: {flag}"), json));
+                };
+                value.to_str()?
+            };
+            match crate::duplicates_cli::parse_go_int(raw) {
+                Ok(value) => normalized.push(format!("{flag}={value}").into()),
+                Err(reason) => {
+                    return Some(emit_error(
+                        format!(
+                            "invalid argument {} for {} flag: strconv.ParseInt: parsing {}: {reason}",
+                            go_quote(raw),
+                            go_quote(flag),
+                            go_quote(raw)
+                        ),
+                        json,
+                    ));
+                }
+            }
+        } else if (family == "conflict" && flag == "--action")
+            || (family == "restore" && flag == "--at")
+        {
+            normalized.push(args[index].clone());
+            if !token.contains('=') {
+                index += 1;
+                let Some(value) = args.get(index) else {
+                    return Some(emit_error(format!("flag needs an argument: {flag}"), json));
+                };
+                normalized.push(value.clone());
+            }
+        } else if family == "trash" && flag == "--all" {
+            let raw = token.split_once('=').map_or("true", |(_, value)| value);
+            all = match raw {
+                "1" | "t" | "T" | "true" | "TRUE" | "True" => true,
+                "0" | "f" | "F" | "false" | "FALSE" | "False" => false,
+                _ => {
+                    return Some(emit_error(
+                        format!(
+                            "invalid argument {} for \"--all\" flag: strconv.ParseBool: parsing {}: invalid syntax",
+                            go_quote(raw),
+                            go_quote(raw)
+                        ),
+                        json,
+                    ));
+                }
+            };
         } else if token.starts_with("--") && token != "--help" {
             return Some(emit_error(format!("unknown flag: {flag}"), json));
         } else {
@@ -111,6 +174,9 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
         .position(|v| v == "--")
         .unwrap_or(normalized.len());
     let mut globals = Vec::new();
+    if all {
+        globals.push(std::ffi::OsString::from("--all"));
+    }
     if json {
         globals.push(std::ffi::OsString::from("--json"));
     }

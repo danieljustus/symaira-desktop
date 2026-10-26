@@ -4,11 +4,14 @@ mod ai_cli;
 mod ai_secrets;
 mod config_cli;
 mod config_paths;
+mod conflict_cli;
 mod dataset;
 mod docs_cli;
 mod duplicates_cli;
+mod graph_cli;
 mod help_cli;
 mod history;
+mod history_cli;
 mod http;
 mod index_cli;
 mod links_cli;
@@ -17,6 +20,7 @@ mod mutate_cli;
 mod notebook_cli;
 mod recipe;
 mod relations_cli;
+mod restore_cli;
 mod retention;
 mod search_cli;
 mod source_cli;
@@ -221,13 +225,24 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("history", command)) => match command.subcommand() {
-            Some(("tasks", _)) => history::run_tasks(
-                matches.get_one::<String>("vault").map(String::as_str),
-                output_json,
-            ),
-            _ => process_exit(CoreExitCode::Ok),
-        },
+        Some(("history", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("restore", command)) => restore_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("trash", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            true,
+        ),
         Some(("duplicates", command)) => duplicates_cli::run_duplicates(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -261,6 +276,16 @@ fn main() -> ExitCode {
             )
         }
         Some(("docs", command)) => docs_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("conflict", command)) => conflict_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("graph", command)) => graph_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -580,11 +605,9 @@ fn cli() -> Command {
                     }),
             ),
         )
-        .subcommand(
-            Command::new("history")
-                .subcommand_required(true)
-                .subcommand(Command::new("tasks")),
-        )
+        .subcommand(history_cli::cli())
+        .subcommand(history_cli::trash_cli())
+        .subcommand(restore_cli::cli())
         .subcommand(retention::cli())
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
@@ -596,6 +619,8 @@ fn cli() -> Command {
         .subcommand(docs_cli::cli().subcommands(mutate_cli::doc_commands()))
         .subcommand(mutate_cli::doc_cli())
         .subcommand(mutate_cli::note_cli())
+        .subcommand(conflict_cli::cli())
+        .subcommand(graph_cli::cli())
         .subcommand(links_cli::backlinks_cli())
         .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())

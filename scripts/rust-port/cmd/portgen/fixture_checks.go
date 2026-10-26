@@ -27,6 +27,7 @@ type fixtureCheckTarget struct {
 
 var fixtureTestTargets = []fixtureCheckTarget{
 	{"docs read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDocsReadProcessContract$"}, []string{"testdata/port/cli/docs-read-process.json"}, false},
+	{"note/document mutation CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNoteDocProcessContract$"}, []string{"testdata/port/cli/note-doc-process.json"}, false},
 	{"views read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortViewsProcessContract$"}, []string{"testdata/port/cli/views-process.json"}, false},
 	{"MCP read tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPReadProcessPortFixture$"}, []string{"testdata/port/mcp/read-process.json"}, false},
 	{"MCP full tool surface", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPSurfaceProcessPortFixture$"}, []string{"testdata/port/mcp/tools-process.json"}, false},

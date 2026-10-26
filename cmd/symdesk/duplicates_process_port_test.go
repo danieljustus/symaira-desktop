@@ -15,6 +15,7 @@ import (
 const duplicatesFixturePath = "../../testdata/port/cli/duplicates-process.json"
 
 type duplicatesPortStep struct {
+	Stdin    string                `json:"stdin,omitempty"`
 	Args     []string              `json:"args"`
 	ExitCode int                   `json:"exit_code"`
 	Stdout   string                `json:"stdout"`
@@ -392,9 +393,12 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, af
 		"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
 		"XDG_CACHE_HOME="+filepath.Join(home, "cache"),
 		"XDG_DATA_HOME="+filepath.Join(home, "data"))
-	run := func(args []string) (int, string, string) {
+	run := func(args []string, input ...string) (int, string, string) {
 		cmd := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = cwd
+		if len(input) > 0 {
+			cmd.Stdin = strings.NewReader(input[0])
+		}
 		cmd.Env = environment
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -440,12 +444,13 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, af
 		for i := range args {
 			args[i] = strings.ReplaceAll(args[i], "$ROOT", root)
 		}
-		code, stdout, stderr := run(args)
+		code, stdout, stderr := run(args, step.Stdin)
 		for _, check := range afterStep {
 			check(vault, home)
 		}
 		observed.Steps = append(observed.Steps, duplicatesPortStep{
 			Args:     step.Args,
+			Stdin:    step.Stdin,
 			ExitCode: code,
 			Stdout:   normalizeRetryText(stdout, root),
 			Stderr:   normalizeRetryText(stderr, root),

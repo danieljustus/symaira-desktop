@@ -1341,3 +1341,10 @@ recipe-validate-fixtures-generate:
 recipe-validate-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test recipe_validate
+
+.PHONY: note-doc-cli-fixtures-generate note-doc-cli-differential
+note-doc-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+note-doc-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test note_doc --locked

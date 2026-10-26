@@ -5,6 +5,37 @@
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
+## Local integration checkpoint — 2026-10-26
+
+Execution mode: local-first on branch `rust/integration` (worktree
+`Symaira_Dev/Worktrees/symaira-desktop/rust-int`), one PR per work package,
+CI only on those PRs. Scope authorized: RUST-008 through RUST-016; no release,
+cutover or Go removal.
+
+- Integrated night PRs #1346–#1348 (closed with reference) plus three worker
+  waves: retrieval document extraction (60 Go cases, re-embed for all formats),
+  SymDraw lowering/SVG/charts/glyph outlines (7,344 emit cases), contacts
+  schema/CSV/vCard/import/CRUD/relationships/erase/key-provider, ingest queue,
+  extraction (84 cases), Notion and Paperless importers, AI providers and
+  compose resolution/probes (90 cases, loopback only), CLI help/completion for
+  all 207 paths, config/ai-config, docs list/review, views reads, backlinks,
+  inverse relations, MCP catalog for all 57 tools and 16 call handlers.
+- Verified at `ee0bb584` on Darwin/arm64: `cargo fmt --check`, strict
+  workspace Clippy, `cargo test --workspace --all-features` (729 passed, 3
+  ignored), `CGO_ENABLED=0 go test ./...` (130 packages ok) with go1.26.10,
+  `portgen --check` PASS. Native Linux/arm64 replay runs in Docker
+  (`symdesk-linux-gate:3`: Debian trixie, git 2.47, go1.26.10, rustc 1.98.0);
+  the SymRoom set (32 differentials, 68 Rust tests) passed at `5c9c54ae`.
+- Integration lessons: test with `--workspace` (symroom-core enables
+  `serde_json/preserve_order`, which changes key order everywhere); fixtures
+  must stay under `testdata/port/`; generate targets must use
+  `$(PORTGEN_GENERATE_GO_ENV)`; filenames whose acceptance differs between
+  APFS and ext4 need per-GOOS fixture entries
+  (`testdata/port/ingest/paperless-export-unicode.json`).
+- Open: every work package still has residual rows (see work-items notes and
+  worker ledger notes); native Windows evidence for all new slices is pending
+  the first package PR CI run. Go remains the production implementation.
+
 ## Local handoff — 2026-09-24
 
 The native portability repairs were subsequently squash-merged as functional

@@ -10,6 +10,7 @@ mod document;
 mod migrations;
 pub mod notion;
 pub mod paperless;
+pub mod paperless_export;
 mod sql;
 pub use document::{Document, DocumentPaths};
 pub use migrations::MIGRATIONS;

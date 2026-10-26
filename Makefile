@@ -1,3 +1,11 @@
+.PHONY: paperless-export-differential paperless-export-fixtures-generate
+paperless-export-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_export_contracts --locked
+
+paperless-export-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+
 .PHONY: paperless-http-differential paperless-http-fixtures-generate
 paperless-http-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'

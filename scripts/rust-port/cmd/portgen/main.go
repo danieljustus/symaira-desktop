@@ -43,6 +43,7 @@ var fixturePaths = []string{
 	"testdata/port/ingest/queue.json",
 	"testdata/port/ingest/notion.json",
 	"testdata/port/ingest/paperless-http.json",
+	"testdata/port/ingest/paperless-export.json",
 	"testdata/port/core/textnorm.json",
 	"testdata/port/mcp/symdesk-tools.json",
 	"testdata/port/mcp/representative.json",

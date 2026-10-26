@@ -11,7 +11,7 @@
 use std::borrow::Cow;
 
 use crate::retrieval_markdown::MAX_RETRIEVAL_SOURCE_BYTES;
-use crate::{RetrievalAnchor, RetrievalSection, SidecarError};
+use crate::{RetrievalAnchor, RetrievalByteSection, SidecarError};
 
 /// The two switches of Go's `csv.Reader` that change which rows survive.
 /// Production always uses [`GO_DIALECT`]; the flipped values exist only so the
@@ -192,28 +192,21 @@ fn parse_with(
     source_path: &str,
     content: &[u8],
     dialect: Dialect,
-) -> Result<Vec<RetrievalSection>, SidecarError> {
+) -> Result<Vec<RetrievalByteSection>, SidecarError> {
     if content.len() > MAX_RETRIEVAL_SOURCE_BYTES {
         return Err(SidecarError::Contract(format!(
             "file {source_path} exceeds {MAX_RETRIEVAL_SOURCE_BYTES} byte limit ({} bytes)",
             content.len()
         )));
     }
-    let bytes = csv_text(content, dialect);
-    // Go keeps invalid UTF-8 bytes in the section; retrieval sections are Rust
-    // strings, so such a file is rejected instead of being stored lossily.
-    let text = std::str::from_utf8(&bytes).map_err(|error| {
-        SidecarError::Contract(format!(
-            "file {source_path} must be valid UTF-8 (invalid byte at {})",
-            error.valid_up_to()
-        ))
-    })?;
-    let text = text.trim();
+    // Go's strings.TrimSpace on a byte string: invalid bytes are never space
+    // and stay in the section.
+    let text = trim_space(&csv_text(content, dialect));
     if text.is_empty() {
         return Ok(Vec::new());
     }
-    Ok(vec![RetrievalSection {
-        text: text.to_owned(),
+    Ok(vec![RetrievalByteSection {
+        text,
         start: 0,
         anchor: RetrievalAnchor {
             kind: "text".to_owned(),
@@ -223,20 +216,57 @@ fn parse_with(
     }])
 }
 
+/// Go's `strings.TrimSpace` over bytes: trims Unicode white space and stops
+/// at the first byte sequence that is not a space, valid or not.
+fn trim_space(bytes: &[u8]) -> Vec<u8> {
+    let mut start = 0;
+    while start < bytes.len() {
+        match decode_char(&bytes[start..]) {
+            Some((ch, width)) if ch.is_whitespace() => start += width,
+            _ => break,
+        }
+    }
+    let mut end = bytes.len();
+    while end > start {
+        match decode_last_char(&bytes[start..end]) {
+            Some((ch, width)) if ch.is_whitespace() => end -= width,
+            _ => break,
+        }
+    }
+    bytes[start..end].to_vec()
+}
+
+fn decode_char(bytes: &[u8]) -> Option<(char, usize)> {
+    let width =
+        (1..=4.min(bytes.len())).find(|width| std::str::from_utf8(&bytes[..*width]).is_ok())?;
+    let ch = std::str::from_utf8(&bytes[..width]).ok()?.chars().next()?;
+    Some((ch, width))
+}
+
+fn decode_last_char(bytes: &[u8]) -> Option<(char, usize)> {
+    let width = (1..=4.min(bytes.len()))
+        .find(|width| std::str::from_utf8(&bytes[bytes.len() - *width..]).is_ok())?;
+    let ch = std::str::from_utf8(&bytes[bytes.len() - width..])
+        .ok()?
+        .chars()
+        .next_back()?;
+    Some((ch, width))
+}
+
 /// Parses a `.csv` source the way Go's `ParseFileSections` does: one
-/// offset-zero text section holding the tab-joined rows, or no section when
-/// the extracted text is blank.
+/// offset-zero text section holding the tab-joined rows (as bytes, so
+/// non-UTF-8 input survives), or no section when the text is blank.
 pub fn parse_csv_retrieval_sections(
     source_path: &str,
     content: &[u8],
-) -> Result<Vec<RetrievalSection>, SidecarError> {
+) -> Result<Vec<RetrievalByteSection>, SidecarError> {
     parse_with(source_path, content, GO_DIALECT)
 }
 
 #[cfg(test)]
 mod tests {
     use super::{Dialect, GO_DIALECT, MAX_RETRIEVAL_SOURCE_BYTES, csv_text, parse_with};
-    use crate::{RetrievalSection, SidecarError};
+    use crate::{RetrievalByteSection, SidecarError};
     use base64::{Engine, engine::general_purpose::STANDARD};
     use serde::Deserialize;
 
@@ -289,7 +319,7 @@ mod tests {
         }
     }
 
-    fn describe(result: &Result<Vec<RetrievalSection>, String>) -> String {
+    fn describe(result: &Result<Vec<RetrievalByteSection>, String>) -> String {
         match result {
             Ok(sections) => format!("{sections:?}"),
             Err(error) => format!("error: {error}"),
@@ -304,30 +334,27 @@ mod tests {
                 SidecarError::Contract(message) => message,
                 other => other.to_string(),
             });
-            let invalid_utf8 = case.sections.iter().any(|section| !section.valid_utf8);
-            if invalid_utf8 {
-                // Documented residual: Go keeps the raw bytes, Rust rejects.
-                match &actual {
-                    Err(message) if message.contains("must be valid UTF-8") => {}
-                    other => drift.push(format!("{}: {}", case.id, describe(other))),
-                }
-                continue;
-            }
-            let expected: Result<Vec<RetrievalSection>, String> = if case.error.is_empty() {
+            let expected: Result<Vec<RetrievalByteSection>, String> = if case.error.is_empty() {
                 Ok(case
                     .sections
                     .iter()
-                    .map(|section| RetrievalSection {
-                        text: String::from_utf8(
-                            STANDARD.decode(&section.text_base64).expect("decode text"),
-                        )
-                        .expect("valid UTF-8 expected text"),
-                        start: section.start,
-                        anchor: crate::RetrievalAnchor {
-                            kind: section.anchor_kind.clone(),
-                            value: section.anchor_value.clone(),
-                        },
-                        synthetic: section.synthetic,
+                    .map(|section| {
+                        let text = STANDARD.decode(&section.text_base64).expect("decode text");
+                        assert_eq!(
+                            std::str::from_utf8(&text).is_ok(),
+                            section.valid_utf8,
+                            "{} valid_utf8 flag",
+                            case.id
+                        );
+                        RetrievalByteSection {
+                            text,
+                            start: section.start,
+                            anchor: crate::RetrievalAnchor {
+                                kind: section.anchor_kind.clone(),
+                                value: section.anchor_value.clone(),
+                            },
+                            synthetic: section.synthetic,
+                        }
                     })
                     .collect())
             } else {
@@ -345,9 +372,9 @@ mod tests {
         drift
     }
 
-    type ParseFn = dyn Fn(&str, &[u8]) -> Result<Vec<RetrievalSection>, SidecarError>;
+    type ParseFn = dyn Fn(&str, &[u8]) -> Result<Vec<RetrievalByteSection>, SidecarError>;
 
-    fn production(path: &str, bytes: &[u8]) -> Result<Vec<RetrievalSection>, SidecarError> {
+    fn production(path: &str, bytes: &[u8]) -> Result<Vec<RetrievalByteSection>, SidecarError> {
         parse_with(path, bytes, GO_DIALECT)
     }
 
@@ -355,6 +382,13 @@ mod tests {
     fn retrieval_csv_sections_replay_go_parse_file_sections() {
         let fixture = fixture();
         assert_eq!(fixture.cases.len(), 35, "every Go case must execute");
+        assert!(
+            fixture
+                .cases
+                .iter()
+                .any(|case| case.sections.iter().any(|section| !section.valid_utf8)),
+            "fixture must contain a non-UTF-8 section"
+        );
         assert!(
             fixture.cases.iter().any(|case| !case.sections.is_empty()),
             "fixture must contain extracted text"
@@ -406,8 +440,8 @@ mod tests {
             Ok(if joined.trim().is_empty() {
                 Vec::new()
             } else {
-                vec![RetrievalSection {
-                    text: joined.trim().to_owned(),
+                vec![RetrievalByteSection {
+                    text: joined.trim().as_bytes().to_vec(),
                     start: 0,
                     anchor: crate::RetrievalAnchor {
                         kind: "text".to_owned(),
@@ -452,6 +486,15 @@ mod tests {
         let drift = mismatches(&fixture, &production);
         assert_eq!(drift.len(), 1, "{drift:#?}");
         assert!(drift[0].starts_with("simple-lf"));
+    }
+
+    #[test]
+    fn retrieval_csv_trim_keeps_invalid_bytes_like_go_trim_space() {
+        use super::trim_space;
+        assert_eq!(trim_space(b" \xc2\xa0\xff\xe3\x80\x80\n"), b"\xff".to_vec());
+        assert_eq!(trim_space(b"\xe9 a \xe9"), b"\xe9 a \xe9".to_vec());
+        assert_eq!(trim_space(" \u{3000}x\u{85}".as_bytes()), b"x".to_vec());
+        assert!(trim_space(b" \t\n").is_empty());
     }
 
     #[test]

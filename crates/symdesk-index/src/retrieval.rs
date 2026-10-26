@@ -216,11 +216,25 @@ pub struct RetrievalSection {
     pub synthetic: bool,
 }
 
+/// A section whose text is raw bytes. Go sections are byte strings, so a
+/// source such as a CSV with Latin-1 text keeps bytes that are not UTF-8.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RetrievalByteSection {
+    pub text: Vec<u8>,
+    pub start: usize,
+    pub anchor: RetrievalAnchor,
+    pub synthetic: bool,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RetrievalChunk {
     pub uuid: String,
     pub chunk_index: usize,
+    /// The chunk text for embedding requests; invalid UTF-8 bytes appear as
+    /// U+FFFD, exactly what Go's JSON encoder sends.
     pub content: String,
+    /// The exact stored bytes, present only when they are not valid UTF-8.
+    pub raw_content: Option<Vec<u8>>,
     pub hash: String,
     pub char_start: Option<usize>,
     pub char_end: Option<usize>,
@@ -669,7 +683,7 @@ impl RetrievalDb {
 
     pub fn save_chunks(&self, chunks: &[StoredRetrievalChunk]) -> Result<(), SidecarError> {
         let transaction = self.connection.unchecked_transaction()?;
-        insert_chunks(&transaction, chunks)?;
+        insert_chunks(&transaction, chunks, &[])?;
         transaction.commit()?;
         let _ = self.connection.execute(
             "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
@@ -686,6 +700,19 @@ impl RetrievalDb {
         &self,
         document: &RetrievalDocument,
         chunks: &[StoredRetrievalChunk],
+    ) -> Result<(), SidecarError> {
+        self.replace_document_chunks_raw(document, chunks, &[])
+    }
+
+    /// `replace_document_chunks` where `raw_contents[i]`, when `Some`, is the
+    /// exact byte content of `chunks[i]` and replaces its lossy string. Go
+    /// stores chunk text as a byte string, so bytes outside UTF-8 stay in the
+    /// TEXT column unchanged; `chunks[i].content` still feeds `content_norm`.
+    pub fn replace_document_chunks_raw(
+        &self,
+        document: &RetrievalDocument,
+        chunks: &[StoredRetrievalChunk],
+        raw_contents: &[Option<Vec<u8>>],
     ) -> Result<(), SidecarError> {
         if chunks
             .iter()
@@ -710,7 +737,7 @@ impl RetrievalDb {
              ",
             params![document.path, document.hash, document.updated_at],
         )?;
-        insert_chunks(&transaction, chunks)?;
+        insert_chunks(&transaction, chunks, raw_contents)?;
         transaction.execute(
             "UPDATE index_meta SET value = value + 2 WHERE key = 'generation'",
             [],
@@ -1226,20 +1253,27 @@ fn backfill_content_norm(connection: &Connection) -> Result<(), SidecarError> {
 fn insert_chunks(
     transaction: &rusqlite::Transaction<'_>,
     chunks: &[StoredRetrievalChunk],
+    raw_contents: &[Option<Vec<u8>>],
 ) -> Result<(), SidecarError> {
     let mut statement = transaction.prepare(
         "INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm,
          binary_signature, embedding_dim, embedding_model, char_start, char_end,
          embedding_pending, anchor_kind, anchor_value, content_norm)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+         VALUES (?1, ?2, ?3, CAST(?4 AS TEXT), ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
     )?;
-    for chunk in chunks {
+    for (index, chunk) in chunks.iter().enumerate() {
+        // CAST turns a bound blob into TEXT without validating it, which keeps
+        // Go's byte-string storage class for non-UTF-8 chunk bytes.
+        let content = match raw_contents.get(index).and_then(Option::as_ref) {
+            Some(raw) => rusqlite::types::Value::Blob(raw.clone()),
+            None => rusqlite::types::Value::Text(chunk.content.clone()),
+        };
         let embedding = encode_embedding(&chunk.embedding);
         statement.execute(params![
             chunk.uuid,
             chunk.document_path,
             chunk.chunk_index,
-            chunk.content,
+            content,
             embedding,
             chunk.hash,
             embedding_norm(&chunk.embedding),
@@ -1257,6 +1291,21 @@ fn insert_chunks(
     Ok(())
 }
 
+/// Reads a TEXT column that Go may have filled with bytes outside UTF-8.
+fn lossy_text(row: &rusqlite::Row<'_>, index: usize) -> rusqlite::Result<String> {
+    let value = row.get_ref(index)?;
+    match value {
+        rusqlite::types::ValueRef::Text(bytes) | rusqlite::types::ValueRef::Blob(bytes) => {
+            Ok(String::from_utf8_lossy(bytes).into_owned())
+        }
+        other => Err(rusqlite::Error::InvalidColumnType(
+            index,
+            "content".to_owned(),
+            other.data_type(),
+        )),
+    }
+}
+
 fn read_stored_chunk(row: &rusqlite::Row<'_>) -> rusqlite::Result<StoredRetrievalChunk> {
     let bytes: Vec<u8> = row.get(5)?;
     Ok(StoredRetrievalChunk {
@@ -1264,7 +1313,7 @@ fn read_stored_chunk(row: &rusqlite::Row<'_>) -> rusqlite::Result<StoredRetrieva
         uuid: row.get(1)?,
         document_path: row.get(2)?,
         chunk_index: row.get(3)?,
-        content: row.get(4)?,
+        content: lossy_text(row, 4)?,
         embedding: decode_embedding(&bytes),
         hash: row.get(6)?,
         norm: row.get::<_, Option<f32>>(7)?.unwrap_or_default(),
@@ -1321,10 +1370,27 @@ fn embedding_norm(values: &[f32]) -> f32 {
 
 /// Splits sections like Go's `buildChunksFromSections`, retaining source byte spans.
 pub fn materialize_chunks(source: &str, sections: &[RetrievalSection]) -> Vec<RetrievalChunk> {
+    let sections = sections
+        .iter()
+        .map(|section| RetrievalByteSection {
+            text: section.text.clone().into_bytes(),
+            start: section.start,
+            anchor: section.anchor.clone(),
+            synthetic: section.synthetic,
+        })
+        .collect::<Vec<_>>();
+    materialize_byte_chunks(source, &sections)
+}
+
+/// `materialize_chunks` for sections that may hold bytes outside UTF-8.
+pub fn materialize_byte_chunks(
+    source: &str,
+    sections: &[RetrievalByteSection],
+) -> Vec<RetrievalChunk> {
     let spans = sections
         .iter()
         .flat_map(|section| {
-            split_spans(section.text.as_bytes(), 0, 0)
+            split_spans(&section.text, 0, 0)
                 .into_iter()
                 .map(|mut span| {
                     if !section.synthetic {
@@ -1356,6 +1422,9 @@ pub fn materialize_chunks(source: &str, sections: &[RetrievalSection]) -> Vec<Re
                 uuid: uuid_v5(CHUNK_NAMESPACE, &name),
                 chunk_index,
                 content: String::from_utf8_lossy(&span.text).into_owned(),
+                raw_content: std::str::from_utf8(&span.text)
+                    .is_err()
+                    .then(|| span.text.clone()),
                 hash,
                 char_start: (!synthetic).then_some(span.start),
                 char_end: (!synthetic).then_some(span.end),

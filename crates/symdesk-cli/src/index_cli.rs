@@ -12,8 +12,8 @@ use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
-    StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_chunks,
-    parse_csv_retrieval_sections, parse_markdown_body_retrieval_sections,
+    StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_byte_chunks,
+    materialize_chunks, parse_csv_retrieval_sections, parse_markdown_body_retrieval_sections,
     parse_markdown_retrieval_sections, parse_text_retrieval_sections, relocate_index_for_vault,
     restore_database, retrieval_embedding_config,
 };
@@ -572,7 +572,7 @@ fn index_markdown_retrieval(
     // Go opens a fresh client per document, so the learned dimension and the
     // embedding cache never carry over between documents.
     let mut expected_dimension = config.embedding_dim;
-    let embeddings = runtime.block_on(embed_chunks(config, &texts, &mut expected_dimension));
+    let embeddings = runtime.block_on(embed_chunks(config, &texts, &[], &mut expected_dimension));
     let stored = stored_chunks(&source, chunks, embeddings, &config.model);
     let record = RetrievalDocument {
         path: source.clone(),
@@ -767,14 +767,17 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 continue;
             }
         };
-        let sections = match if csv {
+        let chunks = match if csv {
             parse_csv_retrieval_sections(&document.path, &bytes)
+                .map(|sections| materialize_byte_chunks(&document.path, &sections))
         } else if plain_text {
             parse_text_retrieval_sections(&document.path, &bytes)
+                .map(|sections| materialize_chunks(&document.path, &sections))
         } else {
             parse_markdown_retrieval_sections(&document.path, &bytes)
+                .map(|sections| materialize_chunks(&document.path, &sections))
         } {
-            Ok(sections) => sections,
+            Ok(chunks) => chunks,
             Err(error) => {
                 eprintln!(
                     "Warning: failed to re-parse {} for re-embed: {error}",
@@ -783,12 +786,20 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 continue;
             }
         };
-        let chunks = materialize_chunks(&document.path, &sections);
         let texts = chunks
             .iter()
             .map(|chunk| chunk.content.clone())
             .collect::<Vec<_>>();
-        let embeddings = runtime.block_on(embed_chunks(&config, &texts, &mut expected_dimension));
+        let raw_contents = chunks
+            .iter()
+            .map(|chunk| chunk.raw_content.clone())
+            .collect::<Vec<_>>();
+        let embeddings = runtime.block_on(embed_chunks(
+            &config,
+            &texts,
+            &raw_contents,
+            &mut expected_dimension,
+        ));
         let stored = stored_chunks(&document.path, chunks, embeddings, &config.model);
         let document = RetrievalDocument {
             path: document.path,
@@ -797,7 +808,8 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 .format(&Rfc3339)
                 .unwrap_or_default(),
         };
-        if let Err(error) = database.replace_document_chunks(&document, &stored) {
+        if let Err(error) = database.replace_document_chunks_raw(&document, &stored, &raw_contents)
+        {
             eprintln!("Warning: failed to re-embed {}: {error}", document.path);
             continue;
         }
@@ -843,9 +855,14 @@ fn read_limited_plain_text(path: &str) -> Result<Vec<u8>, String> {
     Ok(bytes)
 }
 
+/// Chunk text as sent to the provider plus the exact stored bytes when those
+/// are not valid UTF-8.
+type EmbedCacheKey<'a> = (&'a String, Option<&'a Vec<u8>>);
+
 async fn embed_chunks(
     config: &RetrievalEmbeddingConfig,
     texts: &[String],
+    raw_contents: &[Option<Vec<u8>>],
     expected_dimension: &mut Option<usize>,
 ) -> Vec<Option<Vec<f32>>> {
     if texts.is_empty() {
@@ -873,9 +890,13 @@ async fn embed_chunks(
             let mut vectors = Vec::with_capacity(texts.len());
             // Go's per-text path consults the generator cache first, so a
             // repeated chunk text is requested once and reuses its result.
-            let mut cache: BTreeMap<&String, Option<Vec<f32>>> = BTreeMap::new();
-            for text in texts {
-                if let Some(cached) = cache.get(text) {
+            let mut cache: BTreeMap<EmbedCacheKey<'_>, Option<Vec<f32>>> = BTreeMap::new();
+            for (index, text) in texts.iter().enumerate() {
+                // Go keys the cache by the raw chunk bytes, so two chunks whose
+                // invalid bytes differ stay distinct although their request
+                // text is identical.
+                let key = (text, raw_contents.get(index).and_then(Option::as_ref));
+                if let Some(cached) = cache.get(&key) {
                     vectors.push(cached.clone());
                     continue;
                 }
@@ -895,7 +916,7 @@ async fn embed_chunks(
                         None
                     }
                 };
-                cache.insert(text, vector.clone());
+                cache.insert(key, vector.clone());
                 vectors.push(vector);
             }
             vectors

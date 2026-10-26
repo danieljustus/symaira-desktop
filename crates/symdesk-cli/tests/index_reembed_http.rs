@@ -26,6 +26,8 @@ struct FixtureCase {
     #[serde(default)]
     document_path: String,
     document_body: String,
+    #[serde(default)]
+    document_body_base64: String,
     response_status: u16,
     embedding_dim: usize,
     response_dimension: usize,
@@ -34,6 +36,8 @@ struct FixtureCase {
     requests: Vec<FixtureRequest>,
     pending_chunks: Vec<FixtureChunk>,
     resolved_chunks: Vec<FixtureChunk>,
+    #[serde(default)]
+    resolved_content_base64: Vec<String>,
     document_hash: String,
     reembedded_documents: usize,
     remaining_pending: usize,
@@ -103,6 +107,31 @@ impl Drop for TempRoot {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.0);
     }
+}
+
+/// Standard padded base64; the fixture bytes are Go-encoded and trusted input.
+fn decode_base64(text: &str) -> Vec<u8> {
+    let mut output = Vec::with_capacity(text.len() / 4 * 3);
+    let mut accumulator = 0u32;
+    let mut bits = 0;
+    for byte in text.bytes().filter(|byte| *byte != b'=') {
+        let value = match byte {
+            b'A'..=b'Z' => byte - b'A',
+            b'a'..=b'z' => byte - b'a' + 26,
+            b'0'..=b'9' => byte - b'0' + 52,
+            b'+' => 62,
+            b'/' => 63,
+            other => panic!("invalid base64 byte {other}"),
+        };
+        accumulator = (accumulator << 6) | u32::from(value);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            output.push((accumulator >> bits) as u8);
+            accumulator &= (1 << bits) - 1;
+        }
+    }
+    output
 }
 
 fn fixture() -> Fixture {
@@ -298,7 +327,7 @@ fn stored(path: &str, chunk: &FixtureChunk) -> StoredRetrievalChunk {
 fn reembed_cli_replays_go_http_success_and_failure_cases() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 10);
+    assert_eq!(fixture.cases.len(), 12);
     for case in fixture.cases {
         let root = TempRoot::new();
         let document_path = if case.document_path.is_empty() {
@@ -306,7 +335,12 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
         } else {
             case.document_path.as_str()
         };
-        fs::write(root.path("cwd").join(document_path), &case.document_body)
+        let document_body = if case.document_body_base64.is_empty() {
+            case.document_body.clone().into_bytes()
+        } else {
+            decode_base64(&case.document_body_base64)
+        };
+        fs::write(root.path("cwd").join(document_path), &document_body)
             .expect("write source document");
         let config_dir = root.path("home/.config/symseek");
         fs::create_dir_all(&config_dir).expect("create existing symseek config directory");
@@ -426,7 +460,7 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
         let database = Connection::open(&retrieval_path).expect("open rebuilt retrieval DB");
         let mut statement = database
             .prepare(
-                "SELECT uuid, chunk_index, content, embedding, hash, embedding_dim, embedding_model,
+                "SELECT uuid, chunk_index, CAST(content AS BLOB), embedding, hash, embedding_dim, embedding_model,
                         char_start, char_end, anchor_kind, anchor_value, embedding_pending
                  FROM chunks WHERE document_path = ? ORDER BY chunk_index",
             )
@@ -436,7 +470,7 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
                 Ok((
                     row.get::<_, String>(0)?,
                     row.get::<_, i64>(1)?,
-                    row.get::<_, String>(2)?,
+                    row.get::<_, Vec<u8>>(2)?,
                     row.get::<_, Vec<u8>>(3)?,
                     row.get::<_, String>(4)?,
                     row.get::<_, i64>(5)?,
@@ -453,7 +487,7 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
             .expect("read rebuilt chunks");
         let expected = &case.resolved_chunks;
         assert_eq!(actual.len(), expected.len(), "{} chunks", case.id);
-        for (actual, expected) in actual.iter().zip(expected) {
+        for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
             assert_eq!(expected.document_path, "$DOC", "{} source marker", case.id);
             let expected_embedding = expected
                 .embedding
@@ -462,7 +496,12 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
                 .collect::<Vec<_>>();
             assert_eq!(actual.0, expected.uuid, "{} uuid", case.id);
             assert_eq!(actual.1, expected.chunk_index, "{} chunk index", case.id);
-            assert_eq!(actual.2, expected.content, "{} content", case.id);
+            let expected_content = if case.resolved_content_base64.is_empty() {
+                expected.content.clone().into_bytes()
+            } else {
+                decode_base64(&case.resolved_content_base64[index])
+            };
+            assert_eq!(actual.2, expected_content, "{} content", case.id);
             assert_eq!(actual.3, expected_embedding, "{} embedding", case.id);
             assert_eq!(actual.4, expected.hash, "{} hash", case.id);
             assert_eq!(actual.5, expected.dim, "{} dim", case.id);
@@ -473,6 +512,14 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
             assert_eq!(actual.10, expected.anchor_value, "{} anchor", case.id);
             assert_eq!(actual.11, expected.embedding_pending, "{} pending", case.id);
         }
+        let non_text: i64 = database
+            .query_row(
+                "SELECT COUNT(*) FROM chunks WHERE typeof(content) != 'text'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("count chunks stored outside the TEXT class");
+        assert_eq!(non_text, 0, "{} content storage class", case.id);
         let hash: String = database
             .query_row(
                 "SELECT hash FROM documents WHERE path=?",

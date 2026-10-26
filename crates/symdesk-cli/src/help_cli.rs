@@ -20,6 +20,10 @@ fn documents() -> &'static Documents {
     })
 }
 
+pub fn render(path: &str) -> ExitCode {
+    crate::write_stdout(documents().help[path].clone())
+}
+
 /// Handle documentation before Clap, including help for not-yet-native commands.
 /// Never initialize a vault or read configuration for help, as Cobra does not.
 pub fn intercept(args: &[OsString]) -> Option<ExitCode> {

@@ -2,6 +2,7 @@
 
 mod ai_cli;
 mod ai_secrets;
+mod config_cli;
 mod config_paths;
 mod dataset;
 mod duplicates_cli;
@@ -50,6 +51,9 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
     if let Some(result) = help_cli::intercept(&args) {
+        return result;
+    }
+    if let Some(result) = config_cli::intercept(&args) {
         return result;
     }
     if args.get(1).is_some_and(|arg| arg == "--version") {

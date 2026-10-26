@@ -1,0 +1,582 @@
+{
+  "cases": [
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "key_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "static",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "key_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "static",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "key_hex": "666978747572652d6f6e6c792d6b6579"
+      },
+      "key_hex": "666978747572652d6f6e6c792d6b6579",
+      "key_nil": false,
+      "name": "static",
+      "source": "explicit",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "key_hex": "200a"
+      },
+      "key_hex": "200a",
+      "key_nil": false,
+      "name": "static",
+      "source": "explicit",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "key_hex": "00ff01"
+      },
+      "key_hex": "00ff01",
+      "key_nil": false,
+      "name": "static",
+      "source": "explicit",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "name": "",
+        "value": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "env",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "name": "",
+        "value": "fixture-only-env"
+      },
+      "key_hex": "666978747572652d6f6e6c792d656e76",
+      "key_nil": false,
+      "name": "env",
+      "source": "env:SYMRELATE_BACKUP_PASSPHRASE",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "name": "",
+        "value": " \n"
+      },
+      "key_hex": "200a",
+      "key_nil": false,
+      "name": "env",
+      "source": "env:SYMRELATE_BACKUP_PASSPHRASE",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "name": "PORT_CONTACTS_DUMMY_KEY",
+        "value": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "env",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "name": "PORT_CONTACTS_DUMMY_KEY",
+        "value": "fixture-only-env"
+      },
+      "key_hex": "666978747572652d6f6e6c792d656e76",
+      "key_nil": false,
+      "name": "env",
+      "source": "env:PORT_CONTACTS_DUMMY_KEY",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "name": "PORT_CONTACTS_DUMMY_KEY",
+        "value": " \n"
+      },
+      "key_hex": "200a",
+      "key_nil": false,
+      "name": "env",
+      "source": "env:PORT_CONTACTS_DUMMY_KEY",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "confirm": false,
+        "env": "fixture-env",
+        "explicit_hex": "666978747572652d6578706c69636974"
+      },
+      "key_hex": "666978747572652d6578706c69636974",
+      "key_nil": false,
+      "name": "default",
+      "source": "explicit",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "confirm": false,
+        "env": "fixture-env",
+        "explicit_hex": ""
+      },
+      "key_hex": "666978747572652d656e76",
+      "key_nil": false,
+      "name": "default",
+      "source": "env:SYMRELATE_BACKUP_PASSPHRASE",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "confirm": true,
+        "env": "fixture-env",
+        "explicit_hex": "666978747572652d6578706c69636974"
+      },
+      "key_hex": "666978747572652d6578706c69636974",
+      "key_nil": false,
+      "name": "default",
+      "source": "explicit",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "",
+      "input": {
+        "confirm": true,
+        "env": "fixture-env",
+        "explicit_hex": ""
+      },
+      "key_hex": "666978747572652d656e76",
+      "key_nil": false,
+      "name": "default",
+      "source": "env:SYMRELATE_BACKUP_PASSPHRASE",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "states": []
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "chain",
+      "source": "",
+      "unavailable": true,
+      "visits": []
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "states": [
+          "unavailable"
+        ]
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "chain",
+      "source": "",
+      "unavailable": true,
+      "visits": [
+        0
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "states": [
+          "unavailable",
+          "ok",
+          "fatal"
+        ]
+      },
+      "key_hex": "666978747572652d636861696e",
+      "key_nil": false,
+      "name": "chain",
+      "source": "fixture",
+      "unavailable": false,
+      "visits": [
+        0,
+        1
+      ]
+    },
+    {
+      "error": "fixture provider failed",
+      "input": {
+        "states": [
+          "fatal",
+          "ok"
+        ]
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "chain",
+      "source": "",
+      "unavailable": false,
+      "visits": [
+        0
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "states": [
+          "wrapped_unavailable",
+          "ok"
+        ]
+      },
+      "key_hex": "666978747572652d636861696e",
+      "key_nil": false,
+      "name": "chain",
+      "source": "fixture",
+      "unavailable": false,
+      "visits": [
+        0,
+        1
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "states": [
+          "empty_ok",
+          "fatal"
+        ]
+      },
+      "key_hex": "",
+      "key_nil": false,
+      "name": "chain",
+      "source": "empty",
+      "unavailable": false,
+      "visits": [
+        0
+      ]
+    },
+    {
+      "error": "security: key unavailable",
+      "input": {
+        "states": [
+          "unavailable",
+          "unavailable"
+        ]
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "chain",
+      "source": "",
+      "unavailable": true,
+      "visits": [
+        0,
+        1
+      ]
+    },
+    {
+      "error": "security: key unavailable",
+      "input": null,
+      "key_hex": "",
+      "key_nil": true,
+      "name": "terminal_non_tty",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "error": "security: key unavailable",
+      "input": null,
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault_absent",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": false,
+        "name": "",
+        "stdout_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "",
+        "stdout_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": false,
+        "name": "",
+        "stdout_hex": "200a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "",
+        "stdout_hex": "200a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "",
+      "input": {
+        "fail": false,
+        "name": "",
+        "stdout_hex": "20c285666978747572652d73796d7661756c74e280830a"
+      },
+      "key_hex": "666978747572652d73796d7661756c74",
+      "key_nil": false,
+      "name": "symvault",
+      "source": "symvault",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "",
+        "stdout_hex": "20c285666978747572652d73796d7661756c74e280830a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "",
+      "input": {
+        "fail": false,
+        "name": "",
+        "stdout_hex": "ff0001"
+      },
+      "key_hex": "ff0001",
+      "key_nil": false,
+      "name": "symvault",
+      "source": "symvault",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "args": "get\nsymrelate-backup",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "",
+        "stdout_hex": "ff0001"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": false,
+        "name": "custom-key",
+        "stdout_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "custom-key",
+        "stdout_hex": ""
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": false,
+        "name": "custom-key",
+        "stdout_hex": "200a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "custom-key",
+        "stdout_hex": "200a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "",
+      "input": {
+        "fail": false,
+        "name": "custom-key",
+        "stdout_hex": "20c285666978747572652d73796d7661756c74e280830a"
+      },
+      "key_hex": "666978747572652d73796d7661756c74",
+      "key_nil": false,
+      "name": "symvault",
+      "source": "symvault",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "custom-key",
+        "stdout_hex": "20c285666978747572652d73796d7661756c74e280830a"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "",
+      "input": {
+        "fail": false,
+        "name": "custom-key",
+        "stdout_hex": "ff0001"
+      },
+      "key_hex": "ff0001",
+      "key_nil": false,
+      "name": "symvault",
+      "source": "symvault",
+      "unavailable": false,
+      "visits": null
+    },
+    {
+      "args": "get\ncustom-key",
+      "error": "security: key unavailable",
+      "input": {
+        "fail": true,
+        "name": "custom-key",
+        "stdout_hex": "ff0001"
+      },
+      "key_hex": "",
+      "key_nil": true,
+      "name": "symvault",
+      "source": "",
+      "unavailable": true,
+      "visits": null
+    }
+  ],
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source_hashes": {
+    "internal/contacts/internal/domain/security/keyprovider.go": "c867eafb8d7d13b44a6945287770e782b878a6dd922540abb30060831bd8bee7"
+  }
+}

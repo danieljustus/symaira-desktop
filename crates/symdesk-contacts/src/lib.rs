@@ -1,8 +1,12 @@
 //! The absorbed SymRelate contact store. Go remains the production oracle.
 #![deny(unsafe_code)]
 
+pub mod contact;
 pub mod import;
+pub mod keyprovider;
 pub mod pipeline;
+pub mod relationship;
+pub mod security;
 pub mod vcard;
 
 use rusqlite::Connection;

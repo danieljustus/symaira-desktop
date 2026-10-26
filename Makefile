@@ -223,6 +223,26 @@ core-differential: core-fixtures-check
 # acceptance/error text, Eval over field maps and Disambiguate from the
 # production internal/templatepath package; Rust replays all of it.
 CONTACTS_GO ?= go
+.PHONY: contacts-keyprovider-differential
+contacts-keyprovider-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsKeyProviderContract$$' -v
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test keyprovider_contracts
+
+.PHONY: contacts-erase-differential
+contacts-erase-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsEraseContract$$' -v
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test erase_contracts
+
+.PHONY: contacts-relationship-differential
+contacts-relationship-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/relationship -run '^TestPortContactsRelationshipContract$$' -v
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test relationship_contracts
+
+.PHONY: contacts-crud-differential
+contacts-crud-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/contact -run '^TestPortContactsCRUDContract$$' -v
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test crud_contracts
+
 .PHONY: contacts-vcard-differential
 contacts-vcard-differential:
 	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/importer -run '^TestPortContactsVCardContract$$'

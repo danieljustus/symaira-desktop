@@ -105,7 +105,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
     match name {
         "desk_docs" | "list_documents" => {
             let filter = DocsFilter {
-                file_type: text("type"),
+                document_type: text("type"),
                 status: text("status"),
                 person: text("person"),
                 correspondent: text("correspondent"),

@@ -4765,9 +4765,9 @@
       }
     },
     {
-      "id": "metadata-desk_docs-{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
-      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_docs\",\"arguments\":{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
-      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "id": "metadata-desk_docs-{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_docs\",\"arguments\":{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"a.md\\\",\\\"title\\\":\\\"Invoice \\\\u003c\\\\u0026\\\\u003e\\\",\\\"type\\\":\\\"document\\\",\\\"document_date\\\":\\\"2026-01-02\\\",\\\"person\\\":\\\"Ada\\\",\\\"status\\\":\\\"open\\\",\\\"due_date\\\":\\\"2026-01-31\\\",\\\"confidence\\\":40,\\\"correspondent\\\":\\\"Bank\\\",\\\"document_type\\\":\\\"bill\\\",\\\"asn\\\":7,\\\"tags\\\":[\\\"finance\\\"]}]\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
       "exit_code": 0,
       "files": {
@@ -4965,8 +4965,8 @@
       }
     },
     {
-      "id": "metadata-docs_review-{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
-      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_review\",\"arguments\":{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
+      "id": "metadata-docs_review-{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_review\",\"arguments\":{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"$ROOT/vault/a.md\\\",\\\"title\\\":\\\"Invoice \\\\u003c\\\\u0026\\\\u003e\\\",\\\"status\\\":\\\"open\\\",\\\"document_type\\\":\\\"bill\\\",\\\"document_date\\\":\\\"2026-01-02\\\",\\\"confidence\\\":40,\\\"reasons\\\":[\\\"confidence 40 \\\\u003c 85\\\"]}]\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
       "exit_code": 0,
@@ -5165,8 +5165,8 @@
       }
     },
     {
-      "id": "metadata-docs_similar-{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
-      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_similar\",\"arguments\":{\"type\":\"invoice\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
+      "id": "metadata-docs_similar-{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_similar\",\"arguments\":{\"type\":\"bill\",\"status\":\"open\",\"person\":\"Ada\",\"correspondent\":\"Bank\",\"year\":\"2026\",\"due_before\":\"2026-02-01\",\"min_confidence\":0,\"max_confidence\":50}}}",
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file is required\",\"type\":\"text\"}],\"isError\":true}}\n",
       "stderr": "",
       "exit_code": 0,
@@ -5243,6 +5243,466 @@
           "type": "invoice"
         }
       }
+    },
+    {
+      "id": "diagram-false-",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "diagram-false-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "diagram-false-false",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":false}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "diagram-false-{\"title\":7}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":{\"title\":7}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "diagram-true-",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eAlpha \\\\u0026lt;\\\\u0026amp;\\\\u0026gt; \\\\u0026quot;quote\\\\u0026quot;\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(360,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eBee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(640,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eThird\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(920,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ed\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,150)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"440\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"80\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"560\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"840\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "aliases": "- Alias",
+          "title": "Alpha \u003c\u0026\u003e \"quote\""
+        },
+        "b.md": {
+          "title": "Bee"
+        },
+        "c.md": {
+          "title": "Third"
+        },
+        "d.md": {},
+        "e.md": {}
+      }
+    },
+    {
+      "id": "diagram-true-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eAlpha \\\\u0026lt;\\\\u0026amp;\\\\u0026gt; \\\\u0026quot;quote\\\\u0026quot;\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(360,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eBee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(640,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eThird\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(920,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ed\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,150)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"440\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"80\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"560\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"840\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "aliases": "- Alias",
+          "title": "Alpha \u003c\u0026\u003e \"quote\""
+        },
+        "b.md": {
+          "title": "Bee"
+        },
+        "c.md": {
+          "title": "Third"
+        },
+        "d.md": {},
+        "e.md": {}
+      }
+    },
+    {
+      "id": "diagram-true-false",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":false}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eAlpha \\\\u0026lt;\\\\u0026amp;\\\\u0026gt; \\\\u0026quot;quote\\\\u0026quot;\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(360,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eBee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(640,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eThird\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(920,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ed\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,150)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"440\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"80\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"560\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"840\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "aliases": "- Alias",
+          "title": "Alpha \u003c\u0026\u003e \"quote\""
+        },
+        "b.md": {
+          "title": "Bee"
+        },
+        "c.md": {
+          "title": "Third"
+        },
+        "d.md": {},
+        "e.md": {}
+      }
+    },
+    {
+      "id": "diagram-true-{\"title\":7}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":{\"title\":7}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"svg\\\":\\\"\\\\u003csvg xmlns=\\\\\\\"http://www.w3.org/2000/svg\\\\\\\" viewBox=\\\\\\\"0 0 1200 800\\\\\\\" font-family=\\\\\\\"system-ui, sans-serif\\\\\\\"\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eAlpha \\\\u0026lt;\\\\u0026amp;\\\\u0026gt; \\\\u0026quot;quote\\\\u0026quot;\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(360,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eBee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(640,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003eThird\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(920,60)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ed\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cg transform=\\\\\\\"translate(80,150)\\\\\\\"\\\\u003e\\\\u003crect width=\\\\\\\"240\\\\\\\" height=\\\\\\\"60\\\\\\\" rx=\\\\\\\"8\\\\\\\" fill=\\\\\\\"#f3f4f6\\\\\\\" stroke=\\\\\\\"#9ca3af\\\\\\\"/\\\\u003e\\\\u003ctext x=\\\\\\\"120\\\\\\\" y=\\\\\\\"36\\\\\\\" text-anchor=\\\\\\\"middle\\\\\\\" font-size=\\\\\\\"13\\\\\\\"\\\\u003ee\\\\u003c/text\\\\u003e\\\\u003c/g\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"440\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"280\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"80\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"560\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003cline x1=\\\\\\\"840\\\\\\\" y1=\\\\\\\"120\\\\\\\" x2=\\\\\\\"160\\\\\\\" y2=\\\\\\\"120\\\\\\\" stroke=\\\\\\\"#c4b5fd\\\\\\\" stroke-width=\\\\\\\"1.5\\\\\\\"/\\\\u003e\\\\n\\\\u003c/svg\\\\u003e\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "indexed": true,
+      "after_files": {
+        "a.md": "---\ntitle: Alpha \u003c\u0026\u003e \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+        "b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+        "c.md": "---\ntitle: Third\n---\n[[a]]\n",
+        "d.md": "fourth\n",
+        "e.md": "fifth\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "a.md": {
+          "aliases": "- Alias",
+          "title": "Alpha \u003c\u0026\u003e \"quote\""
+        },
+        "b.md": {
+          "title": "Bee"
+        },
+        "c.md": {
+          "title": "Third"
+        },
+        "d.md": {},
+        "e.md": {}
+      }
+    },
+    {
+      "id": "meetings-",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"meetings/a.md\\\",\\\"title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"meeting_id\\\":\\\"m1\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05Z\\\",\\\"duration_ms\\\":2500,\\\"language\\\":\\\"de\\\",\\\"review_state\\\":\\\"reviewed\\\"},{\\\"path\\\":\\\"meetings/b.md\\\",\\\"title\\\":\\\"b\\\",\\\"meeting_id\\\":\\\"\\\",\\\"started_at\\\":\\\"\\\",\\\"duration_ms\\\":2,\\\"language\\\":\\\"\\\",\\\"review_state\\\":\\\"\\\"}]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meetings-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"meetings/a.md\\\",\\\"title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"meeting_id\\\":\\\"m1\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05Z\\\",\\\"duration_ms\\\":2500,\\\"language\\\":\\\"de\\\",\\\"review_state\\\":\\\"reviewed\\\"},{\\\"path\\\":\\\"meetings/b.md\\\",\\\"title\\\":\\\"b\\\",\\\"meeting_id\\\":\\\"\\\",\\\"started_at\\\":\\\"\\\",\\\"duration_ms\\\":2,\\\"language\\\":\\\"\\\",\\\"review_state\\\":\\\"\\\"}]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meetings-false",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\",\"arguments\":false}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"meetings/a.md\\\",\\\"title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"meeting_id\\\":\\\"m1\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05Z\\\",\\\"duration_ms\\\":2500,\\\"language\\\":\\\"de\\\",\\\"review_state\\\":\\\"reviewed\\\"},{\\\"path\\\":\\\"meetings/b.md\\\",\\\"title\\\":\\\"b\\\",\\\"meeting_id\\\":\\\"\\\",\\\"started_at\\\":\\\"\\\",\\\"duration_ms\\\":2,\\\"language\\\":\\\"\\\",\\\"review_state\\\":\\\"\\\"}]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meetings-[]",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\",\"arguments\":[]}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[{\\\"path\\\":\\\"meetings/a.md\\\",\\\"title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"meeting_id\\\":\\\"m1\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05Z\\\",\\\"duration_ms\\\":2500,\\\"language\\\":\\\"de\\\",\\\"review_state\\\":\\\"reviewed\\\"},{\\\"path\\\":\\\"meetings/b.md\\\",\\\"title\\\":\\\"b\\\",\\\"meeting_id\\\":\\\"\\\",\\\"started_at\\\":\\\"\\\",\\\"duration_ms\\\":2,\\\"language\\\":\\\"\\\",\\\"review_state\\\":\\\"\\\"}]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "broken.md": "---\ntitle: [invalid\n---\n",
+        "meetings/a.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-null",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":null}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-[]",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":[]}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Path string \\\"json:\\\\\\\"path\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{\"path\":false}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"path\":false}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal bool into Go struct field .path of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{\"path\":\"../outside\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"path\":\"../outside\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path traversal denied: ../outside is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{\"path\":\"ordinary.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"path\":\"ordinary.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"ordinary.md is not a meeting note (frontmatter type != \\\"meeting\\\")\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{\"path\":\"meeting.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"path\":\"meeting.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"Path\\\":\\\"$ROOT/vault/meeting.md\\\",\\\"SHA256\\\":\\\"c759f93862fc56fbeafd2280e5e7dab62a0bd76946fc76e23ce272dd53f558ab\\\",\\\"Title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"Created\\\":\\\"\\\",\\\"Tags\\\":null,\\\"Aliases\\\":null,\\\"Frontmatter\\\":{\\\"duration_ms\\\":2500,\\\"language\\\":\\\"de\\\",\\\"meeting_id\\\":\\\"m1\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05Z\\\",\\\"symmeet_source\\\":{\\\"review_state\\\":\\\"reviewed\\\"},\\\"title\\\":\\\"Review \\\\u003c\\\\u0026\\\\u003e\\\",\\\"type\\\":\\\"meeting\\\"},\\\"Body\\\":\\\"Reviewed transcript\\\\n\\\",\\\"Links\\\":null,\\\"Size\\\":182,\\\"ModTime\\\":\\\"2026-01-01T00:00:00Z\\\",\\\"DocumentDate\\\":\\\"\\\",\\\"Person\\\":\\\"\\\",\\\"Status\\\":\\\"\\\",\\\"DueDate\\\":\\\"\\\",\\\"Confidence\\\":0,\\\"OcrJSONPath\\\":\\\"\\\",\\\"Simhash\\\":\\\"\\\",\\\"ASN\\\":null,\\\"Type\\\":\\\"meeting\\\",\\\"DerivedFrom\\\":\\\"\\\",\\\"Derived\\\":false}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meetings-empty",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"[]\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "after_files": {},
+      "sidecar_exists": true,
+      "after_index": {}
     },
     {
       "id": "docs-unindexed",

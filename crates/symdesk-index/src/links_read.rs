@@ -86,6 +86,75 @@ fn aliases(raw: &str) -> Vec<String> {
 }
 
 impl Sidecar {
+    /// Reads the stored link graph without scanning or refreshing Markdown.
+    /// Entity-provider enrichment belongs to the caller, not the derived index.
+    pub fn vault_link_graph(
+        &self,
+        root: &Path,
+    ) -> Result<
+        (
+            Vec<symdesk_vault::ResolvedNode>,
+            Vec<symdesk_vault::ResolvedEdge>,
+        ),
+        SidecarError,
+    > {
+        let files = self.list_files(root, "")?;
+        let documents = files
+            .iter()
+            .map(|file| {
+                let properties = self.get_properties(&file.path)?;
+                Ok(symdesk_vault::ResolveDocument {
+                    path: file
+                        .path
+                        .strip_prefix(&format!(
+                            "{}{sep}",
+                            root.display(),
+                            sep = std::path::MAIN_SEPARATOR
+                        ))
+                        .unwrap_or(&file.path)
+                        .replace(std::path::MAIN_SEPARATOR, "/"),
+                    title: file.title.clone(),
+                    aliases: properties
+                        .get("aliases")
+                        .map_or_else(Vec::new, |raw| aliases(raw)),
+                    links: Vec::new(),
+                })
+            })
+            .collect::<Result<Vec<_>, SidecarError>>()?;
+        let resolver = symdesk_vault::Resolver::new(&documents);
+        let nodes = documents
+            .iter()
+            .map(|doc| symdesk_vault::ResolvedNode {
+                id: doc.path.clone(),
+                label: doc.title.clone(),
+            })
+            .collect();
+        let mut statement = self
+            .connection
+            .prepare("SELECT from_path, to_path FROM links")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        let mut seen = BTreeSet::new();
+        let mut edges = Vec::new();
+        for row in rows {
+            let (source, target) = row?;
+            let source = source
+                .strip_prefix(&format!(
+                    "{}{sep}",
+                    root.display(),
+                    sep = std::path::MAIN_SEPARATOR
+                ))
+                .unwrap_or(&source)
+                .replace(std::path::MAIN_SEPARATOR, "/");
+            let target = resolver.resolve(&target);
+            if seen.insert((source.clone(), target.clone())) {
+                edges.push(symdesk_vault::ResolvedEdge { source, target });
+            }
+        }
+        Ok((nodes, edges))
+    }
+
     /// Returns distinct indexed sources linking to a path, title, or alias.
     ///
     /// # Errors

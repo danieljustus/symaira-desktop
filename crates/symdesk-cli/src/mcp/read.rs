@@ -1,5 +1,7 @@
 //! Read-only notebook/property tools; storage semantics live in the libraries.
 mod extra;
+mod graph;
+mod meetings;
 
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -13,7 +15,14 @@ pub(super) fn supports(name: &str) -> bool {
     extra::supports(name)
         || matches!(
             name,
-            "desk_props" | "desk_backlinks" | "notebook_list" | "notebook_get" | "notebook_ask"
+            "desk_props"
+                | "desk_backlinks"
+                | "notebook_list"
+                | "notebook_get"
+                | "notebook_ask"
+                | "desk_diagram"
+                | "meeting_list"
+                | "meeting_get"
         )
 }
 
@@ -27,6 +36,20 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
         return extra::call(name, raw, config);
     }
     match name {
+        "desk_diagram" => graph::call(config),
+        "meeting_list" => {
+            let (root, _sidecar) = open_sidecar(config)?;
+            meetings::list(&root)
+        }
+        "meeting_get" => {
+            let args =
+                go_string_fields(raw, &["path"], r#"struct { Path string "json:\"path\"" }"#)?;
+            if args[0].is_empty() {
+                return Err("path is required".into());
+            }
+            let (root, _sidecar) = open_sidecar(config)?;
+            meetings::show(&root, &args[0])
+        }
         "desk_props" => {
             let args =
                 go_string_fields(raw, &["file"], r#"struct { File string "json:\"file\"" }"#)?;

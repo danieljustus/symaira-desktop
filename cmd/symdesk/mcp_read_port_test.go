@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,6 +24,7 @@ type mcpReadCase struct {
 	ExternalLink  bool                              `json:"external_link,omitempty"`
 	NoVault       bool                              `json:"no_vault,omitempty"`
 	AfterFiles    map[string]string                 `json:"after_files"`
+	FileMtime     int64                             `json:"file_mtime,omitempty"`
 	SidecarExists bool                              `json:"sidecar_exists"`
 	AfterIndex    map[string]map[string]interface{} `json:"after_index"`
 }
@@ -116,12 +118,43 @@ func mcpReadCases() []mcpReadCase {
 		"b.md": "---\ntitle: Reviewed\ntype: invoice\ndocument_type: bill\ndocument_date: '2026-01-03'\nconfidence: 95\nreview_ignored: true\n---\nalpha beta gamma epsilon\n",
 	}
 	for _, name := range []string{"desk_docs", "docs_review", "docs_similar"} {
-		for _, args := range []string{`{}`, `{"file":"a.md","threshold":1}`, `{"file":"b.md","threshold":101}`, `{"type":"invoice","status":"open","person":"Ada","correspondent":"Bank","year":"2026","due_before":"2026-02-01","min_confidence":0,"max_confidence":50}`, `{"file":"../outside"}`} {
+		for _, args := range []string{`{}`, `{"file":"a.md","threshold":1}`, `{"file":"b.md","threshold":101}`, `{"type":"bill","status":"open","person":"Ada","correspondent":"Bank","year":"2026","due_before":"2026-02-01","min_confidence":0,"max_confidence":50}`, `{"file":"../outside"}`} {
 			add("metadata-"+name+"-"+args, name, args)
 			cases[len(cases)-1].Files = metadata
 			cases[len(cases)-1].Indexed = true
 		}
 	}
+	for _, indexed := range []bool{false, true} {
+		for _, args := range []string{"", `{}`, `false`, `{"title":7}`} {
+			add(fmt.Sprintf("diagram-%v-%s", indexed, args), "desk_diagram", args)
+			cases[len(cases)-1].Indexed = indexed
+			cases[len(cases)-1].Files = map[string]string{
+				"a.md": "---\ntitle: Alpha <&> \"quote\"\naliases: [Alias]\n---\n[[b]] [[Bee]] [[Ghost]] [[b]]\n",
+				"b.md": "---\ntitle: Bee\n---\n[[Alias]] [[a]]\n",
+				"c.md": "---\ntitle: Third\n---\n[[a]]\n",
+				"d.md": "fourth\n", "e.md": "fifth\n",
+			}
+		}
+	}
+	for _, args := range []string{"", `{}`, `false`, `[]`} {
+		add("meetings-"+args, "meeting_list", args)
+		cases[len(cases)-1].Files = map[string]string{
+			"meetings/a.md": "---\ntype: meeting\ntitle: Review <&>\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+			"meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
+			"ordinary.md": "not a meeting\n",
+			"broken.md": "---\ntitle: [invalid\n---\n",
+		}
+	}
+	for _, args := range []string{`{}`, `null`, `[]`, `{"path":false}`, `{"path":"../outside"}`, `{"path":"ordinary.md"}`, `{"path":"meeting.md"}`} {
+		add("meeting-get-"+args, "meeting_get", args)
+		cases[len(cases)-1].Files = map[string]string{
+			"meeting.md": "---\ntype: meeting\ntitle: Review <&>\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+			"ordinary.md": "not a meeting\n",
+		}
+		cases[len(cases)-1].FileMtime = 1767225600
+	}
+	add("meetings-empty", "meeting_list", `{}`)
+	cases[len(cases)-1].Files = nil
 	add("docs-unindexed", "desk_docs", `{}`)
 	add("review-unindexed", "docs_review", `{}`)
 	add("similar-unindexed", "docs_similar", `{"file":"alpha.md"}`)
@@ -150,6 +183,10 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			}
 			if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
 				t.Fatal(err)
+			}
+			if c.FileMtime > 0 {
+				stamp := time.Unix(c.FileMtime, 0)
+				if err := os.Chtimes(p, stamp, stamp); err != nil { t.Fatal(err) }
 			}
 		}
 		dbPath := filepath.Join(root, "data", "sidecar.db")

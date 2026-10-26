@@ -41,6 +41,8 @@ struct Case {
     #[serde(default)]
     no_vault: bool,
     after_files: BTreeMap<String, String>,
+    #[serde(default)]
+    file_mtime: u64,
     sidecar_exists: bool,
     after_index: BTreeMap<String, BTreeMap<String, String>>,
 }
@@ -56,7 +58,7 @@ fn read_tools_match_go_stdio_calls_and_authoritative_files() {
     )
     .expect("decode Go process transcript");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 119);
+    assert_eq!(fixture.cases.len(), 139);
     for case in fixture.cases {
         replay(&case);
     }
@@ -71,7 +73,16 @@ fn replay(case: &Case) {
     for (path, body) in &case.files {
         let path = root.join("vault").join(path);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(path, body).unwrap();
+        fs::write(&path, body).unwrap();
+        if case.file_mtime > 0 {
+            let stamp = std::time::UNIX_EPOCH + Duration::from_secs(case.file_mtime);
+            fs::File::options()
+                .write(true)
+                .open(path)
+                .unwrap()
+                .set_times(fs::FileTimes::new().set_accessed(stamp).set_modified(stamp))
+                .unwrap();
+        }
     }
     if case.indexed {
         let mut sidecar = symdesk_index::Sidecar::open(&root.join("data/sidecar.db")).unwrap();

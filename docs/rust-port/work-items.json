@@ -385,7 +385,8 @@
         "make http-differential",
         "make postgres-integration",
         "cargo nextest run -p symdesk-protocol"
-      ]
+      ],
+      "note": "RUST-015 groundwork (HTTP-002/HTTP-005): the Go permissions manager (users, groups, document rules, token hashing, users/groups/permissions.json persistence) is ported as symdesk_vault::permissions::Manager and replays the Go-generated testdata/port/vault/permissions.json (101 scenarios, 632 operations) via make permissions-differential. The HTTP server still reads the ACL files through its own fail-closed reader; routing it through the manager, the CLI user/group/permission commands and the remaining HTTP routes stay open."
     },
     {
       "id": "RUST-016",

@@ -83,6 +83,13 @@
       "increment": [
         "schema_version"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-vault --test permissions_contracts --locked",
+      "fixture": "testdata/port/vault/permissions.json",
+      "increment": [
+        "schema_version"
+      ]
     }
   ],
   "replays": {
@@ -279,7 +286,7 @@
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,
-      "passed": 115
+      "passed": 117
     },
     "cargo test -p symdesk-vault --locked --test dataset_contracts": {
       "ignored": 0,
@@ -320,6 +327,10 @@
     "cargo test -p symdesk-vault --test notebook_write_contracts --locked": {
       "ignored": 0,
       "passed": 3
+    },
+    "cargo test -p symdesk-vault --test permissions_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
     },
     "cargo test -p symdesk-vault --test retention_contracts --locked": {
       "ignored": 0,

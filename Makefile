@@ -314,6 +314,16 @@ base-view-write-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/baseviewwritegen --check
 	$(CARGO) test -p symdesk-vault --test base_view_write_contracts --locked
 
+# HTTP-002/HTTP-005 permissions manager: the Go-owned fixture executes the
+# production internal/permissions package over users, groups and document
+# rules (results, users/groups/permissions.json bytes and modes, Go JSON
+# decoding quirks); Rust replays all of it. Regenerate deliberately with
+# `make port-fixtures-generate`, never in place.
+.PHONY: permissions-differential
+permissions-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/permissionsgen --check
+	$(CARGO) test -p symdesk-vault --test permissions_contracts --locked
+
 vault-history-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 

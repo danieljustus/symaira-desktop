@@ -355,7 +355,7 @@ func observeDuplicatesProcess(t *testing.T) duplicatesPortFixture {
 	return fixture
 }
 
-func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) duplicatesPortCase {
+func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, afterStep ...func(string, string)) duplicatesPortCase {
 	t.Helper()
 	// The service canonicalizes the vault root but the index stores the path
 	// as given, so a root behind a symlink (macOS /var -> /private/var) or a
@@ -440,6 +440,9 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) du
 			args[i] = strings.ReplaceAll(args[i], "$ROOT", root)
 		}
 		code, stdout, stderr := run(args)
+		for _, check := range afterStep {
+			check(vault, home)
+		}
 		observed.Steps = append(observed.Steps, duplicatesPortStep{
 			Args:     step.Args,
 			ExitCode: code,

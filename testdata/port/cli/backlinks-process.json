@@ -1,0 +1,538 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "indexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "backlinks",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[beta.md nested/third.md alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"beta.md\",\"nested/third.md\",\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"beta.md\",\"nested/third.md\",\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[beta.md nested/third.md alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[beta.md nested/third.md alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "beta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "beta.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "beta.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "beta.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "beta.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "missing.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "missing.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "missing.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "missing.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "missing.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "nested/third.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "nested/third.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "nested/third.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "nested/third.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "nested/third.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:relate:person:123"
+          ],
+          "exit_code": 0,
+          "stdout": "[nested/third.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:relate:person:123",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"nested/third.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:relate:person:123",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"nested/third.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:relate:person:123",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[nested/third.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:relate:person:123",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[nested/third.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:bad"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:bad",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:bad",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:bad",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "contact:bad",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "../escape.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n"
+        },
+        {
+          "args": [
+            "backlinks",
+            "../escape.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "../escape.md",
+            "--output",
+            "json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "../escape.md",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n"
+        },
+        {
+          "args": [
+            "backlinks",
+            "../escape.md",
+            "--output",
+            "text"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n"
+        },
+        {
+          "args": [
+            "backlinks"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "backlinks"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "backlinks",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output=json",
+            "backlinks",
+            "--",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"beta.md\",\"nested/third.md\",\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "--json",
+            "alpha.md"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"beta.md\",\"nested/third.md\",\"alpha.md\"]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--output=invalid"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid --output value \"invalid\" (want text|json|yaml)\n"
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--json",
+            "--output=text"
+          ],
+          "exit_code": 0,
+          "stdout": "[beta.md nested/third.md alpha.md]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "backlinks",
+            "alpha.md",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "[\"beta.md\",\"nested/third.md\",\"alpha.md\"]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "unindexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "backlinks",
+            "alpha.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "override",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha Title\naliases: [First, One]\n---\n[[alpha]] [[beta]]\n",
+        "beta.md": "---\ntitle: Beta\n---\n[[Alpha Title]] [[First]] [[alpha.md]]\n",
+        "nested/third.md": "---\ntitle: Third\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n"
+      },
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "backlinks",
+            "alpha.md",
+            "--vault=$ROOT/vault",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    }
+  ]
+}

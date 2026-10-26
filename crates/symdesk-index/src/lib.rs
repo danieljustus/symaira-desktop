@@ -29,6 +29,7 @@ mod dataset_sync;
 mod duplicates;
 mod history_sync;
 pub mod index_status;
+mod links;
 mod metadata;
 mod retrieval;
 mod retrieval_archive;

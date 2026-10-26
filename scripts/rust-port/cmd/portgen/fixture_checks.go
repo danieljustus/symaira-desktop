@@ -47,6 +47,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},
 	{"config vault selection", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortVaultSelectionCLIContract$"}, []string{"testdata/port/cli/config-vault-selection.json"}, false},
 	{"duplicates CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDuplicatesProcessContract$"}, []string{"testdata/port/cli/duplicates-process.json"}, false},
+	{"backlinks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortBacklinksProcessContract$"}, []string{"testdata/port/cli/backlinks-process.json"}, false},
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},
 	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json", "testdata/port/render/v2/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},

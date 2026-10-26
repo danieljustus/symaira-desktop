@@ -82,7 +82,7 @@ pub fn source_identifier(entry: &ManifestEntry) -> String {
         entry.checksum.as_deref().unwrap_or_default()
     )
 }
-pub fn sanitize_file_name(value: &str) -> String {
+pub fn sanitize_file_name_bytes(value: &str) -> Vec<u8> {
     let mut out = String::new();
     for c in value.chars() {
         let c = if "/\\:*?\"<>|\n\r\t".contains(c) {
@@ -96,20 +96,34 @@ pub fn sanitize_file_name(value: &str) -> String {
         out.push(c);
     }
     let out = out.trim_end_matches(['.', ' ']);
-    let mut end = out.len().min(120);
-    while !out.is_char_boundary(end) {
-        end -= 1;
-    }
-    out[..end].into()
+    // Go slices strings at byte 120, including through a UTF-8 code point.
+    out.as_bytes()[..out.len().min(120)].to_vec()
 }
-pub fn note_file_name(entry: &ManifestEntry) -> String {
-    let title = sanitize_file_name(&entry.title);
+pub fn sanitize_file_name(value: &str) -> String {
+    String::from_utf8_lossy(&sanitize_file_name_bytes(value)).into_owned()
+}
+fn note_file_name_os(entry: &ManifestEntry) -> std::ffi::OsString {
+    let title = sanitize_file_name_bytes(&entry.title);
     let title = if title.is_empty() {
-        format!("doc_{}", entry.id)
+        format!("doc_{}", entry.id).into_bytes()
     } else {
         title
     };
-    format!("Paperless_{}_{title}.md", entry.id)
+    let mut name = format!("Paperless_{}_", entry.id).into_bytes();
+    name.extend(title);
+    name.extend(b".md");
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        std::ffi::OsString::from_vec(name)
+    }
+    #[cfg(not(unix))]
+    {
+        String::from_utf8_lossy(&name).into_owned().into()
+    }
+}
+pub fn note_file_name(entry: &ManifestEntry) -> String {
+    note_file_name_os(entry).to_string_lossy().into_owned()
 }
 pub fn archive_file_name(entry: &ManifestEntry) -> String {
     entry
@@ -249,7 +263,7 @@ pub fn import_at(opts: &ImportOptions, now: &str) -> Result<ImportSummary> {
     };
     for entry in entries {
         let source = source_identifier(&entry);
-        let relative = Path::new("paperless").join(note_file_name(&entry));
+        let relative = Path::new("paperless").join(note_file_name_os(&entry));
         let mut note_path = opts.vault_root.join(&relative);
         let archive_name = archive_file_name(&entry);
         let archive_relative = Path::new("archive/paperless").join(&archive_name);

@@ -63,12 +63,14 @@ fn snapshot(root: &Root) -> Value {
                 walk(root, &p, out)
             } else {
                 let body = root.norm(&String::from_utf8(fs::read(&p).unwrap()).unwrap());
+                let relative = p.strip_prefix(root.path("vault")).unwrap();
+                #[cfg(unix)]
+                let path_bytes = relative.as_os_str().as_encoded_bytes().to_vec();
+                #[cfg(not(unix))]
+                let path_bytes = relative.to_string_lossy().replace('\\', "/").into_bytes();
                 out.insert(
-                    p.strip_prefix(root.path("vault"))
-                        .unwrap()
-                        .to_string_lossy()
-                        .replace('\\', "/"),
-                    json!({"body":body,"sha256":format!("{:x}",Sha256::digest(body.as_bytes()))}),
+                    relative.to_string_lossy().replace('\\', "/"),
+                    json!({"path_sha256":format!("{:x}",Sha256::digest(path_bytes)),"body":body,"sha256":format!("{:x}",Sha256::digest(body.as_bytes()))}),
                 );
             }
         }

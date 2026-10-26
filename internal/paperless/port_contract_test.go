@@ -33,6 +33,7 @@ func TestPortPaperlessExportContract(t *testing.T) {
  {"id":2,"title":"","archive_serial_number":77,"original_file_name":"missing.txt","notes":[]},
  {"id":3,"title":"Odd:*? title...  ","checksum":"","archived_file_name":"third.png","tags":[]}
 ]`
+	manifest = strings.TrimSuffix(manifest, "]") + fmt.Sprintf(",{\"id\":4,\"title\":%q,\"checksum\":\"unicode-boundary\"}]", strings.Repeat("x", 119)+"α")
 	inputs := map[string]string{"export/manifest.json": manifest, "export/first.PDF": "synthetic-pdf", "export/third.png": "synthetic-image"}
 	for name, body := range inputs {
 		if e := os.WriteFile(filepath.Join(root, filepath.FromSlash(name)), []byte(body), 0600); e != nil {
@@ -55,7 +56,7 @@ func TestPortPaperlessExportContract(t *testing.T) {
 			}
 			body := clock.ReplaceAllString(norm(string(b)), `created: "2000-01-01T00:00:00Z"`)
 			rel, _ := filepath.Rel(vault, p)
-			out[filepath.ToSlash(rel)] = map[string]any{"body": body, "sha256": fmt.Sprintf("%x", sha256.Sum256([]byte(body)))}
+			out[filepath.ToSlash(rel)] = map[string]any{"path_sha256": fmt.Sprintf("%x", sha256.Sum256([]byte(filepath.ToSlash(rel)))), "body": body, "sha256": fmt.Sprintf("%x", sha256.Sum256([]byte(body)))}
 			return nil
 		})
 		if e != nil {

@@ -1,0 +1,458 @@
+{
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source_hashes": {
+    "internal/contacts/internal/storage/sqlite/db.go": "8377bffb6e7ed15d4c47dde1398765dbd2d8d7241ce8278a3845dcd117b60f9f",
+    "internal/contacts/internal/storage/sqlite/migrate.go": "aa46b83ae5aacb462a103e2f0042b6df0a622b7a5e5afb44bfd40b245c0ec488",
+    "internal/contacts/internal/storage/sqlite/migrations/0001_init.sql": "dfa260b6671f0a033b19eb104e2be29728a766b19e5bc219f2f2853570862fe1",
+    "internal/contacts/internal/storage/sqlite/migrations/0002_contacts.sql": "7fc20f54d55b7e56fea9a8d5a27e32e151d1da1b2bcbb4d65621872e2f8dd0f6",
+    "internal/contacts/internal/storage/sqlite/migrations/0003_relationships.sql": "3dfadf2179ccdf7b2b6ac042380a537e4e95992a7e812e09d3de3f5d328b455b",
+    "internal/contacts/internal/storage/sqlite/migrations/0004_security.sql": "9baa91fda0cacfb4866a1c03fa1f9eca9f7423a77c098caf6206d8b37f7ef2cc",
+    "internal/contacts/internal/storage/sqlite/migrations/0005_import.sql": "c4cf8d716506ae828a70499f3155093f131d987bbe6ebccab258ab3b268f9f92",
+    "internal/contacts/internal/storage/sqlite/migrations/0006_memory_links.sql": "6f4966d5476a3bda624fcd78a3f1a3c54742e837336404ca290d9d08c78e01f4",
+    "internal/contacts/internal/storage/sqlite/migrations/0007_meeting_idempotency.sql": "b8c7446568671f872fc8a06846f95bd397066ba985ec0e9ea9800c01764a612f"
+  },
+  "objects": [
+    {
+      "type": "index",
+      "name": "aliases_organization_idx",
+      "table": "aliases",
+      "sql": "CREATE INDEX aliases_organization_idx ON aliases(organization_id)"
+    },
+    {
+      "type": "index",
+      "name": "aliases_person_idx",
+      "table": "aliases",
+      "sql": "CREATE INDEX aliases_person_idx ON aliases(person_id)"
+    },
+    {
+      "type": "index",
+      "name": "audit_events_occurred_at_idx",
+      "table": "audit_events",
+      "sql": "CREATE INDEX audit_events_occurred_at_idx ON audit_events(occurred_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "contact_points_normalized_idx",
+      "table": "contact_points",
+      "sql": "CREATE INDEX contact_points_normalized_idx ON contact_points(kind, normalized_value)"
+    },
+    {
+      "type": "index",
+      "name": "contact_points_org_unique",
+      "table": "contact_points",
+      "sql": "CREATE UNIQUE INDEX contact_points_org_unique ON contact_points(organization_id, kind, normalized_value) WHERE organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "contact_points_person_unique",
+      "table": "contact_points",
+      "sql": "CREATE UNIQUE INDEX contact_points_person_unique ON contact_points(person_id, kind, normalized_value) WHERE person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "entity_classifications_org_unique",
+      "table": "entity_classifications",
+      "sql": "CREATE UNIQUE INDEX entity_classifications_org_unique ON entity_classifications(classification, organization_id) WHERE organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "entity_classifications_person_unique",
+      "table": "entity_classifications",
+      "sql": "CREATE UNIQUE INDEX entity_classifications_person_unique ON entity_classifications(classification, person_id) WHERE person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "entity_tags_org_unique",
+      "table": "entity_tags",
+      "sql": "CREATE UNIQUE INDEX entity_tags_org_unique ON entity_tags(tag_id, organization_id) WHERE organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "entity_tags_person_unique",
+      "table": "entity_tags",
+      "sql": "CREATE UNIQUE INDEX entity_tags_person_unique ON entity_tags(tag_id, person_id) WHERE person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "follow_ups_org_idx",
+      "table": "follow_ups",
+      "sql": "CREATE INDEX follow_ups_org_idx ON follow_ups(organization_id, due_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "follow_ups_person_idx",
+      "table": "follow_ups",
+      "sql": "CREATE INDEX follow_ups_person_idx ON follow_ups(person_id, due_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "follow_ups_status_due_idx",
+      "table": "follow_ups",
+      "sql": "CREATE INDEX follow_ups_status_due_idx ON follow_ups(status, due_at)"
+    },
+    {
+      "type": "index",
+      "name": "import_runs_started_at_idx",
+      "table": "import_runs",
+      "sql": "CREATE INDEX import_runs_started_at_idx ON import_runs(started_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "import_sources_person_idx",
+      "table": "import_sources",
+      "sql": "CREATE INDEX import_sources_person_idx ON import_sources(person_id)"
+    },
+    {
+      "type": "index",
+      "name": "interactions_meeting_org_external_ref_unique",
+      "table": "interactions",
+      "sql": "CREATE UNIQUE INDEX interactions_meeting_org_external_ref_unique\n\tON interactions(organization_id, external_ref)\n\tWHERE kind = 'meeting' AND external_ref IS NOT NULL AND organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "interactions_meeting_person_external_ref_unique",
+      "table": "interactions",
+      "sql": "CREATE UNIQUE INDEX interactions_meeting_person_external_ref_unique\n\tON interactions(person_id, external_ref)\n\tWHERE kind = 'meeting' AND external_ref IS NOT NULL AND person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "interactions_org_idx",
+      "table": "interactions",
+      "sql": "CREATE INDEX interactions_org_idx ON interactions(organization_id, occurred_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "interactions_person_idx",
+      "table": "interactions",
+      "sql": "CREATE INDEX interactions_person_idx ON interactions(person_id, occurred_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "memory_links_organization_idx",
+      "table": "memory_links",
+      "sql": "CREATE UNIQUE INDEX memory_links_organization_idx ON memory_links(organization_id) WHERE organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "memory_links_person_idx",
+      "table": "memory_links",
+      "sql": "CREATE UNIQUE INDEX memory_links_person_idx ON memory_links(person_id) WHERE person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "organization_memberships_org_idx",
+      "table": "organization_memberships",
+      "sql": "CREATE INDEX organization_memberships_org_idx ON organization_memberships(organization_id)"
+    },
+    {
+      "type": "index",
+      "name": "organization_memberships_person_idx",
+      "table": "organization_memberships",
+      "sql": "CREATE INDEX organization_memberships_person_idx ON organization_memberships(person_id)"
+    },
+    {
+      "type": "index",
+      "name": "organizations_created_at_idx",
+      "table": "organizations",
+      "sql": "CREATE INDEX organizations_created_at_idx ON organizations(created_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "organizations_name_idx",
+      "table": "organizations",
+      "sql": "CREATE INDEX organizations_name_idx ON organizations(name COLLATE NOCASE)"
+    },
+    {
+      "type": "index",
+      "name": "persons_created_at_idx",
+      "table": "persons",
+      "sql": "CREATE INDEX persons_created_at_idx ON persons(created_at, id)"
+    },
+    {
+      "type": "index",
+      "name": "persons_display_name_idx",
+      "table": "persons",
+      "sql": "CREATE INDEX persons_display_name_idx ON persons(display_name COLLATE NOCASE)"
+    },
+    {
+      "type": "index",
+      "name": "relationships_from_idx",
+      "table": "relationships",
+      "sql": "CREATE INDEX relationships_from_idx ON relationships(from_person_id)"
+    },
+    {
+      "type": "index",
+      "name": "relationships_org_target_unique",
+      "table": "relationships",
+      "sql": "CREATE UNIQUE INDEX relationships_org_target_unique\n\tON relationships(from_person_id, to_organization_id, relationship_type, COALESCE(valid_from, ''))\n\tWHERE to_organization_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "relationships_person_target_unique",
+      "table": "relationships",
+      "sql": "CREATE UNIQUE INDEX relationships_person_target_unique\n\tON relationships(from_person_id, to_person_id, relationship_type, COALESCE(valid_from, ''))\n\tWHERE to_person_id IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "relationships_to_org_idx",
+      "table": "relationships",
+      "sql": "CREATE INDEX relationships_to_org_idx ON relationships(to_organization_id)"
+    },
+    {
+      "type": "index",
+      "name": "relationships_to_person_idx",
+      "table": "relationships",
+      "sql": "CREATE INDEX relationships_to_person_idx ON relationships(to_person_id)"
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_aliases_1",
+      "table": "aliases",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_audit_events_1",
+      "table": "audit_events",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_contact_points_1",
+      "table": "contact_points",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_entity_classifications_1",
+      "table": "entity_classifications",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_entity_tags_1",
+      "table": "entity_tags",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_follow_ups_1",
+      "table": "follow_ups",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_import_runs_1",
+      "table": "import_runs",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_import_sources_1",
+      "table": "import_sources",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_import_sources_2",
+      "table": "import_sources",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_interactions_1",
+      "table": "interactions",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_memory_links_1",
+      "table": "memory_links",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_organization_memberships_1",
+      "table": "organization_memberships",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_organizations_1",
+      "table": "organizations",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_persons_1",
+      "table": "persons",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_relationships_1",
+      "table": "relationships",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_settings_1",
+      "table": "settings",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tags_1",
+      "table": "tags",
+      "sql": null
+    },
+    {
+      "type": "index",
+      "name": "sqlite_autoindex_tags_2",
+      "table": "tags",
+      "sql": null
+    },
+    {
+      "type": "table",
+      "name": "aliases",
+      "table": "aliases",
+      "sql": "CREATE TABLE aliases (\n\tid              TEXT PRIMARY KEY,\n\tperson_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\talias           TEXT NOT NULL,\n\tcreated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "audit_events",
+      "table": "audit_events",
+      "sql": "CREATE TABLE audit_events (\n\tid          TEXT PRIMARY KEY,\n\toccurred_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\toperation   TEXT NOT NULL,\n\tactor       TEXT NOT NULL,\n\tentity_type TEXT,\n\tentity_id   TEXT,\n\tdetail      TEXT\n)"
+    },
+    {
+      "type": "table",
+      "name": "contact_points",
+      "table": "contact_points",
+      "sql": "CREATE TABLE contact_points (\n\tid               TEXT PRIMARY KEY,\n\tperson_id        TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id  TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tkind             TEXT NOT NULL CHECK (kind IN ('email','phone','address','url','handle')),\n\traw_value        TEXT NOT NULL,\n\tnormalized_value TEXT NOT NULL,\n\tlabel            TEXT,\n\tis_preferred     INTEGER NOT NULL DEFAULT 0 CHECK (is_preferred IN (0,1)),\n\tis_verified      INTEGER NOT NULL DEFAULT 0 CHECK (is_verified IN (0,1)),\n\tcreated_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "entity_classifications",
+      "table": "entity_classifications",
+      "sql": "CREATE TABLE entity_classifications (\n\tid              TEXT PRIMARY KEY,\n\tperson_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tclassification  TEXT NOT NULL CHECK (classification IN ('personal','business','customer','lead','partner')),\n\tcreated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "entity_tags",
+      "table": "entity_tags",
+      "sql": "CREATE TABLE entity_tags (\n\tid              TEXT PRIMARY KEY,\n\ttag_id          TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,\n\tperson_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "follow_ups",
+      "table": "follow_ups",
+      "sql": "CREATE TABLE follow_ups (\n\tid              TEXT PRIMARY KEY,\n\tperson_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tdue_at          TEXT NOT NULL,\n\tnotes           TEXT,\n\tstatus          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','completed','cancelled')),\n\tcompleted_at    TEXT,\n\tcancelled_at    TEXT,\n\tcreated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "import_runs",
+      "table": "import_runs",
+      "sql": "CREATE TABLE import_runs (\n\tid          TEXT PRIMARY KEY,\n\tsource_kind TEXT NOT NULL CHECK (source_kind IN ('vcard','csv')),\n\tstarted_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tcreated     INTEGER NOT NULL DEFAULT 0,\n\tmerged      INTEGER NOT NULL DEFAULT 0,\n\tskipped     INTEGER NOT NULL DEFAULT 0,\n\tfailed      INTEGER NOT NULL DEFAULT 0\n)"
+    },
+    {
+      "type": "table",
+      "name": "import_sources",
+      "table": "import_sources",
+      "sql": "CREATE TABLE import_sources (\n\tid          TEXT PRIMARY KEY,\n\tsource_kind TEXT NOT NULL CHECK (source_kind IN ('vcard','csv')),\n\tsource_ref  TEXT NOT NULL,\n\tperson_id   TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,\n\timported_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tUNIQUE (source_kind, source_ref)\n)"
+    },
+    {
+      "type": "table",
+      "name": "interactions",
+      "table": "interactions",
+      "sql": "CREATE TABLE interactions (\n\tid              TEXT PRIMARY KEY,\n\tperson_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tkind            TEXT NOT NULL CHECK (kind IN ('note','call','email','meeting','external_reference')),\n\toccurred_at     TEXT NOT NULL,\n\tsummary         TEXT NOT NULL,\n\texternal_ref    TEXT,\n\tcreated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NOT NULL) \u003c\u003e (organization_id IS NOT NULL)),\n\tCHECK (kind \u003c\u003e 'external_reference' OR (external_ref IS NOT NULL AND external_ref \u003c\u003e ''))\n)"
+    },
+    {
+      "type": "table",
+      "name": "memory_links",
+      "table": "memory_links",
+      "sql": "CREATE TABLE memory_links (\n\tid                TEXT PRIMARY KEY,\n\tperson_id         TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id   TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\tmemory_entity_id  TEXT NOT NULL,\n\tmemory_entity_type TEXT NOT NULL DEFAULT '',\n\tlinked_by         TEXT NOT NULL,\n\tcreated_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((person_id IS NULL) != (organization_id IS NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "organization_memberships",
+      "table": "organization_memberships",
+      "sql": "CREATE TABLE organization_memberships (\n\tid              TEXT PRIMARY KEY,\n\tperson_id       TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,\n\torganization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,\n\trole            TEXT,\n\ttitle           TEXT,\n\tvalid_from      TEXT,\n\tvalid_to        TEXT,\n\tcreated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to \u003e= valid_from)\n)"
+    },
+    {
+      "type": "table",
+      "name": "organizations",
+      "table": "organizations",
+      "sql": "CREATE TABLE organizations (\n\tid         TEXT PRIMARY KEY,\n\tname       TEXT NOT NULL,\n\tnotes      TEXT,\n\tsource     TEXT,\n\tsource_ref TEXT,\n\tcreated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))\n)"
+    },
+    {
+      "type": "table",
+      "name": "persons",
+      "table": "persons",
+      "sql": "CREATE TABLE persons (\n\tid           TEXT PRIMARY KEY,\n\tdisplay_name TEXT NOT NULL,\n\tgiven_name   TEXT,\n\tfamily_name  TEXT,\n\tnotes        TEXT,\n\tsource       TEXT,\n\tsource_ref   TEXT,\n\tcreated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))\n)"
+    },
+    {
+      "type": "table",
+      "name": "relationships",
+      "table": "relationships",
+      "sql": "CREATE TABLE relationships (\n\tid                 TEXT PRIMARY KEY,\n\tfrom_person_id     TEXT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,\n\tto_person_id       TEXT REFERENCES persons(id) ON DELETE CASCADE,\n\tto_organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,\n\trelationship_type  TEXT NOT NULL,\n\tvalid_from         TEXT,\n\tvalid_to           TEXT,\n\tnotes              TEXT,\n\tcreated_at         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tupdated_at         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n\tCHECK ((to_person_id IS NOT NULL) \u003c\u003e (to_organization_id IS NOT NULL)),\n\tCHECK (to_person_id IS NULL OR to_person_id \u003c\u003e from_person_id),\n\tCHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to \u003e= valid_from)\n)"
+    },
+    {
+      "type": "table",
+      "name": "schema_migrations",
+      "table": "schema_migrations",
+      "sql": "CREATE TABLE schema_migrations (\n\t\t\tversion    INTEGER PRIMARY KEY,\n\t\t\tname       TEXT NOT NULL,\n\t\t\tapplied_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))\n\t\t)"
+    },
+    {
+      "type": "table",
+      "name": "settings",
+      "table": "settings",
+      "sql": "CREATE TABLE settings (\n\tkey        TEXT PRIMARY KEY,\n\tvalue      TEXT NOT NULL,\n\tupdated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))\n)"
+    },
+    {
+      "type": "table",
+      "name": "tags",
+      "table": "tags",
+      "sql": "CREATE TABLE tags (\n\tid   TEXT PRIMARY KEY,\n\tname TEXT NOT NULL UNIQUE\n)"
+    }
+  ],
+  "migrations": [
+    {
+      "version": 1,
+      "name": "init",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 2,
+      "name": "contacts",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 3,
+      "name": "relationships",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 4,
+      "name": "security",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 5,
+      "name": "import",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 6,
+      "name": "memory_links",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    },
+    {
+      "version": 7,
+      "name": "meeting_idempotency",
+      "applied_at": "2000-01-02T03:04:05.000Z"
+    }
+  ]
+}

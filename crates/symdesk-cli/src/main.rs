@@ -10,6 +10,7 @@ mod duplicates_cli;
 mod graph_cli;
 mod help_cli;
 mod history;
+mod history_cli;
 mod http;
 mod index_cli;
 mod links_cli;
@@ -212,13 +213,18 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("history", command)) => match command.subcommand() {
-            Some(("tasks", _)) => history::run_tasks(
-                matches.get_one::<String>("vault").map(String::as_str),
-                output_json,
-            ),
-            _ => process_exit(CoreExitCode::Ok),
-        },
+        Some(("history", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("trash", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            true,
+        ),
         Some(("duplicates", command)) => duplicates_cli::run_duplicates(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -554,11 +560,8 @@ fn cli() -> Command {
                     }),
             ),
         )
-        .subcommand(
-            Command::new("history")
-                .subcommand_required(true)
-                .subcommand(Command::new("tasks")),
-        )
+        .subcommand(history_cli::cli())
+        .subcommand(history_cli::trash_cli())
         .subcommand(retention::cli())
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())

@@ -466,6 +466,13 @@ relations-inverse-cli-fixtures-generate:
 relations-inverse-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test relations_inverse --locked
+.PHONY: history-read-cli-fixtures-generate history-read-cli-differential
+history-read-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+history-read-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test history_read --locked
+
 .PHONY: graph-cli-fixtures-generate graph-cli-differential
 graph-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortGraphProcessContract$$'

@@ -13,6 +13,7 @@ import (
 func TestPortGraphProcessContract(t *testing.T) {
 	binary := buildIndexRetrievalBinary(t, t.TempDir())
 	t.Setenv("PATH", t.TempDir())
+	t.Setenv("SYMAIRA_BIN", t.TempDir())
 	files := map[string]string{
 		"alpha.md":        "---\ntitle: Alpha <&>\naliases: [First, One]\n---\n[[beta]] [[First]] [[missing]] [[beta]]\n",
 		"beta.md":         "---\ntitle: Beta\n---\n[[alpha]] [[One]] [[contact:relate:person:123]]\n",

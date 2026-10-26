@@ -41,6 +41,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/graph-process.json",
 	"testdata/port/cli/relations-inverse-process.json",
 	"testdata/port/cli/history-tasks.json",
+	"testdata/port/cli/history-read-process.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/cli/symroom-grammar-process.json",
 	"testdata/port/core/config.json",

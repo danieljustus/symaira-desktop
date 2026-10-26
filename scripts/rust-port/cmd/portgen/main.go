@@ -102,6 +102,7 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/pending-rebuild.json",
 	"testdata/port/retrieval/retrieval-sections.json",
 	"testdata/port/retrieval/embedding-http.json",
+	"testdata/port/retrieval/document-extraction.json",
 	"testdata/port/retrieval/csv-sections.json",
 	"testdata/port/retrieval/reembed-http-cli.json",
 	"testdata/port/retrieval/local-hash.json",

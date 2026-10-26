@@ -218,7 +218,7 @@ fn parse_with(
 
 /// Go's `strings.TrimSpace` over bytes: trims Unicode white space and stops
 /// at the first byte sequence that is not a space, valid or not.
-fn trim_space(bytes: &[u8]) -> Vec<u8> {
+pub(crate) fn trim_space(bytes: &[u8]) -> Vec<u8> {
     let mut start = 0;
     while start < bytes.len() {
         match decode_char(&bytes[start..]) {

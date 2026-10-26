@@ -61,6 +61,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"retrieval pending rebuild", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestPendingRebuildPortFixture$"}, []string{"testdata/port/retrieval/pending-rebuild.json"}, false},
 	{"retrieval Markdown sections", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalSectionsFixture$"}, []string{"testdata/port/retrieval/retrieval-sections.json"}, false},
 	{"retrieval embedding HTTP", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestEmbeddingHTTPPortFixture$"}, []string{"testdata/port/retrieval/embedding-http.json"}, false},
+	{"retrieval document extraction", []string{"test", "-count=1", "./internal/retrieval/internal/parser", "-run", "^TestRetrievalExtractionFixture$"}, []string{"testdata/port/retrieval/document-extraction.json"}, false},
 	{"retrieval CSV sections", []string{"test", "-count=1", "./internal/retrieval/internal/parser", "-run", "^TestRetrievalCSVSectionsFixture$"}, []string{"testdata/port/retrieval/csv-sections.json"}, false},
 	{"retrieval re-embed HTTP CLI", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestReembedHTTPPortFixture$"}, []string{"testdata/port/retrieval/reembed-http-cli.json"}, false},
 	{"retrieval local-hash embedding", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestLocalHashPortFixture$"}, []string{"testdata/port/retrieval/local-hash.json"}, false},

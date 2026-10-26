@@ -33,6 +33,8 @@ mod metadata;
 mod retrieval;
 mod retrieval_config;
 mod retrieval_csv;
+mod retrieval_extract;
+pub use retrieval_extract::{extract_retrieval_text, parse_document_retrieval_sections};
 mod retrieval_markdown;
 pub mod retrieval_quant_sidecar;
 mod search_plan;

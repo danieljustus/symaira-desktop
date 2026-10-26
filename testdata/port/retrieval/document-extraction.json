@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "empty.html",
+      "extension": ".html",
+      "input_base64": "",
+      "text_base64": "",
+      "sections": []
+    },
+    {
+      "id": "entities.html",
+      "extension": ".html",
+      "input_base64": "PGhlYWQ+PHRpdGxlPmhpZGRlbjwvdGl0bGU+PC9oZWFkPjxib2R5PjxoMT5BICZhbXA7IEI8L2gxPjxwPm9uZSZuYnNwO3R3byAmI3g2NWU1OzwvcD48c2NyaXB0PmJhZCgpPC9zY3JpcHQ+PHN0eWxlPmJhZHt9PC9zdHlsZT48ZGl2PmVuZDxicj5saW5lPC9kaXY+",
+      "text_base64": "QSAmIEIKCm9uZcKgdHdvIOaXpQoKZW5kbGluZQ==",
+      "sections": [
+        {
+          "text_base64": "QSAmIEIKCm9uZcKgdHdvIOaXpQoKZW5kbGluZQ==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "inline.html",
+      "extension": ".html",
+      "input_base64": "PHA+PHNwYW4+YTwvc3Bhbj4gPGI+YjwvYj48L3A+CiAgPHA+IGMNCmQgPC9wPg==",
+      "text_base64": "YSBiCgogYwpk",
+      "sections": [
+        {
+          "text_base64": "YSBiCgogYwpk",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "repair.html",
+      "extension": ".html",
+      "input_base64": "PHA+Zmlyc3Q8cD5zZWNvbmQ8dGFibGU+Zm9zdGVyPHRyPjx0ZD5jZWxsPC90YWJsZT5lbmQ=",
+      "text_base64": "Zmlyc3QKCnNlY29uZGZvc3RlcmNlbGwKCmVuZA==",
+      "sections": [
+        {
+          "text_base64": "Zmlyc3QKCnNlY29uZGZvc3RlcmNlbGwKCmVuZA==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "comments.html",
+      "extension": ".html",
+      "input_base64": "PCEtLSBoaWRkZW4gLS0+PGRpdj52aXNpYmxlPC9kaXY+PG5vc2NyaXB0PmZhbGxiYWNrPC9ub3NjcmlwdD4=",
+      "text_base64": "dmlzaWJsZQoKZmFsbGJhY2s=",
+      "sections": [
+        {
+          "text_base64": "dmlzaWJsZQoKZmFsbGJhY2s=",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "empty.htm",
+      "extension": ".htm",
+      "input_base64": "",
+      "text_base64": "",
+      "sections": []
+    },
+    {
+      "id": "entities.htm",
+      "extension": ".htm",
+      "input_base64": "PGhlYWQ+PHRpdGxlPmhpZGRlbjwvdGl0bGU+PC9oZWFkPjxib2R5PjxoMT5BICZhbXA7IEI8L2gxPjxwPm9uZSZuYnNwO3R3byAmI3g2NWU1OzwvcD48c2NyaXB0PmJhZCgpPC9zY3JpcHQ+PHN0eWxlPmJhZHt9PC9zdHlsZT48ZGl2PmVuZDxicj5saW5lPC9kaXY+",
+      "text_base64": "QSAmIEIKCm9uZcKgdHdvIOaXpQoKZW5kbGluZQ==",
+      "sections": [
+        {
+          "text_base64": "QSAmIEIKCm9uZcKgdHdvIOaXpQoKZW5kbGluZQ==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "inline.htm",
+      "extension": ".htm",
+      "input_base64": "PHA+PHNwYW4+YTwvc3Bhbj4gPGI+YjwvYj48L3A+CiAgPHA+IGMNCmQgPC9wPg==",
+      "text_base64": "YSBiCgogYwpk",
+      "sections": [
+        {
+          "text_base64": "YSBiCgogYwpk",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "repair.htm",
+      "extension": ".htm",
+      "input_base64": "PHA+Zmlyc3Q8cD5zZWNvbmQ8dGFibGU+Zm9zdGVyPHRyPjx0ZD5jZWxsPC90YWJsZT5lbmQ=",
+      "text_base64": "Zmlyc3QKCnNlY29uZGZvc3RlcmNlbGwKCmVuZA==",
+      "sections": [
+        {
+          "text_base64": "Zmlyc3QKCnNlY29uZGZvc3RlcmNlbGwKCmVuZA==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "comments.htm",
+      "extension": ".htm",
+      "input_base64": "PCEtLSBoaWRkZW4gLS0+PGRpdj52aXNpYmxlPC9kaXY+PG5vc2NyaXB0PmZhbGxiYWNrPC9ub3NjcmlwdD4=",
+      "text_base64": "dmlzaWJsZQoKZmFsbGJhY2s=",
+      "sections": [
+        {
+          "text_base64": "dmlzaWJsZQoKZmFsbGJhY2s=",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "empty.rtf",
+      "extension": ".rtf",
+      "input_base64": "",
+      "text_base64": "",
+      "sections": []
+    },
+    {
+      "id": "paragraphs.rtf",
+      "extension": ".rtf",
+      "input_base64": "e1xydGYxXGFuc2kgSGVsbG9ccGFyIHdvcmxkXGxpbmUgbmV4dFxwYWdlIGxhc3RcdGFiIGNlbGx9",
+      "text_base64": "SGVsbG8Kd29ybGQKbmV4dApsYXN0IGNlbGw=",
+      "sections": [
+        {
+          "text_base64": "SGVsbG8Kd29ybGQKbmV4dApsYXN0IGNlbGw=",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "destinations.rtf",
+      "extension": ".rtf",
+      "input_base64": "e1xydGYxe1xmb250dGJsIGhpZGRlbn17XGNvbG9ydGJsIGhpZGRlbn17XHN0eWxlc2hlZXQgaGlkZGVufXtcKlx1bmtub3duIGhpZGRlbn1WaXNpYmxlIHtcYiBib2xkfSBlbmR9",
+      "text_base64": "VmlzaWJsZSBib2xkIGVuZA==",
+      "sections": [
+        {
+          "text_base64": "VmlzaWJsZSBib2xkIGVuZA==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "escaped.rtf",
+      "extension": ".rtf",
+      "input_base64": "e1xydGYxIGFcXGJce2NcfSBcJ2U5IFx1MTIzND99",
+      "text_base64": "YVxie2N9ICdlOSA/",
+      "sections": [
+        {
+          "text_base64": "YVxie2N9ICdlOSA/",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "malformed.rtf",
+      "extension": ".rtf",
+      "input_base64": "fWF7YlwKIGNc",
+      "text_base64": "YWIgYw==",
+      "sections": [
+        {
+          "text_base64": "YWIgYw==",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "unicode.rtf",
+      "extension": ".rtf",
+      "input_base64": "e1xydGYxIOaXpeacrA0Kw7x9",
+      "text_base64": "5pel5pysw7w=",
+      "sections": [
+        {
+          "text_base64": "5pel5pysw7w=",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "nested-ignore.rtf",
+      "extension": ".rtf",
+      "input_base64": "e1xmb250dGJsIHh7XCogeX16fXRhaWw=",
+      "text_base64": "enRhaWw=",
+      "sections": [
+        {
+          "text_base64": "enRhaWw=",
+          "valid_utf8": false,
+          "start": 0,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "synthetic": false
+        }
+      ]
+    },
+    {
+      "id": "oversized.html",
+      "extension": ".html",
+      "input_base64": "",
+      "oversized": true,
+      "text_base64": "",
+      "error": "file $PATH exceeds 10485760 byte limit (10485761 bytes)",
+      "sections": [],
+      "sections_error": "file $PATH exceeds 10485760 byte limit (10485761 bytes)"
+    },
+    {
+      "id": "oversized.rtf",
+      "extension": ".rtf",
+      "input_base64": "",
+      "oversized": true,
+      "text_base64": "",
+      "error": "file $PATH exceeds 10485760 byte limit (10485761 bytes)",
+      "sections": [],
+      "sections_error": "file $PATH exceeds 10485760 byte limit (10485761 bytes)"
+    }
+  ]
+}

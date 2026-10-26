@@ -638,6 +638,14 @@ retrieval-local-hash-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked local_hash_tests
 
+.PHONY: retrieval-document-extraction-fixtures-generate retrieval-document-extraction-differential
+retrieval-document-extraction-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 /Users/daniel/.local/bin/dev-external go test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalExtractionFixture$$'
+
+retrieval-document-extraction-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 /Users/daniel/.local/bin/dev-external go test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalExtractionFixture$$'
+	$(CARGO) test -p symdesk-index --locked retrieval_extract
+
 retrieval-csv-sections-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalCSVSectionsFixture$$'
 

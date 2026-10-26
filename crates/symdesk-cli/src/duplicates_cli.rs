@@ -262,7 +262,7 @@ fn underscore_ok(text: &[u8]) -> bool {
 
 /// Go's `SimilarDocs` front half: confine the path, read it through the vault
 /// root and return the stored or freshly computed simhash.
-fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
+pub(crate) fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
     let absolute = secure_path(vault_root, requested).map_err(|error| error.to_string())?;
     let canonical_root = fs::canonicalize(vault_root)
         .map_err(|error| format!("resolve canonical vault root: {error}"))?;

@@ -56,7 +56,7 @@ fn read_tools_match_go_stdio_calls_and_authoritative_files() {
     )
     .expect("decode Go process transcript");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 59);
+    assert_eq!(fixture.cases.len(), 119);
     for case in fixture.cases {
         replay(&case);
     }

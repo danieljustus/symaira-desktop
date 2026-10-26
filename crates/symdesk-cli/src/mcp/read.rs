@@ -1,4 +1,6 @@
 //! Read-only notebook/property tools; storage semantics live in the libraries.
+mod extra;
+
 use serde::Serialize;
 use serde_json::{Value, json};
 use symdesk_vault::{
@@ -8,10 +10,11 @@ use symdesk_vault::{
 use super::{ServerConfig, go_string_fields, open_sidecar};
 
 pub(super) fn supports(name: &str) -> bool {
-    matches!(
-        name,
-        "desk_props" | "desk_backlinks" | "notebook_list" | "notebook_get" | "notebook_ask"
-    )
+    extra::supports(name)
+        || matches!(
+            name,
+            "desk_props" | "desk_backlinks" | "notebook_list" | "notebook_get" | "notebook_ask"
+        )
 }
 
 fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
@@ -20,6 +23,9 @@ fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
 }
 
 pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Result<Value, String> {
+    if extra::supports(name) {
+        return extra::call(name, raw, config);
+    }
     match name {
         "desk_props" => {
             let args =

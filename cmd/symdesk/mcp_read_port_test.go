@@ -100,6 +100,31 @@ func mcpReadCases() []mcpReadCase {
 	add("search-alias", "search_documents", `{"query":"  "}`)
 	add("search-alias-missing", "search_documents", `{}`)
 	add("search-alias-bad-type", "search_documents", `{"query":false}`)
+	// Remaining read handlers share the same isolated process/state oracle.
+	for _, name := range []string{"desk_docs", "list_documents", "docs_review", "docs_similar"} {
+		for _, args := range []string{`{}`, `null`, `[]`, `{"file":"alpha.md"}`, `{"file":"../outside"}`, `{"file":false}`, `{"threshold":1}`, `{"threshold":90.0}`} {
+			add(name+"-"+args, name, args)
+			cases[len(cases)-1].Indexed = true
+		}
+	}
+	for _, args := range []string{`{"type":"invoice"}`, `{"status":"open"}`, `{"person":"Ada"}`, `{"correspondent":"Bank"}`, `{"year":"2026"}`, `{"due_before":"2026-02-01"}`, `{"min_confidence":0,"max_confidence":50}`, `{"min_confidence":false}`, `{"TYPE":"invoice","type":null}`, `{"status":false,"status":"open"}`} {
+		add("docs-filter-"+args, "desk_docs", args)
+		cases[len(cases)-1].Indexed = true
+	}
+	metadata := map[string]string{
+		"a.md": "---\ntitle: Invoice <&>\ntype: invoice\ndocument_type: bill\ndocument_date: '2026-01-02'\nconfidence: 40\nperson: Ada\ncorrespondent: Bank\nstatus: open\ndue_date: '2026-01-31'\nasn: 7\ntags: [finance]\n---\nalpha beta gamma delta\n",
+		"b.md": "---\ntitle: Reviewed\ntype: invoice\ndocument_type: bill\ndocument_date: '2026-01-03'\nconfidence: 95\nreview_ignored: true\n---\nalpha beta gamma epsilon\n",
+	}
+	for _, name := range []string{"desk_docs", "docs_review", "docs_similar"} {
+		for _, args := range []string{`{}`, `{"file":"a.md","threshold":1}`, `{"file":"b.md","threshold":101}`, `{"type":"invoice","status":"open","person":"Ada","correspondent":"Bank","year":"2026","due_before":"2026-02-01","min_confidence":0,"max_confidence":50}`, `{"file":"../outside"}`} {
+			add("metadata-"+name+"-"+args, name, args)
+			cases[len(cases)-1].Files = metadata
+			cases[len(cases)-1].Indexed = true
+		}
+	}
+	add("docs-unindexed", "desk_docs", `{}`)
+	add("review-unindexed", "docs_review", `{}`)
+	add("similar-unindexed", "docs_similar", `{"file":"alpha.md"}`)
 	return cases
 }
 

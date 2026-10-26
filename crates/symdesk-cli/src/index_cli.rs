@@ -954,7 +954,7 @@ async fn embed_with_retries(
     Err(last_error.unwrap_or(LocalEmbeddingError::EmptyInputs))
 }
 
-fn index_vault_error(requested: Option<&str>, error: &str) -> String {
+pub(crate) fn index_vault_error(requested: Option<&str>, error: &str) -> String {
     let code = if cfg!(windows) && error.ends_with("(os error 3)") {
         3
     } else if error.contains("No such file or directory") || error.ends_with("(os error 2)") {

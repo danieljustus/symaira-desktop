@@ -26,6 +26,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 mod backup;
 mod dataset_purge;
 mod dataset_sync;
+mod duplicates;
 mod history_sync;
 pub mod index_status;
 mod metadata;
@@ -42,6 +43,10 @@ pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
     DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
+};
+pub use duplicates::{
+    DEFAULT_DUPLICATE_THRESHOLD, DuplicateGroup, DuplicateMember, SimilarResult,
+    resolve_duplicate_threshold,
 };
 pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{

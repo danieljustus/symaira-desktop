@@ -4,6 +4,7 @@ mod pdf;
 #[cfg(test)]
 mod pdf_tests;
 mod read;
+mod write;
 
 use std::{
     collections::BTreeMap,
@@ -420,7 +421,7 @@ where
         name,
         "desk_status" | "desk_ls" | "desk_search" | "desk_ask" | "search_documents"
     ) && !read::supports(name)
-        && !(config.allow_write && pdf::canonical_name(name).is_some())
+        && !(config.allow_write && (pdf::canonical_name(name).is_some() || write::supports(name)))
     {
         if !request.has_id {
             return Ok(());
@@ -559,6 +560,9 @@ fn call_tool(
                 .collect::<Vec<_>>();
             let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
             Ok(json!({"answer": answer}))
+        }
+        _ if config.allow_write && write::supports(name) => {
+            write::call(name, raw_arguments, config)
         }
         _ if read::supports(name) => read::call(name, raw_arguments, config),
         _ if config.allow_write && pdf::canonical_name(name).is_some() => {

@@ -1,0 +1,4051 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Title string \\\"json:\\\\\\\"title\\\\\\\"\\\"; Content string \\\"json:\\\\\\\"content\\\\\\\"\\\"; Template string \\\"json:\\\\\\\"template\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal bool into Go struct field .title of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: desk_note_new\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file and status are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file and status are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { File string \\\"json:\\\\\\\"file\\\\\\\"\\\"; Status string \\\"json:\\\\\\\"status\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal number into Go struct field .file of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"file and status are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "doc_set_status-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: doc_set_status\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Title string \\\"json:\\\\\\\"title\\\\\\\"\\\"; Description string \\\"json:\\\\\\\"description\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal bool into Go struct field .title of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_create-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: notebook_create\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Notebook string \\\"json:\\\\\\\"notebook\\\\\\\"\\\"; Path string \\\"json:\\\\\\\"path\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_add_source-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: notebook_add_source\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Notebook string \\\"json:\\\\\\\"notebook\\\\\\\"\\\"; Path string \\\"json:\\\\\\\"path\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook and path are required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "notebook_remove_source-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: notebook_remove_source\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"data is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"data is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Data string \\\"json:\\\\\\\"data\\\\\\\"\\\"; PreferredName string \\\"json:\\\\\\\"preferred_name\\\\\\\"\\\"; Extension string \\\"json:\\\\\\\"extension\\\\\\\"\\\"; IsBase64 bool \\\"json:\\\\\\\"is_base64\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"data is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"data is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_asset_store-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: desk_asset_store\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-0",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-1",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":null,\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"task_id is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-2",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"task_id is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-3",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":[],\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { TaskID string \\\"json:\\\\\\\"task_id\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-4",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":false,\"file\":7},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"task_id is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-decode-5",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"\",\"file\":\"alpha.md\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"task_id is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_undo_task-read-only",
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Write\",\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"error\":{\"code\":-32601,\"message\":\"Unknown tool: desk_undo_task\"}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "open",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "fa54749dae4cf9ad09689595ead5f26da28aa56f2034159ad793b708514837a3",
+            "simhash": "cd4de79bc6c93295",
+            "size": 45,
+            "status": "open",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-open",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"open\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"open\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to open\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"open\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "open",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "paid",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "4fc7263b0d5dc135acf34ae3d747609632280a1b84c455d17383a05b4487206a",
+            "simhash": "cd4de79bc6c93295",
+            "size": 45,
+            "status": "paid",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-paid",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"paid\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to paid\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"paid\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "paid",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "submitted",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "395147a2098cfb9b6eb9af51bbb982db99928e5401a7976e6612059c0da21609",
+            "simhash": "cd4de79bc6c93295",
+            "size": 50,
+            "status": "submitted",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-submitted",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"submitted\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"submitted\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to submitted\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"submitted\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "submitted",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "done",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "755b3c2fe7bc2cc4122e7a8b87c87afce1cc45d246b74600fc879788e5e06602",
+            "simhash": "cd4de79bc6c93295",
+            "size": 45,
+            "status": "done",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-done",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"done\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"done\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to done\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"done\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "done",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "needs_review",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "1e12c72049a9677c47e8412d40220ed9efb9bf745aa6b2505bcca72ca3832fdc",
+            "simhash": "cd4de79bc6c93295",
+            "size": 53,
+            "status": "needs_review",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-needs_review",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"needs_review\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"needs_review\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to needs_review\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"needs_review\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "needs_review",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "waiting_for_reply",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "ed572d3e3707bc7dc9fe3d002c788e89a360c14f10faa11914341f3c521ccac3",
+            "simhash": "cd4de79bc6c93295",
+            "size": 58,
+            "status": "waiting_for_reply",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-waiting_for_reply",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"waiting_for_reply\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"waiting_for_reply\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to waiting_for_reply\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"waiting_for_reply\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "waiting_for_reply",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-invalid",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"invalid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid status \\\"invalid\\\" (valid: open, paid, submitted, done, needs_review, waiting_for_reply)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-traversal",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"../outside.md\",\"status\":\"paid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path traversal denied: ../outside.md is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "New Note",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/New_Note.md",
+            "person": null,
+            "sha256": "f385f07ba505d2d581031eed20f3212bebbfffea5043955c212f337b84639e0c",
+            "simhash": "a4618c088088b113",
+            "size": 84,
+            "status": null,
+            "title": "New Note",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-create",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"New Note\",\"content\":\"# Hello \\u003c\\u0026\\u003e\\nBody\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"New_Note.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"New_Note.md\",\"title\":\"New Note\",\"details\":\"created note\"}\n",
+        "New_Note.md": "---\ntitle: \"New Note\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\n# Hello \u003c\u0026\u003e\nBody",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "New_Note.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "New Note"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "alpha",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "0568f67dd4b257ce7d1e37f78a350309c415216117b8d987ec73595e97fd158f",
+            "simhash": "f32e26b8d7085a67",
+            "size": 76,
+            "status": null,
+            "title": "alpha",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-overwrite",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"alpha\",\"content\":\"Replacement\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"alpha.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"alpha.md\",\"title\":\"alpha\",\"details\":\"created note\"}\n",
+        "alpha.md": "---\ntitle: \"alpha\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\nReplacement"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "alpha"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-traversal",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"../outside\",\"content\":\"no\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path traversal denied: ../outside.md is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Missing Template",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/Missing_Template.md",
+            "person": null,
+            "sha256": "aaffb85b6f82c7cdd86fbc3e458ceaa1cf7e5ab44ce63e38208dad8d11d409a0",
+            "simhash": "0000000000000000",
+            "size": 76,
+            "status": null,
+            "title": "Missing Template",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-template-missing",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"Missing Template\",\"template\":\"absent\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"Missing_Template.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"Missing_Template.md\",\"title\":\"Missing Template\",\"details\":\"created note\"}\n",
+        "Missing_Template.md": "---\ntitle: \"Missing Template\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "Missing_Template.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "Missing Template"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Templated",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/Templated.md",
+            "person": null,
+            "sha256": "0c7568f30657a174a7adf7de3450eb97e74329116586ad50684d45a7acb3cb11",
+            "simhash": "a431fc46a0abad49",
+            "size": 90,
+            "status": null,
+            "title": "Templated",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-template",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"Templated\",\"template\":\"basic\",\"content\":\"Extra\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"Templated.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "templates/basic.md": "Hello {{title}}"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"Templated.md\",\"title\":\"Templated\",\"details\":\"created note\"}\n",
+        "Templated.md": "---\ntitle: \"Templated\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\nHello Templated\nExtra",
+        "templates/basic.md": "Hello {{title}}"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "Templated.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "Templated"
+        }
+      }
+    },
+    {
+      "after_db": {},
+      "id": "note-no-vault",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"No Vault\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "description",
+            "value": "A description",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research \u003c\u0026\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "6033368a16b99041e08e107cced7376a189c8591c20c8b14db6eed581253ed7b",
+            "simhash": "2fe5dd188811c5b9",
+            "size": 219,
+            "status": null,
+            "title": "Research \u003c\u0026\u003e",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook-create-{\"title\":\"Research \u003c\u0026\u003e\",\"description\":\"A description\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"Research \\u003c\\u0026\\u003e\",\"description\":\"A description\"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research \\\\u003c\\\\u0026\\\\u003e\\\",\\\"description\\\":\\\"A description\\\",\\\"created\\\":\\\"\u003cTIME\u003e\\\",\\\"sources\\\":[]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\ncreated: \"\u003cTIME\u003e\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: A description\nsources: []\n---\n\n# Research \u003c\u0026\u003e\n\nA description\n\n## Sources\n\n_No sources yet._\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "\u003cTIME\u003e",
+          "description": "A description",
+          "notebook_id": "research",
+          "sources": "[]",
+          "tags": "[notebook]",
+          "title": "Research \u003c\u0026\u003e",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook-create-{\"title\":\"   \"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"   \"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"title is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "f52b8f16400e63250cb9e6e6d6fccb929ab014d2201ec22dec90304880e2d2d1",
+            "simhash": "6fe5dd1a8c9187f1",
+            "size": 169,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook-create-{\"title\":\"Research\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"Research\"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"\u003cTIME\u003e\\\",\\\"sources\\\":[]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: \"\u003cTIME\u003e\"\ntags:\n    - notebook\nnotebook_id: research\nsources: []\n---\n\n# Research\n\n## Sources\n\n_No sources yet._\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "\u003cTIME\u003e",
+          "notebook_id": "research",
+          "sources": "[]",
+          "tags": "[notebook]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "notebook",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "日本語",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/notebook.md",
+            "person": null,
+            "sha256": "63b47c82230689356915f4d3bde67d3ca27c47bce937a68863b86ac3ab45a31d",
+            "simhash": "6fc6dd9d8c11cff3",
+            "size": 171,
+            "status": null,
+            "title": "日本語",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook-create-{\"title\":\"日本語\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"日本語\"},\"name\":\"notebook_create\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"notebook\\\",\\\"path\\\":\\\"notebooks/notebook.md\\\",\\\"title\\\":\\\"日本語\\\",\\\"created\\\":\\\"\u003cTIME\u003e\\\",\\\"sources\\\":[]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/notebook.md": "---\ntype: notebook\ntitle: 日本語\ncreated: \"\u003cTIME\u003e\"\ntags:\n    - notebook\nnotebook_id: notebook\nsources: []\n---\n\n# 日本語\n\n## Sources\n\n_No sources yet._\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/notebook.md": {
+          "created": "\u003cTIME\u003e",
+          "notebook_id": "notebook",
+          "sources": "[]",
+          "tags": "[notebook]",
+          "title": "日本語",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source-alpha.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"alpha.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md missing.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "1cb2ff8944a8acefe20547ab8034bcafdbf6e1ba767b05cc8bf8ed77e0eb6c4b",
+            "simhash": "0f63a048800185b9",
+            "size": 224,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": [
+          {
+            "from_path": "$ROOT/vault/notebooks/research.md",
+            "kind": "wikilink",
+            "to_path": "alpha"
+          },
+          {
+            "from_path": "$ROOT/vault/notebooks/research.md",
+            "kind": "wikilink",
+            "to_path": "missing"
+          }
+        ]
+      },
+      "id": "notebook_add_source-missing.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"missing.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\",\\\"missing.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02\"\ntags:\n    - notebook\nnotebook_id: research\nsources:\n    - alpha.md\n    - missing.md\n---\n\n# Research\n\n## Sources\n\n- [[alpha]] (`alpha.md`)\n- [[missing]] (`missing.md`)\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md missing.md]",
+          "tags": "[notebook]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source-notebooks/research.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"notebooks/research.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"a notebook cannot be a source of itself\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source-../outside.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"../outside.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid source path \\\"../outside.md\\\": path traversal denied: ../outside.md is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source-   ",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"   \"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"source path is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source- alpha.md ",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\" alpha.md \"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_add_source-missing",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"missing\",\"path\":\"alpha.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook not found\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "07986d90b91ea1ced4d081d0dcf04a2e293fee432e461e0e2c3f1d13d9fc40a3",
+            "simhash": "6fe5dd1a8c9187f1",
+            "size": 159,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-alpha.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"alpha.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02\"\ntags:\n    - notebook\nnotebook_id: research\nsources: []\n---\n\n# Research\n\n## Sources\n\n_No sources yet._\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[]",
+          "tags": "[notebook]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-missing.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"missing.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-notebooks/research.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"notebooks/research.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-../outside.md",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"../outside.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"path traversal denied: ../outside.md is outside vault\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-   ",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"   \"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646",
+            "simhash": "8440650a84c80010",
+            "size": 120,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source- alpha.md ",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\" alpha.md \"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "notebook_remove_source-missing",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"missing\",\"path\":\"alpha.md\"},\"name\":\"notebook_remove_source\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"notebook not found\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"hello\",\"preferred_name\":\"test.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"hello\",\"preferred_name\":\"test.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![test.txt](assets/test.txt)\\\",\\\"path\\\":\\\"assets/test.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/test.txt\",\"title\":\"test.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/test.txt": "hello"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"world\",\"preferred_name\":\"a b.png\",\"extension\":\"svg\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"world\",\"preferred_name\":\"a b.png\",\"extension\":\"svg\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![a b.svg](assets/a%20b.svg)\\\",\\\"path\\\":\\\"assets/a b.svg\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/a b.svg\",\"title\":\"a b.png\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/a b.svg": "world"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"SGVsbG8=\",\"is_base64\":true,\"preferred_name\":\"base64.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"SGVsbG8=\",\"is_base64\":true,\"preferred_name\":\"base64.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![base64.txt](assets/base64.txt)\\\",\\\"path\\\":\\\"assets/base64.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/base64.txt\",\"title\":\"base64.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/base64.txt": "Hello"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"SGVs\\r\\nbG8=\",\"is_base64\":true,\"preferred_name\":\"lines.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"SGVs\\r\\nbG8=\",\"is_base64\":true,\"preferred_name\":\"lines.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![lines.txt](assets/lines.txt)\\\",\\\"path\\\":\\\"assets/lines.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/lines.txt\",\"title\":\"lines.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/lines.txt": "Hello"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"Zh==\",\"is_base64\":true,\"preferred_name\":\"bits.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zh==\",\"is_base64\":true,\"preferred_name\":\"bits.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![bits.txt](assets/bits.txt)\\\",\\\"path\\\":\\\"assets/bits.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/bits.txt\",\"title\":\"bits.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/bits.txt": "f"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "asset-{\"data\":\"bad!\",\"is_base64\":true}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"bad!\",\"is_base64\":true},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 3\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "asset-{\"data\":\"Zg\",\"is_base64\":true}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg\",\"is_base64\":true},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "asset-{\"data\":\"a\",\"is_base64\":true}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"a\",\"is_base64\":true},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "asset-{\"data\":\"hi\",\"is_base64\":7}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"hi\",\"is_base64\":7},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal number into Go struct field .is_base64 of type bool\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"hi\",\"preferred_name\":\"folder/a:b.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"hi\",\"preferred_name\":\"folder/a:b.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![folder-a-b.txt](assets/folder-a-b.txt)\\\",\\\"path\\\":\\\"assets/folder-a-b.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/folder-a-b.txt\",\"title\":\"folder/a:b.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/folder-a-b.txt": "hi"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-{\"data\":\"collision\",\"preferred_name\":\"same.txt\"}",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"collision\",\"preferred_name\":\"same.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![same-3.txt](assets/same-3.txt)\\\",\\\"path\\\":\\\"assets/same-3.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "assets/same-2.txt": "older",
+        "assets/same.txt": "old"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/same-3.txt\",\"title\":\"same.txt\",\"details\":\"stored asset\"}\n",
+        "assets/same-2.txt": "older",
+        "assets/same-3.txt": "collision",
+        "assets/same.txt": "old"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "stdout_by_goos": {
+        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"openat .symdesk/history/checkpoints/missing.json: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
+      },
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "undo-missing",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"task_id\":\"missing\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "undo-traversal",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"task_id\":\"../escape\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid task id: \\\"../escape\\\"\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Before",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1",
+            "simhash": "d89aa06245afb2be",
+            "size": 29,
+            "status": null,
+            "title": "Before",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "undo-task",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"task_id\":\"task\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"deleted\\\":1,\\\"partial\\\":false,\\\"restored\\\":1,\\\"skipped\\\":[],\\\"status\\\":\\\"undone\\\",\\\"task_id\\\":\\\"task\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        ".symdesk/history/checkpoints/task.json": "{\n  \"files\": [\n    {\n      \"entry\": {\n        \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n        \"size\": 29,\n        \"timestamp\": \"2026-01-02T03:04:05Z\"\n      },\n      \"rel_path\": \"alpha.md\"\n    }\n  ],\n  \"new_files\": [\n    \"new.md\"\n  ],\n  \"skipped\": [],\n  \"task_id\": \"task\",\n  \"timestamp\": \"2026-01-02T03:04:05Z\"\n}",
+        ".symdesk/history/manifest/alpha.md.json": "[{\n  \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n  \"size\": 29,\n  \"timestamp\": \"2026-01-02T03:04:05Z\"\n}]",
+        ".symdesk/history/objects/78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1": "---\ntitle: Before\n---\nbefore\n",
+        "alpha.md": "after\n",
+        "new.md": "new\n"
+      },
+      "after_files": {
+        ".symdesk/history/checkpoints/task.json": "{\n  \"task_id\": \"task\",\n  \"timestamp\": \"\u003cTIME\u003e\",\n  \"files\": [\n    {\n      \"rel_path\": \"alpha.md\",\n      \"entry\": {\n        \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n        \"timestamp\": \"\u003cTIME\u003e\",\n        \"size\": 29\n      }\n    }\n  ],\n  \"new_files\": [\n    \"new.md\"\n  ],\n  \"skipped\": []\n}",
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 6\n  },\n  {\n    \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 29\n  }\n]",
+        ".symdesk/history/objects/78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1": "---\ntitle: Before\n---\nbefore\n",
+        ".symdesk/history/objects/7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919": "after\n",
+        "alpha.md": "---\ntitle: Before\n---\nbefore\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "title": "Before"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "base64-Zg==",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg==\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.txt](assets/binary.txt)\\\",\\\"path\\\":\\\"assets/binary.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.txt\",\"title\":\"binary.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.txt": "f"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-Zg=",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg=\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 3\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-Zg===",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg===\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 4\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-====",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"====\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA=A",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA=A\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 2\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-A===",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"A===\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 1\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "base64-AAA=",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AAA=\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.txt](assets/binary.txt)\\\",\\\"path\\\":\\\"assets/binary.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.txt\",\"title\":\"binary.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.txt": "\u0000\u0000"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "base64-AAAA",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AAAA\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.txt](assets/binary.txt)\\\",\\\"path\\\":\\\"assets/binary.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.txt\",\"title\":\"binary.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.txt": "\u0000\u0000\u0000"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AAAA=",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AAAA=\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 4\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA==AA==",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA==AA==\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 4\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA==!",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA==!\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 4\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA==\n!",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA==\\n!\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 5\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-A\r\n!",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"A\\r\\n!\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 3\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-A",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"A\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AAA",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AAA\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-A!AA",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"A!AA\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 1\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AA!A",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AA!A\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 2\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-AAA!",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"AAA!\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 3\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-!!!!",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"!!!!\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 0\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "base64-Zg== ",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg== \",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"decode base64 data: illegal base64 data at input byte 4\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "base64-Zg==\n",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"Zg==\\n\",\"is_base64\":true,\"preferred_name\":\"binary.txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.txt](assets/binary.txt)\\\",\\\"path\\\":\\\"assets/binary.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.txt\",\"title\":\"binary.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.txt": "f"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-anonymous",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"anonymous\",\"extension\":\"txt\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![pasted-\u003cCLOCK\u003e.txt](assets/pasted-\u003cCLOCK\u003e.txt)\\\",\\\"path\\\":\\\"assets/pasted-\u003cCLOCK\u003e.txt\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/pasted-\u003cCLOCK\u003e.txt\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/pasted-\u003cCLOCK\u003e.txt": "anonymous"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-binary",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"/wCA\",\"is_base64\":true,\"preferred_name\":\"binary.bin\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.bin](assets/binary.bin)\\\",\\\"path\\\":\\\"assets/binary.bin\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.bin\",\"title\":\"binary.bin\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.bin": "\u003cBINARY_HEX\u003eff0080"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "after_db": {},
+      "id": "desk_note_new-read-only-notification",
+      "request": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"paid\",\"title\":\"No Write\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "status",
+            "value": "paid",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Alpha \u003c\u0026\u003e",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "4fc7263b0d5dc135acf34ae3d747609632280a1b84c455d17383a05b4487206a",
+            "simhash": "cd4de79bc6c93295",
+            "size": 45,
+            "status": "paid",
+            "title": "Alpha \u003c\u0026\u003e",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-paid-framed",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"alpha.md\",\"status\":\"paid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "Content-Length: 164\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"file\\\":\\\"alpha.md\\\",\\\"new_status\\\":\\\"paid\\\",\\\"status\\\":\\\"updated\\\"}\",\"type\":\"text\"}],\"isError\":false}}",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 43\n  }\n]",
+        ".symdesk/history/objects/cabce3c53fb9523f80a1fa81b17af09c684baf941c3050704b27e87af3f935c8": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"status_changed\",\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"details\":\"status set to paid\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: \"paid\"\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "status": "paid",
+          "title": "Alpha \u003c\u0026\u003e"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "New Note",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/New_Note.md",
+            "person": null,
+            "sha256": "f385f07ba505d2d581031eed20f3212bebbfffea5043955c212f337b84639e0c",
+            "simhash": "a4618c088088b113",
+            "size": 84,
+            "status": null,
+            "title": "New Note",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-create-framed",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"New Note\",\"content\":\"# Hello \\u003c\\u0026\\u003e\\nBody\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "Content-Length: 120\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"New_Note.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"New_Note.md\",\"title\":\"New Note\",\"details\":\"created note\"}\n",
+        "New_Note.md": "---\ntitle: \"New Note\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\n# Hello \u003c\u0026\u003e\nBody",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "New_Note.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "New Note"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "New Note",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/New_Note.md",
+            "person": null,
+            "sha256": "f385f07ba505d2d581031eed20f3212bebbfffea5043955c212f337b84639e0c",
+            "simhash": "a4618c088088b113",
+            "size": 84,
+            "status": null,
+            "title": "New Note",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-create-framed-notification",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"content\":\"# Hello \\u003c\\u0026\\u003e\\nBody\",\"title\":\"New Note\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"New_Note.md\",\"title\":\"New Note\",\"details\":\"created note\"}\n",
+        "New_Note.md": "---\ntitle: \"New Note\"\ncreated: \"\u003cTIME\u003e\"\ntags: []\n---\n\n# Hello \u003c\u0026\u003e\nBody",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "New_Note.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[]",
+          "title": "New Note"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "2026-01-02",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "notebook_id",
+            "value": "research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "sources",
+            "value": "[alpha.md missing.md]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[notebook]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Research",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "type",
+            "value": "notebook",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "2026-01-02",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/notebooks/research.md",
+            "person": null,
+            "sha256": "1cb2ff8944a8acefe20547ab8034bcafdbf6e1ba767b05cc8bf8ed77e0eb6c4b",
+            "simhash": "0f63a048800185b9",
+            "size": 224,
+            "status": null,
+            "title": "Research",
+            "type": "notebook"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": [
+          {
+            "from_path": "$ROOT/vault/notebooks/research.md",
+            "kind": "wikilink",
+            "to_path": "alpha"
+          },
+          {
+            "from_path": "$ROOT/vault/notebooks/research.md",
+            "kind": "wikilink",
+            "to_path": "missing"
+          }
+        ]
+      },
+      "id": "notebook_add_source-missing.md-framed",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"notebook\":\"research\",\"path\":\"missing.md\"},\"name\":\"notebook_add_source\"}}",
+      "stdout": "Content-Length: 242\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"id\\\":\\\"research\\\",\\\"path\\\":\\\"notebooks/research.md\\\",\\\"title\\\":\\\"Research\\\",\\\"created\\\":\\\"2026-01-02\\\",\\\"sources\\\":[\\\"alpha.md\\\",\\\"missing.md\\\"]}\",\"type\":\"text\"}],\"isError\":false}}",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n"
+      },
+      "after_files": {
+        ".symdesk/history/manifest/notebooks/research.md.json": "[\n  {\n    \"id\": \"10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 120\n  }\n]",
+        ".symdesk/history/objects/10b3c8a7439b3cd8d042553655f7371e46620baf974b0a029a4bf83d2a06e646": "---\ntype: notebook\ntitle: Research\ncreated: '2026-01-02'\nnotebook_id: research\nsources: [alpha.md]\n---\nHand-edited body\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02\"\ntags:\n    - notebook\nnotebook_id: research\nsources:\n    - alpha.md\n    - missing.md\n---\n\n# Research\n\n## Sources\n\n- [[alpha]] (`alpha.md`)\n- [[missing]] (`missing.md`)\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "notebooks/research.md": {
+          "created": "2026-01-02",
+          "notebook_id": "research",
+          "sources": "[alpha.md missing.md]",
+          "tags": "[notebook]",
+          "title": "Research",
+          "type": "notebook"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Before",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/alpha.md",
+            "person": null,
+            "sha256": "78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1",
+            "simhash": "d89aa06245afb2be",
+            "size": 29,
+            "status": null,
+            "title": "Before",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "undo-task-framed",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"task_id\":\"task\"},\"name\":\"desk_undo_task\"}}",
+      "stdout": "Content-Length: 200\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"deleted\\\":1,\\\"partial\\\":false,\\\"restored\\\":1,\\\"skipped\\\":[],\\\"status\\\":\\\"undone\\\",\\\"task_id\\\":\\\"task\\\"}\",\"type\":\"text\"}],\"isError\":false}}",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        ".symdesk/history/checkpoints/task.json": "{\n  \"files\": [\n    {\n      \"entry\": {\n        \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n        \"size\": 29,\n        \"timestamp\": \"2026-01-02T03:04:05Z\"\n      },\n      \"rel_path\": \"alpha.md\"\n    }\n  ],\n  \"new_files\": [\n    \"new.md\"\n  ],\n  \"skipped\": [],\n  \"task_id\": \"task\",\n  \"timestamp\": \"2026-01-02T03:04:05Z\"\n}",
+        ".symdesk/history/manifest/alpha.md.json": "[{\n  \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n  \"size\": 29,\n  \"timestamp\": \"2026-01-02T03:04:05Z\"\n}]",
+        ".symdesk/history/objects/78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1": "---\ntitle: Before\n---\nbefore\n",
+        "alpha.md": "after\n",
+        "new.md": "new\n"
+      },
+      "after_files": {
+        ".symdesk/history/checkpoints/task.json": "{\n  \"task_id\": \"task\",\n  \"timestamp\": \"\u003cTIME\u003e\",\n  \"files\": [\n    {\n      \"rel_path\": \"alpha.md\",\n      \"entry\": {\n        \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n        \"timestamp\": \"\u003cTIME\u003e\",\n        \"size\": 29\n      }\n    }\n  ],\n  \"new_files\": [\n    \"new.md\"\n  ],\n  \"skipped\": []\n}",
+        ".symdesk/history/manifest/alpha.md.json": "[\n  {\n    \"id\": \"7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 6\n  },\n  {\n    \"id\": \"78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1\",\n    \"timestamp\": \"\u003cTIME\u003e\",\n    \"size\": 29\n  }\n]",
+        ".symdesk/history/objects/78f9fff6c84a50935a4ab01ab357d792236fb4b81ab4a0a9642873c8f6bbcba1": "---\ntitle: Before\n---\nbefore\n",
+        ".symdesk/history/objects/7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919": "after\n",
+        "alpha.md": "---\ntitle: Before\n---\nbefore\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "alpha.md": {
+          "title": "Before"
+        }
+      }
+    },
+    {
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "asset-binary-framed",
+      "allow_write": true,
+      "framed": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"data\":\"/wCA\",\"is_base64\":true,\"preferred_name\":\"binary.bin\"},\"name\":\"desk_asset_store\"}}",
+      "stdout": "Content-Length: 181\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"markdown_link\\\":\\\"![binary.bin](assets/binary.bin)\\\",\\\"path\\\":\\\"assets/binary.bin\\\"}\",\"type\":\"text\"}],\"isError\":false}}",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"asset_added\",\"path\":\"assets/binary.bin\",\"title\":\"binary.bin\",\"details\":\"stored asset\"}\n",
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n",
+        "assets/binary.bin": "\u003cBINARY_HEX\u003eff0080"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "hash_inputs": {
+        "Template_Note.md": "---\ntags: [template]\n---\n\nBody\nMore"
+      },
+      "after_db": {
+        "file_properties": [
+          {
+            "file_id": 1,
+            "key": "created",
+            "value": "\u003cTIME\u003e",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "tags",
+            "value": "[template]",
+            "value_type": "string"
+          },
+          {
+            "file_id": 1,
+            "key": "title",
+            "value": "Template Note",
+            "value_type": "string"
+          }
+        ],
+        "files": [
+          {
+            "asn": null,
+            "confidence": null,
+            "created_at": "\u003cTIME\u003e",
+            "document_date": null,
+            "due_date": null,
+            "id": 1,
+            "indexed_at": "\u003cTIME\u003e",
+            "modified_at": "\u003cTIME\u003e",
+            "mtime_ns": "\u003cMTIME\u003e",
+            "ocr_json_path": null,
+            "path": "$ROOT/vault/Template_Note.md",
+            "person": null,
+            "sha256": "f89fc5807c1bbd4474d3874b2b6ac8736f833c4196e814da820cb845394d75d5",
+            "simhash": "0d09e782c4000080",
+            "size": 90,
+            "status": null,
+            "title": "Template Note",
+            "type": "note"
+          }
+        ],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "note-frontmatter-template",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"title\":\"Template Note\",\"template\":\"fm\",\"content\":\"More\"},\"name\":\"desk_note_new\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"path\\\":\\\"Template_Note.md\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "templates/fm.md": "---\ntags: [template]\n---\n\nBody"
+      },
+      "after_files": {
+        ".symdesk/journal/\u003cDATE\u003e.ndjson": "{\"ts\":\"\u003cTIME\u003e\",\"event\":\"file_added\",\"path\":\"Template_Note.md\",\"title\":\"Template Note\",\"details\":\"created note\"}\n",
+        "Template_Note.md": "---\ntags: [template]\ntitle: \"Template Note\"\ncreated: \"\u003cTIME\u003e\"\n---\n\nBody\nMore",
+        "templates/fm.md": "---\ntags: [template]\n---\n\nBody"
+      },
+      "sidecar_exists": true,
+      "after_index": {
+        "Template_Note.md": {
+          "created": "\u003cTIME\u003e",
+          "tags": "[template]",
+          "title": "Template Note"
+        }
+      }
+    },
+    {
+      "stdout_by_goos": {
+        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"read file: open $ROOT/vault/missing.md: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
+      },
+      "after_db": {
+        "file_properties": [],
+        "files": [],
+        "index_lifecycle": [],
+        "links": []
+      },
+      "id": "status-missing-file",
+      "allow_write": true,
+      "request": "{\"id\":\"call\",\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"arguments\":{\"file\":\"missing.md\",\"status\":\"paid\"},\"name\":\"doc_set_status\"}}",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\nstatus: open\n---\nbody\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    }
+  ]
+}

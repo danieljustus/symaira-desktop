@@ -1,0 +1,16 @@
+pub const MIGRATIONS: &[(&str, &str)] = &[
+    ("001_documents", include_str!("../migrations/001_documents.sql")),
+    ("002_jobs", include_str!("../migrations/002_jobs.sql")),
+    ("003_archive_path", include_str!("../migrations/003_archive_path.sql")),
+    ("004_classification_rules", include_str!("../migrations/004_classification_rules.sql")),
+    ("005_paperless_import_state", include_str!("../migrations/005_paperless_import_state.sql")),
+    ("006_paperless_import_state_targets", include_str!("../migrations/006_paperless_import_state_targets.sql")),
+    ("007_paperless_import_state_paths", include_str!("../migrations/007_paperless_import_state_paths.sql")),
+    ("008_paperless_import_state_target_key", include_str!("../migrations/008_paperless_import_state_target_key.sql")),
+    ("009_document_extractions", include_str!("../migrations/009_document_extractions.sql")),
+    ("010_mail_messages", include_str!("../migrations/010_mail_messages.sql")),
+    ("011_document_provenance", include_str!("../migrations/011_document_provenance.sql")),
+    ("012_mail_poll_status", include_str!("../migrations/012_mail_poll_status.sql")),
+    ("013_mail_poll_cursor", include_str!("../migrations/013_mail_poll_cursor.sql")),
+    ("014_document_vault_scope", include_str!("../migrations/014_document_vault_scope.sql")),
+];

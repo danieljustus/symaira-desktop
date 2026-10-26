@@ -2262,6 +2262,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "symdesk-ingest"
+version = "0.0.0"
+dependencies = [
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "symaira-core-sqlite",
+]
+
+[[package]]
 name = "symdesk-protocol"
 version = "0.0.0"
 dependencies = [

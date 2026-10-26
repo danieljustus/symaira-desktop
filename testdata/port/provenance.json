@@ -20,13 +20,13 @@
     "selfhost_http_routes": 21
   },
   "fixture_checksums": {
-    "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
     "testdata/port/ai/compose-probe.json": "9e912ce51b8564095e54cc674c5c394bb78948bd17cbf3dc6dc8a9c3dffab960",
     "testdata/port/ai/compose-resolve.json": "b41134c74bc73a911b45ad107aa021055484a17494c4040f073ce65faec2e766",
     "testdata/port/ai/providers.json": "4a8d5434c0a7fe43c110e44073c2a05885202f9ab8f815316d1fab5aabc8aee3",
     "testdata/port/ai/recipe-validate.json": "3353919da849ede0ef00042149a06040798356b76d1d1b99371a8a18c3eeb8af",
     "testdata/port/cli/ask-offline.json": "808c3c602cefdfc7fd02f682484b6b571657aa6dcb14c6ac694f1bd32ecb65bf",
     "testdata/port/cli/backlinks-process.json": "86562684c73b3916822f806fed9fb68cea1131a54e9cd52e144eb511e69c3792",
+    "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
     "testdata/port/cli/config-process.json": "30b35dc62287f398f9443ce9f09763bf1da8641dcc9ea45dc016861c4f7c3c44",
     "testdata/port/cli/config-vault-selection.json": "8a0b2810896e38e329f81648bc59a8cac022d84cc9730ca14c057f680261ad5f",
     "testdata/port/cli/docs-read-process.json": "09646ab3fc937850e4333e6bab324c77bbf93c35bb376d1372b47d1165d42567",

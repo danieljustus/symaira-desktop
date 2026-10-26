@@ -29,7 +29,7 @@ func committedCases(t *testing.T) cases {
 }
 
 func freshCases() (cases, int) {
-	eval, skipped := buildEval()
+	eval, skipped, _ := buildEval()
 	return cases{Compile: buildCompile(), Eval: eval, Disambiguate: buildDisambiguate()}, skipped
 }
 
@@ -66,6 +66,32 @@ func TestMapOrderDependentStrftimeCasesAreWithheld(t *testing.T) {
 	for _, item := range fresh.Eval {
 		if strings.Contains(item.Template, "%%a") && strings.Contains(item.Fields["document_date"], "2026-11-23") {
 			t.Fatalf("order-dependent case %s was recorded", item.ID)
+		}
+	}
+}
+
+// TestRecordedOutputsAreHostIndependent guards the Windows byte check: no
+// recorded output may have a ':' in its first path element (other than an
+// `x:` volume prefix), because Windows filepath.Clean spells such a path with
+// a leading `.\`.
+func TestRecordedOutputsAreHostIndependent(t *testing.T) {
+	_, _, hostDependent := buildEval()
+	if hostDependent == 0 {
+		t.Fatal("expected colon-led outputs to be withheld")
+	}
+	for _, item := range committedCases(t).Eval {
+		if hostDependentOutput(item.Output) {
+			t.Fatalf("host-dependent case %s (%q) was recorded", item.ID, item.Output)
+		}
+	}
+	for _, output := range []string{"10:30 meeting", "ab:c/x", ":x/y", "2026-03-05T14:07:09/t"} {
+		if !hostDependentOutput(output) {
+			t.Fatalf("%q must be treated as host dependent", output)
+		}
+	}
+	for _, output := range []string{"", "a/b:c", "/abs/10:30", "documents/_:x/2026", "plain", "_:x/unknown", "a:b/_/unknown", "C:"} {
+		if hostDependentOutput(output) {
+			t.Fatalf("%q must not be treated as host dependent", output)
 		}
 	}
 }

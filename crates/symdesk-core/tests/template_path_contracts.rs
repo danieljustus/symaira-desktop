@@ -18,6 +18,7 @@ const FIXTURE: &str = include_str!("../../../testdata/port/core/template-path.js
 struct Fixture {
     schema_version: u8,
     nondeterministic_skipped: usize,
+    host_dependent_skipped: usize,
     cases: Cases,
 }
 
@@ -98,9 +99,25 @@ fn eval_matches_go() {
             .unwrap_or_else(|error| panic!("{}: {error}", case.id));
         assert_eq!(template.eval(&case.fields), case.output, "{}", case.id);
     }
-    // 1154 base cases plus the order-sensitive `%%a`-style formats that Go
-    // cannot answer deterministically and the generator withholds.
-    assert!(fixture.cases.eval.len() >= 1150, "recorded eval cases");
+    // 1206 candidate cases minus 71 whose output starts with a colon element
+    // (Windows `filepath.Clean` spells those with a leading `./`, so the
+    // generator withholds them) and 22 order-sensitive `%%a`-style formats
+    // that Go cannot answer deterministically.
+    assert!(fixture.cases.eval.len() >= 1100, "recorded eval cases");
+    assert!(
+        fixture.host_dependent_skipped > 0,
+        "the fixture must prove the Windows-dependent colon-led outputs were detected and withheld"
+    );
+    for case in &fixture.cases.eval {
+        let first = case.output.split('/').next().unwrap_or_default();
+        let volume = first.as_bytes().get(1) == Some(&b':');
+        assert!(
+            volume || !first.contains(':'),
+            "{}: host-dependent output {:?} must not be recorded",
+            case.id,
+            case.output
+        );
+    }
     assert!(
         fixture.nondeterministic_skipped > 0,
         "the fixture must prove Go's map-order strftime cases were detected and withheld"

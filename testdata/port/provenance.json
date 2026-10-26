@@ -42,7 +42,7 @@
     "testdata/port/core/german-search.json": "68f7ce02fe5b583dce6434e6c7b2fac88d5c388cd5a22644e2cf3073594921e6",
     "testdata/port/core/search-query.json": "42d9b467b36f5a62b53d63d816fc7250f6fe5fd2a91971c2e9d9498adfc74e6c",
     "testdata/port/core/simhash.json": "28e65b4059cf2a9f1fcb19b1492d04eb01eb725965d9098bdfb8a3ce4d3351c4",
-    "testdata/port/core/template-path.json": "59e0a603bb9d35e94744f80e05a93cd2a7928a7dfbec0ef63b25f5a7d0488fb7",
+    "testdata/port/core/template-path.json": "cb456ee5465b2710cc2414ed808bed309bc99fef692395d4ed76bf036afd9a36",
     "testdata/port/core/textnorm.json": "a4c98eb988cb006a56e4079cb890080a3729f4c64c08c35fdfd85b28ea97c51f",
     "testdata/port/dataset/cli.json": "ebd1307fb8fa7e35c10a1b04d4abac427b5cbd631eaa0193153291225fdb6328",
     "testdata/port/dataset/import.json": "d0226a9090f7aee8666b4b326bd8e1819afd705573bbac468fede34caebc1abd",

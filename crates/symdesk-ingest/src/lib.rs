@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 mod document;
 mod migrations;
+pub mod notion;
 mod sql;
 pub use document::{Document, DocumentPaths};
 pub use migrations::MIGRATIONS;

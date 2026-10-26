@@ -1,3 +1,11 @@
+.PHONY: notion-import-differential notion-import-fixtures-generate
+notion-import-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test notion_contracts --locked
+
+notion-import-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+
 .PHONY: ingest-queue-differential ingest-queue-fixtures-generate
 INGEST_GO ?= go
 ingest-queue-differential:

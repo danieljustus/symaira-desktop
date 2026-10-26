@@ -26,6 +26,7 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"Notion import", []string{"test", "-count=1", "./internal/ingest/internal/notionimport", "-run", "^TestPortNotionContract$"}, []string{"testdata/port/ingest/notion.json"}, false},
 	{"contacts vCard", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsVCardContract$"}, []string{"testdata/port/contacts/vcard.json"}, false},
 	{"contacts CSV", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsCSVContract$"}, []string{"testdata/port/contacts/csv.json"}, false},
 	{"contacts import", []string{"test", "-count=1", "./internal/contacts/internal/service/importer", "-run", "^TestPortContactsImportContract$"}, []string{"testdata/port/contacts/import.json"}, false},

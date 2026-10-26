@@ -12,6 +12,11 @@ rusqlite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 symaira-core-sqlite.workspace = true
+regex.workspace = true
+sha2.workspace = true
+symdesk-vault.workspace = true
+noyalib.workspace = true
+time.workspace = true
 
 [dev-dependencies]
 rusqlite = { workspace = true, features = ["functions"] }

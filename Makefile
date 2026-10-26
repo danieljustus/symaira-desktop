@@ -1349,3 +1349,10 @@ mcp-write-differential:
 
 mcp-write-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
+
+.PHONY: note-doc-cli-fixtures-generate note-doc-cli-differential
+note-doc-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+note-doc-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test note_doc --locked

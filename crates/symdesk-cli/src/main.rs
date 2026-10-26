@@ -13,6 +13,7 @@ mod http;
 mod index_cli;
 mod links_cli;
 mod mcp;
+mod mutate_cli;
 mod recipe;
 mod relations_cli;
 mod retention;
@@ -71,6 +72,9 @@ fn main() -> ExitCode {
         return exit;
     }
     rewrite_config_paths_repeated_flags(&mut args);
+    if let Some(exit) = mutate_cli::prepare_args(&mut args) {
+        return exit;
+    }
     if let Some(exit) = docs_cli::preprocess(&mut args) {
         return exit;
     }
@@ -228,6 +232,28 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
+        Some(("note", command)) => mutate_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            true,
+        ),
+        Some(("doc", command)) => mutate_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("docs", command))
+            if !matches!(command.subcommand_name(), Some("list" | "review") | None) =>
+        {
+            mutate_cli::run(
+                command,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+                false,
+            )
+        }
         Some(("docs", command)) => docs_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -560,7 +586,9 @@ fn cli() -> Command {
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
-        .subcommand(docs_cli::cli())
+        .subcommand(docs_cli::cli().subcommands(mutate_cli::doc_commands()))
+        .subcommand(mutate_cli::doc_cli())
+        .subcommand(mutate_cli::note_cli())
         .subcommand(links_cli::backlinks_cli())
         .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())

@@ -4,7 +4,17 @@
 // segment sanitizing, Clean) and Disambiguate.
 //
 // Host independence: the corpus uses no backslash or drive-letter inputs, so
-// filepath.Clean and filepath.Ext agree on every supported OS.
+// filepath.Clean and filepath.Ext agree on every supported OS, with one
+// exception. On Windows, filepath.Clean prefixes `.\` to a cleaned relative
+// path whose first element contains ':' (so `a/../c:` cannot become the drive
+// `c:`), and Eval's filepath.ToSlash then returns `./10:30 meeting` where Unix
+// returns `10:30 meeting`. A fixture that records such an output would fail
+// the byte check on every Windows host, so every Eval case whose output has a
+// ':' in its first path element is withheld and counted in the header, except
+// when the colon is the second byte: Windows reads `x:` as a volume name and
+// Clean then adds no prefix. The rule is deliberately broader than the exact
+// divergence (Clean only prefixes when it rewrote the path), because the
+// generator sees the cleaned output, not the string handed to Clean.
 //
 // Go's strftime applies its directive table by ranging over a map, so a
 // format whose substitution output can complete another directive (for
@@ -37,8 +47,11 @@ type document struct {
 	Oracle        inventory.Oracle `json:"oracle"`
 	// NondeterministicSkipped counts Eval cases withheld because Go's map
 	// iteration order changed their output between runs.
-	NondeterministicSkipped int   `json:"nondeterministic_skipped"`
-	Cases                   cases `json:"cases"`
+	NondeterministicSkipped int `json:"nondeterministic_skipped"`
+	// HostDependentSkipped counts Eval cases withheld because the Windows
+	// filepath.Clean spelling of their output differs from the Unix one.
+	HostDependentSkipped int   `json:"host_dependent_skipped"`
+	Cases                cases `json:"cases"`
 }
 
 type cases struct {
@@ -93,7 +106,7 @@ func main() {
 
 	doc := document{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: *commit, Release: *release}}
 	doc.Cases.Compile = buildCompile()
-	doc.Cases.Eval, doc.NondeterministicSkipped = buildEval()
+	doc.Cases.Eval, doc.NondeterministicSkipped, doc.HostDependentSkipped = buildEval()
 	doc.Cases.Disambiguate = buildDisambiguate()
 
 	content, err := json.MarshalIndent(doc, "", "  ")
@@ -118,8 +131,8 @@ func main() {
 	if err := os.WriteFile(*output, content, 0o600); err != nil {
 		fatal("write fixture: %v", err)
 	}
-	fmt.Printf("PASS template-path fixture generated (%d compile, %d eval, %d disambiguate, %d nondeterministic skipped)\n",
-		len(doc.Cases.Compile), len(doc.Cases.Eval), len(doc.Cases.Disambiguate), doc.NondeterministicSkipped)
+	fmt.Printf("PASS template-path fixture generated (%d compile, %d eval, %d disambiguate, %d nondeterministic skipped, %d host-dependent skipped)\n",
+		len(doc.Cases.Compile), len(doc.Cases.Eval), len(doc.Cases.Disambiguate), doc.NondeterministicSkipped, doc.HostDependentSkipped)
 }
 
 var compileRaws = []string{
@@ -456,7 +469,16 @@ var sanitizeValues = []string{
 	"üüüüüüüüüüüü",
 }
 
-func buildEval() ([]evalCase, int) {
+// hostDependentOutput reports whether the Windows spelling of an Eval output
+// can differ from the Unix one: filepath.Clean inserts a leading `.\` when the
+// first path element holds a ':' that does not form a `x:` volume name (see the
+// package comment).
+func hostDependentOutput(output string) bool {
+	first, _, _ := strings.Cut(output, "/")
+	return strings.Contains(first, ":") && (len(first) < 2 || first[1] != ':')
+}
+
+func buildEval() (recorded []evalCase, nondeterministic, hostDependent int) {
 	var candidates []evalCase
 	add := func(id, template string, fields map[string]string) {
 		candidates = append(candidates, evalCase{ID: id, Template: template, Fields: fields})
@@ -492,7 +514,6 @@ func buildEval() ([]evalCase, int) {
 	}
 
 	result := make([]evalCase, 0, len(candidates))
-	skipped := 0
 	for _, item := range candidates {
 		tmpl, err := templatepath.Compile(item.Template)
 		if err != nil {
@@ -507,13 +528,17 @@ func buildEval() ([]evalCase, int) {
 			}
 		}
 		if !stable {
-			skipped++
+			nondeterministic++
+			continue
+		}
+		if hostDependentOutput(first) {
+			hostDependent++
 			continue
 		}
 		item.Output = first
 		result = append(result, item)
 	}
-	return result, skipped
+	return result, nondeterministic, hostDependent
 }
 
 func buildDisambiguate() []disambiguateCase {

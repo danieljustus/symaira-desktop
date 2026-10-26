@@ -5,6 +5,7 @@
     "release": "renderer-pdf-safety-v2-local"
   },
   "nondeterministic_skipped": 22,
+  "host_dependent_skipped": 71,
   "cases": {
     "compile": [
       {
@@ -778,19 +779,6 @@
         "output": "report.final"
       },
       {
-        "id": "tmpl-02-colon",
-        "template": "{title}",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "10:30 meeting"
-      },
-      {
         "id": "tmpl-03-empty",
         "template": "documents/{correspondent}/{document_date:%Y}/{title}",
         "fields": {},
@@ -1164,21 +1152,6 @@
         "output": "unknown"
       },
       {
-        "id": "tmpl-07-normal",
-        "template": "{created:%d.%m.%Y %H:%M}",
-        "fields": {
-          "asn": "42",
-          "category": "Finance",
-          "correspondent": "ACME GmbH",
-          "created": "2026-03-05T14:07:09Z",
-          "document_date": "2026-03-05",
-          "document_type": "Invoice",
-          "person": "Alice",
-          "title": "Quarterly Report"
-        },
-        "output": "05.03.2026 14:07"
-      },
-      {
         "id": "tmpl-07-tricky",
         "template": "{created:%d.%m.%Y %H:%M}",
         "fields": {
@@ -1206,34 +1179,6 @@
           "title": "tab\therenl\n"
         },
         "output": "unknown"
-      },
-      {
-        "id": "tmpl-07-dotted",
-        "template": "{created:%d.%m.%Y %H:%M}",
-        "fields": {
-          "asn": ".",
-          "category": " . ",
-          "correspondent": ".hidden",
-          "created": "2026-03-05",
-          "document_date": "2026-03",
-          "document_type": "a.b.c",
-          "person": "...",
-          "title": "report.final."
-        },
-        "output": "05.03.2026 00:00"
-      },
-      {
-        "id": "tmpl-07-colon",
-        "template": "{created:%d.%m.%Y %H:%M}",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "05.03.2026 14:07"
       },
       {
         "id": "tmpl-08-empty",
@@ -2024,19 +1969,6 @@
         "output": "report.final"
       },
       {
-        "id": "tmpl-16-colon",
-        "template": "{title}/",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "10:30 meeting"
-      },
-      {
         "id": "tmpl-17-empty",
         "template": "{title}/..",
         "fields": {},
@@ -2200,19 +2132,6 @@
           "title": "report.final."
         },
         "output": "report.final"
-      },
-      {
-        "id": "tmpl-18-colon",
-        "template": "./{title}",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "10:30 meeting"
       },
       {
         "id": "tmpl-19-empty",
@@ -2558,19 +2477,6 @@
         "output": "202603report.final"
       },
       {
-        "id": "tmpl-22-colon",
-        "template": "{document_date:%Y}{created:%m}{title}",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "20260310:30 meeting"
-      },
-      {
         "id": "tmpl-23-empty",
         "template": "{person}-{asn}",
         "fields": {},
@@ -2734,19 +2640,6 @@
           "title": "report.final."
         },
         "output": "report.final.pdf"
-      },
-      {
-        "id": "tmpl-24-colon",
-        "template": "{title}.pdf",
-        "fields": {
-          "category": "a:b",
-          "correspondent": "::x",
-          "created": "2026-03-05T14:07:09+02:00",
-          "document_date": "2026-03-05T14:07:09",
-          "person": ":",
-          "title": "10:30 meeting"
-        },
-        "output": "10:30 meeting.pdf"
       },
       {
         "id": "tmpl-25-empty",
@@ -3138,31 +3031,6 @@
         "output": "2026/03/05/t"
       },
       {
-        "id": "date-012-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+25:00"
-        },
-        "output": "2026-03-05T14:07:09+25:00"
-      },
-      {
-        "id": "created-012-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09+25:00"
-        },
-        "output": "2026-03-05T14:07:09+25:00"
-      },
-      {
-        "id": "date-012-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+25:00",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09+25:00/t"
-      },
-      {
         "id": "date-013-default",
         "template": "{document_date}",
         "fields": {
@@ -3186,56 +3054,6 @@
           "title": "t"
         },
         "output": "2026/03/05/t"
-      },
-      {
-        "id": "date-014-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+0200"
-        },
-        "output": "2026-03-05T14:07:09+0200"
-      },
-      {
-        "id": "created-014-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09+0200"
-        },
-        "output": "2026-03-05T14:07:09+0200"
-      },
-      {
-        "id": "date-014-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+0200",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09+0200/t"
-      },
-      {
-        "id": "date-015-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+02"
-        },
-        "output": "2026-03-05T14:07:09+02"
-      },
-      {
-        "id": "created-015-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09+02"
-        },
-        "output": "2026-03-05T14:07:09+02"
-      },
-      {
-        "id": "date-015-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+02",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09+02/t"
       },
       {
         "id": "date-016-default",
@@ -3313,206 +3131,6 @@
         "output": "2026/03/05/t"
       },
       {
-        "id": "date-019-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09.Z"
-        },
-        "output": "2026-03-05T14:07:09.Z"
-      },
-      {
-        "id": "created-019-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09.Z"
-        },
-        "output": "2026-03-05T14:07:09.Z"
-      },
-      {
-        "id": "date-019-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09.Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09.Z/t"
-      },
-      {
-        "id": "date-020-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09."
-        },
-        "output": "2026-03-05T14:07:09"
-      },
-      {
-        "id": "created-020-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09."
-        },
-        "output": "2026-03-05T14:07:09"
-      },
-      {
-        "id": "date-020-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09.",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09/t"
-      },
-      {
-        "id": "date-021-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09z"
-        },
-        "output": "2026-03-05T14:07:09z"
-      },
-      {
-        "id": "created-021-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09z"
-        },
-        "output": "2026-03-05T14:07:09z"
-      },
-      {
-        "id": "date-021-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09z/t"
-      },
-      {
-        "id": "date-022-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05t14:07:09Z"
-        },
-        "output": "2026-03-05t14:07:09Z"
-      },
-      {
-        "id": "created-022-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05t14:07:09Z"
-        },
-        "output": "2026-03-05t14:07:09Z"
-      },
-      {
-        "id": "date-022-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05t14:07:09Z",
-          "title": "t"
-        },
-        "output": "2026-03-05t14:07:09Z/t"
-      },
-      {
-        "id": "date-023-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05 14:07:09"
-        },
-        "output": "2026-03-05 14:07:09"
-      },
-      {
-        "id": "created-023-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05 14:07:09"
-        },
-        "output": "2026-03-05 14:07:09"
-      },
-      {
-        "id": "date-023-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05 14:07:09",
-          "title": "t"
-        },
-        "output": "2026-03-05 14:07:09/t"
-      },
-      {
-        "id": "date-024-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07Z"
-        },
-        "output": "2026-03-05T14:07Z"
-      },
-      {
-        "id": "created-024-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07Z"
-        },
-        "output": "2026-03-05T14:07Z"
-      },
-      {
-        "id": "date-024-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07Z/t"
-      },
-      {
-        "id": "date-025-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09Zjunk"
-        },
-        "output": "2026-03-05T14:07:09Zjunk"
-      },
-      {
-        "id": "created-025-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09Zjunk"
-        },
-        "output": "2026-03-05T14:07:09Zjunk"
-      },
-      {
-        "id": "date-025-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09Zjunk",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09Zjunk/t"
-      },
-      {
-        "id": "date-026-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T24:00:00Z"
-        },
-        "output": "2026-03-05T24:00:00Z"
-      },
-      {
-        "id": "created-026-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T24:00:00Z"
-        },
-        "output": "2026-03-05T24:00:00Z"
-      },
-      {
-        "id": "date-026-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T24:00:00Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T24:00:00Z/t"
-      },
-      {
         "id": "date-027-default",
         "template": "{document_date}",
         "fields": {
@@ -3538,56 +3156,6 @@
         "output": "2026/03/05/t"
       },
       {
-        "id": "date-028-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T23:59:60Z"
-        },
-        "output": "2026-03-05T23:59:60Z"
-      },
-      {
-        "id": "created-028-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T23:59:60Z"
-        },
-        "output": "2026-03-05T23:59:60Z"
-      },
-      {
-        "id": "date-028-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T23:59:60Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T23:59:60Z/t"
-      },
-      {
-        "id": "date-029-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:60:00Z"
-        },
-        "output": "2026-03-05T14:60:00Z"
-      },
-      {
-        "id": "created-029-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:60:00Z"
-        },
-        "output": "2026-03-05T14:60:00Z"
-      },
-      {
-        "id": "date-029-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:60:00Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:60:00Z/t"
-      },
-      {
         "id": "date-030-default",
         "template": "{document_date}",
         "fields": {
@@ -3611,56 +3179,6 @@
           "title": "t"
         },
         "output": "2026/03/05/t"
-      },
-      {
-        "id": "date-031-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:7:09Z"
-        },
-        "output": "2026-03-05T14:7:09Z"
-      },
-      {
-        "id": "created-031-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:7:09Z"
-        },
-        "output": "2026-03-05T14:7:09Z"
-      },
-      {
-        "id": "date-031-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:7:09Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:7:09Z/t"
-      },
-      {
-        "id": "date-032-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:9Z"
-        },
-        "output": "2026-03-05T14:07:9Z"
-      },
-      {
-        "id": "created-032-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:9Z"
-        },
-        "output": "2026-03-05T14:07:9Z"
-      },
-      {
-        "id": "date-032-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:9Z",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:9Z/t"
       },
       {
         "id": "date-033-default",
@@ -4386,31 +3904,6 @@
           "title": "t"
         },
         "output": "unknown/t"
-      },
-      {
-        "id": "date-062-default",
-        "template": "{document_date}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+02:00:30"
-        },
-        "output": "2026-03-05T14:07:09+02:00:30"
-      },
-      {
-        "id": "created-062-default",
-        "template": "{created}",
-        "fields": {
-          "created": "2026-03-05T14:07:09+02:00:30"
-        },
-        "output": "2026-03-05T14:07:09+02:00:30"
-      },
-      {
-        "id": "date-062-ymd-title",
-        "template": "{document_date:%Y/%m/%d}/{title}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+02:00:30",
-          "title": "t"
-        },
-        "output": "2026-03-05T14:07:09+02:00:30/t"
       },
       {
         "id": "date-063-default",
@@ -5318,100 +4811,12 @@
         "output": "t"
       },
       {
-        "id": "fmt-06-2026-03-05T14:07:09Z",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09Z"
-        },
-        "output": "14:07:09"
-      },
-      {
-        "id": "fmt-06-2026-03-05T14:07:09+02:00",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-03-05T14:07:09+02:00"
-        },
-        "output": "14:07:09"
-      },
-      {
-        "id": "fmt-06-2026-03",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-03"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-2026-11-23",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-11-23"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-0001-01-01",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "0001-01-01"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-0099-12-31",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "0099-12-31"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-2024-02-29",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2024-02-29"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-2026-12-28",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-12-28"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-2026-09-30",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-09-30"
-        },
-        "output": "00:00:00"
-      },
-      {
-        "id": "fmt-06-2026-05-17",
-        "template": "{document_date:%H:%M:%S}",
-        "fields": {
-          "document_date": "2026-05-17"
-        },
-        "output": "00:00:00"
-      },
-      {
         "id": "fmt-06-bad",
         "template": "{document_date:%H:%M:%S}",
         "fields": {
           "document_date": "bad"
         },
         "output": "bad"
-      },
-      {
-        "id": "fmt-06-created",
-        "template": "{created:%H:%M:%S}",
-        "fields": {
-          "created": "2026-07-04T01:02:03Z"
-        },
-        "output": "01:02:03"
       },
       {
         "id": "fmt-06-nonDate-field",
@@ -9788,45 +9193,12 @@
         "output": "_lead"
       },
       {
-        "id": "san-16-title",
-        "template": "{title}",
-        "fields": {
-          "title": "mid:colon"
-        },
-        "output": "mid:colon"
-      },
-      {
-        "id": "san-16-correspondent",
-        "template": "{correspondent}",
-        "fields": {
-          "correspondent": "mid:colon"
-        },
-        "output": "mid:colon"
-      },
-      {
         "id": "san-16-nested",
         "template": "p/{title}/q",
         "fields": {
           "title": "mid:colon"
         },
         "output": "p/mid:colon/q"
-      },
-      {
-        "id": "san-16-pair",
-        "template": "{person}{category}",
-        "fields": {
-          "category": "mid:colon",
-          "person": "mid:colon"
-        },
-        "output": "mid:colonmid:colon"
-      },
-      {
-        "id": "san-16-date-fallback",
-        "template": "{document_date:%Y}",
-        "fields": {
-          "document_date": "mid:colon"
-        },
-        "output": "mid:colon"
       },
       {
         "id": "san-17-title",

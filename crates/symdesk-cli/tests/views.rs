@@ -14,8 +14,8 @@ use std::{
 
 use serde::Deserialize;
 
-const EXPECTED_CASES: usize = 3;
-const EXPECTED_STEPS: usize = 79;
+const EXPECTED_CASES: usize = 5;
+const EXPECTED_STEPS: usize = 84;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -38,6 +38,10 @@ struct Case {
     no_vault: bool,
     #[serde(default)]
     unix_only: bool,
+    /// `insensitive`/`sensitive`: the case only applies to a file system of
+    /// that case-folding class (each recorded natively by Go).
+    #[serde(default)]
+    fs_case: String,
     steps: Vec<Step>,
     states: Vec<serde_json::Value>,
 }
@@ -167,11 +171,16 @@ fn views_match_go_process_contract() {
             .as_nanos()
     ));
     fs::create_dir(&base).expect("make isolated test directory");
+    let fs_class = fs_case_class(&base);
+    assert!(
+        fixture.cases.iter().any(|case| case.fs_case == fs_class),
+        "no Go recording for a case-{fs_class} file system"
+    );
 
     let mut executed_cases = 0;
     let mut executed_steps = 0;
     for case in &fixture.cases {
-        if cfg!(windows) && case.unix_only {
+        if skipped(case, &fs_class) {
             continue;
         }
         executed_cases += 1;
@@ -235,14 +244,14 @@ fn views_match_go_process_contract() {
     let expected_steps: usize = fixture
         .cases
         .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
+        .filter(|case| !skipped(case, &fs_class))
         .map(|case| case.steps.len())
         .sum();
     assert_eq!(executed_steps, expected_steps, "every fixture step ran");
     let expected_cases = fixture
         .cases
         .iter()
-        .filter(|case| !(cfg!(windows) && case.unix_only))
+        .filter(|case| !skipped(case, &fs_class))
         .count();
     assert_eq!(executed_cases, expected_cases, "every fixture case ran");
     fs::remove_dir_all(base).expect("remove only this test's temporary directory");
@@ -264,4 +273,17 @@ fn normalize_pointers(text: &str) -> String {
     }
     output.push_str(rest);
     output
+}
+
+fn skipped(case: &Case, fs_class: &str) -> bool {
+    (cfg!(windows) && case.unix_only) || (!case.fs_case.is_empty() && case.fs_case != fs_class)
+}
+
+/// Mirrors Go's `viewsFSCaseClass`: does the test file system fold case?
+fn fs_case_class(dir: &Path) -> &'static str {
+    let probe = dir.join("CaseProbe");
+    fs::write(&probe, b"").expect("write case probe");
+    let folded = dir.join("caseprobe").exists();
+    fs::remove_file(probe).expect("remove case probe");
+    if folded { "insensitive" } else { "sensitive" }
 }

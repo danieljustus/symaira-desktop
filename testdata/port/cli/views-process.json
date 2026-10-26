@@ -416,68 +416,6 @@
             "views",
             "base",
             "get",
-            "WORK"
-          ],
-          "exit_code": 0,
-          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "--json",
-            "views",
-            "base",
-            "get",
-            "WORK"
-          ],
-          "exit_code": 0,
-          "stdout": "{\"id\":\"work\",\"path\":\"bases/WORK.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "views",
-            "base",
-            "get",
-            "WORK",
-            "--output",
-            "json"
-          ],
-          "exit_code": 0,
-          "stdout": "{\"id\":\"work\",\"path\":\"bases/WORK.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "views",
-            "base",
-            "get",
-            "WORK",
-            "--output",
-            "yaml"
-          ],
-          "exit_code": 0,
-          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "views",
-            "base",
-            "get",
-            "WORK",
-            "--output",
-            "text"
-          ],
-          "exit_code": 0,
-          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "views",
-            "base",
-            "get",
             "bases/work.md"
           ],
           "exit_code": 0,
@@ -3394,7 +3332,358 @@
               "view_presets": 0
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "reads-casefold-insensitive",
+      "files": {
+        "bases/alpha.md": "---\ntype: base\nbase_id: alpha\ntitle: Alpha\ncreated: fixed\nviews: []\n---\n",
+        "bases/nested/no.md": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n",
+        "bases/not-a-base.md": "# Ignore\n",
+        "bases/skip.MD": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n",
+        "bases/work.md": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n"
+      },
+      "skip_index": true,
+      "fs_case": "insensitive",
+      "steps": [
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
         },
+        {
+          "args": [
+            "--json",
+            "views",
+            "base",
+            "get",
+            "WORK"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"bases/WORK.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"bases/WORK.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/WORK.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {
+            "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",
+            "vault/bases/nested/no.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/not-a-base.md": "232049676e6f72650a",
+            "vault/bases/skip.MD": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/work.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",
+            "vault/bases/nested/no.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/not-a-base.md": "232049676e6f72650a",
+            "vault/bases/skip.MD": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/work.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",
+            "vault/bases/nested/no.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/not-a-base.md": "232049676e6f72650a",
+            "vault/bases/skip.MD": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/work.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",
+            "vault/bases/nested/no.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/not-a-base.md": "232049676e6f72650a",
+            "vault/bases/skip.MD": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/work.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        },
+        {
+          "files": {
+            "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",
+            "vault/bases/nested/no.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/not-a-base.md": "232049676e6f72650a",
+            "vault/bases/skip.MD": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a",
+            "vault/bases/work.md": "2d2d2d0a747970653a20626173650a626173655f69643a20776f726b0a7469746c653a20576f726b0a637265617465643a20323032362d30312d30325430333a30343a30355a0a746167733a205b626173652c20776f726b5d0a6465736372697074696f6e3a205461736b732026206e6f7465730a70726f706572746965733a0a20207374617475733a0a20202020747970653a2073656c6563740a202020206f7074696f6e733a205b6f70656e2c20646f6e655d0a76696577733a0a20202d2069643a207461736b730a202020206e616d653a205461736b730a20202020747970653a207461626c650a20202020736f757263653a20277461673a7461736b270a20202020636f6c756d6e733a205b7469746c652c207374617475735d0a2020202066696c746572733a0a2020202020202d206b65793a207374617475730a20202020202020206f70657261746f723a20657175616c730a202020202020202076616c75653a206f70656e0a20202020736f7274733a0a2020202020202d206b65793a207469746c650a2020202020202020617363656e64696e673a20747275650a20202020636f6d70757465643a0a2020202020206c6162656c3a0a2020202020202020666f726d756c613a20277b7374617475737d270a20202d2069643a20626f6172640a202020206e616d653a20426f6172640a20202020736f757263653a20277461673a7461736b270a20202d2069643a20736f6c6f0a202020206e616d653a20536f6c6f0a637573746f6d3a2072657461696e65640a2d2d2d0a2320576f726b0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 0,
+              "files": 0,
+              "fts_norm": 0,
+              "fts_norm_config": 1,
+              "fts_norm_content": 0,
+              "fts_norm_data": 2,
+              "fts_norm_docsize": 0,
+              "fts_norm_idx": 0,
+              "fts_search": 0,
+              "fts_search_config": 1,
+              "fts_search_content": 0,
+              "fts_search_data": 2,
+              "fts_search_docsize": 0,
+              "fts_search_idx": 0,
+              "fts_tri": 0,
+              "fts_tri_config": 1,
+              "fts_tri_content": 0,
+              "fts_tri_data": 2,
+              "fts_tri_docsize": 0,
+              "fts_tri_idx": 0,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 0,
+              "view_presets": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reads-casefold-sensitive",
+      "files": {
+        "bases/alpha.md": "---\ntype: base\nbase_id: alpha\ntitle: Alpha\ncreated: fixed\nviews: []\n---\n",
+        "bases/nested/no.md": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n",
+        "bases/not-a-base.md": "# Ignore\n",
+        "bases/skip.MD": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n",
+        "bases/work.md": "---\ntype: base\nbase_id: work\ntitle: Work\ncreated: 2026-01-02T03:04:05Z\ntags: [base, work]\ndescription: Tasks \u0026 notes\nproperties:\n  status:\n    type: select\n    options: [open, done]\nviews:\n  - id: tasks\n    name: Tasks\n    type: table\n    source: 'tag:task'\n    columns: [title, status]\n    filters:\n      - key: status\n        operator: equals\n        value: open\n    sorts:\n      - key: title\n        ascending: true\n    computed:\n      label:\n        formula: '{status}'\n  - id: board\n    name: Board\n    source: 'tag:task'\n  - id: solo\n    name: Solo\ncustom: retained\n---\n# Work\n"
+      },
+      "skip_index": true,
+      "fs_case": "sensitive",
+      "steps": [
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/work.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "base",
+            "get",
+            "WORK"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"bases/work.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"bases/work.md\",\"title\":\"Work\",\"description\":\"Tasks \\u0026 notes\",\"created\":\"2026-01-02T03:04:05Z\",\"tags\":[\"base\",\"work\"],\"properties\":{\"status\":{\"type\":\"select\",\"options\":[\"open\",\"done\"]}},\"views\":[{\"id\":\"tasks\",\"name\":\"Tasks\",\"type\":\"table\",\"computed\":{\"label\":{\"formula\":\"{status}\"}},\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"sorts\":[{\"key\":\"title\",\"ascending\":true}],\"columns\":[\"title\",\"status\"],\"source\":\"tag:task\"},{\"id\":\"board\",\"name\":\"Board\",\"filters\":[],\"sorts\":[],\"columns\":[],\"source\":\"tag:task\"},{\"id\":\"solo\",\"name\":\"Solo\",\"filters\":[],\"sorts\":[],\"columns\":[]}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/work.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "base",
+            "get",
+            "WORK",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:bases/work.md Title:Work Description:Tasks \u0026 notes Created:2026-01-02T03:04:05Z Tags:[base work] Properties:map[status:{Type:select Label: Options:[open done] Description: Default:}] Views:[{ID:tasks Name:Tasks Type:table GroupBy: DateProperty: Computed:map[label:{Formula:{status} Rollup:}] Filters:[{Key:status Operator:equals Value:open}] FilterGroup:\u003cnil\u003e Sorts:[{Key:title Ascending:true}] Columns:[title status] Source:tag:task Template:\u003cnil\u003e} {ID:board Name:Board Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source:tag:task Template:\u003cnil\u003e} {ID:solo Name:Solo Type: GroupBy: DateProperty: Computed:map[] Filters:[] FilterGroup:\u003cnil\u003e Sorts:[] Columns:[] Source: Template:\u003cnil\u003e}] Extras:map[custom:retained]}\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
         {
           "files": {
             "vault/bases/alpha.md": "2d2d2d0a747970653a20626173650a626173655f69643a20616c7068610a7469746c653a20416c7068610a637265617465643a2066697865640a76696577733a205b5d0a2d2d2d0a",

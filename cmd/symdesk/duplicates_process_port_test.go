@@ -39,8 +39,12 @@ type duplicatesPortCase struct {
 	// vault; the sidecar is not built either.
 	NoVault bool `json:"no_vault,omitempty"`
 	// UnixOnly marks error text that uses the operating system's wording.
-	UnixOnly bool                 `json:"unix_only,omitempty"`
-	Steps    []duplicatesPortStep `json:"steps"`
+	UnixOnly bool `json:"unix_only,omitempty"`
+	// FSCase marks a case whose bytes depend on whether the vault's file
+	// system folds case ("insensitive": APFS, NTFS) or not ("sensitive":
+	// ext4). Each class is recorded natively; replays run only their class.
+	FSCase string               `json:"fs_case,omitempty"`
+	Steps  []duplicatesPortStep `json:"steps"`
 }
 
 type duplicatesPortFixture struct {

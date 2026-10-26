@@ -15,54 +15,6 @@ pub(super) fn canonical_name(name: &str) -> Option<&'static str> {
     }
 }
 
-pub(super) fn tool_definitions() -> Vec<Value> {
-    let mut tools = vec![
-        json!({
-            "name": "desk_split_pdf",
-            "description": "Splits a PDF into new part files after the given pages. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires pdfinfo and qpdf on PATH. Existing outputs and input aliases are refused. Legacy alias: split_pdf.",
-            "inputSchema": {"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"at":{"type":"string","description":"split after these pages, e.g. 2,4 or 2-3,6"},"output_dir":{"type":"string","description":"directory for the generated part PDFs"}},"required":["input","at","output_dir"]},
-            // CoreKit's non-nil annotations omit all false hints, including
-            // readOnlyHint and destructiveHint. These writers create new files.
-            "annotations": {},
-        }),
-        json!({
-            "name": "desk_merge_pdf",
-            "description": "Merges two or more PDFs into a new output file without modifying the inputs. inputs is an array of PDF paths; output must not exist or alias an input. Requires qpdf on PATH. Legacy alias: merge_pdf.",
-            "inputSchema": {"type":"object","properties":{"inputs":{"type":"array","items":{"type":"string"},"description":"input PDF paths, at least two"},"output":{"type":"string","description":"destination PDF path"}},"required":["inputs","output"]},
-            "annotations": {},
-        }),
-        json!({
-            "name": "desk_rotate_pdf",
-            "description": "Rotates pages of a PDF and writes the result to an output path without modifying the input. degrees must be one of -270, -180, -90, 90, 180, 270; pages is an optional comma-separated 1-based page selector (e.g. 1-3,5), empty rotates all pages. Requires qpdf on PATH. Legacy alias: rotate_pdf.",
-            "inputSchema": {"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"output":{"type":"string","description":"destination PDF path"},"degrees":{"type":"integer","description":"rotation in degrees: -270, -180, -90, 90, 180 or 270"},"pages":{"type":"string","description":"optional page selector, e.g. 1-3,5; empty rotates all pages"}},"required":["input","output","degrees"]},
-            "annotations": {},
-        }),
-    ];
-    for (index, name, description) in [
-        (
-            0,
-            "split_pdf",
-            "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf.",
-        ),
-        (
-            1,
-            "merge_pdf",
-            "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf.",
-        ),
-        (
-            2,
-            "rotate_pdf",
-            "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf.",
-        ),
-    ] {
-        let mut alias = tools[index].clone();
-        alias["name"] = name.into();
-        alias["description"] = description.into();
-        tools.push(alias);
-    }
-    tools
-}
-
 #[derive(Debug, Default, PartialEq)]
 struct Arguments {
     input: String,

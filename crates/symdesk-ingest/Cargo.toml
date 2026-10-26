@@ -17,6 +17,8 @@ sha2.workspace = true
 symdesk-vault.workspace = true
 noyalib.workspace = true
 time.workspace = true
+ureq = { version = "=3.4.1", default-features = false, features = ["rustls", "gzip"] }
+url = "=2.5.8"
 
 [dev-dependencies]
 rusqlite = { workspace = true, features = ["functions"] }

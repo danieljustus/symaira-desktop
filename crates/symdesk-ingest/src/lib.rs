@@ -9,6 +9,7 @@ use std::path::Path;
 mod document;
 mod migrations;
 pub mod notion;
+pub mod paperless;
 mod sql;
 pub use document::{Document, DocumentPaths};
 pub use migrations::MIGRATIONS;

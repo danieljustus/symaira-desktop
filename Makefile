@@ -1,3 +1,11 @@
+.PHONY: paperless-http-differential paperless-http-fixtures-generate
+paperless-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_http_contracts --locked
+
+paperless-http-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+
 .PHONY: notion-import-differential notion-import-fixtures-generate
 notion-import-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'

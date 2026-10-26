@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"crypto/sha256"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -24,6 +25,8 @@ type mcpReadCase struct {
 	ExternalLink  bool                              `json:"external_link,omitempty"`
 	NoVault       bool                              `json:"no_vault,omitempty"`
 	AfterFiles    map[string]string                 `json:"after_files"`
+	Results       map[string]string                 `json:"results,omitempty"`
+	AfterResults  map[string]string                 `json:"after_results,omitempty"`
 	FileMtime     int64                             `json:"file_mtime,omitempty"`
 	SidecarExists bool                              `json:"sidecar_exists"`
 	AfterIndex    map[string]map[string]interface{} `json:"after_index"`
@@ -141,20 +144,29 @@ func mcpReadCases() []mcpReadCase {
 		cases[len(cases)-1].Files = map[string]string{
 			"meetings/a.md": "---\ntype: meeting\ntitle: Review <&>\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
 			"meetings/b.md": "---\ntype: meeting\nmeeting_id: 42\nstarted_at: 2026-01-02T03:04:05Z\nduration_ms: 2.75\n---\n",
-			"ordinary.md": "not a meeting\n",
-			"broken.md": "---\ntitle: [invalid\n---\n",
+			"ordinary.md":   "not a meeting\n",
+			"broken.md":     "---\ntitle: [invalid\n---\n",
 		}
 	}
-	for _, args := range []string{`{}`, `null`, `[]`, `{"path":false}`, `{"path":"../outside"}`, `{"path":"ordinary.md"}`, `{"path":"meeting.md"}`} {
+	for _, args := range []string{`{}`, `null`, `[]`, `{"path":false}`, `{"path":"../outside"}`, `{"path":"ordinary.md"}`, `{"path":"meeting.md"}`, `{"path":"meeting-rich.md"}`} {
 		add("meeting-get-"+args, "meeting_get", args)
 		cases[len(cases)-1].Files = map[string]string{
-			"meeting.md": "---\ntype: meeting\ntitle: Review <&>\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
-			"ordinary.md": "not a meeting\n",
+			"meeting.md":      "---\ntype: meeting\ntitle: Review <&>\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+			"meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
+			"ordinary.md":     "not a meeting\n",
 		}
 		cases[len(cases)-1].FileMtime = 1767225600
 	}
+	for _, args := range []string{"", `{}`, `null`, `[]`, `{"handle":false}`, `{"handle":"../outside"}`, `{"handle":"."}`, `{"handle":"task/../../outside"}`, `{"handle":"task/output.txt"}`, `{"handle":"task/nested/../output.txt"}`} {
+		add("read-result-"+args, "desk_read_result", args)
+		cases[len(cases)-1].Results = map[string]string{"task/output.txt": "full result <&>\nUnicode ä 😀\n"}
+	}
 	add("meetings-empty", "meeting_list", `{}`)
 	cases[len(cases)-1].Files = nil
+	for _, name := range []string{"desk_docs", "docs_review", "docs_similar", "desk_diagram", "meeting_list", "meeting_get", "desk_read_result"} {
+		add("remaining-read-no-vault-"+name, name, `{"file":"alpha.md","path":"meeting.md","handle":"task/output.txt"}`)
+		cases[len(cases)-1].NoVault = true
+	}
 	add("docs-unindexed", "desk_docs", `{}`)
 	add("review-unindexed", "docs_review", `{}`)
 	add("similar-unindexed", "docs_similar", `{"file":"alpha.md"}`)
@@ -186,7 +198,9 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			}
 			if c.FileMtime > 0 {
 				stamp := time.Unix(c.FileMtime, 0)
-				if err := os.Chtimes(p, stamp, stamp); err != nil { t.Fatal(err) }
+				if err := os.Chtimes(p, stamp, stamp); err != nil {
+					t.Fatal(err)
+				}
 			}
 		}
 		dbPath := filepath.Join(root, "data", "sidecar.db")
@@ -226,6 +240,18 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 				}
 			}
 			if err := db.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		// ResultsRoot is derived from the disposable vault, not the operator HOME.
+		digest := fmt.Sprintf("%x", sha256.Sum256([]byte(vaultRoot)))
+		resultsRoot := filepath.Join(root, "data", "symdesk", "agent-results", digest[:16])
+		for rel, body := range c.Results {
+			path := filepath.Join(resultsRoot, filepath.FromSlash(rel))
+			if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte(body), 0600); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -295,6 +321,30 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 				c.AfterIndex[filepath.ToSlash(rel)] = props
 			}
 			if err := db.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if len(c.Results) > 0 {
+			c.AfterResults = map[string]string{}
+			err := filepath.WalkDir(resultsRoot, func(path string, d os.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if d.IsDir() {
+					return nil
+				}
+				rel, err := filepath.Rel(resultsRoot, path)
+				if err != nil {
+					return err
+				}
+				body, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				c.AfterResults[filepath.ToSlash(rel)] = string(body)
+				return nil
+			})
+			if err != nil {
 				t.Fatal(err)
 			}
 		}

@@ -43,6 +43,10 @@ struct Case {
     after_files: BTreeMap<String, String>,
     #[serde(default)]
     file_mtime: u64,
+    #[serde(default)]
+    results: BTreeMap<String, String>,
+    #[serde(default)]
+    after_results: BTreeMap<String, String>,
     sidecar_exists: bool,
     after_index: BTreeMap<String, BTreeMap<String, String>>,
 }
@@ -58,7 +62,7 @@ fn read_tools_match_go_stdio_calls_and_authoritative_files() {
     )
     .expect("decode Go process transcript");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 139);
+    assert_eq!(fixture.cases.len(), 157);
     for case in fixture.cases {
         replay(&case);
     }
@@ -83,6 +87,13 @@ fn replay(case: &Case) {
                 .set_times(fs::FileTimes::new().set_accessed(stamp).set_modified(stamp))
                 .unwrap();
         }
+    }
+    let hash = symdesk_vault::sha256_hex(root.join("vault").to_string_lossy().as_bytes());
+    let results_root = root.join("data/symdesk/agent-results").join(&hash[..16]);
+    for (path, body) in &case.results {
+        let path = results_root.join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, body).unwrap();
     }
     if case.indexed {
         let mut sidecar = symdesk_index::Sidecar::open(&root.join("data/sidecar.db")).unwrap();
@@ -213,6 +224,15 @@ fn replay(case: &Case) {
     let stderr = String::from_utf8(stderr)
         .unwrap()
         .replace(root.to_str().unwrap(), "$ROOT");
+    if !case.results.is_empty() {
+        let mut results = BTreeMap::new();
+        collect_files(&results_root, &results_root, &mut results);
+        assert_eq!(
+            results, case.after_results,
+            "{} externalized files",
+            case.id
+        );
+    }
     fs::remove_dir_all(root).unwrap();
     assert_eq!(after, case.after_files, "{} authoritative files", case.id);
     assert_eq!(status.code(), Some(case.exit_code), "{}", case.id);

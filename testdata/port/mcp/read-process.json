@@ -5575,10 +5575,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5593,10 +5595,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5611,10 +5615,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5629,10 +5635,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5647,10 +5655,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5665,10 +5675,12 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
@@ -5683,14 +5695,346 @@
       "stderr": "",
       "exit_code": 0,
       "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
         "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
         "ordinary.md": "not a meeting\n"
       },
       "file_mtime": 1767225600,
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "meeting-get-{\"path\":\"meeting-rich.md\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"path\":\"meeting-rich.md\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"{\\\"Path\\\":\\\"$ROOT/vault/meeting-rich.md\\\",\\\"SHA256\\\":\\\"6ed1a3f3d58dfb1ee867139d67032339f735ed4c7cdb5900ecaaecabc53b6fd1\\\",\\\"Title\\\":\\\"Rich\\\",\\\"Created\\\":\\\"\\\",\\\"Tags\\\":[\\\"a\\\",\\\"b\\\",\\\"inline\\\"],\\\"Aliases\\\":[\\\"Rich Alias\\\"],\\\"Frontmatter\\\":{\\\"aliases\\\":[\\\"Rich Alias\\\"],\\\"asn\\\":9,\\\"confidence\\\":92,\\\"created\\\":\\\"2026-01-02T00:00:00Z\\\",\\\"derived_from\\\":\\\"original.md\\\",\\\"document_date\\\":\\\"2026-01-02\\\",\\\"started_at\\\":\\\"2026-01-02T03:04:05.12+05:30\\\",\\\"status\\\":\\\"done\\\",\\\"symmeet_source\\\":{\\\"a\\\":\\\"first\\\",\\\"review_state\\\":\\\"reviewed\\\",\\\"z\\\":\\\"last\\\"},\\\"tags\\\":[\\\"a\\\",\\\"b\\\"],\\\"title\\\":\\\"Rich\\\",\\\"type\\\":\\\"meeting\\\"},\\\"Body\\\":\\\"[[ordinary]] #inline\\\\n\\\",\\\"Links\\\":[\\\"ordinary\\\"],\\\"Size\\\":302,\\\"ModTime\\\":\\\"2026-01-01T00:00:00Z\\\",\\\"DocumentDate\\\":\\\"2026-01-02\\\",\\\"Person\\\":\\\"\\\",\\\"Status\\\":\\\"done\\\",\\\"DueDate\\\":\\\"\\\",\\\"Confidence\\\":92,\\\"OcrJSONPath\\\":\\\"\\\",\\\"Simhash\\\":\\\"\\\",\\\"ASN\\\":9,\\\"Type\\\":\\\"meeting\\\",\\\"DerivedFrom\\\":\\\"original.md\\\",\\\"Derived\\\":true}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "after_files": {
+        "meeting-rich.md": "---\ntype: meeting\ntitle: Rich\ncreated: 2026-01-02\ntags: [a, b]\naliases: [Rich Alias]\nstarted_at: 2026-01-02T03:04:05.1200+05:30\nstatus: done\nconfidence: 92\ndocument_date: '2026-01-02'\nasn: 9\nderived_from: original.md\nsymmeet_source: {z: last, review_state: reviewed, a: first}\n---\n[[ordinary]] #inline\n",
+        "meeting.md": "---\ntype: meeting\ntitle: Review \u003c\u0026\u003e\nmeeting_id: m1\nstarted_at: '2026-01-02T03:04:05Z'\nduration_ms: 2500\nlanguage: de\nsymmeet_source: {review_state: reviewed}\n---\nReviewed transcript\n",
+        "ordinary.md": "not a meeting\n"
+      },
+      "file_mtime": 1767225600,
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\"}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"unexpected end of JSON input\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"handle is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-null",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":null}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"handle is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-[]",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":[]}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal array into Go value of type struct { Handle string \\\"json:\\\\\\\"handle\\\\\\\"\\\" }\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":false}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":false}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"json: cannot unmarshal bool into Go struct field .handle of type string\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":\"../outside\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":\"../outside\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid externalized-result handle: \\\"../outside\\\"\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":\".\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":\".\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid externalized-result handle: \\\".\\\"\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":\"task/../../outside\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":\"task/../../outside\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"invalid externalized-result handle: \\\"task/../../outside\\\"\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":\"task/output.txt\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"full result \\u003c\\u0026\\u003e\\nUnicode ä 😀\\n\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "read-result-{\"handle\":\"task/nested/../output.txt\"}",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"handle\":\"task/nested/../output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"full result \\u003c\\u0026\\u003e\\nUnicode ä 😀\\n\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
+      "after_results": {
+        "task/output.txt": "full result \u003c\u0026\u003e\nUnicode ä 😀\n"
+      },
       "sidecar_exists": true,
       "after_index": {}
     },
@@ -5702,6 +6046,188 @@
       "exit_code": 0,
       "after_files": {},
       "sidecar_exists": true,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-desk_docs",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_docs\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-docs_review",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_review\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-docs_similar",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"docs_similar\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-desk_diagram",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_diagram\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-meeting_list",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_list\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-meeting_get",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"meeting_get\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
+      "after_index": {}
+    },
+    {
+      "id": "remaining-read-no-vault-desk_read_result",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"method\":\"tools/call\",\"params\":{\"name\":\"desk_read_result\",\"arguments\":{\"file\":\"alpha.md\",\"path\":\"meeting.md\",\"handle\":\"task/output.txt\"}}}",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": "",
+      "exit_code": 0,
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "no_vault": true,
+      "after_files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ncreated: 2026-01-02\ntags: [one, two]\nstatus: open\nnumber: 42\noffset_time: 2026-01-02T03:04:05.1200+05:30\nutc_time: 2026-01-02T03:04:05.123456789Z\nquoted_date: '2026-01-02'\n---\nneedle alpha\n",
+        "notebooks/empty.md": "---\ntype: notebook\ntitle: AAA Empty\ncreated: 2026-01-02\nsources: []\n---\n",
+        "notebooks/ignored.MD": "---\ntype: notebook\ntitle: Ignored\n---\n",
+        "notebooks/nested/hidden.md": "---\ntype: notebook\ntitle: Hidden\n---\n",
+        "notebooks/ordinary.md": "---\ntitle: Ordinary\n---\nnot a notebook\n",
+        "notebooks/research.md": "---\ntype: notebook\ntitle: Research \u003c\u0026\u003e\nnotebook_id: research-id\ndescription: My notebook\ncreated: 2026-01-02\nsources: [alpha.md, missing.md, ../outside.md, alpha.md]\nquery: needle\n---\n# Research\n"
+      },
+      "sidecar_exists": false,
       "after_index": {}
     },
     {

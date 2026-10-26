@@ -2,6 +2,7 @@
 mod extra;
 mod graph;
 mod meetings;
+mod results;
 
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -23,6 +24,7 @@ pub(super) fn supports(name: &str) -> bool {
                 | "desk_diagram"
                 | "meeting_list"
                 | "meeting_get"
+                | "desk_read_result"
         )
 }
 
@@ -49,6 +51,18 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
             }
             let (root, _sidecar) = open_sidecar(config)?;
             meetings::show(&root, &args[0])
+        }
+        "desk_read_result" => {
+            let args = go_string_fields(
+                raw,
+                &["handle"],
+                r#"struct { Handle string "json:\"handle\"" }"#,
+            )?;
+            if args[0].is_empty() {
+                return Err("handle is required".into());
+            }
+            let (root, _sidecar) = open_sidecar(config)?;
+            results::read(&root, &args[0])
         }
         "desk_props" => {
             let args =

@@ -229,6 +229,10 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("docs", command)) => docs_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("backlinks", command)) => links_cli::run_backlinks(
             command,
             matches.get_one::<String>("vault").map(String::as_str),

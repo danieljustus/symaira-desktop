@@ -76,7 +76,7 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 		if runtime.GOOS == "windows" && c.UnixOnly {
 			continue
 		}
-		fixture.Cases = append(fixture.Cases, observeDuplicatesCase(t, binary, c, func(t *testing.T, vault string) {
+		fixture.Cases = append(fixture.Cases, observeDuplicatesCase(t, binary, c, func(vault, _ string) {
 			t.Helper()
 			observed := map[string]string{}
 			err := filepath.WalkDir(vault, func(path string, entry os.DirEntry, err error) error {

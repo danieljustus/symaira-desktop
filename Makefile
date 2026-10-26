@@ -1201,6 +1201,14 @@ clean:
 	go clean -cache -testcache
 	rm -rf vendor/
 
+.PHONY: ai-provider-fixtures-generate ai-provider-differential
+ai-provider-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIProviderContract$$'
+
+ai-provider-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIProviderContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-core --locked --test ai_providers
+
 .PHONY: compose-resolve-fixtures-generate compose-resolve-differential
 compose-resolve-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'

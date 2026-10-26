@@ -2570,9 +2570,11 @@ dependencies = [
  "serde",
  "serde_json",
  "symaira-core-config",
+ "symaira-core-llm",
  "symaira-core-version",
  "time",
  "toml",
+ "ureq",
 ]
 
 [[package]]

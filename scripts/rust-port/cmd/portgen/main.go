@@ -124,6 +124,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/index-retrieval-process.json",
 	"testdata/port/cli/index-retry-process.json",
 	"testdata/port/cli/index-symlink-process.json",
+	"testdata/port/ai/providers.json",
 	"testdata/port/ai/compose-resolve.json",
 	"testdata/port/ai/recipe-validate.json",
 	"testdata/port/render/html-note.json",

@@ -4,6 +4,7 @@
 
 use symaira_core_version::new as version_info;
 
+pub mod ai;
 #[cfg(unix)]
 pub mod compose;
 pub mod config;

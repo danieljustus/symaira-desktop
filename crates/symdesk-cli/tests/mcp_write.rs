@@ -30,6 +30,8 @@ struct Case {
     framed: bool,
     request: String,
     stdout: String,
+    #[serde(default)]
+    stdout_by_goos: BTreeMap<String, String>,
     stderr: String,
     exit_code: i32,
     #[serde(default)]
@@ -40,6 +42,8 @@ struct Case {
     external_link: bool,
     #[serde(default)]
     no_vault: bool,
+    #[serde(default)]
+    hash_inputs: BTreeMap<String, String>,
     after_files: BTreeMap<String, String>,
     after_db: BTreeMap<String, Vec<BTreeMap<String, serde_json::Value>>>,
     sidecar_exists: bool,
@@ -57,7 +61,7 @@ fn write_tools_match_go_stdio_calls_and_authoritative_files() {
     )
     .expect("decode Go process transcript");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 67);
+    assert_eq!(fixture.cases.len(), 128);
     for case in fixture.cases {
         replay(&case);
     }
@@ -233,7 +237,15 @@ fn replay(case: &Case) {
                         .as_str()
                         .unwrap()
                         .replace("$ROOT", root.to_str().unwrap());
-                    let bytes = fs::read(path).unwrap();
+                    let relative = PathBuf::from(&path)
+                        .strip_prefix(root.join("vault"))
+                        .unwrap()
+                        .to_string_lossy()
+                        .replace(std::path::MAIN_SEPARATOR, "/");
+                    let bytes = case
+                        .hash_inputs
+                        .get(&relative)
+                        .map_or_else(|| fs::read(path).unwrap(), |text| text.as_bytes().to_vec());
                     assert_eq!(
                         entry["sha256"],
                         symdesk_vault::sha256_hex(&bytes),
@@ -278,9 +290,21 @@ fn replay(case: &Case) {
     assert_eq!(after, case.after_files, "{} authoritative files", case.id);
     assert_eq!(status.code(), Some(case.exit_code), "{}", case.id);
     assert_eq!(stderr, case.stderr, "{} stderr", case.id);
+    let goos = if cfg!(target_os = "macos") {
+        "darwin"
+    } else {
+        std::env::consts::OS
+    };
+    let expected = if case.stdout_by_goos.is_empty() {
+        &case.stdout
+    } else {
+        case.stdout_by_goos.get(goos).expect(
+            "native Go syscall transcript missing; run mcp-write-fixtures-generate on this OS",
+        )
+    };
     assert_eq!(
-        normalize(&stdout),
-        case.stdout,
+        &normalize(&stdout),
+        expected,
         "{} raw protocol bytes",
         case.id
     );
@@ -305,7 +329,17 @@ fn collect_files(
                         .to_string_lossy()
                         .replace(std::path::MAIN_SEPARATOR, "/"),
                 ),
-                normalize(&fs::read_to_string(path).unwrap()),
+                match String::from_utf8(fs::read(path).unwrap()) {
+                    Ok(text) => normalize(&text),
+                    Err(error) => format!(
+                        "<BINARY_HEX>{}",
+                        error
+                            .as_bytes()
+                            .iter()
+                            .map(|byte| format!("{byte:02x}"))
+                            .collect::<String>()
+                    ),
+                },
             );
         }
     }
@@ -337,6 +371,18 @@ fn normalize(input: &str) -> String {
                 rest = &rest[n + 1..];
                 continue;
             }
+        }
+        if rest.starts_with("pasted-")
+            && b.len() >= 24
+            && b[7..11].iter().all(u8::is_ascii_digit)
+            && b[11] == b'-'
+            && b[14] == b'-'
+            && b[17] == b'-'
+            && b[18..24].iter().all(u8::is_ascii_digit)
+        {
+            out.push_str("pasted-<CLOCK>");
+            rest = &rest[24..];
+            continue;
         }
         if rest.starts_with("journal/")
             && b.len() >= 25

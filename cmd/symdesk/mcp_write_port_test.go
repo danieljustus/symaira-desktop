@@ -12,17 +12,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 type mcpWriteCase struct {
-	AfterDB map[string][]map[string]any `json:"after_db"`
+	HashInputs   map[string]string           `json:"hash_inputs,omitempty"`
+	StdoutByGOOS map[string]string           `json:"stdout_by_goos,omitempty"`
+	AfterDB      map[string][]map[string]any `json:"after_db"`
 	mcpSurfaceCase
 	Files         map[string]string                 `json:"files,omitempty"`
 	Indexed       bool                              `json:"indexed,omitempty"`
@@ -51,7 +55,7 @@ func mcpWriteCases() []mcpWriteCase {
 		}
 		cases = append(cases, mcpWriteCase{mcpSurfaceCase: mcpSurfaceCase{ID: id, AllowWrite: true, Request: string(request)}, Files: files})
 	}
-	for _, name := range []string{"desk_note_new", "doc_set_status", "notebook_create", "notebook_add_source", "notebook_remove_source"} {
+	for _, name := range []string{"desk_note_new", "doc_set_status", "notebook_create", "notebook_add_source", "notebook_remove_source", "desk_asset_store", "desk_undo_task"} {
 		for i, args := range []string{"", `null`, `{}`, `[]`, `{"title":false,"file":7}`, `{"title":"","file":"alpha.md"}`} {
 			add(fmt.Sprintf("%s-decode-%d", name, i), name, args)
 		}
@@ -83,21 +87,75 @@ func mcpWriteCases() []mcpWriteCase {
 		}
 		add(name+"-missing", name, `{"notebook":"missing","path":"alpha.md"}`)
 	}
+	for _, args := range []string{`{"data":"hello","preferred_name":"test.txt"}`, `{"data":"world","preferred_name":"a b.png","extension":"svg"}`, `{"data":"SGVsbG8=","is_base64":true,"preferred_name":"base64.txt"}`, `{"data":"SGVs\r\nbG8=","is_base64":true,"preferred_name":"lines.txt"}`, `{"data":"Zh==","is_base64":true,"preferred_name":"bits.txt"}`, `{"data":"bad!","is_base64":true}`, `{"data":"Zg","is_base64":true}`, `{"data":"a","is_base64":true}`, `{"data":"hi","is_base64":7}`, `{"data":"hi","preferred_name":"folder/a:b.txt"}`, `{"data":"collision","preferred_name":"same.txt"}`} {
+		add("asset-"+args, "desk_asset_store", args)
+	}
+	cases[len(cases)-1].Files = map[string]string{"assets/same.txt": "old", "assets/same-2.txt": "older"}
+	add("undo-missing", "desk_undo_task", `{"task_id":"missing"}`)
+	add("undo-traversal", "desk_undo_task", `{"task_id":"../escape"}`)
+	body := "---\ntitle: Before\n---\nbefore\n"
+	hash := sha256.Sum256([]byte(body))
+	digest := hex.EncodeToString(hash[:])
+	cp := map[string]any{"task_id": "task", "timestamp": "2026-01-02T03:04:05Z", "files": []any{map[string]any{"rel_path": "alpha.md", "entry": map[string]any{"id": digest, "timestamp": "2026-01-02T03:04:05Z", "size": len(body)}}}, "new_files": []string{"new.md"}, "skipped": []string{}}
+	cpBytes, _ := json.MarshalIndent(cp, "", "  ")
+	add("undo-task", "desk_undo_task", `{"task_id":"task"}`)
+	cases[len(cases)-1].Files = map[string]string{"alpha.md": "after\n", "new.md": "new\n", ".symdesk/history/objects/" + digest: body, ".symdesk/history/checkpoints/task.json": string(cpBytes)}
+	manifest, _ := json.MarshalIndent(cp["files"].([]any)[0].(map[string]any)["entry"], "", "  ")
+	cases[len(cases)-1].Files[".symdesk/history/manifest/alpha.md.json"] = "[" + string(manifest) + "]"
+	for _, data := range []string{"Zg==", "Zg=", "Zg===", "====", "AA=A", "A===", "AAA=", "AAAA", "AAAA=", "AA==AA==", "AA==!", "AA==\n!", "A\r\n!", "A", "AA", "AAA", "A!AA", "AA!A", "AAA!", "!!!!", "Zg== ", "Zg==\n"} {
+		args, _ := json.Marshal(map[string]any{"data": data, "is_base64": true, "preferred_name": "binary.txt"})
+		// Valid binary zero bytes are preserved as JSON escapes in the file snapshot.
+		add("base64-"+data, "desk_asset_store", string(args))
+	}
+	add("asset-anonymous", "desk_asset_store", `{"data":"anonymous","extension":"txt"}`)
+	add("asset-binary", "desk_asset_store", `{"data":"/wCA","is_base64":true,"preferred_name":"binary.bin"}`)
+	// The same production call must preserve framing and notification effects.
+	original := append([]mcpWriteCase(nil), cases...)
+	for _, c := range original {
+		if c.ID == "note-create" || c.ID == "status-paid" || c.ID == "notebook_add_source-missing.md" || c.ID == "undo-task" || c.ID == "asset-binary" {
+			c.ID += "-framed"
+			c.Framed = true
+			cases = append(cases, c)
+		}
+		if c.ID == "note-create-framed" || c.ID == "desk_note_new-read-only" {
+			var request map[string]any
+			if err := json.Unmarshal([]byte(c.Request), &request); err != nil {
+				panic(err)
+			}
+			delete(request, "id")
+			raw, _ := json.Marshal(request)
+			c.ID += "-notification"
+			c.Request = string(raw)
+			cases = append(cases, c)
+		}
+	}
+	add("note-frontmatter-template", "desk_note_new", `{"title":"Template Note","template":"fm","content":"More"}`)
+	templateBody := "---\ntags: [template]\n---\n\nBody"
+	cases[len(cases)-1].Files = map[string]string{"templates/fm.md": templateBody}
+	cases[len(cases)-1].HashInputs = map[string]string{"Template_Note.md": templateBody + "\nMore"}
+	add("status-missing-file", "doc_set_status", `{"file":"missing.md","status":"paid"}`)
 	return cases
 }
 
 // Normalize only wall-clock generated timestamps/daily journal filenames.
 // Content, history object hashes, manifest formatting and index properties remain exact.
 var mcpWriteTimestamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z`)
+var mcpWriteAsset = regexp.MustCompile(`pasted-\d{4}-\d{2}-\d{2}-\d{6}`)
 var mcpWriteJournal = regexp.MustCompile(`journal/\d{4}-\d{2}-\d{2}\.ndjson`)
 
 func normalizeMCPWrite(s string) string {
-	return mcpWriteJournal.ReplaceAllString(mcpWriteTimestamp.ReplaceAllString(s, "<TIME>"), "journal/<DATE>.ndjson")
+	return mcpWriteAsset.ReplaceAllString(mcpWriteJournal.ReplaceAllString(mcpWriteTimestamp.ReplaceAllString(s, "<TIME>"), "journal/<DATE>.ndjson"), "pasted-<CLOCK>")
 }
 
 func TestMCPWriteProcessPortFixture(t *testing.T) {
 	binary := buildIndexRetrievalBinary(t, t.TempDir())
 	fixture := mcpWriteFixture{SchemaVersion: 1}
+	var previous mcpWriteFixture
+	if data, err := os.ReadFile("../../testdata/port/mcp/write-process.json"); err == nil {
+		if err := json.Unmarshal(data, &previous); err != nil {
+			t.Fatal(err)
+		}
+	}
 	for _, c := range mcpWriteCases() {
 		root := t.TempDir()
 		root, err := filepath.EvalSymlinks(root)
@@ -174,7 +232,11 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 			cmd.Env = append(cmd.Env, "SYSTEMROOT="+s)
 		}
 		var stdout, stderr bytes.Buffer
-		cmd.Stdin = strings.NewReader(c.Request + "\n")
+		input := c.Request + "\n"
+		if c.Framed {
+			input = "Content-Length: " + fmtMCPSize(len(c.Request)) + "\r\n\r\n" + c.Request
+		}
+		cmd.Stdin = strings.NewReader(input)
 		cmd.Stdout, cmd.Stderr = &stdout, &stderr
 		if err := cmd.Run(); err != nil {
 			cancel()
@@ -199,7 +261,11 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			c.AfterFiles[normalizeMCPWrite(filepath.ToSlash(rel))] = normalizeMCPWrite(string(data))
+			if utf8.Valid(data) {
+				c.AfterFiles[normalizeMCPWrite(filepath.ToSlash(rel))] = normalizeMCPWrite(string(data))
+			} else {
+				c.AfterFiles[normalizeMCPWrite(filepath.ToSlash(rel))] = "<BINARY_HEX>" + hex.EncodeToString(data)
+			}
 			return nil
 		})
 		if err != nil {
@@ -281,6 +347,10 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
+						rel, _ := filepath.Rel(vaultRoot, filepath.FromSlash(path))
+						if input, ok := c.HashInputs[filepath.ToSlash(rel)]; ok {
+							body = []byte(input)
+						}
 						digest := sha256.Sum256(body)
 						if entry["sha256"] != hex.EncodeToString(digest[:]) {
 							t.Fatalf("%s: index SHA does not match file", c.ID)
@@ -306,6 +376,20 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 			if err := raw.Close(); err != nil {
 				t.Fatal(err)
 			}
+		}
+		// os.Root diagnostics carry native syscall/path wording. Record each
+		// native OS independently, never invent the unexecuted platform text.
+		if c.ID == "undo-missing" || c.ID == "status-missing-file" {
+			for _, old := range previous.Cases {
+				if old.ID == c.ID {
+					c.StdoutByGOOS = old.StdoutByGOOS
+				}
+			}
+			if c.StdoutByGOOS == nil {
+				c.StdoutByGOOS = map[string]string{}
+			}
+			c.StdoutByGOOS[runtime.GOOS] = c.Stdout
+			c.Stdout = ""
 		}
 		fixture.Cases = append(fixture.Cases, c)
 	}

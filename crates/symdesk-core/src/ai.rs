@@ -20,7 +20,7 @@ pub struct Provider {
     kind: &'static str,
     url: Option<String>,
     model: String,
-    max_tokens: u32,
+    max_tokens: i64,
     api_key: String,
 }
 impl Provider {
@@ -57,7 +57,7 @@ impl Provider {
                 max_tokens: if config.max_tokens <= 0 {
                     8192
                 } else {
-                    u32::try_from(config.max_tokens).unwrap_or(u32::MAX)
+                    config.max_tokens
                 },
                 api_key: key,
             });
@@ -93,11 +93,17 @@ impl Provider {
     ) -> Result<(), String> {
         let descriptor = lookup(self.kind)
             .ok_or_else(|| format!("{} descriptor missing from embedded registry", self.kind))?;
+        let max_tokens = self.max_tokens;
         let agent = ureq::Agent::config_builder()
             .http_status_as_error(false)
             .max_redirects(0)
             .timeout_global(Some(Duration::from_secs(5 * 60)))
-            .middleware(go_request_json)
+            .middleware(
+                move |request: ureq::http::Request<ureq::SendBody<'_>>,
+                      next: ureq::middleware::MiddlewareNext<'_>| {
+                    go_request_json(request, next, max_tokens)
+                },
+            )
             .build()
             .into();
         let mut builder = ClientBuilder::new(descriptor.clone(), "")
@@ -128,7 +134,9 @@ impl Provider {
                     content: prompt.to_owned(),
                 }],
                 Some(&ChatOptions {
-                    max_tokens: self.max_tokens,
+                    // CoreKit's option is u32; the Go i64 value is restored
+                    // exactly by the request middleware before sending.
+                    max_tokens: u32::try_from(self.max_tokens).unwrap_or(u32::MAX),
                     ..ChatOptions::default()
                 }),
                 |delta| callback.borrow_mut()(delta),
@@ -195,6 +203,7 @@ fn ollama_root(raw: &str) -> &str {
 fn go_request_json(
     request: ureq::http::Request<ureq::SendBody>,
     next: ureq::middleware::MiddlewareNext,
+    max_tokens: i64,
 ) -> Result<ureq::http::Response<ureq::Body>, ureq::Error> {
     let (mut parts, body) = request.into_parts();
     let mut json = String::new();
@@ -203,7 +212,9 @@ fn go_request_json(
         // Go Anthropic's typed request uses declaration order, unlike the
         // CoreKit Rust Value map's sorted keys. This boundary sends only the
         // single-user-message schema owned by internal/ai/anthropic.go.
-        let request: AnthropicRequest = serde_json::from_str(&json).map_err(io::Error::other)?;
+        let mut request: AnthropicRequest =
+            serde_json::from_str(&json).map_err(io::Error::other)?;
+        request.max_tokens = max_tokens;
         json = serde_json::to_string(&request).map_err(io::Error::other)?;
     }
     let encoded = json
@@ -233,7 +244,7 @@ fn go_request_json(
 #[serde(deny_unknown_fields)]
 struct AnthropicRequest {
     model: String,
-    max_tokens: u32,
+    max_tokens: i64,
     messages: Vec<AnthropicMessage>,
     stream: bool,
 }

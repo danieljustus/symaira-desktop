@@ -98,6 +98,8 @@ func TestPortAIProviderContract(t *testing.T) {
 		{ID: "anthropic-default", Provider: "anthropic", Response: sse},
 		{ID: "anthropic-custom-model-options", Provider: "anthropic", Model: "synthetic-model", MaxTokens: 321, Response: sse},
 		{ID: "anthropic-negative-max-default", Provider: "anthropic", MaxTokens: -1, Response: sse},
+		{ID: "anthropic-wide-max-tokens", Provider: "anthropic", MaxTokens: 4294967296, Response: sse},
+		{ID: "anthropic-i64-max-tokens", Provider: "anthropic", MaxTokens: 9223372036854775807, Response: sse},
 		{ID: "anthropic-truncated", Provider: "anthropic", Response: strings.ReplaceAll(sse, "end_turn", "max_tokens")},
 		{ID: "anthropic-empty-stream", Provider: "anthropic"},
 		{ID: "anthropic-malformed-event", Provider: "anthropic", Response: "event: content_block_delta\ndata: {broken}\n\n"},

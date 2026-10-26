@@ -127,7 +127,7 @@ fn serve(listener: &TcpListener, status: u16, response: &str) -> Request {
 fn replay_go_provider_requests_chunks_and_errors() {
     let corpus = corpus();
     assert_eq!(corpus.schema_version, 1);
-    assert_eq!(corpus.cases.len(), 31);
+    assert_eq!(corpus.cases.len(), 33);
     let mut leak_controls = 0;
     for case in corpus.cases {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();

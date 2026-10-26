@@ -454,6 +454,12 @@ docs-read-cli-fixtures-generate:
 docs-read-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./cmd/symdesk -run '^TestPortDocsReadProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test docs_read --locked
+.PHONY: notebook-write-cli-fixtures-generate notebook-write-cli-differential
+notebook-write-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookWriteProcessContract$$'
+notebook-write-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookWriteProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test notebook_write --locked
 .PHONY: notebook-read-cli-fixtures-generate notebook-read-cli-differential
 notebook-read-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookReadProcessContract$$'

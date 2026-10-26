@@ -16,6 +16,7 @@ import (
 type viewsPortState struct {
 	Files     map[string]string         `json:"files"`
 	Databases map[string]map[string]int `json:"databases"`
+	Tables    map[string][][]string     `json:"tables,omitempty"`
 }
 type viewsPortCase struct {
 	duplicatesPortCase
@@ -27,6 +28,10 @@ type viewsPortFixture struct {
 }
 
 func observeViewsCase(t *testing.T, binary string, c duplicatesPortCase) viewsPortCase {
+	return observeViewsCaseWithState(t, binary, c, observeViewsState)
+}
+
+func observeViewsCaseWithState(t *testing.T, binary string, c duplicatesPortCase, snapshot func(*testing.T, string) viewsPortState) viewsPortCase {
 	t.Helper()
 	// The service canonicalizes the vault root but the index stores the path
 	// as given, so a root behind a symlink (macOS /var -> /private/var) or a
@@ -117,7 +122,7 @@ func observeViewsCase(t *testing.T, binary string, c duplicatesPortCase) viewsPo
 			Stdout:   normalizeRetryText(stdout, root),
 			Stderr:   normalizeRetryText(stderr, root),
 		})
-		observed.States = append(observed.States, observeViewsState(t, root))
+		observed.States = append(observed.States, snapshot(t, root))
 	}
 	return observed
 }

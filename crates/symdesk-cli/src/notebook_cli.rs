@@ -18,6 +18,15 @@ pub fn cli() -> Command {
     Command::new("notebook")
         .subcommand(Command::new("list").arg(Arg::new("args").num_args(0..)))
         .subcommand(Command::new("show").arg(Arg::new("args").num_args(0..)))
+        .subcommand(
+            Command::new("new").arg(Arg::new("args").num_args(0..)).arg(
+                Arg::new("description")
+                    .long("description")
+                    .default_value(""),
+            ),
+        )
+        .subcommand(Command::new("add-source").arg(Arg::new("args").num_args(0..)))
+        .subcommand(Command::new("remove-source").arg(Arg::new("args").num_args(0..)))
 }
 
 pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
@@ -28,8 +37,16 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
         .get_many::<String>("args")
         .map(|v| v.cloned().collect::<Vec<_>>())
         .unwrap_or_default();
-    if name == "show" && args.len() != 1 {
-        return crate::emit_error(format!("accepts 1 arg(s), received {}", args.len()), json);
+    let expected = if matches!(name, "add-source" | "remove-source") {
+        2
+    } else {
+        1
+    };
+    if name != "list" && args.len() != expected {
+        return crate::emit_error(
+            format!("accepts {expected} arg(s), received {}", args.len()),
+            json,
+        );
     }
     let root = match crate::resolve_vault(vault) {
         Ok(root) => root,
@@ -62,6 +79,36 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
                         .collect::<Vec<_>>()
                         .join(" ")
                 ))
+            });
+        }
+        if matches!(name, "new" | "add-source" | "remove-source") {
+            let notebook = if name == "new" {
+                symdesk_vault::new_notebook(
+                    &root,
+                    &args[0],
+                    matches
+                        .get_one::<String>("description")
+                        .map_or("", String::as_str),
+                )
+                .map_err(|e| e.to_string())?
+            } else {
+                let notebook = load_notebook(&root, &args[0])?;
+                // Service snapshots even validation failures and idempotent edits.
+                symdesk_vault::HistoryStore::new(&root)
+                    .snapshot(&notebook.path)
+                    .map_err(|e| e.to_string())?;
+                let edit = if name == "add-source" {
+                    symdesk_vault::add_notebook_source
+                } else {
+                    symdesk_vault::remove_notebook_source
+                };
+                edit(&root, &notebook.path, &args[1]).map_err(|e| e.to_string())?
+            };
+            reindex(&root, &mut db, &notebook)?;
+            return Ok(if json {
+                crate::write_go_json(&notebook)
+            } else {
+                crate::write_stdout(notebook_text(&notebook))
             });
         }
         let notebook = load_notebook(&root, &args[0])?;
@@ -101,4 +148,33 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
         Ok(exit) => exit,
         Err(error) => crate::emit_error(error, json),
     }
+}
+
+fn reindex(
+    root: &std::path::Path,
+    db: &mut symdesk_index::Sidecar,
+    notebook: &symdesk_vault::Notebook,
+) -> Result<(), String> {
+    let path = symdesk_vault::secure_path(root, &notebook.path).map_err(|e| e.to_string())?;
+    let bytes = std::fs::read(&path)
+        .map_err(|e| format!("wrote notebook but failed to parse for indexing: {e}"))?;
+    let document = symdesk_vault::parse_bytes(&path.to_string_lossy(), &bytes)
+        .map_err(|e| format!("wrote notebook but failed to parse for indexing: {e}"))?;
+    let indexed =
+        symdesk_index::IndexedDocument::from_vault(&document, None).map_err(|e| e.to_string())?;
+    db.index_document(&indexed)
+        .map_err(|e| format!("wrote notebook but failed to index: {e}"))
+}
+
+fn notebook_text(n: &symdesk_vault::Notebook) -> String {
+    format!(
+        "&{{ID:{} Path:{} Title:{} Description:{} Created:{} Sources:[{}] Query:{}}}\n",
+        n.id,
+        n.path,
+        n.title,
+        n.description,
+        n.created,
+        n.sources.join(" "),
+        n.query
+    )
 }

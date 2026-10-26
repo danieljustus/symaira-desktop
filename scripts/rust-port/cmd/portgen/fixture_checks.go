@@ -26,6 +26,7 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"notebook write CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookWriteProcessContract$"}, []string{"testdata/port/cli/notebook-write-process.json"}, false},
 	{"notebook read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookReadProcessContract$"}, []string{"testdata/port/cli/notebook-read-process.json"}, false},
 	{"docs read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDocsReadProcessContract$"}, []string{"testdata/port/cli/docs-read-process.json"}, false},
 	{"views read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortViewsProcessContract$"}, []string{"testdata/port/cli/views-process.json"}, false},

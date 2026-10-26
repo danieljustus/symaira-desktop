@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -36,7 +37,7 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 	for _, c := range notebookReadCases() {
 		result := observeViewsCase(t, binary, c)
 		for i := range result.Steps {
-			result.Steps[i].Stdout = viewsPointer.ReplaceAllString(result.Steps[i].Stdout, "$$PTR")
+			result.Steps[i].Stdout = normalizeNotebookPaths(viewsPointer.ReplaceAllString(result.Steps[i].Stdout, "$$PTR"))
 		}
 		observed.Cases = append(observed.Cases, result)
 	}
@@ -63,4 +64,10 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 	if !bytes.Equal(current, encoded) {
 		t.Fatal("notebook read process fixture drift; regenerate deliberately")
 	}
+}
+
+// Notebook references use slash-normalized paths in the portable process corpus.
+func normalizeNotebookPaths(text string) string {
+	text = strings.ReplaceAll(text, `notebooks\\`, `notebooks/`)
+	return strings.ReplaceAll(text, `notebooks\`, `notebooks/`)
 }

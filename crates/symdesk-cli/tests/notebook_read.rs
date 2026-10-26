@@ -99,7 +99,9 @@ fn run(binary: &str, home: &Path, cwd: &Path, args: &[String]) -> Run {
 
 /// Replaces the temporary root with `$ROOT` like the Go generator.
 fn normalize(text: &str, raw_root: &Path, canonical_root: &Path) -> String {
-    let mut text = text.to_owned();
+    let mut text = text
+        .replace(r"notebooks\\", "notebooks/")
+        .replace(r"notebooks\", "notebooks/");
     for root in [canonical_root, raw_root] {
         let root = root.to_string_lossy().into_owned();
         text = text.replace(&root, "$ROOT");

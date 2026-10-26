@@ -2566,6 +2566,7 @@ name = "symdesk-core"
 version = "0.0.0"
 dependencies = [
  "regex",
+ "rustix",
  "serde",
  "serde_json",
  "symaira-core-config",

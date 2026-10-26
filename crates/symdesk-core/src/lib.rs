@@ -4,6 +4,8 @@
 
 use symaira_core_version::new as version_info;
 
+#[cfg(unix)]
+pub mod compose;
 pub mod config;
 pub mod document_format;
 pub mod german;

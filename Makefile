@@ -1201,6 +1201,14 @@ clean:
 	go clean -cache -testcache
 	rm -rf vendor/
 
+.PHONY: compose-resolve-fixtures-generate compose-resolve-differential
+compose-resolve-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'
+
+compose-resolve-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-core --locked --test compose_resolve
+
 recipe-validate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 

@@ -33,12 +33,12 @@ func TestPortConflictProcessContract(t *testing.T) {
 	// every platform record the same hermetic, embedding-less retrieval state.
 	homeFiles := map[string]string{".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:1/api/embeddings\"\nretry_count = 0\ntimeout_seconds = 1\n"}
 	cases := []duplicatesPortCase{
-		{Name: "mine", Files: files, HomeFiles: homeFiles, Steps: makeSteps(
+		{Name: "mine", Files: files, Steps: makeSteps(
 			[]string{"conflict", "resolve", "note conflicted copy.md", "--action=keep-mine", "--json"},
 			[]string{"conflict", "resolve", "nested/second 2.md", "--action", "keep-mine"},
 			[]string{"graph", "--json"},
 		)},
-		{Name: "theirs", Files: files, HomeFiles: homeFiles, Steps: makeSteps(
+		{Name: "theirs", Files: files, Steps: makeSteps(
 			[]string{"conflict", "resolve", "note conflicted copy.md", "--action=keep-theirs", "--json"},
 			[]string{"conflict", "resolve", "nested/second 2.md", "--action", "keep-theirs"},
 			[]string{"graph", "--json"},
@@ -66,6 +66,9 @@ func TestPortConflictProcessContract(t *testing.T) {
 	}
 	fixture := duplicatesPortFixture{SchemaVersion: 1}
 	for _, c := range cases {
+		if !c.NoVault {
+			c.HomeFiles = homeFiles
+		}
 		var states []map[string][][]string
 		observed := observeDuplicatesCase(t, binary, c, func(vault, home string) { states = append(states, conflictProcessState(t, vault, home)) })
 		for i := range observed.Steps {

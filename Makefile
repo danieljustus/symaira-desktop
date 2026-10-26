@@ -1,3 +1,11 @@
+.PHONY: paperless-mapping-differential paperless-mapping-fixtures-generate
+paperless-mapping-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_mapping_contracts --locked
+
+paperless-mapping-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+
 .PHONY: paperless-state-differential paperless-state-fixtures-generate
 paperless-state-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state

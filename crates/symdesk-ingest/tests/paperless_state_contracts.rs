@@ -63,16 +63,14 @@ fn fixture() -> Value {
     .unwrap()
 }
 fn replay(f: &Value) -> Result<(), String> {
-    let root = Root(
-        std::env::temp_dir().join(format!(
+    let root = Root(std::env::temp_dir().join(format!(
             "paperless-state-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        )),
-    );
+        )));
     fs::create_dir(&root.0).unwrap();
     let path = root.0.join("state.db");
     let clock = Arc::new(Mutex::new("2000-01-01 00:00:00".to_owned()));

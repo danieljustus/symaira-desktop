@@ -14,7 +14,9 @@
 // when the colon is the second byte: Windows reads `x:` as a volume name and
 // Clean then adds no prefix. The rule is deliberately broader than the exact
 // divergence (Clean only prefixes when it rewrote the path), because the
-// generator sees the cleaned output, not the string handed to Clean.
+// generator sees the cleaned output, not the string handed to Clean. On a
+// Windows host that output already starts with the `./` prefix, which is
+// stripped before the rule is applied so every host withholds the same cases.
 //
 // Go's strftime applies its directive table by ranging over a map, so a
 // format whose substitution output can complete another directive (for
@@ -478,8 +480,13 @@ var sanitizeValues = []string{
 // hostDependentOutput reports whether the Windows spelling of an Eval output
 // can differ from the Unix one: filepath.Clean inserts a leading `.\` when the
 // first path element holds a ':' that does not form a `x:` volume name (see the
-// package comment).
+// package comment). The generator must judge the Unix spelling on every host:
+// on Windows the output already carries that `./` prefix (Windows run
+// 40390080135 observed `./10:30 meeting`), so the rule would not recognise it
+// and the host would record a case the Unix host withholds. Unix Clean never
+// emits a leading `./`, so stripping it first is a no-op there.
 func hostDependentOutput(output string) bool {
+	output = strings.TrimPrefix(output, "./")
 	first, _, _ := strings.Cut(output, "/")
 	return strings.Contains(first, ":") && (len(first) < 2 || first[1] != ':')
 }

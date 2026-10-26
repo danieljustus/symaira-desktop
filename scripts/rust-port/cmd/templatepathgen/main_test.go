@@ -84,12 +84,12 @@ func TestRecordedOutputsAreHostIndependent(t *testing.T) {
 			t.Fatalf("host-dependent case %s (%q) was recorded", item.ID, item.Output)
 		}
 	}
-	for _, output := range []string{"10:30 meeting", "ab:c/x", ":x/y", "2026-03-05T14:07:09/t"} {
+	for _, output := range []string{"10:30 meeting", "ab:c/x", ":x/y", "2026-03-05T14:07:09/t", "./10:30 meeting", "./ab:c/x", "./:x"} {
 		if !hostDependentOutput(output) {
 			t.Fatalf("%q must be treated as host dependent", output)
 		}
 	}
-	for _, output := range []string{"", "a/b:c", "/abs/10:30", "documents/_:x/2026", "plain", "_:x/unknown", "a:b/_/unknown", "C:"} {
+	for _, output := range []string{"", "a/b:c", "/abs/10:30", "documents/_:x/2026", "plain", "_:x/unknown", "a:b/_/unknown", "C:", "./plain", "./a/b:c"} {
 		if hostDependentOutput(output) {
 			t.Fatalf("%q must not be treated as host dependent", output)
 		}

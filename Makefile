@@ -93,6 +93,22 @@ ingest-extraction-fixtures-generate:
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential index-symlink-cli-fixtures-generate index-symlink-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
+.PHONY: config-cli-fixtures-generate config-cli-differential
+config-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConfigProcessContract$$'
+
+config-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConfigProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test config --locked
+
+.PHONY: help-cli-fixtures-generate help-cli-differential
+help-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHelpProcessContract$$'
+
+help-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHelpProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test help --locked
+
 .PHONY: duplicates-cli-fixtures-generate duplicates-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
 .PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential

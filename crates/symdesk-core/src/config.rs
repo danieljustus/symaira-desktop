@@ -439,6 +439,24 @@ pub fn load(
 
 fn go_toml_error(input: &str, error: &toml::de::Error) -> String {
     let detail = error.to_string();
+    if error.message().starts_with("invalid type: string")
+        && error.message().contains("expected i64")
+        && let Some(span) = error.span()
+    {
+        let prefix = &input[..span.start];
+        let line = prefix.bytes().filter(|b| *b == b'\n').count() + 1;
+        if let Some((key, _)) = prefix
+            .rsplit('\n')
+            .next()
+            .unwrap_or_default()
+            .split_once('=')
+        {
+            let key = key.trim().trim_matches('"');
+            return format!(
+                "toml: line {line} (last key {key:?}): incompatible types: TOML value has type string; destination has type integer"
+            );
+        }
+    }
     if !detail.contains("unclosed array") || !input.trim_end().ends_with('[') {
         return detail;
     }

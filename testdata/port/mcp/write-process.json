@@ -2976,7 +2976,8 @@
     },
     {
       "stdout_by_goos": {
-        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"openat .symdesk/history/checkpoints/missing.json: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
+        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"openat .symdesk/history/checkpoints/missing.json: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n",
+        "linux": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"openat .symdesk/history/checkpoints/missing.json: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
       },
       "after_db": {
         "file_properties": [],
@@ -4024,7 +4025,8 @@
     },
     {
       "stdout_by_goos": {
-        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"read file: open $ROOT/vault/missing.md: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
+        "darwin": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"read file: open $ROOT/vault/missing.md: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n",
+        "linux": "{\"jsonrpc\":\"2.0\",\"id\":\"call\",\"result\":{\"content\":[{\"text\":\"read file: open $ROOT/vault/missing.md: no such file or directory\",\"type\":\"text\"}],\"isError\":true}}\n"
       },
       "after_db": {
         "file_properties": [],

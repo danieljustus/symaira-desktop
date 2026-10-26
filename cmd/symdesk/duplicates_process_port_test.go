@@ -40,6 +40,9 @@ type duplicatesPortCase struct {
 	NoVault bool `json:"no_vault,omitempty"`
 	// UnixOnly marks error text that uses the operating system's wording.
 	UnixOnly bool `json:"unix_only,omitempty"`
+	// HomeFiles are written under the isolated HOME before anything runs,
+	// e.g. a symseek config that points embeddings at a closed port.
+	HomeFiles map[string]string `json:"home_files,omitempty"`
 	// FSCase marks a case whose bytes depend on whether the vault's file
 	// system folds case ("insensitive": APFS, NTFS) or not ("sensitive":
 	// ext4). Each class is recorded natively; replays run only their class.
@@ -389,6 +392,15 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, af
 			if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
 				t.Fatal(err)
 			}
+		}
+	}
+	for name, content := range c.HomeFiles {
+		target := filepath.Join(home, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
 		}
 	}
 	writeFiles(c.Files)

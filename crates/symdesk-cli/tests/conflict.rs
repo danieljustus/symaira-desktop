@@ -40,6 +40,8 @@ struct Case {
     no_vault: bool,
     #[serde(default)]
     unix_only: bool,
+    #[serde(default)]
+    home_files: BTreeMap<String, String>,
     steps: Vec<Step>,
 }
 
@@ -203,6 +205,7 @@ fn conflict_match_go_process_contract() {
             fs::create_dir_all(directory).expect("make case directory");
         }
         let canonical_root = fs::canonicalize(&root).expect("canonical case root");
+        write_files(&home, &case.home_files);
         write_files(&vault, &case.files);
         if !case.skip_index && !case.no_vault {
             let setup = run(

@@ -20,6 +20,10 @@ production implementation; this crate is not wired into `symdesk` yet.
   idempotent inserts, preferred ordering, cross-parent removal, FK failures,
   duplicate conflicts and failed-tag transaction rollback: 116 Go operations
   with seven ordered database snapshots (`crud.json`).
+- Directed person/person and person/organization relationships, idempotent
+  retries, self-link/date/FK errors; follow-up creation/filtering and terminal
+  state transitions; immutable interactions, ordering and most-recent lookup:
+  95 Go operations with three ordered DB snapshots (`relationship.json`).
 - Contact-point normalization: 36 Go-generated cases, including simple Unicode
   case mapping and non-ASCII decimal digits.
 - Duplicate planning (exact source, normalized email/phone, SQLite NOCASE names)
@@ -32,7 +36,11 @@ The Rust services receive ID and UTC RFC3339Nano timestamp suppliers.
 CRUD uses google/uuid's injected entropy seam in Go; the production clock has
 no seam, so only `CreatedAt`/`UpdatedAt` and their DB columns are normalized to
 one documented instant after each operation. IDs and all other values are
-compared exactly; clock acquisition/defaults are not certified.
+compared exactly; clock acquisition/defaults are not certified. Relationship
+inputs accept canonical UTC RFC3339Nano strings at the typed-time adapter
+boundary. Follow-up transition clock fields are normalized too. Overdue/upcoming
+oracle cases use years 2000 and 9000, not a wall-clock tolerance window; precise
+clock-boundary and non-UTC time adapters remain uncertified.
 
 The Rust apply function receives ID and UTC RFC3339Nano timestamp suppliers;
 callers must supply UUIDs and correctly formatted clock values. Oracle snapshots
@@ -50,16 +58,17 @@ cargo test -p symdesk-contacts --locked
 
 Set `PORT_GENERATE=1` only for deliberate fixture generation; ordinary tests
 recompute the real Go result and compare without writing. Make targets are
-`contacts-schema-differential`, `contacts-import-differential` and
-`contacts-vcard-differential` and `contacts-crud-differential`. Build-volume
+`contacts-schema-differential`, `contacts-import-differential`,
+`contacts-vcard-differential`, `contacts-crud-differential` and
+`contacts-relationship-differential`. Build-volume
 runners can override `CONTACTS_GO` and `CARGO` with their approved launchers.
 Fixtures are registered in portgen; its shared provenance manifest must be
 refreshed by the integration owner when adding these fixtures.
 
 ## Not complete
 
-- Memberships, quick-add, opaque-reference facade, relationships/follow-ups,
-  keyprovider, backup and erase remain Go-only.
+- Memberships, quick-add, opaque-reference facade, combined timeline,
+  meeting/memory adapters, keyprovider, backup and erase remain Go-only.
 - UUID/time defaults, stream I/O failures and non-UTF-8 CSV inputs need adapters.
 - Planning currently uses per-row queries rather than Go's batched queries;
   batch-scale performance/concurrency are not certified.

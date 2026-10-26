@@ -1,0 +1,2294 @@
+{
+  "actions": [
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {}
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "  ",
+        "ToPersonID": "q",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToPersonID": "q",
+        "Type": " \n"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToOrganizationID": "o",
+        "ToPersonID": "q",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToPersonID": "p",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToPersonID": "missing",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "missing",
+        "ToOrganizationID": "o",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "Notes": "original",
+        "ToPersonID": "q",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "Notes": "ignored retry",
+        "ToPersonID": "q",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToOrganizationID": "o",
+        "Type": "employee",
+        "ValidFrom": "2025-02-03T04:05:06Z",
+        "ValidTo": "2025-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToOrganizationID": "o",
+        "Type": "employee",
+        "ValidFrom": "2025-02-03T04:05:06Z",
+        "ValidTo": "2027-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "Notes": "ignored retry",
+        "ToOrganizationID": "o",
+        "Type": "employee",
+        "ValidFrom": "2025-02-03T04:05:06Z"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "p",
+        "ToOrganizationID": "o",
+        "Type": "employee",
+        "ValidFrom": "2024-02-03T04:05:06.123456789Z"
+      }
+    },
+    {
+      "op": "relationship",
+      "entity": "person",
+      "id": "",
+      "input": {
+        "FromPersonID": "q",
+        "ToPersonID": "p",
+        "Type": "friend"
+      }
+    },
+    {
+      "op": "outgoing",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "incoming_person",
+      "entity": "person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "incoming_org",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "outgoing",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "last",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "interactions",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00Z",
+        "Notes": "reviewed",
+        "ref": "person-f0"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "9000-01-01T00:00:00Z",
+        "Notes": "reviewed",
+        "ref": "person-f1"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00.1Z",
+        "Notes": "reviewed",
+        "ref": "person-f2"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": ""
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "all"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "open"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "overdue"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "upcoming"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "invalid"
+      }
+    },
+    {
+      "op": "complete",
+      "entity": "person",
+      "id": "person-f0",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "person",
+      "id": "person-f0",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "person",
+      "id": "person-f0",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "person",
+      "id": "person-f1",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "person",
+      "id": "person-f1",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "person",
+      "id": "person-f1",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "all"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "open"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "overdue"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "filter": "upcoming"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {}
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "unknown",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "note",
+        "Summary": "  "
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": " \t",
+        "Kind": "external_reference",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-0",
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-1",
+        "Kind": "call",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-2",
+        "Kind": "email",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-3",
+        "Kind": "meeting",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-4",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06Z",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interactions",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "last",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "last",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "interactions",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00Z",
+        "Notes": "reviewed",
+        "ref": "organization-f0"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "9000-01-01T00:00:00Z",
+        "Notes": "reviewed",
+        "ref": "organization-f1"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2000-01-01T00:00:00.1Z",
+        "Notes": "reviewed",
+        "ref": "organization-f2"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": ""
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "all"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "open"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "overdue"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "upcoming"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "invalid"
+      }
+    },
+    {
+      "op": "complete",
+      "entity": "organization",
+      "id": "organization-f0",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "organization",
+      "id": "organization-f0",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "organization",
+      "id": "organization-f0",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "organization",
+      "id": "organization-f1",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "organization",
+      "id": "organization-f1",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "organization",
+      "id": "organization-f1",
+      "input": null
+    },
+    {
+      "op": "complete",
+      "entity": "organization",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "cancel",
+      "entity": "organization",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "all"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "open"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "overdue"
+      }
+    },
+    {
+      "op": "followups",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "filter": "upcoming"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {}
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "unknown",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "note",
+        "Summary": "  "
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": " \t",
+        "Kind": "external_reference",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-0",
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-1",
+        "Kind": "call",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-2",
+        "Kind": "email",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-3",
+        "Kind": "meeting",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-4",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06Z",
+        "Summary": "x"
+      }
+    },
+    {
+      "op": "interactions",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "last",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    }
+  ],
+  "ids": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005",
+    "00000000-0000-4000-8000-000000000006",
+    "00000000-0000-4000-8000-000000000007",
+    "00000000-0000-4000-8000-000000000008",
+    "00000000-0000-4000-8000-000000000009",
+    "00000000-0000-4000-8000-00000000000a",
+    "00000000-0000-4000-8000-00000000000b",
+    "00000000-0000-4000-8000-00000000000c",
+    "00000000-0000-4000-8000-00000000000d",
+    "00000000-0000-4000-8000-00000000000e",
+    "00000000-0000-4000-8000-00000000000f",
+    "00000000-0000-4000-8000-000000000010",
+    "00000000-0000-4000-8000-000000000011",
+    "00000000-0000-4000-8000-000000000012",
+    "00000000-0000-4000-8000-000000000013",
+    "00000000-0000-4000-8000-000000000014",
+    "00000000-0000-4000-8000-000000000015",
+    "00000000-0000-4000-8000-000000000016",
+    "00000000-0000-4000-8000-000000000017",
+    "00000000-0000-4000-8000-000000000018",
+    "00000000-0000-4000-8000-000000000019",
+    "00000000-0000-4000-8000-00000000001a",
+    "00000000-0000-4000-8000-00000000001b",
+    "00000000-0000-4000-8000-00000000001c",
+    "00000000-0000-4000-8000-00000000001d",
+    "00000000-0000-4000-8000-00000000001e"
+  ],
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "queries": [
+    "SELECT * FROM relationships ORDER BY id",
+    "SELECT * FROM follow_ups ORDER BY id",
+    "SELECT * FROM interactions ORDER BY id"
+  ],
+  "results": [
+    {
+      "error": "relationship.AddRelationship: from person id must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: from person id must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: relationship type must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: exactly one of to-person or to-organization must be set",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: exactly one of to-person or to-organization must be set",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: invalid relationship (self-reference or valid_to before valid_from): constraint failed: CHECK constraint failed: to_person_id IS NULL OR to_person_id \u003c\u003e from_person_id (275)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: from/to entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.AddRelationship: from/to entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "p",
+        "ID": "00000000-0000-4000-8000-000000000004",
+        "Notes": "original",
+        "ToOrganizationID": "",
+        "ToPersonID": "q",
+        "Type": "friend",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "p",
+        "ID": "00000000-0000-4000-8000-000000000004",
+        "Notes": "original",
+        "ToOrganizationID": "",
+        "ToPersonID": "q",
+        "Type": "friend",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "relationship.AddRelationship: invalid relationship (self-reference or valid_to before valid_from): constraint failed: CHECK constraint failed: valid_to IS NULL OR valid_from IS NULL OR valid_to \u003e= valid_from (275)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "p",
+        "ID": "00000000-0000-4000-8000-000000000007",
+        "Notes": "",
+        "ToOrganizationID": "o",
+        "ToPersonID": "",
+        "Type": "employee",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2025-02-03T04:05:06Z",
+        "ValidTo": "2027-01-01T00:00:00Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "p",
+        "ID": "00000000-0000-4000-8000-000000000007",
+        "Notes": "",
+        "ToOrganizationID": "o",
+        "ToPersonID": "",
+        "Type": "employee",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2025-02-03T04:05:06Z",
+        "ValidTo": "2027-01-01T00:00:00Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "p",
+        "ID": "00000000-0000-4000-8000-000000000009",
+        "Notes": "",
+        "ToOrganizationID": "o",
+        "ToPersonID": "",
+        "Type": "employee",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2024-02-03T04:05:06.123456789Z",
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "FromPersonID": "q",
+        "ID": "00000000-0000-4000-8000-00000000000a",
+        "Notes": "",
+        "ToOrganizationID": "",
+        "ToPersonID": "p",
+        "Type": "friend",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000004",
+          "Notes": "original",
+          "ToOrganizationID": "",
+          "ToPersonID": "q",
+          "Type": "friend",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000007",
+          "Notes": "",
+          "ToOrganizationID": "o",
+          "ToPersonID": "",
+          "Type": "employee",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2025-02-03T04:05:06Z",
+          "ValidTo": "2027-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "Notes": "",
+          "ToOrganizationID": "o",
+          "ToPersonID": "",
+          "Type": "employee",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2024-02-03T04:05:06.123456789Z",
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000004",
+          "Notes": "original",
+          "ToOrganizationID": "",
+          "ToPersonID": "q",
+          "Type": "friend",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000007",
+          "Notes": "",
+          "ToOrganizationID": "o",
+          "ToPersonID": "",
+          "Type": "employee",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2025-02-03T04:05:06Z",
+          "ValidTo": "2027-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "FromPersonID": "p",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "Notes": "",
+          "ToOrganizationID": "o",
+          "ToPersonID": "",
+          "Type": "employee",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2024-02-03T04:05:06.123456789Z",
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "relationship.addFollowUp: due date must be set",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addFollowUp: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000c",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "9000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000d",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00.1Z",
+        "ID": "00000000-0000-4000-8000-00000000000e",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000c",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000c",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000c",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000c",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "relationship.listFollowUps: unknown follow-up filter: invalid",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": "2026-01-02T03:04:05Z",
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000c",
+        "Notes": "reviewed",
+        "Status": "completed",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already completed",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already completed",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": "2026-01-02T03:04:05Z",
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "9000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000d",
+        "Notes": "reviewed",
+        "Status": "cancelled",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already cancelled",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already cancelled",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.getFollowUp: follow-up not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "relationship.getFollowUp: follow-up not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": "2026-01-02T03:04:05Z",
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000c",
+          "Notes": "reviewed",
+          "Status": "completed",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": "2026-01-02T03:04:05Z",
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "Notes": "reviewed",
+          "Status": "cancelled",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: unknown interaction kind: ",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: unknown interaction kind: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: summary must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: external_reference interactions require an external_ref",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-0",
+        "ID": "00000000-0000-4000-8000-00000000000f",
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-1",
+        "ID": "00000000-0000-4000-8000-000000000010",
+        "Kind": "call",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-2",
+        "ID": "00000000-0000-4000-8000-000000000011",
+        "Kind": "email",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-3",
+        "ID": "00000000-0000-4000-8000-000000000012",
+        "Kind": "meeting",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-4",
+        "ID": "00000000-0000-4000-8000-000000000013",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "relationship.addInteraction: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-0",
+          "ID": "00000000-0000-4000-8000-00000000000f",
+          "Kind": "note",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-1",
+          "ID": "00000000-0000-4000-8000-000000000010",
+          "Kind": "call",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-2",
+          "ID": "00000000-0000-4000-8000-000000000011",
+          "Kind": "email",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-3",
+          "ID": "00000000-0000-4000-8000-000000000012",
+          "Kind": "meeting",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-4",
+          "ID": "00000000-0000-4000-8000-000000000013",
+          "Kind": "external_reference",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-4",
+        "ID": "00000000-0000-4000-8000-000000000013",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "relationship.addFollowUp: due date must be set",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addFollowUp: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000016",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "9000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000017",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00.1Z",
+        "ID": "00000000-0000-4000-8000-000000000018",
+        "Notes": "reviewed",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000016",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000016",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000016",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000016",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "relationship.listFollowUps: unknown follow-up filter: invalid",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": "2026-01-02T03:04:05Z",
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000016",
+        "Notes": "reviewed",
+        "Status": "completed",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already completed",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already completed",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": "2026-01-02T03:04:05Z",
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "9000-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000017",
+        "Notes": "reviewed",
+        "Status": "cancelled",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already cancelled",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.transitionFollowUp: follow-up is already cancelled",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "relationship.getFollowUp: follow-up not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "relationship.getFollowUp: follow-up not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": null,
+          "CompletedAt": "2026-01-02T03:04:05Z",
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000016",
+          "Notes": "reviewed",
+          "Status": "completed",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        },
+        {
+          "CancelledAt": "2026-01-02T03:04:05Z",
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "9000-01-01T00:00:00Z",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Notes": "reviewed",
+          "Status": "cancelled",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CancelledAt": null,
+          "CompletedAt": null,
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "DueAt": "2000-01-01T00:00:00.1Z",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Notes": "reviewed",
+          "Status": "open",
+          "UpdatedAt": "2026-01-02T03:04:05Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: unknown interaction kind: ",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: unknown interaction kind: unknown",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: summary must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "relationship.addInteraction: external_reference interactions require an external_ref",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-0",
+        "ID": "00000000-0000-4000-8000-000000000019",
+        "Kind": "note",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-1",
+        "ID": "00000000-0000-4000-8000-00000000001a",
+        "Kind": "call",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-2",
+        "ID": "00000000-0000-4000-8000-00000000001b",
+        "Kind": "email",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-3",
+        "ID": "00000000-0000-4000-8000-00000000001c",
+        "Kind": "meeting",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-4",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    },
+    {
+      "error": "relationship.addInteraction: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-0",
+          "ID": "00000000-0000-4000-8000-000000000019",
+          "Kind": "note",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-1",
+          "ID": "00000000-0000-4000-8000-00000000001a",
+          "Kind": "call",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-2",
+          "ID": "00000000-0000-4000-8000-00000000001b",
+          "Kind": "email",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-3",
+          "ID": "00000000-0000-4000-8000-00000000001c",
+          "Kind": "meeting",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "opaque-4",
+          "ID": "00000000-0000-4000-8000-00000000001d",
+          "Kind": "external_reference",
+          "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+          "Summary": "private note"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-4",
+        "ID": "00000000-0000-4000-8000-00000000001d",
+        "Kind": "external_reference",
+        "OccurredAt": "2025-02-03T04:05:06.123456789Z",
+        "Summary": "private note"
+      }
+    }
+  ],
+  "seed": "INSERT INTO persons(id,display_name,created_at,updated_at) VALUES('p','Ada','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'),('q','Bob','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'); INSERT INTO organizations(id,name,created_at,updated_at) VALUES('o','Example','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z');",
+  "snapshots": [
+    [
+      [
+        "00000000-0000-4000-8000-000000000004",
+        "p",
+        "q",
+        null,
+        "friend",
+        null,
+        null,
+        "original",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000007",
+        "p",
+        null,
+        "o",
+        "employee",
+        "2025-02-03T04:05:06Z",
+        "2027-01-01T00:00:00Z",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000009",
+        "p",
+        null,
+        "o",
+        "employee",
+        "2024-02-03T04:05:06.123456789Z",
+        null,
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000a",
+        "q",
+        "p",
+        null,
+        "friend",
+        null,
+        null,
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-00000000000c",
+        "p",
+        null,
+        "2000-01-01T00:00:00Z",
+        "reviewed",
+        "completed",
+        "2026-01-02T03:04:05Z",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000d",
+        "p",
+        null,
+        "9000-01-01T00:00:00Z",
+        "reviewed",
+        "cancelled",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000e",
+        "p",
+        null,
+        "2000-01-01T00:00:00.1Z",
+        "reviewed",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000016",
+        null,
+        "o",
+        "2000-01-01T00:00:00Z",
+        "reviewed",
+        "completed",
+        "2026-01-02T03:04:05Z",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000017",
+        null,
+        "o",
+        "9000-01-01T00:00:00Z",
+        "reviewed",
+        "cancelled",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000018",
+        null,
+        "o",
+        "2000-01-01T00:00:00.1Z",
+        "reviewed",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-00000000000f",
+        "p",
+        null,
+        "note",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-0",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000010",
+        "p",
+        null,
+        "call",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000011",
+        "p",
+        null,
+        "email",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-2",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000012",
+        "p",
+        null,
+        "meeting",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-3",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000013",
+        "p",
+        null,
+        "external_reference",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-4",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000019",
+        null,
+        "o",
+        "note",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-0",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001a",
+        null,
+        "o",
+        "call",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001b",
+        null,
+        "o",
+        "email",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-2",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001c",
+        null,
+        "o",
+        "meeting",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-3",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001d",
+        null,
+        "o",
+        "external_reference",
+        "2025-02-03T04:05:06.123456789Z",
+        "private note",
+        "opaque-4",
+        "2026-01-02T03:04:05Z"
+      ]
+    ]
+  ],
+  "source_hashes": {
+    "internal/contacts/internal/domain/relationship/types.go": "f4437a408d0dc83c981ec8eb6d7cc2cf3d5a637b053d6a7d1b98ab27cb6a7bfe",
+    "internal/contacts/internal/errs/errors.go": "cc52b683298dc32deec618f82982ac0b6b2b4b2fb6b4b41955578f49ad6fab2c",
+    "internal/contacts/internal/service/relationship/followups.go": "2598a94a8e3b57a928accdb099dd41681ab67df8aaa67d864ea5f774dc1bd3ca",
+    "internal/contacts/internal/service/relationship/interactions.go": "377086c08735c428fdd3ac15bf75760d1e3c7eea2eaaf589a2d2102ef9129a77",
+    "internal/contacts/internal/service/relationship/relationships.go": "397f68585e946a320fe8fed4470e0b69179b16630e0a229de5d28cfe140123a4",
+    "internal/contacts/internal/service/relationship/service.go": "14d96feccfa7a4a4f5f51618fea6634e99472697bb6fb3c850cf0f3759cbf169"
+  },
+  "timestamp": "2026-01-02T03:04:05Z"
+}

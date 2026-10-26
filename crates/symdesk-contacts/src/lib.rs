@@ -4,6 +4,7 @@
 pub mod contact;
 pub mod import;
 pub mod pipeline;
+pub mod relationship;
 pub mod vcard;
 
 use rusqlite::Connection;

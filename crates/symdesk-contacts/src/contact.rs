@@ -21,7 +21,7 @@ fn error(kind: &'static str, op: &str, message: &str) -> Error {
         message: format!("{op}: {message}"),
     }
 }
-fn sql_error(e: rusqlite::Error) -> Error {
+pub(crate) fn sql_error(e: rusqlite::Error) -> Error {
     let message = match &e {
         rusqlite::Error::SqliteFailure(code, Some(message))
             if code.code == rusqlite::ErrorCode::ConstraintViolation =>

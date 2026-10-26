@@ -2603,10 +2603,16 @@ dependencies = [
 name = "symdesk-ingest"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
+ "quick-xml",
+ "regex",
  "rusqlite",
+ "scraper",
  "serde",
  "serde_json",
  "symaira-core-sqlite",
+ "symdesk-core",
+ "zip",
 ]
 
 [[package]]

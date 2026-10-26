@@ -30,6 +30,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"contacts erase", []string{"test", "-count=1", "./internal/contacts/internal/service/security", "-run", "^TestPortContactsEraseContract$"}, []string{"testdata/port/contacts/erase.json"}, false},
 	{"contacts relationships", []string{"test", "-count=1", "./internal/contacts/internal/service/relationship", "-run", "^TestPortContactsRelationshipContract$"}, []string{"testdata/port/contacts/relationship.json"}, false},
 	{"contacts CRUD", []string{"test", "-count=1", "./internal/contacts/internal/service/contact", "-run", "^TestPortContactsCRUDContract$"}, []string{"testdata/port/contacts/crud.json"}, false},
+	{"ingest extraction", []string{"test", "-count=1", "./internal/ingest/internal/extract", "-run", "^TestPortIngestExtractionContract$"}, []string{"testdata/port/ingest/extraction.json"}, false},
 	{"contacts vCard", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsVCardContract$"}, []string{"testdata/port/contacts/vcard.json"}, false},
 	{"contacts CSV", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsCSVContract$"}, []string{"testdata/port/contacts/csv.json"}, false},
 	{"contacts import", []string{"test", "-count=1", "./internal/contacts/internal/service/importer", "-run", "^TestPortContactsImportContract$"}, []string{"testdata/port/contacts/import.json"}, false},

@@ -1,0 +1,1046 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "indexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ntype: document\ndocument_type: invoice\ndocument_date: '2026-01-02'\nperson: Ada\nstatus: open\ndue_date: '2026-02-01'\nconfidence: 40\ncorrespondent: Bank\nasn: 7\ntags: [finance, tax]\n---\nInvoice body\n",
+        "ignored.md": "---\ntitle: Ignored\nreview_ignored: true\n---\nIgnored body\n",
+        "nested/beta.md": "---\ntitle: Beta\ntype: document\ndocument_type: contract\ndocument_date: '2025-02-03'\nconfidence: 99\nstatus: paid\n---\nContract\n",
+        "note.md": "---\ntitle: Note\n---\nNote body\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--json",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=json",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "yaml",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=yaml",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "text",
+            "docs",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=text",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "invalid"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid --output value \"invalid\" (want text|json|yaml)\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n"
+        },
+        {
+          "args": [
+            "--json",
+            "docs",
+            "list",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --unknown\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--unknown",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "-z"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown shorthand flag: 'z' in -z\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --output\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--vault"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --vault\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--json",
+            "--output"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --output\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "text",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "yaml",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--json",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--json",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--output",
+            "text",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--",
+            "--unknown"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:alpha.md Title:Alpha \u003c\u0026\u003e Type:document DocumentDate:2026-01-02 Person:Ada Status:open DueDate:2026-02-01 Confidence:40 Correspondent:Bank DocumentType:invoice ASN:7 Tags:[finance tax]} {Path:ignored.md Title:Ignored Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]} {Path:nested/beta.md Title:Beta Type:document DocumentDate:2025-02-03 Person: Status:paid DueDate: Confidence:99 Correspondent: DocumentType:contract ASN:0 Tags:[]} {Path:note.md Title:Note Type:note DocumentDate: Person: Status: DueDate: Confidence:0 Correspondent: DocumentType: ASN:0 Tags:[]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "docs",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--json",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "docs",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=json",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "yaml",
+            "docs",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=yaml",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "yaml"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--output",
+            "text",
+            "docs",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "--output=text",
+            "review"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "text"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "invalid"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid --output value \"invalid\" (want text|json|yaml)\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n"
+        },
+        {
+          "args": [
+            "--json",
+            "docs",
+            "review",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --unknown\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--unknown",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "-z"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown shorthand flag: 'z' in -z\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --output\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--vault"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --vault\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json",
+            "--output"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --output\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "text",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "yaml",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--output",
+            "text",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--",
+            "--unknown"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Path:$ROOT/vault/alpha.md Title:Alpha \u003c\u0026\u003e Status:open DocumentType:invoice DocumentDate:2026-01-02 Confidence:40 Reasons:[confidence 40 \u003c 85]} {Path:$ROOT/vault/note.md Title:Note Status: DocumentType: DocumentDate: Confidence:0 Reasons:[confidence 0 \u003c 85 missing document_type missing document_date]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--type",
+            "invoice",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--file-type",
+            "document",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--status",
+            "open",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--person",
+            "Ada",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--correspondent",
+            "Bank",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--year",
+            "2026",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--due-before",
+            "2026-02-02",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--min-confidence",
+            "50",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--max-confidence",
+            "50",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--asn",
+            "7",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--asn",
+            "0",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid --asn: must be a positive integer\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--asn",
+            "-1",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid --asn: must be a positive integer\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--asn",
+            "2147483648",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--asn",
+            "bad",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"bad\" for \"--asn\" flag: strconv.ParseInt: parsing \"bad\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--min-confidence",
+            "08",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"08\" for \"--min-confidence\" flag: strconv.ParseInt: parsing \"08\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--max-confidence",
+            "0x32",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--year",
+            "1900",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--type",
+            "invoice",
+            "--person",
+            "Ada",
+            "--min-confidence",
+            "1",
+            "--max-confidence",
+            "50",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--status",
+            "paid",
+            "--status",
+            "open",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "1",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 1\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "100",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 100\"]},{\"path\":\"$ROOT/vault/nested/beta.md\",\"title\":\"Beta\",\"status\":\"paid\",\"document_type\":\"contract\",\"document_date\":\"2025-02-03\",\"confidence\":99,\"reasons\":[\"confidence 99 \\u003c 100\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 100\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "40",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 40\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "0",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "-1",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "0x32",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 50\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 50\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--threshold",
+            "bad",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"bad\" for \"--threshold\" flag: strconv.ParseInt: parsing \"bad\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "docs",
+            "list",
+            "--vault",
+            "$ROOT/vault",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"type\":\"document\",\"document_date\":\"2026-01-02\",\"person\":\"Ada\",\"status\":\"open\",\"due_date\":\"2026-02-01\",\"confidence\":40,\"correspondent\":\"Bank\",\"document_type\":\"invoice\",\"asn\":7,\"tags\":[\"finance\",\"tax\"]},{\"path\":\"ignored.md\",\"title\":\"Ignored\",\"type\":\"note\"},{\"path\":\"nested/beta.md\",\"title\":\"Beta\",\"type\":\"document\",\"document_date\":\"2025-02-03\",\"status\":\"paid\",\"confidence\":99,\"document_type\":\"contract\"},{\"path\":\"note.md\",\"title\":\"Note\",\"type\":\"note\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--vault=$ROOT/vault",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"path\":\"$ROOT/vault/alpha.md\",\"title\":\"Alpha \\u003c\\u0026\\u003e\",\"status\":\"open\",\"document_type\":\"invoice\",\"document_date\":\"2026-01-02\",\"confidence\":40,\"reasons\":[\"confidence 40 \\u003c 85\"]},{\"path\":\"$ROOT/vault/note.md\",\"title\":\"Note\",\"confidence\":0,\"reasons\":[\"confidence 0 \\u003c 85\",\"missing document_type\",\"missing document_date\"]}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "unindexed",
+      "files": {
+        "alpha.md": "---\ntitle: Alpha \u003c\u0026\u003e\ntype: document\ndocument_type: invoice\ndocument_date: '2026-01-02'\nperson: Ada\nstatus: open\ndue_date: '2026-02-01'\nconfidence: 40\ncorrespondent: Bank\nasn: 7\ntags: [finance, tax]\n---\nInvoice body\n",
+        "ignored.md": "---\ntitle: Ignored\nreview_ignored: true\n---\nIgnored body\n",
+        "nested/beta.md": "---\ntitle: Beta\ntype: document\ndocument_type: contract\ndocument_date: '2025-02-03'\nconfidence: 99\nstatus: paid\n---\nContract\n",
+        "note.md": "---\ntitle: Note\n---\nNote body\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "docs",
+            "list",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "missing-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "docs",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "bad-vault",
+      "no_vault": true,
+      "unix_only": true,
+      "steps": [
+        {
+          "args": [
+            "docs",
+            "list",
+            "--vault",
+            "$ROOT/nope",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/nope: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "docs",
+            "review",
+            "--vault",
+            "$ROOT/nope"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/nope: no such file or directory\n"
+        }
+      ]
+    }
+  ]
+}

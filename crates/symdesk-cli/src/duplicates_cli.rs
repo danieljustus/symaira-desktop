@@ -163,7 +163,7 @@ fn parse_threshold(command: &ArgMatches) -> Result<Option<i64>, String> {
 
 /// Go's `strconv.ParseInt(s, 0, 64)` as used by pflag's `Int` flag; the error
 /// is pflag's rewritten reason text.
-fn parse_go_int(raw: &str) -> Result<i64, &'static str> {
+pub(crate) fn parse_go_int(raw: &str) -> Result<i64, &'static str> {
     const SYNTAX: &str = "invalid syntax";
     const RANGE: &str = "value out of range";
     let (negative, digits) = match raw.as_bytes().first() {

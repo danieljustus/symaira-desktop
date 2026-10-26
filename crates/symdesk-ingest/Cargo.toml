@@ -17,6 +17,12 @@ regex.workspace = true
 scraper = "0.29.0"
 quick-xml = "=0.38.3"
 zip = { version = "=6.0.0", default-features = false, features = ["deflate"] }
+sha2.workspace = true
+symdesk-vault.workspace = true
+noyalib.workspace = true
+time.workspace = true
+ureq = { version = "=3.4.1", default-features = false, features = ["rustls", "gzip"] }
+url = "=2.5.8"
 
 [dev-dependencies]
 base64.workspace = true

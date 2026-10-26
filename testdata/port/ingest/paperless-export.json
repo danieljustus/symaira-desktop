@@ -1,0 +1,396 @@
+{
+  "db_mode": "nil (filesystem-only export importer contract)",
+  "input_files": {
+    "export/first.PDF": "synthetic-pdf",
+    "export/manifest.json": "[\n {\"id\":1,\"title\":\"Invoice / α\",\"content\":\"OCR body\",\"tags\":[\"tax\",\"2024\"],\"checksum\":\"first\",\"correspondent\":\"Sender\",\"document_type\":\"Invoice\",\"created\":\"2024-02-03T04:05:06Z\",\"added\":\"2024-02-04\",\"modified\":\"2024-02-05\",\"original_file_name\":\"original.pdf\",\"archived_file_name\":\"first.PDF\",\"notes\":[{\"note\":\"Reviewed\",\"created\":\"2024-02-06\"}]},\n {\"id\":2,\"title\":\"\",\"archive_serial_number\":77,\"original_file_name\":\"missing.txt\",\"notes\":[]},\n {\"id\":3,\"title\":\"Odd:*? title...  \",\"checksum\":\"\",\"archived_file_name\":\"third.png\",\"tags\":[]}\n,{\"id\":4,\"title\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα\",\"checksum\":\"unicode-boundary\"}]",
+    "export/third.png": "synthetic-image"
+  },
+  "normalizations": [
+    "disposable root -\u003e $ROOT; paths -\u003e slash",
+    "top-level created wall clock -\u003e fixed UTC; hashes cover normalized bytes"
+  ],
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "importer.go": "c1d7b518739a01fcc08af2c178e600ea7c994f161a01748b6d2990e966a5ad87",
+    "manifest.go": "650fa255842ff3eb09e2f5c096987d6c3921794565a99786c6a560281273e4b2",
+    "port_contract_test.go": "c45cb1b65adbb273f32b0dbc6429ef5435b6c7a2d3f6691442dc2a29b6578333"
+  },
+  "steps": [
+    {
+      "error": "",
+      "files": {},
+      "op": "dry-run",
+      "summary": {
+        "created": 4,
+        "errors": 0,
+        "results": [
+          {
+            "action": "created",
+            "note_path": "paperless/Paperless_1_Invoice _ α.md",
+            "paperless_id": 1,
+            "title": "Invoice / α"
+          },
+          {
+            "action": "created",
+            "asn": 77,
+            "note_path": "paperless/Paperless_2_doc_2.md",
+            "paperless_id": 2,
+            "title": ""
+          },
+          {
+            "action": "created",
+            "note_path": "paperless/Paperless_3_Odd_ title.md",
+            "paperless_id": 3,
+            "title": "Odd:*? title...  "
+          },
+          {
+            "action": "created",
+            "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+            "paperless_id": 4,
+            "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+          }
+        ],
+        "skipped": 0,
+        "total": 4,
+        "updated": 0
+      }
+    },
+    {
+      "error": "",
+      "files": {
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "paperless/Paperless_1_Invoice _ α.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "705f6352ad072e609dd72117543e16f751faa0174f3cbcfa0f73dfca42e05c75",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "import",
+      "summary": {
+        "created": 3,
+        "errors": 1,
+        "results": [
+          {
+            "action": "created",
+            "note_path": "paperless/Paperless_1_Invoice _ α.md",
+            "paperless_id": 1,
+            "title": "Invoice / α"
+          },
+          {
+            "action": "created",
+            "asn": 77,
+            "note_path": "paperless/Paperless_2_doc_2.md",
+            "paperless_id": 2,
+            "title": ""
+          },
+          {
+            "action": "created",
+            "note_path": "paperless/Paperless_3_Odd_ title.md",
+            "paperless_id": 3,
+            "title": "Odd:*? title...  "
+          },
+          {
+            "action": "error",
+            "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+            "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+            "paperless_id": 4,
+            "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+          }
+        ],
+        "skipped": 0,
+        "total": 4,
+        "updated": 0
+      }
+    },
+    {
+      "error": "",
+      "files": {
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "paperless/Paperless_1_Invoice _ α.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "705f6352ad072e609dd72117543e16f751faa0174f3cbcfa0f73dfca42e05c75",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "rerun",
+      "summary": {
+        "created": 0,
+        "errors": 1,
+        "results": [
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/paperless/Paperless_1_Invoice _ α.md",
+            "paperless_id": 1,
+            "title": "Invoice / α"
+          },
+          {
+            "action": "updated",
+            "asn": 77,
+            "note_path": "$ROOT/vault/paperless/Paperless_2_doc_2.md",
+            "paperless_id": 2,
+            "title": ""
+          },
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/paperless/Paperless_3_Odd_ title.md",
+            "paperless_id": 3,
+            "title": "Odd:*? title...  "
+          },
+          {
+            "action": "error",
+            "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+            "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+            "paperless_id": 4,
+            "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+          }
+        ],
+        "skipped": 0,
+        "total": 4,
+        "updated": 3
+      }
+    },
+    {
+      "files": {
+        "Moved.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "2650172489a96632d1fe233ef655f166f761d39c209f6df173a3412ad0ed856f",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "move"
+    },
+    {
+      "error": "",
+      "files": {
+        "Moved.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "2650172489a96632d1fe233ef655f166f761d39c209f6df173a3412ad0ed856f",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "rerun",
+      "summary": {
+        "created": 0,
+        "errors": 1,
+        "results": [
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/Moved.md",
+            "paperless_id": 1,
+            "title": "Invoice / α"
+          },
+          {
+            "action": "updated",
+            "asn": 77,
+            "note_path": "$ROOT/vault/paperless/Paperless_2_doc_2.md",
+            "paperless_id": 2,
+            "title": ""
+          },
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/paperless/Paperless_3_Odd_ title.md",
+            "paperless_id": 3,
+            "title": "Odd:*? title...  "
+          },
+          {
+            "action": "error",
+            "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+            "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+            "paperless_id": 4,
+            "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+          }
+        ],
+        "skipped": 0,
+        "total": 4,
+        "updated": 3
+      }
+    },
+    {
+      "files": {
+        "Moved.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "2650172489a96632d1fe233ef655f166f761d39c209f6df173a3412ad0ed856f",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "collision.md": {
+          "body": "---\nasn: 77\n---\n\nUser document\n",
+          "path_sha256": "ecc023c77f5d0d958aa6525999405071a084cd1aaf81c08c73b1b4450a8674ca",
+          "sha256": "ce781e76310eb9ec4efd158de46903f4071b9d36d498ff5eb39ce3fbfa5ca068"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "collision"
+    },
+    {
+      "error": "",
+      "files": {
+        "Moved.md": {
+          "body": "---\ntitle: \"Invoice / α\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags:\n  - \"tax\"\n  - \"2024\"\nstatus: \"open\"\nsource_identifier: \"paperless:1:first\"\nimported_from: \"paperless\"\ncorrespondent: \"Sender\"\ndocument_type: \"Invoice\"\ndocument_date: \"2024-02-03\"\narchive_path: \"archive/paperless/first.PDF\"\npaperless:\n  id: 1\n  checksum: \"first\"\n  added: \"2024-02-04\"\n  modified: \"2024-02-05\"\n  original_file_name: \"original.pdf\"\nconfidence: 100\nmime: \"application/pdf\"\n---\n\nOCR body\n\n[[archive/paperless/first.PDF]]\n\n## Paperless Notes\n\n- Reviewed\n  (added: 2024-02-06)\n",
+          "path_sha256": "2650172489a96632d1fe233ef655f166f761d39c209f6df173a3412ad0ed856f",
+          "sha256": "87ad556b4c1b8e388d75b036751f72127a06ac766e6ee187c291f55589378217"
+        },
+        "archive/paperless/first.PDF": {
+          "body": "synthetic-pdf",
+          "path_sha256": "bd5be04ec289e5031519eec3cbac9a657c7fb3eb714af35e98c6193a88a15d0a",
+          "sha256": "1759310ab11053297113c688c781bd6829682f06d4e0b6d32e4be1c83d8ff5db"
+        },
+        "archive/paperless/third.png": {
+          "body": "synthetic-image",
+          "path_sha256": "61d33cd9b5c08a6436e7d382e03df3af88909e199dd77fa9e0fcc681c5166ff6",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "collision.md": {
+          "body": "---\nasn: 77\n---\n\nUser document\n",
+          "path_sha256": "ecc023c77f5d0d958aa6525999405071a084cd1aaf81c08c73b1b4450a8674ca",
+          "sha256": "ce781e76310eb9ec4efd158de46903f4071b9d36d498ff5eb39ce3fbfa5ca068"
+        },
+        "paperless/Paperless_2_doc_2.md": {
+          "body": "---\ntitle: \"\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:2:\"\nimported_from: \"paperless\"\nasn: 77\narchive_path: \"archive/paperless/missing.txt\"\npaperless:\n  id: 2\n  original_file_name: \"missing.txt\"\nconfidence: 100\n---\n\n[[archive/paperless/missing.txt]]\n",
+          "path_sha256": "8c4b4a6a725c6385ae835712d55c27cb37d788c9f7625adcb5ef9e948efd8798",
+          "sha256": "ad47c8f18abdb540a1da5e7a1c7d0e721e2dd29bdc6fb204e7d475ca4f3160d1"
+        },
+        "paperless/Paperless_3_Odd_ title.md": {
+          "body": "---\ntitle: \"Odd:*? title...  \"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:3:\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/third.png\"\npaperless:\n  id: 3\n  checksum: \"\"\nconfidence: 100\nmime: \"image/png\"\n---\n\n[[archive/paperless/third.png]]\n",
+          "path_sha256": "180f2d5b84b0830a65be282560c0ac1fbc9f63ec442cca192daef47baf6f599b",
+          "sha256": "ade57ee948d4ae6e7f1dd553c39533ccb382f64e714225b0f54157923eb90e25"
+        }
+      },
+      "op": "rerun",
+      "summary": {
+        "created": 0,
+        "errors": 2,
+        "results": [
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/Moved.md",
+            "paperless_id": 1,
+            "title": "Invoice / α"
+          },
+          {
+            "action": "error",
+            "error": "ASN 77 is already assigned to another note",
+            "paperless_id": 2,
+            "title": ""
+          },
+          {
+            "action": "updated",
+            "note_path": "$ROOT/vault/paperless/Paperless_3_Odd_ title.md",
+            "paperless_id": 3,
+            "title": "Odd:*? title...  "
+          },
+          {
+            "action": "error",
+            "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+            "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+            "paperless_id": 4,
+            "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+          }
+        ],
+        "skipped": 0,
+        "total": 4,
+        "updated": 2
+      }
+    }
+  ]
+}

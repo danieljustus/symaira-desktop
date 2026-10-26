@@ -1,3 +1,43 @@
+.PHONY: paperless-mapping-differential paperless-mapping-fixtures-generate
+paperless-mapping-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_mapping_contracts --locked
+
+paperless-mapping-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+
+.PHONY: paperless-state-differential paperless-state-fixtures-generate
+paperless-state-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_state_contracts --locked
+
+paperless-state-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
+
+.PHONY: paperless-export-differential paperless-export-fixtures-generate
+paperless-export-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_export_contracts --locked
+
+paperless-export-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExportContract$$'
+
+.PHONY: paperless-http-differential paperless-http-fixtures-generate
+paperless-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_http_contracts --locked
+
+paperless-http-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+
+.PHONY: notion-import-differential notion-import-fixtures-generate
+notion-import-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test notion_contracts --locked
+
+notion-import-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+
 .PHONY: ingest-queue-differential ingest-queue-fixtures-generate
 INGEST_GO ?= go
 ingest-queue-differential:

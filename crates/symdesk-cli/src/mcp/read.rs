@@ -1,4 +1,9 @@
 //! Read-only notebook/property tools; storage semantics live in the libraries.
+mod extra;
+mod graph;
+mod meetings;
+mod results;
+
 use serde::Serialize;
 use serde_json::{Value, json};
 use symdesk_vault::{
@@ -8,10 +13,19 @@ use symdesk_vault::{
 use super::{ServerConfig, go_string_fields, open_sidecar};
 
 pub(super) fn supports(name: &str) -> bool {
-    matches!(
-        name,
-        "desk_props" | "desk_backlinks" | "notebook_list" | "notebook_get" | "notebook_ask"
-    )
+    extra::supports(name)
+        || matches!(
+            name,
+            "desk_props"
+                | "desk_backlinks"
+                | "notebook_list"
+                | "notebook_get"
+                | "notebook_ask"
+                | "desk_diagram"
+                | "meeting_list"
+                | "meeting_get"
+                | "desk_read_result"
+        )
 }
 
 fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
@@ -20,7 +34,36 @@ fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
 }
 
 pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Result<Value, String> {
+    if extra::supports(name) {
+        return extra::call(name, raw, config);
+    }
     match name {
+        "desk_diagram" => graph::call(config),
+        "meeting_list" => {
+            let (root, _sidecar) = open_sidecar(config)?;
+            meetings::list(&root)
+        }
+        "meeting_get" => {
+            let args =
+                go_string_fields(raw, &["path"], r#"struct { Path string "json:\"path\"" }"#)?;
+            if args[0].is_empty() {
+                return Err("path is required".into());
+            }
+            let (root, _sidecar) = open_sidecar(config)?;
+            meetings::show(&root, &args[0])
+        }
+        "desk_read_result" => {
+            let args = go_string_fields(
+                raw,
+                &["handle"],
+                r#"struct { Handle string "json:\"handle\"" }"#,
+            )?;
+            if args[0].is_empty() {
+                return Err("handle is required".into());
+            }
+            let (root, _sidecar) = open_sidecar(config)?;
+            results::read(&root, &args[0])
+        }
         "desk_props" => {
             let args =
                 go_string_fields(raw, &["file"], r#"struct { File string "json:\"file\"" }"#)?;

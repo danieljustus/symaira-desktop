@@ -24,6 +24,7 @@ use tokio::time::Duration;
 
 #[path = "index_status.rs"]
 mod status;
+pub(crate) use status::go_time_text;
 #[path = "index_status_process.rs"]
 mod status_process;
 

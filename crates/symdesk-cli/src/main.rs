@@ -18,6 +18,7 @@ mod links_cli;
 mod mcp;
 mod recipe;
 mod relations_cli;
+mod restore_cli;
 mod retention;
 mod search_cli;
 mod source_cli;
@@ -215,6 +216,12 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("history", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("restore", command)) => restore_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -568,6 +575,7 @@ fn cli() -> Command {
         )
         .subcommand(history_cli::cli())
         .subcommand(history_cli::trash_cli())
+        .subcommand(restore_cli::cli())
         .subcommand(retention::cli())
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())

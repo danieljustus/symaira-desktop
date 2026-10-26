@@ -32,6 +32,7 @@ pub fn cli() -> Command {
 }
 pub fn trash_cli() -> Command {
     Command::new("trash")
+        .subcommand(Command::new("restore").arg(positions()))
         .subcommand(Command::new("list").arg(positions()))
         .subcommand(
             Command::new("purge")
@@ -90,6 +91,9 @@ fn date(timestamp: time::OffsetDateTime) -> String {
 }
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool, trash: bool) -> ExitCode {
     let (operation, command) = command.subcommand().unwrap_or(("list", command));
+    if trash && operation == "restore" {
+        return crate::restore_cli::run(command, vault, output_json, true);
+    }
     if !trash && operation == "tasks" {
         return match exact(command, 0, "symdesk history tasks") {
             Ok(_) => crate::history::run_tasks(vault, output_json),

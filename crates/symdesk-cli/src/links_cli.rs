@@ -27,7 +27,7 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
         family = token.to_owned();
         selected = matches!(
             token,
-            "backlinks" | "graph" | "history" | "trash" | "conflict"
+            "backlinks" | "graph" | "history" | "trash" | "conflict" | "restore"
         );
         if token == "relations" {
             index += 1;
@@ -134,7 +134,9 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
                     ));
                 }
             }
-        } else if family == "conflict" && flag == "--action" {
+        } else if (family == "conflict" && flag == "--action")
+            || (family == "restore" && flag == "--at")
+        {
             normalized.push(args[index].clone());
             if !token.contains('=') {
                 index += 1;

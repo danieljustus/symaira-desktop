@@ -28,6 +28,7 @@ type fixtureCheckTarget struct {
 var fixtureTestTargets = []fixtureCheckTarget{
 	{"history read and trash retention CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryReadProcessContract$"}, []string{"testdata/port/cli/history-read-process.json"}, false},
 	{"conflict CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortConflictProcessContract$"}, []string{"testdata/port/cli/conflict-process.json"}, false},
+	{"snapshot and trash restore CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRestoreProcessContract$"}, []string{"testdata/port/cli/restore-process.json"}, false},
 	{"graph CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortGraphProcessContract$"}, []string{"testdata/port/cli/graph-process.json"}, false},
 	{"docs read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDocsReadProcessContract$"}, []string{"testdata/port/cli/docs-read-process.json"}, false},
 	{"views read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortViewsProcessContract$"}, []string{"testdata/port/cli/views-process.json"}, false},

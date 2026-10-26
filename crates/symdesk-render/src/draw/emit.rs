@@ -101,10 +101,13 @@ fn points(out: &mut String, pts: &Option<Vec<Point>>) {
         .join(" ");
     attr(out, "points", &text);
 }
-/// Go measure.SegmentsToSVGPath (including trailing spaces).
+/// Go measure.SegmentsToSVGPath: one separator between segments, no trimming.
 pub fn segments_to_svg_path(segments: &[PathSegment]) -> String {
     let mut out = String::new();
-    for s in segments {
+    for (index, s) in segments.iter().enumerate() {
+        if index > 0 {
+            out.push(' ');
+        }
         out.push_str(&s.op);
         for (i, p) in s.args.iter().enumerate() {
             if i > 0 {
@@ -114,9 +117,8 @@ pub fn segments_to_svg_path(segments: &[PathSegment]) -> String {
             out.push(' ');
             out.push_str(&number(p.y));
         }
-        out.push(' ');
     }
-    out.trim_end().to_owned()
+    out
 }
 fn link(p: &Primitive) -> &str {
     match p {

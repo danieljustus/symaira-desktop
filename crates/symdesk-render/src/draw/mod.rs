@@ -5,7 +5,9 @@
 //! layout and emit depend on, the `internal/draw/theme` registry and the
 //! `internal/draw/scene` graph (primitives, bounds, JSON) and the
 //! `internal/draw/layout` engines (layered graph layout, closed-form sequence
-//! layout). Builder lowering and SVG/PDF output are not part of this module.
+//! layout). The builder lowers non-chart diagrams into scenes; the SVG
+//! emitter serializes text elements (font outlines and raster/PDF output remain
+//! outside this port).
 
 mod gotext;
 #[rustfmt::skip]

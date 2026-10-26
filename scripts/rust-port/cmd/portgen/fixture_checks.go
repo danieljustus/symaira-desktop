@@ -26,6 +26,7 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"Paperless target state", []string{"test", "-count=1", "./internal/ingest/internal/store", "-run", "^TestPortPaperlessStateContract$", "-args", "-port-paperless-state"}, []string{"testdata/port/ingest/paperless-state.json"}, false},
 	{"Paperless export", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportContract$"}, []string{"testdata/port/ingest/paperless-export.json"}, false},
 	{"Paperless HTTP", []string{"test", "-count=1", "./internal/ingest/internal/paperless", "-run", "^TestPortPaperlessHTTPContract$"}, []string{"testdata/port/ingest/paperless-http.json"}, false},
 	{"Notion import", []string{"test", "-count=1", "./internal/ingest/internal/notionimport", "-run", "^TestPortNotionContract$"}, []string{"testdata/port/ingest/notion.json"}, false},

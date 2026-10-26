@@ -11,6 +11,8 @@ mod migrations;
 pub mod notion;
 pub mod paperless;
 pub mod paperless_export;
+mod paperless_state;
+pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};
 mod sql;
 pub use document::{Document, DocumentPaths};
 pub use migrations::MIGRATIONS;

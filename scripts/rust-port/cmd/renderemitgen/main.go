@@ -27,6 +27,7 @@ type testCase struct {
 type corpus struct {
 	SchemaVersion int              `json:"schema_version"`
 	Oracle        inventory.Oracle `json:"oracle"`
+	FMAWithheld   int              `json:"fma_withheld"`
 	ChartResidual int              `json:"chart_residual"`
 	Cases         []testCase       `json:"cases"`
 }
@@ -68,8 +69,9 @@ func run() error {
 		if err != nil {
 			return nil
 		} // Parser errors belong to the DSL fixture.
-		if d.Kind == ir.KindChart || d.Chart != nil {
-			f.ChartResidual++
+
+		if chartFMAAmbiguous(d) {
+			f.FMAWithheld++
 			return nil
 		}
 		c := testCase{ID: id, Mode: mode, Input: input}
@@ -110,6 +112,11 @@ func run() error {
 	}
 	for i, input := range []string{`{}`, `{"kind":"graph","nodes":[{"id":"a","shape":"invalid"}]}`, `{"kind":"sequence"}`, `{"kind":"graph","nodes":[{"id":"a","label":"<&\"'\nUnicode 日本語","x":10,"y":20,"note":"https://example.invalid/?a=1&b=2"}]}`} {
 		if err = add(fmt.Sprintf("hand-%d", i), "ir", input); err != nil {
+			return err
+		}
+	}
+	for i, input := range chartInputs() {
+		if err = add(fmt.Sprintf("chart-%d", i), "ir", input); err != nil {
 			return err
 		}
 	}

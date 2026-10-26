@@ -10,8 +10,9 @@ fn go_scene_lowering_svg_contract() {
         serde_json::from_str(include_str!("../../../testdata/port/render/emit.json")).unwrap();
     let cases = fixture["cases"].as_array().unwrap();
     assert_eq!(fixture["schema_version"], 1);
-    assert_eq!(fixture["chart_residual"], 15);
-    assert_eq!(cases.len(), 1290);
+    assert_eq!(fixture["chart_residual"], 0);
+    assert_eq!(fixture["fma_withheld"], 3);
+    assert_eq!(cases.len(), 1350);
     for c in cases {
         let id = c["id"].as_str().unwrap();
         let input = c["input"].as_str().unwrap();
@@ -54,15 +55,12 @@ fn svg_nil_scene_contract() {
     );
 }
 #[test]
-fn chart_lowering_residual_is_explicit() {
+fn chart_lowering_is_accepted() {
     let d = parse_source(
         r#"{"kind":"chart","chart":{"type":"bar","series":[{"name":"x","data":[{"x":1,"y":2}]}]}}"#,
     )
     .unwrap();
-    assert_eq!(
-        build_scene(&d).unwrap_err(),
-        "chart scene lowering is not ported"
-    );
+    assert!(!build_scene(&d).unwrap().primitives.is_empty());
 }
 
 fn direct_scene(background: &str) -> symdesk_render::draw::scene::Scene {

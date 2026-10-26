@@ -21,6 +21,8 @@ const (
 )
 
 var fixturePaths = []string{
+	"testdata/port/contacts/csv.json",
+	"testdata/port/contacts/import.json",
 	"testdata/port/contacts/schema.json",
 	"testdata/port/cli/symdesk-command-tree.json",
 	"testdata/port/cli/config-vault-selection.json",

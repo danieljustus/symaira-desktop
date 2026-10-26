@@ -1,6 +1,9 @@
 //! The absorbed SymRelate contact store. Go remains the production oracle.
 #![deny(unsafe_code)]
 
+pub mod import;
+pub mod pipeline;
+
 use rusqlite::Connection;
 use std::path::Path;
 use std::time::Duration;

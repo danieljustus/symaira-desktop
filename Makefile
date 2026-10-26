@@ -214,6 +214,11 @@ core-differential: core-fixtures-check
 # acceptance/error text, Eval over field maps and Disambiguate from the
 # production internal/templatepath package; Rust replays all of it.
 CONTACTS_GO ?= go
+.PHONY: contacts-import-differential
+contacts-import-differential:
+	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/importer ./internal/contacts/internal/service/importer -run '^TestPortContacts(CSV|Import)Contract$$'
+	$(CARGO) test -p symdesk-contacts --locked --test csv_contracts --test import_contracts
+
 .PHONY: contacts-schema-differential
 contacts-schema-differential:
 	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/storage/sqlite -run '^TestPortContactsSchemaContract$$'

@@ -520,7 +520,7 @@ pub enum Primitive {
     Group(GroupElement),
 }
 
-fn default_measurer() -> &'static Measurer {
+pub(super) fn default_measurer() -> &'static Measurer {
     static DEFAULT: OnceLock<Measurer> = OnceLock::new();
     DEFAULT.get_or_init(|| Measurer::new().expect("embedded Inter fonts must load"))
 }

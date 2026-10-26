@@ -143,6 +143,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"render DSL parse", []string{"run", "./scripts/rust-port/cmd/renderdslgen", "--check"}, []string{"testdata/port/render/dsl-parse.json"}, false},
 	{"render text measure", []string{"run", "./scripts/rust-port/cmd/rendermeasuregen", "--check"}, []string{"testdata/port/render/text-measure.json"}, false},
 	{"render scene bounds", []string{"run", "./scripts/rust-port/cmd/renderscenegen", "--check"}, []string{"testdata/port/render/scene-bounds.json"}, false},
+	{"render emit", []string{"run", "./scripts/rust-port/cmd/renderemitgen", "--check"}, []string{"testdata/port/render/emit.json"}, false},
 	{"render layout", []string{"run", "./scripts/rust-port/cmd/renderlayoutgen", "--check"}, []string{"testdata/port/render/layout.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},

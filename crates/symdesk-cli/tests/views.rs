@@ -180,7 +180,7 @@ fn views_match_go_process_contract() {
     let mut executed_cases = 0;
     let mut executed_steps = 0;
     for case in &fixture.cases {
-        if skipped(case, &fs_class) {
+        if skipped(case, fs_class) {
             continue;
         }
         executed_cases += 1;
@@ -244,14 +244,14 @@ fn views_match_go_process_contract() {
     let expected_steps: usize = fixture
         .cases
         .iter()
-        .filter(|case| !skipped(case, &fs_class))
+        .filter(|case| !skipped(case, fs_class))
         .map(|case| case.steps.len())
         .sum();
     assert_eq!(executed_steps, expected_steps, "every fixture step ran");
     let expected_cases = fixture
         .cases
         .iter()
-        .filter(|case| !skipped(case, &fs_class))
+        .filter(|case| !skipped(case, fs_class))
         .count();
     assert_eq!(executed_cases, expected_cases, "every fixture case ran");
     fs::remove_dir_all(base).expect("remove only this test's temporary directory");

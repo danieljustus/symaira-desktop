@@ -383,7 +383,7 @@ fn encode(value: Value) -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
-fn sort_keys(value: Value) -> Value {
+pub(crate) fn sort_keys(value: Value) -> Value {
     match value {
         Value::Object(map) => {
             let mut entries: Vec<_> = map.into_iter().collect();

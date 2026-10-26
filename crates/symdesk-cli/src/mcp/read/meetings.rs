@@ -144,7 +144,10 @@ pub(super) fn show(root: &Path, requested: &str) -> Result<serde_json::Value, St
         derived_from: &'a str,
         derived: bool,
     }
-    let mut frontmatter = serde_json::to_value(&doc.frontmatter).map_err(|e| e.to_string())?;
+    // Go decodes frontmatter into map[string]any, which encodes sorted keys.
+    let mut frontmatter = crate::config_cli::sort_keys(
+        serde_json::to_value(&doc.frontmatter).map_err(|e| e.to_string())?,
+    );
     for (key, stamp) in &doc.yaml_timestamps {
         let parsed =
             time::OffsetDateTime::parse(stamp, &time::format_description::well_known::Rfc3339)

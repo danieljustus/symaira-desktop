@@ -139,7 +139,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
                 &title,
                 &format!("status set to {status}"),
             );
-            Ok(json!({"status":"updated", "file":file, "new_status":status}))
+            Ok(json!({"file":file, "new_status":status, "status":"updated"}))
         }
         "notebook_create" => {
             let args = go_string_fields(
@@ -199,7 +199,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
             let filename = path.rsplit('/').next().unwrap_or(&path);
             let _ = append_activity(&root, "asset_added", &path, &args[1], "stored asset");
             Ok(
-                json!({"path":path,"markdown_link":format!("![{filename}]({})",path.replace(' ',"%20"))}),
+                json!({"markdown_link":format!("![{filename}]({})",path.replace(' ',"%20")),"path":path}),
             )
         }
         "desk_undo_task" => {
@@ -231,7 +231,7 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
                 .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
                 .is_none_or(|value| value.get("skipped").is_none_or(Value::is_null));
             Ok(
-                json!({"status":"undone", "task_id":checkpoint.task_id,"restored":checkpoint.files.len(),"deleted":checkpoint.new_files.len(),"skipped":if checkpoint.skipped.is_empty() && skipped_was_null {Value::Null} else {json!(checkpoint.skipped)},"partial":checkpoint.partial()}),
+                json!({"deleted":checkpoint.new_files.len(),"partial":checkpoint.partial(),"restored":checkpoint.files.len(),"skipped":if checkpoint.skipped.is_empty() && skipped_was_null {Value::Null} else {json!(checkpoint.skipped)},"status":"undone","task_id":checkpoint.task_id}),
             )
         }
         _ => Err(format!("Unknown tool: {name}")),

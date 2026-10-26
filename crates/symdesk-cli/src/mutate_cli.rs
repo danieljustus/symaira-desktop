@@ -202,7 +202,7 @@ fn execute(
         }
         if name == "asn" {
             let n = assign_asn(&root, &mut db, &a[0], &a[1])?;
-            return Ok(json!({"status":"updated","file":a[0],"asn":n}));
+            return Ok(json!({"asn":n,"file":a[0],"status":"updated"}));
         }
         let (files, value) = batch.unwrap();
         let mut results = Vec::new();
@@ -216,7 +216,7 @@ fn execute(
                 }
                 Err(e) => {
                     failed += 1;
-                    results.push(json!({"file":file,"status":"error","error":e}));
+                    results.push(json!({"error":e,"file":file,"status":"error"}));
                 }
             }
         }
@@ -228,7 +228,7 @@ fn execute(
             ));
         }
         Ok(
-            json!({"status":if failed==0 {"updated"} else if updated==0 {"failed"} else {"partial"},"results":results,"updated":updated,"failed":failed}),
+            json!({"failed":failed,"results":results,"status":if failed==0 {"updated"} else if updated==0 {"failed"} else {"partial"},"updated":updated}),
         )
     })();
     if let Err(e) = db.close() {
@@ -341,7 +341,7 @@ fn note_execute(
             db.delete_document(&old.to_string_lossy())
                 .map_err(|e| e.to_string())?;
             reindex(db, &new)?;
-            Ok(json!({"status":"moved","from":a[0],"to":a[1]}))
+            Ok(json!({"from":a[0],"status":"moved","to":a[1]}))
         }
         "delete" => {
             let path = secure_path(root, &a[0]).map_err(|e| e.to_string())?;
@@ -355,7 +355,7 @@ fn note_execute(
             db.delete_document(&path.to_string_lossy())
                 .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
             let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
-            Ok(json!({"status":"trashed","file":entry.original_path,"trash_name":entry.name}))
+            Ok(json!({"file":entry.original_path,"status":"trashed","trash_name":entry.name}))
         }
         "daily" => {
             let now = time::OffsetDateTime::now_utc();
@@ -373,7 +373,7 @@ fn note_execute(
             if !path.exists() {
                 new_note(root, db, &date, "", "daily")?;
             }
-            Ok(json!({"status":"ok","path":file}))
+            Ok(json!({"path":file,"status":"ok"}))
         }
         "new" => {
             let title = sub.get_one::<String>("title").unwrap();
@@ -388,7 +388,7 @@ fn note_execute(
                 a.first().map(String::as_str).unwrap_or(""),
                 template,
             )?;
-            Ok(json!({"status":"created","path":file}))
+            Ok(json!({"path":file,"status":"created"}))
         }
         _ => Ok(json!(null)),
     }

@@ -458,22 +458,48 @@ fn replay(scenario: &Value) -> usize {
 fn permissions_manager_matches_go() {
     let fixture = fixture();
     let scenarios = fixture["scenarios"].as_array().expect("scenarios");
+
+    // The corpus invariant is asserted against the complete fixture, before any
+    // platform filtering, so a platform that replays fewer scenarios cannot
+    // weaken it.
+    let total_operations: usize = scenarios
+        .iter()
+        .map(|scenario| scenario["ops"].as_array().map_or(0, Vec::len))
+        .sum();
+    assert!(
+        scenarios.len() >= 100,
+        "fixture must keep its scenario corpus"
+    );
+    assert!(
+        total_operations >= 600,
+        "fixture must keep its operation corpus"
+    );
+
+    let is_unix_only = |scenario: &Value| scenario["unix_only"].as_bool().unwrap_or(false);
+    let unix_only = scenarios.iter().filter(|s| is_unix_only(s)).count();
+    let expected_replayed = if cfg!(unix) {
+        scenarios.len()
+    } else {
+        scenarios.len() - unix_only
+    };
+
     let mut replayed = 0;
     let mut operations = 0;
     for scenario in scenarios {
-        if scenario["unix_only"].as_bool().unwrap_or(false) && !cfg!(unix) {
+        if is_unix_only(scenario) && !cfg!(unix) {
             continue;
         }
         operations += replay(scenario);
         replayed += 1;
     }
-    let expected_scenarios = scenarios
+    // Skipping is only allowed for the declared unix_only scenarios.
+    assert_eq!(replayed, expected_replayed, "replayed scenario count");
+    let expected_operations: usize = scenarios
         .iter()
-        .filter(|scenario| cfg!(unix) || !scenario["unix_only"].as_bool().unwrap_or(false))
-        .count();
-    assert_eq!(replayed, expected_scenarios);
-    assert!(replayed >= 100, "fixture must keep its scenario corpus");
-    assert!(operations >= 600, "fixture must keep its operation corpus");
+        .filter(|s| cfg!(unix) || !is_unix_only(s))
+        .map(|scenario| scenario["ops"].as_array().map_or(0, Vec::len))
+        .sum();
+    assert_eq!(operations, expected_operations, "replayed operation count");
 }
 
 #[test]

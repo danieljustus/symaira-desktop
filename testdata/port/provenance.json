@@ -145,6 +145,7 @@
     "testdata/port/vault/notebook-write.json": "ce40a8a19704e1c12fff3dcac42e887b288a3a8c7014804633fbf350ad82f028",
     "testdata/port/vault/notebook.json": "0b609b187fe3d5e243367c3fc02045863c65fa10bd9a72e5e82c3dbb7cb316a5",
     "testdata/port/vault/parse.json": "3fc59d4a760d02101a2610013538868dd31f9942cf87304b23181d165a239a50",
+    "testdata/port/vault/permissions.json": "e85f28571ca935339a46b8d768b14b93263548dcd0c88c92fe241bb650731092",
     "testdata/port/vault/resolution.json": "1f03d4e048298e48929af8eac9a9a364dd469c30b88ea3ccb2018af7688a478e",
     "testdata/port/vault/retention-rules.json": "a210d934afdc4901ca0ae5ec35f73a05e00ad4b38a98a7474be25be7a61b1071",
     "testdata/port/vault/retention-state.json": "236a9974bdcec92425a8e9dfa676e9d271833056a0aebe0c60e625f18d5099a0",

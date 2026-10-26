@@ -13,6 +13,7 @@ mod http;
 mod index_cli;
 mod links_cli;
 mod mcp;
+mod notebook_cli;
 mod recipe;
 mod relations_cli;
 mod retention;
@@ -189,6 +190,11 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
+        ),
+        Some(("notebook", command)) => notebook_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
         ),
         Some(("views", command)) => views_cli::run(
             command,
@@ -557,6 +563,7 @@ fn cli() -> Command {
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
         .subcommand(views_cli::cli())
+        .subcommand(notebook_cli::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())

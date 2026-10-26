@@ -37,6 +37,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/duplicates-process.json",
 	"testdata/port/cli/docs-read-process.json",
 	"testdata/port/cli/views-process.json",
+	"testdata/port/cli/notebook-read-process.json",
 	"testdata/port/cli/backlinks-process.json",
 	"testdata/port/cli/relations-inverse-process.json",
 	"testdata/port/cli/history-tasks.json",

@@ -22,7 +22,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -96,8 +98,16 @@ func main() {
 		fatal("verify selected fixture source: %v", identityErr)
 	}
 
+	if runtime.GOOS == "windows" && !*check {
+		fatal("regenerate the permissions fixture on a POSIX host: Windows records no permission bits")
+	}
 	doc := document{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: *commit, Release: *release}}
 	for _, spec := range scenarioSpecs() {
+		if spec.UnixOnly && runtime.GOOS == "windows" {
+			// Recorded POSIX path text and permission bits do not exist on
+			// Windows; the committed bytes are still verified below.
+			continue
+		}
 		doc.Scenarios = append(doc.Scenarios, run(spec))
 	}
 
@@ -111,8 +121,8 @@ func main() {
 		if err != nil {
 			fatal("read fixture: %v", err)
 		}
-		if !bytes.Equal(existing, content) {
-			fatal("permissions fixture drift; regenerate deliberately")
+		if err := compareFixtureForPlatform(existing, content, runtime.GOOS); err != nil {
+			fatal("permissions fixture drift; regenerate deliberately: %v", err)
 		}
 		fmt.Println("PASS permissions fixture")
 		return
@@ -128,6 +138,82 @@ func main() {
 		ops += len(s.Ops)
 	}
 	fmt.Printf("PASS permissions fixture generated (%d scenarios, %d operations)\n", len(doc.Scenarios), ops)
+}
+
+// compareFixtureForPlatform compares the committed fixture with a fresh
+// capture. POSIX hosts require identical bytes. Windows has no permission
+// bits (Go reports 0666/0777 and Chmod only toggles read-only), so there the
+// scenarios flagged UnixOnly are excluded from both sides and every recorded
+// mode is ignored; all remaining content (results, errors, final file bytes
+// and the file set) plus the oracle identity must still match exactly.
+func compareFixtureForPlatform(existing, generated []byte, goos string) error {
+	if goos != "windows" {
+		if !bytes.Equal(existing, generated) {
+			return fmt.Errorf("committed bytes differ from the fresh capture")
+		}
+		return nil
+	}
+	retained, err := decodeDocument(existing)
+	if err != nil {
+		return fmt.Errorf("decode committed fixture: %w", err)
+	}
+	fresh, err := decodeDocument(generated)
+	if err != nil {
+		return fmt.Errorf("decode fresh capture: %w", err)
+	}
+	var portable []scenario
+	for _, s := range retained.Scenarios {
+		if !s.UnixOnly {
+			portable = append(portable, s)
+		}
+	}
+	retained.Scenarios = portable
+	for i := range retained.Scenarios {
+		dropModes(&retained.Scenarios[i])
+	}
+	for i := range fresh.Scenarios {
+		dropModes(&fresh.Scenarios[i])
+	}
+	if !reflect.DeepEqual(retained, fresh) {
+		return fmt.Errorf("portable scenarios differ: %s", firstDifference(retained, fresh))
+	}
+	return nil
+}
+
+func decodeDocument(data []byte) (document, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	decoder.DisallowUnknownFields()
+	var doc document
+	if err := decoder.Decode(&doc); err != nil {
+		return document{}, err
+	}
+	return doc, nil
+}
+
+func dropModes(s *scenario) {
+	s.Final.ConfigDirMode = 0
+	files := make(map[string]file, len(s.Final.Files))
+	for name, f := range s.Final.Files {
+		f.Mode = 0
+		files[name] = f
+	}
+	s.Final.Files = files
+}
+
+func firstDifference(want, got document) string {
+	if want.Oracle != got.Oracle || want.SchemaVersion != got.SchemaVersion {
+		return "oracle or schema version"
+	}
+	if len(want.Scenarios) != len(got.Scenarios) {
+		return fmt.Sprintf("scenario count %d != %d", len(want.Scenarios), len(got.Scenarios))
+	}
+	for i := range want.Scenarios {
+		if !reflect.DeepEqual(want.Scenarios[i], got.Scenarios[i]) {
+			return "scenario " + want.Scenarios[i].ID
+		}
+	}
+	return "unknown"
 }
 
 func run(spec scenario) scenario {

@@ -390,7 +390,8 @@ fn replay(scenario: &Value) -> usize {
 
     let config_dir = root.join(setup["config_dir"].as_str().expect("config dir"));
     let mut compared = 0;
-    let mut config_mode = None;
+    #[cfg(unix)]
+    let mut config_mode: Option<u64> = None;
     match Manager::new(&config_dir) {
         Err(error) => {
             assert_eq!(
@@ -427,7 +428,6 @@ fn replay(scenario: &Value) -> usize {
             assert_eq!(config_mode, Some(expected), "{id}: config dir mode");
         }
     }
-    let _ = config_mode;
     unlock(&root);
     let mut files = BTreeMap::new();
     collect(&root, &root, &mut files);

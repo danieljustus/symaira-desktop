@@ -542,6 +542,7 @@ fn go_mkdir_all(path: &Path) -> Result<(), Failure> {
     {
         go_mkdir_all(parent)?;
     }
+    #[cfg_attr(not(unix), allow(unused_mut))]
     let mut builder = fs::DirBuilder::new();
     #[cfg(unix)]
     {

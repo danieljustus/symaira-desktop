@@ -244,7 +244,8 @@ fn delete_view_inner(
     Err(BaseWriteError::ViewNotFound)
 }
 
-fn get_base(root: &Path, reference: &str) -> Result<Base, BaseWriteError> {
+/// Resolves a base using the Go manager's path, ID and title precedence.
+pub fn get_base(root: &Path, reference: &str) -> Result<Base, BaseWriteError> {
     let reference = reference.trim();
     if reference.is_empty() {
         return Err(BaseWriteError::BaseNotFound);
@@ -275,7 +276,8 @@ fn get_base(root: &Path, reference: &str) -> Result<Base, BaseWriteError> {
     Err(BaseWriteError::BaseNotFound)
 }
 
-fn list_bases(root: &Path) -> Result<Vec<Base>, BaseWriteError> {
+/// Lists valid top-level base notes, ordered by their case-folded title.
+pub fn list_bases(root: &Path) -> Result<Vec<Base>, BaseWriteError> {
     let dir = secure_path(root, BASES_DIR)?;
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
@@ -306,7 +308,8 @@ fn list_bases(root: &Path) -> Result<Vec<Base>, BaseWriteError> {
     Ok(bases)
 }
 
-fn migrate_legacy_views(root: &Path) {
+/// Applies the manager's best-effort legacy JSON migration on construction.
+pub fn migrate_legacy_views(root: &Path) {
     let Ok(path) = secure_path(root, LEGACY_VIEWS) else {
         return;
     };

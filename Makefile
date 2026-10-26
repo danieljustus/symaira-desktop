@@ -438,6 +438,12 @@ docs-read-cli-fixtures-generate:
 docs-read-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./cmd/symdesk -run '^TestPortDocsReadProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test docs_read --locked
+.PHONY: views-cli-fixtures-generate views-cli-differential
+views-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+views-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test views --locked
 
 duplicates-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortDuplicatesProcessContract$$'

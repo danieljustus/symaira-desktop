@@ -26,6 +26,10 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"contacts vCard", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsVCardContract$"}, []string{"testdata/port/contacts/vcard.json"}, false},
+	{"contacts CSV", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsCSVContract$"}, []string{"testdata/port/contacts/csv.json"}, false},
+	{"contacts import", []string{"test", "-count=1", "./internal/contacts/internal/service/importer", "-run", "^TestPortContactsImportContract$"}, []string{"testdata/port/contacts/import.json"}, false},
+	{"contacts schema", []string{"test", "-count=1", "./internal/contacts/internal/storage/sqlite", "-run", "^TestPortContactsSchemaContract$"}, []string{"testdata/port/contacts/schema.json"}, false},
 	{"room outer surrogates", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomOuterSurrogateContract$"}, []string{"testdata/port/room/outer-surrogate.json"}, false},
 	{"configuration save", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigSaveContract$"}, []string{"testdata/port/config/config-save.json"}, false},
 	{"room identity events", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomIdentityEventContract$"}, []string{"testdata/port/room/identity-events.json"}, false},

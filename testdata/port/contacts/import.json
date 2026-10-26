@@ -1,0 +1,436 @@
+{
+  "source_hashes": {
+    "internal/contacts/internal/domain/contact/normalize.go": "ad53a4b1bb5c69c29062940256fe92d2fbf09220a0452c4f2c09ceac2ea15dea",
+    "internal/contacts/internal/errs/errors.go": "cc52b683298dc32deec618f82982ac0b6b2b4b2fb6b4b41955578f49ad6fab2c",
+    "internal/contacts/internal/service/importer/apply.go": "162b68dc82deb4f72309129a76cb0a841c5d5e107c7cb7fbd1a5d1f9661ccb64",
+    "internal/contacts/internal/service/importer/plan.go": "293fd0cacadbf7cc99e4b75f689dfc79499e0056f0c869ce9accd787aed7fd59",
+    "internal/contacts/internal/service/importer/service.go": "e589b3ef3005a7fb1795cad7e1f841104594a8a6e5c36b55e12066c132b97144"
+  },
+  "reimport": {
+    "Source": "csv",
+    "Created": 1,
+    "Merged": 0,
+    "Skipped": 8,
+    "Failed": 0,
+    "Errors": null
+  },
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "seed": "INSERT INTO persons(id,display_name,given_name,family_name,notes,source) VALUES ('seed-ada','Ada','A','L','verified','manual'),('seed-bob','Bob','','','','manual');\n INSERT INTO contact_points(id,person_id,kind,raw_value,normalized_value) VALUES ('cp-a','seed-ada','email','ADA@example.com','ada@example.com'),('cp-b','seed-bob','phone','+49 (123)','+49123');\n INSERT INTO import_sources(id,source_kind,source_ref,person_id) VALUES ('src-a','csv','known','seed-ada');",
+  "plan": {
+    "Source": "csv",
+    "Rows": [
+      {
+        "RowNumber": 1,
+        "DisplayName": "Ada",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "Ignored",
+        "Title": "New",
+        "Emails": [
+          "ADA@example.com"
+        ],
+        "Phones": [
+          "+49 123"
+        ],
+        "URLs": [
+          "https://Example.com/"
+        ],
+        "SourceRef": "csv:88d0b8d898c7e7e1"
+      },
+      {
+        "RowNumber": 2,
+        "DisplayName": "New",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "Example",
+        "Title": "Engineer",
+        "Emails": [
+          "new@example.com",
+          "NEW@example.com"
+        ],
+        "Phones": null,
+        "URLs": [
+          "https://site/"
+        ],
+        "SourceRef": "csv:9a05f20993628c64"
+      },
+      {
+        "RowNumber": 3,
+        "DisplayName": "NoName",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": null,
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": "csv:c3422c78a673367d"
+      },
+      {
+        "RowNumber": 4,
+        "DisplayName": "Renamed",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": [
+          "ada@example.com"
+        ],
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": "known"
+      },
+      {
+        "RowNumber": 5,
+        "DisplayName": "Bob",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": null,
+        "Phones": [
+          "+49 (123)"
+        ],
+        "URLs": null,
+        "SourceRef": ""
+      },
+      {
+        "RowNumber": 6,
+        "DisplayName": "Ada",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": [
+          "ada@example.com"
+        ],
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": ""
+      },
+      {
+        "RowNumber": 7,
+        "DisplayName": "Bob",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": null,
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": ""
+      },
+      {
+        "RowNumber": 8,
+        "DisplayName": "Ada",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": null,
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": ""
+      },
+      {
+        "RowNumber": 9,
+        "DisplayName": "Ada",
+        "GivenName": "",
+        "FamilyName": "",
+        "OrganizationName": "",
+        "Title": "",
+        "Emails": null,
+        "Phones": null,
+        "URLs": null,
+        "SourceRef": ""
+      }
+    ],
+    "Issues": null,
+    "Duplicates": [
+      {
+        "RowNumber": 1,
+        "ExistingPersonID": "seed-ada",
+        "ExistingName": "Ada",
+        "MatchedOn": "email:ADA@example.com",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 1,
+        "ExistingPersonID": "seed-bob",
+        "ExistingName": "Bob",
+        "MatchedOn": "phone:+49 123",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 4,
+        "ExistingPersonID": "seed-ada",
+        "ExistingName": "Ada",
+        "MatchedOn": "source:csv:known",
+        "ExactSourceRematch": true
+      },
+      {
+        "RowNumber": 5,
+        "ExistingPersonID": "seed-bob",
+        "ExistingName": "Bob",
+        "MatchedOn": "phone:+49 (123)",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 6,
+        "ExistingPersonID": "seed-ada",
+        "ExistingName": "Ada",
+        "MatchedOn": "email:ada@example.com",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 7,
+        "ExistingPersonID": "seed-bob",
+        "ExistingName": "Bob",
+        "MatchedOn": "name:Bob",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 8,
+        "ExistingPersonID": "seed-ada",
+        "ExistingName": "Ada",
+        "MatchedOn": "name:Ada",
+        "ExactSourceRematch": false
+      },
+      {
+        "RowNumber": 9,
+        "ExistingPersonID": "seed-ada",
+        "ExistingName": "Ada",
+        "MatchedOn": "name:Ada",
+        "ExactSourceRematch": false
+      }
+    ]
+  },
+  "resolutions": [
+    {
+      "RowNumber": 1,
+      "Resolution": "merge",
+      "MergePersonID": "seed-ada"
+    },
+    {
+      "RowNumber": 3,
+      "Resolution": "skip",
+      "MergePersonID": ""
+    },
+    {
+      "RowNumber": 4,
+      "Resolution": "skip",
+      "MergePersonID": ""
+    },
+    {
+      "RowNumber": 6,
+      "Resolution": "unknown",
+      "MergePersonID": ""
+    },
+    {
+      "RowNumber": 7,
+      "Resolution": "merge",
+      "MergePersonID": ""
+    },
+    {
+      "RowNumber": 8,
+      "Resolution": "merge",
+      "MergePersonID": "missing"
+    },
+    {
+      "RowNumber": 9,
+      "Resolution": "create",
+      "MergePersonID": ""
+    }
+  ],
+  "result": {
+    "Source": "csv",
+    "Created": 2,
+    "Merged": 1,
+    "Skipped": 3,
+    "Failed": 3,
+    "Errors": [
+      {
+        "RowNumber": 6,
+        "Field": "resolution",
+        "Message": "unknown resolution: unknown"
+      },
+      {
+        "RowNumber": 7,
+        "Field": "merge_person_id",
+        "Message": "merge resolution requires a target person id"
+      },
+      {
+        "RowNumber": 8,
+        "Field": "",
+        "Message": "importer.mergeIntoRow: merge target person does not exist"
+      }
+    ]
+  },
+  "queries": [
+    "SELECT display_name,given_name,family_name,notes,source,source_ref FROM persons ORDER BY display_name,id",
+    "SELECT name,notes,source,source_ref FROM organizations ORDER BY name",
+    "SELECT p.display_name,p.source,p.given_name,cp.kind,cp.raw_value,cp.normalized_value,cp.label,cp.is_preferred,cp.is_verified FROM contact_points cp JOIN persons p ON p.id=cp.person_id ORDER BY p.display_name,cp.kind,cp.normalized_value",
+    "SELECT p.display_name,p.source,p.given_name,o.name,m.role,m.title,m.valid_from,m.valid_to FROM organization_memberships m JOIN persons p ON p.id=m.person_id JOIN organizations o ON o.id=m.organization_id ORDER BY p.display_name,o.name",
+    "SELECT s.source_kind,s.source_ref,p.display_name,p.source,p.given_name FROM import_sources s JOIN persons p ON p.id=s.person_id ORDER BY s.source_kind,s.source_ref",
+    "SELECT source_kind,created,merged,skipped,failed FROM import_runs ORDER BY rowid"
+  ],
+  "snapshots": [
+    [
+      [
+        "Ada",
+        "",
+        "",
+        "",
+        "import",
+        null
+      ],
+      [
+        "Ada",
+        "A",
+        "L",
+        "verified",
+        "manual",
+        null
+      ],
+      [
+        "Bob",
+        "",
+        "",
+        "",
+        "manual",
+        null
+      ],
+      [
+        "New",
+        "",
+        "",
+        "",
+        "import",
+        null
+      ]
+    ],
+    [
+      [
+        "Example",
+        "",
+        "import",
+        null
+      ]
+    ],
+    [
+      [
+        "Ada",
+        "manual",
+        "A",
+        "email",
+        "ADA@example.com",
+        "ada@example.com",
+        null,
+        0,
+        0
+      ],
+      [
+        "Ada",
+        "manual",
+        "A",
+        "phone",
+        "+49 123",
+        "+49123",
+        "",
+        0,
+        0
+      ],
+      [
+        "Ada",
+        "manual",
+        "A",
+        "url",
+        "https://Example.com/",
+        "https://example.com",
+        "",
+        0,
+        0
+      ],
+      [
+        "Bob",
+        "manual",
+        "",
+        "phone",
+        "+49 (123)",
+        "+49123",
+        null,
+        0,
+        0
+      ],
+      [
+        "New",
+        "import",
+        "",
+        "email",
+        "new@example.com",
+        "new@example.com",
+        "",
+        0,
+        0
+      ],
+      [
+        "New",
+        "import",
+        "",
+        "url",
+        "https://site/",
+        "https://site",
+        "",
+        0,
+        0
+      ]
+    ],
+    [
+      [
+        "New",
+        "import",
+        "",
+        "Example",
+        "",
+        "Engineer",
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        "csv",
+        "csv:88d0b8d898c7e7e1",
+        "Ada",
+        "manual",
+        "A"
+      ],
+      [
+        "csv",
+        "csv:9a05f20993628c64",
+        "New",
+        "import",
+        ""
+      ],
+      [
+        "csv",
+        "known",
+        "Ada",
+        "manual",
+        "A"
+      ]
+    ],
+    [
+      [
+        "csv",
+        2,
+        1,
+        3,
+        3
+      ]
+    ]
+  ]
+}

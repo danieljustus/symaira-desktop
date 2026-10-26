@@ -1,0 +1,3463 @@
+{
+  "oracle": {
+    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source_hashes": {
+    "internal/contacts/internal/domain/contact/normalize.go": "ad53a4b1bb5c69c29062940256fe92d2fbf09220a0452c4f2c09ceac2ea15dea",
+    "internal/contacts/internal/domain/importer/csv.go": "f5d1f8f68122ff8787a6b37dfc200f721303026cba67782be3be530fcecbd331",
+    "internal/contacts/internal/domain/importer/types.go": "c48bc7a0ac101b83e62475ceaae88509a0125a88d1433dde3f5ae04f0e6adb37"
+  },
+  "cases": [
+    {
+      "ID": "empty",
+      "Input": "",
+      "Header": null,
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": null,
+      "Error": "csv file is empty"
+    },
+    {
+      "ID": "header-only",
+      "Input": "name,email\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "basic",
+      "Input": "name,email,phone,company,title,url\nAda, ADA@Example.COM ; second@example.com ,+49 (123) 45,Example,Engineer,https://EXAMPLE.com/\nAda,ada@example.com,,,,\n",
+      "Header": [
+        "name",
+        "email",
+        "phone",
+        "company",
+        "title",
+        "url"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "company",
+        "Title": "title",
+        "Email": "email",
+        "Phone": "phone",
+        "URL": "url"
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Ada",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "Example",
+          "Title": "Engineer",
+          "Emails": [
+            "ADA@Example.COM",
+            "second@example.com"
+          ],
+          "Phones": [
+            "+49 (123) 45"
+          ],
+          "URLs": [
+            "https://EXAMPLE.com/"
+          ],
+          "SourceRef": "csv:99a4296f7b177418"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Ada",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "ada@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:e20e9dcf358f940d"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "unicode",
+      "Input": "first name,last name,email\n Zoë , 李 ,zoe@example.com\n, Müller ,\n,,nobody@example.com\n",
+      "Header": [
+        "first name",
+        "last name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "",
+        "GivenName": "first name",
+        "FamilyName": "last name",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Zoë 李",
+          "GivenName": "Zoë",
+          "FamilyName": "李",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "zoe@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:05a62f0f3aa1c85d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Müller",
+          "GivenName": "",
+          "FamilyName": "Müller",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:eeaf91caa874411c"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 3,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "bom",
+      "Input": "﻿name,email\nAda,ada@example.com\n",
+      "Header": [
+        "﻿name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "ragged",
+      "Input": "name,email\nAda\nBob,bob@example.com,extra\n,missing@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Ada",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:95163a94b700fb14"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Bob",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "bob@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0d4fee46014965b9"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 3,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "quoting",
+      "Input": "name,email\r\n\"Ada, A\",\"a@example.com;b@example.com\"\r\n\"Two\nLines\",x\r\n\"A \"\"quote\"\"\",q\r\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Ada, A",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a@example.com",
+            "b@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:c39098aff7d932b5"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Two\nLines",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "x"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:cbcf317218152aa5"
+        },
+        {
+          "RowNumber": 3,
+          "DisplayName": "A \"quote\"",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "q"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:d94adf70eec6bcac"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "malformed",
+      "Input": "name,email\nA\"da,x\nGood,good@example.com\n\"Bad\"tail,b\nLast,last@example.com\n\"unterminated\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Good",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "good@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:bfad5ebebd719adc"
+        },
+        {
+          "RowNumber": 4,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        },
+        {
+          "RowNumber": 3,
+          "Field": "",
+          "Message": "parse error on line 4, column 5: extraneous or missing \" in quoted-field"
+        },
+        {
+          "RowNumber": 5,
+          "Field": "",
+          "Message": "parse error on line 6, column 15: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "bad-header",
+      "Input": "\"name\"oops,email\nAda,a\n",
+      "Header": null,
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": null,
+      "Error": "failed to read CSV header: parse error on line 1, column 6: extraneous or missing \" in quoted-field"
+    },
+    {
+      "ID": "alias-priority",
+      "Input": "full name,name,Email,email address\nOther,Primary,A@b,C@d\n",
+      "Header": [
+        "full name",
+        "name",
+        "Email",
+        "email address"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "Email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Primary",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "A@b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:7bcf7eb6f2fc3ea3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "duplicate-header",
+      "Input": "name,name,email\nFirst,Last,x\n",
+      "Header": [
+        "name",
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "x"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:910156aacce48d19"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "blank-lines",
+      "Input": "\nname,email\n\nAda,x\n\r\n , \n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Ada",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "x"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:c8c534c6114a19a3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 2,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "multi-empty",
+      "Input": "name,email\nAda, ; ; \n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "Ada",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:95163a94b700fb14"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-0",
+      "Input": "name,email\na,a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-1",
+      "Input": "name,email\na,\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-2",
+      "Input": "name,email\na,\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-3",
+      "Input": "name,email\na,a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 4: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-4",
+      "Input": "name,email\na,a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-5",
+      "Input": "name,email\na,\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a\nb"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:436d7aca4edb3aba"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-6",
+      "Input": "name,email\na,\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:e53a7050a82a1921"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-0-7",
+      "Input": "name,email\na,\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:e53a7050a82a1921"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-0",
+      "Input": "name,email\n\"a\",a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-1",
+      "Input": "name,email\n\"a\",\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-2",
+      "Input": "name,email\n\"a\",\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-3",
+      "Input": "name,email\n\"a\",a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 6: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-4",
+      "Input": "name,email\n\"a\",a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:b9f47fc77c0b969e"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-5",
+      "Input": "name,email\n\"a\",\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a\nb"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:436d7aca4edb3aba"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-6",
+      "Input": "name,email\n\"a\",\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:e53a7050a82a1921"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-1-7",
+      "Input": "name,email\n\"a\",\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:e53a7050a82a1921"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-0",
+      "Input": "name,email\n\"a,a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-1",
+      "Input": "name,email\n\"a,\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 4: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-2",
+      "Input": "name,email\n\"a,\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 4: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-3",
+      "Input": "name,email\n\"a,a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a,a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:862beb2447bd63c2"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-4",
+      "Input": "name,email\n\"a,a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-5",
+      "Input": "name,email\n\"a,\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 3,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 4: extraneous or missing \" in quoted-field"
+        },
+        {
+          "RowNumber": 2,
+          "Field": "",
+          "Message": "parse error on line 3, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-6",
+      "Input": "name,email\n\"a,\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-2-7",
+      "Input": "name,email\n\"a,\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-0",
+      "Input": "name,email\na\",a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-1",
+      "Input": "name,email\na\",\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-2",
+      "Input": "name,email\na\",\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-3",
+      "Input": "name,email\na\",a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-4",
+      "Input": "name,email\na\",a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-5",
+      "Input": "name,email\na\",\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 3,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        },
+        {
+          "RowNumber": 2,
+          "Field": "",
+          "Message": "parse error on line 3, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-6",
+      "Input": "name,email\na\",\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-3-7",
+      "Input": "name,email\na\",\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 2: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-0",
+      "Input": "name,email\na,b,a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-1",
+      "Input": "name,email\na,b,\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-2",
+      "Input": "name,email\na,b,\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-3",
+      "Input": "name,email\na,b,a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 6: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-4",
+      "Input": "name,email\na,b,a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-5",
+      "Input": "name,email\na,b,\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-6",
+      "Input": "name,email\na,b,\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-4-7",
+      "Input": "name,email\na,b,\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "b"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:443f5cd03e8fae6d"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-0",
+      "Input": "name,email\n\"a\nb\",a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:43885ff34bb435ee"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-1",
+      "Input": "name,email\n\"a\nb\",\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:43885ff34bb435ee"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-2",
+      "Input": "name,email\n\"a\nb\",\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 4, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-3",
+      "Input": "name,email\n\"a\nb\",a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 5: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-4",
+      "Input": "name,email\n\"a\nb\",a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:43885ff34bb435ee"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-5",
+      "Input": "name,email\n\"a\nb\",\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "a\nb"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:fa020690f9ec37f4"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-6",
+      "Input": "name,email\n\"a\nb\",\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:aa355a0d9fb08ed4"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-5-7",
+      "Input": "name,email\n\"a\nb\",\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 1,
+          "DisplayName": "a\nb",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": null,
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:aa355a0d9fb08ed4"
+        },
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": null,
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-0",
+      "Input": "name,email\n\r,a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-1",
+      "Input": "name,email\n\r,\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-2",
+      "Input": "name,email\n\r,\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-3",
+      "Input": "name,email\n\r,a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 4: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-4",
+      "Input": "name,email\n\r,a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-5",
+      "Input": "name,email\n\r,\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-6",
+      "Input": "name,email\n\r,\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-6-7",
+      "Input": "name,email\n\r,\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-0",
+      "Input": "name,email\n\"\",a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-1",
+      "Input": "name,email\n\"\",\"a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-2",
+      "Input": "name,email\n\"\",\"a\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": null,
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "record on line 2; parse error on line 3, column 23: extraneous or missing \" in quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-3",
+      "Input": "name,email\n\"\",a\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "",
+          "Message": "parse error on line 2, column 5: bare \" in non-quoted-field"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-4",
+      "Input": "name,email\n\"\",a,b\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-5",
+      "Input": "name,email\n\"\",\"a\nb\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-6",
+      "Input": "name,email\n\"\",\r\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    },
+    {
+      "ID": "grammar-7-7",
+      "Input": "name,email\n\"\",\"\"\nLast,last@example.com\n",
+      "Header": [
+        "name",
+        "email"
+      ],
+      "Mapping": {
+        "DisplayName": "name",
+        "GivenName": "",
+        "FamilyName": "",
+        "Organization": "",
+        "Title": "",
+        "Email": "email",
+        "Phone": "",
+        "URL": ""
+      },
+      "Rows": [
+        {
+          "RowNumber": 2,
+          "DisplayName": "Last",
+          "GivenName": "",
+          "FamilyName": "",
+          "OrganizationName": "",
+          "Title": "",
+          "Emails": [
+            "last@example.com"
+          ],
+          "Phones": null,
+          "URLs": null,
+          "SourceRef": "csv:0a4077a2b87069c3"
+        }
+      ],
+      "Issues": [
+        {
+          "RowNumber": 1,
+          "Field": "name",
+          "Message": "row has no display name, given name or family name"
+        }
+      ],
+      "Error": ""
+    }
+  ],
+  "normalizations": [
+    {
+      "Kind": "email",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": "ada@example.com"
+    },
+    {
+      "Kind": "email",
+      "Raw": "ΟΣ İ K",
+      "Expected": "οσ i k"
+    },
+    {
+      "Kind": "email",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49 (١٢٣) 456ⅳ²"
+    },
+    {
+      "Kind": "email",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": "https://example.com///"
+    },
+    {
+      "Kind": "email",
+      "Raw": "@@USER",
+      "Expected": "@@user"
+    },
+    {
+      "Kind": "email",
+      "Raw": " A\t B\n C D ",
+      "Expected": "a\t b\n c d"
+    },
+    {
+      "Kind": "phone",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": ""
+    },
+    {
+      "Kind": "phone",
+      "Raw": "ΟΣ İ K",
+      "Expected": ""
+    },
+    {
+      "Kind": "phone",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49١٢٣456"
+    },
+    {
+      "Kind": "phone",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": ""
+    },
+    {
+      "Kind": "phone",
+      "Raw": "@@USER",
+      "Expected": ""
+    },
+    {
+      "Kind": "phone",
+      "Raw": " A\t B\n C D ",
+      "Expected": ""
+    },
+    {
+      "Kind": "url",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": "ada@example.com"
+    },
+    {
+      "Kind": "url",
+      "Raw": "ΟΣ İ K",
+      "Expected": "οσ i k"
+    },
+    {
+      "Kind": "url",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49 (١٢٣) 456ⅳ²"
+    },
+    {
+      "Kind": "url",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": "https://example.com"
+    },
+    {
+      "Kind": "url",
+      "Raw": "@@USER",
+      "Expected": "@@user"
+    },
+    {
+      "Kind": "url",
+      "Raw": " A\t B\n C D ",
+      "Expected": "a\t b\n c d"
+    },
+    {
+      "Kind": "handle",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": "ada@example.com"
+    },
+    {
+      "Kind": "handle",
+      "Raw": "ΟΣ İ K",
+      "Expected": "οσ i k"
+    },
+    {
+      "Kind": "handle",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49 (١٢٣) 456ⅳ²"
+    },
+    {
+      "Kind": "handle",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": "https://example.com///"
+    },
+    {
+      "Kind": "handle",
+      "Raw": "@@USER",
+      "Expected": "@user"
+    },
+    {
+      "Kind": "handle",
+      "Raw": " A\t B\n C D ",
+      "Expected": "a\t b\n c d"
+    },
+    {
+      "Kind": "address",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": "ada@example.com"
+    },
+    {
+      "Kind": "address",
+      "Raw": "ΟΣ İ K",
+      "Expected": "οσ i k"
+    },
+    {
+      "Kind": "address",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49 (١٢٣) 456ⅳ²"
+    },
+    {
+      "Kind": "address",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": "https://example.com///"
+    },
+    {
+      "Kind": "address",
+      "Raw": "@@USER",
+      "Expected": "@@user"
+    },
+    {
+      "Kind": "address",
+      "Raw": " A\t B\n C D ",
+      "Expected": "a b c d"
+    },
+    {
+      "Kind": "other",
+      "Raw": "  ADA@Example.COM  ",
+      "Expected": "ada@example.com"
+    },
+    {
+      "Kind": "other",
+      "Raw": "ΟΣ İ K",
+      "Expected": "οσ i k"
+    },
+    {
+      "Kind": "other",
+      "Raw": "+49 (١٢٣) 456Ⅳ²",
+      "Expected": "+49 (١٢٣) 456ⅳ²"
+    },
+    {
+      "Kind": "other",
+      "Raw": "https://EXAMPLE.COM///",
+      "Expected": "https://example.com///"
+    },
+    {
+      "Kind": "other",
+      "Raw": "@@USER",
+      "Expected": "@@user"
+    },
+    {
+      "Kind": "other",
+      "Raw": " A\t B\n C D ",
+      "Expected": "a\t b\n c d"
+    }
+  ]
+}

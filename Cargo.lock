@@ -2551,6 +2551,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "symdesk-contacts"
+version = "0.0.0"
+dependencies = [
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "unicode-general-category",
+]
+
+[[package]]
 name = "symdesk-core"
 version = "0.0.0"
 dependencies = [

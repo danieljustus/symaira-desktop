@@ -5,7 +5,7 @@ ingest-queue-differential:
 	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --locked
 
 ingest-queue-fixtures-generate:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 PORT_GENERATE=1 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
 
 .PHONY: benchmark-large boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 

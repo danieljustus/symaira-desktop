@@ -107,8 +107,6 @@ func main() {
 		if err != nil {
 			fatal("%s Rust output: %v (%q)", tc.ID, err, rightResult.stdout)
 		}
-		leftFrames = normalize(tc.ID, leftFrames)
-		rightFrames = normalize(tc.ID, rightFrames)
 		if tc.InstructionsAbsent {
 			if err := checkInstructionsAbsent(leftFrames); err != nil {
 				fatal("%s Go %v", tc.ID, err)
@@ -264,26 +262,6 @@ func decodeFrames(data []byte, framed bool) ([]any, error) {
 		rest = rest[length:]
 	}
 	return frames, nil
-}
-
-func normalize(id string, frames []any) []any {
-	if id != "tools-list-line" || len(frames) != 1 {
-		return frames
-	}
-	response, ok := frames[0].(map[string]any)
-	if !ok {
-		return frames
-	}
-	result, ok := response["result"].(map[string]any)
-	if !ok {
-		return frames
-	}
-	tools, ok := result["tools"].([]any)
-	if !ok || len(tools) <= 3 {
-		return frames
-	}
-	result["tools"] = tools[:3]
-	return frames
 }
 
 func compact(frames []any) string { data, _ := json.Marshal(frames); return string(data) }

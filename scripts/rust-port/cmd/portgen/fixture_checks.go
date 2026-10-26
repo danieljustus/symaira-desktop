@@ -28,6 +28,8 @@ type fixtureCheckTarget struct {
 var fixtureTestTargets = []fixtureCheckTarget{
 	{"docs read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDocsReadProcessContract$"}, []string{"testdata/port/cli/docs-read-process.json"}, false},
 	{"views read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortViewsProcessContract$"}, []string{"testdata/port/cli/views-process.json"}, false},
+	{"MCP read tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPReadProcessPortFixture$"}, []string{"testdata/port/mcp/read-process.json"}, false},
+	{"MCP full tool surface", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPSurfaceProcessPortFixture$"}, []string{"testdata/port/mcp/tools-process.json"}, false},
 	{"contacts keyprovider", []string{"test", "-count=1", "./internal/contacts/internal/domain/security", "-run", "^TestPortContactsKeyProviderContract$"}, []string{"testdata/port/contacts/keyprovider.json"}, false},
 	{"contacts erase", []string{"test", "-count=1", "./internal/contacts/internal/service/security", "-run", "^TestPortContactsEraseContract$"}, []string{"testdata/port/contacts/erase.json"}, false},
 	{"contacts relationships", []string{"test", "-count=1", "./internal/contacts/internal/service/relationship", "-run", "^TestPortContactsRelationshipContract$"}, []string{"testdata/port/contacts/relationship.json"}, false},

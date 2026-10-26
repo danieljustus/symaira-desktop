@@ -14,6 +14,7 @@ mod links;
 mod markdown_links;
 mod metadata;
 mod mutations;
+mod notebook_read;
 mod notebook_write;
 pub mod notes;
 mod paths;
@@ -62,6 +63,7 @@ pub use mutations::{
     MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_map,
     render_go_yaml_string, set_frontmatter_key, set_frontmatter_value, write_atomic,
 };
+pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
     NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
     remove_notebook_source,

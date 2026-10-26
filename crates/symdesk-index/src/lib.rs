@@ -198,7 +198,12 @@ impl IndexedDocument {
         let mut properties = BTreeMap::new();
         for (key, value) in &document.frontmatter {
             if key != "tags" && key != "aliases" {
-                properties.insert(key.clone(), go_value(value));
+                let text = document
+                    .yaml_timestamps
+                    .get(key)
+                    .and_then(|timestamp| OffsetDateTime::parse(timestamp, &Rfc3339).ok())
+                    .map_or_else(|| go_value(value), go_property_timestamp);
+                properties.insert(key.clone(), text);
             }
         }
         if !document.tags.is_empty() {
@@ -291,6 +296,40 @@ pub struct DatasetGroupCountResult {
     pub limit: usize,
     pub capped: bool,
 }
+
+// fmt.Sprint(time.Time), used by Go's sidecar property projection for YAML
+// timestamp scalars. Keep this separate from RFC3339 document date fields.
+fn go_property_timestamp(value: OffsetDateTime) -> String {
+    let mut text = format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        value.year(),
+        u8::from(value.month()),
+        value.day(),
+        value.hour(),
+        value.minute(),
+        value.second()
+    );
+    if value.nanosecond() != 0 {
+        text.push('.');
+        text.push_str(format!("{:09}", value.nanosecond()).trim_end_matches('0'));
+    }
+    let seconds = value.offset().whole_seconds();
+    let absolute = seconds.unsigned_abs();
+    let offset = format!(
+        "{}{:02}{:02}",
+        if seconds < 0 { '-' } else { '+' },
+        absolute / 3600,
+        (absolute % 3600) / 60
+    );
+    text.push_str(&format!(
+        " {offset} {}",
+        if seconds == 0 { "UTC" } else { &offset }
+    ));
+    text
+}
+
+mod links_read;
+pub use links_read::is_contact_reference;
 
 pub struct Sidecar {
     connection: Connection,
@@ -1709,6 +1748,19 @@ impl Sidecar {
             })
         })?;
         rows.collect::<Result<Vec<_>, rusqlite::Error>>()
+            .map_err(Into::into)
+    }
+
+    /// Returns indexed frontmatter properties, not a fresh parse of Markdown.
+    ///
+    /// # Errors
+    /// Returns a database error when the derived index cannot be read.
+    pub fn get_properties(&self, path: &str) -> Result<BTreeMap<String, String>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT p.key, p.value FROM file_properties p JOIN files f ON f.id = p.file_id WHERE f.path = ?",
+        )?;
+        let rows = statement.query_map([path], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        rows.collect::<Result<BTreeMap<String, String>, _>>()
             .map_err(Into::into)
     }
 

@@ -122,18 +122,6 @@ pub struct Notebook {
 }
 
 #[derive(Default, Deserialize)]
-struct NotebookFrontmatter {
-    #[serde(default)]
-    notebook_id: String,
-    #[serde(default)]
-    description: String,
-    #[serde(default)]
-    sources: Vec<Value>,
-    #[serde(default)]
-    query: String,
-}
-
-#[derive(Default, Deserialize)]
 struct BaseFrontmatter {
     #[serde(default)]
     title: String,
@@ -285,27 +273,41 @@ pub fn parse_notebook(path: &str, input: &[u8]) -> Result<Notebook, TypedVaultEr
             "{path} is not a notebook note (type={note_type:?})"
         )));
     }
-    let frontmatter: NotebookFrontmatter = decode_frontmatter(input, "parse notebook frontmatter")?;
-    let mut sources: Vec<String> = frontmatter
-        .sources
-        .iter()
+    // The shipped reader asserts types from the generic YAML map; fields
+    // with another scalar type or non-list sources are ignored, not rejected.
+    let text = |key: &str| {
+        if document.yaml_timestamps.contains_key(key) {
+            String::new()
+        } else {
+            value_string(&document, key)
+        }
+    };
+    let id = text("notebook_id");
+    let description = text("description");
+    let query = text("query");
+    let mut sources: Vec<String> = document
+        .frontmatter
+        .get("sources")
+        .and_then(Value::as_sequence)
+        .into_iter()
+        .flatten()
         .filter_map(Value::as_str)
         .filter(|source| !source.is_empty())
         .map(ToOwned::to_owned)
         .collect();
     sources.sort();
     Ok(Notebook {
-        id: if frontmatter.notebook_id.is_empty() {
+        id: if id.is_empty() {
             file_stem_markdown(path)
         } else {
-            frontmatter.notebook_id
+            id
         },
         path: path.to_owned(),
         title: document.title,
-        description: frontmatter.description,
+        description,
         created: document.created,
         sources,
-        query: frontmatter.query,
+        query,
     })
 }
 

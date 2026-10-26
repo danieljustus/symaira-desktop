@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -71,12 +72,6 @@ type final struct {
 type file struct {
 	Content string `json:"content"`
 	Mode    int    `json:"mode"`
-}
-
-type userSpec struct {
-	Name      string   `json:"name"`
-	TokenHash string   `json:"token_hash,omitempty"`
-	Roles     []string `json:"roles,omitempty"`
 }
 
 func main() {
@@ -141,12 +136,18 @@ func run(spec scenario) scenario {
 		fatal("temp root: %v", err)
 	}
 	defer func() {
-		_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			if err == nil && info.IsDir() {
-				_ = os.Chmod(path, 0o700)
-			}
-			return nil
-		})
+		// Scenarios may leave directories unreadable; restore the search bit
+		// through a root-scoped handle so cleanup cannot follow a swapped
+		// path outside the scenario root.
+		if scoped, openErr := os.OpenRoot(root); openErr == nil {
+			_ = fs.WalkDir(scoped.FS(), ".", func(path string, d fs.DirEntry, err error) error {
+				if err == nil && d.IsDir() {
+					_ = scoped.Chmod(path, 0o700)
+				}
+				return nil
+			})
+			_ = scoped.Close()
+		}
 		_ = os.RemoveAll(root)
 	}()
 	norm := func(s string) string { return strings.ReplaceAll(s, root, "<root>") }
@@ -154,14 +155,14 @@ func run(spec scenario) scenario {
 	for rel, mode := range spec.Setup.DirModes {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		must(os.MkdirAll(path, 0o700))
-		must(os.Chmod(path, os.FileMode(mode)))
+		must(os.Chmod(path, permMode(mode)))
 	}
 	writeSetup := func(rel string, data []byte) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		must(os.MkdirAll(filepath.Dir(path), 0o700))
 		must(os.WriteFile(path, data, 0o600))
 		if mode, ok := spec.Setup.FileModes[rel]; ok {
-			must(os.Chmod(path, os.FileMode(mode)))
+			must(os.Chmod(path, permMode(mode)))
 		}
 	}
 	for rel, text := range spec.Setup.Files {
@@ -175,7 +176,7 @@ func run(spec scenario) scenario {
 	for rel, mode := range spec.Setup.DirModes {
 		// DirModes applied before files; re-apply in case a file write
 		// needed the directory writable.
-		must(os.Chmod(filepath.Join(root, filepath.FromSlash(rel)), os.FileMode(mode)))
+		must(os.Chmod(filepath.Join(root, filepath.FromSlash(rel)), permMode(mode)))
 	}
 
 	configDir := filepath.Join(root, filepath.FromSlash(spec.Setup.ConfigDir))
@@ -188,7 +189,7 @@ func run(spec scenario) scenario {
 		return out
 	}
 	if spec.Setup.LockConfigDir != 0 {
-		must(os.Chmod(configDir, os.FileMode(spec.Setup.LockConfigDir)))
+		must(os.Chmod(configDir, permMode(spec.Setup.LockConfigDir)))
 	}
 	for _, op := range spec.Ops {
 		recorded := map[string]any{}
@@ -207,16 +208,24 @@ func snapshot(root, configDir string, created bool) final {
 	if info, err := os.Stat(configDir); err == nil && created {
 		f.ConfigDirMode = int(info.Mode().Perm())
 	}
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+	// Walk and read through a root-scoped handle: every path stays confined
+	// to the disposable scenario root, even if a scenario plants a symlink.
+	scoped, openErr := os.OpenRoot(root)
+	must(openErr)
+	defer func() { _ = scoped.Close() }()
+	_ = fs.WalkDir(scoped.FS(), ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
 			return nil
 		}
-		rel, _ := filepath.Rel(root, path)
+		info, infoErr := d.Info()
+		if infoErr != nil {
+			return nil
+		}
 		// Record the mode first, then make the file readable for the snapshot.
-		_ = os.Chmod(path, 0o600)
-		data, readErr := os.ReadFile(path)
+		_ = scoped.Chmod(path, 0o600)
+		data, readErr := fs.ReadFile(scoped.FS(), path)
 		must(readErr)
-		f.Files[filepath.ToSlash(rel)] = file{Content: string(data), Mode: int(info.Mode().Perm())}
+		f.Files[path] = file{Content: string(data), Mode: int(info.Mode().Perm())}
 		return nil
 	})
 	return f
@@ -354,6 +363,29 @@ func execute(m *permissions.Manager, op map[string]any, norm func(string) string
 	return result
 }
 
+// permMode converts a recorded permission value to a file mode, rejecting
+// anything outside the permission bits instead of silently truncating it.
+func permMode(mode int) os.FileMode {
+	if mode < 0 || mode > 0o777 {
+		fatal("permission bits out of range: %#o", mode)
+	}
+	return os.FileMode(mode & 0o777)
+}
+
+// putPairs stores alternating string-key/value pairs, refusing a dangling key.
+func putPairs(m map[string]any, kv []any) {
+	if len(kv)%2 != 0 {
+		fatal("odd key/value argument count: %d", len(kv))
+	}
+	for i := 0; i+1 < len(kv); i += 2 {
+		key, ok := kv[i].(string)
+		if !ok {
+			fatal("non-string key %v", kv[i])
+		}
+		m[key] = kv[i+1]
+	}
+}
+
 func must(err error) {
 	if err != nil {
 		fatal("%v", err)
@@ -366,9 +398,7 @@ type ops []map[string]any
 
 func o(op string, kv ...any) map[string]any {
 	m := map[string]any{"op": op}
-	for i := 0; i < len(kv); i += 2 {
-		m[kv[i].(string)] = kv[i+1]
-	}
+	putPairs(m, kv)
 	return m
 }
 
@@ -788,9 +818,7 @@ func scenarioSpecs() []scenario {
 	// --- document rules -------------------------------------------------
 	rule := func(path, owner string, extra ...any) map[string]any {
 		m := map[string]any{"path": path, "owner": owner}
-		for i := 0; i < len(extra); i += 2 {
-			m[extra[i].(string)] = extra[i+1]
-		}
+		putPairs(m, extra)
 		return m
 	}
 	add(sc("set_document_rule_lifecycle", nil, ops{

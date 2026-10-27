@@ -466,7 +466,9 @@ impl TempDir {
         let path =
             std::env::temp_dir().join(format!("symroom-io-error-{}-{nonce}", std::process::id()));
         create_private_dir(&path);
-        // Match the physical cwd returned by the child on symlinked TMPDIRs.
+        // Match the physical cwd returned by the child on symlinked TMPDIRs,
+        // without changing Windows paths to verbatim-prefix spelling.
+        #[cfg(unix)]
         let path = fs::canonicalize(path).expect("canonical test root");
         Self { path }
     }

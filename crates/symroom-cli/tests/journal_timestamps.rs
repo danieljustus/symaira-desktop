@@ -15,6 +15,8 @@ fn unstamped_cli_event_kinds_keep_empty_signed_timestamps() {
     let root = std::env::temp_dir().join(format!("room-ts-{}", std::process::id()));
     fs::create_dir(&root).expect("fresh root");
     // Artifact paths are checked against the CLI's canonical room root.
+    // Preserve Windows' non-verbatim spelling.
+    #[cfg(unix)]
     let root = fs::canonicalize(root).expect("canonical test root");
     struct Cleanup(std::path::PathBuf);
     impl Drop for Cleanup {

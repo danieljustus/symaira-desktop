@@ -273,7 +273,9 @@ impl TempDir {
         ));
         fs::create_dir(&path).expect("create isolated test directory");
         // Derive every child from the same physical root used by the CLI.
-        // macOS TMPDIR can traverse /var -> /private/var.
+        // macOS TMPDIR can traverse /var -> /private/var. Keep Windows' normal
+        // path spelling rather than introducing canonicalize's verbatim prefix.
+        #[cfg(unix)]
         let path = fs::canonicalize(path).expect("canonical test root");
         Self { path }
     }

@@ -1068,6 +1068,12 @@ func populateShareAccess(vault string) error {
 	if err := os.Truncate(largeFile, (8<<20)+2); err != nil {
 		return err
 	}
+	// Last-Modified is part of the compared wire contract. Independent fixture
+	// creation must not inherit different wall-clock seconds.
+	modified := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	if err := os.Chtimes(largeFile, modified, modified); err != nil {
+		return err
+	}
 	return os.WriteFile(shareFixturePath(vault), data, 0o600)
 }
 
@@ -2166,9 +2172,23 @@ func normalizeBody(body []byte) []byte {
 	return body
 }
 
+// bodyDifference describes full-byte comparisons without dumping multi-MiB bodies.
+func bodyDifference(left, right []byte) string {
+	offset := 0
+	for offset < len(left) && offset < len(right) && left[offset] == right[offset] {
+		offset++
+	}
+	start := max(0, offset-16)
+	window := func(body []byte) []byte {
+		return body[min(start, len(body)):min(offset+17, len(body))]
+	}
+	return fmt.Sprintf("Go len=%d sha256=%x Rust len=%d sha256=%x; first difference=%d window[%d:] Go=%q Rust=%q",
+		len(left), sha256.Sum256(left), len(right), sha256.Sum256(right), offset, start, window(left), window(right))
+}
+
 func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
-		return fmt.Errorf("status mismatch: Go=%d Rust=%d; Go body=%q Rust body=%q", left.Status, right.Status, left.Body, right.Body)
+		return fmt.Errorf("status mismatch: Go=%d Rust=%d; %s", left.Status, right.Status, bodyDifference(left.Body, right.Body))
 	}
 	if id == "ai-ask-ranked-citations" {
 		for _, item := range []struct {
@@ -2371,10 +2391,10 @@ func compare(id string, left, right transcript) error {
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
 	if err := compareHeaders(left.Headers, right.Headers); err != nil {
-		return fmt.Errorf("%w; bodies Go=%q Rust=%q", err, left.Body, right.Body)
+		return fmt.Errorf("%w; %s", err, bodyDifference(left.Body, right.Body))
 	}
 	if !reflect.DeepEqual(left.Body, right.Body) {
-		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)
+		return fmt.Errorf("body mismatch: %s", bodyDifference(left.Body, right.Body))
 	}
 	return nil
 }

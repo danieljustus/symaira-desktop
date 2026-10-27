@@ -10,8 +10,13 @@ struct Root(PathBuf);
 impl Root {
     fn new() -> Self {
         let p = std::env::temp_dir().join(format!(
-            "notion-parity-{}-{}",
+            "notion-parity-{}-{}-{}",
             std::process::id(),
+            {
+                // Parallel tests can read the same clock tick.
+                static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            },
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

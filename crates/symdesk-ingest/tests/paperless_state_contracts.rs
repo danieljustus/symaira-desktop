@@ -64,8 +64,13 @@ fn fixture() -> Value {
 }
 fn replay(f: &Value) -> Result<(), String> {
     let root = Root(std::env::temp_dir().join(format!(
-            "paperless-state-{}-{}",
+            "paperless-state-{}-{}-{}",
             std::process::id(),
+            {
+                // Parallel tests can read the same clock tick.
+                static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            },
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

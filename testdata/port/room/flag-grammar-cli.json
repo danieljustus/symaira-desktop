@@ -1646,6 +1646,162 @@
       ]
     },
     {
+      "name": "empty: identity export --public= ",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=­",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=​",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=\u2028",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=⁦",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=　",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=﻿",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=￿",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=͸",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=󠀁",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: identity export --public=􏿿",
+      "state": "empty",
+      "args": [
+        "identity",
+        "export",
+        "--public=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: identity export --public=x --zzz",
       "state": "empty",
       "args": [
@@ -5393,6 +5549,162 @@
       ]
     },
     {
+      "name": "empty: member list --json= ",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=­",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=​",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=\u2028",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=⁦",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=　",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=﻿",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=￿",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=͸",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=󠀁",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: member list --json=􏿿",
+      "state": "empty",
+      "args": [
+        "member",
+        "list",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: member list --json=x --zzz",
       "state": "empty",
       "args": [
@@ -7973,6 +8285,150 @@
       ]
     },
     {
+      "name": "empty: note --json= ",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=­",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=​",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=\u2028",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=⁦",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=　",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=﻿",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=￿",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=͸",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=󠀁",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: note --json=􏿿",
+      "state": "empty",
+      "args": [
+        "note",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of note:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: note --json=x --zzz",
       "state": "empty",
       "args": [
@@ -9040,6 +9496,150 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: decide --json= ",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=­",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=​",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=\u2028",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=⁦",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=　",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=﻿",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=￿",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=͸",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=󠀁",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: decide --json=􏿿",
+      "state": "empty",
+      "args": [
+        "decide",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: decide --json=x --zzz",
@@ -11255,6 +11855,162 @@
       ]
     },
     {
+      "name": "empty: artifact list --json= ",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=­",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=​",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=\u2028",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=⁦",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=　",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=﻿",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=￿",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=͸",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=󠀁",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: artifact list --json=􏿿",
+      "state": "empty",
+      "args": [
+        "artifact",
+        "list",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: artifact list --json=x --zzz",
       "state": "empty",
       "args": [
@@ -13098,6 +13854,150 @@
       ]
     },
     {
+      "name": "empty: log --json= ",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=­",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=​",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=\u2028",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=⁦",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=　",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=﻿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=￿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=͸",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=󠀁",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --json=􏿿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: log --json=x --zzz",
       "state": "empty",
       "args": [
@@ -13823,6 +14723,150 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: log --limit= ",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit= "
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00a0\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=­",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00ad\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=​",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u200b\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=\u2028",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2028\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=⁦",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2066\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=　",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u3000\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit="
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ue000\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=﻿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ufeff\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=￿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\uffff\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=͸",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u0378\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=󠀁",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U000e0001\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: log --limit=􏿿",
+      "state": "empty",
+      "args": [
+        "log",
+        "--limit=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U0010ffff\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: log --limit=x",
@@ -15512,6 +16556,150 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: verify --json= ",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=­",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=​",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=\u2028",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=⁦",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=　",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=﻿",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=￿",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=͸",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=󠀁",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: verify --json=􏿿",
+      "state": "empty",
+      "args": [
+        "verify",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: verify --json=x --zzz",
@@ -17346,6 +18534,162 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: run approve --ttl= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl= "
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00a0\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00ad\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u200b\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2028\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2066\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u3000\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl="
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ue000\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ufeff\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\uffff\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u0378\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U000e0001\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run approve --ttl=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "approve",
+        "--ttl=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U0010ffff\" for flag -ttl: parse error\nUsage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: run approve --ttl=x",
@@ -20174,6 +21518,162 @@
       ]
     },
     {
+      "name": "empty: run list --json= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --json=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: run list --json=x --zzz",
       "state": "empty",
       "args": [
@@ -20582,6 +22082,162 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: run list --pending= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run list --pending=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "list",
+        "--pending=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -pending: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: run list --pending=x --zzz",
@@ -23245,6 +24901,162 @@
       ]
     },
     {
+      "name": "empty: run show --json= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run show --json=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "show",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: run show --json=x --zzz",
       "state": "empty",
       "args": [
@@ -24508,6 +26320,162 @@
       "files": []
     },
     {
+      "name": "empty: run wait --json= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --json=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: run wait --json=x --zzz",
       "state": "empty",
       "args": [
@@ -24572,6 +26540,162 @@
       ],
       "stdout": "",
       "stderr": "flag provided but not defined: -zzz\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout= ",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout= "
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00a0\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=­",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00ad\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=​",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u200b\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=\u2028",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2028\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=⁦",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2066\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=　",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u3000\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout="
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ue000\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=﻿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ufeff\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=￿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\uffff\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=͸",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u0378\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=󠀁",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U000e0001\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: run wait --timeout=􏿿",
+      "state": "empty",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U0010ffff\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n",
       "exit_code": 2,
       "files": []
     },
@@ -26142,6 +28266,162 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: checkpoint request --timeout= ",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout= "
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00a0\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=­",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u00ad\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=​",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u200b\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=\u2028",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2028\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=⁦",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u2066\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=　",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u3000\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout="
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ue000\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=﻿",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\ufeff\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=￿",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\uffff\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=͸",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\u0378\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=󠀁",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U000e0001\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: checkpoint request --timeout=􏿿",
+      "state": "empty",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid value \"\\U0010ffff\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: checkpoint request --timeout=x",
@@ -28861,6 +31141,150 @@
       ]
     },
     {
+      "name": "empty: brain-profile --install= ",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=­",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=​",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=\u2028",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=⁦",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=　",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=﻿",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=￿",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=͸",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=󠀁",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: brain-profile --install=􏿿",
+      "state": "empty",
+      "args": [
+        "brain-profile",
+        "--install=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -install: parse error\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: brain-profile --install=x --zzz",
       "state": "empty",
       "args": [
@@ -29925,6 +32349,150 @@
       ]
     },
     {
+      "name": "empty: doctor --json= ",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=­",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=​",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=\u2028",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=⁦",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=　",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=﻿",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=￿",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=͸",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=󠀁",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: doctor --json=􏿿",
+      "state": "empty",
+      "args": [
+        "doctor",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of doctor:\n  -json\n    \tEmit stable machine-readable JSON\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
       "name": "empty: doctor --json=x --zzz",
       "state": "empty",
       "args": [
@@ -30632,6 +33200,150 @@
         "journal/",
         "room.toml"
       ]
+    },
+    {
+      "name": "empty: version --json= ",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json= "
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00a0\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=­",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=­"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u00ad\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=​",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=​"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u200b\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=\u2028",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=\u2028"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2028\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=⁦",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=⁦"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u2066\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=　",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=　"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u3000\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json="
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ue000\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=﻿",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=﻿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\ufeff\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=￿",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=￿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\uffff\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=͸",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=͸"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\u0378\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=󠀁",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=󠀁"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U000e0001\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
+    },
+    {
+      "name": "empty: version --json=􏿿",
+      "state": "empty",
+      "args": [
+        "version",
+        "--json=􏿿"
+      ],
+      "stdout": "",
+      "stderr": "invalid boolean value \"\\U0010ffff\" for -json: parse error\nUsage of version:\n  -json\n    \tEmit version info in JSON format\n",
+      "exit_code": 2,
+      "files": []
     },
     {
       "name": "empty: version --json=x --zzz",

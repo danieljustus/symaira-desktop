@@ -101,7 +101,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -131,7 +131,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -182,7 +182,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "dynamic_event": true,
@@ -192,7 +192,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\"},\"id\":\"ev_0b1511fa60d9d289\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:148f37a976534e94f3a7590d28bd32382f325782d6f1771564008c43c605aeee\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\"},\"id\":\"ev_0b1511fa60d9d289\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:8dcffc2b22544450b4fe5737cd7d3791828554e57ad394e78a86696314fd6feb\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -262,7 +262,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "exit_code": 0,
@@ -271,7 +271,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -295,7 +295,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "exit_code": 0,
@@ -304,7 +304,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -327,7 +327,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "exit_code": 0,
@@ -336,7 +336,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -354,7 +354,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "exit_code": 0,
@@ -363,7 +363,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ]
     }

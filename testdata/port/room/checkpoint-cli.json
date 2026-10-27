@@ -145,7 +145,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -174,7 +174,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -226,7 +226,7 @@
         },
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -255,7 +255,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -291,7 +291,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"\\u003cdynamic-prev\\u003e\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_checkpoint_fixture\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"\\u003cdynamic-prev\\u003e\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -359,7 +359,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -396,7 +396,7 @@
         },
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_checkpoint_fixture\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -450,7 +450,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Already done\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"event-checkpoint-resolved\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Already done\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"event-checkpoint-resolved\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
         },
         {
           "name": "room.toml",
@@ -482,7 +482,7 @@
       "final_files": [
         {
           "name": "journal/mem_19659a12900b9c14.jsonl",
-          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"name\":\"Fixture\",\"public_key\":\"2cbb097991644a68a8a9aae504de9bdeb2e2b754e0676de52641d3830be3f115\"},\"id\":\"event-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"id\":\"mem_685ce7fe5f38f22c\",\"kind\":\"agent\",\"name\":\"Agent\",\"public_key\":\"327c98399ce9c1de56dd16d8e8264fdaee8a399182669cd07725ed1cbc6216c7\",\"role\":\"agent\"},\"id\":\"event-agent-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1e6023da3b8ec9ce67082e07aef186c2ff1e0f4aac8c82369b67c53b14415cb2\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":3,\"prev\":\"sha256:6c42ecb8bad8956e90f8fa347615d23ad52bc04d69ce5eb3fd8f7b1796e0e14b\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"name\":\"Fixture\",\"public_key\":\"2cbb097991644a68a8a9aae504de9bdeb2e2b754e0676de52641d3830be3f115\"},\"id\":\"event-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"id\":\"mem_685ce7fe5f38f22c\",\"kind\":\"agent\",\"name\":\"Agent\",\"public_key\":\"327c98399ce9c1de56dd16d8e8264fdaee8a399182669cd07725ed1cbc6216c7\",\"role\":\"agent\"},\"id\":\"event-agent-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1e6023da3b8ec9ce67082e07aef186c2ff1e0f4aac8c82369b67c53b14415cb2\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":3,\"prev\":\"sha256:6c42ecb8bad8956e90f8fa347615d23ad52bc04d69ce5eb3fd8f7b1796e0e14b\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
         },
         {
           "name": "room.toml",

@@ -1,7 +1,7 @@
 .PHONY: paperless-mapping-differential paperless-mapping-fixtures-generate
 paperless-mapping-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_mapping_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test paperless_mapping_contracts --locked
 
 paperless-mapping-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
@@ -9,7 +9,7 @@ paperless-mapping-fixtures-generate:
 .PHONY: paperless-state-differential paperless-state-fixtures-generate
 paperless-state-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_state_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test paperless_state_contracts --locked
 
 paperless-state-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
@@ -17,7 +17,7 @@ paperless-state-fixtures-generate:
 .PHONY: paperless-export-differential paperless-export-fixtures-generate
 paperless-export-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_export_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test paperless_export_contracts --locked
 
 paperless-export-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
@@ -25,7 +25,7 @@ paperless-export-fixtures-generate:
 .PHONY: paperless-http-differential paperless-http-fixtures-generate
 paperless-http-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test paperless_http_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test paperless_http_contracts --locked
 
 paperless-http-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
@@ -33,7 +33,7 @@ paperless-http-fixtures-generate:
 .PHONY: notion-import-differential notion-import-fixtures-generate
 notion-import-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test notion_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test notion_contracts --locked
 
 notion-import-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
@@ -42,7 +42,7 @@ notion-import-fixtures-generate:
 INGEST_GO ?= go
 ingest-queue-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --locked
+	$(CARGO) test -p symdesk-ingest --locked
 
 ingest-queue-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
@@ -50,7 +50,7 @@ ingest-queue-fixtures-generate:
 .PHONY: ingest-extraction-differential ingest-extraction-fixtures-generate
 ingest-extraction-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestExtractionContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-ingest --test extraction_contracts --locked
+	$(CARGO) test -p symdesk-ingest --test extraction_contracts --locked
 
 ingest-extraction-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestExtractionContract$$'
@@ -290,22 +290,22 @@ CONTACTS_GO ?= go
 .PHONY: contacts-keyprovider-differential
 contacts-keyprovider-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsKeyProviderContract$$' -v
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test keyprovider_contracts
+	$(CARGO) test -p symdesk-contacts --locked --test keyprovider_contracts
 
 .PHONY: contacts-erase-differential
 contacts-erase-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsEraseContract$$' -v
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test erase_contracts
+	$(CARGO) test -p symdesk-contacts --locked --test erase_contracts
 
 .PHONY: contacts-relationship-differential
 contacts-relationship-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/relationship -run '^TestPortContactsRelationshipContract$$' -v
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test relationship_contracts
+	$(CARGO) test -p symdesk-contacts --locked --test relationship_contracts
 
 .PHONY: contacts-crud-differential
 contacts-crud-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/contact -run '^TestPortContactsCRUDContract$$' -v
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-contacts --locked --test crud_contracts
+	$(CARGO) test -p symdesk-contacts --locked --test crud_contracts
 
 .PHONY: contacts-vcard-differential
 contacts-vcard-differential:
@@ -1343,7 +1343,7 @@ ai-provider-fixtures-generate:
 
 ai-provider-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIProviderContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-core --locked --test ai_providers
+	$(CARGO) test -p symdesk-core --locked --test ai_providers
 
 .PHONY: compose-probe-fixtures-generate compose-probe-differential
 compose-probe-fixtures-generate:
@@ -1351,7 +1351,7 @@ compose-probe-fixtures-generate:
 
 compose-probe-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeProbeContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-core --locked --test compose_probe
+	$(CARGO) test -p symdesk-core --locked --test compose_probe
 
 .PHONY: compose-resolve-fixtures-generate compose-resolve-differential
 compose-resolve-fixtures-generate:
@@ -1359,7 +1359,7 @@ compose-resolve-fixtures-generate:
 
 compose-resolve-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-core --locked --test compose_resolve
+	$(CARGO) test -p symdesk-core --locked --test compose_resolve
 
 recipe-validate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
@@ -1371,7 +1371,7 @@ recipe-validate-differential:
 .PHONY: mcp-write-differential mcp-write-fixtures-generate
 mcp-write-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
-	$(CARGO) test --manifest-path "$(CURDIR)/Cargo.toml" -p symdesk-cli --test mcp_write --locked
+	$(CARGO) test -p symdesk-cli --test mcp_write --locked
 
 mcp-write-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'

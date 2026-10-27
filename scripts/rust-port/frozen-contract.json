@@ -152,15 +152,99 @@
       "ignored": 0,
       "passed": 3
     },
+    "cargo test -p symdesk-cli --test backlinks --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test config --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --test config_vault_selection --locked": {
       "ignored": 0,
       "passed": 2
+    },
+    "cargo test -p symdesk-cli --test conflict --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test docs_read --locked": {
+      "ignored": 0,
+      "passed": 1
     },
     "cargo test -p symdesk-cli --test duplicates --locked": {
       "ignored": 0,
       "passed": 2
     },
+    "cargo test -p symdesk-cli --test graph --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test help --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test history_read --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --test history_tasks --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test mcp_write --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --test note_doc --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test notebook_read --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test notebook_write --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test relations_inverse --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test restore --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-cli --test views --locked": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-contacts --locked --test crud_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-contacts --locked --test csv_contracts --test import_contracts": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-contacts --locked --test erase_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-contacts --locked --test keyprovider_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-contacts --locked --test relationship_contracts": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-contacts --locked --test schema_contracts": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-contacts --locked --test vcard_contracts": {
       "ignored": 0,
       "passed": 1
     },
@@ -169,7 +253,19 @@
       "live_only_tests": [
         "contacts_and_ingest_paths_match_native_go"
       ],
-      "passed": 36
+      "passed": 39
+    },
+    "cargo test -p symdesk-core --locked --test ai_providers": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-core --locked --test compose_probe": {
+      "ignored": 0,
+      "passed": 1
+    },
+    "cargo test -p symdesk-core --locked --test compose_resolve": {
+      "ignored": 0,
+      "passed": 1
     },
     "cargo test -p symdesk-core --locked --test template_path_contracts": {
       "ignored": 0,
@@ -185,7 +281,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 119
+      "passed": 123
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,
@@ -271,13 +367,45 @@
       "ignored": 0,
       "passed": 5
     },
+    "cargo test -p symdesk-index --locked retrieval_extract": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-ingest --locked": {
+      "ignored": 0,
+      "passed": 23
+    },
+    "cargo test -p symdesk-ingest --test extraction_contracts --locked": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-ingest --test notion_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-ingest --test paperless_export_contracts --locked": {
+      "ignored": 0,
+      "passed": 4
+    },
+    "cargo test -p symdesk-ingest --test paperless_http_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-ingest --test paperless_mapping_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-ingest --test paperless_state_contracts --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
     "cargo test -p symdesk-protocol --locked --test retrieval_embedding": {
       "ignored": 0,
       "passed": 2
     },
     "cargo test -p symdesk-render --locked": {
       "ignored": 0,
-      "passed": 72
+      "passed": 75
     },
     "cargo test -p symdesk-render --locked archive": {
       "ignored": 0,
@@ -298,6 +426,10 @@
     "cargo test -p symdesk-render --locked stamp": {
       "ignored": 0,
       "passed": 17
+    },
+    "cargo test -p symdesk-render --test draw_emit_contract --locked": {
+      "ignored": 0,
+      "passed": 3
     },
     "cargo test -p symdesk-vault --all-features --locked": {
       "ignored": 3,

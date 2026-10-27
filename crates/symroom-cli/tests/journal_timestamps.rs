@@ -14,6 +14,8 @@ fn unstamped_cli_event_kinds_keep_empty_signed_timestamps() {
     .expect("parse");
     let root = std::env::temp_dir().join(format!("room-ts-{}", std::process::id()));
     fs::create_dir(&root).expect("fresh root");
+    // Artifact paths are checked against the CLI's canonical room root.
+    let root = fs::canonicalize(root).expect("canonical test root");
     struct Cleanup(std::path::PathBuf);
     impl Drop for Cleanup {
         fn drop(&mut self) {

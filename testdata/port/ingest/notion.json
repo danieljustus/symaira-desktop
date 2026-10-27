@@ -204,7 +204,7 @@
     "import.go": "f9b5d394f4d3f9e38044419624ffbc95d71a2b975794405dffde3a1baf36cd70",
     "links.go": "b4ca4b0e1eb0fb2ddc1f044a1aeac457d09c2c09f49acfcb4a1894f9235d5f82",
     "parse.go": "e73177bd64ad6e403fbd2fe94332692670c290fe5590ad01afa195b1af4e49f9",
-    "port_contract_test.go": "d32f8c5a62e26a659283e6e5d1db2836d09c8c3d146606f000036e9599fa00f0",
+    "port_contract_test.go": "5570536ac5e7a7f7151a3f447c6868ce3a20848a259bfcde7114838f57b48d71",
     "yaml.go": "8c7fabfb68c568e1c9c682188c1e8d874a13b0f1a42c067026c767097d6f6d67"
   },
   "steps": [

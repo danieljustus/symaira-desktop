@@ -784,7 +784,7 @@
   "schema_version": 1,
   "source_hashes": {
     "client.go": "e65884654d87ec29e47eeb31d1e2c75ed4b2ff00aa5d8b4c28d589f2215f2159",
-    "port_contract_test.go": "202fe65c32ee3d555fc872eed0252e623b68a7d5dba9ff33d75900e693c41e40",
+    "port_contract_test.go": "f2940b37214478be7132b8e2fb883a70522fe9c594b3b0bf18b357b4a21f084d",
     "types.go": "850d6e3791be0c54ebe41eea11b1ac30f1eb370533d6ce9e9c1d744bef21152d"
   }
 }

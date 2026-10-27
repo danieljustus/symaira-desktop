@@ -17,7 +17,7 @@
   "source_hashes": {
     "importer.go": "c1d7b518739a01fcc08af2c178e600ea7c994f161a01748b6d2990e966a5ad87",
     "manifest.go": "650fa255842ff3eb09e2f5c096987d6c3921794565a99786c6a560281273e4b2",
-    "port_contract_test.go": "2745cfc9b8da8ea7fcaa33a5f11b434c09a21fef5174c5733bbad1748700159a"
+    "port_contract_test.go": "7eb4b9c5bec6bf8037a95d6bc160a1a270dbe9c3092019eae7efb9865c71bc55"
   },
   "steps": [
     {

@@ -1052,7 +1052,7 @@
   "source_hashes": {
     "extract/containers.go": "6357e0c595ce944e58f64d33830d4055942ba139dfa8f2df2f0864c16260a704",
     "extract/extract.go": "29b3e258b0583de21057702ed6c0b2d3b67bbdd44028bfbf8c52885179291b73",
-    "extract/extract_port_test.go": "4f675538679ee2cd2c69e78b5f72c53a7030e918b08bfd2bf35ce0adc6df20e7",
+    "extract/extract_port_test.go": "dff7cbf5d99643b94ed9b5fd96bcb1aaa202d5e26d1f606142bbb22781530eb9",
     "extract/limits.go": "7b224c9f48692ea23da3b916d0a65f761a93c4b420e1826a47e2140bcd4dec60",
     "extract/structured.go": "5979e7e4e784779077a00a83e3cb17004b8d3c2afc421f80df1c11b352c994ec",
     "filetype/magika.go": "6f772aa0b63c480fefcc9fdbba48ce61e2e1722b41fff8b4a48b287453b05ffb"

@@ -378,7 +378,7 @@
   "source_hashes": {
     "audit.go": "722c477b858df3e6f7352c262121dfb932f33bc0cf129c35e8b0fea31777a4f4",
     "import.go": "934894daa8e8add10ccb538b1819cf4fcaf53614ded1321d18c0b1adbf91b4e6",
-    "port_contract_test.go": "e1004ad7a2da778360ce5a0fbc4a13ed98d64ae684f4bb3e874b8abda1d59825"
+    "port_contract_test.go": "80c84a56a277a979e0df8494610373659a9f80f42437cb2fb367ef87a60c7275"
   },
   "stages": [
     {

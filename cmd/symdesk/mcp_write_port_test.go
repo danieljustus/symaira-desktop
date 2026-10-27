@@ -148,6 +148,22 @@ func normalizeMCPWrite(s string) string {
 }
 
 func TestMCPWriteProcessPortFixture(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// This frozen transcript contains Unix os.Root syscall diagnostics and
+		// path-bearing write/history observations. No native Windows capture has
+		// been recorded; do not manufacture one by rewriting Unix observations.
+		// Keep the frozen bytes checked here and by portgen provenance. Linux
+		// and macOS still execute and compare every process case below.
+		data, err := os.ReadFile("../../testdata/port/mcp/write-process.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(data)
+		if hex.EncodeToString(digest[:]) != "6d0a8572b1082e6410260be3d7fb37c5fe9001597c55fe103c32714e62453294" {
+			t.Fatal("frozen MCP write transcript checksum changed")
+		}
+		t.Skip("MCP write process syscall transcript recorded on Linux/macOS only; Windows frozen checksum verified, native replay pending")
+	}
 	binary := buildIndexRetrievalBinary(t, t.TempDir())
 	fixture := mcpWriteFixture{SchemaVersion: 1}
 	var previous mcpWriteFixture

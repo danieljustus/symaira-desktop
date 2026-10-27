@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -50,12 +51,77 @@ func TestGoCLIJournalTimestamps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := json.Marshal([]any{approval, artifacts, checkpoints})
-	if err != nil {
-		t.Fatal(err)
+	observed := map[string]int{}
+	check := func(initial, final []string) {
+		seeded := map[string]bool{}
+		for _, content := range initial {
+			for _, line := range strings.Split(content, "\n") {
+				var ev map[string]any
+				if json.Unmarshal([]byte(line), &ev) == nil {
+					if id, ok := ev["id"].(string); ok {
+						seeded[id] = true
+					}
+				}
+			}
+		}
+		for _, content := range final {
+			for _, line := range strings.Split(content, "\n") {
+				var ev map[string]any
+				if json.Unmarshal([]byte(line), &ev) != nil {
+					continue
+				}
+				kind, _ := ev["kind"].(string)
+				if kind == "" || goStampsJournalKind(kind) {
+					continue
+				}
+				id, _ := ev["id"].(string)
+				if seeded[id] {
+					continue
+				}
+				if ev["ts"] != "" {
+					t.Fatalf("Go CLI %s event has ts=%v, want empty", kind, ev["ts"])
+				}
+				observed[kind]++
+			}
+		}
 	}
-	// The constructors preserve empty TS; prove real recorded events reach this assertion.
-	if !bytes.Contains(raw, []byte(`\"ts\":\"\"`)) {
-		t.Fatal("no empty-ts Go CLI journal event was exercised")
+	for _, c := range approval.Cases {
+		var initial, final []string
+		for _, f := range c.InitialJournal {
+			initial = append(initial, f.Content)
+		}
+		for _, f := range c.FinalJournal {
+			final = append(final, f.Content)
+		}
+		check(initial, final)
+	}
+	for _, c := range artifacts.Cases {
+		var initial, final []string
+		for _, f := range c.InitialJournal {
+			initial = append(initial, f.Content)
+		}
+		for _, f := range c.FinalFiles {
+			if strings.HasSuffix(f.Name, ".jsonl") {
+				final = append(final, f.Content)
+			}
+		}
+		check(initial, final)
+	}
+	for _, c := range checkpoints.Cases {
+		var initial, final []string
+		for _, f := range c.InitialJournal {
+			initial = append(initial, f.Content)
+		}
+		for _, f := range c.FinalFiles {
+			if strings.HasSuffix(f.Name, ".jsonl") {
+				final = append(final, f.Content)
+			}
+		}
+		check(initial, final)
+	}
+	for _, kind := range []string{"run.approved", "run.denied", "artifact.linked", "artifact.unlinked", "checkpoint.requested", "checkpoint.resolved"} {
+		if observed[kind] == 0 {
+			t.Fatalf("no real Go CLI %s event exercised", kind)
+		}
 	}
 }

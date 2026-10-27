@@ -124,6 +124,9 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
         let search = if case.path_mode == "dot" {
             #[cfg(unix)]
             write_fake_symbrain(&room, false);
+            #[cfg(windows)]
+            fs::copy(env!("CARGO_BIN_EXE_symroom"), room.join("symbrain.exe"))
+                .expect("plant dot executable");
             Path::new(".")
         } else {
             &path_dir

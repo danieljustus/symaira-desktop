@@ -140,6 +140,19 @@ fn unstamped_cli_event_kinds_keep_empty_signed_timestamps() {
         event
             .verify_signature(&identity.public_key)
             .expect("empty TS is signed");
+        if kind == "artifact.linked" {
+            let id = found[0]["body"]["artifact_id"].as_str().unwrap();
+            assert!(run(&["artifact", "unlink", id]).status.success());
+            let content = fs::read_to_string(
+                room.join("journal")
+                    .join(format!("{}.jsonl", identity.member_id)),
+            )
+            .unwrap();
+            let last: Value =
+                serde_json::from_str(content.trim_end().rsplit('\n').next().unwrap()).unwrap();
+            assert_eq!(last["kind"], "artifact.unlinked");
+            assert_eq!(last["ts"], "");
+        }
         if kind == "checkpoint.requested" {
             let id = found[0]["body"]["checkpoint_id"].as_str().unwrap();
             assert!(

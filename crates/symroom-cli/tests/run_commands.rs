@@ -389,10 +389,7 @@ fn read_mutation_journal(journal: &Path, identity_member: &str) -> Vec<(String, 
 fn normalize_dynamic_event(line: &str) -> String {
     let mut event: serde_json::Value = serde_json::from_str(line).expect("parse generated event");
     let object = event.as_object_mut().expect("generated event object");
-    object.insert(
-        "ts".to_owned(),
-        serde_json::Value::String("<dynamic-clock>".to_owned()),
-    );
+
     object.insert(
         "sig".to_owned(),
         serde_json::Value::String("<signature-of-dynamic-clock>".to_owned()),

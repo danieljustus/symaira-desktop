@@ -465,7 +465,12 @@ fn normalize_journal(content: &str) -> String {
         .map(|(index, line)| {
             let mut event: serde_json::Value = serde_json::from_str(line).expect("parse event");
             let object = event.as_object_mut().expect("event object");
-            object.insert("ts".into(), "<dynamic-clock>".into());
+            if matches!(
+                object.get("kind").and_then(serde_json::Value::as_str),
+                Some("room.created" | "member.added" | "note.posted" | "decision.recorded")
+            ) {
+                object.insert("ts".into(), "<dynamic-clock>".into());
+            }
             object.insert("sig".into(), "<signature>".into());
             if index > 0 && previous_dynamic {
                 object.insert("prev".into(), "<dynamic-prev>".into());

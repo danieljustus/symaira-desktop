@@ -116,7 +116,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		OracleRevision: fixtureoracle.Current().Commit,
 		RootEvent:      "approval-room-created",
 		RootPubkey:     "ed25519:" + hex.EncodeToString(keys["owner"].PublicKey),
-		Normalization:  "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",
+		Normalization:  "dynamic appended event sig; empty ts preserved; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",
 		IdentityKeys:   make(map[string]string, len(keys)),
 		SourceHashes:   make(map[string]string),
 	}
@@ -368,7 +368,6 @@ func normalizeRunApprovalCLIEvent(content []byte, approval bool) ([]byte, error)
 		if kind != event.KindRunApproved && kind != event.KindRunDenied {
 			return content, nil
 		}
-		fields["ts"] = json.RawMessage(`"<dynamic-clock>"`)
 		fields["sig"] = json.RawMessage(`"<signature-of-dynamic-clock>"`)
 		if kind == event.KindRunApproved && approval {
 			fields["id"] = json.RawMessage(`"<dynamic-event-id>"`)

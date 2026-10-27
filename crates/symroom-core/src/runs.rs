@@ -430,8 +430,8 @@ pub fn start(
         event_id,
         "run.started",
         body,
-        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
-        now_timestamp(),
+        // Go leaves TS unset for run lifecycle events.
+        String::new(),
     )
 }
 
@@ -457,13 +457,9 @@ pub fn cancel(
         event_id,
         "run.cancelled",
         body,
-        // TODO(#1313): Go leaves ts empty for run.started/run.cancelled
-        now_timestamp(),
+        // Go leaves TS unset for run lifecycle events.
+        String::new(),
     )
-}
-
-fn now_timestamp() -> String {
-    event::format_timestamp(time::OffsetDateTime::now_utc())
 }
 
 fn derived_event_id(run_id: &str, action: &str) -> String {

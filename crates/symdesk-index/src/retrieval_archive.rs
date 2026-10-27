@@ -110,7 +110,7 @@ fn xml_text(bytes: &[u8], mode: Mode, shared: &[String]) -> (String, Vec<String>
                 }
             }
             Ok(Event::Text(e)) => {
-                let Ok(text) = e.xml_content() else { break };
+                let Ok(text) = e.xml11_content() else { break };
                 if (mode == Mode::Odf && in_block > 0) || (mode == Mode::Office && active) {
                     out.push_str(&text);
                 }
@@ -193,7 +193,7 @@ pub(super) fn archive_text(
     let names = (0..zip.len())
         .map(|i| {
             zip.by_index(i)
-                .map(|f| f.name().to_owned())
+                .and_then(|f| f.name().map(|name| name.into_owned()))
                 .map_err(|e| contract(e.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;

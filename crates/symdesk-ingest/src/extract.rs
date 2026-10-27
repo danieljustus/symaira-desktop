@@ -159,7 +159,7 @@ impl<'a> Archive<'a> {
         let names = (0..zip.len())
             .map(|i| {
                 zip.by_index(i)
-                    .map(|f| f.name().to_owned())
+                    .and_then(|f| f.name().map(|name| name.into_owned()))
                     .map_err(|e| e.to_string())
             })
             .collect::<Result<_, _>>()?;
@@ -224,7 +224,9 @@ fn detect_zip(data: &[u8]) -> &'static str {
                                 Some((
                                     String::from_utf8_lossy(a.key.local_name().as_ref())
                                         .into_owned(),
-                                    a.unescape_value().ok()?.into_owned(),
+                                    quick_xml::escape::unescape(std::str::from_utf8(&a.value).ok()?)
+                                        .ok()?
+                                        .into_owned(),
                                 ))
                             })
                             .collect::<std::collections::HashMap<_, _>>();
@@ -536,7 +538,7 @@ fn xml_text(data: &[u8], pptx: bool) -> Result<String, String> {
                 }
             }
             Ok(Event::Text(e)) if !pptx || active => {
-                out.push_str(&e.xml_content().map_err(|e| e.to_string())?)
+                out.push_str(&e.xml11_content().map_err(|e| e.to_string())?)
             }
             Ok(Event::CData(e)) if !pptx || active => {
                 out.push_str(&e.decode().map_err(|e| e.to_string())?)

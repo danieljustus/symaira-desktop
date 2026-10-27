@@ -15,8 +15,8 @@ symaira-core-sqlite.workspace = true
 symdesk-core.workspace = true
 regex.workspace = true
 scraper = "0.29.0"
-quick-xml = "=0.38.3"
-zip = { version = "=6.0.0", default-features = false, features = ["deflate"] }
+quick-xml = "=0.41.0"
+zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
 sha2.workspace = true
 symdesk-vault.workspace = true
 noyalib.workspace = true

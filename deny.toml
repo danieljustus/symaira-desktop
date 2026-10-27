@@ -70,6 +70,49 @@ name = "webpki-root-certs"
 version = "=1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 
+# Pinned HTML extraction dependencies: ISC notices and Mozilla's MPL-2.0
+# file-level license remain upstream; no global copyleft allowance.
+[[licenses.exceptions]]
+name = "scraper"
+version = "=0.29.0"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "ego-tree"
+version = "=0.11.1"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "cssparser"
+version = "=0.38.0"
+allow = ["MPL-2.0"]
+
+[[licenses.exceptions]]
+name = "cssparser-macros"
+version = "=0.7.1"
+allow = ["MPL-2.0"]
+
+[[licenses.exceptions]]
+name = "dtoa-short"
+version = "=0.3.5"
+allow = ["MPL-2.0"]
+
+[[licenses.exceptions]]
+name = "selectors"
+version = "=0.41.0"
+allow = ["MPL-2.0"]
+
+# ZIP/PDF deflate backend, retaining the zlib notice in these exact releases.
+[[licenses.exceptions]]
+name = "libz-rs-sys"
+version = "=0.5.5"
+allow = ["Zlib"]
+
+[[licenses.exceptions]]
+name = "zlib-rs"
+version = "=0.5.5"
+allow = ["Zlib"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"

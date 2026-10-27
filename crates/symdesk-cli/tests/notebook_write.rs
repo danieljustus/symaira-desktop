@@ -150,16 +150,6 @@ fn slash_root_paths(text: &str) -> String {
 }
 
 #[test]
-fn frozen_notebook_write_checksum_is_unchanged() {
-    assert_eq!(
-        symdesk_vault::sha256_hex(include_bytes!(
-            "../../../testdata/port/cli/notebook-write-process.json"
-        )),
-        "32f391e61d299b3ef8190896273fd4b69c578be853a5090a04a0cb582d38f0e3"
-    );
-}
-
-#[test]
 #[cfg_attr(
     windows,
     ignore = "Unix notebook self-source/write observations are not portable to Windows; frozen checksum remains checked"

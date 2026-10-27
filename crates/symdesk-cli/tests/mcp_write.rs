@@ -51,7 +51,15 @@ struct Case {
 }
 
 #[test]
-fn frozen_write_transcript_checksum_is_unchanged() {
+fn frozen_write_transcript_checksums_are_unchanged() {
+    // Always check both platform-limited write captures, even on Windows
+    // where their Unix process replays are explicitly ignored.
+    assert_eq!(
+        symdesk_vault::sha256_hex(include_bytes!(
+            "../../../testdata/port/cli/notebook-write-process.json"
+        )),
+        "32f391e61d299b3ef8190896273fd4b69c578be853a5090a04a0cb582d38f0e3"
+    );
     let bytes = fs::read(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../testdata/port/mcp/write-process.json"),

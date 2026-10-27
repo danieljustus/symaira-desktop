@@ -458,9 +458,9 @@ fn call_tool(
 ) -> Result<Value, String> {
     match name {
         "desk_status" => Ok(json!({
-            "version": config.version,
-            "vault": config.vault.clone().unwrap_or_default(),
             "capabilities": if config.allow_write { "read_write" } else { "read_only" },
+            "vault": config.vault.clone().unwrap_or_default(),
+            "version": config.version,
         })),
         "desk_ls" => {
             let args = go_string_fields(
@@ -1163,12 +1163,22 @@ mod tests {
     fn line_initialize_and_tools_list_match_representative_contract() {
         let output = run(br#"{"jsonrpc":"2.0","id":1,"method":"initialize"}
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"desk_status","arguments":{}}}
 "#);
         let responses: Vec<Value> = output
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
-        assert_eq!(responses.len(), 2);
+        assert_eq!(responses.len(), 3);
+        // The embedded JSON is text, so outer JSON comparison cannot ignore
+        // its key order. Go marshals this status map in sorted-key order.
+        assert_eq!(
+            responses[2]["result"]["content"][0]["text"],
+            format!(
+                r#"{{"capabilities":"read_only","vault":"/tmp/rust006-vault","version":"{}"}}"#,
+                super::super::VERSION
+            )
+        );
         assert_eq!(responses[0]["result"]["protocolVersion"], PROTOCOL_VERSION);
         assert_eq!(
             responses[0]["result"]["serverInfo"],

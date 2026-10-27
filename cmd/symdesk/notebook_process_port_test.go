@@ -38,6 +38,9 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 		result := observeViewsCase(t, binary, c)
 		for i := range result.Steps {
 			result.Steps[i].Stdout = normalizeNotebookPaths(viewsPointer.ReplaceAllString(result.Steps[i].Stdout, "$$PTR"))
+			// Resolve emits a native notebooks\\ordinary.md diagnostic on stderr
+			// too. This is separator spelling, not a nonportable observation.
+			result.Steps[i].Stderr = normalizeNotebookPaths(result.Steps[i].Stderr)
 		}
 		observed.Cases = append(observed.Cases, result)
 	}
@@ -68,7 +71,20 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 }
 
 // Notebook references use slash-normalized paths in the portable process corpus.
+// Normalize only this known path prefix, not arbitrary diagnostic backslashes.
 func normalizeNotebookPaths(text string) string {
 	text = strings.ReplaceAll(text, `notebooks\\`, `notebooks/`)
 	return strings.ReplaceAll(text, `notebooks\`, `notebooks/`)
+}
+
+func TestNormalizeNotebookPathsPreservesDiagnostics(t *testing.T) {
+	for _, test := range []struct{ input, want string }{
+		{`notebooks\ordinary.md is not a notebook note (type="")`, `notebooks/ordinary.md is not a notebook note (type="")`},
+		{`notebooks\\ordinary.md is not a notebook note (type=\"\")`, `notebooks/ordinary.md is not a notebook note (type=\"\")`},
+		{`notes\source.md: unrelated backslash remains unchanged`, `notes\source.md: unrelated backslash remains unchanged`},
+	} {
+		if got := normalizeNotebookPaths(test.input); got != test.want {
+			t.Fatalf("diagnostic normalization: got %q, want %q", got, test.want)
+		}
+	}
 }

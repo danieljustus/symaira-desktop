@@ -1,4 +1,7 @@
 //! Replays the real Go snapshot and trash restoration process corpus.
+#[path = "support/process_root.rs"]
+mod process_root;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -175,6 +178,8 @@ fn restore_match_go_process_contract() {
         }
         executed_cases += 1;
         let root = base.join(&case.name);
+        fs::create_dir_all(&root).expect("make case root");
+        let root = process_root::canonical_root(&root);
         let vault = root.join("vault");
         let home = root.join("home");
         let cwd = root.join("cwd");

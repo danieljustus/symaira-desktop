@@ -13,6 +13,8 @@ use serde::Deserialize;
 
 #[path = "support/link_state.rs"]
 mod link_state;
+#[path = "support/process_root.rs"]
+mod process_root;
 
 const EXPECTED_CASES: usize = 4;
 const EXPECTED_STEPS: usize = 56;
@@ -176,6 +178,8 @@ fn backlinks_match_go_process_contract() {
         }
         executed_cases += 1;
         let root = base.join(&case.name);
+        fs::create_dir_all(&root).expect("make case root");
+        let root = process_root::canonical_root(&root);
         let vault = root.join("vault");
         let home = root.join("home");
         let cwd = root.join("cwd");

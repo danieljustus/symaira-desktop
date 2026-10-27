@@ -1,4 +1,7 @@
 //! Replays every case captured by the real Go CLI oracle.
+#[path = "support/process_root.rs"]
+mod process_root;
+
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
@@ -95,13 +98,14 @@ fn docs_read_matches_go_process_contract() {
             continue;
         }
         let root = base.join(&case.name);
+        fs::create_dir_all(&root).unwrap();
+        let root = process_root::canonical_root(&root);
         let home = root.join("home");
         let vault = root.join("vault");
         let cwd = root.join("cwd");
         for d in [&home, &vault, &cwd] {
             fs::create_dir_all(d).unwrap();
         }
-        let root = fs::canonicalize(root).unwrap();
         for (name, content) in &case.files {
             let p = vault.join(name);
             fs::create_dir_all(p.parent().unwrap()).unwrap();

@@ -692,7 +692,9 @@ fn write_proposal_new_directory_modes_follow_go_mkdirall() {
     for (umask, expected) in [("000", 0o755), ("077", 0o700)] {
         let root = temp_dir(&format!("sd-retention-umask-{umask}-"));
         let executable = std::env::current_exe().expect("current test executable");
-        let status = Command::new("/bin/sh")
+        // Child libtest summaries must not leak into the parent cargo output:
+        // the frozen-contract gate counts each top-level test binary's summary.
+        let output = Command::new("/bin/sh")
             .args([
                 "-c",
                 "umask \"$CHILD_UMASK\"; exec \"$CHILD_EXE\" --exact write_proposal_new_directory_modes_follow_go_mkdirall --nocapture",
@@ -701,9 +703,15 @@ fn write_proposal_new_directory_modes_follow_go_mkdirall() {
             .env("CHILD_EXE", &executable)
             .env(CHILD, "1")
             .env(ROOT, &root)
-            .status()
+            .output()
             .expect("run mode child");
-        assert!(status.success(), "child failed for umask {umask}");
+        assert!(
+            output.status.success(),
+            "child failed for umask {umask}: {}\nstdout:\n{}\nstderr:\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr),
+        );
         for relative in [
             Path::new("one"),
             Path::new("one/vault"),

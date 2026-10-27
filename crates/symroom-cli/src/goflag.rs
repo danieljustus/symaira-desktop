@@ -295,6 +295,9 @@ fn underscore_ok(text: &str) -> bool {
     saw != b'_'
 }
 
+#[path = "go_isprint.rs"]
+mod go_isprint;
+
 /// `fmt`'s `%q` for strings (`strconv.Quote`).
 pub fn go_quote(text: &str) -> String {
     let mut quoted = String::with_capacity(text.len() + 2);
@@ -313,7 +316,7 @@ pub fn go_quote(text: &str) -> String {
             ch if (ch as u32) < 0x20 || ch as u32 == 0x7f => {
                 quoted.push_str(&format!("\\x{:02x}", ch as u32));
             }
-            ch if ch.is_control() => {
+            ch if !go_isprint::is_print(ch) => {
                 if (ch as u32) < 0x10000 {
                     quoted.push_str(&format!("\\u{:04x}", ch as u32));
                 } else {
@@ -441,6 +444,23 @@ mod tests {
             Err(Failure::Error(message)) => message,
             other => panic!("expected an error, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn quote_escapes_go_non_printable_runes() {
+        for value in [
+            0xa0, 0xad, 0x200b, 0x2028, 0x2066, 0x3000, 0xe000, 0xfeff, 0xffff, 0x378, 0xe0001,
+            0x10ffff,
+        ] {
+            let ch = char::from_u32(value).unwrap();
+            let want = if value < 0x10000 {
+                format!("\"\\u{value:04x}\"")
+            } else {
+                format!("\"\\U{value:08x}\"")
+            };
+            assert_eq!(go_quote(&ch.to_string()), want);
+        }
+        assert_eq!(go_quote("é界😀"), "\"é界😀\"");
     }
 
     #[test]

@@ -224,9 +224,11 @@ fn detect_zip(data: &[u8]) -> &'static str {
                                 Some((
                                     String::from_utf8_lossy(a.key.local_name().as_ref())
                                         .into_owned(),
-                                    quick_xml::escape::unescape(std::str::from_utf8(&a.value).ok()?)
-                                        .ok()?
-                                        .into_owned(),
+                                    quick_xml::escape::unescape(
+                                        std::str::from_utf8(&a.value).ok()?,
+                                    )
+                                    .ok()?
+                                    .into_owned(),
                                 ))
                             })
                             .collect::<std::collections::HashMap<_, _>>();

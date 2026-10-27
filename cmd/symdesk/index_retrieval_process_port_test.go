@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -244,31 +243,9 @@ func observeIndexRetrievalProcess(t *testing.T) indexRetrievalProcessFixture {
 	return fixture
 }
 
-func buildIndexRetrievalBinary(t *testing.T, root string) string {
+func buildIndexRetrievalBinary(t *testing.T, _ string) string {
 	t.Helper()
-	binary := filepath.Join(root, "symdesk")
-	if runtime.GOOS == "windows" {
-		binary += ".exe"
-	}
-	if err := os.MkdirAll(filepath.Join(root, "go-build"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	currentUser, err := user.Current()
-	if err != nil {
-		t.Fatalf("resolve build cache home: %v", err)
-	}
-	goEnv := exec.Command("go", "env", "GOMODCACHE")
-	goEnv.Env = append(os.Environ(), "HOME="+currentUser.HomeDir)
-	moduleCache, err := goEnv.Output()
-	if err != nil {
-		t.Fatalf("resolve Go module cache: %v", err)
-	}
-	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
-	build.Env = append(os.Environ(), "HOME="+currentUser.HomeDir, "GOMODCACHE="+strings.TrimSpace(string(moduleCache)), "GOTMPDIR="+filepath.Join(root, "go-build"))
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build Go CLI process fixture: %v\n%s", err, output)
-	}
-	return binary
+	return processFixtureBinary(t)
 }
 
 func readIndexRetrievalState(t *testing.T, root, retrievalPath, vault string) indexRetrievalProcessState {

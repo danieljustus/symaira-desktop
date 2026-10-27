@@ -244,7 +244,7 @@ func TestPortContactsCRUDContract(t *testing.T) {
 		}
 		id := entity
 		run("list", entity, "", nil)
-		run("create", entity, "bad", map[string]any{name: " 	\u0085"})
+		run("create", entity, "bad", map[string]any{name: " \t\u0085"})
 		run("create", entity, id, map[string]any{name: " Ada_% ", "Notes": "private", "Source": "manual", "SourceRef": "source-1", "GivenName": "Ada", "FamilyName": "Lovelace"})
 		run("create", entity, id+"-2", map[string]any{name: "bob"})
 		run("create", entity, id+"-3", map[string]any{name: "BOB"})

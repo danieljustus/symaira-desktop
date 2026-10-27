@@ -28,7 +28,7 @@ func TestPortContactsVCardContract(t *testing.T) {
 		{"fallback", "BEGIN:VCARD\nN:李;Zoë\nEND:VCARD\n"},
 		{"nameless", "BEGIN:VCARD\nEMAIL:x@y\nEND:VCARD\n"},
 		{"no-end", "BEGIN:VCARD\nFN:Test\n"},
-		{"folded", "BEGIN:VCARD\r\nFN:Long\r\n Name\r\n	 More\r\nEND:VCARD\r\n"},
+		{"folded", "BEGIN:VCARD\r\nFN:Long\r\n Name\r\n\t More\r\nEND:VCARD\r\n"},
 		{"folded-no-newline", "BEGIN:VCARD\nFN:Long\n Name"},
 		{"no-begin", "FN:Ada\nEND:VCARD\n"},
 		{"bad-begin", "BEGIN:OTHER\nFN:Ada\nEND:VCARD\n"},

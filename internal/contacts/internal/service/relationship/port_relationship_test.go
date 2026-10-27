@@ -239,7 +239,7 @@ func TestPortContactsRelationshipContract(t *testing.T) {
 		for _, filter := range []string{"all", "open", "overdue", "upcoming"} {
 			run("followups", entity, id, map[string]any{"filter": filter})
 		}
-		for _, in := range []map[string]any{{}, {"Kind": "unknown", "Summary": "x"}, {"Kind": "note", "Summary": " \u2003"}, {"Kind": "external_reference", "Summary": "x", "ExternalRef": " 	"}} {
+		for _, in := range []map[string]any{{}, {"Kind": "unknown", "Summary": "x"}, {"Kind": "note", "Summary": " \u2003"}, {"Kind": "external_reference", "Summary": "x", "ExternalRef": " \t"}} {
 			run("interaction", entity, id, in)
 		}
 		for n, kind := range []string{"note", "call", "email", "meeting", "external_reference"} {

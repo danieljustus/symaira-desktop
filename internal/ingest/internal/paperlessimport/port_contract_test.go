@@ -55,7 +55,7 @@ func TestPortPaperlessMappingContract(t *testing.T) {
 		paths = append(paths, map[string]any{"input": input, "output": filepath.ToSlash(writer.SanitizeStoragePath(input))})
 	}
 	stages := []any{}
-	for _, input := range []string{"download timeout", "detect source type: unknown", "extract text failed", "archive file failed", "write note failed", "record document failed", "set vault path failed", "complete job failed", "other", "download and write note", " multi\n line	 message ", strings.Repeat("x", 1030)} {
+	for _, input := range []string{"download timeout", "detect source type: unknown", "extract text failed", "archive file failed", "write note failed", "record document failed", "set vault path failed", "complete job failed", "other", "download and write note", " multi\n line\t message ", strings.Repeat("x", 1030)} {
 		err := errors.New(input)
 		stages = append(stages, map[string]any{"input": input, "stage": stageFromError(err), "bounded": boundedErrorString(err), "explicit_stage": stageFromError(stageError("custom", err))})
 	}

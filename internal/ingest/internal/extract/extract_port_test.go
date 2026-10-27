@@ -107,13 +107,13 @@ func TestPortIngestExtractionContract(t *testing.T) {
 	add("unknown", "file.zzz", []byte("source"), false, "")
 	add("empty-unknown", "file", []byte{}, false, "")
 	add("empty-text", "file.txt", []byte{}, true, "")
-	add("text-raw", "file.txt", []byte("  raw\r\n\nunchanged	\xff"), true, "")
+	add("text-raw", "file.txt", []byte("  raw\r\n\nunchanged\t\xff"), true, "")
 	add("markdown", "file.md", []byte("# Title\n\n**body**"), true, "")
 	add("csv", "file.csv", []byte("a,b\n1,2"), true, "")
 	for i, s := range []string{"<h1>Title</h1><p>a &amp; b<br>next</p>", "<script>x</script><style>y</style><p>docu-\nment\u00a0text</p>", "<p>one</p><p>two</p>", "<broken>survives &lt;x&gt; &copy; &#x1f600;", "<table><tr><td>A</td><td>B</td></tr></table>", "<script>unfinished"} {
 		add(fmt.Sprintf("html-%d", i), "file.html", []byte(s), true, "")
 	}
-	for i, s := range []string{`{\rtf1 Hello\par world}`, `{\rtf1{\fonttbl ignored}body	ab x\'41\{end\}}`, `{\rtf1 unclosed`, "trailing\\", "{\\*ignored}visible", `{\rtf1 \'e9}`} {
+	for i, s := range []string{`{\rtf1 Hello\par world}`, `{\rtf1{\fonttbl ignored}body\tab x\'41\{end\}}`, `{\rtf1 unclosed`, "trailing\\", "{\\*ignored}visible", `{\rtf1 \'e9}`} {
 		add(fmt.Sprintf("rtf-%d", i), "file.rtf", []byte(s), true, "")
 	}
 	add("zip-corrupt", "file.docx", []byte("PK\x03\x04broken"), false, "")

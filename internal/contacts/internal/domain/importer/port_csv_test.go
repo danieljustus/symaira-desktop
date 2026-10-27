@@ -64,7 +64,7 @@ func TestPortContactsCSVContract(t *testing.T) {
 		fixture.SourceHashes[path] = hex.EncodeToString(h[:])
 	}
 	for _, kind := range []string{"email", "phone", "url", "handle", "address", "other"} {
-		for _, raw := range []string{"  ADA@Example.COM  ", "ΟΣ İ K", "+49 (١٢٣) 456Ⅳ²", "https://EXAMPLE.COM///", "@@USER", " A	 B\n C\u00a0D "} {
+		for _, raw := range []string{"  ADA@Example.COM  ", "ΟΣ İ K", "+49 (١٢٣) 456Ⅳ²", "https://EXAMPLE.COM///", "@@USER", " A\t B\n C\u00a0D "} {
 			fixture.Normalizations = append(fixture.Normalizations, norm{kind, raw, contact.Normalize(contact.ContactPointKind(kind), raw)})
 		}
 	}

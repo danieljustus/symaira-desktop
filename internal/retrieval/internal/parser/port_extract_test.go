@@ -41,7 +41,7 @@ func extractionInputs() []extractionInput {
 		}
 	}
 	for _, s := range []struct{ id, body string }{
-		{"empty", ""}, {"paragraphs", `{\rtf1\ansi Hello\par world\line next\page last	ab cell}`},
+		{"empty", ""}, {"paragraphs", `{\rtf1\ansi Hello\par world\line next\page last\tab cell}`},
 		{"destinations", `{\rtf1{\fonttbl hidden}{\colortbl hidden}{\stylesheet hidden}{\*\unknown hidden}Visible {\b bold} end}`},
 		{"escaped", `{\rtf1 a\\b\{c\} \'e9 \u1234?}`},
 		{"malformed", "}a{b\\\n c\\"}, {"unicode", "{\\rtf1 日本\r\nü}"},

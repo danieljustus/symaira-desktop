@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -131,6 +130,7 @@ func TestPortConfigProcessContract(t *testing.T) {
 				args[j] = strings.ReplaceAll(args[j], "$ROOT", root)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			//nolint:gosec // binary is the locally built symdesk fixture; arguments come from fixed test cases.
 			cmd := exec.CommandContext(ctx, binary, args...)
 			cmd.Dir, cmd.Env = root, environment
 			var stdout, stderr bytes.Buffer
@@ -160,6 +160,7 @@ func TestPortConfigProcessContract(t *testing.T) {
 				if d.IsDir() {
 					return nil
 				}
+				//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 				data, err := os.ReadFile(path)
 				if err != nil {
 					return err
@@ -188,7 +189,7 @@ func TestPortConfigProcessContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := "../../testdata/port/cli/config-process.json"
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {
@@ -197,7 +198,7 @@ func TestPortConfigProcessContract(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !bytes.Equal(current, encoded) {
-			t.Fatal(fmt.Sprintf("config process fixture drift: %s", path))
+			t.Fatalf("config process fixture drift: %s", path)
 		}
 	}
 	count := 0

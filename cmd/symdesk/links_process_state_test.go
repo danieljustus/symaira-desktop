@@ -21,6 +21,7 @@ func linkProcessState(t *testing.T, vault, home string) map[string][][]string {
 		if entry.IsDir() {
 			return nil
 		}
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return err

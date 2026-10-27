@@ -85,7 +85,11 @@ func TestPortPaperlessStateContract(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
 		cols, e := rows.Columns()
 		if e != nil {
 			t.Fatal(e)
@@ -156,6 +160,7 @@ func TestPortPaperlessStateContract(t *testing.T) {
 	dir := filepath.Dir(file)
 	hashes := map[string]string{}
 	for _, name := range []string{"store.go", "paperless_state_port_test.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(dir, name))
 		if e != nil {
 			t.Fatal(e)
@@ -173,6 +178,7 @@ func TestPortPaperlessStateContract(t *testing.T) {
 			t.Fatal(e)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		old, e := os.ReadFile(out)
 		if e != nil {
 			t.Fatal(e)

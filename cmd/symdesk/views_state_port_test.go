@@ -146,6 +146,7 @@ func observeViewsState(t *testing.T, root string) viewsPortState {
 		}
 		rel = filepath.ToSlash(rel)
 		if strings.HasPrefix(rel, "vault/") {
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -183,6 +184,7 @@ func observeViewsState(t *testing.T, root string) viewsPortState {
 			counts := map[string]int{}
 			for _, name := range names {
 				var n int
+				//nolint:gosec // table name comes from the test-owned SQLite schema and embedded quotes are escaped.
 				query := fmt.Sprintf("SELECT count(*) FROM \"%s\"", strings.ReplaceAll(name, "\"", "\"\""))
 				if err := db.QueryRow(query).Scan(&n); err != nil {
 					return err

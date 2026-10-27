@@ -102,7 +102,11 @@ func TestPortIngestQueueContract(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
 		cols, e := rows.Columns()
 		if e != nil {
 			t.Fatal(e)
@@ -257,6 +261,7 @@ func TestPortIngestQueueContract(t *testing.T) {
 		sources = append(sources, "migrations/"+filepath.Base(f))
 	}
 	for _, name := range sources {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(sourceDir, name))
 		if e != nil {
 			t.Fatal(e)
@@ -278,6 +283,7 @@ func TestPortIngestQueueContract(t *testing.T) {
 			t.Fatal(e)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		old, e := os.ReadFile(out)
 		if e != nil {
 			t.Fatal(e)

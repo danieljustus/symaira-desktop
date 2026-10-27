@@ -53,6 +53,7 @@ func paperlessExportContract(t *testing.T, unicodeBoundary bool) map[string]any 
 			if d.IsDir() {
 				return nil
 			}
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			b, e := os.ReadFile(p)
 			if e != nil {
 				return e
@@ -106,6 +107,7 @@ func paperlessExportContract(t *testing.T, unicodeBoundary bool) map[string]any 
 	dir := filepath.Dir(file)
 	hashes := map[string]string{}
 	for _, name := range []string{"importer.go", "manifest.go", "port_contract_test.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(dir, name))
 		if e != nil {
 			t.Fatal(e)
@@ -139,8 +141,9 @@ func checkPaperlessExportFixture(t *testing.T, name string, actual map[string]an
 	t.Helper()
 	_, file, _, _ := runtime.Caller(0)
 	out := filepath.Join(filepath.Dir(file), "../../testdata/port/ingest", name)
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	old, err := os.ReadFile(out)
-	if err != nil && !(os.IsNotExist(err) && os.Getenv("PORT_GENERATE") == "1") {
+	if err != nil && (!os.IsNotExist(err) || os.Getenv("PORT_GENERATE") != "1") {
 		t.Fatal(err)
 	}
 	expected := map[string]any{}

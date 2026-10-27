@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,6 +42,7 @@ func TestPortHelpProcessContract(t *testing.T) {
 	run := func(args []string) helpProcessResult {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		//nolint:gosec // binary is the locally built symdesk fixture; arguments come from fixed test cases.
 		cmd := exec.CommandContext(ctx, binary, args...)
 		cmd.Dir, cmd.Env = root, environment
 		var stdout, stderr bytes.Buffer
@@ -114,19 +114,20 @@ func TestPortHelpProcessContract(t *testing.T) {
 	paths := []string{"../../testdata/port/cli/help-process.json", "../../testdata/port/cli/cobra-help.json"}
 	for _, path := range paths {
 		if os.Getenv("PORT_GENERATE") == "1" {
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(path, encoded, 0o644); err != nil {
+			if err := os.WriteFile(path, encoded, 0o600); err != nil {
 				t.Fatal(err)
 			}
 		} else {
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			current, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(current, encoded) {
-				t.Fatal(fmt.Sprintf("help process fixture drift: %s", path))
+				t.Fatalf("help process fixture drift: %s", path)
 			}
 		}
 	}

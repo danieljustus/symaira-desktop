@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -39,6 +40,7 @@ func TestPortComposeProbeContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	commit := fixtureoracle.Current().Commit
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	source, err := os.ReadFile(filepath.Join(repo, "internal/compose/compose.go"))
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +74,7 @@ func TestPortComposeProbeContract(t *testing.T) {
 		c := &cases[i]
 		root := t.TempDir()
 		bin := filepath.Join(root, "bin")
-		if err := os.MkdirAll(bin, 0755); err != nil {
+		if err := os.MkdirAll(bin, 0o750); err != nil {
 			t.Fatal(err)
 		}
 		transcript := filepath.Join(root, "argv")
@@ -86,8 +88,9 @@ func TestPortComposeProbeContract(t *testing.T) {
 			if hang {
 				script += "while :; do :; done\n"
 			} else {
-				script += "printf '%s' '" + output + "'\nexit " + string(rune('0'+exit)) + "\n"
+				script += "printf '%s' '" + output + "'\nexit " + fmt.Sprint(exit) + "\n"
 			}
+			//nolint:gosec // test helper must be executable; bytes are the fixed fixture script or this test executable.
 			if err := os.WriteFile(scriptPath, []byte(script), 0700); err != nil {
 				t.Fatal(err)
 			}
@@ -98,6 +101,7 @@ func TestPortComposeProbeContract(t *testing.T) {
 		ResetCache()
 		observe := func() {
 			available, version := HasTool("symprobe")
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			argv, err := os.ReadFile(transcript)
 			if err != nil && !os.IsNotExist(err) {
 				t.Fatal(err)
@@ -130,10 +134,12 @@ func TestPortComposeProbeContract(t *testing.T) {
 		path = override
 	}
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		//nolint:gosec // path is the repository-local fixture output selected by this test.
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		expected, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)

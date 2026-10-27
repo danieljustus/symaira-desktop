@@ -86,6 +86,7 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 				if entry.IsDir() {
 					return nil
 				}
+				//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 				body, err := os.ReadFile(path)
 				if err != nil {
 					return err
@@ -121,11 +122,12 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 	}
 	path := filepath.Join(filepath.Dir(source), docsReadFixturePath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

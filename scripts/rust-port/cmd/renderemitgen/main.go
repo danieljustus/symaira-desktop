@@ -90,6 +90,7 @@ func run() error {
 		return nil
 	}
 	for _, name := range []string{"dsl-parse", "layout"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(root, "testdata/port/render", name+".json"))
 		if e != nil {
 			return e

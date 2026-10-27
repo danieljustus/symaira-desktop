@@ -225,11 +225,13 @@ func TestPortContactsCRUDContract(t *testing.T) {
 		}
 		results = append(results, map[string]any{"value": value, "error": message, "kind": errs.KindOf(callErr)})
 		for _, table := range []string{"persons", "organizations", "aliases", "entity_classifications", "contact_points"} {
+			//nolint:gosec // SQL identifiers come from the fixed fixture table list or its SQLite schema, never user input.
 			if _, e := db.Exec("UPDATE "+table+" SET created_at = ?", stamp); e != nil {
 				t.Fatal(e)
 			}
 		}
 		for _, table := range []string{"persons", "organizations", "contact_points"} {
+			//nolint:gosec // SQL identifiers come from the fixed fixture table list or its SQLite schema, never user input.
 			if _, e := db.Exec("UPDATE "+table+" SET updated_at = ?", stamp); e != nil {
 				t.Fatal(e)
 			}
@@ -242,7 +244,7 @@ func TestPortContactsCRUDContract(t *testing.T) {
 		}
 		id := entity
 		run("list", entity, "", nil)
-		run("create", entity, "bad", map[string]any{name: " \t\u0085"})
+		run("create", entity, "bad", map[string]any{name: " 	\u0085"})
 		run("create", entity, id, map[string]any{name: " Ada_% ", "Notes": "private", "Source": "manual", "SourceRef": "source-1", "GivenName": "Ada", "FamilyName": "Lovelace"})
 		run("create", entity, id+"-2", map[string]any{name: "bob"})
 		run("create", entity, id+"-3", map[string]any{name: "BOB"})
@@ -289,6 +291,7 @@ func TestPortContactsCRUDContract(t *testing.T) {
 	queries := []string{}
 	snapshots := []any{}
 	for _, table := range []string{"persons", "organizations", "aliases", "tags", "entity_tags", "entity_classifications", "contact_points"} {
+		//nolint:gosec // SQL identifiers come from the fixed fixture table list or its SQLite schema, never user input.
 		q := "SELECT * FROM " + table + " ORDER BY id"
 		queries = append(queries, q)
 		rows, e := db.Query(q)
@@ -323,6 +326,7 @@ func TestPortContactsCRUDContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "../../../../.."))
 	hashes := map[string]string{}
 	for _, rel := range []string{"internal/contacts/internal/service/contact/persons.go", "internal/contacts/internal/service/contact/organizations.go", "internal/contacts/internal/service/contact/childtables.go", "internal/contacts/internal/service/contact/service.go", "internal/contacts/internal/domain/contact/types.go", "internal/contacts/internal/domain/page/page.go", "internal/contacts/internal/errs/errors.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(root, rel))
 		if e != nil {
 			t.Fatal(e)
@@ -338,7 +342,7 @@ func TestPortContactsCRUDContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/crud.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if e := os.WriteFile(path, data, 0644); e != nil {
+		if e := os.WriteFile(path, data, 0o600); e != nil {
 			t.Fatal(e)
 		}
 	} else {

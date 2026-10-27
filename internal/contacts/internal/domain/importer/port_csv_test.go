@@ -55,6 +55,7 @@ func TestPortContactsCSVContract(t *testing.T) {
 		Normalizations []norm            `json:"normalizations"`
 	}{Oracle: fixtureoracle.Current(), SourceHashes: map[string]string{}}
 	for _, path := range []string{"internal/contacts/internal/domain/importer/csv.go", "internal/contacts/internal/domain/importer/types.go", "internal/contacts/internal/domain/contact/normalize.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		data, err := os.ReadFile(filepath.Join(root, path))
 		if err != nil {
 			t.Fatal(err)
@@ -63,7 +64,7 @@ func TestPortContactsCSVContract(t *testing.T) {
 		fixture.SourceHashes[path] = hex.EncodeToString(h[:])
 	}
 	for _, kind := range []string{"email", "phone", "url", "handle", "address", "other"} {
-		for _, raw := range []string{"  ADA@Example.COM  ", "ΟΣ İ K", "+49 (١٢٣) 456Ⅳ²", "https://EXAMPLE.COM///", "@@USER", " A\t B\n C\u00a0D "} {
+		for _, raw := range []string{"  ADA@Example.COM  ", "ΟΣ İ K", "+49 (١٢٣) 456Ⅳ²", "https://EXAMPLE.COM///", "@@USER", " A	 B\n C\u00a0D "} {
 			fixture.Normalizations = append(fixture.Normalizations, norm{kind, raw, contact.Normalize(contact.ContactPointKind(kind), raw)})
 		}
 	}
@@ -97,10 +98,10 @@ func TestPortContactsCSVContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/csv.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {

@@ -16,6 +16,7 @@ func extractionReembedCases(t *testing.T) []reembedHTTPFixtureCase {
 	t.Helper()
 	_, file, _, _ := runtime.Caller(0)
 	path := filepath.Join(filepath.Dir(file), "../../../../testdata/port/retrieval/document-extraction.json")
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

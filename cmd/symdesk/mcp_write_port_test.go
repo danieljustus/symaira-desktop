@@ -225,6 +225,7 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 		if c.AllowWrite {
 			args = append(args, "--allow-write")
 		}
+		//nolint:gosec // binary is the locally built symdesk fixture; arguments come from fixed test cases.
 		cmd := exec.CommandContext(ctx, binary, args...)
 		cmd.Dir = filepath.Join(root, "cwd")
 		cmd.Env = []string{"HOME=" + filepath.Join(root, "home"), "USERPROFILE=" + filepath.Join(root, "home"), "XDG_CONFIG_HOME=" + filepath.Join(root, "config"), "XDG_CACHE_HOME=" + filepath.Join(root, "cache"), "XDG_DATA_HOME=" + filepath.Join(root, "data"), "TMPDIR=" + filepath.Join(root, "tmp"), "TEMP=" + filepath.Join(root, "tmp"), "TMP=" + filepath.Join(root, "tmp"), "SYMDESK_SIDECAR=" + dbPath, "TZ=UTC", "LANG=C", "LC_ALL=C", "PATH="}
@@ -257,6 +258,7 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 			if err != nil {
 				return err
 			}
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -309,6 +311,7 @@ func TestMCPWriteProcessPortFixture(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, table := range []string{"files", "file_properties", "links", "index_lifecycle"} {
+				//nolint:gosec // SQL identifiers come from the fixed fixture table list or its SQLite schema, never user input.
 				rows, err := raw.Query("SELECT * FROM " + table + " ORDER BY 1,2")
 				if err != nil {
 					t.Fatal(err)

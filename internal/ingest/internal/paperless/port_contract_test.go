@@ -41,9 +41,9 @@ func TestPortPaperlessHTTPContract(t *testing.T) {
 		{ID: "get", Op: "get", Responses: []portResponse{{200, `{"id":42,"title":"One","created_date":"2024-01-01","created":"2024-02-03T04:05:06.123Z","document_type":9,"storage_path":{"id":1,"name":"Folder"},"mime_type":"application/pdf"}`, nil}}},
 		{ID: "get-malformed", Op: "get", Responses: []portResponse{{200, `{`, nil}}},
 		{ID: "get-empty", Op: "get", Responses: []portResponse{{200, ``, nil}}},
-		{ID: "get-forbidden", Op: "get", Responses: []portResponse{{403, "  forbidden \n\t please login ", nil}}},
+		{ID: "get-forbidden", Op: "get", Responses: []portResponse{{403, "  forbidden \n	 please login ", nil}}},
 		{ID: "get-truncated-error", Op: "get", Responses: []portResponse{{500, strings.Repeat("x", 530), nil}}},
-		{ID: "get-blank-error", Op: "get", Responses: []portResponse{{404, " \n\t", nil}}},
+		{ID: "get-blank-error", Op: "get", Responses: []portResponse{{404, " \n	", nil}}},
 		{ID: "tags", Op: "tags", Responses: []portResponse{{200, `{"results":[{"id":1,"name":"Tag","slug":"tag"}],"next":"/api/tags/?page=2"}`, nil}, {200, `{"results":[{"id":2,"name":"Other"}]}`, nil}}},
 		{ID: "correspondents", Op: "correspondents", Responses: []portResponse{{200, `{"results":[{"id":3,"name":"Sender"}]}`, nil}}},
 		{ID: "document-types", Op: "document_types", Responses: []portResponse{{200, `{"results":[{"id":4,"name":"Invoice"}]}`, nil}}},
@@ -129,6 +129,7 @@ func TestPortPaperlessHTTPContract(t *testing.T) {
 	dir := filepath.Dir(file)
 	hashes := map[string]string{}
 	for _, name := range []string{"client.go", "types.go", "port_contract_test.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(dir, name))
 		if e != nil {
 			t.Fatal(e)
@@ -146,6 +147,7 @@ func TestPortPaperlessHTTPContract(t *testing.T) {
 			t.Fatal(e)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		old, e := os.ReadFile(out)
 		if e != nil {
 			t.Fatal(e)

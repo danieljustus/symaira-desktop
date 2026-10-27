@@ -20,6 +20,7 @@ import (
 // credential service is ever consulted: PATH is a fresh private directory.
 func init() {
 	if os.Getenv("SYMDESK_CONTACTS_PORT_KEY_HELPER") == "1" {
+		//nolint:gosec // helper subprocess receives this transcript path from its parent test-owned temporary directory.
 		if err := os.WriteFile(os.Getenv("SYMDESK_CONTACTS_PORT_KEY_ARGS"), []byte(os.Args[1]+"\n"+os.Args[2]), 0600); err != nil {
 			os.Exit(3)
 		}
@@ -129,6 +130,7 @@ func TestPortContactsKeyProviderContract(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	binary, e := os.ReadFile(exe)
 	if e != nil {
 		t.Fatal(e)
@@ -137,6 +139,7 @@ func TestPortContactsKeyProviderContract(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
+	//nolint:gosec // test helper must be executable; bytes are the fixed fixture script or this test executable.
 	if e := os.WriteFile(filepath.Join(dir, name), binary, 0700); e != nil {
 		t.Fatal(e)
 	}
@@ -153,6 +156,7 @@ func TestPortContactsKeyProviderContract(t *testing.T) {
 				}
 				t.Setenv("SYMDESK_CONTACTS_PORT_KEY_FAIL", f)
 				record("symvault", map[string]any{"name": keyName, "stdout_hex": hex.EncodeToString(out), "fail": fail}, SymVaultKeyProvider{keyName}, nil)
+				//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 				args, e := os.ReadFile(argsFile)
 				if e != nil {
 					t.Fatal(e)
@@ -176,7 +180,7 @@ func TestPortContactsKeyProviderContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/keyprovider.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if e := os.WriteFile(path, data, 0644); e != nil {
+		if e := os.WriteFile(path, data, 0o600); e != nil {
 			t.Fatal(e)
 		}
 	} else {

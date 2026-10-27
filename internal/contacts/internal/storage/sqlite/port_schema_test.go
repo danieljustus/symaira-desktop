@@ -50,6 +50,7 @@ func TestPortContactsSchemaContract(t *testing.T) {
 		paths = append(paths, filepath.ToSlash(rel))
 	}
 	for _, path := range paths {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, err := os.ReadFile(filepath.Join(root, path))
 		if err != nil {
 			t.Fatal(err)
@@ -114,10 +115,10 @@ func TestPortContactsSchemaContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/schema.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {

@@ -58,6 +58,7 @@ func TestPortNotionContract(t *testing.T) {
 			if d.IsDir() {
 				return nil
 			}
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			b, e := os.ReadFile(p)
 			if e != nil {
 				return e
@@ -130,6 +131,7 @@ func TestPortNotionContract(t *testing.T) {
 	}
 	hashes := map[string]string{}
 	for _, name := range []string{"parse.go", "csv.go", "import.go", "links.go", "assets.go", "yaml.go", "port_contract_test.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(sourceDir, name))
 		if e != nil {
 			t.Fatal(e)
@@ -151,6 +153,7 @@ func TestPortNotionContract(t *testing.T) {
 			t.Fatal(e)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		old, e := os.ReadFile(out)
 		if e != nil {
 			t.Fatal(e)

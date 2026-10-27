@@ -104,6 +104,7 @@ func TestPortContactsImportContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "../../../../.."))
 	hashes := map[string]string{}
 	for _, rel := range []string{"internal/contacts/internal/service/importer/plan.go", "internal/contacts/internal/service/importer/apply.go", "internal/contacts/internal/service/importer/service.go", "internal/contacts/internal/domain/contact/normalize.go", "internal/contacts/internal/errs/errors.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		data, err := os.ReadFile(filepath.Join(root, rel))
 		if err != nil {
 			t.Fatal(err)
@@ -137,10 +138,10 @@ func TestPortContactsImportContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/import.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {

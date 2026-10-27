@@ -57,6 +57,7 @@ func TestPortAIProviderContract(t *testing.T) {
 	commit := fixtureoracle.Current().Commit
 	hashes := map[string]string{}
 	for _, name := range []string{"internal/ai/ai.go", "internal/ai/anthropic.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		data, err := os.ReadFile(filepath.Join(repo, name))
 		if err != nil {
 			t.Fatal(err)
@@ -188,10 +189,12 @@ func TestPortAIProviderContract(t *testing.T) {
 		path = override
 	}
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		//nolint:gosec // path is the repository-local fixture output selected by this test.
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		expected, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)

@@ -58,6 +58,7 @@ func TestPortBacklinksProcessContract(t *testing.T) {
 		observed := observeDuplicatesCase(t, binary, c, func(vault, home string) {
 			states = append(states, linkProcessState(t, vault, home))
 			for name, expected := range c.Files {
+				//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 				actual, err := os.ReadFile(filepath.Join(vault, filepath.FromSlash(name)))
 				if err != nil || string(actual) != expected {
 					t.Fatalf("backlinks changed vault file %s: %v", name, err)
@@ -77,11 +78,12 @@ func TestPortBacklinksProcessContract(t *testing.T) {
 	_, source, _, _ := runtime.Caller(0)
 	path := filepath.Join(filepath.Dir(source), "../../testdata/port/cli/backlinks-process.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

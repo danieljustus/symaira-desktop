@@ -59,6 +59,7 @@ func TestMCPSurfaceProcessPortFixture(t *testing.T) {
 			if write {
 				args = append(args, "--allow-write")
 			}
+			//nolint:gosec // binary is the locally built symdesk fixture; arguments come from fixed test cases.
 			cmd := exec.CommandContext(ctx, binary, args...)
 			cmd.Dir = filepath.Join(root, "cwd")
 			cmd.Env = []string{"HOME=" + filepath.Join(root, "home"), "USERPROFILE=" + filepath.Join(root, "home"), "XDG_CONFIG_HOME=" + filepath.Join(root, "config"), "XDG_DATA_HOME=" + filepath.Join(root, "data"), "XDG_CACHE_HOME=" + filepath.Join(root, "cache"), "TMPDIR=" + filepath.Join(root, "tmp"), "TMP=" + filepath.Join(root, "tmp"), "TEMP=" + filepath.Join(root, "tmp"), "TZ=UTC", "LANG=C", "LC_ALL=C", "PATH="}
@@ -111,14 +112,15 @@ func fmtMCPSize(size int) string { return strconv.Itoa(size) }
 func checkMCPSurfaceBytes(t *testing.T, path string, want []byte) {
 	t.Helper()
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, want, 0o644); err != nil {
+		if err := os.WriteFile(path, want, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

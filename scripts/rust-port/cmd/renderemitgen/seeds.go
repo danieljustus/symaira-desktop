@@ -23,6 +23,7 @@ func parserSeeds(root string, check bool) error {
 		path := filepath.Join(root, "fuzz/seeds/draw_parser", s.name)
 		data := []byte(s.input)
 		if check {
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			old, err := os.ReadFile(path)
 			if err != nil {
 				return err

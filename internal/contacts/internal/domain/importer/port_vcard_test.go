@@ -28,7 +28,7 @@ func TestPortContactsVCardContract(t *testing.T) {
 		{"fallback", "BEGIN:VCARD\nN:李;Zoë\nEND:VCARD\n"},
 		{"nameless", "BEGIN:VCARD\nEMAIL:x@y\nEND:VCARD\n"},
 		{"no-end", "BEGIN:VCARD\nFN:Test\n"},
-		{"folded", "BEGIN:VCARD\r\nFN:Long\r\n Name\r\n\t More\r\nEND:VCARD\r\n"},
+		{"folded", "BEGIN:VCARD\r\nFN:Long\r\n Name\r\n	 More\r\nEND:VCARD\r\n"},
 		{"folded-no-newline", "BEGIN:VCARD\nFN:Long\n Name"},
 		{"no-begin", "FN:Ada\nEND:VCARD\n"},
 		{"bad-begin", "BEGIN:OTHER\nFN:Ada\nEND:VCARD\n"},
@@ -53,6 +53,7 @@ func TestPortContactsVCardContract(t *testing.T) {
 		Cases        []sample          `json:"cases"`
 	}{Oracle: fixtureoracle.Current(), SourceHashes: map[string]string{}}
 	for _, p := range []string{"internal/contacts/internal/domain/importer/vcard.go", "internal/contacts/internal/domain/importer/types.go", "go.mod", "go.sum"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		data, err := os.ReadFile(filepath.Join(root, p))
 		if err != nil {
 			t.Fatal(err)
@@ -75,10 +76,10 @@ func TestPortContactsVCardContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/vcard.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else {

@@ -77,6 +77,7 @@ func TestPortContactsEraseContract(t *testing.T) {
 					t.Fatal(e)
 				}
 				for _, col := range cols {
+					//nolint:gosec // SQL identifiers come from the fixed fixture table list or its SQLite schema, never user input.
 					if _, e := db.Exec("UPDATE "+table+" SET "+col+"=?", stamp); e != nil {
 						t.Fatal(e)
 					}
@@ -158,6 +159,7 @@ func TestPortContactsEraseContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "../../../../.."))
 	hashes := map[string]string{}
 	for _, rel := range []string{"internal/contacts/internal/service/security/erase.go", "internal/contacts/internal/service/security/audit.go", "internal/contacts/internal/service/security/service.go", "internal/contacts/internal/domain/security/types.go", "internal/contacts/internal/errs/errors.go"} {
+		//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 		b, e := os.ReadFile(filepath.Join(root, rel))
 		if e != nil {
 			t.Fatal(e)
@@ -173,7 +175,7 @@ func TestPortContactsEraseContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, "testdata/port/contacts/erase.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if e := os.WriteFile(path, data, 0644); e != nil {
+		if e := os.WriteFile(path, data, 0o600); e != nil {
 			t.Fatal(e)
 		}
 	} else {

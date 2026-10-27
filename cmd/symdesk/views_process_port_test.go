@@ -74,6 +74,7 @@ func TestPortViewsProcessContract(t *testing.T) {
 	path := filepath.Join(filepath.Dir(source), viewsFixturePath)
 	// The other file-system class cannot be observed here; carry its native
 	// recording over unchanged so generation on one class never drops the other.
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	if previous, err := os.ReadFile(path); err == nil {
 		var recorded viewsPortFixture
 		if err := json.Unmarshal(previous, &recorded); err != nil {
@@ -95,11 +96,12 @@ func TestPortViewsProcessContract(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
+	//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

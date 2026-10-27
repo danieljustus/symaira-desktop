@@ -260,6 +260,7 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 		if !c.NoVault {
 			args = []string{"--vault", vaultRoot, "mcp"}
 		}
+		//nolint:gosec // binary is the locally built symdesk fixture; arguments come from fixed test cases.
 		cmd := exec.CommandContext(ctx, binary, args...)
 		cmd.Dir = filepath.Join(root, "cwd")
 		cmd.Env = []string{"HOME=" + filepath.Join(root, "home"), "USERPROFILE=" + filepath.Join(root, "home"), "XDG_CONFIG_HOME=" + filepath.Join(root, "config"), "XDG_CACHE_HOME=" + filepath.Join(root, "cache"), "XDG_DATA_HOME=" + filepath.Join(root, "data"), "TMPDIR=" + filepath.Join(root, "tmp"), "TEMP=" + filepath.Join(root, "tmp"), "TMP=" + filepath.Join(root, "tmp"), "SYMDESK_SIDECAR=" + dbPath, "TZ=UTC", "LANG=C", "LC_ALL=C", "PATH="}
@@ -288,6 +289,7 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			if err != nil {
 				return err
 			}
+			//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -337,6 +339,7 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 				if err != nil {
 					return err
 				}
+				//nolint:gosec // path is derived from repository fixtures or the test-owned temporary root, not external input.
 				body, err := os.ReadFile(path)
 				if err != nil {
 					return err

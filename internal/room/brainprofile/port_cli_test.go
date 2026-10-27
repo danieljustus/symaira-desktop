@@ -206,6 +206,7 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 		{"unknown-flag", []string{"brain-profile", "--bogus"}, "empty"},
 		{"missing-member", []string{"brain-profile", "--member", "mem_missing"}, "empty"},
 		{"render", []string{"brain-profile", "--member", memberID}, "empty"},
+		{"install-dot-symbrain", []string{"brain-profile", "--member", memberID, "--install"}, "dot"},
 		{"install-no-symbrain", []string{"brain-profile", "--member", memberID, "--install"}, "empty"},
 		{"install-symbrain", []string{"brain-profile", "--member", memberID, "--install"}, "helper"},
 		{"install-fallback", []string{"brain-profile", "--member", memberID, "--install"}, "helper-fails"},
@@ -235,10 +236,20 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 			if err := os.Mkdir(path, 0o700); err != nil {
 				return brainProfileCLIContract{}, err
 			}
+		case "dot":
+			path = "."
+			data, err := os.ReadFile(helperBinary)
+			if err != nil {
+				return brainProfileCLIContract{}, err
+			}
+			if err := os.WriteFile(filepath.Join(caseDir, filepath.Base(helperBinary)), data, 0o700); err != nil {
+				return brainProfileCLIContract{}, err
+			}
 		case "helper", "helper-fails":
 			path = binPath
 		}
 		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // goBinary is the test-built helper and args are fixed vectors
+		cmd.Dir = caseDir
 		cmd.Env = []string{"HOME=" + home, "USERPROFILE=" + home, "PATH=" + path, "SYMROOM_ROOM_DIR=" + roomDir, "TZ=UTC", "LC_ALL=C", "LANG=C"}
 		if vector.pathMode == "helper-fails" {
 			cmd.Env = append(cmd.Env, "FAKE_SYMBRAIN_FAIL=1")
@@ -318,4 +329,20 @@ func brainProfileCLIRoot(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return root
+}
+
+func TestBrainProfileRejectsDotExecutable(t *testing.T) {
+	fixture, err := makeBrainProfileCLIContract(t, brainProfileCLIRoot(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range fixture.Cases {
+		if c.PathMode == "dot" {
+			if c.ExitCode != 0 || strings.Contains(c.Stdout, "called ") || !strings.Contains(c.Stdout, "not installed on PATH") || len(c.FinalFiles) != 1 {
+				t.Fatalf("dot executable was not refused: %+v", c)
+			}
+			return
+		}
+	}
+	t.Fatal("missing dot case")
 }

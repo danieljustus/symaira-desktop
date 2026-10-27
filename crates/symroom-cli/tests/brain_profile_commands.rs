@@ -121,7 +121,14 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
             write_fake_symbrain(&path_dir, case.path_mode == "helper-fails");
         }
 
-        let output = run_symroom(&case.args, &home, &room, &path_dir, &tmp);
+        let search = if case.path_mode == "dot" {
+            #[cfg(unix)]
+            write_fake_symbrain(&room, false);
+            Path::new(".")
+        } else {
+            &path_dir
+        };
+        let output = run_symroom(&case.args, &home, &room, search, &tmp);
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
@@ -172,6 +179,7 @@ fn run_symroom(args: &[String], home: &Path, room: &Path, path: &Path, temp: &Pa
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(args)
+        .current_dir(room)
         .isolated_env()
         .env("HOME", home)
         .env("USERPROFILE", home)
@@ -269,4 +277,39 @@ impl Drop for TempDir {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.path).expect("remove isolated test directory");
     }
+}
+
+#[test]
+#[cfg(unix)]
+fn brain_profile_rejects_planted_dot_executable() {
+    let fixture: Fixture = serde_json::from_slice(
+        &fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../testdata/port/room/brain-profile-cli.json"),
+        )
+        .expect("fixture"),
+    )
+    .expect("parse");
+    let temp = TempDir::new();
+    let home = temp.path.join("home");
+    let room = temp.path.join("room");
+    fs::create_dir_all(room.join("journal")).expect("journal");
+    fs::create_dir(&home).expect("home");
+    fs::write(room.join("room.toml"), fixture.room_toml).expect("room config");
+    for file in fixture.journal_files {
+        fs::write(room.join("journal").join(file.path), file.content).expect("journal event");
+    }
+    write_fake_symbrain(&room, false);
+    let case = fixture
+        .cases
+        .iter()
+        .find(|case| case.name == "install-no-symbrain")
+        .expect("Go absent result");
+    let output = run_symroom(&case.args, &home, &room, Path::new("."), &temp.path);
+    assert_eq!(output.status.code(), Some(case.exit_code));
+    assert_eq!(
+        normalize_home(&output.stdout, &home),
+        case.stdout.as_bytes()
+    );
+    assert_eq!(output.stderr, case.stderr.as_bytes());
 }

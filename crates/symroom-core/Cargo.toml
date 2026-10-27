@@ -18,3 +18,6 @@ hex.workspace = true
 thiserror.workspace = true
 rusqlite.workspace = true
 symaira-core-sqlite.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+same-file = "=1.0.6"

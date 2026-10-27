@@ -26,62 +26,10 @@ pub(crate) fn look_path(name: &str) -> Option<PathBuf> {
 
 /// Go `exec.LookPath` over `search_path`, or the process `PATH` when `None`.
 pub(crate) fn look_path_in(name: &str, search_path: Option<&OsStr>) -> Option<PathBuf> {
-    let search_path = search_path
-        .map(OsStr::to_os_string)
-        .or_else(|| std::env::var_os("PATH"))?;
-    for directory in std::env::split_paths(&search_path) {
-        #[cfg(windows)]
-        let names = windows_tool_names(name);
-        #[cfg(not(windows))]
-        let names = vec![name.to_owned()];
-        for candidate in names {
-            let path = directory.join(candidate);
-            if path.is_file() && is_executable(&path) {
-                // Go (>= 1.19) stops at the first executable hit and reports
-                // `ErrDot` for a relative one (`.`, an empty PATH element or
-                // any other relative directory); callers treat that as "not
-                // found" instead of running a binary from the cwd.
-                if !path.is_absolute() {
-                    return None;
-                }
-                return Some(path);
-            }
-        }
+    match search_path {
+        Some(path) => symroom_core::lookpath::look_path_in(name, path),
+        None => symroom_core::lookpath::look_path(name),
     }
-    None
-}
-
-#[cfg(windows)]
-fn windows_tool_names(name: &str) -> Vec<String> {
-    if Path::new(name).extension().is_some() {
-        return vec![name.to_owned()];
-    }
-    let extensions = std::env::var_os("PATHEXT")
-        .map(|value| {
-            value
-                .to_string_lossy()
-                .split(';')
-                .map(|extension| extension.to_ascii_lowercase())
-                .filter(|extension| !extension.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .filter(|extensions| !extensions.is_empty())
-        .unwrap_or_else(|| vec![".com".to_owned(), ".exe".to_owned()]);
-    extensions
-        .into_iter()
-        .map(|extension| format!("{name}{extension}"))
-        .collect()
-}
-
-#[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
-}
-
-#[cfg(not(unix))]
-fn is_executable(path: &Path) -> bool {
-    path.is_file()
 }
 
 pub(crate) fn symdesk_command(path: &Path) -> Command {

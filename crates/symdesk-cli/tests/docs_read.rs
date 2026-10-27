@@ -1,6 +1,8 @@
 //! Replays every case captured by the real Go CLI oracle.
 #[path = "support/process_root.rs"]
 mod process_root;
+#[path = "support/root_paths.rs"]
+mod root_paths;
 
 use serde::Deserialize;
 use std::{
@@ -140,10 +142,11 @@ fn docs_read_matches_go_process_contract() {
             );
             let output = run(&home, &cwd, &args);
             let normal = |bytes: Vec<u8>| {
-                String::from_utf8(bytes)
+                let text = String::from_utf8(bytes)
                     .unwrap()
                     .replace(&root.to_string_lossy().replace('\\', "\\\\"), "$ROOT")
-                    .replace(root.to_str().unwrap(), "$ROOT")
+                    .replace(root.to_str().unwrap(), "$ROOT");
+                root_paths::slash_root_paths(&text)
             };
             assert_eq!(
                 normal(output.stdout),

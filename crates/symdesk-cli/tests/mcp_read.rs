@@ -14,6 +14,8 @@ use serde::Deserialize;
 
 #[path = "support/isolated_root.rs"]
 mod isolated_root;
+#[path = "support/process_root.rs"]
+mod process_root;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -73,7 +75,7 @@ fn replay(case: &Case) {
     for dir in ["home", "config", "cache", "data", "tmp", "vault", "cwd"] {
         fs::create_dir_all(root.join(dir)).unwrap();
     }
-    let root = root.canonicalize().unwrap();
+    let root = process_root::canonical_root(&root);
     for (path, body) in &case.files {
         let path = root.join("vault").join(path);
         fs::create_dir_all(path.parent().unwrap()).unwrap();

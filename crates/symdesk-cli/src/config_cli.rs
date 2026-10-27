@@ -110,6 +110,11 @@ fn parse_flag_int(value: &str) -> Result<i64, &'static str> {
 }
 
 pub fn intercept(args: &[OsString]) -> Option<ExitCode> {
+    // Persistent flags may appear between `config` and `paths`. Leave that
+    // entire command to the existing Clap route, not the config CRUD adapter.
+    if crate::has_config_paths_command(args) {
+        return None;
+    }
     let args: Vec<String> = args
         .iter()
         .skip(1)

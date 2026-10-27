@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -284,10 +285,32 @@ func createSparseFile(path string, size int64) error {
 	return file.Close()
 }
 
+// Readiness diagnostics can read stderr while the process is still writing it.
+type serverOutput struct {
+	mu     sync.Mutex
+	output bytes.Buffer
+}
+
+func (b *serverOutput) Write(data []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if remaining := maxMCPBytes - b.output.Len(); remaining > 0 {
+		_, _ = b.output.Write(data[:min(len(data), remaining)])
+	}
+	return len(data), nil
+}
+
+func (b *serverOutput) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.output.String()
+}
+
 type runningServer struct {
 	cmd     *exec.Cmd
 	address string
-	logs    limitedOutput
+	logs    serverOutput
+	done    chan struct{}
 }
 
 func startServer(binary, vault, root string) (*runningServer, error) {
@@ -300,12 +323,18 @@ func startServer(binary, vault, root string) (*runningServer, error) {
 	cmd := exec.Command(binary, "serve", "--listen", address, "--vault", vault, "--token", token) // #nosec G204 -- explicit test operand
 	cmd.Dir = root
 	cmd.Env = isolatedEnv(root, vault)
-	server := &runningServer{cmd: cmd, address: "http://" + address}
+	server := &runningServer{cmd: cmd, address: "http://" + address, done: make(chan struct{})}
 	cmd.Stdout = io.Discard
 	cmd.Stderr = &server.logs
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
+	// Exactly one waiter owns Wait; closing done publishes ProcessState and
+	// the final stderr to both readiness and shutdown without consuming a result.
+	go func() {
+		_ = cmd.Wait()
+		close(server.done)
+	}()
 	return server, nil
 }
 
@@ -316,10 +345,11 @@ func (s *runningServer) ready(client *http.Client) error {
 		if err == nil && result.status == http.StatusOK && bytes.Equal(result.body, []byte(`{"status":"ok"}`)) {
 			return nil
 		}
-		if s.cmd.ProcessState != nil {
+		select {
+		case <-s.done:
 			return fmt.Errorf("server exited: %s; stderr=%s", s.cmd.ProcessState, s.logs.String())
+		case <-time.After(25 * time.Millisecond):
 		}
-		time.Sleep(25 * time.Millisecond)
 	}
 	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.address, s.logs.String())
 }
@@ -351,8 +381,13 @@ func (s *runningServer) request(client *http.Client, method, path string, body [
 }
 
 func (s *runningServer) stop() error {
-	if s == nil || s.cmd == nil || s.cmd.Process == nil || s.cmd.ProcessState != nil {
+	if s == nil || s.cmd == nil || s.cmd.Process == nil {
 		return nil
+	}
+	select {
+	case <-s.done:
+		return nil
+	default:
 	}
 	if runtime.GOOS != "windows" {
 		if err := s.cmd.Process.Signal(os.Interrupt); err != nil {
@@ -361,13 +396,8 @@ func (s *runningServer) stop() error {
 	} else if err := s.cmd.Process.Kill(); err != nil {
 		return err
 	}
-	done := make(chan error, 1)
-	go func() { done <- s.cmd.Wait() }()
 	select {
-	case err := <-done:
-		if err != nil && runtime.GOOS == "windows" {
-			return nil
-		}
+	case <-s.done:
 		return nil
 	case <-time.After(3 * time.Second):
 		_ = s.cmd.Process.Kill()

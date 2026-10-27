@@ -238,10 +238,11 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 			}
 		case "dot":
 			path = "."
-			data, err := os.ReadFile(helperBinary)
+			data, err := os.ReadFile(helperBinary) //nolint:gosec // helperBinary is the helper this test just built
 			if err != nil {
 				return brainProfileCLIContract{}, err
 			}
+			//nolint:gosec // the planted copy must stay executable: the case checks Go's refusal to run a dot-relative executable
 			if err := os.WriteFile(filepath.Join(caseDir, filepath.Base(helperBinary)), data, 0o700); err != nil {
 				return brainProfileCLIContract{}, err
 			}

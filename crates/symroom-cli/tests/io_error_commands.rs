@@ -400,7 +400,9 @@ fn recorded_literal_slashes_survive_the_windows_separator() {
             if text.contains("<slash>") {
                 literal_cases += 1;
                 assert!(
-                    windows.contains("create/select") || windows.contains("index.sqlite"),
+                    windows.contains("create/select")
+                        && windows.contains("rebuild .symroom/index.sqlite")
+                        && !windows.contains("<slash>"),
                     "{}: literal slash lost",
                     case.name
                 );

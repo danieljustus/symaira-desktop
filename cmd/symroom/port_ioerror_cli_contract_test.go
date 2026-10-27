@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -366,13 +367,20 @@ func runIOErrorCase(t *testing.T, oracle string, fixture ioErrorCLIContract, vec
 		t.Fatalf("Go symroom %v did not exit", vector.args)
 	}
 	exitCode := processExitCode(runErr)
+	normalize := func(text string) string {
+		text = normalizeIOError(text, work, link)
+		if err := checkIOErrorSlashes(text); err != nil {
+			t.Fatal(err)
+		}
+		return text
+	}
 	return ioErrorCLICase{
 		Name:     vector.state + ": " + strings.Join(vector.args, " "),
 		State:    vector.state,
 		Args:     vector.args,
 		UnixOnly: ioErrorUnixOnly[vector.state],
-		Stdout:   normalizeIOError(stdout.String(), work, link),
-		Stderr:   normalizeIOError(stderr.String(), work, link),
+		Stdout:   normalize(stdout.String()),
+		Stderr:   normalize(stderr.String()),
 		ExitCode: exitCode,
 		Files:    listIOErrorFiles(t, work),
 		Rooms:    listIOErrorRooms(t, work),
@@ -404,8 +412,14 @@ func normalizeIOError(text, work, link string) string {
 		text = strings.ReplaceAll(text, literal.span, literal.tokenized)
 	}
 	// link is checked first: it is a sibling of work, never a prefix of it.
-	text = strings.ReplaceAll(text, link, "<link>")
-	text = strings.ReplaceAll(text, work, "<work>")
+	for _, replacement := range [][2]string{{link, "<link>"}, {work, "<work>"}} {
+		path := replacement[0]
+		if json.Valid([]byte(text)) {
+			encoded, _ := json.Marshal(path)
+			path = string(encoded[1 : len(encoded)-1])
+		}
+		text = strings.ReplaceAll(text, path, replacement[1])
+	}
 	text = ioErrorGeneratedID.ReplaceAllString(text, "<${1}_id>")
 	if runtime.GOOS == "windows" {
 		text = windowsPathSlashes(text)
@@ -420,39 +434,65 @@ func normalizeIOError(text, work, link string) string {
 	return strings.ReplaceAll(text, "is a directory", "<EISDIR>")
 }
 
-// ioErrorJSONHTMLEscape matches the escapes encoding/json writes for '<', '>',
-// '&' and the two JS line separators. `doctor --json` prints `\u003cname\u003e`
-// on every host; the backslash is JSON syntax, never a Windows path separator.
-var ioErrorJSONHTMLEscape = regexp.MustCompile(`\\u(?:003c|003e|0026|2028|2029)`)
-
-// windowsPathSlashes rewrites the Windows path separator to '/', leaving the
-// JSON escapes of ioErrorJSONHTMLEscape untouched. Rewriting them turned
-// `\u003c` into `/u003c`, which the flag grammar generator then refused as an
-// unclassified '/' (and which would have recorded a host-dependent fixture).
+// windowsPathSlashes recognizes JSON string escapes before rewriting path
+// separators. In a JSON document a separator is encoded as a backslash pair;
+// all other escapes (including a following u003c) remain syntax, not paths.
+// Human-readable streams have no JSON syntax and every backslash is a path.
 func windowsPathSlashes(text string) string {
-	var out strings.Builder
-	last := 0
-	for _, span := range ioErrorJSONHTMLEscape.FindAllStringIndex(text, -1) {
-		out.WriteString(strings.ReplaceAll(text[last:span[0]], `\`, "/"))
-		out.WriteString(text[span[0]:span[1]])
-		last = span[1]
+	if !json.Valid([]byte(text)) {
+		return strings.ReplaceAll(text, `\`, "/")
 	}
-	out.WriteString(strings.ReplaceAll(text[last:], `\`, "/"))
+	var out strings.Builder
+	for i := 0; i < len(text); i++ {
+		if text[i] != '\\' {
+			out.WriteByte(text[i])
+			continue
+		}
+		i++
+		if text[i] == '\\' {
+			out.WriteByte('/')
+			continue
+		}
+		out.WriteByte('\\')
+		out.WriteByte(text[i])
+	}
 	return out.String()
 }
 
-// TestWindowsPathSlashesKeepsJSONEscapes runs on every host: the Windows
-// normaliser must turn path separators into '/' and nothing else.
+// Only the concrete host path spans printed by these vectors may carry raw
+// slashes. In particular, new remediation prose must be classified explicitly.
+var ioErrorHostPath = regexp.MustCompile(`(?:open |openat |readlink |stat |lstat )((?:<work>|<link>|afile|nope|journal)/(?:journal(?:/mem_[0-9a-f]+\.jsonl)?|room\.toml|mem_[a-z0-9_]+\.jsonl)):`)
+
+func checkIOErrorSlashes(text string) error {
+	classified := ioErrorHostPath.ReplaceAllString(text, "<host-path>")
+	if strings.Contains(classified, "/") {
+		return fmt.Errorf("unclassified '/' in I/O error output: %q", text)
+	}
+	return nil
+}
+
+func TestIOErrorUnclassifiedSlashes(t *testing.T) {
+	for _, text := range []string{"new/prose", "remediation: new/path", "open nope/room.toml: failure; new/prose"} {
+		if checkIOErrorSlashes(text) == nil {
+			t.Errorf("accepted unclassified slash: %q", text)
+		}
+	}
+	if err := checkIOErrorSlashes("open nope/room.toml: failure"); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestWindowsPathSlashesKeepsJSONEscapes(t *testing.T) {
 	for _, tc := range []struct{ name, in, want string }{
 		{"path", `open C:\w\work\journal:`, `open C:/w/work/journal:`},
-		{"json html escapes", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029", "init \\u003cdirectory\\u003e --identity \\u003cname\\u003e \\u0026 \\u2028\\u2029"},
-		{"mixed", `\u003c\w\work\u003e\x`, `\u003c/w/work\u003e/x`},
-		{"other json escape is not special", `a\nb`, `a/nb`},
+		{"plain escape-like path", `C:\u003c\n`, `C:/u003c/n`},
+		{"json escapes", `{"v":"\u003c\u00ff\n\t\r\b\f\"\ufffd"}`, `{"v":"\u003c\u00ff\n\t\r\b\f\"\ufffd"}`},
+		{"escaped separator before unicode-looking text", `{"v":"C:\\u003c\\n"}`, `{"v":"C:/u003c/n"}`},
+		{"separator before control", `{"v":"C:\\\u0001"}`, `{"v":"C:/\u0001"}`},
 		{"none", "plain", "plain"},
 	} {
 		if got := windowsPathSlashes(tc.in); got != tc.want {
-			t.Errorf("%s: windowsPathSlashes(%q) = %q, want %q", tc.name, tc.in, got, tc.want)
+			t.Errorf("%s: got %q, want %q", tc.name, got, tc.want)
 		}
 	}
 }

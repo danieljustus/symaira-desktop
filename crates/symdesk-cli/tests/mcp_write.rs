@@ -51,6 +51,23 @@ struct Case {
 }
 
 #[test]
+fn frozen_write_transcript_checksum_is_unchanged() {
+    let bytes = fs::read(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../testdata/port/mcp/write-process.json"),
+    )
+    .expect("frozen Unix MCP write transcript");
+    assert_eq!(
+        symdesk_vault::sha256_hex(&bytes),
+        "6d0a8572b1082e6410260be3d7fb37c5fe9001597c55fe103c32714e62453294"
+    );
+}
+
+#[test]
+#[cfg_attr(
+    windows,
+    ignore = "Unix MCP write transcript has no native Windows syscall/path observations; frozen checksum remains checked"
+)]
 fn write_tools_match_go_stdio_calls_and_authoritative_files() {
     let fixture: Fixture = serde_json::from_slice(
         &fs::read(

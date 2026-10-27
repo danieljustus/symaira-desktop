@@ -68,9 +68,37 @@ fn delete_retrieval(root: &Path, path: &Path) -> Result<(), String> {
             log_path(&target)
         );
     }
+    // Retrieval indexes canonical local sources, unlike sidecar lexical keys.
+    // Resolve the surviving parent after removal (e.g. macOS /var -> /private/var).
     retrieval
-        .delete_document(&path.to_string_lossy())
+        .delete_document(&retrieval_document_key(path))
         .map_err(|e| e.to_string())
+}
+
+fn retrieval_document_key(path: &Path) -> String {
+    crate::index_cli::canonical_local_source(&path.to_string_lossy())
+}
+
+#[test]
+#[cfg(unix)]
+fn removed_conflict_retrieval_key_resolves_parent_alias() {
+    let base = std::env::temp_dir().join(format!(
+        "symdesk-conflict-key-{}-{}",
+        std::process::id(),
+        time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+    ));
+    fs::create_dir_all(base.join("real")).unwrap();
+    std::os::unix::fs::symlink(base.join("real"), base.join("alias")).unwrap();
+    let path = base.join("alias/note conflicted copy.md");
+    fs::write(&path, "conflict").unwrap();
+    let indexed = fs::canonicalize(&path)
+        .unwrap()
+        .to_string_lossy()
+        .into_owned();
+    fs::remove_file(&path).unwrap();
+    assert_ne!(path.to_string_lossy(), indexed);
+    assert_eq!(retrieval_document_key(&path), indexed);
+    fs::remove_dir_all(base).unwrap();
 }
 
 fn remove(path: &Path) -> std::io::Result<()> {

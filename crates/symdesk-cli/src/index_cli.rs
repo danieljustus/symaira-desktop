@@ -612,7 +612,7 @@ fn index_markdown_retrieval(
 
 /// Go's `canonicalLocalSource`: resolve symlinks for absolute paths, falling
 /// back to the resolved parent for a path that no longer exists.
-fn canonical_local_source(path: &str) -> String {
+pub(crate) fn canonical_local_source(path: &str) -> String {
     let path = Path::new(path);
     if !path.is_absolute() {
         return path.to_string_lossy().into_owned();

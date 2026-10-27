@@ -224,10 +224,11 @@ pub fn run_backlinks(command: &ArgMatches, vault: Option<&str>, output_json: boo
         let target = if contact {
             files[0].to_owned()
         } else {
-            secure_path(&root, files[0])
-                .map_err(|e| e.to_string())?
-                .to_string_lossy()
-                .into_owned()
+            crate::strip_windows_verbatim_prefix(
+                &secure_path(&root, files[0]).map_err(|e| e.to_string())?,
+            )
+            .to_string_lossy()
+            .into_owned()
         };
         let result = sidecar
             .backlinks(&target, contact)

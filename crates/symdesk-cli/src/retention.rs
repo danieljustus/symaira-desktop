@@ -195,7 +195,7 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
             if error.kind() == std::io::ErrorKind::NotFound {
                 // Go: `outputResult(map[string]interface{}{"proposals": []string{}, "message": "no pending proposals"})`
                 return output(
-                    json!({"proposals": Vec::<String>::new(), "message": "no pending proposals"}),
+                    json!({"message": "no pending proposals", "proposals": Vec::<String>::new()}),
                     output_json,
                 );
             }

@@ -149,6 +149,22 @@ func notebookWriteCases() []duplicatesPortCase {
 }
 
 func TestPortNotebookWriteProcessContract(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The Unix transcript includes self-source rejection. Go notePath uses
+		// filepath.Join (backslashes on Windows), but validateSource compares
+		// its slash-normalized source against that raw Notebook.Path. Thus the
+		// Windows oracle can accept a self-source and persist different bytes.
+		// Do not relabel this Unix capture as native Windows write evidence.
+		data, err := os.ReadFile("../../testdata/port/cli/notebook-write-process.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(data)
+		if hex.EncodeToString(digest[:]) != "32f391e61d299b3ef8190896273fd4b69c578be853a5090a04a0cb582d38f0e3" {
+			t.Fatal("frozen Unix notebook write transcript checksum changed")
+		}
+		t.Skip("Unix notebook self-source/write transcript is not portable to Windows; frozen checksum verified, native capture pending")
+	}
 	binary := buildIndexRetrievalBinary(t, t.TempDir())
 	observed := viewsPortFixture{SchemaVersion: 1}
 	for _, c := range notebookWriteCases() {

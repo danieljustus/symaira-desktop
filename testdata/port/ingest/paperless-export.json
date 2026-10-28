@@ -10,7 +10,7 @@
     "top-level created wall clock -\u003e fixed UTC; hashes cover normalized bytes"
   ],
   "oracle": {
-    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
     "release": "renderer-pdf-safety-v2-local"
   },
   "schema_version": 1,

@@ -1,11 +1,11 @@
 {
   "oracle": {
-    "commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
     "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {
-    "go.mod": "3620f28f6905843fd98e7b0a8a9f74abb096f0613b52d898935dfbb3c05bf9fc",
-    "go.sum": "ffe0a0d61d65e11ae50dae2f4075be58a06f096e8d3deb3c0a973e6c64f848c3",
+    "go.mod": "e15fa6a3f35dca55c548dd18913c26b43b20b4ae047ff5677ac265c24a3a53c5",
+    "go.sum": "2b2e10452b842861551cb81451fdce09c0fe58942d69df6a414b93367d982c5e",
     "internal/contacts/internal/domain/importer/types.go": "c48bc7a0ac101b83e62475ceaae88509a0125a88d1433dde3f5ae04f0e6adb37",
     "internal/contacts/internal/domain/importer/vcard.go": "07ee3dd436f6ba122c6d1bf908a9e50b04d7aea8b63600af4b66c0570ea7c126"
   },

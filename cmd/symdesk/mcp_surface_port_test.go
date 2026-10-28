@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 // This process oracle deliberately records the raw frames, not reconstructed
@@ -126,6 +128,58 @@ func checkMCPSurfaceBytes(t *testing.T, path string, want []byte) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(got, want) {
-		t.Fatalf("MCP surface fixture drift: %s", path)
+		at := 0
+		for at < len(got) && at < len(want) && got[at] == want[at] {
+			at++
+		}
+		t.Fatalf("MCP surface fixture drift: %s: %s; recorded case=%q checked case=%q", path,
+			inventory.FirstDifference(got, want), mcpSurfaceCaseAt(got, at), mcpSurfaceCaseAt(want, at))
+	}
+}
+
+// Locate the original JSON span, not a re-encoding whose offsets could differ.
+// Catalog-only fixtures and offsets outside a case deliberately return no ID.
+func mcpSurfaceCaseAt(data []byte, at int) string {
+	var fixture struct {
+		Cases []json.RawMessage `json:"cases"`
+	}
+	if json.Unmarshal(data, &fixture) != nil {
+		return ""
+	}
+	cursor := 0
+	for _, raw := range fixture.Cases {
+		rel := bytes.Index(data[cursor:], raw)
+		if rel < 0 {
+			return ""
+		}
+		start := cursor + rel
+		cursor = start + len(raw)
+		if at >= start && at < cursor {
+			var c struct {
+				ID string `json:"id"`
+			}
+			if json.Unmarshal(raw, &c) == nil {
+				return c.ID
+			}
+			return ""
+		}
+	}
+	return ""
+}
+
+func TestMCPSurfaceCaseAt(t *testing.T) {
+	data := []byte(`{"cases":[{"id":"first","stdout":"one"},{"id":"second","stdout":"two"}]}`)
+	for _, test := range []struct {
+		at   int
+		want string
+	}{
+		{bytes.Index(data, []byte("one")), "first"},
+		{bytes.Index(data, []byte("two")), "second"},
+		{0, ""},
+		{len(data), ""},
+	} {
+		if got := mcpSurfaceCaseAt(data, test.at); got != test.want {
+			t.Fatalf("case at %d: got %q, want %q", test.at, got, test.want)
+		}
 	}
 }

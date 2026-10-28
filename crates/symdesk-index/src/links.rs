@@ -94,6 +94,10 @@ impl Sidecar {
         root: &Path,
         target: &str,
     ) -> Result<Vec<InverseRelation>, SidecarError> {
+        let key = super::strip_verbatim_prefix(target);
+        let target = key.as_str();
+        let root = super::absolute_non_verbatim(root)?;
+        let root = root.as_path();
         let base = Path::new(target)
             .file_name()
             .and_then(|v| v.to_str())

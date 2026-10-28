@@ -158,7 +158,8 @@ fn reindex(
     let path = symdesk_vault::secure_path(root, &notebook.path).map_err(|e| e.to_string())?;
     let bytes = std::fs::read(&path)
         .map_err(|e| format!("wrote notebook but failed to parse for indexing: {e}"))?;
-    let document = symdesk_vault::parse_bytes(&path.to_string_lossy(), &bytes)
+    let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
+    let document = symdesk_vault::parse_bytes(&key.to_string_lossy(), &bytes)
         .map_err(|e| format!("wrote notebook but failed to parse for indexing: {e}"))?;
     let indexed =
         symdesk_index::IndexedDocument::from_vault(&document, None).map_err(|e| e.to_string())?;

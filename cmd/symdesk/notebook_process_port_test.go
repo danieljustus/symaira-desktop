@@ -73,6 +73,7 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 // Notebook references use slash-normalized paths in the portable process corpus.
 // Normalize only this known path prefix, not arbitrary diagnostic backslashes.
 func normalizeNotebookPaths(text string) string {
+	text = strings.ReplaceAll(text, `notebooks\\\\`, `notebooks/`)
 	text = strings.ReplaceAll(text, `notebooks\\`, `notebooks/`)
 	return strings.ReplaceAll(text, `notebooks\`, `notebooks/`)
 }

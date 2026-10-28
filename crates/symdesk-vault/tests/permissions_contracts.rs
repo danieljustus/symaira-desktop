@@ -472,8 +472,27 @@ fn permissions_manager_matches_go() {
         .filter(|scenario| cfg!(unix) || !scenario["unix_only"].as_bool().unwrap_or(false))
         .count();
     assert_eq!(replayed, expected_scenarios);
-    assert!(replayed >= 100, "fixture must keep its scenario corpus");
-    assert!(operations >= 600, "fixture must keep its operation corpus");
+    assert!(
+        scenarios.len() >= 100,
+        "fixture must keep its scenario corpus"
+    );
+    let expected_operations: usize = scenarios
+        .iter()
+        .filter(|scenario| cfg!(unix) || !scenario["unix_only"].as_bool().unwrap_or(false))
+        .map(|scenario| scenario["ops"].as_array().map_or(0, Vec::len))
+        .sum();
+    assert_eq!(
+        operations, expected_operations,
+        "every applicable operation ran"
+    );
+    let all_operations: usize = scenarios
+        .iter()
+        .map(|scenario| scenario["ops"].as_array().map_or(0, Vec::len))
+        .sum();
+    assert!(
+        all_operations >= 600,
+        "fixture must keep its operation corpus"
+    );
 }
 
 #[test]

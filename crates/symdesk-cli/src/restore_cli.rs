@@ -23,7 +23,8 @@ fn reindex(root: &Path, path: &Path, sidecar: &mut symdesk_index::Sidecar) -> Re
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes)
         .map_err(|e| format!("restored file but failed to parse for indexing: {e}"))?;
-    let doc = parse_bytes(&path.to_string_lossy(), &bytes)
+    let key = symdesk_index::document_storage_key(path).map_err(|e| e.to_string())?;
+    let doc = parse_bytes(&key.to_string_lossy(), &bytes)
         .map_err(|e| format!("restored file but failed to parse for indexing: {e}"))?;
     let mtime = file
         .metadata()

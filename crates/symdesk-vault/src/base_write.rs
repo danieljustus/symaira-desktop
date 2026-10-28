@@ -75,7 +75,7 @@ fn write_base(
         base.id = slugify(&base.title);
     }
     if base.path.is_empty() {
-        base.path = format!("{BASES_DIR}/{}.md", base.id);
+        base.path = base_relative_path(&format!("{}.md", base.id), std::path::MAIN_SEPARATOR);
     }
     if base.created.is_empty() {
         let now = OffsetDateTime::now_utc();
@@ -200,7 +200,7 @@ fn save_view_inner(
     };
     let mut base = Base {
         id: slug.clone(),
-        path: format!("{BASES_DIR}/{slug}.md"),
+        path: base_relative_path(&format!("{slug}.md"), std::path::MAIN_SEPARATOR),
         title,
         description: String::new(),
         created: String::new(),
@@ -254,13 +254,16 @@ pub fn get_base(root: &Path, reference: &str) -> Result<Base, BaseWriteError> {
     if !path.ends_with(".md") {
         path.push_str(".md");
     }
-    if !path.starts_with("bases/") {
-        path = format!(
-            "{BASES_DIR}/{}",
+    if !path
+        .replace(std::path::MAIN_SEPARATOR, "/")
+        .starts_with("bases/")
+    {
+        path = base_relative_path(
             Path::new(&path)
                 .file_name()
                 .and_then(|v| v.to_str())
-                .unwrap_or("")
+                .unwrap_or(""),
+            std::path::MAIN_SEPARATOR,
         );
     }
     if let Ok(abs) = secure_path(root, &path)
@@ -293,7 +296,7 @@ pub fn list_bases(root: &Path) -> Result<Vec<Base>, BaseWriteError> {
             continue;
         }
         let name = entry.file_name().to_string_lossy().into_owned();
-        let path = format!("{BASES_DIR}/{name}");
+        let path = base_relative_path(&name, std::path::MAIN_SEPARATOR);
         let Ok(abs) = secure_path(root, &path) else {
             continue;
         };
@@ -361,7 +364,7 @@ pub fn migrate_legacy_views(root: &Path) {
         let now = OffsetDateTime::now_utc();
         let mut base = Base {
             id: slug.clone(),
-            path: format!("{BASES_DIR}/{slug}.md"),
+            path: base_relative_path(&format!("{slug}.md"), std::path::MAIN_SEPARATOR),
             title,
             description: String::new(),
             created: OffsetDateTime::from_unix_timestamp(now.unix_timestamp())
@@ -559,5 +562,25 @@ fn create_dir_all_0750(path: &Path) -> Result<(), std::io::Error> {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists && path.is_dir() => Ok(()),
         Err(error) => Err(error),
+    }
+}
+
+// Go stores filepath.Join results in Base.Path, preserving an explicitly supplied
+// bases/ reference but using native separators for generated/listed paths.
+fn base_relative_path(name: &str, separator: char) -> String {
+    format!("{BASES_DIR}{separator}{name}")
+}
+
+#[cfg(test)]
+mod path_tests {
+    use super::base_relative_path;
+
+    #[test]
+    fn generated_base_path_uses_native_separator() {
+        assert_eq!(base_relative_path("invoices.md", '/'), "bases/invoices.md");
+        assert_eq!(
+            base_relative_path("invoices.md", '\\'),
+            r"bases\invoices.md"
+        );
     }
 }

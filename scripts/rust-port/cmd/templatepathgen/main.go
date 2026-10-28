@@ -474,7 +474,7 @@ var sanitizeValues = []string{
 // first path element holds a ':' that does not form a `x:` volume name (see the
 // package comment).
 func hostDependentOutput(output string) bool {
-	first, _, _ := strings.Cut(output, "/")
+	first, _, _ := strings.Cut(strings.TrimPrefix(output, "./"), "/")
 	return strings.Contains(first, ":") && (len(first) < 2 || first[1] != ':')
 }
 

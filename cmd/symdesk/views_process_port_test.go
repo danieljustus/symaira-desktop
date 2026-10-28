@@ -63,7 +63,8 @@ func TestPortViewsProcessContract(t *testing.T) {
 	for _, c := range viewsCases(t) {
 		result := observeViewsCase(t, binary, c)
 		for i := range result.Steps {
-			result.Steps[i].Stdout = viewsPointer.ReplaceAllString(result.Steps[i].Stdout, "$$PTR")
+			result.Steps[i].Stdout = normalizeBasePaths(viewsPointer.ReplaceAllString(result.Steps[i].Stdout, "$$PTR"))
+			result.Steps[i].Stderr = normalizeBasePaths(result.Steps[i].Stderr)
 		}
 		observed.Cases = append(observed.Cases, result)
 	}
@@ -132,4 +133,17 @@ func viewsCaseRank(name string) int {
 		}
 	}
 	return 99
+}
+
+// Go's Base.Path uses filepath.Join; fixtures record slash spelling.
+var basePathSeparators = regexp.MustCompile(`bases\\+`)
+
+func normalizeBasePaths(text string) string {
+	return basePathSeparators.ReplaceAllString(text, "bases/")
+}
+
+func TestNormalizeBasePaths(t *testing.T) {
+	if got := normalizeBasePaths(`bases\\work.md unrelated\\literal`); got != `bases/work.md unrelated\\literal` {
+		t.Fatalf("base path normalization: %q", got)
+	}
 }

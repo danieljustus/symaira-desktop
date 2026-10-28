@@ -10,7 +10,7 @@ var mcpReadRootToken = regexp.MustCompile(`\$ROOT[A-Za-z0-9._/\\-]*`)
 var mcpReadSeparators = regexp.MustCompile(`\\+`)
 
 // MCP carries JSON inside JSON strings: temporary roots can therefore be
-// escaped twice. Normalize only rooted tokens and the known notebook prefix,
+// escaped twice. Normalize only rooted tokens and the known notebook/base prefixes,
 // retaining closing-quote escapes, newlines, and arbitrary user backslashes.
 func normalizeMCPReadPaths(text, root string) string {
 	escaped := strings.ReplaceAll(root, `\`, `\\`)
@@ -21,7 +21,7 @@ func normalizeMCPReadPaths(text, root string) string {
 		path := strings.TrimRight(token, `\`)
 		return mcpReadSeparators.ReplaceAllString(path, "/") + token[len(path):]
 	})
-	return normalizeNotebookPaths(text)
+	return normalizeBasePaths(normalizeNotebookPaths(text))
 }
 
 func TestNormalizeMCPReadNestedWindowsPaths(t *testing.T) {
@@ -29,6 +29,8 @@ func TestNormalizeMCPReadNestedWindowsPaths(t *testing.T) {
 	for _, test := range []struct{ input, want string }{
 		{`{"path":"C:\\Users\\runner\\fixture\\vault\\note.md"}`, `{"path":"$ROOT/vault/note.md"}`},
 		{`{"text":"{\"path\":\"C:\\\\Users\\\\runner\\\\fixture\\\\vault\\\\note.md\"}"}`, `{"text":"{\"path\":\"$ROOT/vault/note.md\"}"}`},
+		{`{"text":"[{\"path\":\"notebooks\\\\empty.md\"}]"}`, `{"text":"[{\"path\":\"notebooks/empty.md\"}]"}`},
+		{`{"text":"[{\"path\":\"bases\\\\work.md\"}]"}`, `{"text":"[{\"path\":\"bases/work.md\"}]"}`},
 		{`notebooks\\ordinary.md type=\"\"\n bad\\literal`, `notebooks/ordinary.md type=\"\"\n bad\\literal`},
 	} {
 		if got := normalizeMCPReadPaths(test.input, root); got != test.want {

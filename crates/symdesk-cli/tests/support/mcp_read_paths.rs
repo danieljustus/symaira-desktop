@@ -34,8 +34,12 @@ pub fn normalize(text: &str, root: &Path) -> String {
         rest = &rest[end..];
     }
     out.push_str(rest);
-    out.replace(r"notebooks\\", "notebooks/")
+    out.replace(r"notebooks\\\\", "notebooks/")
+        .replace(r"notebooks\\", "notebooks/")
         .replace(r"notebooks\", "notebooks/")
+        .replace(r"bases\\\\", "bases/")
+        .replace(r"bases\\", "bases/")
+        .replace(r"bases\", "bases/")
 }
 
 #[test]
@@ -47,6 +51,14 @@ fn nested_windows_paths_preserve_json_escapes() {
             root
         ),
         r#"{"text":"{\"path\":\"$ROOT/vault/note.md\"}"}"#
+    );
+    assert_eq!(
+        normalize(r#"{"text":"[{\"path\":\"notebooks\\\\empty.md\"}]"}"#, root),
+        r#"{"text":"[{\"path\":\"notebooks/empty.md\"}]"}"#
+    );
+    assert_eq!(
+        normalize(r#"{"text":"[{\"path\":\"bases\\\\work.md\"}]"}"#, root),
+        r#"{"text":"[{\"path\":\"bases/work.md\"}]"}"#
     );
     assert_eq!(
         normalize(r#"bad\\literal\n\""#, root),

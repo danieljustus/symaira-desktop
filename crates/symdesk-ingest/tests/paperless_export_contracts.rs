@@ -67,7 +67,13 @@ fn snapshot(root: &Root) -> Value {
             if p.is_dir() {
                 walk(root, &p, out)
             } else {
-                let body = root.norm(&String::from_utf8(fs::read(&p).unwrap()).unwrap());
+                let raw = String::from_utf8(fs::read(&p).unwrap()).unwrap();
+                let raw = if cfg!(windows) {
+                    raw.replace(r"\\", r"\")
+                } else {
+                    raw
+                };
+                let body = root.norm(&raw);
                 let relative = p.strip_prefix(root.path("vault")).unwrap();
                 #[cfg(unix)]
                 let path_bytes = relative.as_os_str().as_encoded_bytes().to_vec();

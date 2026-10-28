@@ -116,6 +116,11 @@ fn normalize(text: &str, raw_root: &Path, canonical_root: &Path) -> String {
         text = text.replace(&root, "$ROOT");
         text = text.replace(&root.replace('\\', "\\\\"), "$ROOT");
     }
+    // Go Base.Path uses filepath.Join, including outside $ROOT tokens.
+    #[cfg(windows)]
+    let text = text
+        .replace(r"bases\\", "bases/")
+        .replace(r"bases\", "bases/");
     normalize_pointers(&slash_root_paths(&text))
 }
 

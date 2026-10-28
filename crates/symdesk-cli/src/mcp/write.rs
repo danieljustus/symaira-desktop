@@ -250,8 +250,9 @@ fn index_file(
     hash: Option<&str>,
 ) -> Result<String, String> {
     let bytes = std::fs::read(path).map_err(|e| io_error("open", path, &e))?;
+    let key = symdesk_index::document_storage_key(path).map_err(|e| e.to_string())?;
     let mut document =
-        symdesk_vault::parse_bytes(&path.to_string_lossy(), &bytes).map_err(|e| e.to_string())?;
+        symdesk_vault::parse_bytes(&key.to_string_lossy(), &bytes).map_err(|e| e.to_string())?;
     if let Some(hash) = hash {
         document.sha256 = hash.to_owned();
     }

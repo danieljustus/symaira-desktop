@@ -58,7 +58,11 @@ func paperlessExportContract(t *testing.T, unicodeBoundary bool) map[string]any 
 			if e != nil {
 				return e
 			}
-			body := clock.ReplaceAllString(norm(string(b)), `created: "2000-01-01T00:00:00Z"`)
+			body := string(b)
+			if runtime.GOOS == "windows" {
+				body = strings.ReplaceAll(body, `\\`, `\`)
+			}
+			body = clock.ReplaceAllString(norm(body), `created: "2000-01-01T00:00:00Z"`)
 			rel, _ := filepath.Rel(vault, p)
 			out[filepath.ToSlash(rel)] = map[string]any{"path_sha256": fmt.Sprintf("%x", sha256.Sum256([]byte(filepath.ToSlash(rel)))), "body": body, "sha256": fmt.Sprintf("%x", sha256.Sum256([]byte(body)))}
 			return nil
@@ -98,9 +102,10 @@ func paperlessExportContract(t *testing.T, unicodeBoundary bool) map[string]any 
 			t.Fatal(e)
 		}
 		var result any
-		if e := json.Unmarshal([]byte(norm(string(b))), &result); e != nil {
+		if e := json.Unmarshal(b, &result); e != nil {
 			t.Fatal(e)
 		}
+		result = fixtureoracle.NormalizeStrings(result, norm)
 		steps = append(steps, map[string]any{"op": op, "summary": result, "error": message, "files": snapshot()})
 	}
 	_, file, _, _ := runtime.Caller(0)

@@ -2100,6 +2100,14 @@ pub fn vault_document_path(vault_root: &Path, relative: &Path) -> Result<PathBuf
     Ok(storage_path(vault_root, &normalized_relative)?.key_path)
 }
 
+/// Converts an absolute filesystem I/O path to Go's ordinary sidecar key.
+///
+/// # Errors
+/// Returns an error for a non-UTF-8 path or an unavailable working directory.
+pub fn document_storage_key(path: &Path) -> Result<PathBuf, SidecarError> {
+    absolute_non_verbatim(path)
+}
+
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
     validate_utf8_path(path, "vault root")?;
     let absolute = if path.is_absolute() {
@@ -2464,6 +2472,22 @@ mod source_tests {
 
         drop(sidecar);
         fs::remove_dir_all(root).expect("remove temporary source");
+    }
+
+    #[test]
+    fn windows_io_spellings_use_one_ordinary_database_key() {
+        for (io, key) in [
+            (r"\\?\C:\vault\nested\alpha.md", r"C:\vault\nested\alpha.md"),
+            (
+                r"\\?\UNC\host\share\nested\alpha.md",
+                r"\\host\share\nested\alpha.md",
+            ),
+            (r"C:\vault\nested\alpha.md", r"C:\vault\nested\alpha.md"),
+            ("/vault/nested/alpha.md", "/vault/nested/alpha.md"),
+        ] {
+            assert_eq!(super::strip_verbatim_prefix(io), key);
+            assert_eq!(super::strip_verbatim_prefix(key), key);
+        }
     }
 
     #[test]

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -196,6 +197,30 @@ func TestPortConfigProcessContract(t *testing.T) {
 		current, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if runtime.GOOS == "windows" {
+			var expected configProcessFixture
+			if err := json.Unmarshal(current, &expected); err != nil {
+				t.Fatal(err)
+			}
+			for _, fixture := range []*configProcessFixture{&expected, &fixture} {
+				for i := range fixture.Cases {
+					for j := range fixture.Cases[i].Steps {
+						for name, file := range fixture.Cases[i].Steps[j].Files {
+							file.Mode = 0
+							fixture.Cases[i].Steps[j].Files[name] = file
+						}
+					}
+				}
+			}
+			current, err = json.Marshal(expected)
+			if err != nil {
+				t.Fatal(err)
+			}
+			encoded, err = json.Marshal(fixture)
+			if err != nil {
+				t.Fatal(err)
+			}
 		}
 		if !bytes.Equal(current, encoded) {
 			t.Fatalf("config process fixture drift: %s", path)

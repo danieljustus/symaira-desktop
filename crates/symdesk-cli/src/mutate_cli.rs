@@ -242,7 +242,11 @@ fn parse(path: &Path) -> Result<symdesk_vault::Document, String> {
     parse_bytes(&path.to_string_lossy(), &bytes).map_err(|e| e.to_string())
 }
 fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, String> {
-    let doc = parse(path)?;
+    let mut doc = parse(path)?;
+    doc.path = symdesk_index::document_storage_key(path)
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .into_owned();
     let mtime = fs::metadata(path)
         .and_then(|m| m.modified())
         .map_err(|e| e.to_string())?;
@@ -255,7 +259,9 @@ fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, Str
     Ok(doc)
 }
 fn snapshot(root: &Path, path: &Path) {
-    if let Ok(rel) = path.strip_prefix(root) {
+    if let Ok(root) = fs::canonicalize(root)
+        && let Ok(rel) = path.strip_prefix(&root)
+    {
         let _ = HistoryStore::new(root).snapshot(&rel.to_string_lossy());
     }
 }
@@ -338,21 +344,24 @@ fn note_execute(
         "move" => {
             let old = secure_path(root, &a[0]).map_err(|e| e.to_string())?;
             let new = symdesk_vault::move_note(root, &a[0], &a[1]).map_err(|e| e.to_string())?;
-            db.delete_document(&old.to_string_lossy())
+            let key = symdesk_index::document_storage_key(&old).map_err(|e| e.to_string())?;
+            db.delete_document(&key.to_string_lossy())
                 .map_err(|e| e.to_string())?;
             reindex(db, &new)?;
             Ok(json!({"from":a[0],"status":"moved","to":a[1]}))
         }
         "delete" => {
             let path = secure_path(root, &a[0]).map_err(|e| e.to_string())?;
+            let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
             let rel = path
-                .strip_prefix(root)
+                .strip_prefix(&canonical_root)
                 .map_err(|e| e.to_string())?
                 .to_string_lossy();
             let entry = HistoryStore::new(root)
                 .trash(&rel)
                 .map_err(|e| e.to_string())?;
-            db.delete_document(&path.to_string_lossy())
+            let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
+            db.delete_document(&key.to_string_lossy())
                 .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
             let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
             Ok(json!({"file":entry.original_path,"status":"trashed","trash_name":entry.name}))
@@ -441,6 +450,10 @@ fn new_note(
         let _ = set_frontmatter_key(&path, "created", &created);
     }
     let mut doc = parse(&path)?;
+    doc.path = symdesk_index::document_storage_key(&path)
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .into_owned();
     doc.sha256 = symdesk_vault::sha256_hex(body.as_bytes());
     let indexed = IndexedDocument::from_vault(&doc, None).map_err(|e| e.to_string())?;
     db.index_document(&indexed)
@@ -450,8 +463,9 @@ fn new_note(
 }
 fn assign_asn(root: &Path, db: &mut Sidecar, file: &str, value: &str) -> Result<i64, String> {
     let path = secure_path(root, file).map_err(|e| e.to_string())?;
+    let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
     let target = path
-        .strip_prefix(root)
+        .strip_prefix(&canonical_root)
         .map_err(|e| e.to_string())?
         .to_string_lossy()
         .into_owned();
@@ -633,4 +647,32 @@ pub fn prepare_args(args: &mut Vec<std::ffi::OsString>) -> Option<ExitCode> {
     normalized.splice(at..at, globals);
     *args = normalized;
     None
+}
+
+#[cfg(all(test, unix))]
+mod snapshot_tests {
+    #[test]
+    fn canonical_io_path_snapshots_through_lexical_root() {
+        let base = std::env::temp_dir().join(format!(
+            "snapshot-root-{}-{}",
+            std::process::id(),
+            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ));
+        let vault = base.join("vault");
+        let alias = base.join("alias");
+        std::fs::create_dir_all(&vault).unwrap();
+        std::os::unix::fs::symlink(&vault, &alias).unwrap();
+        std::fs::write(vault.join("note.md"), "before mutation\n").unwrap();
+        let path = symdesk_vault::secure_path(&alias, "note.md").unwrap();
+        super::snapshot(&alias, &path);
+        assert_eq!(
+            symdesk_vault::HistoryStore::new(&alias)
+                .list("note.md")
+                .unwrap()
+                .unwrap()
+                .len(),
+            1
+        );
+        std::fs::remove_dir_all(base).unwrap();
+    }
 }

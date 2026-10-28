@@ -266,7 +266,7 @@ pub fn import_at(opts: &ImportOptions, now: &str) -> Result<ImportSummary> {
         let relative = Path::new("paperless").join(note_file_name_os(&entry));
         let mut note_path = opts.vault_root.join(&relative);
         let archive_name = archive_file_name(&entry);
-        let archive_relative = Path::new("archive/paperless").join(&archive_name);
+        let archive_relative = Path::new("archive").join("paperless").join(&archive_name);
         let archive_path = opts.vault_root.join(&archive_relative);
         let mut r = ImportResult {
             paperless_id: entry.id,

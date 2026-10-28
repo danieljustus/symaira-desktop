@@ -7,7 +7,10 @@ use symdesk_vault::{Document, go_path_error, parse_bytes, secure_path, walk_mark
 
 pub(super) fn read(root: &Path, requested: &str) -> Result<Document, String> {
     let path = secure_path(root, requested).map_err(|e| e.to_string())?;
-    let relative = path.strip_prefix(root).map_err(|e| e.to_string())?;
+    let canonical_root = std::fs::canonicalize(root).map_err(|e| e.to_string())?;
+    let relative = path
+        .strip_prefix(&canonical_root)
+        .map_err(|e| e.to_string())?;
     let dir = Dir::open_ambient_dir(root, ambient_authority()).map_err(|e| e.to_string())?;
     let file = dir.open(relative).map_err(|e| {
         format!(
@@ -182,4 +185,24 @@ pub(super) fn show(root: &Path, requested: &str) -> Result<serde_json::Value, St
         derived_from: &doc.derived_from,
         derived: doc.derived,
     })
+}
+
+#[test]
+#[cfg(unix)]
+fn meeting_read_accepts_lexical_root_alias() {
+    let base = std::env::temp_dir().join(format!(
+        "meeting-root-{}-{}",
+        std::process::id(),
+        time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+    ));
+    std::fs::create_dir_all(base.join("vault")).unwrap();
+    std::os::unix::fs::symlink(base.join("vault"), base.join("alias")).unwrap();
+    std::fs::write(
+        base.join("vault/meeting.md"),
+        "---\ntitle: Meeting\n---\nbody\n",
+    )
+    .unwrap();
+    let document = read(&base.join("alias"), "meeting.md").unwrap();
+    assert_eq!(document.title, "Meeting");
+    std::fs::remove_dir_all(base).unwrap();
 }

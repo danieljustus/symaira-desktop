@@ -96,9 +96,10 @@ func TestPortNotionContract(t *testing.T) {
 			t.Fatal(e)
 		}
 		var results any
-		if e := json.Unmarshal([]byte(norm(string(raw))), &results); e != nil {
+		if e := json.Unmarshal(raw, &results); e != nil {
 			t.Fatal(e)
 		}
+		results = fixtureoracle.NormalizeStrings(results, norm)
 		steps = append(steps, map[string]any{"op": op, "results": results, "imported": stats.Imported, "skipped": stats.Skipped, "failed": stats.Failed, "total": stats.Total, "error": text, "files": snapshot()})
 	}
 	names := []string{" Page / name:*?\"<>| ", "", "   ", "..", "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "Hi <aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>", "Hi AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md", "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  "}
@@ -124,9 +125,10 @@ func TestPortNotionContract(t *testing.T) {
 			t.Fatal(e)
 		}
 		var result any
-		if e := json.Unmarshal([]byte(norm(string(raw))), &result); e != nil {
+		if e := json.Unmarshal(raw, &result); e != nil {
 			t.Fatal(e)
 		}
+		result = fixtureoracle.NormalizeStrings(result, norm)
 		csvCases = append(csvCases, map[string]any{"input": body, "results": result})
 	}
 	hashes := map[string]string{}

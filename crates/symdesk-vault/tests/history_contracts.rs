@@ -18,14 +18,16 @@ use symdesk_vault::{HistoryError, HistoryStore};
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
 
+// Refresh from `go run ./scripts/rust-port/cmd/historygen --output <report>`:
+// copy the real report's source_hashes only after reviewing the oracle payload.
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "3620f28f6905843fd98e7b0a8a9f74abb096f0613b52d898935dfbb3c05bf9fc",
+        "e15fa6a3f35dca55c548dd18913c26b43b20b4ae047ff5677ac265c24a3a53c5",
     ),
     (
         "go.sum",
-        "ffe0a0d61d65e11ae50dae2f4075be58a06f096e8d3deb3c0a973e6c64f848c3",
+        "2b2e10452b842861551cb81451fdce09c0fe58942d69df6a414b93367d982c5e",
     ),
     (
         "internal/history/checkpoint.go",

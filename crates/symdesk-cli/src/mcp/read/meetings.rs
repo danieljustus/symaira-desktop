@@ -43,7 +43,8 @@ pub(super) fn read(root: &Path, requested: &str) -> Result<Document, String> {
             path.display()
         ));
     }
-    parse_bytes(&path.to_string_lossy(), &bytes).map_err(|e| e.to_string())
+    let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
+    parse_bytes(&key.to_string_lossy(), &bytes).map_err(|e| e.to_string())
 }
 
 #[derive(Serialize)]

@@ -72,9 +72,11 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
             }
             let (root, sidecar) = open_sidecar(config)?;
             let absolute = secure_path(&root, &args[0]).map_err(|error| error.to_string())?;
+            let key = symdesk_index::document_storage_key(&absolute)
+                .map_err(|error| error.to_string())?;
             encoded(
                 &sidecar
-                    .get_properties(&absolute.to_string_lossy())
+                    .get_properties(&key.to_string_lossy())
                     .map_err(|error| error.to_string())?,
             )
         }
@@ -88,7 +90,8 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
             let target = if symdesk_index::is_contact_reference(&args[0]) {
                 args[0].clone()
             } else {
-                secure_path(&root, &args[0])
+                let path = secure_path(&root, &args[0]).map_err(|error| error.to_string())?;
+                symdesk_index::document_storage_key(&path)
                     .map_err(|error| error.to_string())?
                     .to_string_lossy()
                     .into_owned()
@@ -166,8 +169,10 @@ pub(super) fn call(name: &str, raw: Option<&str>, config: &ServerConfig) -> Resu
 // sources outside the vault. Different volumes retain the original path.
 fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> String {
     use std::path::{Component, PathBuf};
-    let root = root.components().collect::<Vec<_>>();
-    let target = path.components().collect::<Vec<_>>();
+    let root_path = symdesk_index::document_storage_key(root).unwrap_or_else(|_| root.to_owned());
+    let target_path = symdesk_index::document_storage_key(path).unwrap_or_else(|_| path.to_owned());
+    let root = root_path.components().collect::<Vec<_>>();
+    let target = target_path.components().collect::<Vec<_>>();
     if !path.is_absolute() || root.first() != target.first() {
         return path.to_string_lossy().into_owned();
     }

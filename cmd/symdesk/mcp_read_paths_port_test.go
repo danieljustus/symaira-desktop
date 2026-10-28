@@ -28,6 +28,48 @@ func normalizeMCPReadPaths(text, root string) string {
 	return normalizeBasePaths(normalizeNotebookPaths(text))
 }
 
+// These probes characterize suspected spellings without declaring them equivalent.
+// Only native drift windows can establish which spelling the process emits; in
+// particular, a guessed 8.3 expansion must never erase an unrelated user's path.
+func TestNormalizeMCPReadWindowsHypotheses(t *testing.T) {
+	root := `C:\Users\runneradmin\AppData\Local\Temp\fixture`
+	for _, test := range []struct {
+		name, input, want string
+	}{
+		{
+			"short-name-alias-is-not-inferred",
+			`{"path":"C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\fixture\\vault\\alpha.md"}`,
+			`{"path":"C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\fixture\\vault\\alpha.md"}`,
+		},
+		{
+			"slash-root-alias-is-not-inferred",
+			`{"path":"C:/Users/runneradmin/AppData/Local/Temp/fixture/vault/alpha.md"}`,
+			`{"path":"C:/Users/runneradmin/AppData/Local/Temp/fixture/vault/alpha.md"}`,
+		},
+		{
+			"mixed-separators-below-matching-root",
+			`{"path":"C:\\Users\\runneradmin\\AppData\\Local\\Temp\\fixture/vault\\alpha.md"}`,
+			`{"path":"$ROOT/vault/alpha.md"}`,
+		},
+		{
+			"relative-external-index-key-is-not-a-root-token",
+			`{"after_index":{"..\\external\\link.md":{}}}`,
+			`{"after_index":{"..\\external\\link.md":{}}}`,
+		},
+		{
+			"relative-results-key-is-not-a-root-token",
+			`{"after_results":{"task\\output.txt":"body"}}`,
+			`{"after_results":{"task\\output.txt":"body"}}`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := normalizeMCPReadPaths(test.input, root); got != test.want {
+				t.Fatalf("hypothesis normalization: got %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
 func TestNormalizeMCPReadNestedWindowsPaths(t *testing.T) {
 	root := `C:\Users\runner\fixture`
 	for _, test := range []struct{ input, want string }{

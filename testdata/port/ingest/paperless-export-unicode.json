@@ -169,6 +169,6 @@
   "source_hashes": {
     "importer.go": "c1d7b518739a01fcc08af2c178e600ea7c994f161a01748b6d2990e966a5ad87",
     "manifest.go": "650fa255842ff3eb09e2f5c096987d6c3921794565a99786c6a560281273e4b2",
-    "port_contract_test.go": "7eb4b9c5bec6bf8037a95d6bc160a1a270dbe9c3092019eae7efb9865c71bc55"
+    "port_contract_test.go": "84ac47440e394f69ef6e75cd553af476c76f330f94a6f72d96ea5ae4ee705967"
   }
 }

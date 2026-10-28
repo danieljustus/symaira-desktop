@@ -24,7 +24,7 @@ func TestNormalizeConflictWindowsSlogPaths(t *testing.T) {
 	// Produce the native Go slog quoting on this host from actual Windows-shaped
 	// paths, rather than hand-writing a plausible log. Native execution is still
 	// required to establish the Windows replay result.
-	root := `C:\Users\runner\Temp\fixture`
+	root := `C:\Users\runner\Temp directory\fixture`
 	var output strings.Builder
 	logger := slog.New(slog.NewTextHandler(&output, nil))
 	logger.Info("seeded per-vault retrieval index from standalone store",

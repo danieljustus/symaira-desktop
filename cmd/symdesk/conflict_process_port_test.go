@@ -106,9 +106,9 @@ func normalizeConflictLog(text string) string {
 	if !strings.Contains(text, "seeded per-vault retrieval index from standalone store") {
 		return text
 	}
-	// slog quotes Windows backslash-bearing attribute values. Decode only the
-	// two known path attributes before root/separator normalization; do not
-	// rewrite arbitrary JSON escapes or message text.
+	// When a path needs quoting (for example a temporary root with spaces),
+	// slog escapes Windows backslashes. Decode only the two known path
+	// attributes before root normalization; preserve other JSON escapes.
 	text = regexp.MustCompile(`(standalone_path|new_path)=("(?:\\.|[^"\\])*")`).ReplaceAllStringFunc(text, func(attribute string) string {
 		key, value, _ := strings.Cut(attribute, "=")
 		decoded, err := strconv.Unquote(value)

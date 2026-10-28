@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "459223b3e65ef1a2c28691418c77a8b73fa48aef",
+  "oracle_commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
   "source_hashes": {
     "internal/retrieval/internal/db/db.go": "0e088953959bc9ff9018aa02604abb77869f9669ed61498301478f762317852b",
     "internal/retrieval/internal/db/migrations/0001_baseline.sql": "b262f7561e218aa92dced583908d93526858395503413ef801ab2780344c14a5",

@@ -1,5 +1,7 @@
 #[path = "../../test-support/process_env.rs"]
 mod process_env;
+#[path = "support/process_root.rs"]
+mod process_root;
 use process_env::IsolatedEnvironment;
 use std::process::Command;
 
@@ -17,4 +19,35 @@ fn isolated_environment_drops_parent_state_but_keeps_windows_system_root() {
     }
     #[cfg(not(windows))]
     assert!(variables.is_empty());
+}
+
+// Keep shared-helper controls outside the frozen fixture replay binaries: an
+// included module's #[test] is otherwise counted once for every consumer.
+#[test]
+fn root_markers_use_native_separators_without_cleaning_literal_arguments() {
+    let directory = std::env::current_dir().unwrap();
+    let canonical = process_root::canonical_root(&directory);
+    assert_eq!(
+        std::fs::canonicalize(&canonical).unwrap(),
+        std::fs::canonicalize(&directory).unwrap()
+    );
+    let root = if cfg!(windows) {
+        r"C:\temp\case"
+    } else {
+        "/private/case"
+    };
+    let expected =
+        format!("{root}/vault/note conflicted copy.md").replace('/', std::path::MAIN_SEPARATOR_STR);
+    assert_eq!(
+        process_root::expand_argument("$ROOT/vault/note conflicted copy.md", root),
+        expected
+    );
+    assert_eq!(
+        process_root::expand_argument("../literal/path", root),
+        "../literal/path"
+    );
+    assert_eq!(
+        process_root::expand_argument("https://example.invalid/path", root),
+        "https://example.invalid/path"
+    );
 }

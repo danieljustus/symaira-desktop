@@ -1,4 +1,8 @@
 #![deny(unsafe_code)]
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use serde_json::Value;
 use std::{fs, path::Path, process::Command};
 
@@ -96,7 +100,7 @@ fn unstamped_cli_event_kinds_keep_empty_signed_timestamps() {
             Command::new(env!("CARGO_BIN_EXE_symroom"))
                 .args(args)
                 .current_dir(&room)
-                .env_clear()
+                .isolated_env()
                 .env("HOME", room.join("home"))
                 .env("USERPROFILE", room.join("home"))
                 .env("XDG_DATA_HOME", room.join("home/data"))

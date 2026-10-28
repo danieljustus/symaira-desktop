@@ -113,7 +113,7 @@ func observeViewsCaseWithState(t *testing.T, binary string, c duplicatesPortCase
 			args = append([]string{"--vault", vault}, args...)
 		}
 		for i := range args {
-			args[i] = strings.ReplaceAll(args[i], "$ROOT", root)
+			args[i] = materializePortProcessArg(args[i], root, string(filepath.Separator))
 		}
 		code, stdout, stderr := run(args)
 		observed.Steps = append(observed.Steps, duplicatesPortStep{

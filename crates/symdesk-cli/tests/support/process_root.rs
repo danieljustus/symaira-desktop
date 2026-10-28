@@ -17,3 +17,35 @@ pub fn canonical_root(root: &Path) -> PathBuf {
     }
     root
 }
+
+/// Materialize only language-neutral root-marked paths, preserving literal argv.
+/// Go conflict resolve retains an absolute argument as-is for exact DB deletion;
+/// injecting a slash suffix after a native Windows root creates a different key.
+pub fn expand_argument(arg: &str, root: &str) -> String {
+    if arg.contains("$ROOT") {
+        arg.replace("$ROOT", root)
+            .replace('/', std::path::MAIN_SEPARATOR_STR)
+    } else {
+        arg.to_owned()
+    }
+}
+
+#[test]
+fn root_markers_use_native_separators_without_cleaning_literal_arguments() {
+    let root = if cfg!(windows) {
+        r"C:\temp\case"
+    } else {
+        "/private/case"
+    };
+    let expected =
+        format!("{root}/vault/note conflicted copy.md").replace('/', std::path::MAIN_SEPARATOR_STR);
+    assert_eq!(
+        expand_argument("$ROOT/vault/note conflicted copy.md", root),
+        expected
+    );
+    assert_eq!(expand_argument("../literal/path", root), "../literal/path");
+    assert_eq!(
+        expand_argument("https://example.invalid/path", root),
+        "https://example.invalid/path"
+    );
+}

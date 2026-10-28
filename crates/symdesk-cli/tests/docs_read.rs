@@ -142,7 +142,7 @@ fn docs_read_matches_go_process_contract() {
             args.extend(
                 step.args
                     .iter()
-                    .map(|a| a.replace("$ROOT", &root.to_string_lossy())),
+                    .map(|a| process_root::expand_argument(a, &root.to_string_lossy())),
             );
             let output = run(&home, &cwd, &args);
             let normal = |bytes: Vec<u8>| {

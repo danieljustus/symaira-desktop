@@ -217,7 +217,11 @@ fn restore_match_go_process_contract() {
                 args.push(vault.to_string_lossy().into_owned());
             }
             let root_text = root.to_string_lossy().into_owned();
-            args.extend(step.args.iter().map(|arg| arg.replace("$ROOT", &root_text)));
+            args.extend(
+                step.args
+                    .iter()
+                    .map(|arg| process_root::expand_argument(arg, &root_text)),
+            );
             let observed = run(binary, &home, &cwd, &args);
             assert_eq!(
                 restore_snapshot(&vault, &home, &root, &canonical_root),

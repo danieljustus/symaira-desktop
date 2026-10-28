@@ -41,3 +41,27 @@ func TestNormalizeConflictWindowsSlogPaths(t *testing.T) {
 		}
 	}
 }
+
+// $ROOT is a language-neutral path marker, not a request to test mixed Windows
+// separators. Materialize its slash suffix in native spelling before invoking
+// the CLI. Do not clean .., whitespace, or unmarked literal argv values.
+func materializePortProcessArg(arg, root, separator string) string {
+	if !strings.Contains(arg, "$ROOT") {
+		return arg
+	}
+	return strings.ReplaceAll(strings.ReplaceAll(arg, "$ROOT", root), "/", separator)
+}
+
+func TestMaterializePortProcessArg(t *testing.T) {
+	for _, test := range []struct{ arg, root, separator, want string }{
+		{"$ROOT/vault/note conflicted copy.md", `C:\temp\case`, `\`, `C:\temp\case\vault\note conflicted copy.md`},
+		{"--vault=$ROOT/vault/../vault", `C:\temp\case`, `\`, `--vault=C:\temp\case\vault\..\vault`},
+		{"../literal/path", `C:\temp\case`, `\`, "../literal/path"},
+		{"https://example.invalid/path", `C:\temp\case`, `\`, "https://example.invalid/path"},
+		{"$ROOT/vault/note.md", "/private/case", "/", "/private/case/vault/note.md"},
+	} {
+		if got := materializePortProcessArg(test.arg, test.root, test.separator); got != test.want {
+			t.Fatalf("materialized argv: got %q, want %q", got, test.want)
+		}
+	}
+}

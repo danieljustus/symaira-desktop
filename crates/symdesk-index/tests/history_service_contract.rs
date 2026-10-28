@@ -39,7 +39,8 @@ impl Sandbox {
         fs::write(&path, content).unwrap();
         // Seed the same ordinary key as refresh_index and history_sync, not
         // secure_path's Windows verbatim I/O spelling.
-        let key = symdesk_index::vault_document_path(&self.root, Path::new(rel)).unwrap();
+        let canonical = symdesk_vault::secure_path(&self.root, rel).unwrap();
+        let key = symdesk_index::document_storage_key(&canonical).unwrap();
         let document = parse_bytes(key.to_str().unwrap(), content.as_bytes()).unwrap();
         self.sidecar
             .index_document(&IndexedDocument::from_vault(&document, None).unwrap())

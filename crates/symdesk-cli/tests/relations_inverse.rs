@@ -1,6 +1,10 @@
 //! Replays the Go-owned `backlinks` / `similar` process fixture
 //! (`testdata/port/cli/relations-inverse-process.json`) against the Rust binary.
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "support/process_root.rs"]
 mod process_root;
 
@@ -80,7 +84,7 @@ fn run(binary: &str, home: &Path, cwd: &Path, args: &[String]) -> Run {
     let output =
         Command::new(binary)
             .current_dir(cwd)
-            .env_clear()
+            .isolated_env()
             .envs(std::env::vars().filter(|(name, _)| {
                 matches!(name.as_str(), "PATH" | "SYSTEMROOT" | "TEMP" | "TMP")
             }))

@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -258,7 +262,7 @@ fn flag_grammar_matches_go_process_contract() {
         command
             .args(&case.args)
             .current_dir(&work)
-            .env_clear()
+            .isolated_env()
             .env("HOME", temp.path.join("home"))
             .env("USERPROFILE", temp.path.join("home"))
             .env("XDG_DATA_HOME", temp.path.join("data"))

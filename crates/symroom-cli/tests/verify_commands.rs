@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -78,7 +82,7 @@ fn verify_cli_matches_go_process_contract() {
         }
         let output = Command::new(env!("CARGO_BIN_EXE_symroom"))
             .args(&case.args)
-            .env_clear()
+            .isolated_env()
             .env("SYMROOM_ROOM_DIR", &room)
             .output()
             .expect("run Rust verify CLI");

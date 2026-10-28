@@ -89,6 +89,6 @@ func TestPortBacklinksProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("backlinks process fixture stale")
+		portProcessFixtureDifference(t, "backlinks process fixture stale", current, encoded)
 	}
 }

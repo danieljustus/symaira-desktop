@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -320,7 +324,7 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     });
     let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .args(["mcp"])
-        .env_clear()
+        .isolated_env()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .env("HOME", &home)
         .env("USERPROFILE", &home)

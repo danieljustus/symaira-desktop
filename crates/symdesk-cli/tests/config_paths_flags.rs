@@ -1,4 +1,8 @@
 //! Regression for config CRUD interception shadowing persistent paths flags.
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{fs, process::Command};
 
 #[test]
@@ -24,7 +28,7 @@ fn persistent_flags_between_config_and_paths_reach_the_paths_command() {
         let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
             .args(args)
             .current_dir(&root.0)
-            .env_clear()
+            .isolated_env()
             .env("HOME", &home)
             .env("USERPROFILE", &home)
             .env("XDG_CONFIG_HOME", home.join("config"))

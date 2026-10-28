@@ -107,7 +107,7 @@ func TestPortViewsProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("views process fixture drift; regenerate deliberately")
+		portProcessFixtureDifference(t, "views process fixture drift; regenerate deliberately", current, encoded)
 	}
 }
 

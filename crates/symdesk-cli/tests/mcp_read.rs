@@ -1,5 +1,11 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+#[path = "support/mcp_read_paths.rs"]
+mod mcp_read_paths;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -128,7 +134,7 @@ fn replay(case: &Case) {
     if case.allow_write {
         command.arg("--allow-write");
     }
-    command.env_clear();
+    command.isolated_env();
     command.env("SYMDESK_SIDECAR", root.join("data/sidecar.db"));
     for (key, dir) in [
         ("HOME", "home"),
@@ -220,12 +226,8 @@ fn replay(case: &Case) {
     }
     let mut after = BTreeMap::new();
     collect_files(&root.join("vault"), &root.join("vault"), &mut after);
-    let stdout = String::from_utf8(stdout)
-        .unwrap()
-        .replace(root.to_str().unwrap(), "$ROOT");
-    let stderr = String::from_utf8(stderr)
-        .unwrap()
-        .replace(root.to_str().unwrap(), "$ROOT");
+    let stdout = mcp_read_paths::normalize(&String::from_utf8(stdout).unwrap(), &root);
+    let stderr = mcp_read_paths::normalize(&String::from_utf8(stderr).unwrap(), &root);
     if !case.results.is_empty() {
         let mut results = BTreeMap::new();
         collect_files(&results_root, &results_root, &mut results);

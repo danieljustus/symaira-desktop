@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -96,7 +97,7 @@ func TestPortConflictProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("conflict process fixture stale")
+		portProcessFixtureDifference(t, "conflict process fixture stale", current, encoded)
 	}
 }
 
@@ -105,6 +106,17 @@ func normalizeConflictLog(text string) string {
 	if !strings.Contains(text, "seeded per-vault retrieval index from standalone store") {
 		return text
 	}
+	// slog quotes Windows backslash-bearing attribute values. Decode only the
+	// two known path attributes before root/separator normalization; do not
+	// rewrite arbitrary JSON escapes or message text.
+	text = regexp.MustCompile(`(standalone_path|new_path)=("(?:\\.|[^"\\])*")`).ReplaceAllStringFunc(text, func(attribute string) string {
+		key, value, _ := strings.Cut(attribute, "=")
+		decoded, err := strconv.Unquote(value)
+		if err != nil {
+			return attribute
+		}
+		return key + "=" + decoded
+	})
 	text = regexp.MustCompile(`time=[^ ]+`).ReplaceAllString(text, `time=$$NOW`)
 	return regexp.MustCompile(`(/vaults/)[0-9a-f]{16}(/)`).ReplaceAllString(text, `${1}$$VAULT_ID${2}`)
 }

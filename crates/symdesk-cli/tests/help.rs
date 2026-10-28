@@ -1,4 +1,8 @@
 //! Every frozen Cobra node is exercised through the actual Rust executable.
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use serde::Deserialize;
 use std::{
     fs,
@@ -45,7 +49,7 @@ fn every_command_help_and_completion_match_go_process() {
     for case in fixture.cases {
         let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
             .current_dir(&root)
-            .env_clear()
+            .isolated_env()
             .env("HOME", &root)
             .env("USERPROFILE", &root)
             .env("XDG_CONFIG_HOME", root.join("config"))

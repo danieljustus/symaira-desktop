@@ -275,8 +275,8 @@ func TestMCPReadProcessPortFixture(t *testing.T) {
 			t.Fatalf("%s: %v: %s", c.ID, err, stderr.String())
 		}
 		cancel()
-		c.Stdout = strings.ReplaceAll(stdout.String(), root, "$ROOT")
-		c.Stderr = strings.ReplaceAll(stderr.String(), root, "$ROOT")
+		c.Stdout = normalizeMCPReadPaths(stdout.String(), root)
+		c.Stderr = normalizeMCPReadPaths(stderr.String(), root)
 		c.AfterFiles = map[string]string{}
 		err = filepath.WalkDir(vaultRoot, func(path string, d os.DirEntry, err error) error {
 			if err != nil {

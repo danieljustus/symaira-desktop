@@ -151,6 +151,6 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 		current = append(current, '\n')
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("docs read fixture is stale; regenerate explicitly")
+		portProcessFixtureDifference(t, "docs read fixture is stale; regenerate explicitly", current, encoded)
 	}
 }

@@ -132,7 +132,7 @@ func TestPortRestoreProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("restore process fixture stale")
+		portProcessFixtureDifference(t, "restore process fixture stale", current, encoded)
 	}
 }
 

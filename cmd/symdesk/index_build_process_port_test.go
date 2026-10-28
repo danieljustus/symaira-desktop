@@ -74,7 +74,7 @@ func TestIndexBuildProcessPortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("index build fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'")
+		portProcessFixtureDifference(t, "index build fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'", current, encoded)
 	}
 }
 

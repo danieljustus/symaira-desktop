@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -134,7 +138,7 @@ fn replay(case: &Case) {
     if case.allow_write {
         command.arg("--allow-write");
     }
-    command.env_clear();
+    command.isolated_env();
     command.env("SYMDESK_SIDECAR", root.join("data/sidecar.db"));
     for (key, dir) in [
         ("HOME", "home"),

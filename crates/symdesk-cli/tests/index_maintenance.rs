@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -160,7 +164,7 @@ fn index_maintenance_cli_replays_go_process_fixture() {
     let run = |arguments: &[&OsStr]| {
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
         command
-            .env_clear()
+            .isolated_env()
             .current_dir(&cwd)
             .envs(&environment)
             .args(arguments);

@@ -1,3 +1,7 @@
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
@@ -120,7 +124,7 @@ fn config_and_ai_config_match_real_go_process_and_filesystem() {
                 .collect();
             let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
                 .current_dir(&root)
-                .env_clear()
+                .isolated_env()
                 .env("HOME", &home)
                 .env("USERPROFILE", &home)
                 .env("XDG_CONFIG_HOME", home.join("config"))

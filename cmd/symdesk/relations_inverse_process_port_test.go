@@ -94,6 +94,6 @@ func TestPortRelationsInverseProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("inverse process fixture stale")
+		portProcessFixtureDifference(t, "inverse process fixture stale", current, encoded)
 	}
 }

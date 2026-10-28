@@ -1,6 +1,10 @@
 //! Replays the Go-owned `history_read` / `similar` process fixture
 //! (`testdata/port/cli/history-read-process.json`) against the Rust binary.
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "support/process_root.rs"]
 mod process_root;
 
@@ -80,7 +84,7 @@ fn run(binary: &str, home: &Path, cwd: &Path, args: &[String]) -> Run {
     let output =
         Command::new(binary)
             .current_dir(cwd)
-            .env_clear()
+            .isolated_env()
             .envs(std::env::vars().filter(|(name, _)| {
                 matches!(name.as_str(), "PATH" | "SYSTEMROOT" | "TEMP" | "TMP")
             }))
@@ -109,7 +113,26 @@ fn normalize(text: &str, raw_root: &Path, canonical_root: &Path) -> String {
         text = text.replace(&root, "$ROOT");
         text = text.replace(&root.replace('\\', "\\\\"), "$ROOT");
     }
-    slash_root_paths(&text)
+    let text = slash_root_paths(&text);
+    #[cfg(windows)]
+    if text.starts_with("old-note.md  old.md  (deleted ") {
+        let stamp = time::macros::datetime!(2020-01-01 00:00 UTC);
+        let local =
+            stamp.to_offset(time::UtcOffset::local_offset_at(stamp).expect("Windows timezone"));
+        let format = time::format_description::parse_borrowed::<2>(
+            "[year]-[month]-[day] [hour]:[minute]:[second]",
+        )
+        .unwrap();
+        assert_eq!(
+            text,
+            format!(
+                "old-note.md  old.md  (deleted {})\n",
+                local.format(&format).unwrap()
+            )
+        );
+        return "old-note.md  old.md  (deleted 2020-01-01 00:00:00)\n".to_owned();
+    }
+    text
 }
 
 #[cfg(not(windows))]

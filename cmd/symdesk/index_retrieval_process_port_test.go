@@ -121,7 +121,7 @@ func TestIndexRetrievalProcessPortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("index retrieval fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$'")
+		portProcessFixtureDifference(t, "index retrieval fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexRetrievalProcessPortFixture$'", current, encoded)
 	}
 }
 

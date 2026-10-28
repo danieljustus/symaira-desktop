@@ -1,4 +1,8 @@
 //! Replays every case captured by the real Go CLI oracle.
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "support/process_root.rs"]
 mod process_root;
 #[path = "support/root_paths.rs"]
@@ -40,7 +44,7 @@ struct Step {
 fn run(home: &Path, cwd: &Path, args: &[String]) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .current_dir(cwd)
-        .env_clear()
+        .isolated_env()
         .envs(
             std::env::vars()
                 .filter(|(n, _)| matches!(n.as_str(), "PATH" | "SYSTEMROOT" | "TEMP" | "TMP")),

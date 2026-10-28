@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -121,7 +125,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
         command
             .args(&case.args)
             .current_dir(&work)
-            .env_clear()
+            .isolated_env()
             .env("HOME", &home)
             .env("USERPROFILE", &home)
             .env("XDG_DATA_HOME", &data_home)

@@ -140,6 +140,6 @@ func TestPortNoteDocProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("note/doc process fixture stale")
+		portProcessFixtureDifference(t, "note/doc process fixture stale", current, encoded)
 	}
 }

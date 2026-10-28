@@ -66,7 +66,7 @@ func TestPortNotebookReadProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("notebook read process fixture drift; regenerate deliberately")
+		portProcessFixtureDifference(t, "notebook read process fixture drift; regenerate deliberately", current, encoded)
 	}
 }
 

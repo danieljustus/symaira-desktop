@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -97,6 +98,11 @@ func TestPortHistoryReadProcessContract(t *testing.T) {
 		observed := observeDuplicatesCase(t, binary, c, func(vault, home string) { states = append(states, linkProcessState(t, vault, home)) })
 		for i := range observed.Steps {
 			observed.Steps[i].State = states[i]
+			if runtime.GOOS == "windows" && c.Name == "purge" && len(observed.Steps[i].Args) == 2 && observed.Steps[i].Args[0] == "trash" && observed.Steps[i].Args[1] == "list" {
+				// Windows Go ignores TZ and uses the system zone, as history tasks
+				// already accounts for. Verify the full native line first.
+				observed.Steps[i].Stdout = normalizeHistoryTrashLocal(t, observed.Steps[i].Stdout, time.Local)
+			}
 		}
 		fixture.Cases = append(fixture.Cases, observed)
 	}
@@ -119,6 +125,30 @@ func TestPortHistoryReadProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("history read process fixture stale")
+		portProcessFixtureDifference(t, "history read process fixture stale", current, encoded)
+	}
+}
+
+// Normalize only the seeded trash entry's human timestamp, after checking its
+// exact native rendering. JSON timestamps and unrelated diagnostics stay raw.
+func normalizeHistoryTrashLocal(t *testing.T, text string, location *time.Location) string {
+	t.Helper()
+	stamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	const layout = "2006-01-02 15:04:05"
+	local := "old-note.md  old.md  (deleted " + stamp.In(location).Format(layout) + ")\n"
+	if text != local {
+		t.Fatalf("trash list did not render seeded local timestamp: got %q, want %q", text, local)
+	}
+	return strings.Replace(text, stamp.In(location).Format(layout), stamp.Format(layout), 1)
+}
+
+func TestNormalizeHistoryTrashLocal(t *testing.T) {
+	for _, offset := range []int{-8 * 3600, 0, 330 * 60, 14 * 3600} {
+		zone := time.FixedZone("synthetic", offset)
+		stamp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+		input := "old-note.md  old.md  (deleted " + stamp.In(zone).Format("2006-01-02 15:04:05") + ")\n"
+		if got := normalizeHistoryTrashLocal(t, input, zone); got != "old-note.md  old.md  (deleted 2020-01-01 00:00:00)\n" {
+			t.Fatalf("offset %d: %q", offset, got)
+		}
 	}
 }

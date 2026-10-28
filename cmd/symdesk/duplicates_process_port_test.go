@@ -469,7 +469,7 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, af
 			Stdin:    step.Stdin,
 			ExitCode: code,
 			Stdout:   normalizeRetryText(stdout, root),
-			Stderr:   normalizeRetryText(stderr, root),
+			Stderr:   normalizeRetryText(normalizeConflictLog(stderr), root),
 		})
 	}
 	return observed

@@ -7,6 +7,10 @@
 //! for the refusal, so this pins the Rust behaviour: non-zero exit, a clear
 //! message and an untouched journal.
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -110,7 +114,7 @@ fn run_note(scratch: &Path, room: &Path, key: &str) -> Output {
     }
     Command::new(env!("CARGO_BIN_EXE_symroom"))
         .args(["note", "--identity", "oracle", "hello"])
-        .env_clear()
+        .isolated_env()
         .env("HOME", &home)
         .env("USERPROFILE", &home)
         .env("XDG_DATA_HOME", &data_home)

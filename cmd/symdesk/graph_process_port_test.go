@@ -68,6 +68,6 @@ func TestPortGraphProcessContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("graph process fixture stale")
+		portProcessFixtureDifference(t, "graph process fixture stale", current, encoded)
 	}
 }

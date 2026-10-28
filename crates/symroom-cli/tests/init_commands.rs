@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -121,7 +125,7 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
         command
             .args(&case.args)
             .current_dir(&work)
-            .env_clear()
+            .isolated_env()
             .env("HOME", &home)
             .env("USERPROFILE", &home)
             .env("XDG_DATA_HOME", &data_home)

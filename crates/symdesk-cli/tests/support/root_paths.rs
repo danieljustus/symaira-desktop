@@ -1,12 +1,8 @@
 //! Go normalizeRetryText / slashRootPaths: only temporary-root path tokens.
-#[cfg(not(windows))]
-pub fn slash_root_paths(text: &str) -> String {
-    text.to_owned()
-}
-
 /// Rewrites the separators of every `$ROOT` path token to `/`; a doubled
 /// backslash inside a token is one separator (Go `slashRootPaths`).
-#[cfg(windows)]
+/// Like the Go helper, run on every host so Windows-shaped controls execute
+/// locally too. Unmarked text and its JSON escapes remain untouched.
 pub fn slash_root_paths(text: &str) -> String {
     let mut out = String::new();
     let mut rest = text;

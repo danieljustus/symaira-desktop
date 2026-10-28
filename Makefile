@@ -1294,7 +1294,7 @@ rust-lint:
 	$(CARGO) clippy --workspace --all-targets --all-features --locked -- -D warnings
 
 rust-test:
-	$(CARGO) nextest run --workspace --all-features --locked
+	$(CARGO) nextest run --workspace --all-features --locked --no-fail-fast
 	$(CARGO) test --workspace --doc --all-features --locked
 
 rust-features:

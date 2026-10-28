@@ -51,3 +51,37 @@ fn root_markers_use_native_separators_without_cleaning_literal_arguments() {
         "https://example.invalid/path"
     );
 }
+
+#[path = "support/docs_output.rs"]
+mod docs_output;
+
+#[test]
+fn docs_relative_path_fields_preserve_multiline_user_text_and_json_escapes() {
+    let input = concat!(
+        r"[{Path:nested\beta.md Title:user\text}]",
+        "\n",
+        r#"[{"path":"nested\\beta.md","title":"keep\\text\n"}]"#,
+        "\n"
+    );
+    let expected = concat!(
+        r"[{Path:nested/beta.md Title:user\text}]",
+        "\n",
+        r#"[{"path":"nested/beta.md","title":"keep\\text\n"}]"#,
+        "\n"
+    );
+    assert_eq!(docs_output::normalize(input), expected);
+    assert_eq!(docs_output::normalize(expected), expected);
+}
+
+#[path = "support/root_paths.rs"]
+mod root_paths;
+
+#[test]
+fn root_path_normalizer_preserves_unrelated_escapes() {
+    let text = r#"$ROOT\home\config\symdesk\config.toml "literal\n""#;
+    let normalized = root_paths::slash_root_paths(text);
+    assert_eq!(
+        normalized,
+        r#"$ROOT/home/config/symdesk/config.toml "literal\n""#
+    );
+}

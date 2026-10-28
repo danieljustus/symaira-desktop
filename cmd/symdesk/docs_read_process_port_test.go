@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -111,6 +112,7 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 			}
 		}))
 	}
+	normalizeDocsReadFixture(&fixture)
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -137,6 +139,7 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 		if err := json.Unmarshal(current, &saved); err != nil {
 			t.Fatal(err)
 		}
+		normalizeDocsReadFixture(&saved)
 		filtered := saved
 		filtered.Cases = nil
 		for _, c := range saved.Cases {
@@ -152,5 +155,38 @@ func TestPortDocsReadProcessContract(t *testing.T) {
 	}
 	if !bytes.Equal(current, encoded) {
 		portProcessFixtureDifference(t, "docs read fixture is stale; regenerate explicitly", current, encoded)
+	}
+}
+
+// Only fixture-owned result path fields are portable. Do not slash arbitrary
+// user text or JSON escapes; docs output uses native sidecar relative paths.
+func normalizeDocsReadOutput(text string) string {
+	for _, pair := range [][2]string{
+		{`Path:nested\beta.md `, `Path:nested/beta.md `},
+		{`"path":"nested\\beta.md"`, `"path":"nested/beta.md"`},
+	} {
+		text = strings.ReplaceAll(text, pair[0], pair[1])
+	}
+	return slashRootPaths(text)
+}
+
+func normalizeDocsReadFixture(fixture *docsReadFixture) {
+	for i := range fixture.Cases {
+		for j := range fixture.Cases[i].Steps {
+			step := &fixture.Cases[i].Steps[j]
+			step.Stdout = normalizeDocsReadOutput(step.Stdout)
+			step.Stderr = normalizeDocsReadOutput(step.Stderr)
+		}
+	}
+}
+
+func TestNormalizeDocsReadOutputWindowsPaths(t *testing.T) {
+	input := `[{Path:nested\beta.md Title:user\text}]` + "\n" + `[{"path":"nested\\beta.md","title":"keep\\text\n"}]` + "\n"
+	want := `[{Path:nested/beta.md Title:user\text}]` + "\n" + `[{"path":"nested/beta.md","title":"keep\\text\n"}]` + "\n"
+	if got := normalizeDocsReadOutput(input); got != want {
+		t.Fatalf("normalize docs output = %q, want %q", got, want)
+	}
+	if got := normalizeDocsReadOutput(want); got != want {
+		t.Fatalf("normalization is not idempotent: %q", got)
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -442,6 +443,7 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	defer cleanup()
 	environment := sanitizedCheckEnvironment(os.Environ(), configPath)
 	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
+	var failures []error
 	for _, target := range targets {
 		// Keep the original native capture byte-for-byte on other hosts. Its
 		// checksum is always checked; fresh Go parity runs on both Windows jobs.
@@ -454,8 +456,15 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 			targetEnvironment = sidecarOracleEnvironment(os.Environ(), sidecarOracle, configPath)
 		}
 		if err := runFixtureCheckTarget(goTool, repoRoot, targetEnvironment, target); err != nil {
-			return err
+			// Preserve each complete child diagnostic and continue independent
+			// replays, so a native CI round reports the entire drift set.
+			failure := fmt.Errorf("fixture check %q: %w", target.name, err)
+			fmt.Fprintln(os.Stderr, failure)
+			failures = append(failures, failure)
 		}
+	}
+	if len(failures) != 0 {
+		return fmt.Errorf("%d fixture checks failed:\n%w", len(failures), errors.Join(failures...))
 	}
 	return nil
 }

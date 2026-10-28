@@ -188,6 +188,17 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_native_rust_tests_report_all_failing_binaries(self):
+        bodies = {name: body for name, _, body in native_step_bodies()}
+        self.assertIn(
+            "cargo test --workspace --all-features --locked --no-fail-fast",
+            bodies["Check, lint, and test Rust workspace"],
+        )
+        self.assertIn(
+            "$(CARGO) nextest run --workspace --all-features --locked --no-fail-fast",
+            (ROOT / "Makefile").read_text(),
+        )
+
     def test_pdf_mcp_acceptance_is_manual_source_bound_and_fail_fast(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         job = workflow_job_body(workflow, "pdf-mcp-native")

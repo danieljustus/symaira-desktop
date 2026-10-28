@@ -3,6 +3,8 @@
 mod process_env;
 use process_env::IsolatedEnvironment;
 
+#[path = "support/docs_output.rs"]
+mod docs_output;
 #[path = "support/process_root.rs"]
 mod process_root;
 #[path = "support/root_paths.rs"]
@@ -150,18 +152,18 @@ fn docs_read_matches_go_process_contract() {
                     .unwrap()
                     .replace(&root.to_string_lossy().replace('\\', "\\\\"), "$ROOT")
                     .replace(root.to_str().unwrap(), "$ROOT");
-                root_paths::slash_root_paths(&text)
+                normalize_docs_output(&text)
             };
             assert_eq!(
                 normal(output.stdout),
-                step.stdout,
+                normalize_docs_output(&step.stdout),
                 "{} {:?} stdout",
                 case.name,
                 step.args
             );
             assert_eq!(
                 normal(output.stderr),
-                step.stderr,
+                normalize_docs_output(&step.stderr),
                 "{} {:?} stderr",
                 case.name,
                 step.args
@@ -190,4 +192,8 @@ fn docs_read_matches_go_process_contract() {
     assert_eq!(executed, expected);
     assert!(executed > 0);
     fs::remove_dir_all(base).unwrap();
+}
+
+fn normalize_docs_output(text: &str) -> String {
+    root_paths::slash_root_paths(&docs_output::normalize(text))
 }

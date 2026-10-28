@@ -2,6 +2,9 @@
 mod process_env;
 use process_env::IsolatedEnvironment;
 
+#[path = "support/root_paths.rs"]
+mod root_paths;
+
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
@@ -42,9 +45,10 @@ struct File {
     mode: u32,
 }
 fn normalize(value: &str, root: &Path) -> String {
-    value
+    let text = value
         .replace(&root.to_string_lossy().replace('\\', "\\\\"), "$ROOT")
-        .replace(root.to_string_lossy().as_ref(), "$ROOT")
+        .replace(root.to_string_lossy().as_ref(), "$ROOT");
+    root_paths::slash_root_paths(&text)
 }
 fn snapshot(path: &Path, root: &Path, out: &mut BTreeMap<String, File>) {
     for entry in fs::read_dir(path).unwrap() {

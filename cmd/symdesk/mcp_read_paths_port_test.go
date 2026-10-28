@@ -21,6 +21,10 @@ func normalizeMCPReadPaths(text, root string) string {
 		path := strings.TrimRight(token, `\`)
 		return mcpReadSeparators.ReplaceAllString(path, "/") + token[len(path):]
 	})
+	// Go meeting summaries retain filepath.Rel's native separators.
+	text = strings.ReplaceAll(text, `meetings\\\\`, "meetings/")
+	text = strings.ReplaceAll(text, `meetings\\`, "meetings/")
+	text = strings.ReplaceAll(text, `meetings\`, "meetings/")
 	return normalizeBasePaths(normalizeNotebookPaths(text))
 }
 
@@ -31,6 +35,7 @@ func TestNormalizeMCPReadNestedWindowsPaths(t *testing.T) {
 		{`{"text":"{\"path\":\"C:\\\\Users\\\\runner\\\\fixture\\\\vault\\\\note.md\"}"}`, `{"text":"{\"path\":\"$ROOT/vault/note.md\"}"}`},
 		{`{"text":"[{\"path\":\"notebooks\\\\empty.md\"}]"}`, `{"text":"[{\"path\":\"notebooks/empty.md\"}]"}`},
 		{`{"text":"[{\"path\":\"bases\\\\work.md\"}]"}`, `{"text":"[{\"path\":\"bases/work.md\"}]"}`},
+		{`{"text":"[{\"path\":\"meetings\\\\a.md\"}]"}`, `{"text":"[{\"path\":\"meetings/a.md\"}]"}`},
 		{`notebooks\\ordinary.md type=\"\"\n bad\\literal`, `notebooks/ordinary.md type=\"\"\n bad\\literal`},
 	} {
 		if got := normalizeMCPReadPaths(test.input, root); got != test.want {

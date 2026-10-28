@@ -34,7 +34,11 @@ pub fn normalize(text: &str, root: &Path) -> String {
         rest = &rest[end..];
     }
     out.push_str(rest);
-    out.replace(r"notebooks\\\\", "notebooks/")
+    // Go MeetingListDetailed uses filepath.Rel without ToSlash.
+    out.replace(r"meetings\\\\", "meetings/")
+        .replace(r"meetings\\", "meetings/")
+        .replace(r"meetings\", "meetings/")
+        .replace(r"notebooks\\\\", "notebooks/")
         .replace(r"notebooks\\", "notebooks/")
         .replace(r"notebooks\", "notebooks/")
         .replace(r"bases\\\\", "bases/")
@@ -59,6 +63,10 @@ fn nested_windows_paths_preserve_json_escapes() {
     assert_eq!(
         normalize(r#"{"text":"[{\"path\":\"bases\\\\work.md\"}]"}"#, root),
         r#"{"text":"[{\"path\":\"bases/work.md\"}]"}"#
+    );
+    assert_eq!(
+        normalize(r#"{"text":"[{\"path\":\"meetings\\\\a.md\"}]"}"#, root),
+        r#"{"text":"[{\"path\":\"meetings/a.md\"}]"}"#
     );
     assert_eq!(
         normalize(r#"bad\\literal\n\""#, root),

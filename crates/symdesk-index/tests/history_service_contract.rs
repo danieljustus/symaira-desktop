@@ -6,7 +6,7 @@ use std::{
 
 use serde_json::Value;
 use symdesk_index::{HistorySyncError, IndexedDocument, Sidecar, checkpoint_undo, history_restore};
-use symdesk_vault::{HistoryStore, parse_bytes, secure_path};
+use symdesk_vault::{HistoryStore, parse_bytes};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 const FIXTURE: &str = include_str!("../../../testdata/port/vault/history-service.json");
@@ -37,8 +37,10 @@ impl Sandbox {
     fn write_and_index(&mut self, rel: &str, content: &str) {
         let path = self.root.join(rel);
         fs::write(&path, content).unwrap();
-        let canonical = secure_path(&self.root, rel).unwrap();
-        let document = parse_bytes(canonical.to_str().unwrap(), content.as_bytes()).unwrap();
+        // Seed the same ordinary key as refresh_index and history_sync, not
+        // secure_path's Windows verbatim I/O spelling.
+        let key = symdesk_index::vault_document_path(&self.root, Path::new(rel)).unwrap();
+        let document = parse_bytes(key.to_str().unwrap(), content.as_bytes()).unwrap();
         self.sidecar
             .index_document(&IndexedDocument::from_vault(&document, None).unwrap())
             .unwrap();

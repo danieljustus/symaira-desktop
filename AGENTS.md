@@ -93,6 +93,7 @@ The absorbed tools live in this repository in the root module (the nested `go.mo
 - **CGO-free Go core** (`CGO_ENABLED=0` in test/release paths) — cross-compilation + GoReleaser depend on it.
 - **Zero stdio pollution** in `symdesk mcp` — stdout carries JSON-RPC frames only; logs to stderr.
 - **Swift apps consume `symaira-appkit` exact-pinned** — do not reintroduce app-local Theme/Process-runner code; extend appkit (workspace rule, applies here too).
+- **GUI work follows the Symaira Interface Guidelines** in that AppKit checkout: read `GUIDELINES.md`, then `DESIGN.md` and `docs/workspace-foundation.md`. Review `Sources/SymDeskApp`, `Sources/SymDeskMobile`, `ingest/client/Sources` and `room/client/Sources` with `python3 <symaira-appkit>/scripts/gui-review.py <root>` plus the manual checklist in GUIDELINES.md section 13 before a UI change lands.
 - **XcodeGen**: `SymDesk.xcodeproj` is generated from `project.yml` — edit `project.yml`, never the `.xcodeproj`.
 - **Self-host API is authenticated** — see `docs/SELF_HOSTING.md`; do not add unauthenticated endpoints.
 - CI: `.github/workflows/{ci,codeql,container,release}.yml`.

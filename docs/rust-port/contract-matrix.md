@@ -85,7 +85,7 @@ baseline remains `ae863319` / `v0.12.2`.
 | SEC-002 | Secrets/redaction | generated tokens/passwords in every failure path | Go servers/adapters | no values in logs/errors/snapshots; exact resolution order | canary scanner | all | absence + semantic | TODO |
 | SEC-003 | Resource limits | huge frames/bodies/files/results, slow peers | Go boundaries | bounded memory/time/output, cancellation and cleanup | `make resource-stress` (native Go/Rust MCP+HTTP stress; Rust MCP response/snapshot bound tests; HTTP scope is GET/HEAD snapshot/file, with no Rust upload route) | native OS | limits | PASS |
 | SEC-004 | Dependency/unsafe policy | locked dependency graph | current policy | approved licenses/advisories, default no unsafe, documented exceptions | audit/deny/geiger/Miri | all | policy | TODO |
-| DIST-001 | Targets | current two-binary build matrix | GoReleaser | linux/darwin/windows arm64+amd64 executables | native/cross smoke | all | executable | TODO |
+| DIST-001 | Targets | current two-binary build matrix | GoReleaser | Linux amd64/arm64 and macOS arm64 executables (Windows and macOS Intel no longer required; platform scope decision 2026-10-29, #1364) | native/cross smoke | all | executable | TODO |
 | DIST-002 | Archives | release snapshot | GoReleaser | exact archive names, both binaries, LICENSE/README/VAULT, modes | manifest script | all | metadata | TODO |
 | DIST-003 | Trust chain | signed prerelease | current workflows | checksums, Cosign cert/signature, SBOM/provenance, macOS signatures | public readback | all | cryptographic | TODO |
 | DIST-004 | Homebrew/Docker/HA | isolated installations/upgrades | current release | install, version, paths, health, persisted data compatibility | ecosystem smoke | relevant OS | semantic | TODO |

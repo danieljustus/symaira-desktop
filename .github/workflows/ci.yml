@@ -1116,8 +1116,10 @@ jobs:
   app:
     # Native macOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
-    needs: [decide]
-    runs-on: ${{ fromJSON(needs.decide.outputs.runs_on) }}
+    # Xcode test hosts and iOS simulators stay on the hosted image: the
+    # MacBook runner's LaunchAgent session cannot host the app test runner
+    # and has no iPhone simulator installed.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -1160,8 +1162,8 @@ jobs:
     # Native iOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
     name: iOS app
-    needs: [decide]
-    runs-on: ${{ fromJSON(needs.decide.outputs.runs_on) }}
+    # The MacBook runner has no iPhone simulator; keep the hosted image.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

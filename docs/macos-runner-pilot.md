@@ -53,8 +53,8 @@ is not VM isolation and must never be trusted with arbitrary external code.
 | `ci.yml / port-contract` | `${{ matrix.os }}` | CI pilot |
 | `ci.yml / rust-native` | `${{ matrix.os }}` | CI pilot |
 | `ci.yml / pdf-mcp-native` | `${{ matrix.os }}` | CI pilot |
-| `ci.yml / app` | `macos-26` | CI pilot |
-| `ci.yml / app-ios` | `macos-26` | CI pilot |
+| `ci.yml / app` | `macos-26` | Hosted: the LaunchAgent session cannot host the Xcode test runner ("test runner hung before establishing connection") |
+| `ci.yml / app-ios` | `macos-26` | Hosted: no iPhone simulator installed on the MacBook runner |
 | `release.yml / release-cli` | `macos-15` | Unchanged: release/signing excluded |
 | `release.yml / release-macos-app` | `macos-15` | Unchanged: release/signing excluded |
 | `release.yml / release-ios-testflight` | `macos-15` | Unchanged: release/signing excluded |

@@ -9,7 +9,6 @@ import (
 )
 
 var mcpReadRootToken = regexp.MustCompile(`\$ROOT[A-Za-z0-9._/\\-]*`)
-var mcpReadSeparators = regexp.MustCompile(`\\+`)
 
 // MCP carries JSON inside JSON strings: temporary roots can therefore be
 // escaped twice. Replace only the disposable root,

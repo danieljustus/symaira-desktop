@@ -281,7 +281,7 @@
     },
     "cargo test -p symdesk-index --all-features --locked": {
       "ignored": 0,
-      "passed": 124
+      "passed": 125
     },
     "cargo test -p symdesk-index --locked --test dataset_aggregate_contract": {
       "ignored": 0,

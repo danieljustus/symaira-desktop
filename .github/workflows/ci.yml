@@ -27,16 +27,27 @@ permissions:
 # verify the macOS and iOS builds against the pinned public AppKit package.
 
 jobs:
+  decide:
+    name: Select macOS capacity
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/macos-runner.yml
+    with:
+      hosted: macos-26
+
   test:
     strategy:
       matrix:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
         go-version: ["1.26.10"]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
 
@@ -57,6 +68,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: ${{ matrix.go-version }}
 
       - name: Download dependencies
@@ -163,10 +175,12 @@ jobs:
         # Exercise the portable source and oracle contracts on every native runner.
         # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
         os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
 
@@ -186,6 +200,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
@@ -309,10 +324,12 @@ jobs:
       matrix:
         # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
         os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # Detach even on main pushes; the gate owns an exact-SHA temporary branch.
           ref: ${{ github.sha }}
           # The pinned Go source oracles are validated from Git history.
@@ -335,6 +352,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
@@ -913,13 +931,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           fetch-depth: 0
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
       - name: Install pinned Rust and real PDF tools
         shell: bash
@@ -1093,9 +1114,12 @@ jobs:
   app:
     # Native macOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
-    runs-on: macos-26
+    needs: [decide]
+    runs-on: ${{ fromJSON(needs.decide.outputs.runs_on) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          clean: ${{ runner.environment != 'self-hosted' }}
 
       - name: Verify Xcode 26 toolchain
         run: |
@@ -1134,9 +1158,12 @@ jobs:
     # Native iOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
     name: iOS app
-    runs-on: macos-26
+    needs: [decide]
+    runs-on: ${{ fromJSON(needs.decide.outputs.runs_on) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          clean: ${{ runner.environment != 'self-hosted' }}
 
       - name: Verify Xcode 26 toolchain
         run: |

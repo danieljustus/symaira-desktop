@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+  "oracle_revision": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
   "root_event": "approval-room-created",
   "root_pubkey": "ed25519:b38f6131ca6f266530b9f01cbe7bc53d10005f829c21e3060f5cf66d9de9221d",
   "normalization": "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized",

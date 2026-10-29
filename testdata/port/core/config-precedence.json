@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+  "oracle_commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
   "source_hashes": {
     "internal/config/config.go": "0a16504c6d866efa6804555fa14de5daa0475b7e04bc6168c621590748463fb3"
   },

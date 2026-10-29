@@ -15,7 +15,7 @@
     "Errors": null
   },
   "oracle": {
-    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+    "commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
     "release": "renderer-pdf-safety-v2-local"
   },
   "seed": "INSERT INTO persons(id,display_name,given_name,family_name,notes,source) VALUES ('seed-ada','Ada','A','L','verified','manual'),('seed-bob','Bob','','','','manual');\n INSERT INTO contact_points(id,person_id,kind,raw_value,normalized_value) VALUES ('cp-a','seed-ada','email','ADA@example.com','ada@example.com'),('cp-b','seed-bob','phone','+49 (123)','+49123');\n INSERT INTO import_sources(id,source_kind,source_ref,person_id) VALUES ('src-a','csv','known','seed-ada');",

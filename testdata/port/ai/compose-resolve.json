@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+  "oracle_commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
   "platform": "unix",
   "source_hashes": {
     "internal/compose/resolve.go": "dfc86b0375c829c0b3d56bfd62ef1d8462d2a50a89c14862db735b5f6078220f"

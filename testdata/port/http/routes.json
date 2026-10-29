@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+    "commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
     "release": "renderer-pdf-safety-v2-local"
   },
   "routes": [

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+    "commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
     "toolchain": "go1.26.10",
     "goos": "darwin",
     "goarch": "arm64"
@@ -14,7 +14,7 @@
     "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
     "internal/service/dataset_policy.go": "90c291d84a0cf3ba0017aa9855a5a7a8951800ec2118c0a2fdd80aed50ad690e",
     "internal/service/datasets.go": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
-    "internal/sidecar/db.go": "aaa740a6d3c42e2724b2ce76495b5841bce6641e947028d0aa12647d182ba11d",
+    "internal/sidecar/db.go": "8a2a268898ef9a88bbd50de89eb0edeb3d4296d01970c6a74b1d67121707d9e0",
     "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
     "internal/vault/vault.go": "13e3b1186205e739ee8835e25b5536aeb657835c8a3ae12a1b38b52c0a75241e"

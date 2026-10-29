@@ -194,7 +194,7 @@
     "filesystem hashes are of those normalized bytes"
   ],
   "oracle": {
-    "commit": "04b4194b6b0ae22e718d7dabf7795c5dc5bd7a7a",
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
     "release": "renderer-pdf-safety-v2-local"
   },
   "schema_version": 1,

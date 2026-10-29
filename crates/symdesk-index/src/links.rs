@@ -265,7 +265,7 @@ impl Sidecar {
             .optional()?;
         let row = match row {
             Some(row) => Some(row),
-            None => self.connection.query_row("SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1", params![target, format!("%/{base}")], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))).optional()?,
+            None => self.connection.query_row("SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1", params![target, format!("%/{base}"), format!("%{}{base}", std::path::MAIN_SEPARATOR)], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?))).optional()?,
         };
         if let Some((id, title)) = row {
             add(&title);

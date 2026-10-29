@@ -179,8 +179,8 @@ impl Sidecar {
             .optional()
             .unwrap_or_default();
         let document = exact.or_else(|| self.connection.query_row(
-            "SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1",
-            [path, &format!("%/{base}")], |row| Ok((row.get::<_,i64>(0)?, row.get::<_,String>(1)?)),
+            "SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1",
+            [path, &format!("%/{base}"), &format!("%{}{base}", std::path::MAIN_SEPARATOR)], |row| Ok((row.get::<_,i64>(0)?, row.get::<_,String>(1)?)),
         ).ok());
         if let Some((file_id, title)) = document {
             add_target(&mut targets, &title);

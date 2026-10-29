@@ -33,6 +33,8 @@ jobs:
       contents: read
       actions: read
     uses: ./.github/workflows/macos-runner.yml
+    secrets:
+      RUNNER_INVENTORY_TOKEN: ${{ secrets.RUNNER_INVENTORY_TOKEN }}
     with:
       hosted: macos-26
 

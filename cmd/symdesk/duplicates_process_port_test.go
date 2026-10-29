@@ -15,10 +15,12 @@ import (
 const duplicatesFixturePath = "../../testdata/port/cli/duplicates-process.json"
 
 type duplicatesPortStep struct {
-	Args     []string `json:"args"`
-	ExitCode int      `json:"exit_code"`
-	Stdout   string   `json:"stdout"`
-	Stderr   string   `json:"stderr"`
+	Stdin    string                `json:"stdin,omitempty"`
+	Args     []string              `json:"args"`
+	ExitCode int                   `json:"exit_code"`
+	Stdout   string                `json:"stdout"`
+	Stderr   string                `json:"stderr"`
+	State    map[string][][]string `json:"state,omitempty"`
 }
 
 type duplicatesPortCase struct {
@@ -37,8 +39,15 @@ type duplicatesPortCase struct {
 	// vault; the sidecar is not built either.
 	NoVault bool `json:"no_vault,omitempty"`
 	// UnixOnly marks error text that uses the operating system's wording.
-	UnixOnly bool                 `json:"unix_only,omitempty"`
-	Steps    []duplicatesPortStep `json:"steps"`
+	UnixOnly bool `json:"unix_only,omitempty"`
+	// HomeFiles are written under the isolated HOME before anything runs,
+	// e.g. a symseek config that points embeddings at a closed port.
+	HomeFiles map[string]string `json:"home_files,omitempty"`
+	// FSCase marks a case whose bytes depend on whether the vault's file
+	// system folds case ("insensitive": APFS, NTFS) or not ("sensitive":
+	// ext4). Each class is recorded natively; replays run only their class.
+	FSCase string               `json:"fs_case,omitempty"`
+	Steps  []duplicatesPortStep `json:"steps"`
 }
 
 type duplicatesPortFixture struct {
@@ -355,7 +364,7 @@ func observeDuplicatesProcess(t *testing.T) duplicatesPortFixture {
 	return fixture
 }
 
-func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) duplicatesPortCase {
+func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase, afterStep ...func(string, string)) duplicatesPortCase {
 	t.Helper()
 	// The service canonicalizes the vault root but the index stores the path
 	// as given, so a root behind a symlink (macOS /var -> /private/var) or a
@@ -385,15 +394,27 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) du
 			}
 		}
 	}
+	for name, content := range c.HomeFiles {
+		target := filepath.Join(home, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	writeFiles(c.Files)
 	environment := cleanDuplicatesEnv(os.Environ())
 	environment = append(environment, "TZ=UTC", "HOME="+home, "USERPROFILE="+home,
 		"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
 		"XDG_CACHE_HOME="+filepath.Join(home, "cache"),
 		"XDG_DATA_HOME="+filepath.Join(home, "data"))
-	run := func(args []string) (int, string, string) {
+	run := func(args []string, input ...string) (int, string, string) {
 		cmd := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = cwd
+		if len(input) > 0 {
+			cmd.Stdin = strings.NewReader(input[0])
+		}
 		cmd.Env = environment
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -437,14 +458,18 @@ func observeDuplicatesCase(t *testing.T, binary string, c duplicatesPortCase) du
 			args = append([]string{"--vault", vault}, args...)
 		}
 		for i := range args {
-			args[i] = strings.ReplaceAll(args[i], "$ROOT", root)
+			args[i] = materializePortProcessArg(args[i], root, string(filepath.Separator))
 		}
-		code, stdout, stderr := run(args)
+		code, stdout, stderr := run(args, step.Stdin)
+		for _, check := range afterStep {
+			check(vault, home)
+		}
 		observed.Steps = append(observed.Steps, duplicatesPortStep{
 			Args:     step.Args,
+			Stdin:    step.Stdin,
 			ExitCode: code,
 			Stdout:   normalizeRetryText(stdout, root),
-			Stderr:   normalizeRetryText(stderr, root),
+			Stderr:   normalizeRetryText(normalizeConflictLog(stderr), root),
 		})
 	}
 	return observed

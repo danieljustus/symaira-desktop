@@ -27,6 +27,11 @@ pub enum NotebookWriteError {
     TitleRequired,
     #[error("write notebook: {0}")]
     Write(std::io::Error),
+    #[error("invalid source path {path}: {source}")]
+    InvalidSource {
+        path: String,
+        source: crate::SecurePathError,
+    },
     #[error("a notebook cannot be a source of itself")]
     SourceIsSelf,
 }
@@ -61,10 +66,8 @@ pub fn new_notebook_with_query(
         } else {
             format!("{base}-{suffix}")
         };
-        let path = Path::new("notebooks")
-            .join(format!("{slug}.md"))
-            .to_string_lossy()
-            .into_owned();
+        // This is a vault-relative Markdown identifier, not a host path.
+        let path = format!("notebooks/{slug}.md");
         let file = secure_path(root, &path)?;
         if fs::metadata(&file).is_ok() {
             suffix += 1;
@@ -177,13 +180,24 @@ fn change_notebook_source(
     let notebook_rel = relative_slash_path(&root, &notebook_file)?;
     let mut notebook = parse_notebook(&notebook_rel, &notebook_data)?;
 
-    let source_path = source_path.trim();
-    if source_path.is_empty() {
+    // Go validates and trims additions, but removal uses the literal path
+    // (including empty/self references, both legitimate absent-source no-ops).
+    let source_path = if add { source_path.trim() } else { source_path };
+    if add && source_path.is_empty() {
         return Err(NotebookWriteError::EmptySource);
     }
-    let source_file = secure_path(vault_root, source_path)?;
+    let source_file = secure_path(vault_root, source_path).map_err(|source| {
+        if add {
+            NotebookWriteError::InvalidSource {
+                path: crate::go_quote(source_path),
+                source,
+            }
+        } else {
+            NotebookWriteError::Path(source)
+        }
+    })?;
     let source_rel = relative_slash_path(&root, &source_file)?;
-    if source_rel == notebook.path {
+    if add && source_rel == notebook.path {
         return Err(NotebookWriteError::SourceIsSelf);
     }
 

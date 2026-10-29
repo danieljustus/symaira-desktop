@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -122,7 +126,7 @@ fn run_symroom(args: &[String], home: &Path, data_home: &Path, tmp: &Path) -> Ou
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(args)
-        .env_clear()
+        .isolated_env()
         .env("HOME", home)
         .env("XDG_DATA_HOME", data_home)
         .env("TMPDIR", tmp)

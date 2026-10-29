@@ -327,7 +327,7 @@ fn stored(path: &str, chunk: &FixtureChunk) -> StoredRetrievalChunk {
 fn reembed_cli_replays_go_http_success_and_failure_cases() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 12);
+    assert_eq!(fixture.cases.len(), 22);
     for case in fixture.cases {
         let root = TempRoot::new();
         let document_path = if case.document_path.is_empty() {
@@ -556,10 +556,25 @@ fn reembed_cli_replays_go_http_success_and_failure_cases() {
             )
             .expect("search removed pending text");
         assert_eq!(old_fts, 0, "{} old FTS", case.id);
+        let fts_term = if case.id.starts_with("provider-resolves-extraction-") {
+            match Path::new(document_path)
+                .extension()
+                .and_then(|s| s.to_str())
+            {
+                Some("html") => "one",
+                Some("rtf" | "docx" | "xlsx") => "Hello",
+                Some("odt" | "ods" | "odp") => "Title",
+                Some("pptx") => "Second",
+                Some("epub" | "pdf") => "First",
+                _ => panic!("uncovered extraction FTS term: {}", case.id),
+            }
+        } else {
+            "contract"
+        };
         let new_fts: i64 = database
             .query_row(
-                "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'contract'",
-                [],
+                "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH ?1",
+                [fts_term],
                 |row| row.get(0),
             )
             .expect("search rebuilt text");

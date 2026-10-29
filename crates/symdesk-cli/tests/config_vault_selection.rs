@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -99,7 +103,7 @@ fn cli_vault_precedence_matches_go_process_fixture() {
 
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
         command
-            .env_clear()
+            .isolated_env()
             .env("HOME", root.path("home"))
             .env("USERPROFILE", root.path("home"))
             .env("XDG_CONFIG_HOME", root.path("config"))
@@ -162,7 +166,7 @@ fn consumed_raw_environment_is_rejected_without_defaulting_or_overriding_flags()
     let isolated = || {
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
         command
-            .env_clear()
+            .isolated_env()
             .current_dir(&root.0)
             .env("HOME", root.path("home"))
             .env("USERPROFILE", root.path("home"))

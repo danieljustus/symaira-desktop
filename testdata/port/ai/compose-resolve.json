@@ -1,0 +1,843 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "platform": "unix",
+  "source_hashes": {
+    "internal/compose/resolve.go": "dfc86b0375c829c0b3d56bfd62ef1d8462d2a50a89c14862db735b5f6078220f"
+  },
+  "cases": [
+    {
+      "id": "missing",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, {root}/home/.symaira/bin, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "env",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "managed",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "home/.symaira/bin/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/home/.symaira/bin/symtest",
+      "origin": "managed_runtime",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": true
+    },
+    {
+      "id": "path",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "env-wins",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "home/.symaira/bin/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": true
+    },
+    {
+      "id": "managed-beats-path",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "home/.symaira/bin/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/home/.symaira/bin/symtest",
+      "origin": "managed_runtime",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": true
+    },
+    {
+      "id": "nonexecutable-env-falls-through",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "directory-env-falls-through",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "dir",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "nonexecutable-managed-falls-through",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "home/.symaira/bin/symtest",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": true
+    },
+    {
+      "id": "directory-path-not-executable",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "path/symtest",
+          "kind": "dir",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, {root}/home/.symaira/bin, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "nonexecutable-path-not-found",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, {root}/home/.symaira/bin, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "env-symlink",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "target",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "env/symtest",
+          "kind": "symlink",
+          "mode": 0,
+          "target": "{root}/target"
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "dangling-env-symlink-falls-through",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "symlink",
+          "mode": 0,
+          "target": "{root}/absent"
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "path-symlink",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "target",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "symlink",
+          "mode": 0,
+          "target": "{root}/target"
+        }
+      ],
+      "path": "{root}/path/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "executable-owner-only",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 64,
+          "target": ""
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "executable-group-only-env",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 8,
+          "target": ""
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "managed-directory-exists",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "home/.symaira/bin",
+          "kind": "dir",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, {root}/home/.symaira/bin, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": true
+    },
+    {
+      "id": "managed-is-file",
+      "name": "symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "home/.symaira/bin",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, {root}/home/.symaira/bin, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-absolute",
+      "name": "{root}/direct",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "direct",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/direct",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-relative",
+      "name": "./direct",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "direct",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "./direct",
+      "origin": "path",
+      "error": "",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-missing",
+      "name": "./absent",
+      "home": "{root}/home",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": "exec: \"./absent\": stat ./absent: no such file or directory",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-nonexecutable",
+      "name": "./direct",
+      "home": "{root}/home",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "direct",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "exec: \"./direct\": permission denied",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-directory",
+      "name": "./direct",
+      "home": "{root}/home",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "direct",
+          "kind": "dir",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "exec: \"./direct\": is a directory",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "explicit-subpath-bypasses-managed",
+      "name": "sub/symtest",
+      "home": "{root}/home",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "exec: \"sub/symtest\": stat sub/symtest: no such file or directory",
+      "managed": "{root}/home/.symaira/bin",
+      "managed_exists": false
+    },
+    {
+      "id": "empty-path-does-not-search-cwd",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "dot-path-rejected",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": ".",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"symtest\": cannot run executable found relative to current directory",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "empty-path-component-rejected",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": ":{root}/path",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "path/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"symtest\": cannot run executable found relative to current directory",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "relative-path-rejected",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": "relative",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "relative/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"symtest\": cannot run executable found relative to current directory",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "dot-path-explicitly-enabled",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": ".",
+      "execerrdot": "0",
+      "files": [
+        {
+          "path": "symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "relative-env-allowed",
+      "name": "symtest",
+      "home": "",
+      "bin": "relative",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "relative/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "relative/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "empty-name",
+      "name": "",
+      "home": "",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": " not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "dot-name",
+      "name": ".",
+      "home": "",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": ". not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \".\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "dotdot-name",
+      "name": "..",
+      "home": "",
+      "bin": "{root}/env",
+      "path_env": "{root}/path",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": ".. not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"..\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "path-order",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": "{root}/second:{root}/first",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "first/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        },
+        {
+          "path": "second/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/second/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "path-skips-bad-entry",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": "{root}/first:{root}/second",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "first/symtest",
+          "kind": "file",
+          "mode": 420,
+          "target": ""
+        },
+        {
+          "path": "second/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/second/symtest",
+      "origin": "path",
+      "error": "",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "clean-env-path",
+      "name": "symtest",
+      "home": "",
+      "bin": "{root}/env/../env//",
+      "path_env": "",
+      "execerrdot": "",
+      "files": [
+        {
+          "path": "env/symtest",
+          "kind": "file",
+          "mode": 493,
+          "target": ""
+        }
+      ],
+      "path": "{root}/env/symtest",
+      "origin": "symaira_bin_env",
+      "error": "",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "unset-home-missing",
+      "name": "symtest",
+      "home": "",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": "symtest not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"symtest\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    },
+    {
+      "id": "quoted-name",
+      "name": "sym\"test",
+      "home": "",
+      "bin": "",
+      "path_env": "",
+      "execerrdot": "",
+      "files": null,
+      "path": "",
+      "origin": "",
+      "error": "sym\"test not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: exec: \"sym\\\"test\": executable file not found in $PATH",
+      "managed": "",
+      "managed_exists": false
+    }
+  ]
+}

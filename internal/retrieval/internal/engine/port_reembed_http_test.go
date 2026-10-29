@@ -80,6 +80,7 @@ func TestReembedHTTPPortFixture(t *testing.T) {
 		{ID: "provider-resolves-pending-csv-invalid-utf8", DocumentPath: "invalid.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 		{ID: "provider-resolves-pending-csv-split-multibyte", DocumentPath: "split.csv", ResponseStatus: http.StatusOK, EmbeddingDim: 3},
 	}
+	cases = append(cases, extractionReembedCases(t)...)
 	fixture := reembedHTTPFixture{SchemaVersion: 1}
 	for index := range cases {
 		testCase := cases[index]
@@ -177,6 +178,9 @@ func runReembedHTTPFixtureCase(t *testing.T, testCase reembedHTTPFixtureCase) re
 		// prefix) is hard-split on byte offsets, so chunk boundaries cut through
 		// a rune.
 		documentBody = "id,contract\r\nx" + strings.Repeat("ü", 1500) + ",x\r\n"
+	}
+	if testCase.DocumentBody != "" {
+		documentBody = testCase.DocumentBody
 	}
 	testCase.DocumentPath = documentPath
 	testCase.DocumentBody = documentBody

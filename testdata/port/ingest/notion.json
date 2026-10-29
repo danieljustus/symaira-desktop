@@ -1,0 +1,550 @@
+{
+  "csv": [
+    {
+      "input": "",
+      "results": [
+        {
+          "reason": "empty CSV (no data rows)",
+          "source_path": "$ROOT/case.csv",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "input": "Name\n",
+      "results": [
+        {
+          "reason": "empty CSV (no data rows)",
+          "source_path": "$ROOT/case.csv",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "input": "Name,Value\nOne\n",
+      "results": [
+        {
+          "error": "read CSV: record on line 2: wrong number of fields",
+          "source_path": "$ROOT/case.csv",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "input": "Name,Value\nA,b\"c\n",
+      "results": [
+        {
+          "error": "read CSV: parse error on line 2, column 4: bare \" in non-quoted-field",
+          "source_path": "$ROOT/case.csv",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "input": "Name,Value\n\"A,B\",\"line1\nline2\"\n",
+      "results": [
+        {
+          "sha256": "efe283532fed348c2b5c9cf5020167d34efd6163145b5bdcaa015f0b05579bb2",
+          "source_path": "$ROOT/case.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/unused/databases/case/A,B.md"
+        },
+        {
+          "sha256": "444afc42ca262de1587aa234e5e9608e2212a15724db2a6626c100165d732f10",
+          "source_path": "$ROOT/case.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/unused/databases/case/_index.md"
+        }
+      ]
+    },
+    {
+      "input": "Name,Name\nFirst,Last\n",
+      "results": [
+        {
+          "sha256": "aef882a9ed3be4090d670dc0c80ffe7ecc2094e5d51b5b817f6fe57112c2a109",
+          "source_path": "$ROOT/case.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/unused/databases/case/First.md"
+        },
+        {
+          "sha256": "74bfdddffc76feb733a1a2f01f6797d1fe1f424915cac5d7fb562fef079c1dc2",
+          "source_path": "$ROOT/case.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/unused/databases/case/_index.md"
+        }
+      ]
+    },
+    {
+      "input": "Name\n\"unfinished",
+      "results": [
+        {
+          "error": "read CSV: parse error on line 2, column 12: extraneous or missing \" in quoted-field",
+          "source_path": "$ROOT/case.csv",
+          "status": "failed"
+        }
+      ]
+    }
+  ],
+  "input_files": {
+    "export/Workspace/.hidden/Skip.md": "secret",
+    "export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md": "# Alpha\n\n[Beta](Beta%20bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md) ![x](assets/image.png)\n",
+    "export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md": "[[Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]]\n",
+    "export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv": "Name,Status,tags,Empty\r\nOne,Open,private,\r\n,Closed,,\r\n",
+    "export/Workspace/assets/image.png": "synthetic-image",
+    "export/Workspace/ignored.txt": "ignore"
+  },
+  "links": [
+    {
+      "input": "[[Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]]",
+      "output": "[[Alpha]]"
+    },
+    {
+      "input": "[[Unknown ffffffffffffffffffffffffffffffff]]",
+      "output": "[[Unknown]]"
+    },
+    {
+      "input": "[[ plain ]]",
+      "output": "[[plain]]"
+    },
+    {
+      "input": "[alias](nested/Alpha%20aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md)",
+      "output": "[[Alpha]]"
+    },
+    {
+      "input": "[alias](unknown.md) ![img](x.md)",
+      "output": "[[alias]] ![[img]]"
+    },
+    {
+      "input": "[remote](https://example.test/x.md#anchor)",
+      "output": "[remote](https://example.test/x.md#anchor)"
+    },
+    {
+      "input": "[[Alias \u003caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u003e]]",
+      "output": "[[Alpha]]"
+    }
+  ],
+  "names": [
+    {
+      "display": " name:*?\"\u003c\u003e| ",
+      "input": " Page / name:*?\"\u003c\u003e| ",
+      "notion_id": "",
+      "sanitized": "Page _ name_______",
+      "vault_path": "$ROOT/vault/Folder/Page/name_______.md"
+    },
+    {
+      "display": "",
+      "input": "",
+      "notion_id": "",
+      "sanitized": "untitled",
+      "vault_path": "$ROOT/vault/Folder/untitled.md"
+    },
+    {
+      "display": "   ",
+      "input": "   ",
+      "notion_id": "",
+      "sanitized": "untitled",
+      "vault_path": "$ROOT/vault/Folder/untitled.md"
+    },
+    {
+      "display": "..",
+      "input": "..",
+      "notion_id": "",
+      "sanitized": "..",
+      "vault_path": "$ROOT/vault/Folder/...md"
+    },
+    {
+      "display": "Hi",
+      "input": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notion_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sanitized": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "vault_path": "$ROOT/vault/Folder/Hi.md"
+    },
+    {
+      "display": "Hi",
+      "input": "Hi \u003caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\u003e",
+      "notion_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sanitized": "Hi _aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_",
+      "vault_path": "$ROOT/vault/Folder/Hi.md"
+    },
+    {
+      "display": "Hi AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "input": "Hi AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "notion_id": "",
+      "sanitized": "Hi AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "vault_path": "$ROOT/vault/Folder/Hi AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.md"
+    },
+    {
+      "display": "Hi",
+      "input": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+      "notion_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sanitized": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+      "vault_path": "$ROOT/vault/Folder/Hi.md"
+    },
+    {
+      "display": "Hi",
+      "input": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  ",
+      "notion_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sanitized": "Hi aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "vault_path": "$ROOT/vault/Folder/Hi.md"
+    }
+  ],
+  "normalizations": [
+    "disposable root -\u003e $ROOT; paths -\u003e slash",
+    "ingested_at -\u003e fixed UTC instant; report wall clocks omitted",
+    "filesystem hashes are of those normalized bytes"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "assets.go": "36529b3873480bb100f59e66caf42ee6aad385dd8d03e8d9c5c96594979bf8da",
+    "csv.go": "3f947892eec6eb3da8aa65acf0563afeed164c6dfae084dd75a3f4a3c0c88b1e",
+    "import.go": "f9b5d394f4d3f9e38044419624ffbc95d71a2b975794405dffde3a1baf36cd70",
+    "links.go": "b4ca4b0e1eb0fb2ddc1f044a1aeac457d09c2c09f49acfcb4a1894f9235d5f82",
+    "parse.go": "e73177bd64ad6e403fbd2fe94332692670c290fe5590ad01afa195b1af4e49f9",
+    "port_contract_test.go": "016a8ca7cb6b2b425d0af78cf5e7d1b09becc8c42e404fd995f3c2dc8a266c02",
+    "yaml.go": "8c7fabfb68c568e1c9c682188c1e8d874a13b0f1a42c067026c767097d6f6d67"
+  },
+  "steps": [
+    {
+      "error": "",
+      "failed": 0,
+      "files": {},
+      "imported": 5,
+      "op": "dry-run",
+      "results": [
+        {
+          "source_path": "$ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+          "status": "would-import"
+        },
+        {
+          "source_path": "$ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md",
+          "status": "would-import"
+        },
+        {
+          "sha256": "bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/vault/databases/Tasks/One.md"
+        },
+        {
+          "sha256": "7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/vault/databases/Tasks/Row 2.md"
+        },
+        {
+          "sha256": "a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "would-import",
+          "vault_path": "$ROOT/vault/databases/Tasks/_index.md"
+        }
+      ],
+      "skipped": 0,
+      "total": 5
+    },
+    {
+      "error": "",
+      "failed": 0,
+      "files": {
+        "Alpha.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "a3c73b390c1ae46c0fad37f02065ccada5718b02ea93fe659a7bca1dd6cfc2a1"
+        },
+        "Deep/Beta.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d\nmime: text/markdown\ntags:\n    - notion\ncategory: Deep\narchive_path: \"\"\n---\n\n[[Alpha]]\n",
+          "sha256": "6cc4ede9daa6b769555e3a4607bc762d974e892cc8649b529232db09e6d602a5"
+        },
+        "assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png": {
+          "body": "synthetic-image",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "databases/Tasks/One.md": {
+          "body": "---\nEmpty: \"\"\nName: One\nStatus: Open\ncategory: database\ncsv_tags: private\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Name:** One\n\n**Status:** Open\n\n**tags:** private\n\n",
+          "sha256": "7532fbd2dfe1a44427f8d6ae50b00a3b137ba1c26d5a222afa2d752a3adf1ed8"
+        },
+        "databases/Tasks/Row 2.md": {
+          "body": "---\nEmpty: \"\"\nName: \"\"\nStatus: Closed\ncategory: database\ncsv_tags: \"\"\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: 7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Status:** Closed\n\n",
+          "sha256": "94d1647dead176ac53f19cdb0007e05718864adbf49ab3522c2ebe1fa890d372"
+        },
+        "databases/Tasks/_index.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885\nmime: text/csv\ntags:\n    - notion\n    - csv-index\n    - database\ncategory: database\narchive_path: \"\"\n---\n\n# Tasks\n\nDatabase with 2 rows and 4 columns.\n\n## Columns\n\n- Name\n- Status\n- tags\n- Empty\n\n",
+          "sha256": "5052ab7fe16fdb92e4353c715732e7ec80f890eca346ad04e14736c33ec78cc0"
+        }
+      },
+      "imported": 5,
+      "op": "import",
+      "results": [
+        {
+          "sha256": "2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c",
+          "source_path": "$ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/Alpha.md"
+        },
+        {
+          "sha256": "225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d",
+          "source_path": "$ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/Deep/Beta.md"
+        },
+        {
+          "sha256": "bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/One.md"
+        },
+        {
+          "sha256": "7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/Row 2.md"
+        },
+        {
+          "sha256": "a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/_index.md"
+        }
+      ],
+      "skipped": 0,
+      "total": 5
+    },
+    {
+      "error": "",
+      "failed": 0,
+      "files": {
+        "Alpha.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "a3c73b390c1ae46c0fad37f02065ccada5718b02ea93fe659a7bca1dd6cfc2a1"
+        },
+        "Deep/Beta.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d\nmime: text/markdown\ntags:\n    - notion\ncategory: Deep\narchive_path: \"\"\n---\n\n[[Alpha]]\n",
+          "sha256": "6cc4ede9daa6b769555e3a4607bc762d974e892cc8649b529232db09e6d602a5"
+        },
+        "assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png": {
+          "body": "synthetic-image",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "databases/Tasks/One.md": {
+          "body": "---\nEmpty: \"\"\nName: One\nStatus: Open\ncategory: database\ncsv_tags: private\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Name:** One\n\n**Status:** Open\n\n**tags:** private\n\n",
+          "sha256": "7532fbd2dfe1a44427f8d6ae50b00a3b137ba1c26d5a222afa2d752a3adf1ed8"
+        },
+        "databases/Tasks/Row 2.md": {
+          "body": "---\nEmpty: \"\"\nName: \"\"\nStatus: Closed\ncategory: database\ncsv_tags: \"\"\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: 7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Status:** Closed\n\n",
+          "sha256": "94d1647dead176ac53f19cdb0007e05718864adbf49ab3522c2ebe1fa890d372"
+        },
+        "databases/Tasks/_index.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885\nmime: text/csv\ntags:\n    - notion\n    - csv-index\n    - database\ncategory: database\narchive_path: \"\"\n---\n\n# Tasks\n\nDatabase with 2 rows and 4 columns.\n\n## Columns\n\n- Name\n- Status\n- tags\n- Empty\n\n",
+          "sha256": "5052ab7fe16fdb92e4353c715732e7ec80f890eca346ad04e14736c33ec78cc0"
+        }
+      },
+      "imported": 0,
+      "op": "rerun",
+      "results": [
+        {
+          "reason": "already imported in a previous run",
+          "sha256": "2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c",
+          "source_path": "$ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/Alpha.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "sha256": "225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d",
+          "source_path": "$ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/Deep/Beta.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/One.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/Row 2.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/_index.md"
+        }
+      ],
+      "skipped": 5,
+      "total": 5
+    },
+    {
+      "files": {
+        "Deep/Beta.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d\nmime: text/markdown\ntags:\n    - notion\ncategory: Deep\narchive_path: \"\"\n---\n\n[[Alpha]]\n",
+          "sha256": "6cc4ede9daa6b769555e3a4607bc762d974e892cc8649b529232db09e6d602a5"
+        },
+        "Moved.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "a3c73b390c1ae46c0fad37f02065ccada5718b02ea93fe659a7bca1dd6cfc2a1"
+        },
+        "assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png": {
+          "body": "synthetic-image",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "databases/Tasks/One.md": {
+          "body": "---\nEmpty: \"\"\nName: One\nStatus: Open\ncategory: database\ncsv_tags: private\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Name:** One\n\n**Status:** Open\n\n**tags:** private\n\n",
+          "sha256": "7532fbd2dfe1a44427f8d6ae50b00a3b137ba1c26d5a222afa2d752a3adf1ed8"
+        },
+        "databases/Tasks/Row 2.md": {
+          "body": "---\nEmpty: \"\"\nName: \"\"\nStatus: Closed\ncategory: database\ncsv_tags: \"\"\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: 7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Status:** Closed\n\n",
+          "sha256": "94d1647dead176ac53f19cdb0007e05718864adbf49ab3522c2ebe1fa890d372"
+        },
+        "databases/Tasks/_index.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885\nmime: text/csv\ntags:\n    - notion\n    - csv-index\n    - database\ncategory: database\narchive_path: \"\"\n---\n\n# Tasks\n\nDatabase with 2 rows and 4 columns.\n\n## Columns\n\n- Name\n- Status\n- tags\n- Empty\n\n",
+          "sha256": "5052ab7fe16fdb92e4353c715732e7ec80f890eca346ad04e14736c33ec78cc0"
+        }
+      },
+      "op": "move"
+    },
+    {
+      "error": "",
+      "failed": 0,
+      "files": {
+        "Deep/Beta.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d\nmime: text/markdown\ntags:\n    - notion\ncategory: Deep\narchive_path: \"\"\n---\n\n[[Alpha]]\n",
+          "sha256": "6cc4ede9daa6b769555e3a4607bc762d974e892cc8649b529232db09e6d602a5"
+        },
+        "Moved.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "a3c73b390c1ae46c0fad37f02065ccada5718b02ea93fe659a7bca1dd6cfc2a1"
+        },
+        "assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png": {
+          "body": "synthetic-image",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "databases/Tasks/One.md": {
+          "body": "---\nEmpty: \"\"\nName: One\nStatus: Open\ncategory: database\ncsv_tags: private\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Name:** One\n\n**Status:** Open\n\n**tags:** private\n\n",
+          "sha256": "7532fbd2dfe1a44427f8d6ae50b00a3b137ba1c26d5a222afa2d752a3adf1ed8"
+        },
+        "databases/Tasks/Row 2.md": {
+          "body": "---\nEmpty: \"\"\nName: \"\"\nStatus: Closed\ncategory: database\ncsv_tags: \"\"\nimport_run_id: fixed-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: 7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Status:** Closed\n\n",
+          "sha256": "94d1647dead176ac53f19cdb0007e05718864adbf49ab3522c2ebe1fa890d372"
+        },
+        "databases/Tasks/_index.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885\nmime: text/csv\ntags:\n    - notion\n    - csv-index\n    - database\ncategory: database\narchive_path: \"\"\n---\n\n# Tasks\n\nDatabase with 2 rows and 4 columns.\n\n## Columns\n\n- Name\n- Status\n- tags\n- Empty\n\n",
+          "sha256": "5052ab7fe16fdb92e4353c715732e7ec80f890eca346ad04e14736c33ec78cc0"
+        }
+      },
+      "imported": 0,
+      "op": "rerun",
+      "results": [
+        {
+          "reason": "already imported in a previous run",
+          "sha256": "2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c",
+          "source_path": "$ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/Moved.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "sha256": "225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d",
+          "source_path": "$ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/Deep/Beta.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/One.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/Row 2.md"
+        },
+        {
+          "reason": "already imported in a previous run",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "skipped",
+          "vault_path": "$ROOT/vault/databases/Tasks/_index.md"
+        }
+      ],
+      "skipped": 5,
+      "total": 5
+    },
+    {
+      "error": "",
+      "failed": 0,
+      "files": {
+        "Alpha.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: next-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "9dd8f45b4473dbb857f8efb96e74e33efa26ccbd38445638970d2259e65802c7"
+        },
+        "Deep/Beta.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md\nimported_from: notion\nimport_run_id: next-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d\nmime: text/markdown\ntags:\n    - notion\ncategory: Deep\narchive_path: \"\"\n---\n\n[[Alpha]]\n",
+          "sha256": "ee992ff917449ee966c097de49835221e9555202f93efe97e7e8cfdefac39078"
+        },
+        "Moved.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md\nimported_from: notion\nimport_run_id: fixed-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: 2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c\nmime: text/markdown\ntags:\n    - notion\ncategory: \"\"\narchive_path: \"\"\n---\n\n# Alpha\n\n[[Beta]] ![x](assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png)\n",
+          "sha256": "a3c73b390c1ae46c0fad37f02065ccada5718b02ea93fe659a7bca1dd6cfc2a1"
+        },
+        "assets/6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7.png": {
+          "body": "synthetic-image",
+          "sha256": "6f252e1d85c9df6308cbb574aa764fcb8d35d477e9cca0adfa6257617f1fffd7"
+        },
+        "databases/Tasks/One.md": {
+          "body": "---\nEmpty: \"\"\nName: One\nStatus: Open\ncategory: database\ncsv_tags: private\nimport_run_id: next-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Name:** One\n\n**Status:** Open\n\n**tags:** private\n\n",
+          "sha256": "61468afa12961cd244d8e993c66ab26f4a6e5b664f15f5aebff3fbf99ae35dff"
+        },
+        "databases/Tasks/Row 2.md": {
+          "body": "---\nEmpty: \"\"\nName: \"\"\nStatus: Closed\ncategory: database\ncsv_tags: \"\"\nimport_run_id: next-run\nimported_from: notion\ningested_at: 2000-01-01T00:00:00Z\nmime: text/csv\nsha256: 7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\ntags:\n    - notion\n    - csv-row\n    - database\n---\n\n**Status:** Closed\n\n",
+          "sha256": "3b9db07454fc7facc239152f496fca14d084bd5579ecaa9a432bdb5305042648"
+        },
+        "databases/Tasks/_index.md": {
+          "body": "---\nsource_path: $ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv\nimported_from: notion\nimport_run_id: next-run\ningested_at: 2000-01-01T00:00:00Z\nsha256: a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885\nmime: text/csv\ntags:\n    - notion\n    - csv-index\n    - database\ncategory: database\narchive_path: \"\"\n---\n\n# Tasks\n\nDatabase with 2 rows and 4 columns.\n\n## Columns\n\n- Name\n- Status\n- tags\n- Empty\n\n",
+          "sha256": "9a66caa3d20e879968e24c744c404a05af2d0676cba1add8a29aad3606f2eebe"
+        }
+      },
+      "imported": 5,
+      "op": "new-run",
+      "results": [
+        {
+          "sha256": "2f54f7a165e4a41e99fad840b19e43579c9ed2cc67b5a60af69018c5482a3d9c",
+          "source_path": "$ROOT/export/Workspace/Alpha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.md",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/Alpha.md"
+        },
+        {
+          "sha256": "225e88ae44bbade7dd7f0e9914e441e9673f17879ac11c8f1bb732ecf296c14d",
+          "source_path": "$ROOT/export/Workspace/Deep/Beta bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.md",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/Deep/Beta.md"
+        },
+        {
+          "sha256": "bf8f4519cdbadb300448499698fabef924bdce92ed2ee5e23db6fa873d8d28a4",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/One.md"
+        },
+        {
+          "sha256": "7c898185ea40d366fc6dc2f52829c91cbd548b03975bf2090b104d04ae27a980",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/Row 2.md"
+        },
+        {
+          "sha256": "a14191ac631a230a6a3ba05e3bfc1a142a2aeddd21a66bb1cdaad2caa7163885",
+          "source_path": "$ROOT/export/Workspace/Tasks cccccccccccccccccccccccccccccccc.csv",
+          "status": "imported",
+          "vault_path": "$ROOT/vault/databases/Tasks/_index.md"
+        }
+      ],
+      "skipped": 0,
+      "total": 5
+    }
+  ]
+}

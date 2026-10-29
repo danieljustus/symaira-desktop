@@ -40,7 +40,7 @@ func (s *Service) DocsList(f sidecar.DocsFilter) ([]DocsListResult, error) {
 			relPath = r.Path
 		}
 		results = append(results, DocsListResult{
-			Path:          relPath,
+			Path:          filepath.ToSlash(relPath),
 			Title:         r.Title,
 			Type:          r.Type,
 			DocumentDate:  r.DocumentDate,

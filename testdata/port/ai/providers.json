@@ -1,0 +1,1618 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "source_hashes": {
+    "internal/ai/ai.go": "c1973ec6c6687a6ce11f33ae1d3e3112660367f1d87d7d26376b845ba4c9c922",
+    "internal/ai/anthropic.go": "36a192248abf448393792c07e1c759cbce27857222332b1837c54e3ad7881883"
+  },
+  "cases": [
+    {
+      "id": "missing-default",
+      "provider": "",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "",
+      "chunks": [],
+      "error": "AI feature not configured",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "SYMDESK_OLLAMA_URL not set",
+      "requests": []
+    },
+    {
+      "id": "missing-unknown",
+      "provider": "other",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "",
+      "chunks": [],
+      "error": "AI feature not configured",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "SYMDESK_OLLAMA_URL not set",
+      "requests": []
+    },
+    {
+      "id": "ollama-default",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-native-root",
+      "provider": "ollama",
+      "url": "{server}/v1/models///",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "unknown-falls-back-to-ollama",
+      "provider": "other",
+      "url": "{server}/nested",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-env-url-wins",
+      "provider": "",
+      "url": "http://127.0.0.1:1",
+      "env_url": "{server}/v1///",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-configured-model-ignored",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "ignored-config-model",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-env-model",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "local-test-model",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\" first \"}\n{\"response\":\"\"}\n{\"response\":\"second\u003c\u0026\u003eé\"}\n{\"done\":true}\n",
+      "chunks": [
+        " first ",
+        "second\u003c\u0026\u003eé"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first second\u003c\u0026\u003eé",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"local-test-model\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"local-test-model\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-empty-stream",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "",
+      "chunks": [],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-malformed-chunk",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{broken}\n",
+      "chunks": [],
+      "error": "ollama: llmkit: provider_error: decode generate chunk: invalid character 'b' looking for beginning of object key string",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: provider_error: decode generate chunk: invalid character 'b' looking for beginning of object key string",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-partial-then-malformed",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\"partial\"}\n{broken}\n",
+      "chunks": [
+        "partial"
+      ],
+      "error": "ollama: llmkit: provider_error: decode generate chunk: invalid character 'b' looking for beginning of object key string",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: provider_error: decode generate chunk: invalid character 'b' looking for beginning of object key string",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-error-chunk",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"error\":\"model missing\"}\n",
+      "chunks": [],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-unauthorized",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 401,
+      "response": "denied",
+      "chunks": [],
+      "error": "ollama: llmkit: auth_failure (status 401): denied",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: auth_failure (status 401): denied",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-rate-limit",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 429,
+      "response": "slow down",
+      "chunks": [],
+      "error": "ollama: llmkit: rate_limited (status 429): slow down",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: rate_limited (status 429): slow down",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-server-error",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 500,
+      "response": "unavailable",
+      "chunks": [],
+      "error": "ollama: llmkit: provider_error (status 500): unavailable",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: provider_error (status 500): unavailable",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-null-scalars",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "null\n{\"model\":null,\"response\":null,\"done\":null}\n",
+      "chunks": [],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-crlf-blank-lines",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "\r\n{\"response\":\"CRLF\"}\r\n\r\n",
+      "chunks": [
+        "CRLF"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "CRLF",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-final-line-no-newline",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"response\":\"tail\"}",
+      "chunks": [
+        "tail"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "tail",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-output-after-done",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "{\"done\":true}\n{\"response\":\"late\"}\n",
+      "chunks": [
+        "late"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "late",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-forbidden",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 403,
+      "response": "forbidden",
+      "chunks": [],
+      "error": "ollama: llmkit: auth_failure (status 403): forbidden",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: auth_failure (status 403): forbidden",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-model-not-found",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 404,
+      "response": "model missing",
+      "chunks": [],
+      "error": "ollama: llmkit: model_not_found (status 404): model missing",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: model_not_found (status 404): model missing",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "ollama-context-overflow",
+      "provider": "",
+      "url": "{server}",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 400,
+      "response": "maximum context length",
+      "chunks": [],
+      "error": "ollama: llmkit: context_overflow (status 400): maximum context length",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "ollama: llmkit: context_overflow (status 400): maximum context length",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"model\":\"llama3.2\",\"prompt\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\",\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-default",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second "
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-custom-model-options",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "synthetic-model",
+      "env_model": "",
+      "max_tokens": 321,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second "
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"synthetic-model\",\"max_tokens\":321,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"synthetic-model\",\"max_tokens\":321,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-negative-max-default",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": -1,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second "
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-wide-max-tokens",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 4294967296,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second "
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":4294967296,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":4294967296,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-i64-max-tokens",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 9223372036854775807,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second "
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":9223372036854775807,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":9223372036854775807,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-truncated",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"first\u003c\u0026\u003eé\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\" second \"}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"max_tokens\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+      "chunks": [
+        "first\u003c\u0026\u003eé",
+        " second ",
+        "\n\n⚠️ **[Output truncated due to token limit]**"
+      ],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "first\u003c\u0026\u003eé second \n\n⚠️ **[Output truncated due to token limit]**",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-empty-stream",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "",
+      "chunks": [],
+      "error": "anthropic: llmkit: provider_error: no stream data received",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "anthropic: llmkit: provider_error: no stream data received",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-malformed-event",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 200,
+      "response": "event: content_block_delta\ndata: {broken}\n\n",
+      "chunks": [],
+      "error": "",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-unauthorized-redacted",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 401,
+      "response": "denied port-only-synthetic-provider-canary",
+      "chunks": [],
+      "error": "anthropic: llmkit: auth_failure (status 401): denied [REDACTED]",
+      "go_error_contains_credential": true,
+      "one_shot": "",
+      "one_shot_error": "anthropic: llmkit: auth_failure (status 401): denied [REDACTED]",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-rate-limit",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 429,
+      "response": "slow down",
+      "chunks": [],
+      "error": "anthropic: llmkit: rate_limited (status 429): slow down",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "anthropic: llmkit: rate_limited (status 429): slow down",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    },
+    {
+      "id": "anthropic-server-error",
+      "provider": "anthropic",
+      "url": "",
+      "env_url": "",
+      "model": "",
+      "env_model": "",
+      "max_tokens": 0,
+      "prompt": "Prompt \u003c\u0026\u003e é\u2028\n",
+      "status": 500,
+      "response": "unavailable",
+      "chunks": [],
+      "error": "anthropic: llmkit: provider_error (status 500): unavailable",
+      "go_error_contains_credential": false,
+      "one_shot": "",
+      "one_shot_error": "anthropic: llmkit: provider_error (status 500): unavailable",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        },
+        {
+          "method": "POST",
+          "path": "/messages",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "anthropic-version": [
+              "2023-06-01"
+            ],
+            "content-type": [
+              "application/json"
+            ],
+            "x-api-key": [
+              "[REDACTED]"
+            ]
+          },
+          "body": "{\"model\":\"claude-sonnet-5\",\"max_tokens\":8192,\"messages\":[{\"role\":\"user\",\"content\":\"Prompt \\u003c\\u0026\\u003e é\\u2028\\n\"}],\"stream\":true}"
+        }
+      ]
+    }
+  ]
+}

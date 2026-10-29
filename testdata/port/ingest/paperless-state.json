@@ -1,0 +1,1985 @@
+{
+  "clock": "test-only SQLite current_timestamp override; target roots are opaque keys, never opened",
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "paperless_state_port_test.go": "d20eb9e7c0c20581c1b6a67460bd881f808b25c0a3e4d7ae62242f0d8f0b7e24",
+    "store.go": "29723d070ee76d5767ab0f588c718f0cf125174cbb587073b86e9a97181fa396"
+  },
+  "steps": [
+    {
+      "error": "",
+      "input": {
+        "op": "status",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "found": false,
+        "status": ""
+      },
+      "rows": [],
+      "sequence": 0
+    },
+    {
+      "error": "sql: no rows in result set",
+      "input": {
+        "op": "get",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [],
+      "sequence": 0
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [],
+      "sequence": 0
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "imported",
+        "error": "",
+        "note": "a.md",
+        "file": "a.pdf",
+        "hash": "hash-a"
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        }
+      ],
+      "sequence": 1
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/b",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "failed",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "status",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "found": true,
+        "status": "failed"
+      },
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "target-status",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "found": true,
+        "status": "imported"
+      },
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "target-get",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "id": 1,
+        "base_url": "https://paperless.example.test",
+        "target_vault": "/vault/a",
+        "target_archive": "/archive/a",
+        "paperless_document_id": 7,
+        "status": "imported",
+        "vault_path": "a.md",
+        "archive_path": "a.pdf",
+        "sha256": "hash-a",
+        "created_at": "2000-01-01T00:00:00Z",
+        "updated_at": "2000-01-01T00:00:00Z"
+      },
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "sql: no rows in result set",
+      "input": {
+        "op": "target-get",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/b",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "advance",
+        "base": "",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "2000-01-01 01:00:00",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "a.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "imported",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": "a.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 2
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "skipped",
+        "error": "",
+        "note": "moved.md",
+        "file": "moved.pdf",
+        "hash": "hash-a"
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 3
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "status",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "found": true,
+        "status": "skipped"
+      },
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 3
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "get",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "id": 1,
+        "base_url": "https://paperless.example.test",
+        "target_vault": "/vault/a",
+        "target_archive": "/archive/a",
+        "paperless_document_id": 7,
+        "status": "skipped",
+        "vault_path": "moved.md",
+        "archive_path": "moved.pdf",
+        "sha256": "hash-a",
+        "created_at": "2000-01-01T00:00:00Z",
+        "updated_at": "2000-01-01T01:00:00Z"
+      },
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 3
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/b",
+        "id": 7,
+        "status": "pending",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 4
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 3,
+        "status": "failed",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": null,
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 5
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "/vault/a",
+        "archive": "/archive/a",
+        "id": 3,
+        "status": "failed",
+        "error": "download: failed",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 6
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "legacy-upsert",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "imported",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": [
+        {
+          "id": 5,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 3,
+          "status": "failed",
+          "last_error": "download: failed",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 7,
+          "base_url": "https://paperless.example.test",
+          "paperless_document_id": 7,
+          "status": "imported",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 1,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "skipped",
+          "vault_path": "moved.md",
+          "archive_path": "moved.pdf",
+          "sha256": "hash-a",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 4,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/b",
+          "paperless_document_id": 7,
+          "status": "pending",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 2,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/b",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "failed",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T00:00:00Z"
+        }
+      ],
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "failed",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": [
+        {
+          "id": 5,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 3,
+          "status": "failed",
+          "last_error": "download: failed",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 2,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/b",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "failed",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T00:00:00Z"
+        }
+      ],
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "invalid",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "reopen",
+        "base": "",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": [
+        {
+          "id": 5,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 3,
+          "status": "failed",
+          "last_error": "download: failed",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 7,
+          "base_url": "https://paperless.example.test",
+          "paperless_document_id": 7,
+          "status": "imported",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 1,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "skipped",
+          "vault_path": "moved.md",
+          "archive_path": "moved.pdf",
+          "sha256": "hash-a",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 4,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/b",
+          "paperless_document_id": 7,
+          "status": "pending",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 2,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/b",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "failed",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T00:00:00Z"
+        }
+      ],
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "target-status",
+        "base": "https://paperless.example.test",
+        "vault": "/missing",
+        "archive": "/archive/a",
+        "id": 7,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": {
+        "found": false,
+        "status": ""
+      },
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "invalid paperless import state status: \"invalid\\n\\\"status\"",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "invalid\n\"status",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 7
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "upsert",
+        "base": "https://paperless.example.test/",
+        "vault": "",
+        "archive": "",
+        "id": 7,
+        "status": "imported",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": null,
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test/",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 8,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 8
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test/",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": [
+        {
+          "id": 8,
+          "base_url": "https://paperless.example.test/",
+          "paperless_document_id": 7,
+          "status": "imported",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        }
+      ],
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test/",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 8,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 8
+    },
+    {
+      "error": "",
+      "input": {
+        "op": "list",
+        "base": "https://paperless.example.test",
+        "vault": "",
+        "archive": "",
+        "id": 0,
+        "status": "",
+        "error": "",
+        "note": "",
+        "file": "",
+        "hash": ""
+      },
+      "result": [
+        {
+          "id": 5,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 3,
+          "status": "failed",
+          "last_error": "download: failed",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 7,
+          "base_url": "https://paperless.example.test",
+          "paperless_document_id": 7,
+          "status": "imported",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 1,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "skipped",
+          "vault_path": "moved.md",
+          "archive_path": "moved.pdf",
+          "sha256": "hash-a",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 4,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/a",
+          "target_archive": "/archive/b",
+          "paperless_document_id": 7,
+          "status": "pending",
+          "created_at": "2000-01-01T01:00:00Z",
+          "updated_at": "2000-01-01T01:00:00Z"
+        },
+        {
+          "id": 2,
+          "base_url": "https://paperless.example.test",
+          "target_vault": "/vault/b",
+          "target_archive": "/archive/a",
+          "paperless_document_id": 7,
+          "status": "failed",
+          "created_at": "2000-01-01T00:00:00Z",
+          "updated_at": "2000-01-01T00:00:00Z"
+        }
+      ],
+      "rows": [
+        {
+          "archive_path": "moved.pdf",
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 1,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": "hash-a",
+          "status": "skipped",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": "moved.md"
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 00:00:00",
+          "id": 2,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/b",
+          "updated_at": "2000-01-01 00:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 4,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "pending",
+          "target_archive": "/archive/b",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 5,
+          "last_error": "download: failed",
+          "paperless_document_id": 3,
+          "sha256": null,
+          "status": "failed",
+          "target_archive": "/archive/a",
+          "target_vault": "/vault/a",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 7,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        },
+        {
+          "archive_path": null,
+          "base_url": "https://paperless.example.test/",
+          "created_at": "2000-01-01 01:00:00",
+          "id": 8,
+          "last_error": null,
+          "paperless_document_id": 7,
+          "sha256": null,
+          "status": "imported",
+          "target_archive": "",
+          "target_vault": "",
+          "updated_at": "2000-01-01 01:00:00",
+          "vault_path": null
+        }
+      ],
+      "sequence": 8
+    }
+  ]
+}

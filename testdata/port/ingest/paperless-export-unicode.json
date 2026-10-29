@@ -1,0 +1,174 @@
+{
+  "db_mode": "nil (filesystem-only export importer contract)",
+  "normalizations": [
+    "disposable root -\u003e $ROOT; paths -\u003e slash",
+    "top-level created wall clock -\u003e fixed UTC; hashes cover normalized bytes"
+  ],
+  "not_covered": {
+    "windows": "Windows Unicode-boundary filename behavior is not covered; requires a native Windows oracle"
+  },
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "platforms": {
+    "darwin": {
+      "input_files": {
+        "export/first.PDF": "synthetic-pdf",
+        "export/manifest.json": "[{\"id\":4,\"title\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα\",\"checksum\":\"unicode-boundary\"}]",
+        "export/third.png": "synthetic-image"
+      },
+      "steps": [
+        {
+          "error": "",
+          "files": {},
+          "op": "dry-run",
+          "summary": {
+            "created": 1,
+            "errors": 0,
+            "results": [
+              {
+                "action": "created",
+                "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 0
+          }
+        },
+        {
+          "error": "",
+          "files": {},
+          "op": "import",
+          "summary": {
+            "created": 0,
+            "errors": 1,
+            "results": [
+              {
+                "action": "error",
+                "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+                "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 0
+          }
+        },
+        {
+          "error": "",
+          "files": {},
+          "op": "rerun",
+          "summary": {
+            "created": 0,
+            "errors": 1,
+            "results": [
+              {
+                "action": "error",
+                "error": "write note: open $ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md: illegal byte sequence",
+                "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 0
+          }
+        }
+      ]
+    },
+    "linux": {
+      "input_files": {
+        "export/first.PDF": "synthetic-pdf",
+        "export/manifest.json": "[{\"id\":4,\"title\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα\",\"checksum\":\"unicode-boundary\"}]",
+        "export/third.png": "synthetic-image"
+      },
+      "steps": [
+        {
+          "error": "",
+          "files": {},
+          "op": "dry-run",
+          "summary": {
+            "created": 1,
+            "errors": 0,
+            "results": [
+              {
+                "action": "created",
+                "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 0
+          }
+        },
+        {
+          "error": "",
+          "files": {
+            "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\ufffd.md": {
+              "body": "---\ntitle: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:4:unicode-boundary\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/paperless_4\"\npaperless:\n  id: 4\n  checksum: \"unicode-boundary\"\nconfidence: 100\n---\n\n[[archive/paperless/paperless_4]]\n",
+              "path_sha256": "267544ca924df05cce0ed25561e90d34729ed7a28bc9bf08a24069e165643f7d",
+              "sha256": "893cc5a91346543a5fd8c59d31d0af763d18f41c25ae613902e170d2e3fbf052"
+            }
+          },
+          "op": "import",
+          "summary": {
+            "created": 1,
+            "errors": 0,
+            "results": [
+              {
+                "action": "created",
+                "note_path": "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 0
+          }
+        },
+        {
+          "error": "",
+          "files": {
+            "paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\ufffd.md": {
+              "body": "---\ntitle: \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα\"\ncreated: \"2000-01-01T00:00:00Z\"\ntags: []\nstatus: \"open\"\nsource_identifier: \"paperless:4:unicode-boundary\"\nimported_from: \"paperless\"\narchive_path: \"archive/paperless/paperless_4\"\npaperless:\n  id: 4\n  checksum: \"unicode-boundary\"\nconfidence: 100\n---\n\n[[archive/paperless/paperless_4]]\n",
+              "path_sha256": "267544ca924df05cce0ed25561e90d34729ed7a28bc9bf08a24069e165643f7d",
+              "sha256": "893cc5a91346543a5fd8c59d31d0af763d18f41c25ae613902e170d2e3fbf052"
+            }
+          },
+          "op": "rerun",
+          "summary": {
+            "created": 0,
+            "errors": 0,
+            "results": [
+              {
+                "action": "updated",
+                "note_path": "$ROOT/vault/paperless/Paperless_4_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�.md",
+                "paperless_id": 4,
+                "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxα"
+              }
+            ],
+            "skipped": 0,
+            "total": 1,
+            "updated": 1
+          }
+        }
+      ]
+    }
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "importer.go": "c1d7b518739a01fcc08af2c178e600ea7c994f161a01748b6d2990e966a5ad87",
+    "manifest.go": "650fa255842ff3eb09e2f5c096987d6c3921794565a99786c6a560281273e4b2",
+    "port_contract_test.go": "84ac47440e394f69ef6e75cd553af476c76f330f94a6f72d96ea5ae4ee705967"
+  }
+}

@@ -13,9 +13,10 @@ use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
     StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_byte_chunks,
-    materialize_chunks, parse_csv_retrieval_sections, parse_markdown_body_retrieval_sections,
-    parse_markdown_retrieval_sections, parse_text_retrieval_sections, relocate_index_for_vault,
-    restore_database, retrieval_embedding_config,
+    materialize_chunks, parse_csv_retrieval_sections, parse_document_retrieval_sections,
+    parse_markdown_body_retrieval_sections, parse_markdown_retrieval_sections,
+    parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
+    retrieval_embedding_config,
 };
 use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -23,6 +24,7 @@ use tokio::time::Duration;
 
 #[path = "index_status.rs"]
 mod status;
+pub(crate) use status::go_time_text;
 #[path = "index_status_process.rs"]
 mod status_process;
 
@@ -610,7 +612,7 @@ fn index_markdown_retrieval(
 
 /// Go's `canonicalLocalSource`: resolve symlinks for absolute paths, falling
 /// back to the resolved parent for a path that no longer exists.
-fn canonical_local_source(path: &str) -> String {
+pub(crate) fn canonical_local_source(path: &str) -> String {
     let path = Path::new(path);
     if !path.is_absolute() {
         return path.to_string_lossy().into_owned();
@@ -746,14 +748,33 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
             extension.eq_ignore_ascii_case(".md") || extension.eq_ignore_ascii_case(".markdown");
         let plain_text = extension.eq_ignore_ascii_case(".txt");
         let csv = extension.eq_ignore_ascii_case(".csv");
-        if !markdown && !plain_text && !csv {
+        let extracted = matches!(
+            extension.to_ascii_lowercase().as_str(),
+            ".pdf"
+                | ".docx"
+                | ".xlsx"
+                | ".pptx"
+                | ".odt"
+                | ".ods"
+                | ".odp"
+                | ".rtf"
+                | ".epub"
+                | ".html"
+                | ".htm"
+        );
+        if !markdown && !plain_text && !csv && !extracted {
             eprintln!(
-                "Warning: failed to re-parse {} for re-embed: Rust re-embed currently supports Markdown, UTF-8 plain text and CSV only",
+                "Warning: failed to re-parse {} for re-embed: Rust re-embed does not support this source extension",
                 document.path
             );
             continue;
         }
-        let bytes = match if plain_text || csv {
+        let bytes = match if plain_text
+            || csv
+            || matches!(
+                extension.to_ascii_lowercase().as_str(),
+                ".html" | ".htm" | ".rtf"
+            ) {
             read_limited_plain_text(&document.path)
         } else {
             fs::read(&document.path).map_err(|error| error.to_string())
@@ -767,7 +788,10 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
                 continue;
             }
         };
-        let chunks = match if csv {
+        let chunks = match if extracted {
+            parse_document_retrieval_sections(&document.path, extension, &bytes)
+                .map(|sections| materialize_byte_chunks(&document.path, &sections))
+        } else if csv {
             parse_csv_retrieval_sections(&document.path, &bytes)
                 .map(|sections| materialize_byte_chunks(&document.path, &sections))
         } else if plain_text {

@@ -300,6 +300,8 @@ func hasRetentionStateFIFO(setup []retentionStateSetup) bool {
 	return false
 }
 
+const retentionStateFIFODeadline = 20 * time.Second
+
 func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retentionStateCase {
 	t.Helper()
 	parent, err := os.MkdirTemp("", "symdesk-port-retention-oracle-")
@@ -312,7 +314,10 @@ func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retenti
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// The bound detects a call that blocks on a FIFO indefinitely. It also
+	// covers starting the -race test binary and writing its coverage profile,
+	// which took more than 3s on loaded CI runners once the package grew.
+	ctx, cancel := context.WithTimeout(context.Background(), retentionStateFIFODeadline)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRetentionStateOracleCaseHelper$") // #nosec G204,G702 -- current test binary and helper selector are fixed.
 	for _, variable := range os.Environ() {
@@ -326,7 +331,7 @@ func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retenti
 	cmd.Stderr = &output
 	if err := cmd.Run(); err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			t.Fatalf("%s: Go Service.RetentionState exceeded 3s FIFO deadline; child output: %s", spec.ID, output.String())
+			t.Fatalf("%s: Go Service.RetentionState exceeded %s FIFO deadline; child output: %s", spec.ID, retentionStateFIFODeadline, output.String())
 		}
 		t.Fatalf("%s: Go retention oracle child failed: %v\n%s", spec.ID, err, output.String())
 	}

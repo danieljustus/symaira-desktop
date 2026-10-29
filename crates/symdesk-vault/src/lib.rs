@@ -14,9 +14,11 @@ mod links;
 mod markdown_links;
 mod metadata;
 mod mutations;
+mod notebook_read;
 mod notebook_write;
 pub mod notes;
 mod paths;
+pub mod permissions;
 mod resolver;
 pub mod retention;
 pub mod retention_state;
@@ -37,7 +39,8 @@ use serde_json as _;
 
 pub use base_write::{
     BaseWriteError, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
-    save_base, save_base_with_snapshot, save_view, save_view_with_snapshot,
+    get_base, list_bases, migrate_legacy_views, save_base, save_base_with_snapshot, save_view,
+    save_view_with_snapshot,
 };
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
@@ -60,6 +63,7 @@ pub use mutations::{
     MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_map,
     render_go_yaml_string, set_frontmatter_key, set_frontmatter_value, write_atomic,
 };
+pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
     NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
     remove_notebook_source,

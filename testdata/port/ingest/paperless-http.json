@@ -1,0 +1,790 @@
+{
+  "cases": [
+    {
+      "error": "",
+      "input": {
+        "id": "documents-pagination",
+        "op": "documents",
+        "since": "2024-02-03",
+        "limit": 0,
+        "filters": [
+          "tags__id=7",
+          "custom=x%20y"
+        ],
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":1,\"title\":\"First\",\"created\":\"2024-02-03\",\"tags\":[7,{\"id\":8,\"name\":\"embedded\"}]}],\"next\":\"http://127.0.0.1/api/documents/?page=2\"}",
+            "headers": null
+          },
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":2,\"title\":\"Second\",\"correspondent\":{\"id\":3,\"name\":\"Sender\"}}],\"next\":null}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/",
+          "query": "format=json\u0026ordering=-created_date\u0026created__date__gte=2024-02-03\u0026tags__id=7\u0026custom=x%20y"
+        },
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/",
+          "query": "page=2"
+        }
+      ],
+      "result": [
+        {
+          "id": 1,
+          "title": "First",
+          "content": "",
+          "created_date": null,
+          "created": "2024-02-03T00:00:00Z",
+          "added": null,
+          "modified": null,
+          "correspondent": null,
+          "tags": [
+            {
+              "ID": 7,
+              "Name": ""
+            },
+            {
+              "ID": 8,
+              "Name": "embedded"
+            }
+          ],
+          "document_type": null,
+          "storage_path": null,
+          "file_type": "",
+          "mime_type": "",
+          "original_file_name": "",
+          "archived_file_name": "",
+          "page_count": 0
+        },
+        {
+          "id": 2,
+          "title": "Second",
+          "content": "",
+          "created_date": null,
+          "created": null,
+          "added": null,
+          "modified": null,
+          "correspondent": {
+            "ID": 3,
+            "Name": "Sender"
+          },
+          "tags": null,
+          "document_type": null,
+          "storage_path": null,
+          "file_type": "",
+          "mime_type": "",
+          "original_file_name": "",
+          "archived_file_name": "",
+          "page_count": 0
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "documents-limit",
+        "op": "documents",
+        "since": "",
+        "limit": 1,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":1},{\"id\":2}],\"next\":\"/never\"}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/",
+          "query": "format=json\u0026ordering=-created_date\u0026page_size=1"
+        }
+      ],
+      "result": [
+        {
+          "id": 1,
+          "title": "",
+          "content": "",
+          "created_date": null,
+          "created": null,
+          "added": null,
+          "modified": null,
+          "correspondent": null,
+          "tags": null,
+          "document_type": null,
+          "storage_path": null,
+          "file_type": "",
+          "mime_type": "",
+          "original_file_name": "",
+          "archived_file_name": "",
+          "page_count": 0
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "documents-empty",
+        "op": "documents",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[],\"next\":null}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/",
+          "query": "format=json\u0026ordering=-created_date"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "get",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"id\":42,\"title\":\"One\",\"created_date\":\"2024-01-01\",\"created\":\"2024-02-03T04:05:06.123Z\",\"document_type\":9,\"storage_path\":{\"id\":1,\"name\":\"Folder\"},\"mime_type\":\"application/pdf\"}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": {
+        "id": 42,
+        "title": "One",
+        "content": "",
+        "created_date": "2024-01-01T00:00:00Z",
+        "created": "2024-02-03T04:05:06Z",
+        "added": null,
+        "modified": null,
+        "correspondent": null,
+        "tags": null,
+        "document_type": {
+          "ID": 9,
+          "Name": ""
+        },
+        "storage_path": {
+          "ID": 1,
+          "Name": "Folder"
+        },
+        "file_type": "",
+        "mime_type": "application/pdf",
+        "original_file_name": "",
+        "archived_file_name": "",
+        "page_count": 0
+      }
+    },
+    {
+      "error": "decode response: unexpected EOF",
+      "input": {
+        "id": "get-malformed",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "decode response: EOF",
+      "input": {
+        "id": "get-empty",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "API error 403 Forbidden: forbidden please login",
+      "input": {
+        "id": "get-forbidden",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 403,
+            "body": "  forbidden \n\t please login ",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "API error 500 Internal Server Error: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+      "input": {
+        "id": "get-truncated-error",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 500,
+            "body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "API error 404 Not Found",
+      "input": {
+        "id": "get-blank-error",
+        "op": "get",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 404,
+            "body": " \n\t",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/",
+          "query": "format=json"
+        }
+      ],
+      "result": null
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "tags",
+        "op": "tags",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":1,\"name\":\"Tag\",\"slug\":\"tag\"}],\"next\":\"/api/tags/?page=2\"}",
+            "headers": null
+          },
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":2,\"name\":\"Other\"}]}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/tags/",
+          "query": "format=json"
+        },
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/tags/",
+          "query": "page=2"
+        }
+      ],
+      "result": [
+        {
+          "id": 1,
+          "name": "Tag",
+          "slug": "tag"
+        },
+        {
+          "id": 2,
+          "name": "Other",
+          "slug": ""
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "correspondents",
+        "op": "correspondents",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":3,\"name\":\"Sender\"}]}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/correspondents/",
+          "query": "format=json"
+        }
+      ],
+      "result": [
+        {
+          "id": 3,
+          "name": "Sender",
+          "slug": ""
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "document-types",
+        "op": "document_types",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":4,\"name\":\"Invoice\"}]}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/document_types/",
+          "query": "format=json"
+        }
+      ],
+      "result": [
+        {
+          "id": 4,
+          "name": "Invoice",
+          "slug": ""
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "storage-paths",
+        "op": "storage_paths",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "{\"results\":[{\"id\":5,\"name\":\"Folder\"}]}",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept": [
+              "application/json"
+            ],
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/storage_paths/",
+          "query": "format=json"
+        }
+      ],
+      "result": [
+        {
+          "id": 5,
+          "name": "Folder",
+          "slug": ""
+        }
+      ]
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "download",
+        "op": "download",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "synthetic-pdf",
+            "headers": {
+              "Content-Disposition": "attachment; filename*=UTF-8''folder%2FInvoice%20%C3%A4.pdf",
+              "Content-Type": "application/pdf"
+            }
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/download/",
+          "query": ""
+        }
+      ],
+      "result": {
+        "body": "synthetic-pdf",
+        "meta": {
+          "content_type": "application/pdf",
+          "content_disposition": "attachment; filename*=UTF-8''folder%2FInvoice%20%C3%A4.pdf",
+          "filename": "Invoice ä.pdf"
+        }
+      }
+    },
+    {
+      "error": "",
+      "input": {
+        "id": "download-invalid-filename",
+        "op": "download",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 200,
+            "body": "data",
+            "headers": {
+              "Content-Disposition": "broken; filename=\"unterminated",
+              "Content-Type": "application/octet-stream"
+            }
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/download/",
+          "query": ""
+        }
+      ],
+      "result": {
+        "body": "data",
+        "meta": {
+          "content_type": "application/octet-stream",
+          "content_disposition": "broken; filename=\"unterminated"
+        }
+      }
+    },
+    {
+      "error": "API error 503 Service Unavailable: server unavailable",
+      "input": {
+        "id": "download-error",
+        "op": "download",
+        "since": "",
+        "limit": 0,
+        "filters": null,
+        "responses": [
+          {
+            "status": 503,
+            "body": "server\n unavailable",
+            "headers": null
+          }
+        ]
+      },
+      "requests": [
+        {
+          "body": "",
+          "headers": {
+            "accept-encoding": [
+              "gzip"
+            ],
+            "user-agent": [
+              "Go-http-client/1.1"
+            ]
+          },
+          "method": "GET",
+          "path": "/api/documents/42/download/",
+          "query": ""
+        }
+      ],
+      "result": {
+        "body": "",
+        "meta": {}
+      }
+    }
+  ],
+  "normalizations": [
+    "loopback host/port omitted from transcript; method, path, raw query and all non-auth headers retained",
+    "synthetic auth token asserted by server, never recorded"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "client.go": "e65884654d87ec29e47eeb31d1e2c75ed4b2ff00aa5d8b4c28d589f2215f2159",
+    "port_contract_test.go": "f2940b37214478be7132b8e2fb883a70522fe9c594b3b0bf18b357b4a21f084d",
+    "types.go": "850d6e3791be0c54ebe41eea11b1ac30f1eb370533d6ce9e9c1d744bef21152d"
+  }
+}

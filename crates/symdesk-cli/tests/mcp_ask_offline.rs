@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     fs,
     io::{BufRead, Read, Write},
@@ -133,7 +137,7 @@ fn serial_transport_deadline_reaps_the_owned_mcp_process() {
     let root = TestRoot::new("serial-timeout-control");
     let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .arg("mcp")
-        .env_clear()
+        .isolated_env()
         .env("HOME", root.path("home"))
         .env("USERPROFILE", root.path("home"))
         .env(
@@ -348,7 +352,7 @@ fn run_mcp_with_delivery(
     }
     let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
         .arg("mcp")
-        .env_clear()
+        .isolated_env()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .env(
             "SYSTEMROOT",

@@ -2,14 +2,14 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "6aea7f97c3cf3213b62119fe718cf71c0b3557d2",
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
     "release": "renderer-pdf-safety-v2-local",
     "module_go": "1.26.10",
     "toolchain": "go1.26.10",
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "2d47d7a8997cd88c3121ca7fb3d3ce504db5ed47ef67f86ccaebbfd4b0bbbb14",
+  "generator_sha256": "492e874dbf1486628df88e2ffb0821b4f1891efc638c04f0047c77b0685bcfb9",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "e15fa6a3f35dca55c548dd18913c26b43b20b4ae047ff5677ac265c24a3a53c5",
@@ -20,7 +20,7 @@
     "internal/service/dataset_policy.go": "90c291d84a0cf3ba0017aa9855a5a7a8951800ec2118c0a2fdd80aed50ad690e",
     "internal/service/datasets.go": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
     "internal/service/datasets_test.go": "512a0db61132929cc9aec0a4252003dce36005c7c674ca05ed464b89c808783e",
-    "internal/sidecar/db.go": "aaa740a6d3c42e2724b2ce76495b5841bce6641e947028d0aa12647d182ba11d",
+    "internal/sidecar/db.go": "8a2a268898ef9a88bbd50de89eb0edeb3d4296d01970c6a74b1d67121707d9e0",
     "internal/tools/dataset_tools.go": "57a64499db04504ef3e78a4bfe1310420904a9124426ed01664601817aaa0b7a",
     "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",

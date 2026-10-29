@@ -94,7 +94,7 @@ func runIndexStatusChild(
 	case runErr = <-waitCh:
 	case <-ctx.Done():
 		killIndexStatusWorker(cmd)
-		<-waitCh // always join the wait goroutine
+		<-waitCh //nolint:errcheck // Join the killed worker; ctx.Err below is the timeout result.
 		runErr = ctx.Err()
 		timedOut = true
 	}

@@ -90,7 +90,7 @@ func TestDocsListReturnsRelativePaths(t *testing.T) {
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(results))
 	}
-	if results[0].Path != filepath.Join("docs", "invoice.md") {
+	if results[0].Path != "docs/invoice.md" {
 		t.Errorf("expected relative path 'docs/invoice.md', got '%s'", results[0].Path)
 	}
 	if results[0].Person != "Alice" {

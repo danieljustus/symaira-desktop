@@ -1,6 +1,13 @@
 //! Replays the Go-owned `duplicates` / `similar` process fixture
 //! (`testdata/port/cli/duplicates-process.json`) against the Rust binary.
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
+#[path = "support/process_root.rs"]
+mod process_root;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -73,7 +80,7 @@ fn run(binary: &str, home: &Path, cwd: &Path, args: &[String]) -> Run {
     let output =
         Command::new(binary)
             .current_dir(cwd)
-            .env_clear()
+            .isolated_env()
             .envs(std::env::vars().filter(|(name, _)| {
                 matches!(name.as_str(), "PATH" | "SYSTEMROOT" | "TEMP" | "TMP")
             }))
@@ -172,6 +179,8 @@ fn duplicates_and_similar_match_go_process_contract() {
         }
         executed_cases += 1;
         let root = base.join(&case.name);
+        fs::create_dir_all(&root).expect("make case root");
+        let root = process_root::canonical_root(&root);
         let vault = root.join("vault");
         let home = root.join("home");
         let cwd = root.join("cwd");
@@ -205,7 +214,11 @@ fn duplicates_and_similar_match_go_process_contract() {
                 args.push(vault.to_string_lossy().into_owned());
             }
             let root_text = root.to_string_lossy().into_owned();
-            args.extend(step.args.iter().map(|arg| arg.replace("$ROOT", &root_text)));
+            args.extend(
+                step.args
+                    .iter()
+                    .map(|arg| process_root::expand_argument(arg, &root_text)),
+            );
             let observed = run(binary, &home, &cwd, &args);
             let label = format!("{} {:?}", case.name, step.args);
             assert_eq!(

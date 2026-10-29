@@ -1,3 +1,7 @@
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     fs,
     io::{BufRead, BufReader, Read, Write},
@@ -107,7 +111,7 @@ fn hybrid_search_migrates_populated_legacy_index_and_skips_deleted_source() {
     .expect("write retrieval config");
 
     let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
-        .env_clear()
+        .isolated_env()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .args([
             "--vault",

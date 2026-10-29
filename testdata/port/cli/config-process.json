@@ -1,0 +1,2144 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "ollama",
+      "ollama_response": "{\"models\":[{\"name\":\"model-one\"},{\"name\":\"model-two\"}]}",
+      "steps": [
+        {
+          "args": [
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\nModels: [model-one model-two]\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"models\":[\"model-one\",\"model-two\"],\"ok\":true,\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"models\":[\"model-one\",\"model-two\"],\"ok\":true,\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        },
+        {
+          "args": [
+            "--output=yaml",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\nModels: [model-one model-two]\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        },
+        {
+          "args": [
+            "--json",
+            "--output=text",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\nModels: [model-one model-two]\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        },
+        {
+          "args": [
+            "--output=json",
+            "--json=false",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"models\":[\"model-one\",\"model-two\"],\"ok\":true,\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {},
+          "requests": [
+            "GET /api/tags",
+            "GET /api/tags"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "anthropic",
+      "config": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+      "steps": [
+        {
+          "args": [
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"ok\":true,\"provider\":\"anthropic\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"ok\":true,\"provider\":\"anthropic\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--output=yaml",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "--output=text",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "Connection OK.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--output=json",
+            "--json=false",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"ok\":true,\"provider\":\"anthropic\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "llm_provider = 'anthropic'\nllm_api_key = 'fixture-only-key'\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "defaults",
+      "steps": [
+        {
+          "args": [
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=yaml",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "--output=text",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=json",
+            "--json=false",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = \nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=yaml",
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "--output=text",
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=json",
+            "--json=false",
+            "config",
+            "path"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=yaml",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "--output=text",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=json",
+            "--json=false",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        }
+      ]
+    },
+    {
+      "name": "config-write",
+      "steps": [
+        {
+          "args": [
+            "config",
+            "init"
+          ],
+          "exit_code": 0,
+          "stdout": "wrote default config to $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "init"
+          ],
+          "exit_code": 0,
+          "stdout": "config already exists at $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "language",
+            "de"
+          ],
+          "exit_code": 0,
+          "stdout": "set language = de in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "language"
+          ],
+          "exit_code": 0,
+          "stdout": "de\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get"
+          ],
+          "exit_code": 0,
+          "stdout": "agent_max_iterations = 0\nhistory_max_age_days = 90\nhistory_max_per_file = 20\ninbox = \nlanguage = de\nllm_model = claude-sonnet-5\nllm_provider = ollama\nmax_tokens = 8192\nollama_url = \nresults_max_age_days = 30\nresults_max_per_task = 20\nreview_threshold = 85\nstorage_path_template = \ntrash_retention_days = 30\nvault = \n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/override",
+            "config",
+            "set",
+            "inbox",
+            "post"
+          ],
+          "exit_code": 0,
+          "stdout": "set inbox = post in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"post\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"post\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "post\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"post\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ai-write",
+      "steps": [
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--provider",
+            "anthropic",
+            "--model",
+            "test \u003c\u0026\u003e model",
+            "--max-tokens",
+            "1024",
+            "--api-key",
+            "fixture-only-key"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"anthropic\"\nllm_api_key = \"fixture-only-key\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: anthropic\nOllama URL: \nModel: test \u003c\u0026\u003e model\nMax tokens: 1024\nAPI key configured: true\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"anthropic\"\nllm_api_key = \"fixture-only-key\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":true,\"max_tokens\":1024,\"model\":\"test \\u003c\\u0026\\u003e model\",\"ollama_url\":\"\",\"provider\":\"anthropic\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"anthropic\"\nllm_api_key = \"fixture-only-key\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--output=json",
+            "ai-config",
+            "set",
+            "--api-key="
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"ok\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"anthropic\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: anthropic\nOllama URL: \nModel: test \u003c\u0026\u003e model\nMax tokens: 1024\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"anthropic\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--vault=$ROOT/override",
+            "ai-config",
+            "set",
+            "--provider=none"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"$ROOT/override\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"none\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/override\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"$ROOT/override\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"none\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 1024\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--max-tokens=-3"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"$ROOT/override\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"none\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = -3\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: none\nOllama URL: \nModel: test \u003c\u0026\u003e model\nMax tokens: -3\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"$ROOT/override\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"none\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = -3\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "test"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"error\":\"Ollama URL is not set.\",\"ok\":false,\"provider\":\"none\"}\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"$ROOT/override\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"none\"\nllm_api_key = \"\"\nllm_model = \"test \u003c\u0026\u003e model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = -3\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "environment",
+      "config": "language = 'en'\nvault = 'file-vault'\nllm_api_key = 'fixture-only-file-key'\n",
+      "environment": {
+        "SYMDESK_LANG": "de",
+        "SYMDESK_LLM_MODEL": "env-model",
+        "SYMDESK_VAULT": "env-vault"
+      },
+      "steps": [
+        {
+          "args": [
+            "--vault=flag-vault",
+            "config",
+            "get",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "env-vault\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "language = 'en'\nvault = 'file-vault'\nllm_api_key = 'fixture-only-file-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--vault=flag-vault",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: env-model\nMax tokens: 8192\nAPI key configured: true\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "language = 'en'\nvault = 'file-vault'\nllm_api_key = 'fixture-only-file-key'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "language",
+            "en"
+          ],
+          "exit_code": 0,
+          "stdout": "set language = en in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"env-vault\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"fixture-only-file-key\"\nllm_model = \"env-model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"en\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "language"
+          ],
+          "exit_code": 0,
+          "stdout": "de\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"env-vault\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"fixture-only-file-key\"\nllm_model = \"env-model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"en\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--model=flag-model"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"env-vault\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"fixture-only-file-key\"\nllm_model = \"flag-model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: env-model\nMax tokens: 8192\nAPI key configured: true\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"env-vault\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"fixture-only-file-key\"\nllm_model = \"flag-model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "errors",
+      "steps": [
+        {
+          "args": [
+            "config",
+            "get",
+            "unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown config key \"unknown\"\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "llm_api_key"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown config key \\\"llm_api_key\\\"\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "usage: config get [key]\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "set"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 2 arg(s), received 0\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "set",
+            "language"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 2 arg(s), received 1\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "a",
+            "b",
+            "c"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 2 arg(s), received 3\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "max_tokens",
+            "not-an-int"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown config key \"max_tokens\"\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=json",
+            "config",
+            "set",
+            "unknown",
+            "value"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown config key \\\"unknown\\\"\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "--bad"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bad\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--max-tokens",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"abc\" for \"--max-tokens\" flag: strconv.ParseInt: parsing \"abc\": invalid syntax\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "set",
+            "--max-tokens",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"abc\\\" for \\\"--max-tokens\\\" flag: strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "path",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "show",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=bad",
+            "config",
+            "get"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid --output value \"bad\" (want text|json|yaml)\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json=false",
+            "config",
+            "get",
+            "unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown config key \"unknown\"\n",
+          "files": {}
+        }
+      ]
+    },
+    {
+      "name": "corrupt",
+      "config": "max_tokens = 'invalid'\n",
+      "steps": [
+        {
+          "args": [
+            "config",
+            "get"
+          ],
+          "exit_code": 9,
+          "stdout": "",
+          "stderr": "failed to load config: failed to decode config file: toml: line 1 (last key \"max_tokens\"): incompatible types: TOML value has type string; destination has type integer\n",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "max_tokens = 'invalid'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "path"
+          ],
+          "exit_code": 9,
+          "stdout": "",
+          "stderr": "failed to load config: failed to decode config file: toml: line 1 (last key \"max_tokens\"): incompatible types: TOML value has type string; destination has type integer\n",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "max_tokens = 'invalid'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 9,
+          "stdout": "",
+          "stderr": "failed to load config: failed to decode config file: toml: line 1 (last key \"max_tokens\"): incompatible types: TOML value has type string; destination has type integer\n",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "max_tokens = 'invalid'\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "max_tokens",
+            "12"
+          ],
+          "exit_code": 9,
+          "stdout": "",
+          "stderr": "failed to load config: failed to decode config file: toml: line 1 (last key \"max_tokens\"): incompatible types: TOML value has type string; destination has type integer\n",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "max_tokens = 'invalid'\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "permutations",
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "--json",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "show",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output",
+            "json",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "--output=json",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "ai-config",
+            "show",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "ai-config",
+            "show",
+            "--output=text"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=text",
+            "ai-config",
+            "show",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--output=text",
+            "ai-config",
+            "show",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"has_api_key\":false,\"max_tokens\":8192,\"model\":\"claude-sonnet-5\",\"ollama_url\":\"\",\"provider\":\"ollama\"}\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "--json",
+            "--json=false",
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8192\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "language",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "--vault=one",
+            "get",
+            "vault",
+            "--vault=two"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "--",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown config key \"--json\"\n",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "max_tokens",
+            "+23"
+          ],
+          "exit_code": 0,
+          "stdout": "set max_tokens = +23 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 23\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "max_tokens"
+          ],
+          "exit_code": 0,
+          "stdout": "23\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 23\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "review_threshold",
+            "-1"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown shorthand flag: '1' in -1\n",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 23\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "review_threshold",
+            "--",
+            "-1"
+          ],
+          "exit_code": 0,
+          "stdout": "set review_threshold = -1 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 23\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "review_threshold"
+          ],
+          "exit_code": 0,
+          "stdout": "-1\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 23\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--max-tokens=010"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 8\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "set",
+            "--max-tokens=0x20"
+          ],
+          "exit_code": 0,
+          "stdout": "AI configuration saved.\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 32\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "ai-config",
+            "show"
+          ],
+          "exit_code": 0,
+          "stdout": "Provider: ollama\nOllama URL: \nModel: claude-sonnet-5\nMax tokens: 32\nAPI key configured: false\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"\"\ninbox = \"\"\nreview_threshold = -1\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 32\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "all-public-keys",
+      "steps": [
+        {
+          "args": [
+            "config",
+            "get",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {}
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "vault",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set vault = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "inbox",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set inbox = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "review_threshold"
+          ],
+          "exit_code": 0,
+          "stdout": "85\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "review_threshold",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set review_threshold = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "review_threshold"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "llm_provider"
+          ],
+          "exit_code": 0,
+          "stdout": "ollama\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "llm_provider",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set llm_provider = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "llm_provider"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "llm_model"
+          ],
+          "exit_code": 0,
+          "stdout": "claude-sonnet-5\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "llm_model",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set llm_model = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "llm_model"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "ollama_url"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "ollama_url",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set ollama_url = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "ollama_url"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "language"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "language",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set language = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "language"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "max_tokens"
+          ],
+          "exit_code": 0,
+          "stdout": "8192\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 8192\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "max_tokens",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set max_tokens = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "max_tokens"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "agent_max_iterations"
+          ],
+          "exit_code": 0,
+          "stdout": "0\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "agent_max_iterations",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set agent_max_iterations = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "agent_max_iterations"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "history_max_per_file"
+          ],
+          "exit_code": 0,
+          "stdout": "20\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "history_max_per_file",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set history_max_per_file = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "history_max_per_file"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "history_max_age_days"
+          ],
+          "exit_code": 0,
+          "stdout": "90\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "history_max_age_days",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set history_max_age_days = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "history_max_age_days"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "trash_retention_days"
+          ],
+          "exit_code": 0,
+          "stdout": "30\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "trash_retention_days",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set trash_retention_days = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "trash_retention_days"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "results_max_age_days"
+          ],
+          "exit_code": 0,
+          "stdout": "30\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "results_max_age_days",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set results_max_age_days = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "results_max_age_days"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "results_max_per_task"
+          ],
+          "exit_code": 0,
+          "stdout": "20\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "results_max_per_task",
+            "17"
+          ],
+          "exit_code": 0,
+          "stdout": "set results_max_per_task = 17 in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 17\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "results_max_per_task"
+          ],
+          "exit_code": 0,
+          "stdout": "17\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 17\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "storage_path_template"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 17\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "config",
+            "set",
+            "storage_path_template",
+            "value \u003c\u0026\u003e ü"
+          ],
+          "exit_code": 0,
+          "stdout": "set storage_path_template = value \u003c\u0026\u003e ü in $ROOT/home/config/symdesk/config.toml\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 17\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"value \u003c\u0026\u003e ü\"\n",
+              "mode": 384
+            }
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "storage_path_template"
+          ],
+          "exit_code": 0,
+          "stdout": "value \u003c\u0026\u003e ü\n",
+          "stderr": "",
+          "files": {
+            "home/config/symdesk/config.toml": {
+              "content": "vault = \"value \u003c\u0026\u003e ü\"\ninbox = \"value \u003c\u0026\u003e ü\"\nreview_threshold = 17\nllm_provider = \"value \u003c\u0026\u003e ü\"\nllm_api_key = \"\"\nllm_model = \"value \u003c\u0026\u003e ü\"\nollama_url = \"value \u003c\u0026\u003e ü\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"value \u003c\u0026\u003e ü\"\nmax_tokens = 17\nagent_max_iterations = 17\nhistory_max_per_file = 17\nhistory_max_age_days = 17\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 17\nresults_max_age_days = 17\nresults_max_per_task = 17\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"value \u003c\u0026\u003e ü\"\n",
+              "mode": 384
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

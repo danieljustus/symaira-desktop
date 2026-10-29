@@ -2,17 +2,29 @@
 
 mod ai_cli;
 mod ai_secrets;
+mod config_cli;
 mod config_paths;
+mod conflict_cli;
 mod dataset;
+mod docs_cli;
 mod duplicates_cli;
+mod graph_cli;
+mod help_cli;
 mod history;
+mod history_cli;
 mod http;
 mod index_cli;
+mod links_cli;
 mod mcp;
+mod mutate_cli;
+mod notebook_cli;
 mod recipe;
+mod relations_cli;
+mod restore_cli;
 mod retention;
 mod search_cli;
 mod source_cli;
+mod views_cli;
 
 use std::{
     ffi::OsString,
@@ -48,6 +60,12 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
+    if let Some(result) = help_cli::intercept(&args) {
+        return result;
+    }
+    if let Some(result) = config_cli::intercept(&args) {
+        return result;
+    }
     if args.get(1).is_some_and(|arg| arg == "--version") {
         return write_stdout(format!("symdesk version {VERSION}\n"));
     }
@@ -55,7 +73,16 @@ fn main() -> ExitCode {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
     rewrite_index_output_flag(&mut args);
+    if let Some(exit) = links_cli::prepare_args(&mut args) {
+        return exit;
+    }
     rewrite_config_paths_repeated_flags(&mut args);
+    if let Some(exit) = mutate_cli::prepare_args(&mut args) {
+        return exit;
+    }
+    if let Some(exit) = docs_cli::preprocess(&mut args) {
+        return exit;
+    }
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -172,6 +199,16 @@ fn main() -> ExitCode {
             command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("notebook", command)) => notebook_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("views", command)) => views_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("dataset", command)) => dataset::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -188,19 +225,77 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("history", command)) => match command.subcommand() {
-            Some(("tasks", _)) => history::run_tasks(
-                matches.get_one::<String>("vault").map(String::as_str),
-                output_json,
-            ),
-            _ => process_exit(CoreExitCode::Ok),
-        },
+        Some(("history", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("restore", command)) => restore_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("trash", command)) => history_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            true,
+        ),
         Some(("duplicates", command)) => duplicates_cli::run_duplicates(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
         Some(("similar", command)) => duplicates_cli::run_similar(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("note", command)) => mutate_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            true,
+        ),
+        Some(("doc", command)) => mutate_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            false,
+        ),
+        Some(("docs", command))
+            if !matches!(command.subcommand_name(), Some("list" | "review") | None) =>
+        {
+            mutate_cli::run(
+                command,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+                false,
+            )
+        }
+        Some(("docs", command)) => docs_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("conflict", command)) => conflict_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("graph", command)) => graph_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("backlinks", command)) => links_cli::run_backlinks(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("relations", command)) => relations_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -510,17 +605,24 @@ fn cli() -> Command {
                     }),
             ),
         )
-        .subcommand(
-            Command::new("history")
-                .subcommand_required(true)
-                .subcommand(Command::new("tasks")),
-        )
+        .subcommand(history_cli::cli())
+        .subcommand(history_cli::trash_cli())
+        .subcommand(restore_cli::cli())
         .subcommand(retention::cli())
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
+        .subcommand(views_cli::cli())
+        .subcommand(notebook_cli::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())
+        .subcommand(docs_cli::cli().subcommands(mutate_cli::doc_commands()))
+        .subcommand(mutate_cli::doc_cli())
+        .subcommand(mutate_cli::note_cli())
+        .subcommand(conflict_cli::cli())
+        .subcommand(graph_cli::cli())
+        .subcommand(links_cli::backlinks_cli())
+        .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")

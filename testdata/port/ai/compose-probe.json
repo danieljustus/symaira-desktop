@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "platform": "unix",
+  "source_hashes": {
+    "internal/compose/compose.go": "582d2af4e4d5155f1b148f792f5f78ea053c68619397ec830aecddf8004ba464"
+  },
+  "cases": [
+    {
+      "id": "missing",
+      "output": "",
+      "exit": 0,
+      "missing": true,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": false,
+          "version": "not_found",
+          "argv": ""
+        },
+        {
+          "available": false,
+          "version": "not_found",
+          "argv": ""
+        }
+      ]
+    },
+    {
+      "id": "version",
+      "output": "{\"schema_version\":1,\"version\":\"1.2.3\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "1.2.3",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "1.2.3",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "schema-not-enforced",
+      "output": "{\"schema_version\":99,\"version\":\"future\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "future",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "future",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "no-schema",
+      "output": "{\"version\":\"dev\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "dev",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "dev",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "empty-version",
+      "output": "{\"version\":\"\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "absent-version",
+      "output": "{}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "null-document",
+      "output": "null",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "null-version",
+      "output": "{\"version\":null}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "uppercase-keys",
+      "output": "{\"SCHEMA_VERSION\":1,\"VeRsIoN\":\"case-folded\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "case-folded",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "case-folded",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-version-null-keeps-value",
+      "output": "{\"version\":\"first\",\"version\":null}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "first",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "first",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "duplicate-version-last-value",
+      "output": "{\"version\":\"first\",\"Version\":\"last\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "last",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "last",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "wrong-schema-type",
+      "output": "{\"schema_version\":\"1\",\"version\":\"ignored\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "wrong-version-type",
+      "output": "{\"version\":123}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "malformed",
+      "output": "{broken}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "empty-output",
+      "output": "",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "nonzero-exit",
+      "output": "{\"version\":\"ignored\"}",
+      "exit": 7,
+      "missing": false,
+      "timeout": false,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "timeout",
+      "output": "",
+      "exit": 0,
+      "missing": false,
+      "timeout": true,
+      "replace": "",
+      "observations": [
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "unknown",
+          "argv": "version\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "cache-success-until-reset",
+      "output": "{\"version\":\"old\"}",
+      "exit": 0,
+      "missing": false,
+      "timeout": false,
+      "replace": "{\"version\":\"new\"}",
+      "observations": [
+        {
+          "available": true,
+          "version": "old",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "old",
+          "argv": "version\n--json\n"
+        },
+        {
+          "available": true,
+          "version": "new",
+          "argv": "version\n--json\nversion\n--json\n"
+        }
+      ]
+    },
+    {
+      "id": "cache-missing-until-reset",
+      "output": "",
+      "exit": 0,
+      "missing": true,
+      "timeout": false,
+      "replace": "{\"version\":\"installed\"}",
+      "observations": [
+        {
+          "available": false,
+          "version": "not_found",
+          "argv": ""
+        },
+        {
+          "available": false,
+          "version": "not_found",
+          "argv": ""
+        },
+        {
+          "available": true,
+          "version": "installed",
+          "argv": "version\n--json\n"
+        }
+      ]
+    }
+  ]
+}

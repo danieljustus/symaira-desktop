@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
 
+#[path = "support/root_paths.rs"]
+mod root_paths;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -143,9 +146,10 @@ fn result(output: Output, root: &Path) -> ProcessResult {
 
 fn normalize(text: &str, root: &Path) -> String {
     let root = root.to_string_lossy();
-    text.replace(&format!("{}\\\\", root.replace('\\', "\\\\")), "$ROOT/")
-        .replace(&format!("{}\\", root), "$ROOT/")
-        .replace(root.as_ref(), "$ROOT")
+    let text = text
+        .replace(&root.replace('\\', "\\\\"), "$ROOT")
+        .replace(root.as_ref(), "$ROOT");
+    root_paths::slash_root_paths(&text)
 }
 
 #[test]

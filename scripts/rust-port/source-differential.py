@@ -17,7 +17,7 @@ import time
 # Reviewed functional source with #1129 canonical identity and native vault
 # reference repairs, anchored to the actual merged functional P.
 # Keep the source guard: the live differential below must certify this revision.
-GO_ORACLE = "012e350bfc7b5def92e7b87b2f15c71fe5431b6b"
+GO_ORACLE = "5c666cbf6051eba7b8e659d7d3f16d051c3404b9"
 GO_SOURCES = (
     "cmd/symdesk/sources.go",
     "internal/retrieval/sources.go",

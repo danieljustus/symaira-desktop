@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin",
   "oracle": {
-    "commit": "6aea7f97c3cf3213b62119fe718cf71c0b3557d2",
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
     "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {

@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -75,7 +74,7 @@ func TestIndexBuildProcessPortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("index build fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'")
+		portProcessFixtureDifference(t, "index build fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'", current, encoded)
 	}
 }
 
@@ -143,28 +142,7 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 		t.Fatal(err)
 	}
 
-	binary := filepath.Join(root, "symdesk")
-	if runtime.GOOS == "windows" {
-		binary += ".exe"
-	}
-	if err := os.MkdirAll(filepath.Join(root, "go-build"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	currentUser, err := user.Current()
-	if err != nil {
-		t.Fatalf("resolve build cache home: %v", err)
-	}
-	goEnv := exec.Command("go", "env", "GOMODCACHE")
-	goEnv.Env = append(os.Environ(), "HOME="+currentUser.HomeDir)
-	moduleCache, err := goEnv.Output()
-	if err != nil {
-		t.Fatalf("resolve Go module cache: %v", err)
-	}
-	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
-	build.Env = append(os.Environ(), "HOME="+currentUser.HomeDir, "GOMODCACHE="+strings.TrimSpace(string(moduleCache)), "GOTMPDIR="+filepath.Join(root, "go-build"))
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build Go CLI process fixture: %v\n%s", err, output)
-	}
+	binary := processFixtureBinary(t)
 	environment := []string{"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempRoot, "TMP=" + tempRoot, "TEMP=" + tempRoot, "LANG=C", "LC_ALL=C", "TZ=UTC", "TERM=dumb", "NO_COLOR=1"}
 	run := func(args ...string) indexBuildProcessResult {
 		command := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
@@ -203,7 +181,7 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 		}
 	}
 	fixture.Lifecycle, fixture.LifecycleReasons = readIndexBuildLifecycle(t, vault)
-	_, err = os.Stat(filepath.Join(filepath.Dir(sidecarPathForFixture(t, vault)), "metadata.json"))
+	_, err := os.Stat(filepath.Join(filepath.Dir(sidecarPathForFixture(t, vault)), "metadata.json"))
 	fixture.Metadata = err == nil
 	return fixture
 }

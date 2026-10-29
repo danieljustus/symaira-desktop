@@ -81,11 +81,11 @@ jobs:
 
       - name: Test
         if: matrix.os != 'ubuntu-latest'
-        run: go test -race -count=1 ./...
+        run: go test -race -count=1 -timeout 20m ./...
 
       - name: Test with coverage
         if: matrix.os == 'ubuntu-latest'
-        run: go test -race -count=1 -coverprofile=coverage.out ./...
+        run: go test -race -count=1 -timeout 20m -coverprofile=coverage.out ./...
 
       - name: Native retention runner negative controls
         if: matrix.os == 'ubuntu-latest'
@@ -412,7 +412,7 @@ jobs:
           cargo fmt --all --check
           cargo check --workspace --all-targets --all-features --locked
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-          cargo test --workspace --all-features --locked
+          cargo test --workspace --all-features --locked --no-fail-fast
           cargo test --workspace --doc --all-features --locked
 
       - name: Run native vault write differential

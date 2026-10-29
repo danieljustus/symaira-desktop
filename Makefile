@@ -1,3 +1,60 @@
+.PHONY: paperless-mapping-differential paperless-mapping-fixtures-generate
+paperless-mapping-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+	$(CARGO) test -p symdesk-ingest --test paperless_mapping_contracts --locked
+
+paperless-mapping-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperlessimport -run '^TestPortPaperlessMappingContract$$'
+
+.PHONY: paperless-state-differential paperless-state-fixtures-generate
+paperless-state-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
+	$(CARGO) test -p symdesk-ingest --test paperless_state_contracts --locked
+
+paperless-state-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortPaperlessStateContract$$' -args -port-paperless-state
+
+.PHONY: paperless-export-differential paperless-export-fixtures-generate
+paperless-export-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
+	$(CARGO) test -p symdesk-ingest --test paperless_export_contracts --locked
+
+paperless-export-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/paperless -run '^TestPortPaperlessExport(Unicode)?Contract$$'
+
+.PHONY: paperless-http-differential paperless-http-fixtures-generate
+paperless-http-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+	$(CARGO) test -p symdesk-ingest --test paperless_http_contracts --locked
+
+paperless-http-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/paperless -run '^TestPortPaperlessHTTPContract$$'
+
+.PHONY: notion-import-differential notion-import-fixtures-generate
+notion-import-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+	$(CARGO) test -p symdesk-ingest --test notion_contracts --locked
+
+notion-import-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/notionimport -run '^TestPortNotionContract$$'
+
+.PHONY: ingest-queue-differential ingest-queue-fixtures-generate
+INGEST_GO ?= go
+ingest-queue-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
+	$(CARGO) test -p symdesk-ingest --locked
+
+ingest-queue-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
+
+.PHONY: ingest-extraction-differential ingest-extraction-fixtures-generate
+ingest-extraction-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestExtractionContract$$'
+	$(CARGO) test -p symdesk-ingest --test extraction_contracts --locked
+
+ingest-extraction-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestExtractionContract$$'
+
 .PHONY: benchmark-large boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
@@ -36,6 +93,22 @@
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential index-symlink-cli-fixtures-generate index-symlink-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
+.PHONY: config-cli-fixtures-generate config-cli-differential
+config-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConfigProcessContract$$'
+
+config-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConfigProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test config --locked
+
+.PHONY: help-cli-fixtures-generate help-cli-differential
+help-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHelpProcessContract$$'
+
+help-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHelpProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test help --locked
+
 .PHONY: duplicates-cli-fixtures-generate duplicates-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
 .PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential
@@ -197,14 +270,63 @@ core-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen \
+		--oracle-commit $(PORT_ORACLE_COMMIT) \
+		--oracle-release $(PORT_ORACLE_RELEASE)
 
 core-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/configgen --check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/coregen --check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/querygen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen --check
 
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
+
+# INGEST-006 storage-path templates: the Go-owned fixture records Compile
+# acceptance/error text, Eval over field maps and Disambiguate from the
+# production internal/templatepath package; Rust replays all of it.
+CONTACTS_GO ?= go
+.PHONY: contacts-keyprovider-differential
+contacts-keyprovider-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsKeyProviderContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test keyprovider_contracts
+
+.PHONY: contacts-erase-differential
+contacts-erase-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsEraseContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test erase_contracts
+
+.PHONY: contacts-relationship-differential
+contacts-relationship-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/relationship -run '^TestPortContactsRelationshipContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test relationship_contracts
+
+.PHONY: contacts-crud-differential
+contacts-crud-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/contact -run '^TestPortContactsCRUDContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test crud_contracts
+
+.PHONY: contacts-vcard-differential
+contacts-vcard-differential:
+	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/importer -run '^TestPortContactsVCardContract$$'
+	$(CARGO) test -p symdesk-contacts --locked --test vcard_contracts
+
+.PHONY: contacts-import-differential
+contacts-import-differential:
+	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/importer ./internal/contacts/internal/service/importer -run '^TestPortContacts(CSV|Import)Contract$$'
+	$(CARGO) test -p symdesk-contacts --locked --test csv_contracts --test import_contracts
+
+.PHONY: contacts-schema-differential
+contacts-schema-differential:
+	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/storage/sqlite -run '^TestPortContactsSchemaContract$$'
+	$(CARGO) test -p symdesk-contacts --locked --test schema_contracts
+
+.PHONY: template-path-differential
+template-path-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/templatepathgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/templatepath ./scripts/rust-port/cmd/templatepathgen
+	$(CARGO) test -p symdesk-core --locked --test template_path_contracts
 
 .PHONY: config-verbatim-fixtures-check config-verbatim-differential
 # Native Windows only: retain the recorded AMD64 bytes and compare fresh Go
@@ -302,6 +424,16 @@ base-view-write-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/baseviewwritegen --check
 	$(CARGO) test -p symdesk-vault --test base_view_write_contracts --locked
 
+# HTTP-002/HTTP-005 permissions manager: the Go-owned fixture executes the
+# production internal/permissions package over users, groups and document
+# rules (results, users/groups/permissions.json bytes and modes, Go JSON
+# decoding quirks); Rust replays all of it. Regenerate deliberately with
+# `make port-fixtures-generate`, never in place.
+.PHONY: permissions-differential
+permissions-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/permissionsgen --check
+	$(CARGO) test -p symdesk-vault --test permissions_contracts --locked
+
 vault-history-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 
@@ -314,6 +446,58 @@ vault-history-differential:
 history-tasks-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortHistoryTasksCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test history_tasks --locked
+
+.PHONY: docs-read-cli-fixtures-generate docs-read-cli-differential
+docs-read-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./cmd/symdesk -run '^TestPortDocsReadProcessContract$$'
+
+docs-read-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./cmd/symdesk -run '^TestPortDocsReadProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test docs_read --locked
+.PHONY: notebook-write-cli-fixtures-generate notebook-write-cli-differential
+notebook-write-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookWriteProcessContract$$'
+notebook-write-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookWriteProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test notebook_write --locked
+.PHONY: notebook-read-cli-fixtures-generate notebook-read-cli-differential
+notebook-read-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookReadProcessContract$$'
+notebook-read-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNotebookReadProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test notebook_read --locked
+.PHONY: views-cli-fixtures-generate views-cli-differential
+views-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+views-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortViewsProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test views --locked
+.PHONY: relations-inverse-cli-fixtures-generate relations-inverse-cli-differential
+relations-inverse-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
+relations-inverse-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRelationsInverseProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test relations_inverse --locked
+.PHONY: history-read-cli-fixtures-generate history-read-cli-differential
+history-read-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+history-read-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHistoryReadProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test history_read --locked
+
+.PHONY: graph-cli-fixtures-generate graph-cli-differential
+graph-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortGraphProcessContract$$'
+graph-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortGraphProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test graph --locked
+
+.PHONY: backlinks-cli-fixtures-generate backlinks-cli-differential
+backlinks-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortBacklinksProcessContract$$'
+backlinks-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortBacklinksProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test backlinks --locked
 
 duplicates-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortDuplicatesProcessContract$$'
@@ -615,6 +799,15 @@ retrieval-local-hash-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/engine -run '^TestLocalHashPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked local_hash_tests
 
+.PHONY: retrieval-document-extraction-fixtures-generate retrieval-document-extraction-differential
+RETRIEVAL_EXTRACTION_GO ?= go
+retrieval-document-extraction-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 $(RETRIEVAL_EXTRACTION_GO) test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalExtractionFixture$$'
+
+retrieval-document-extraction-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(RETRIEVAL_EXTRACTION_GO) test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalExtractionFixture$$'
+	$(CARGO) test -p symdesk-index --locked retrieval_extract
+
 retrieval-csv-sections-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/parser -run '^TestRetrievalCSVSectionsFixture$$'
 
@@ -678,7 +871,13 @@ render-ir-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderscenegen
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderlayoutgen
 
-render-ir-differential:
+GO ?= go
+.PHONY: render-emit-differential
+render-emit-differential:
+	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/renderemitgen --check
+	$(CARGO) test -p symdesk-render --test draw_emit_contract --locked
+
+render-ir-differential: render-emit-differential
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen --check
@@ -1095,7 +1294,7 @@ rust-lint:
 	$(CARGO) clippy --workspace --all-targets --all-features --locked -- -D warnings
 
 rust-test:
-	$(CARGO) nextest run --workspace --all-features --locked
+	$(CARGO) nextest run --workspace --all-features --locked --no-fail-fast
 	$(CARGO) test --workspace --doc --all-features --locked
 
 rust-features:
@@ -1138,9 +1337,62 @@ clean:
 	go clean -cache -testcache
 	rm -rf vendor/
 
+.PHONY: ai-provider-fixtures-generate ai-provider-differential
+ai-provider-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIProviderContract$$'
+
+ai-provider-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIProviderContract$$'
+	$(CARGO) test -p symdesk-core --locked --test ai_providers
+
+.PHONY: compose-probe-fixtures-generate compose-probe-differential
+compose-probe-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeProbeContract$$'
+
+compose-probe-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeProbeContract$$'
+	$(CARGO) test -p symdesk-core --locked --test compose_probe
+
+.PHONY: compose-resolve-fixtures-generate compose-resolve-differential
+compose-resolve-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'
+
+compose-resolve-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/compose -run '^TestPortComposeResolveContract$$'
+	$(CARGO) test -p symdesk-core --locked --test compose_resolve
+
 recipe-validate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 
 recipe-validate-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test recipe_validate
+
+.PHONY: mcp-write-differential mcp-write-fixtures-generate
+mcp-write-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --test mcp_write --locked
+
+mcp-write-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
+
+.PHONY: note-doc-cli-fixtures-generate note-doc-cli-differential
+note-doc-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+note-doc-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test note_doc --locked
+
+.PHONY: conflict-cli-fixtures-generate conflict-cli-differential
+conflict-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConflictProcessContract$$'
+conflict-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortConflictProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test conflict --locked
+
+.PHONY: restore-cli-fixtures-generate restore-cli-differential
+restore-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRestoreProcessContract$$'
+restore-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortRestoreProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test restore --locked

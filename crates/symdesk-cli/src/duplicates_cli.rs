@@ -163,7 +163,7 @@ fn parse_threshold(command: &ArgMatches) -> Result<Option<i64>, String> {
 
 /// Go's `strconv.ParseInt(s, 0, 64)` as used by pflag's `Int` flag; the error
 /// is pflag's rewritten reason text.
-fn parse_go_int(raw: &str) -> Result<i64, &'static str> {
+pub(crate) fn parse_go_int(raw: &str) -> Result<i64, &'static str> {
     const SYNTAX: &str = "invalid syntax";
     const RANGE: &str = "value out of range";
     let (negative, digits) = match raw.as_bytes().first() {
@@ -262,7 +262,7 @@ fn underscore_ok(text: &[u8]) -> bool {
 
 /// Go's `SimilarDocs` front half: confine the path, read it through the vault
 /// root and return the stored or freshly computed simhash.
-fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
+pub(crate) fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
     let absolute = secure_path(vault_root, requested).map_err(|error| error.to_string())?;
     let canonical_root = fs::canonicalize(vault_root)
         .map_err(|error| format!("resolve canonical vault root: {error}"))?;

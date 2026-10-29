@@ -672,6 +672,23 @@ impl RetrievalDb {
         Ok(Self { connection })
     }
 
+    /// Delete a document, its chunks and extraction cache in one transaction.
+    ///
+    /// # Errors
+    /// Returns the database failure without committing a partial deletion.
+    pub fn delete_document(&self, path: &str) -> Result<(), SidecarError> {
+        let transaction = self.connection.unchecked_transaction()?;
+        transaction.execute("DELETE FROM extractions WHERE document_path = ?1", [path])?;
+        transaction.execute("DELETE FROM chunks WHERE document_path = ?1", [path])?;
+        transaction.execute("DELETE FROM documents WHERE path = ?1", [path])?;
+        transaction.commit()?;
+        let _ = self.connection.execute(
+            "UPDATE index_meta SET value = value + 1 WHERE key = 'generation'",
+            [],
+        );
+        Ok(())
+    }
+
     pub fn save_document(&self, document: &RetrievalDocument) -> Result<(), SidecarError> {
         self.connection.execute(
             "INSERT INTO documents (path, hash, updated_at) VALUES (?1, ?2, ?3)

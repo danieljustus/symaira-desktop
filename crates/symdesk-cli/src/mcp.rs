@@ -3,6 +3,8 @@
 mod pdf;
 #[cfg(test)]
 mod pdf_tests;
+mod read;
+mod write;
 
 use std::{
     collections::BTreeMap,
@@ -378,12 +380,7 @@ where
             }),
         ),
         "ping" => send_result(output, mode, request.id.clone(), json!({})),
-        "tools/list" => send_result(
-            output,
-            mode,
-            request.id.clone(),
-            json!({"tools": tool_definitions(config.allow_write)}),
-        ),
+        "tools/list" => send_tools_list(output, mode, request.id.clone(), config.allow_write),
         "tools/call" => dispatch_tool_call(request, mode, config, output),
         method => send_error(
             output,
@@ -420,8 +417,11 @@ where
         }
     };
     let name = name.as_str();
-    if !matches!(name, "desk_status" | "desk_ls" | "desk_search" | "desk_ask")
-        && !(config.allow_write && pdf::canonical_name(name).is_some())
+    if !matches!(
+        name,
+        "desk_status" | "desk_ls" | "desk_search" | "desk_ask" | "search_documents"
+    ) && !read::supports(name)
+        && !(config.allow_write && (pdf::canonical_name(name).is_some() || write::supports(name)))
     {
         if !request.has_id {
             return Ok(());
@@ -458,9 +458,9 @@ fn call_tool(
 ) -> Result<Value, String> {
     match name {
         "desk_status" => Ok(json!({
-            "version": config.version,
-            "vault": config.vault.clone().unwrap_or_default(),
             "capabilities": if config.allow_write { "read_write" } else { "read_only" },
+            "vault": config.vault.clone().unwrap_or_default(),
+            "version": config.version,
         })),
         "desk_ls" => {
             let args = go_string_fields(
@@ -494,7 +494,7 @@ fn call_tool(
                 .map_err(|error| error.to_string())?,
             ))
         }
-        "desk_search" => {
+        "desk_search" | "search_documents" => {
             let (query, _) = go_string_arguments(raw_arguments, false)?;
             if query.is_empty() {
                 return Err("query is required".to_owned());
@@ -561,6 +561,10 @@ fn call_tool(
             let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
             Ok(json!({"answer": answer}))
         }
+        _ if config.allow_write && write::supports(name) => {
+            write::call(name, raw_arguments, config)
+        }
+        _ if read::supports(name) => read::call(name, raw_arguments, config),
         _ if config.allow_write && pdf::canonical_name(name).is_some() => {
             pdf::call(name, raw_arguments, &config.pdf_context)
         }
@@ -773,7 +777,13 @@ fn go_string_field_type_error(value_type: &str, field: &str) -> String {
 }
 
 fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
-    let vault = super::resolve_vault(config.vault.as_deref())?;
+    let vault = super::resolve_vault(config.vault.as_deref()).map_err(|error| {
+        if error == "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)" {
+            "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned()
+        } else {
+            error
+        }
+    })?;
     {
         // The first call sets the database up once and keeps that connection;
         // later calls block here only until it exists. Calls still run
@@ -820,37 +830,33 @@ fn search_entry(root: &std::path::Path, hit: &SearchHit, sources: &[SearchSource
     }
 }
 
-fn tool_definitions(allow_write: bool) -> Vec<Value> {
-    let mut tools = vec![
-        json!({
-            "name": "desk_status",
-            "description": "Returns the current version and vault path configuration for symdesk.",
-            "inputSchema": {"type": "object", "properties": {}},
-            "annotations": {"readOnlyHint": true},
-        }),
-        json!({
-            "name": "desk_ls",
-            "description": "Lists files in the vault.",
-            "inputSchema": {"type": "object", "properties": {"dir": {"type": "string"}}},
-            "annotations": {"readOnlyHint": true},
-        }),
-        json!({
-            "name": "desk_search",
-            "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
-            "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
-            "annotations": {"readOnlyHint": true},
-        }),
-        json!({
-            "name": "desk_ask",
-            "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
-            "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "notebook": {"type": "string", "description": "optional: notebook id or path to restrict retrieval and citations to"}}, "required": ["query"]},
-            "annotations": {"readOnlyHint": true},
-        }),
-    ];
-    if allow_write {
-        tools.extend(pdf::tool_definitions());
+// These crate-local assets are recorded from the real Go stdio process by
+// TestMCPSurfaceProcessPortFixture. Keep RawMessage schema key order intact;
+// serializing through Value would change the observable tools/list bytes.
+fn send_tools_list<W: Write + Send + 'static>(
+    output: &Arc<Mutex<W>>,
+    mode: ResponseMode,
+    id: Value,
+    allow_write: bool,
+) -> io::Result<()> {
+    #[derive(Serialize)]
+    struct Response {
+        jsonrpc: &'static str,
+        id: Value,
+        result: Box<RawValue>,
     }
-    tools
+    let catalog = if allow_write {
+        include_str!("mcp/assets/tools-read-write.json")
+    } else {
+        include_str!("mcp/assets/tools-read-only.json")
+    };
+    let response = Response {
+        jsonrpc: "2.0",
+        id,
+        result: RawValue::from_string(catalog.trim_end().to_owned()).map_err(io::Error::other)?,
+    };
+    let data = super::go_escape_json(serde_json::to_string(&response).map_err(io::Error::other)?);
+    write_data(output, mode, data.as_bytes())
 }
 
 fn send_result<W>(
@@ -892,8 +898,10 @@ where
         output,
         mode,
         id,
+        // Key order is written in Go's sorted map order so the bytes do not
+        // depend on whether serde_json's `preserve_order` is unified on.
         json!({
-            "content": [{"type": "text", "text": text}],
+            "content": [{"text": text, "type": "text"}],
             "isError": is_error,
         }),
     )
@@ -931,6 +939,14 @@ where
 {
     let data = super::go_escape_json(serde_json::to_string(&response).map_err(io::Error::other)?)
         .into_bytes();
+    write_data(output, mode, &data)
+}
+
+fn write_data<W: Write + Send + 'static>(
+    output: &Arc<Mutex<W>>,
+    mode: ResponseMode,
+    data: &[u8],
+) -> io::Result<()> {
     if data.len() > MAX_MESSAGE_BYTES {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -942,12 +958,12 @@ where
         .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
     match mode {
         ResponseMode::Line => {
-            writer.write_all(&data)?;
+            writer.write_all(data)?;
             writer.write_all(b"\n")?;
         }
         ResponseMode::Framed => {
             write!(writer, "Content-Length: {}\r\n\r\n", data.len())?;
-            writer.write_all(&data)?;
+            writer.write_all(data)?;
         }
     }
     writer.flush()
@@ -1147,25 +1163,35 @@ mod tests {
     fn line_initialize_and_tools_list_match_representative_contract() {
         let output = run(br#"{"jsonrpc":"2.0","id":1,"method":"initialize"}
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"desk_status","arguments":{}}}
 "#);
         let responses: Vec<Value> = output
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
-        assert_eq!(responses.len(), 2);
+        assert_eq!(responses.len(), 3);
+        // The embedded JSON is text, so outer JSON comparison cannot ignore
+        // its key order. Go marshals this status map in sorted-key order.
+        assert_eq!(
+            responses[2]["result"]["content"][0]["text"],
+            format!(
+                r#"{{"capabilities":"read_only","vault":"/tmp/rust006-vault","version":"{}"}}"#,
+                super::super::VERSION
+            )
+        );
         assert_eq!(responses[0]["result"]["protocolVersion"], PROTOCOL_VERSION);
         assert_eq!(
             responses[0]["result"]["serverInfo"],
             json!({"name":"symdesk","version":super::super::VERSION})
         );
         let tools = responses[1]["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 4);
+        assert_eq!(tools.len(), 29);
         assert_eq!(
-            tools
+            tools[..3]
                 .iter()
                 .map(|tool| tool["name"].as_str().unwrap())
                 .collect::<Vec<_>>(),
-            ["desk_status", "desk_ls", "desk_search", "desk_ask"]
+            ["desk_status", "desk_ls", "desk_search"]
         );
         assert!(
             tools

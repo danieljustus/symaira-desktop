@@ -20,7 +20,7 @@ A local-first and self-hostable, **agent-native** workspace that unifies documen
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
 - **Composes at runtime today:** [`symmemory`](https://github.com/danieljustus/symaira-brain) (RAG/graph — built by `symaira-brain`), [`symbrowse`](https://github.com/danieljustus/symaira-browse) (web clipping), and [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets resolution), all detected dynamically via `PATH` probe (the core never depends on their presence and degrades gracefully).
 - **Ships in-repo:** the tools absorbed by the repo consolidation live here as [`meet/`](meet/) (meeting capture, macOS app target) and directly in the root module as [`internal/pdf/`](internal/pdf/) (Markdown → PDF, former `symaira-print`), [`internal/contacts/`](internal/contacts/) (contact references, former `symaira-relate`), [`internal/retrieval/`](internal/retrieval/) (hybrid search, former `symaira-seek`), [`internal/ingest/`](internal/ingest/) (OCR/ingest, former `symaira-ingest`), and [`internal/room/`](internal/room/) + [`cmd/symroom`](cmd/symroom) (signed project journal, former `symaira-room`). PDF rendering, contact references, hybrid search, ingest, and the room logic are linked into `symdesk` in-process, so there is no separate `symprint`, `symrelate`, `symseek` or `symingest` binary to install any more. Meet is the exception: its module lives here and its libraries are available to the app, but recording still runs in the separate SymMeet menu-bar agent, which SymDesk brings forward rather than links against — SymDesk itself never captures audio. Room is the second exception: it ships as the `symroom` binary (built from the root module since the 2026-08 module dissolution), and its SwiftUI module in [`room/client/`](room/client/) is embedded in the app as the Project Journal surface, which bridges that binary rather than linking Go code. See `docs/repo-konsolidierung.md` §10 in the workspace.
-- **Runs on:** macOS, Linux amd64/arm64, Docker/Compose, Raspberry Pi, Mac mini, NAS-class hosts, and Home Assistant OS as an app/add-on
+- **Runs on:** macOS Apple Silicon, Linux amd64/arm64, Docker/Compose, Raspberry Pi, Mac mini, NAS-class hosts, and Home Assistant OS as an app/add-on
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; Obsidian Canvas/whiteboards → Obsidian; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
@@ -43,6 +43,19 @@ page; the near-term roadmap is in [docs/PLAN.md](docs/PLAN.md).
 - Symaira tools are composed at runtime, so optional capabilities degrade gracefully when a companion tool is unavailable.
 - Local-first and self-hosted modes both keep documents, indexes, and configuration under the user’s control.
 - OCR jobs can run beside the server or be leased to a stronger Mac/Linux worker, including a MacBook using a local Ollama vision model.
+
+## Supported platforms
+
+| Surface | Supported targets |
+| --- | --- |
+| Native macOS app and CLI | Apple Silicon (arm64) |
+| Native mobile app | iOS / iPadOS |
+| CLI, self-hosted server and CI | Linux amd64 / arm64 |
+| Browser access | Web, within the documented implementation status above |
+
+Windows and Intel macOS are unsupported and receive no CI or release artifacts.
+Existing Windows-specific source and fixtures remain for now; their removal is
+follow-up work, not part of this support change (see [#1364](https://github.com/danieljustus/symaira-desktop/issues/1364)).
 
 ## Installation
 
@@ -88,7 +101,7 @@ go install github.com/danieljustus/symaira-desktop/cmd/symdesk@latest
 
 ### Native macOS app from source
 
-The SwiftUI app currently builds from source on macOS 14 or newer:
+The SwiftUI app currently builds from source on Apple Silicon with macOS 14 or newer:
 
 ```sh
 brew install xcodegen
@@ -192,7 +205,7 @@ make benchmark-large # generate and index a deterministic 10k-document vault
 docker compose build # multi-architecture-compatible Linux server/worker image
 ```
 
-On Linux or Windows, `make test` cannot run the race detector with CGO disabled.
+On Linux, `make test` cannot run the race detector with CGO disabled.
 Use `CGO_ENABLED=1 go test -race -count=1 ./...` with a C toolchain, as CI does.
 CGO-free production builds remain supported.
 

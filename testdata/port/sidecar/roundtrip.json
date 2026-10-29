@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "c2aa04080d8a5c39a43058ffa6fa9ade2d5cab75",
+    "commit": "6aea7f97c3cf3213b62119fe718cf71c0b3557d2",
     "release": "renderer-pdf-safety-v2-local"
   },
   "source": "internal/sidecar + crates/symdesk-index",

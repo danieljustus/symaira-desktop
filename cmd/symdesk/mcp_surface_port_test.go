@@ -127,7 +127,16 @@ func checkMCPSurfaceBytes(t *testing.T, path string, want []byte) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if filepath.Base(path) == "read-process.json" {
+		got, err = adjustMCPReadFixtureExpectation(got)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	if !bytes.Equal(got, want) {
+		for _, difference := range mcpSurfaceCaseDifferences(got, want, 50) {
+			t.Log(difference)
+		}
 		at := 0
 		for at < len(got) && at < len(want) && got[at] == want[at] {
 			at++

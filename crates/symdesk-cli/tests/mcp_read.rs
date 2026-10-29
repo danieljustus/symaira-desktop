@@ -106,7 +106,8 @@ fn replay(case: &Case) {
     if case.indexed {
         let mut sidecar = symdesk_index::Sidecar::open(&root.join("data/sidecar.db")).unwrap();
         for (path, body) in &case.files {
-            let path = root.join("vault").join(path);
+            let path = symdesk_index::document_storage_key(&root.join("vault").join(path))
+                .expect("Go filepath.Join native storage spelling");
             let document =
                 symdesk_vault::parse_bytes(&path.to_string_lossy(), body.as_bytes()).unwrap();
             let indexed = symdesk_index::IndexedDocument::from_vault(&document, None).unwrap();
@@ -240,8 +241,18 @@ fn replay(case: &Case) {
     fs::remove_dir_all(root).unwrap();
     assert_eq!(after, case.after_files, "{} authoritative files", case.id);
     assert_eq!(status.code(), Some(case.exit_code), "{}", case.id);
-    assert_eq!(stderr, case.stderr, "{} stderr", case.id);
-    assert_eq!(stdout, case.stdout, "{} raw protocol bytes", case.id);
+    assert_eq!(
+        stderr,
+        mcp_read_paths::platform_expectation(&case.stderr, cfg!(windows)),
+        "{} stderr",
+        case.id
+    );
+    assert_eq!(
+        stdout,
+        mcp_read_paths::platform_expectation(&case.stdout, cfg!(windows)),
+        "{} raw protocol bytes",
+        case.id
+    );
 }
 
 fn collect_files(

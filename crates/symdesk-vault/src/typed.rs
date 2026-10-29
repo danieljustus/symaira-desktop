@@ -260,12 +260,29 @@ pub fn parse_base(path: &str, input: &[u8]) -> Result<Base, TypedVaultError> {
         extras: frontmatter.extras,
     })
 }
+fn portable_notebook_path(path: &str, separator: char) -> String {
+    path.replace(separator, "/")
+}
+
+#[test]
+fn notebook_identifiers_use_slashes_at_every_native_level() {
+    assert_eq!(
+        portable_notebook_path(r"notebooks\nested\hidden.md", '\\'),
+        "notebooks/nested/hidden.md"
+    );
+    assert_eq!(
+        portable_notebook_path(r"notebooks/nested\literal.md", '/'),
+        r"notebooks/nested\literal.md"
+    );
+}
 
 /// Parses a notebook note and preserves the Go source ordering rules.
 ///
 /// # Errors
 /// Returns a parser or notebook identity error.
 pub fn parse_notebook(path: &str, input: &[u8]) -> Result<Notebook, TypedVaultError> {
+    let portable_path = portable_notebook_path(path, std::path::MAIN_SEPARATOR);
+    let path = portable_path.as_str();
     let document = parse_bytes(path, input)?;
     let note_type = value_string(&document, "type");
     if note_type != "notebook" {

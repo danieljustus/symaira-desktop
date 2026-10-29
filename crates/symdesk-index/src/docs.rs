@@ -158,3 +158,38 @@ fn parse_tags(raw: &str) -> Vec<String> {
         .map(str::to_owned)
         .collect()
 }
+
+#[cfg(test)]
+mod native_path_tests {
+    use super::*;
+
+    #[test]
+    fn index_queries_preserve_native_absolute_host_paths() {
+        let mut connection = rusqlite::Connection::open_in_memory().unwrap();
+        crate::migrate(&mut connection).unwrap();
+        let sidecar = Sidecar {
+            connection,
+            closed: false,
+        };
+        let path = r"C:\vault\notebooks\nested\hidden.md";
+        sidecar
+            .connection
+            .execute(
+                "INSERT INTO files (path,title,sha256,type,modified_at,indexed_at) VALUES (?1,'Hidden','test','note','2026-01-01','2026-01-01')",
+                [path],
+            )
+            .unwrap();
+        assert_eq!(
+            sidecar.docs_list(&DocsFilter::default()).unwrap()[0].path,
+            path
+        );
+        assert_eq!(sidecar.docs_review(85).unwrap()[0].path, path);
+        assert_eq!(
+            sidecar
+                .list_files(std::path::Path::new(r"C:\vault"), "")
+                .unwrap()[0]
+                .path,
+            path
+        );
+    }
+}

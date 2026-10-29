@@ -174,7 +174,7 @@ fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> Str
     let root = root_path.components().collect::<Vec<_>>();
     let target = target_path.components().collect::<Vec<_>>();
     if !path.is_absolute() || root.first() != target.first() {
-        return path.to_string_lossy().into_owned();
+        return portable_identifier(&path.to_string_lossy(), std::path::MAIN_SEPARATOR);
     }
     let common = root.iter().zip(&target).take_while(|(a, b)| a == b).count();
     let mut relative = PathBuf::new();
@@ -189,7 +189,17 @@ fn backlink_relative_path(root: &std::path::Path, path: &std::path::Path) -> Str
     if relative.as_os_str().is_empty() {
         relative.push(".");
     }
-    relative
-        .to_string_lossy()
-        .replace(std::path::MAIN_SEPARATOR, "/")
+    portable_identifier(&relative.to_string_lossy(), std::path::MAIN_SEPARATOR)
+}
+
+fn portable_identifier(path: &str, native_separator: char) -> String {
+    path.replace(native_separator, "/")
+}
+
+#[test]
+fn document_identifiers_do_not_leak_native_separators() {
+    for input in [r"notebooks\nested\hidden.md", r"..\external\link.md"] {
+        assert_eq!(portable_identifier(input, '\\'), input.replace('\\', "/"));
+        assert_eq!(portable_identifier(input, '/'), input);
+    }
 }

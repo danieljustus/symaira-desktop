@@ -1,5 +1,6 @@
 use std::path::Path;
 
+// Replace the disposable root only. Never repair actual output separators.
 pub fn normalize(text: &str, root: &Path) -> String {
     let root = root.to_string_lossy();
     let escaped = root.replace('\\', "\\\\");
@@ -7,8 +8,18 @@ pub fn normalize(text: &str, root: &Path) -> String {
     for spelling in [escaped.replace('\\', "\\\\"), escaped, root.into_owned()] {
         text = text.replace(&spelling, "$ROOT");
     }
+    text
+}
+
+// Platform-adjusted expectation, not separator-insensitive comparison. Only
+// absolute host paths following the substituted root change; vault-relative
+// Markdown identifiers, escapes and all other bytes remain exact.
+pub fn platform_expectation(text: &str, windows: bool) -> String {
+    if !windows {
+        return text.to_owned();
+    }
     let mut out = String::new();
-    let mut rest = text.as_str();
+    let mut rest = text;
     while let Some(index) = rest.find("$ROOT") {
         out.push_str(&rest[..index + 5]);
         rest = &rest[index + 5..];
@@ -18,58 +29,36 @@ pub fn normalize(text: &str, root: &Path) -> String {
             .count();
         let token = &rest[..end];
         let path = token.trim_end_matches('\\');
-        let mut previous_separator = false;
-        for c in path.chars() {
-            if c == '\\' {
-                if !previous_separator {
-                    out.push('/');
-                }
-                previous_separator = true;
-            } else {
-                out.push(c);
-                previous_separator = false;
-            }
-        }
+        let escaping = 2 * (token.len() - path.len() + 1);
+        out.push_str(&path.replace('/', &"\\".repeat(escaping)));
         out.push_str(&token[path.len()..]);
         rest = &rest[end..];
     }
     out.push_str(rest);
-    // Go MeetingListDetailed uses filepath.Rel without ToSlash.
-    out.replace(r"meetings\\\\", "meetings/")
-        .replace(r"meetings\\", "meetings/")
-        .replace(r"meetings\", "meetings/")
-        .replace(r"notebooks\\\\", "notebooks/")
-        .replace(r"notebooks\\", "notebooks/")
-        .replace(r"notebooks\", "notebooks/")
-        .replace(r"bases\\\\", "bases/")
-        .replace(r"bases\\", "bases/")
-        .replace(r"bases\", "bases/")
+    out
 }
 
 #[test]
-fn nested_windows_paths_preserve_json_escapes() {
+fn native_expectation_preserves_relative_identifiers_and_rejects_wrong_output() {
     let root = Path::new(r"C:\Users\runner\fixture");
+    let recorded = r#"{"text":"[{\"path\":\"$ROOT/vault/nested/note.md\"},{\"path\":\"notebooks/nested/note.md\"}]"}"#;
+    let native = r#"{"text":"[{\"path\":\"$ROOT\\\\vault\\\\nested\\\\note.md\"},{\"path\":\"notebooks/nested/note.md\"}]"}"#;
+    assert_eq!(platform_expectation(recorded, true), native);
+    assert_eq!(platform_expectation(recorded, false), recorded);
     assert_eq!(
         normalize(
-            r#"{"text":"{\"path\":\"C:\\\\Users\\\\runner\\\\fixture\\\\vault\\\\note.md\"}"}"#,
+            r#"{"text":"{\"path\":\"C:\\\\Users\\\\runner\\\\fixture\\\\vault\\\\nested\\\\note.md\"}"}"#,
             root
         ),
-        r#"{"text":"{\"path\":\"$ROOT/vault/note.md\"}"}"#
+        r#"{"text":"{\"path\":\"$ROOT\\\\vault\\\\nested\\\\note.md\"}"}"#
     );
-    assert_eq!(
-        normalize(r#"{"text":"[{\"path\":\"notebooks\\\\empty.md\"}]"}"#, root),
-        r#"{"text":"[{\"path\":\"notebooks/empty.md\"}]"}"#
-    );
-    assert_eq!(
-        normalize(r#"{"text":"[{\"path\":\"bases\\\\work.md\"}]"}"#, root),
-        r#"{"text":"[{\"path\":\"bases/work.md\"}]"}"#
-    );
-    assert_eq!(
-        normalize(r#"{"text":"[{\"path\":\"meetings\\\\a.md\"}]"}"#, root),
-        r#"{"text":"[{\"path\":\"meetings/a.md\"}]"}"#
-    );
-    assert_eq!(
-        normalize(r#"bad\\literal\n\""#, root),
-        r#"bad\\literal\n\""#
-    );
+    for wrong in [
+        native.replacen(r"vault\\\\nested", "vault/nested", 1),
+        native.replacen("notebooks/nested", r"notebooks\\\\nested", 1),
+    ] {
+        assert_ne!(wrong, native, "negative control must mutate bytes");
+        assert_ne!(normalize(&wrong, root), native);
+    }
+    let literal = r#"bad\\literal\n\""#;
+    assert_eq!(normalize(literal, root), literal);
 }

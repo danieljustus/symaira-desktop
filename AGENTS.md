@@ -28,7 +28,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 # iOS app: open SymDesk.xcodeproj in Xcode, target SymDeskMobile (iOS 18+)
 
-# Release: GoReleaser → linux/darwin/windows × amd64/arm64 + Homebrew formula
+# Release: GoReleaser → Linux amd64/arm64 + macOS arm64 + Homebrew formula. Windows and macOS Intel are no longer required (platform scope decision 2026-10-29, #1364).
 ```
 
 Entry point: `cmd/symdesk/main.go`. `symdesk --help` groups the subcommands into Vault, Document, AI, Server and Maintenance families; run it rather than trusting a list here, which drifts with every added command.

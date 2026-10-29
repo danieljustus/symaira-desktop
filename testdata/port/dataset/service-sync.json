@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "6f6a1aff53b3f6ec60184ad052736018be0bf722",
+    "commit": "7eedcc89fec77aa8dfd30a55ce9fd3b8ba05446d",
     "release": "renderer-pdf-safety-v2-local",
     "module_go": "1.26.10",
     "toolchain": "go1.26.10",

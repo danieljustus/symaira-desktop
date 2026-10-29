@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "oracle": "internal/notebook (Go production API)",
-  "source_sha256": "4bdaa3f06ef51bc96623c8439cf32dd0c59d4e9e60cbb2be1d75cc6446737d6c",
+  "source_sha256": "162e54f5d35f6ce5a917f3e02f0f23f6b321706dd1661f174a8ff0f4e9cef7b1",
   "path": "notebooks/research.md",
   "initial": "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n  - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n  - z.md\nquery: source query\ncustom: keep me\n---\n\n# Original body\n",
   "steps": [

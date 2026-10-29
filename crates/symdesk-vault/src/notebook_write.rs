@@ -66,10 +66,8 @@ pub fn new_notebook_with_query(
         } else {
             format!("{base}-{suffix}")
         };
-        let path = Path::new("notebooks")
-            .join(format!("{slug}.md"))
-            .to_string_lossy()
-            .into_owned();
+        // This is a vault-relative Markdown identifier, not a host path.
+        let path = format!("notebooks/{slug}.md");
         let file = secure_path(root, &path)?;
         if fs::metadata(&file).is_ok() {
             suffix += 1;

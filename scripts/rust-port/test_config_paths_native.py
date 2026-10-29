@@ -342,14 +342,8 @@ class ConfigPathsNativeTests(unittest.TestCase):
             self.fail("missing rust-native matrix job")
         job = job_match.group("body")
         self.assertIn("if: github.event_name != 'pull_request'", job)
-        # Main pushes skip Intel macOS; schedule and workflow_dispatch run all six (#1311).
-        self.assertIn(
-            "os: ${{ github.event_name == 'push' && fromJSON('[\"ubuntu-latest\", \"ubuntu-24.04-arm\", "
-            "\"macos-latest\", \"windows-latest\", \"windows-11-arm\"]') || fromJSON('[\"ubuntu-latest\", "
-            "\"ubuntu-24.04-arm\", \"macos-latest\", \"macos-15-intel\", \"windows-latest\", "
-            "\"windows-11-arm\"]') }}",
-            job,
-        )
+        # Linux amd64/arm64 and Apple Silicon stay on the same event boundaries.
+        self.assertIn("os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]", job)
         checkout = job.split("      - uses: actions/checkout@", 1)[1].split("\n      - ", 1)[0]
         self.assertIn("          ref: ${{ github.sha }}\n", checkout,
                       "main push, schedule and dispatch must detach the immutable trigger SHA")

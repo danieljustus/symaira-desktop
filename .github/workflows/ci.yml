@@ -13,10 +13,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '51 5 * * 1'  # weekly Monday 05:51 UTC — full suite incl. macOS + app
-    - cron: '17 2 * * *'  # nightly 02:17 UTC — main-equivalent suite incl. Intel macOS legs
+    - cron: '17 2 * * *'  # nightly 02:17 UTC — main-equivalent suite on supported platforms
 
 # Scheduled runs get a unique group so a main push cannot cancel the nightly
-# Intel evidence run (and vice versa); push/PR behaviour is unchanged.
+# native evidence run (and vice versa); push/PR behaviour is unchanged.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && github.run_id || github.ref }}
   cancel-in-progress: true
@@ -175,8 +175,8 @@ jobs:
       fail-fast: false
       matrix:
         # Exercise the portable source and oracle contracts on every native runner.
-        # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
-        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
+        # Supported native targets on push, schedule, and workflow_dispatch.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     needs: [decide]
     runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
@@ -324,8 +324,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Intel macOS (macos-15-intel) runs only on schedule and workflow_dispatch.
-        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "windows-latest", "windows-11-arm"]') || fromJSON('["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest", "macos-15-intel", "windows-latest", "windows-11-arm"]') }}
+        # Supported native targets on push, schedule, and workflow_dispatch.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     needs: [decide]
     runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
@@ -891,18 +891,18 @@ jobs:
           SIDECAR_NATIVE=1 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
       - name: Run native macOS version differential
-        if: ${{ contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
+        if: ${{ matrix.os == 'macos-latest' }}
         run: make rust-version-contract
 
       - name: Record three fresh current-build macOS version samples
-        if: ${{ contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
+        if: ${{ matrix.os == 'macos-latest' }}
         env:
           SYMDESK_NATIVE_RECORD: ${{ runner.temp }}/symdesk-native-record
           NATIVE_RECORD_TEMP_ROOT: ${{ runner.temp }}
         run: make native-record
 
       - name: Retain current-build native version evidence
-        if: ${{ always() && contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
+        if: ${{ always() && matrix.os == 'macos-latest' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: native-record-${{ matrix.os }}

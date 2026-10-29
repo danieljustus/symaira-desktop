@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "7eedcc89fec77aa8dfd30a55ce9fd3b8ba05446d",
+    "commit": "04b4194b6b0ae22e718d7dabf7795c5dc5bd7a7a",
     "go_version": "go1.26.10",
     "source": "internal/archive/archive.go",
     "source_sha256": "d9f95ceb810f9a9b125066e35d446643d733e5dc32c4714d3a7f21860a2d56ab"

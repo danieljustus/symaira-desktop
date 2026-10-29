@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_commit": "7eedcc89fec77aa8dfd30a55ce9fd3b8ba05446d",
+  "oracle_commit": "04b4194b6b0ae22e718d7dabf7795c5dc5bd7a7a",
   "source_hashes": {
     "internal/ai/ai.go": "c1973ec6c6687a6ce11f33ae1d3e3112660367f1d87d7d26376b845ba4c9c922",
     "internal/ai/anthropic.go": "36a192248abf448393792c07e1c759cbce27857222332b1837c54e3ad7881883"

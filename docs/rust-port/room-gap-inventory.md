@@ -81,13 +81,13 @@ residual.
 | Row | Missing | Implementable now | Go reference | Notes |
 |---|---|---|---|---|
 | ROOMCLI-000 | 0 local; Linux/Windows native receipts | no (CI) | `cmd/symroom/cmd_version.go:14-19` | Only native CI evidence is outstanding. |
-| ROOMCLI-001 | Linux/Windows native receipts for the flag-grammar replay; aggregate #1153. Residuals of the fixture: `run wait` and `identity create` are pinned only for shapes that fail while parsing (a successful `run wait` polls up to 15 minutes, `identity create` mints a random member id); `index rebuild <args>` is pinned through its usage path only (its success depends on the host temporary-directory permissions, see ROOM-002); non-UTF-8 argv is lossy in the Rust parser (including separate `mcp` path values, previously passed as `OsString`); Go `%q` escaping of non-printable runes outside ASCII/`is_control` (e.g. U+00A0, U+200B, U+FEFF) in flag error messages is not ported, #1322 | no (CI) | `cmd/symroom/main.go:65` (dispatch); one `flag.NewFlagSet(..., ExitOnError)` + `fs.Parse` per command, e.g. `cmd_run.go:26-31,48-51,70-72,107-109,130-133,154-157,191-195,216-219`, `cmd_member.go:30-36,62-64,110-112,128-130`, `cmd_artifact.go:23-26,48-50,68-70`, `cmd_checkpoint.go:25-30,64-67`, `cmd_note.go:16-19`, `cmd_decide.go:17-21`, `cmd_verify.go:16-18`, `cmd_log.go:15-23`, `cmd_identity.go:62-64`, `cmd_init.go:15-18`, `cmd_doctor.go:16-18`, `cmd_watch.go:20-23`, `cmd_brainprofile.go:14-17`, `cmd_mcp.go:15-19`, `cmd_version.go:14-16` | Closed locally by `testdata/port/room/flag-grammar-cli.json` (2231 Go-recorded process results, `make room-flag-grammar-cli-differential`); every command parser now goes through `crates/symroom-cli/src/goflag.rs`. |
-| ROOMCLI-002 | `index rebuild` success path prints the host separator (`.symroom\index.sqlite` on Windows); `identity create` prints a random member id (shape only); native Windows replay of the new I/O fixture | partly (separator/random id are native-only or shape-only) | `cmd/symroom/cmd_index.go`, `cmd_identity.go` | `run list` and every other missing-`room.toml` path is now pinned (79 cases). |
-| ROOM-001 | Native Linux/Windows replay of `make room-identity-provider-cli-differential` (local PASS on Darwin ARM64, 104 cases); the 8 Keychain cases are macOS-only. Deviation: signing with a 64-byte key whose public half mismatches its seed is refused (Go signs an unverifiable signature). Non-UTF-8 identity *names* in argv are lossy in Rust (`identity show`, see ROOMCLI-001 residual) | no (CI) | `internal/room/identity/identity.go:100` (`Load`), `:122` symvault, `:141` `security find-generic-password` | Closed locally in slice 3: `testdata/port/room/identity-provider-cli.json` (Go test `TestPortIdentityProviderCLIContract`, Rust `identity_provider_commands.rs`). Found and fixed two Rust divergences (public-half consistency check, `serde_json` identity-file decoding). |
+| ROOMCLI-001 | Closed locally in slice 4: non-UTF-8 argv is lossless and the `%q` non-printable escaping is ported; successful `run wait` is covered by `room-run-wait-cli-differential`, successful `identity create`/`index rebuild` by `store-cli.json`. Native Linux/Windows receipts and the aggregate #1153 remain | no (CI) | `cmd/symroom/main.go:65` (dispatch); one `flag.NewFlagSet(..., ExitOnError)` + `fs.Parse` per command, e.g. `cmd_run.go:26-31,48-51,70-72,107-109,130-133,154-157,191-195,216-219`, `cmd_member.go:30-36,62-64,110-112,128-130`, `cmd_artifact.go:23-26,48-50,68-70`, `cmd_checkpoint.go:25-30,64-67`, `cmd_note.go:16-19`, `cmd_decide.go:17-21`, `cmd_verify.go:16-18`, `cmd_log.go:15-23`, `cmd_identity.go:62-64`, `cmd_init.go:15-18`, `cmd_doctor.go:16-18`, `cmd_watch.go:20-23`, `cmd_brainprofile.go:14-17`, `cmd_mcp.go:15-19`, `cmd_version.go:14-16` | Closed locally by `testdata/port/room/flag-grammar-cli.json` (2231 Go-recorded process results, `make room-flag-grammar-cli-differential`); every command parser now goes through `crates/symroom-cli/src/goflag.rs`. Slice 4 adds the `bytes-*` cases of `testdata/port/room/store-cli.json`. |
+| ROOMCLI-002 | Closed locally in slice 4 (`testdata/port/room/store-cli.json`, 131 cases): `index rebuild` success output and arbitrary `identity create` arguments. Native Windows replay of the I/O and store fixtures remains | no (CI) | `cmd/symroom/cmd_index.go`, `cmd_identity.go` | `run list` and every other missing-`room.toml` path is now pinned (79 cases). Random member ids and keys are compared by shape and consistency. |
+| ROOM-001 | Closed locally in slice 4: 64-byte-key signing now uses the stored public half like Go (`sign-*` cases in `store-cli.json`); non-UTF-8 identity names are lossless. Native Linux/Windows replay of the identity fixtures remains | no (CI) | `internal/room/identity/identity.go:100` (`Load`), `:122` symvault, `:141` `security find-generic-password` | Closed locally in slice 3: `testdata/port/room/identity-provider-cli.json` (Go test `TestPortIdentityProviderCLIContract`, Rust `identity_provider_commands.rs`). Found and fixed two Rust divergences (public-half consistency check, `serde_json` identity-file decoding). The former documented signing deviation no longer exists. |
 | ROOM-002 | Exact-current native Linux/macOS/Windows matrix | no (CI) | `internal/room/journal/journal.go:224-259,302`, `merge.go:31`, `verifier.go:36` | Harness note: `index_commands` and `index_contracts` need a TMPDIR whose ancestors are not group-writable; they fail under `dev-external`'s `.worktrees/*/tmp` and pass with a private TMPDIR. Not a product gap. |
 | ROOM-003 | `run.Finish`, `run.Fail`, `run.ExecuteAdapter` have no Rust port; exact native matrix | yes, library level only | `internal/room/run/run.go:182` (`Finish`), `:228` (`Fail`), `internal/room/run/adapter.go:22` (`ExecuteAdapter`, fails the run via `Fail` at `:105`) | No Go CLI or MCP path calls them (only `adapter_test.go`), so there is no process fixture to replay; the projection of `run.finished`/`run.failed` is already covered. |
 | ROOM-004 | Native Windows replay; exact native matrix | no (CI) | `internal/room/artifact/artifact.go:35,66,124,153,216`, `internal/room/desk/watch.go:21,51` | No local gap found; I/O hashing errors are now pinned by the new fixture. |
-| MCP-004 | Native Linux/macOS/Windows replay; 12 `/bin/sh` scenarios are Unix-only; in-flight cap 512 vs Go's unbounded goroutines (observable only above 512 concurrent calls) | no (CI; cap is a recorded deviation) | `cmd/symroom/cmd_mcp.go:15-19`; `crates/symroom-cli/src/mcp.rs:40` | MCP file errors now use the same Go-shaped text (`goio`). |
+| MCP-004 | Closed locally in slice 4 with one accepted, tested difference: Rust runs at most 512 `tools/call` handlers and queues the rest, Go starts an unbounded goroutine per call (a resource hazard, observable only above 512 concurrent calls: a non-wait call sent after such a flood is answered after a worker frees). Native Windows replay remains; 12 `/bin/sh` scenarios and the POSIX process cases are Unix-only | no (CI; the cap is a recorded, tested deviation) | `cmd/symroom/cmd_mcp.go:15-19`; `crates/symroom-cli/src/mcp.rs:40` | MCP file errors now use the same Go-shaped text (`goio`). `testdata/port/room/mcp-process.json` pins 100 and 600 concurrent waits. |
 
 ### ROOMCLI-001 flag grammar (closed locally)
 
@@ -175,3 +175,34 @@ Residuals: native Windows/Linux receipts; identity files containing invalid
 UTF-8 are covered at the unit level (`gojson` tests) and for syntax errors, not
 for field values (the fixture is JSON and cannot carry them except via
 `content_hex`, which the cases use only for error positions).
+
+## Slice 4: process fixtures for the remaining functional residuals
+
+Real Go processes, recorded by `cmd/symroom/port_mcp_process_contract_test.go`
+(`testdata/port/room/mcp-process.json`, 15 cases) and
+`cmd/symroom/port_store_cli_contract_test.go`
+(`testdata/port/room/store-cli.json`, 131 cases); replayed by
+`crates/symroom-cli/tests/mcp_process.rs` and `store_commands.rs`.
+
+- **MCP-004** concurrency: Rust queues calls beyond 512 workers; accepted,
+  pinned difference (see the matrix row).
+- **MCP-005** cancellation and shutdown: EOF, `notifications/cancelled`,
+  truncated/invalid/oversized frames, failed writes (`EBADF`), broken pipe
+  (SIGPIPE), SIGTERM/SIGINT.
+- **ROOMCLI-002** identity store and `index rebuild` success.
+- **ROOMCLI-001** lossless non-UTF-8 argv (`goio::os_text` / `text_os`).
+- **ROOM-001** Go-identical 64-byte-key signing (`identity::sign_with_stored_half`).
+
+Negative controls, each applied to the Rust source, run against the committed
+fixtures and restored afterwards (the tree was clean afterwards): cap raised to
+100000 fails `six-hundred-concurrent-waits-answer-ping-first`; SIGPIPE left
+ignored fails `broken-pipe-ends-with-sigpipe`; non-UTF-8 argv bytes turned into
+U+FFFD, a zeroed public half in the signature hash, and a changed `index
+rebuild` success line each fail the store replay.
+
+Local receipts at `5dd326453689dd347c9923fea15df4e59f710822` (macOS arm64
+`macos-5dd32645-144706.log`, Linux arm64 `linux-5dd32645-151118.log`): all gate
+targets exit 0. The Linux replay counts 3 macOS-only file-name-policy cases as
+SKIPs (131 total, 128 replayed); macOS replays 131 of 131 and 15 of 15 MCP
+cases. `cargo +nightly-2026-09-03 fuzz run room_event` ran 1,753,724 cases in
+121 seconds, exit 0.

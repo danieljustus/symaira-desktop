@@ -698,7 +698,7 @@ fn render_go_rfc3339(parsed: OffsetDateTime, fractional: bool) -> String {
     rendered
 }
 
-fn go_time_text(value: &str) -> Result<String, String> {
+pub(crate) fn go_time_text(value: &str) -> Result<String, String> {
     let parsed = OffsetDateTime::parse(value, &Rfc3339)
         .map_err(|error| format!("invalid index timestamp {value:?}: {error}"))?;
     let mut rendered = format!(

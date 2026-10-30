@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "6aea7f97c3cf3213b62119fe718cf71c0b3557d2",
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
     "release": "renderer-pdf-safety-v2-local"
   },
   "source_hashes": {
     "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89",
     "internal/service/history.go": "67a37a56fa117e170025183043f340ecae6a0d51f64fb906233b238a1357b6fe",
-    "internal/service/service.go": "32c46d38772f12dcf835b69aa1df9817a7627804b0a92de44f0d73f6d0470632"
+    "internal/service/service.go": "49a80f16ed5a220124ba7f623f0c758415d09f5004e6df32617f4c166706a888"
   },
   "cases": [
     {

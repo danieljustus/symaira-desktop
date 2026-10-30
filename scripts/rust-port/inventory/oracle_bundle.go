@@ -342,6 +342,18 @@ func oracleRevisionDigest(repoRoot, git, revision string) (string, error) {
 // OracleGitOutput supports source-reading generators after the original source
 // branch is gone. The supplied args are fixed Git reads owned by those callers.
 func OracleGitOutput(repoRoot, revision string, args ...string) ([]byte, error) {
+	outputs, err := OracleGitOutputs(repoRoot, revision, args)
+	if err != nil {
+		return nil, err
+	}
+	return outputs[0], nil
+}
+
+// OracleGitOutputs runs several fixed Git reads against one opened oracle
+// store. Opening a recorded oracle bundle verifies and unbundles it, which
+// costs seconds for a large bundle; callers that read many pinned blobs must
+// pay that once instead of once per blob.
+func OracleGitOutputs(repoRoot, revision string, commands ...[]string) ([][]byte, error) {
 	git, err := oracleGitExecutable()
 	if err != nil {
 		return nil, err
@@ -351,5 +363,13 @@ func OracleGitOutput(repoRoot, revision string, args ...string) ([]byte, error) 
 		return nil, err
 	}
 	defer cleanup()
-	return inventoryGitOutputWithExecutable(root, git, args...)
+	outputs := make([][]byte, 0, len(commands))
+	for _, args := range commands {
+		output, err := inventoryGitOutputWithExecutable(root, git, args...)
+		if err != nil {
+			return nil, err
+		}
+		outputs = append(outputs, output)
+	}
+	return outputs, nil
 }

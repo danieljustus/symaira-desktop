@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -225,7 +229,7 @@ fn command(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .current_dir(room)
-        .env_clear()
+        .isolated_env()
         .env("HOME", isolated.join("home"))
         .env("USERPROFILE", isolated.join("home"))
         .env("XDG_DATA_HOME", isolated.join("data"))

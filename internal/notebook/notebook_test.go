@@ -48,7 +48,7 @@ func TestNew_CreatesContractConformNote(t *testing.T) {
 	if nb.ID != "research-x" {
 		t.Errorf("ID = %q, want research-x", nb.ID)
 	}
-	if nb.Path != filepath.Join("notebooks", "research-x.md") {
+	if nb.Path != "notebooks/research-x.md" {
 		t.Errorf("Path = %q", nb.Path)
 	}
 

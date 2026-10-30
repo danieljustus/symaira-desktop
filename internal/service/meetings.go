@@ -100,6 +100,8 @@ func (s *Service) MeetingListDetailed() (*MeetingListResult, error) {
 			rel = path
 		}
 
+		rel = filepath.ToSlash(rel)
+
 		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			result.Failures = append(result.Failures, MeetingListFailure{

@@ -21,7 +21,7 @@ import (
 const (
 	modulePath      = "github.com/danieljustus/symaira-desktop"
 	originURL       = "https://github.com/danieljustus/symaira-desktop.git"
-	foundation      = "876bf2ca3ed7e40f242714fdde9b78362daf4ae5"
+	foundation      = "61d0277782349ddbb0da6c3cdc101790e962e834"
 	corekitVersion  = "v0.18.3-0.20261012110002-27d2daf8ec1e"
 	oracleGoVersion = "go1.26.10"
 )

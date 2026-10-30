@@ -12,6 +12,8 @@
 //! chain silently falls through. [`look_path`] mirrors that: it returns a path
 //! only where Go returns one *without* an error, and the caller spawns that
 //! absolute path.
+//! `GODEBUG=execerrdot=0` is deliberately not honored: relative execution is
+//! never enabled by an environment override.
 
 use std::{
     env,
@@ -24,6 +26,12 @@ use std::{
 /// `None` for both "not found" and the `ErrDot` rejection, which `identity.Load`
 /// handles identically.
 pub fn look_path(file: &str) -> Option<PathBuf> {
+    look_path_in(file, &env::var_os("PATH").unwrap_or_default())
+}
+
+/// Resolve against an explicitly supplied PATH, retaining the process PATHEXT
+/// and Windows implicit-current-directory policy.
+pub fn look_path_in(file: &str, path: &OsStr) -> Option<PathBuf> {
     if matches!(file, "" | "." | "..") {
         return None;
     }
@@ -33,16 +41,12 @@ pub fn look_path(file: &str) -> Option<PathBuf> {
         look_path_windows(
             Path::new("."),
             file,
-            &env::var_os("PATH").unwrap_or_default(),
+            path,
             pathext.as_deref(),
             no_default_cwd,
         )
     } else {
-        look_path_unix(
-            Path::new("."),
-            file,
-            &env::var_os("PATH").unwrap_or_default(),
-        )
+        look_path_unix(Path::new("."), file, path)
     }
 }
 
@@ -155,9 +159,35 @@ fn look_path_windows(
 
 #[cfg_attr(not(windows), allow(dead_code))]
 fn same_file(left: &Path, right: &Path) -> bool {
-    match (fs::canonicalize(left), fs::canonicalize(right)) {
-        (Ok(left), Ok(right)) => left == right,
-        _ => false,
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        match (fs::symlink_metadata(left), fs::symlink_metadata(right)) {
+            (Ok(left), Ok(right)) => left.dev() == right.dev() && left.ino() == right.ino(),
+            _ => false,
+        }
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // Go Lstat + os.SameFile compares the reparse point itself, not its
+        // target. Handle equality compares volume serial + file index.
+        let handle = |path| {
+            fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(0x0020_0000 | 0x0200_0000) // OPEN_REPARSE_POINT | BACKUP_SEMANTICS
+                .open(path)
+                .and_then(same_file::Handle::from_file)
+        };
+        match (handle(left), handle(right)) {
+            (Ok(left), Ok(right)) => left == right,
+            _ => false,
+        }
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (left, right);
+        false
     }
 }
 
@@ -348,6 +378,38 @@ mod tests {
     fn reserved_names_never_resolve() {
         for name in ["", ".", ".."] {
             assert_eq!(look_path(name), None);
+        }
+    }
+
+    #[test]
+    fn windows_relative_and_absolute_hits_compare_file_identity() {
+        let scratch = Scratch::new();
+        let original = scratch.file("cwd/symvault.exe", 0o755);
+        let alias = scratch.abs("alias");
+        fs::create_dir(&alias).expect("alias dir");
+        fs::hard_link(&original, alias.join("symvault.exe")).expect("hardlink");
+        assert!(same_file(&original, &alias.join("symvault.exe")));
+        let path = join(&[Path::new("."), &alias]);
+        assert_eq!(
+            look_path_windows(&scratch.cwd, "symvault", &path, None, true),
+            Some(alias.join("symvault.exe"))
+        );
+        #[cfg(unix)]
+        {
+            let link = scratch.abs("symlink");
+            fs::create_dir(&link).expect("symlink dir");
+            std::os::unix::fs::symlink(&original, link.join("symvault.exe")).expect("symlink");
+            assert!(!same_file(&original, &link.join("symvault.exe")));
+            assert_eq!(
+                look_path_windows(
+                    &scratch.cwd,
+                    "symvault",
+                    &join(&[Path::new("."), &link]),
+                    None,
+                    true
+                ),
+                None
+            );
         }
     }
 

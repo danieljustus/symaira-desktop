@@ -1494,6 +1494,663 @@
       "reembedded_documents": 1,
       "remaining_pending": 0,
       "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-entities.html",
+      "document_path": "doc.html",
+      "document_body": "\u003chead\u003e\u003ctitle\u003ehidden\u003c/title\u003e\u003c/head\u003e\u003cbody\u003e\u003ch1\u003eA \u0026amp; B\u003c/h1\u003e\u003cp\u003eone\u0026nbsp;two \u0026#x65e5;\u003c/p\u003e\u003cscript\u003ebad()\u003c/script\u003e\u003cstyle\u003ebad{}\u003c/style\u003e\u003cdiv\u003eend\u003cbr\u003eline\u003c/div\u003e",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "A \u0026 B\n\none two 日\n\nendline"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "108f7026-1c9e-5690-afc4-8f11d7fffa9a",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "f8570423-d118-5285-92e2-bbca3cf147d3",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "A \u0026 B\n\none two 日\n\nendline",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "66811cb8035c6332d8f0872b25cbace2a40797b9aa151d82d49690ba96d1ba94",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 28,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "93249a3a76871e10156e422f8bda080abea638fc45db1b5af2eedfc95964450e",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-paragraphs.rtf",
+      "document_path": "doc.rtf",
+      "document_body": "{\\rtf1\\ansi Hello\\par world\\line next\\page last\\tab cell}",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Hello\nworld\nnext\nlast cell"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "0f0f926b-0649-5053-8939-c9a11b49fb28",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "5484119f-664e-51b1-bcb3-866cef767f06",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Hello\nworld\nnext\nlast cell",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "ecfa95bd84179141deaa38f025fcd322d399acbd36014a583f948641b7240287",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 26,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "6e368f1687f5ea04d8763442e48dc04818822b7a1ddd12d0c72e6293cb90a48b",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-blocks.docx",
+      "document_path": "doc.docx",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAARAAAAd29yZC9kb2N1bWVudC54bWyyKbdKyU8uzU3NK1GoyM3JK7Yqt1UqLcqzKleysym3KgARRSCixM4jNScnX0EtMbfAWuHZ9KXP5qyx0QeJg0iIksQkfST1yak5OWgqkor0IXI5mXmpCDmwLQX6cAtL7HwSi0tQ5PUR7rQDBAAA//9QSwcI65u7sm8AAAC0AAAAUEsBAhQAFAAIAAgAAAAAAOubu7JvAAAAtAAAABEAAAAAAAAAAAAAAAAAAAAAAHdvcmQvZG9jdW1lbnQueG1sUEsFBgAAAAABAAEAPwAAAK4AAAAAAA==",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Hello \u0026 日本\tcell\nline\n\nLast"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "3c50a18e-67b4-5bad-b8f1-4422b0ffa1be",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "4cfbac4a-f54c-59f4-aca5-1adea1237f31",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Hello \u0026 日本\tcell\nline\n\nLast",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "69f7d4c89ee1b9bf5974727fc2336cb3748b8a670d84c114823e269d192e6c66",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 30,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "db2116954bff174c483053672a3d161651d8e48b7c194df52e9d329e268cce3a",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-blocks.odt",
+      "document_path": "doc.odt",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAALAAAAY29udGVudC54bWyyyU9Ly0xOtUrJTy7NTc0rUajIzckrtoKI2iqVFuVZ5StBBUtSK0ogQiVKdjYgnlWGXUhmSU6qjT6UBxEtsHOEMIoVwFSyrZKxkr6dE0SwJDFJ384Zws7JzEvVTSpKTczWt3NRUEvMLbBWeDZ96bM5a6BGFtjBXFiWmFOaamdiZKOPIgDnwnxgBwgAAP//UEsHCLfPPjaOAAAA0wAAAFBLAQIUABQACAAIAAAAAAC3zz42jgAAANMAAAALAAAAAAAAAAAAAAAAAAAAAABjb250ZW50LnhtbFBLBQYAAAAAAQABADkAAADHAAAAAAA=",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Title\n\nA   B\tC\nD \u0026 日本\n\n42"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "3ee36d00-d061-5982-9f44-66b29744e807",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "63f49c69-3721-57cc-adc9-4afd1c6a1641",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Title\n\nA   B\tC\nD \u0026 日本\n\n42",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "4cdb18d70769d8390b3eaa78bef76ce70ba45deebf79832a0f243858bf94aa41",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 29,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "7bc42988d057ba98c60304a11a001c8754dcdaea3ae71d3f8957e4ef178cdac1",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-blocks.ods",
+      "document_path": "doc.ods",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAALAAAAY29udGVudC54bWyyyU9Ly0xOtUrJTy7NTc0rUajIzckrtoKI2iqVFuVZ5StBBUtSK0ogQiVKdjYgnlWGXUhmSU6qjT6UBxEtsHOEMIoVwFSyrZKxkr6dE0SwJDFJ384Zws7JzEvVTSpKTczWt3NRUEvMLbBWeDZ96bM5a6BGFtjBXFiWmFOaamdiZKOPIgDnwnxgBwgAAP//UEsHCLfPPjaOAAAA0wAAAFBLAQIUABQACAAIAAAAAAC3zz42jgAAANMAAAALAAAAAAAAAAAAAAAAAAAAAABjb250ZW50LnhtbFBLBQYAAAAAAQABADkAAADHAAAAAAA=",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Title\n\nA   B\tC\nD \u0026 日本\n\n42"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "f8c67c3a-607e-572b-9a3f-912b52397e4a",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "5692854e-f66b-5400-86bd-f0139c8da2cb",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Title\n\nA   B\tC\nD \u0026 日本\n\n42",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "4cdb18d70769d8390b3eaa78bef76ce70ba45deebf79832a0f243858bf94aa41",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 29,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "7bc42988d057ba98c60304a11a001c8754dcdaea3ae71d3f8957e4ef178cdac1",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-blocks.odp",
+      "document_path": "doc.odp",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAALAAAAY29udGVudC54bWyyyU9Ly0xOtUrJTy7NTc0rUajIzckrtoKI2iqVFuVZ5StBBUtSK0ogQiVKdjYgnlWGXUhmSU6qjT6UBxEtsHOEMIoVwFSyrZKxkr6dE0SwJDFJ384Zws7JzEvVTSpKTczWt3NRUEvMLbBWeDZ96bM5a6BGFtjBXFiWmFOaamdiZKOPIgDnwnxgBwgAAP//UEsHCLfPPjaOAAAA0wAAAFBLAQIUABQACAAIAAAAAAC3zz42jgAAANMAAAALAAAAAAAAAAAAAAAAAAAAAABjb250ZW50LnhtbFBLBQYAAAAAAQABADkAAADHAAAAAAA=",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Title\n\nA   B\tC\nD \u0026 日本\n\n42"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "a333fc90-aa98-5a6a-b7fc-d67bd4ed21ef",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "a991dd32-9a04-509a-b333-704b129ae7d0",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Title\n\nA   B\tC\nD \u0026 日本\n\n42",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "4cdb18d70769d8390b3eaa78bef76ce70ba45deebf79832a0f243858bf94aa41",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 29,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "7bc42988d057ba98c60304a11a001c8754dcdaea3ae71d3f8957e4ef178cdac1",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-sheets-order.xlsx",
+      "document_path": "doc.xlsx",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAAUAAAAeGwvc2hhcmVkU3RyaW5ncy54bWyyKS4usbMpzrSzKbHzSM3JybfRLwGxFcrzi3JSwBx9kCxExbPpS5/NWYMQ1QfpBgQAAP//UEsHCJ57hE80AAAAQwAAAFBLAwQUAAgACAAAAAAAAAAAAAAAAAAAAAAAGAAAAHhsL3dvcmtzaGVldHMvc2hlZXQyLnhtbLIpzy/KLs5ITS2xsynKL7ezSVYosVUqVrKzKbMztNEvs7PRT7azSQZxTYwQfH07G32wcnQ9Bgg1CEFLS7goRJc+wlZAAAAA//9QSwcIgxQdU0kAAACBAAAAUEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1sRMyxDYQwDAXQVU4Z4Fycrvv8JRghWGCBEsmxkvURUNC+4mFU39umGoTXQeRPTMnKYUXn8ERYI4K2luq6QIKQiyQTmej8ff+Q/oDchbznGQAA//9QSwcIbNlwoVMAAABfAAAAUEsBAhQAFAAIAAgAAAAAAJ57hE80AAAAQwAAABQAAAAAAAAAAAAAAAAAAAAAAHhsL3NoYXJlZFN0cmluZ3MueG1sUEsBAhQAFAAIAAgAAAAAAIMUHVNJAAAAgQAAABgAAAAAAAAAAAAAAAAAdgAAAHhsL3dvcmtzaGVldHMvc2hlZXQyLnhtbFBLAQIUABQACAAIAAAAAABs2XChUwAAAF8AAAAYAAAAAAAAAAAAAAAAAAUBAAB4bC93b3Jrc2hlZXRzL3NoZWV0MS54bWxQSwUGAAAAAAMAAwDOAAAAngEAAAAA",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "日本\t42\t42\nHello world\t99\n\n3.5"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "ba4017bb-cb9b-56c3-b5d5-b2b507e97481",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "858b1b87-e054-555a-b119-8015234481e4",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "日本\t42\t42\nHello world\t99\n\n3.5",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "9a93e808682cc83961c7b8250298a711ce4ba57935e5c45248e491cc1d232303",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "39d54978aa818b828dbe835ccbf3991505f7b6e5d06f760ae5c97aeafd2204f6",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-slides-order.pptx",
+      "document_path": "doc.pptx",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAAVAAAAcHB0L3NsaWRlcy9zbGlkZTIueG1ssikusLMpsLMpsQtOTc7PS7HRL7GzSSrSB4nkZOalgvn6BXY2+sUFdoAAAAD//1BLBwg89nXoLgAAAC0AAABQSwMEFAAIAAgAAAAAAAAAAAAAAAAAAAAAABUAAABwcHQvc2xpZGVzL3NsaWRlMS54bWyyKS6wsymwsymxc8ssKi6x0S+xs9EvsLPRLy6wAwQAAP//UEsHCCSWd80iAAAAHAAAAFBLAQIUABQACAAIAAAAAAA89nXoLgAAAC0AAAAVAAAAAAAAAAAAAAAAAAAAAABwcHQvc2xpZGVzL3NsaWRlMi54bWxQSwECFAAUAAgACAAAAAAAJJZ3zSIAAAAcAAAAFQAAAAAAAAAAAAAAAABxAAAAcHB0L3NsaWRlcy9zbGlkZTEueG1sUEsFBgAAAAACAAIAhgAAANYAAAAAAA==",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "Second\nline\nFirst"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "8611c917-4cc0-506e-96b4-e8b132d87b5a",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "69a07017-e699-57de-a665-fc87e2db98cb",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "Second\nline\nFirst",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "1ece9749353ec72e4c3d2600f7b89351d5cb42131357300c4eaf4879c952034f",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 17,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "5525116951a8d92585d4d6df13e5770969d2d22f434a055f11736c2cc473f651",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-chapters-sorted.epub",
+      "document_path": "doc.epub",
+      "document_body": "",
+      "document_body_base64": "UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAANAAAAT0VCUFMvYi54aHRtbLIpsAtOTc7PS7HRL7ADBAAA//9QSwcIcgxSkhMAAAANAAAAUEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAANAAAAT0VCUFMvYS54aHRtbLLJSE1MsbMpySzJSbXLyExJSc2z0YfwbPQhcgV2bplFxSUKaom5BdYKz6YvfTZnjY1+gZ1NcXJRZkEJXBeUCwgAAP//UEsHCMNy/+1EAAAAUgAAAFBLAwQUAAgACAAAAAAAAAAAAAAAAAAAAAAAFQAAAE1FVEEtSU5GL2lnbm9yZWQuaHRtbMrITElJzQMEAAD//1BLBwi96V2IDAAAAAYAAABQSwMEFAAIAAgAAAAAAAAAAAAAAAAAAAAAAAcAAAB0b2MubmN4ykzPyy9KTQEEAAD//1BLBwhOQdTWDQAAAAcAAABQSwECFAAUAAgACAAAAAAAcgxSkhMAAAANAAAADQAAAAAAAAAAAAAAAAAAAAAAT0VCUFMvYi54aHRtbFBLAQIUABQACAAIAAAAAADDcv/tRAAAAFIAAAANAAAAAAAAAAAAAAAAAE4AAABPRUJQUy9hLnhodG1sUEsBAhQAFAAIAAgAAAAAAL3pXYgMAAAABgAAABUAAAAAAAAAAAAAAAAAzQAAAE1FVEEtSU5GL2lnbm9yZWQuaHRtbFBLAQIUABQACAAIAAAAAABOQdTWDQAAAAcAAAAHAAAAAAAAAAAAAAAAABwBAAB0b2MubmN4UEsFBgAAAAAEAAQA7gAAAF4BAAAAAA==",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "First \u0026 日本\n\nSecond"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "43d43b6b-aab8-509e-866d-d1a291c79a6d",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "6511150b-f1f9-5cc8-86ce-2019823966e4",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "First \u0026 日本\n\nSecond",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "b9a81c620a17094a99e3532132dc5bc648636d7a0fe61e64ca60c7a9933eeabe",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 22,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "8dc4e9e508fa28eb64845f32b4be04599431009df01f7d40f0a28022a985384a",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
+    },
+    {
+      "id": "provider-resolves-extraction-operators.pdf",
+      "document_path": "doc.pdf",
+      "document_body": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e\nendobj\n2 0 obj\n\u003c\u003c /Type /Pages /Count 1 /Kids [4 0 R ] \u003e\u003e\nendobj\n3 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding \u003e\u003e\nendobj\n4 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources \u003c\u003c /Font \u003c\u003c /F1 3 0 R \u003e\u003e \u003e\u003e /Contents 5 0 R \u003e\u003e\nendobj\n5 0 obj\n\u003c\u003c /Length 76 \u003e\u003e\nstream\nBT /F1 12 Tf (First) Tj T* [(sec) 200 (ond)] TJ (quote) ' ET BT (last) Tj ET\nendstream\nendobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000116 00000 n \n0000000213 00000 n \n0000000339 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n465\n%%EOF\n",
+      "response_status": 200,
+      "embedding_dim": 3,
+      "response_dimension": 0,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "accept": "application/json",
+          "body": {
+            "model": "fixture-model",
+            "input": [
+              "First\nsecondquote\nlast"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "pending_chunks": [
+        {
+          "uuid": "6efe13c7-73e0-5386-9303-cfeef5bd546e",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "# Old pending content\n\nold state",
+          "embedding": [],
+          "hash": "ef4d86279affa345a0cc704b080035d2208ac044a85f5b3a7cbd14387f9c6422",
+          "dim": 0,
+          "embedding_model": "local-hash",
+          "char_start": 0,
+          "char_end": 32,
+          "anchor_kind": "text",
+          "anchor_value": "offset:0",
+          "embedding_pending": true
+        }
+      ],
+      "resolved_chunks": [
+        {
+          "uuid": "73cb75ef-314b-5c26-b55e-28dde0b82737",
+          "document_path": "$DOC",
+          "chunk_index": 0,
+          "content": "First\nsecondquote\nlast",
+          "embedding": [
+            0.25,
+            -0.5,
+            1
+          ],
+          "hash": "7ae8459aa50baae11070871eea02d0d3ae6e91ba39d53b2c7409d985ef04fba0",
+          "dim": 3,
+          "embedding_model": "fixture-model",
+          "char_start": 0,
+          "char_end": 22,
+          "anchor_kind": "page",
+          "anchor_value": "1",
+          "embedding_pending": false
+        }
+      ],
+      "document_hash": "2245796dd8c1f175e8d22cb65bc8fa8fa1fae74b57d3a6e321f9e755e3efc761",
+      "reembedded_documents": 1,
+      "remaining_pending": 0,
+      "generation": 3
     }
   ]
 }

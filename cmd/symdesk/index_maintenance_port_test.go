@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -89,33 +88,7 @@ func observeIndexMaintenanceProcess(t *testing.T) indexMaintenanceProcessFixture
 		}
 	}
 
-	binary := filepath.Join(root, "symdesk")
-	if runtime.GOOS == "windows" {
-		binary += ".exe"
-	}
-	if err := os.MkdirAll(filepath.Join(root, "go-build"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	currentUser, err := user.Current()
-	if err != nil {
-		t.Fatalf("resolve build cache home: %v", err)
-	}
-	goEnv := exec.Command("go", "env", "GOMODCACHE")
-	goEnv.Env = append(os.Environ(), "HOME="+currentUser.HomeDir)
-	moduleCache, err := goEnv.Output()
-	if err != nil {
-		t.Fatalf("resolve Go module cache: %v", err)
-	}
-	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
-	build.Dir = "."
-	build.Env = append(os.Environ(),
-		"HOME="+currentUser.HomeDir,
-		"GOMODCACHE="+strings.TrimSpace(string(moduleCache)),
-		"GOTMPDIR="+filepath.Join(root, "go-build"),
-	)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build Go CLI process fixture: %v\n%s", err, output)
-	}
+	binary := processFixtureBinary(t)
 
 	source := filepath.Join(dataHome, "retrieval.db")
 	configPath := filepath.Join(home, ".config", "symseek", "config.toml")

@@ -57,7 +57,7 @@ use flate2::{Compression, write::GzEncoder};
 use futures_core::Stream;
 use http_body_util::BodyExt;
 use httpdate::{fmt_http_date, parse_http_date};
-use hyper::server::conn::http1::Builder as ConnectionBuilder;
+use hyper::{body::Body as _, server::conn::http1::Builder as ConnectionBuilder};
 use hyper_util::{
     client::legacy::{Client as HttpClient, connect::HttpConnector},
     rt::TokioExecutor,
@@ -458,12 +458,35 @@ async fn serve(
         let tower_service = make_service
             .call(remote_addr)
             .await
-            .unwrap_or_else(|error| match error {})
-            .map_request(move |request: hyper::Request<hyper::body::Incoming>| {
-                let mut request = request.map(Body::new);
-                request.extensions_mut().insert(request_linger.clone());
-                request
-            });
+            .unwrap_or_else(|error| match error {});
+        // Track consumption outside the router, including auth middleware,
+        // fallbacks and capped/timeout reads, not just individual handlers.
+        let tower_service = tower::service_fn(move |request: Request<hyper::body::Incoming>| {
+            let service = tower_service.clone();
+            let linger = request_linger.clone();
+            async move {
+                let complete = Arc::new(AtomicBool::new(false));
+                let body_complete = Arc::clone(&complete);
+                let request = request.map(|body| {
+                    let body = Body::new(body);
+                    body_complete.store(body.is_end_stream(), Ordering::SeqCst);
+                    Body::new(TrackedRequestBody {
+                        body,
+                        complete: body_complete,
+                    })
+                });
+                let mut response = service.oneshot(request).await?;
+                if !complete.load(Ordering::SeqCst) {
+                    linger.set();
+                    // An unread body must never be interpreted as the next
+                    // keep-alive request, even if a handler retains a drain task.
+                    response
+                        .headers_mut()
+                        .insert(header::CONNECTION, HeaderValue::from_static("close"));
+                }
+                Ok::<_, std::convert::Infallible>(response)
+            }
+        });
         let hyper_service = TowerToHyperService::new(tower_service);
         let builder = connection_builder.clone();
         let mut connection_shutdown = shutdown_rx.clone();
@@ -491,8 +514,40 @@ async fn serve(
     Ok(())
 }
 
+/// Observes actual body consumption without buffering or changing body limits.
+/// In particular, reaching a declared Content-Length need not require an extra
+/// poll returning None; hyper can signal end-of-stream on the final data frame.
+struct TrackedRequestBody {
+    body: Body,
+    complete: Arc<AtomicBool>,
+}
+
+impl hyper::body::Body for TrackedRequestBody {
+    type Data = Bytes;
+    type Error = axum::Error;
+
+    fn poll_frame(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<hyper::body::Frame<Bytes>, Self::Error>>> {
+        let result = Pin::new(&mut self.body).poll_frame(cx);
+        if matches!(result, Poll::Ready(None)) || self.body.is_end_stream() {
+            self.complete.store(true, Ordering::SeqCst);
+        }
+        result
+    }
+
+    fn is_end_stream(&self) -> bool {
+        self.body.is_end_stream()
+    }
+
+    fn size_hint(&self) -> hyper::body::SizeHint {
+        self.body.size_hint()
+    }
+}
+
 /// Marks a connection whose handler answered without consuming the whole
-/// request body. Carried as a request extension by [`serve`].
+/// request body. Set at the common response boundary in [`serve`].
 #[derive(Clone, Default)]
 struct ConnectionLinger(Arc<AtomicBool>);
 
@@ -2339,25 +2394,20 @@ async fn handle_command_validation(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
-    let linger = request.extensions().get::<ConnectionLinger>().cloned();
-    let request = match tokio::time::timeout(
-        READ_TIMEOUT,
-        read_command_request(request.into_body(), linger),
-    )
-    .await
-    {
-        Ok(Ok(request)) => request,
-        Ok(Err(CommandBodyError::TooLarge)) => {
-            return json_error(
-                StatusCode::BAD_REQUEST,
-                "invalid JSON: request body too large",
-            );
-        }
-        Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
-            return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
-        }
-        Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
-    };
+    let request =
+        match tokio::time::timeout(READ_TIMEOUT, read_command_request(request.into_body())).await {
+            Ok(Ok(request)) => request,
+            Ok(Err(CommandBodyError::TooLarge)) => {
+                return json_error(
+                    StatusCode::BAD_REQUEST,
+                    "invalid JSON: request body too large",
+                );
+            }
+            Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
+                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
+            }
+            Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+        };
     let arguments = request.arguments.unwrap_or_default();
     let stdin = request.stdin.unwrap_or_default();
     if let Some(message) = validate_remote_command(&arguments) {
@@ -2562,10 +2612,7 @@ enum CommandBodyError {
     Read,
 }
 
-async fn read_command_request(
-    body: Body,
-    linger: Option<ConnectionLinger>,
-) -> Result<RemoteCommandRequest, CommandBodyError> {
+async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, CommandBodyError> {
     let mut chunks = body.into_data_stream();
     let mut bytes = Vec::with_capacity(4096);
     loop {
@@ -2578,9 +2625,6 @@ async fn read_command_request(
         bytes.extend_from_slice(&chunk[..chunk.len().min(available)]);
         match parse_command_request(&bytes) {
             Ok(request) => {
-                if let Some(linger) = &linger {
-                    linger.set();
-                }
                 // Go's HTTP server drains a bounded amount of unread request
                 // data after the handler returns. Keep the same allowance so
                 // an early response to a valid JSON prefix does not reset an
@@ -2605,22 +2649,13 @@ async fn read_command_request(
             }
             Err(error) if error.is_eof() && bytes.len() < MAX_COMMAND_BODY_BYTES => {}
             Err(error) if error.is_eof() => {
-                if let Some(linger) = &linger {
-                    linger.set();
-                }
                 return Err(CommandBodyError::TooLarge);
             }
             Err(_) => {
-                if let Some(linger) = &linger {
-                    linger.set();
-                }
                 return Err(CommandBodyError::Malformed);
             }
         }
         if chunk.len() > available {
-            if let Some(linger) = &linger {
-                linger.set();
-            }
             return Err(CommandBodyError::TooLarge);
         }
     }
@@ -7479,6 +7514,130 @@ mod tests {
     /// client (observed on macOS as `write: broken pipe` in #1202).
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn over_limit_command_body_response_survives_continued_upload() {
+        assert_early_response_survives_upload(
+            "POST /api/v1/command",
+            true,
+            br#"{"arguments":["not-real"]}"#,
+            MAX_COMMAND_DRAIN_BYTES + (64 << 10),
+            MAX_COMMAND_BODY_BYTES,
+            403,
+        )
+        .await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn auth_rejection_response_survives_continued_upload() {
+        assert_early_response_survives_upload("POST /api/v1/command", false, b"", 0, 2 << 20, 401)
+            .await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn capped_read_response_survives_continued_upload() {
+        assert_early_response_survives_upload(
+            "POST /api/v1/worker/lease",
+            true,
+            b"{",
+            MAX_WORKER_LEASE_BODY_BYTES + (16 << 10),
+            2 << 20,
+            400,
+        )
+        .await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn unknown_route_response_survives_continued_upload() {
+        assert_early_response_survives_upload("POST /not-a-route", true, b"", 0, 2 << 20, 404)
+            .await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn method_rejection_response_survives_continued_upload() {
+        assert_early_response_survives_upload("POST /healthz", true, b"", 0, 2 << 20, 405).await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn body_read_timeout_response_survives_continued_upload() {
+        assert_early_response_survives_upload(
+            "POST /test-body-timeout",
+            true,
+            b"",
+            0,
+            2 << 20,
+            408,
+        )
+        .await;
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn consumed_bodies_preserve_keep_alive() {
+        let app = Router::new().route("/echo", post(|body: Bytes| async move { body }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
+        let server = tokio::spawn(serve(listener, app, async {
+            let _ = stop_rx.await;
+        }));
+        let client = tokio::task::spawn_blocking(move || {
+            use std::io::{BufRead, BufReader, Read, Write};
+            let socket = std::net::TcpStream::connect(address).unwrap();
+            socket
+                .set_read_timeout(Some(Duration::from_secs(2)))
+                .unwrap();
+            let mut socket = BufReader::new(socket);
+            // Reuse the very same connection after fixed-length, chunked and
+            // empty bodies. None should receive Connection: close or linger.
+            for framing in [
+                "Content-Length: 3\r\n\r\nabc",
+                "Transfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n",
+                "Content-Length: 0\r\n\r\n",
+            ] {
+                write!(
+                    socket.get_mut(),
+                    "POST /echo HTTP/1.1\r\nHost: {address}\r\n{framing}"
+                )
+                .unwrap();
+                let mut line = String::new();
+                socket.read_line(&mut line).unwrap();
+                assert!(line.starts_with("HTTP/1.1 200 "), "{line:?}");
+                let mut length = 0;
+                loop {
+                    line.clear();
+                    assert!(socket.read_line(&mut line).unwrap() > 0);
+                    if line == "\r\n" {
+                        break;
+                    }
+                    let lower = line.to_ascii_lowercase();
+                    assert!(!lower.starts_with("connection: close"));
+                    if let Some(value) = lower.strip_prefix("content-length: ") {
+                        length = value.trim().parse().unwrap();
+                    }
+                }
+                let mut response = vec![0; length];
+                socket.read_exact(&mut response).unwrap();
+                assert_eq!(
+                    response,
+                    if framing.starts_with("Content-Length: 0") {
+                        b"".as_slice()
+                    } else {
+                        b"abc".as_slice()
+                    }
+                );
+            }
+        })
+        .await;
+        let _ = stop_tx.send(());
+        server.await.unwrap().unwrap();
+        client.unwrap();
+    }
+
+    async fn assert_early_response_survives_upload(
+        request_line: &'static str,
+        authorized: bool,
+        prefix: &'static [u8],
+        first: usize,
+        total: usize,
+        expected: u16,
+    ) {
         use std::io::{Read as _, Write as _};
 
         let root = std::env::temp_dir().join(format!(
@@ -7488,7 +7647,22 @@ mod tests {
         ));
         fs::create_dir_all(&root).unwrap();
         let token = "a sufficiently long test token";
-        let app = router(Arc::new(test_state(&root, token)));
+        let app = router(Arc::new(test_state(&root, token))).route(
+            "/test-body-timeout",
+            post(|request: Request<Body>| async move {
+                // Exercise the common boundary after cancelling a pending body
+                // read, without waiting the production 120-second deadline.
+                match tokio::time::timeout(
+                    Duration::from_millis(20),
+                    read_command_request(request.into_body()),
+                )
+                .await
+                {
+                    Err(_) => json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+                    Ok(_) => panic!("the test client must leave the body pending"),
+                }
+            }),
+        );
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
@@ -7497,8 +7671,7 @@ mod tests {
         }));
 
         let client = tokio::task::spawn_blocking(move || {
-            let prefix = br#"{"arguments":["not-real"]}"#;
-            let total = MAX_COMMAND_BODY_BYTES;
+            let token = if authorized { token } else { "" };
             let mut socket = std::net::TcpStream::connect(address).unwrap();
             socket
                 .set_read_timeout(Some(Duration::from_secs(10)))
@@ -7507,11 +7680,10 @@ mod tests {
                 .set_write_timeout(Some(Duration::from_secs(10)))
                 .unwrap();
             let head = format!(
-                "POST /api/v1/command HTTP/1.1\r\nHost: {address}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {total}\r\n\r\n"
+                "{request_line} HTTP/1.1\r\nHost: {address}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {total}\r\n\r\n"
             );
-            // A valid JSON prefix plus more than the server's bounded drain
-            // allowance, so the handler answers early and stops reading.
-            let first = MAX_COMMAND_DRAIN_BYTES + (64 << 10);
+            // Send only enough to trigger the early response. The declared
+            // remainder stays unread until after the response is available.
             let mut body = prefix.to_vec();
             body.resize(first, b'a');
             socket.write_all(head.as_bytes()).unwrap();
@@ -7548,12 +7720,19 @@ mod tests {
             "reading the response failed: {read:?}; received {text:?}"
         );
         assert!(
-            text.starts_with("HTTP/1.1 403 "),
-            "complete early response expected, got {text:?}"
+            text.starts_with(&format!("HTTP/1.1 {expected} ")),
+            "complete early {expected} response expected, got {text:?}"
         );
-        assert!(
-            text.ends_with('}') || text.ends_with("}\n"),
-            "response body truncated: {text:?}"
-        );
+        assert!(text.to_ascii_lowercase().contains("connection: close\r\n"));
+        let (headers, body) = text.split_once("\r\n\r\n").expect("response headers");
+        let length: usize = headers
+            .lines()
+            .find_map(|line| {
+                line.to_ascii_lowercase()
+                    .strip_prefix("content-length: ")
+                    .map(|value| value.parse().unwrap())
+            })
+            .expect("response content length");
+        assert_eq!(body.len(), length, "response body truncated: {text:?}");
     }
 }

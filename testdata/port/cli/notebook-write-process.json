@@ -1,0 +1,2961 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "edits",
+      "files": {
+        "notebooks/work.md": "---\ntype: notebook\nnotebook_id: work\ntitle: Work \u0026 notes\ncreated: fixed\nsources: [notes/a.md]\n---\n# Custom body\n",
+        "notes/a.md": "# Alpha\n",
+        "notes/b.md": "# Beta\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            "notes/b.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/a.md\",\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            "notes/b.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/a.md\",\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            "notes/a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            "absent.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            "notebooks/work.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"a notebook cannot be a source of itself\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"source path is required\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            "notebooks/work.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            "../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid source path \\\"../outside.md\\\": path traversal denied: ../outside.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            "../outside.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../outside.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "work",
+            " notes/b.md "
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work",
+            " notes/b.md "
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"work\",\"path\":\"notebooks/work.md\",\"title\":\"Work \\u0026 notes\",\"created\":\"fixed\",\"sources\":[\"notes/b.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source",
+            "missing",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebook not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "missing",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebook not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "add-source"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 2 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "remove-source",
+            "work"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 2 arg(s), received 1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "new"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "new",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"title is required\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "add-source",
+            "work",
+            "notes/a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:notebooks/work.md Title:Work \u0026 notes Description: Created:fixed Sources:[notes/a.md notes/b.md] Query:}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "remove-source",
+            "work",
+            "notes/b.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:work Path:notebooks/work.md Title:Work \u0026 notes Description: Created:fixed Sources:[notes/a.md] Query:}\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 3,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 1,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 3,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 1,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 3,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 1,
+              "index_lifecycle": 0,
+              "links": 2,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[a]] (`notes/a.md`)\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "a",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/a.md notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 4,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 2,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 4,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 2,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 4,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 2,
+              "index_lifecycle": 0,
+              "links": 2,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[a]] (`notes/a.md`)\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "a",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/a.md notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 5,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 3,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 5,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 3,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 5,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 3,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 6,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 4,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 6,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 4,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 6,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 4,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 6,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 4,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 6,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 4,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 6,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 4,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 6,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 4,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 6,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 4,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 6,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 4,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 7,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 5,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 7,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 5,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 7,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 5,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 8,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 6,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 8,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 6,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 8,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 6,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 8,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 6,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 8,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 6,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 8,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 6,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 8,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 6,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 8,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 6,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 8,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 6,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 9,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 7,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 9,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 7,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 9,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 7,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 10,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 8,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 10,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 8,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 10,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 8,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 11,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 9,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 11,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 9,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 11,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 9,
+              "index_lifecycle": 0,
+              "links": 2,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[a]] (`notes/a.md`)\n- [[b]] (`notes/b.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "a",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "b",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/a.md notes/b.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/.symdesk/history/manifest/notebooks/work.md.json": "5b0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202266306566303333333938383239376664333939363234313234663761663832366636393566383261303636393335646134643064613739396263303139373031222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203137350a20207d2c0a20207b0a20202020226964223a202264353239643665666332663935376136343339396364623535643136336166363539656461313233303933373965386433653231626533393036303332613933222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203231350a20207d2c0a20207b0a20202020226964223a202232336331323830663666366463666463383462353235333639653566353634623034393237666535323233613234323064643331656338613433346631383263222c0a202020202274696d657374616d70223a20222454494d45222c0a202020202273697a65223a203131320a20207d0a5d",
+            "vault/.symdesk/history/objects/23c1280f6f6dcfdc84b525369e5f564b04927fe5223a2420dd31ec8a434f182c": "2d2d2d0a747970653a206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a736f75726365733a205b6e6f7465732f612e6d645d0a2d2d2d0a2320437573746f6d20626f64790a",
+            "vault/.symdesk/history/objects/d529d6efc2f957a64399cdb55d163af659eda12309379e8d3e21be3906032a93": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/.symdesk/history/objects/f0ef0333988297fd399624124f7af826f695f82a066935da4d0da799bc019701": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f622e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b625d5d2028606e6f7465732f622e6d6460290a",
+            "vault/notebooks/work.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a20576f726b2026206e6f7465730a637265617465643a2066697865640a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a20776f726b0a736f75726365733a0a202020202d206e6f7465732f612e6d640a2d2d2d0a0a2320576f726b2026206e6f7465730a0a232320536f75726365730a0a2d205b5b615d5d2028606e6f7465732f612e6d6460290a",
+            "vault/notes/a.md": "2320416c7068610a",
+            "vault/notes/b.md": "2320426574610a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 6,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 12,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 10,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 12,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 10,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 12,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 10,
+              "index_lifecycle": 0,
+              "links": 1,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "Work \u0026 notes"
+              ]
+            ],
+            "fts": [
+              [
+                "Work \u0026 notes",
+                "\n# Work \u0026 notes\n\n## Sources\n\n- [[a]] (`notes/a.md`)\n"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "a",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "created",
+                "fixed",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "notebook_id",
+                "work",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "sources",
+                "[notes/a.md]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "title",
+                "Work \u0026 notes",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/work.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "create",
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "new",
+            " New \u0026 Research ",
+            "--description",
+            "Purpose \u003ctest\u003e"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"new-research\",\"path\":\"notebooks/new-research.md\",\"title\":\"New \\u0026 Research\",\"description\":\"Purpose \\u003ctest\\u003e\",\"created\":\"$TIME\",\"sources\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "new",
+            "New \u0026 Research"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:new-research-2 Path:notebooks/new-research-2.md Title:New \u0026 Research Description: Created:$TIME Sources:[] Query:}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "new",
+            "!!!"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"notebook\",\"path\":\"notebooks/notebook.md\",\"title\":\"!!!\",\"created\":\"$TIME\",\"sources\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "new",
+            "Title",
+            "--output",
+            "json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"title\",\"path\":\"notebooks/title.md\",\"title\":\"Title\",\"created\":\"$TIME\",\"sources\":[]}\n",
+          "stderr": ""
+        }
+      ],
+      "states": [
+        {
+          "files": {
+            "vault/notebooks/new-research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263680a6465736372697074696f6e3a20507572706f7365203c746573743e0a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a507572706f7365203c746573743e0a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 7,
+              "files": 1,
+              "fts_norm": 1,
+              "fts_norm_config": 1,
+              "fts_norm_content": 1,
+              "fts_norm_data": 3,
+              "fts_norm_docsize": 1,
+              "fts_norm_idx": 1,
+              "fts_search": 1,
+              "fts_search_config": 1,
+              "fts_search_content": 1,
+              "fts_search_data": 3,
+              "fts_search_docsize": 1,
+              "fts_search_idx": 1,
+              "fts_tri": 1,
+              "fts_tri_config": 1,
+              "fts_tri_content": 1,
+              "fts_tri_data": 3,
+              "fts_tri_docsize": 1,
+              "fts_tri_idx": 1,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "New \u0026 Research"
+              ]
+            ],
+            "fts": [
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\nPurpose \u003ctest\u003e\n\n## Sources\n\n_No sources yet._\n"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "description",
+                "Purpose \u003ctest\u003e",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "notebook_id",
+                "new-research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/new-research-2.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263682d320a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/new-research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263680a6465736372697074696f6e3a20507572706f7365203c746573743e0a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a507572706f7365203c746573743e0a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 13,
+              "files": 2,
+              "fts_norm": 2,
+              "fts_norm_config": 1,
+              "fts_norm_content": 2,
+              "fts_norm_data": 4,
+              "fts_norm_docsize": 2,
+              "fts_norm_idx": 2,
+              "fts_search": 2,
+              "fts_search_config": 1,
+              "fts_search_content": 2,
+              "fts_search_data": 4,
+              "fts_search_docsize": 2,
+              "fts_search_idx": 2,
+              "fts_tri": 2,
+              "fts_tri_config": 1,
+              "fts_tri_content": 2,
+              "fts_tri_data": 4,
+              "fts_tri_docsize": 2,
+              "fts_tri_idx": 2,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "New \u0026 Research"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "New \u0026 Research"
+              ]
+            ],
+            "fts": [
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\nPurpose \u003ctest\u003e\n\n## Sources\n\n_No sources yet._\n"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "notebook_id",
+                "new-research-2",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "description",
+                "Purpose \u003ctest\u003e",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "notebook_id",
+                "new-research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/new-research-2.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263682d320a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/new-research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263680a6465736372697074696f6e3a20507572706f7365203c746573743e0a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a507572706f7365203c746573743e0a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/notebook.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a2027212121270a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e6f7465626f6f6b0a736f75726365733a205b5d0a2d2d2d0a0a23202121210a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 19,
+              "files": 3,
+              "fts_norm": 3,
+              "fts_norm_config": 1,
+              "fts_norm_content": 3,
+              "fts_norm_data": 5,
+              "fts_norm_docsize": 3,
+              "fts_norm_idx": 3,
+              "fts_search": 3,
+              "fts_search_config": 1,
+              "fts_search_content": 3,
+              "fts_search_data": 5,
+              "fts_search_docsize": 3,
+              "fts_search_idx": 3,
+              "fts_tri": 3,
+              "fts_tri_config": 1,
+              "fts_tri_content": 3,
+              "fts_tri_data": 5,
+              "fts_tri_docsize": 3,
+              "fts_tri_idx": 3,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "New \u0026 Research"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "New \u0026 Research"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "!!!"
+              ]
+            ],
+            "fts": [
+              [
+                "!!!",
+                "\n# !!!\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\nPurpose \u003ctest\u003e\n\n## Sources\n\n_No sources yet._\n"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "notebook_id",
+                "new-research-2",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "description",
+                "Purpose \u003ctest\u003e",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "notebook_id",
+                "new-research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "notebook_id",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "title",
+                "!!!",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        },
+        {
+          "files": {
+            "vault/notebooks/new-research-2.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263682d320a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/new-research.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a204e657720262052657365617263680a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e65772d72657365617263680a6465736372697074696f6e3a20507572706f7365203c746573743e0a736f75726365733a205b5d0a2d2d2d0a0a23204e657720262052657365617263680a0a507572706f7365203c746573743e0a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/notebook.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a2027212121270a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a206e6f7465626f6f6b0a736f75726365733a205b5d0a2d2d2d0a0a23202121210a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a",
+            "vault/notebooks/title.md": "2d2d2d0a747970653a206e6f7465626f6f6b0a7469746c653a205469746c650a637265617465643a20222454494d45220a746167733a0a202020202d206e6f7465626f6f6b0a6e6f7465626f6f6b5f69643a207469746c650a736f75726365733a205b5d0a2d2d2d0a0a23205469746c650a0a232320536f75726365730a0a5f4e6f20736f7572636573207965742e5f0a"
+          },
+          "databases": {
+            "sidecar": {
+              "dataset_rows": 0,
+              "file_properties": 25,
+              "files": 4,
+              "fts_norm": 4,
+              "fts_norm_config": 1,
+              "fts_norm_content": 4,
+              "fts_norm_data": 6,
+              "fts_norm_docsize": 4,
+              "fts_norm_idx": 4,
+              "fts_search": 4,
+              "fts_search_config": 1,
+              "fts_search_content": 4,
+              "fts_search_data": 6,
+              "fts_search_docsize": 4,
+              "fts_search_idx": 4,
+              "fts_tri": 4,
+              "fts_tri_config": 1,
+              "fts_tri_content": 4,
+              "fts_tri_data": 6,
+              "fts_tri_docsize": 4,
+              "fts_tri_idx": 4,
+              "index_lifecycle": 0,
+              "links": 0,
+              "schema_migrations": 11,
+              "sqlite_sequence": 1,
+              "view_presets": 0
+            }
+          },
+          "tables": {
+            "files": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "New \u0026 Research"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "New \u0026 Research"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "!!!"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "Title"
+              ]
+            ],
+            "fts": [
+              [
+                "!!!",
+                "\n# !!!\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "New \u0026 Research",
+                "\n# New \u0026 Research\n\nPurpose \u003ctest\u003e\n\n## Sources\n\n_No sources yet._\n"
+              ],
+              [
+                "Title",
+                "\n# Title\n\n## Sources\n\n_No sources yet._\n"
+              ]
+            ],
+            "links": [],
+            "properties": [
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "notebook_id",
+                "new-research-2",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research-2.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "description",
+                "Purpose \u003ctest\u003e",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "notebook_id",
+                "new-research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "title",
+                "New \u0026 Research",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/new-research.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "notebook_id",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "title",
+                "!!!",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/notebook.md",
+                "type",
+                "notebook",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "created",
+                "$TIME",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "notebook_id",
+                "title",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "sources",
+                "[]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "tags",
+                "[notebook]",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "title",
+                "Title",
+                "string"
+              ],
+              [
+                "$ROOT/vault/notebooks/title.md",
+                "type",
+                "notebook",
+                "string"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

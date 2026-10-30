@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -26,12 +27,44 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"MCP write tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPWriteProcessPortFixture$"}, []string{"testdata/port/mcp/write-process.json"}, false},
+	{"notebook write CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookWriteProcessContract$"}, []string{"testdata/port/cli/notebook-write-process.json"}, false},
+	{"notebook read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNotebookReadProcessContract$"}, []string{"testdata/port/cli/notebook-read-process.json"}, false},
+	{"history read and trash retention CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryReadProcessContract$"}, []string{"testdata/port/cli/history-read-process.json"}, false},
+	{"conflict CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortConflictProcessContract$"}, []string{"testdata/port/cli/conflict-process.json"}, false},
+	{"snapshot and trash restore CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRestoreProcessContract$"}, []string{"testdata/port/cli/restore-process.json"}, false},
+	{"graph CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortGraphProcessContract$"}, []string{"testdata/port/cli/graph-process.json"}, false},
+	{"docs read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDocsReadProcessContract$"}, []string{"testdata/port/cli/docs-read-process.json"}, false},
+	{"note/document mutation CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortNoteDocProcessContract$"}, []string{"testdata/port/cli/note-doc-process.json"}, false},
+	{"views read CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortViewsProcessContract$"}, []string{"testdata/port/cli/views-process.json"}, false},
+	{"MCP read tool calls", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPReadProcessPortFixture$"}, []string{"testdata/port/mcp/read-process.json"}, false},
+	{"MCP full tool surface", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestMCPSurfaceProcessPortFixture$"}, []string{"testdata/port/mcp/tools-process.json"}, false},
+	{"contacts keyprovider", []string{"test", "-count=1", "./internal/contacts/internal/domain/security", "-run", "^TestPortContactsKeyProviderContract$"}, []string{"testdata/port/contacts/keyprovider.json"}, false},
+	{"contacts erase", []string{"test", "-count=1", "./internal/contacts/internal/service/security", "-run", "^TestPortContactsEraseContract$"}, []string{"testdata/port/contacts/erase.json"}, false},
+	{"contacts relationships", []string{"test", "-count=1", "./internal/contacts/internal/service/relationship", "-run", "^TestPortContactsRelationshipContract$"}, []string{"testdata/port/contacts/relationship.json"}, false},
+	{"contacts CRUD", []string{"test", "-count=1", "./internal/contacts/internal/service/contact", "-run", "^TestPortContactsCRUDContract$"}, []string{"testdata/port/contacts/crud.json"}, false},
+	{"ingest extraction", []string{"test", "-count=1", "./internal/ingest/internal/extract", "-run", "^TestPortIngestExtractionContract$"}, []string{"testdata/port/ingest/extraction.json"}, false},
+	{"Paperless mapping audit", []string{"test", "-count=1", "./internal/ingest/internal/paperlessimport", "-run", "^TestPortPaperlessMappingContract$"}, []string{"testdata/port/ingest/paperless-mapping.json"}, false},
+	{"Paperless target state", []string{"test", "-count=1", "./internal/ingest/internal/store", "-run", "^TestPortPaperlessStateContract$", "-args", "-port-paperless-state"}, []string{"testdata/port/ingest/paperless-state.json"}, false},
+	{"Paperless export", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportContract$"}, []string{"testdata/port/ingest/paperless-export.json"}, false},
+	{"Paperless export Unicode", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportUnicodeContract$"}, []string{"testdata/port/ingest/paperless-export-unicode.json"}, false},
+	{"Paperless HTTP", []string{"test", "-count=1", "./internal/ingest/internal/paperless", "-run", "^TestPortPaperlessHTTPContract$"}, []string{"testdata/port/ingest/paperless-http.json"}, false},
+	{"Notion import", []string{"test", "-count=1", "./internal/ingest/internal/notionimport", "-run", "^TestPortNotionContract$"}, []string{"testdata/port/ingest/notion.json"}, false},
+	{"contacts vCard", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsVCardContract$"}, []string{"testdata/port/contacts/vcard.json"}, false},
+	{"contacts CSV", []string{"test", "-count=1", "./internal/contacts/internal/domain/importer", "-run", "^TestPortContactsCSVContract$"}, []string{"testdata/port/contacts/csv.json"}, false},
+	{"contacts import", []string{"test", "-count=1", "./internal/contacts/internal/service/importer", "-run", "^TestPortContactsImportContract$"}, []string{"testdata/port/contacts/import.json"}, false},
+	{"contacts schema", []string{"test", "-count=1", "./internal/contacts/internal/storage/sqlite", "-run", "^TestPortContactsSchemaContract$"}, []string{"testdata/port/contacts/schema.json"}, false},
+	{"ingest queue", []string{"test", "-count=1", "./internal/ingest/internal/store", "-run", "^TestPortIngestQueueContract$", "-args", "-port-ingest-queue"}, []string{"testdata/port/ingest/queue.json"}, false},
 	{"room outer surrogates", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomOuterSurrogateContract$"}, []string{"testdata/port/room/outer-surrogate.json"}, false},
 	{"configuration save", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigSaveContract$"}, []string{"testdata/port/config/config-save.json"}, false},
 	{"room identity events", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomIdentityEventContract$"}, []string{"testdata/port/room/identity-events.json"}, false},
 	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},
 	{"config vault selection", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortVaultSelectionCLIContract$"}, []string{"testdata/port/cli/config-vault-selection.json"}, false},
+	{"config process CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortConfigProcessContract$"}, []string{"testdata/port/cli/config-process.json"}, false},
+	{"help and completion CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHelpProcessContract$"}, []string{"testdata/port/cli/help-process.json", "testdata/port/cli/cobra-help.json"}, false},
 	{"duplicates CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDuplicatesProcessContract$"}, []string{"testdata/port/cli/duplicates-process.json"}, false},
+	{"backlinks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortBacklinksProcessContract$"}, []string{"testdata/port/cli/backlinks-process.json"}, false},
+	{"inverse relations CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRelationsInverseProcessContract$"}, []string{"testdata/port/cli/relations-inverse-process.json"}, false},
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},
 	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json", "testdata/port/render/v2/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},
@@ -61,6 +94,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"retrieval pending rebuild", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestPendingRebuildPortFixture$"}, []string{"testdata/port/retrieval/pending-rebuild.json"}, false},
 	{"retrieval Markdown sections", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalSectionsFixture$"}, []string{"testdata/port/retrieval/retrieval-sections.json"}, false},
 	{"retrieval embedding HTTP", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestEmbeddingHTTPPortFixture$"}, []string{"testdata/port/retrieval/embedding-http.json"}, false},
+	{"retrieval document extraction", []string{"test", "-count=1", "./internal/retrieval/internal/parser", "-run", "^TestRetrievalExtractionFixture$"}, []string{"testdata/port/retrieval/document-extraction.json"}, false},
 	{"retrieval CSV sections", []string{"test", "-count=1", "./internal/retrieval/internal/parser", "-run", "^TestRetrievalCSVSectionsFixture$"}, []string{"testdata/port/retrieval/csv-sections.json"}, false},
 	{"retrieval re-embed HTTP CLI", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestReembedHTTPPortFixture$"}, []string{"testdata/port/retrieval/reembed-http-cli.json"}, false},
 	{"retrieval local-hash embedding", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestLocalHashPortFixture$"}, []string{"testdata/port/retrieval/local-hash.json"}, false},
@@ -80,6 +114,9 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"index retrieval CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetrievalProcessPortFixture$"}, []string{"testdata/port/cli/index-retrieval-process.json"}, false},
 	{"index retry CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetryProcessPortFixture$"}, []string{"testdata/port/cli/index-retry-process.json"}, false},
 	{"index symlink CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexSymlinkProcessPortFixture$"}, []string{"testdata/port/cli/index-symlink-process.json"}, false},
+	{"AI providers", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIProviderContract$"}, []string{"testdata/port/ai/providers.json"}, false},
+	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
+	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},
 	{"recipe validate CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeValidateCLIContract$"}, []string{"testdata/port/ai/recipe-validate.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json", "testdata/port/render/v2/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},
@@ -121,6 +158,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"configuration corpus", []string{"run", "./scripts/rust-port/cmd/configgen", "--check"}, []string{"testdata/port/core/config.json"}, false},
 	{"core corpus", []string{"run", "./scripts/rust-port/cmd/coregen", "--check"}, []string{"testdata/port/core/document-formats.json", "testdata/port/core/german-search.json", "testdata/port/core/simhash.json", "testdata/port/core/textnorm.json"}, false},
 	{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--check"}, []string{"testdata/port/core/search-query.json"}, false},
+	{"template-path corpus", []string{"run", "./scripts/rust-port/cmd/templatepathgen", "--check"}, []string{"testdata/port/core/template-path.json"}, false},
 	{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--check"}, []string{"testdata/port/vault/parse.json"}, false},
 	{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--check"}, []string{"testdata/port/vault/filesystem.json"}, false},
 	{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen", "--check"}, []string{"testdata/port/vault/frontmatter-write.json"}, false},
@@ -141,10 +179,12 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"render DSL parse", []string{"run", "./scripts/rust-port/cmd/renderdslgen", "--check"}, []string{"testdata/port/render/dsl-parse.json"}, false},
 	{"render text measure", []string{"run", "./scripts/rust-port/cmd/rendermeasuregen", "--check"}, []string{"testdata/port/render/text-measure.json"}, false},
 	{"render scene bounds", []string{"run", "./scripts/rust-port/cmd/renderscenegen", "--check"}, []string{"testdata/port/render/scene-bounds.json"}, false},
+	{"render emit", []string{"run", "./scripts/rust-port/cmd/renderemitgen", "--check"}, []string{"testdata/port/render/emit.json"}, false},
 	{"render layout", []string{"run", "./scripts/rust-port/cmd/renderlayoutgen", "--check"}, []string{"testdata/port/render/layout.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},
+	{"permissions manager", []string{"run", "./scripts/rust-port/cmd/permissionsgen", "--check"}, []string{"testdata/port/vault/permissions.json"}, false},
 }
 
 var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, target fixtureCheckTarget) error {
@@ -171,7 +211,7 @@ func fixtureReplayArgs(repoRoot string, target fixtureCheckTarget) ([]string, er
 		return target.args, nil
 	}
 	switch target.args[1] {
-	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
+	case "./scripts/rust-port/cmd/configgen", "./scripts/rust-port/cmd/coregen", "./scripts/rust-port/cmd/querygen", "./scripts/rust-port/cmd/templatepathgen", "./scripts/rust-port/cmd/vaultgen", "./scripts/rust-port/cmd/vaultfsgen", "./scripts/rust-port/cmd/vaultwritegen":
 	default:
 		return target.args, nil
 	}
@@ -403,6 +443,7 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	defer cleanup()
 	environment := sanitizedCheckEnvironment(os.Environ(), configPath)
 	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
+	var failures []error
 	for _, target := range targets {
 		// Keep the original native capture byte-for-byte on other hosts. Its
 		// checksum is always checked; fresh Go parity runs on both Windows jobs.
@@ -415,8 +456,15 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 			targetEnvironment = sidecarOracleEnvironment(os.Environ(), sidecarOracle, configPath)
 		}
 		if err := runFixtureCheckTarget(goTool, repoRoot, targetEnvironment, target); err != nil {
-			return err
+			// Preserve each complete child diagnostic and continue independent
+			// replays, so a native CI round reports the entire drift set.
+			failure := fmt.Errorf("fixture check %q: %w", target.name, err)
+			fmt.Fprintln(os.Stderr, failure)
+			failures = append(failures, failure)
 		}
+	}
+	if len(failures) != 0 {
+		return fmt.Errorf("%d fixture checks failed:\n%w", len(failures), errors.Join(failures...))
 	}
 	return nil
 }

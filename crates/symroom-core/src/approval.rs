@@ -180,7 +180,7 @@ fn append_approval_event(
         seq: author.seq.saturating_add(1).max(1),
         prev: author.prev,
         lamport: stats.max_lamport.saturating_add(1),
-        ts: event::format_timestamp(time::OffsetDateTime::now_utc()),
+        ts: String::new(),
         kind: kind.to_owned(),
         body,
         sig: None,

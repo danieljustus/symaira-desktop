@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +13,64 @@ import (
 	"testing"
 	"time"
 )
+
+func TestPopulateShareAccessPinsLargeFileMetadata(t *testing.T) {
+	want := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
+	for _, initial := range []time.Time{want.Add(-time.Hour), want.Add(time.Hour)} {
+		root := t.TempDir()
+		path := filepath.Join(root, "large.bin")
+		if err := os.WriteFile(path, []byte("old"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(path, initial, initial); err != nil {
+			t.Fatal(err)
+		}
+		if err := populateShareAccess(root); err != nil {
+			t.Fatal(err)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !info.ModTime().Equal(want) || info.Size() != (8<<20)+2 {
+			t.Fatalf("metadata: mtime=%v size=%d", info.ModTime(), info.Size())
+		}
+	}
+}
+
+func TestCompareBoundsBodyDiagnostics(t *testing.T) {
+	for _, kind := range []string{"status", "header", "body"} {
+		t.Run(kind, func(t *testing.T) {
+			left := transcript{Status: 200, Body: bytes.Repeat([]byte{0}, 8<<20)}
+			right := transcript{Status: 200, Body: bytes.Clone(left.Body)}
+			right.Body[len(right.Body)-1] = 1
+			switch kind {
+			case "status":
+				right.Status = 400
+			case "header":
+				right.Headers = map[string]string{"last-modified": "different"}
+			}
+			err := compare("test", left, right)
+			if err == nil {
+				t.Fatal("full-byte mismatch was not detected")
+			}
+			text := err.Error()
+			for _, body := range [][]byte{left.Body, right.Body} {
+				if !strings.Contains(text, fmt.Sprintf("len=%d sha256=%x", len(body), sha256.Sum256(body))) {
+					t.Fatalf("missing full-body length/digest: %s", text)
+				}
+			}
+			if len(text) > 1024 || !strings.Contains(text, "first difference=8388607") {
+				t.Fatalf("unbounded or incorrect mismatch window (%d bytes): %.1024s", len(text), text)
+			}
+		})
+	}
+	for _, pair := range [][2][]byte{{nil, {1}}, {{1}, nil}, {{1}, {1, 2}}, {{1}, {2}}, {nil, nil}} {
+		if text := bodyDifference(pair[0], pair[1]); len(text) > 1024 {
+			t.Fatalf("unbounded short-body diagnostic: %s", text)
+		}
+	}
+}
 
 func testExecutable(t *testing.T) string {
 	t.Helper()

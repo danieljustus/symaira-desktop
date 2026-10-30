@@ -1,3 +1,7 @@
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -277,7 +281,7 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
 
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
     command
-        .env_clear()
+        .isolated_env()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .env(
             "SYSTEMROOT",

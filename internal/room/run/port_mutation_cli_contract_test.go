@@ -259,7 +259,6 @@ func normalizeGeneratedRunLines(data []byte) ([]byte, error) {
 		if err := json.Unmarshal(trimmed, &fields); err != nil {
 			return nil, err
 		}
-		fields["ts"] = json.RawMessage(`"<dynamic-clock>"`)
 		fields["sig"] = json.RawMessage(`"<signature-of-dynamic-clock>"`)
 		canonical, err := json.Marshal(fields)
 		if err != nil {

@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -305,7 +309,7 @@ fn io_errors_match_go_process_contract() {
         command
             .args(&case.args)
             .current_dir(&cwd)
-            .env_clear()
+            .isolated_env()
             .env("HOME", temp.path.join("home"))
             .env("USERPROFILE", temp.path.join("home"))
             .env("XDG_DATA_HOME", temp.path.join("data"))
@@ -396,7 +400,9 @@ fn recorded_literal_slashes_survive_the_windows_separator() {
             if text.contains("<slash>") {
                 literal_cases += 1;
                 assert!(
-                    windows.contains("create/select") || windows.contains("index.sqlite"),
+                    windows.contains("create/select")
+                        && windows.contains("rebuild .symroom/index.sqlite")
+                        && !windows.contains("<slash>"),
                     "{}: literal slash lost",
                     case.name
                 );
@@ -460,6 +466,10 @@ impl TempDir {
         let path =
             std::env::temp_dir().join(format!("symroom-io-error-{}-{nonce}", std::process::id()));
         create_private_dir(&path);
+        // Match the physical cwd returned by the child on symlinked TMPDIRs,
+        // without changing Windows paths to verbatim-prefix spelling.
+        #[cfg(unix)]
+        let path = fs::canonicalize(path).expect("canonical test root");
         Self { path }
     }
 }

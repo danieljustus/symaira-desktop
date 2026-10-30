@@ -5,7 +5,9 @@ from pathlib import Path
 import shutil
 import stat
 import tempfile
+import subprocess
 import unittest
+from unittest import mock
 
 spec = importlib.util.spec_from_file_location("frozen_contract", Path(__file__).with_name("frozen_contract.py"))
 assert spec is not None and spec.loader is not None
@@ -63,6 +65,40 @@ class FrozenContractControls(unittest.TestCase):
             runner.counts("running 0 tests\n")
         with self.assertRaises(ValueError):
             runner.counts(OK + "test result: FAILED. 1 passed; 1 failed; 0 ignored;")
+
+    def test_parser_rejects_embedded_truncated_and_failed_summaries(self):
+        for output in ("prefix " + OK, "    " + OK, "test result: ok. 3 passed;",
+                       OK.replace("0 failed", "1 failed")):
+            with self.subTest(output=output), self.assertRaises(ValueError):
+                runner.counts(output)
+        self.assertEqual(runner.counts("prefix " + OK + OK)["passed"], 3)
+
+    def test_count_mismatch_includes_bounded_cargo_diagnostics(self):
+        output = OK + "\nfailures:\n    failing_case\n" + "noise\n" * 10000
+        run = subprocess.CompletedProcess([], 0, stdout=output, stderr="cargo stderr marker\n")
+        with mock.patch.object(runner.subprocess, "run", return_value=run):
+            with self.assertRaises(RuntimeError) as caught:
+                runner.replay("cargo test", {"passed": 9, "ignored": 1}, {})
+        message = str(caught.exception)
+        for expected in ("got 3 passed/1 ignored", "recorded 9/1", "test result: ok.",
+                         "failures:", "failing_case", "cargo stderr marker"):
+            self.assertIn(expected, message)
+        self.assertLess(len(message), 25000)
+
+    def test_leaked_child_summary_fails_exact_counts(self):
+        run = subprocess.CompletedProcess([], 0, stdout=OK + OK, stderr="")
+        with mock.patch.object(runner.subprocess, "run", return_value=run):
+            with self.assertRaisesRegex(RuntimeError, "got 6 passed/2 ignored"):
+                runner.replay("cargo test", {"passed": 3, "ignored": 1}, {})
+            got, _ = runner.replay("cargo test", {}, {}, verify_counts=False)
+            self.assertEqual(got["passed"], 6)
+
+    def test_missing_or_failed_results_include_output(self):
+        for output in ("missing summary", OK.replace("ok.", "FAILED.")):
+            run = subprocess.CompletedProcess([], 0, stdout=output, stderr="stderr marker")
+            with mock.patch.object(runner.subprocess, "run", return_value=run):
+                with self.assertRaisesRegex(RuntimeError, "stderr marker"):
+                    runner.replay("cargo test", {"passed": 3, "ignored": 1}, {})
 
     def test_go_is_removed_from_path_and_user_roots_are_private(self):
         with tempfile.TemporaryDirectory() as directory:

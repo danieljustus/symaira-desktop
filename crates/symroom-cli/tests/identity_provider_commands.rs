@@ -5,6 +5,10 @@
 //! macOS `security`, identity file) observed through `symroom identity
 //! show|export` with fake provider executables on a scoped `PATH`.
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -209,7 +213,7 @@ fn replay(case: &Case, scratch: &Path, helper: &Path) -> Result<(), String> {
     command
         .args(&case.args)
         .current_dir(&cwd)
-        .env_clear()
+        .isolated_env()
         .env("HOME", &home)
         .env("USERPROFILE", &home)
         .env("XDG_DATA_HOME", &data_home)

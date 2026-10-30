@@ -103,7 +103,8 @@ pub fn checkpoint_undo(
     }
     for rel in &checkpoint.new_files {
         if let Ok(path) = secure_path(vault_root, rel)
-            && let Some(key) = path.to_str()
+            && let Ok(key) = super::absolute_non_verbatim(&path)
+            && let Some(key) = key.to_str()
         {
             let _ = sidecar.delete_document(key);
         }
@@ -134,7 +135,8 @@ fn index_path(
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes)
         .map_err(HistoryIndexError::Io)?;
-    let key = path.to_str().ok_or_else(|| {
+    let key_path = super::absolute_non_verbatim(path).map_err(HistoryIndexError::Index)?;
+    let key = key_path.to_str().ok_or_else(|| {
         HistoryIndexError::Index(SidecarError::NonUtf8Path {
             context: "history index path",
             path: path.to_path_buf(),

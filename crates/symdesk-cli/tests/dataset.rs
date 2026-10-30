@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     ffi::OsStr,
     fs,
@@ -40,7 +44,7 @@ fn run(root: &TempRoot, args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Ou
     let home = root.0.join("home");
     let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
     command
-        .env_clear()
+        .isolated_env()
         .env("HOME", &home)
         .env("USERPROFILE", &home)
         .env("XDG_CONFIG_HOME", home.join(".config"))

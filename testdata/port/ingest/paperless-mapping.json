@@ -1,0 +1,487 @@
+{
+  "audit": {
+    "total_documents": 4,
+    "by_mime": {
+      "application/pdf": 1,
+      "application/unknown": 1,
+      "image/png; charset=utf-8": 1,
+      "text/csv": 1
+    },
+    "tag_counts": {
+      "Embedded": 1,
+      "Tax": 1
+    },
+    "correspondent_counts": {
+      "Sender": 1
+    },
+    "document_type_counts": {
+      "Invoice": 1
+    },
+    "storage_path_counts": {
+      "Embedded/path": 1,
+      "Finance/{{created_year}}": 1
+    },
+    "unresolved_tag_ids": [
+      91
+    ],
+    "unresolved_correspondent_ids": [
+      92
+    ],
+    "unresolved_document_type_ids": [
+      93
+    ],
+    "unresolved_storage_path_ids": [
+      94
+    ],
+    "unsupported_file_types": {
+      "weird": 1
+    },
+    "by_expected_extension": {
+      "custom": 1,
+      "pdf": 1,
+      "png": 1,
+      "weird": 1
+    },
+    "required_tools": [
+      "pdftoppm",
+      "tesseract"
+    ]
+  },
+  "cases": [
+    {
+      "created": "2024-02-03T04:05:06Z",
+      "input": {
+        "archived_file_name": "archive.PDF",
+        "correspondent": 3,
+        "created": "2024-02-03T04:05:06Z",
+        "created_date": "2023-01-01",
+        "document_type": 4,
+        "id": 1,
+        "mime_type": "application/pdf",
+        "original_file_name": "original.txt",
+        "storage_path": 5,
+        "tags": [
+          7,
+          {
+            "id": 8,
+            "name": "Embedded"
+          }
+        ],
+        "title": "Invoice"
+      },
+      "planned": {
+        "id": 1,
+        "status": "planned",
+        "mime": "application/pdf",
+        "expected_extension": ".pdf",
+        "import_run_id": "fixed-run",
+        "source_uri": "paperless://documents/1",
+        "download_uri": "paperless://documents/1/download"
+      },
+      "resolved": {
+        "Tags": [
+          "Tax",
+          "Embedded"
+        ],
+        "Correspondent": "Sender",
+        "DocumentType": "Invoice",
+        "StoragePath": "Finance/{{created_year}}",
+        "Warnings": null
+      }
+    },
+    {
+      "created": "0001-01-01T00:00:00Z",
+      "input": {
+        "correspondent": 92,
+        "document_type": 93,
+        "file_type": "weird",
+        "id": 2,
+        "mime_type": "application/unknown",
+        "storage_path": 94,
+        "tags": [
+          91,
+          91,
+          0
+        ],
+        "title": "Missing"
+      },
+      "planned": {
+        "id": 2,
+        "status": "planned",
+        "mime": "application/unknown",
+        "expected_extension": ".weird",
+        "import_run_id": "fixed-run",
+        "source_uri": "paperless://documents/2",
+        "download_uri": "paperless://documents/2/download"
+      },
+      "resolved": {
+        "Tags": [
+          "id:91",
+          "id:91"
+        ],
+        "Correspondent": "id:92",
+        "DocumentType": "id:93",
+        "StoragePath": "",
+        "Warnings": [
+          "document 2 (Missing): unresolved tag ID 91",
+          "document 2 (Missing): unresolved tag ID 91",
+          "document 2 (Missing): unresolved correspondent ID 92",
+          "document 2 (Missing): unresolved document type ID 93",
+          "document 2 (Missing): unresolved storage path ID 94"
+        ]
+      }
+    },
+    {
+      "created": "2024-03-04T00:00:00Z",
+      "input": {
+        "correspondent": {
+          "id": 0
+        },
+        "created_date": "2024-03-04",
+        "id": 3,
+        "mime_type": "image/png; charset=utf-8",
+        "storage_path": {
+          "name": "Embedded/path"
+        },
+        "tags": []
+      },
+      "planned": {
+        "id": 3,
+        "status": "planned",
+        "mime": "image/png; charset=utf-8",
+        "expected_extension": ".png",
+        "import_run_id": "fixed-run",
+        "source_uri": "paperless://documents/3",
+        "download_uri": "paperless://documents/3/download"
+      },
+      "resolved": {
+        "Tags": [],
+        "Correspondent": "",
+        "DocumentType": "",
+        "StoragePath": "Embedded/path",
+        "Warnings": null
+      }
+    },
+    {
+      "created": "0001-01-01T00:00:00Z",
+      "input": {
+        "file_type": ".csv",
+        "id": 4,
+        "mime_type": "text/csv",
+        "original_file_name": "unknown.custom",
+        "tags": [
+          10
+        ]
+      },
+      "planned": {
+        "id": 4,
+        "status": "planned",
+        "mime": "text/csv",
+        "expected_extension": ".custom",
+        "import_run_id": "fixed-run",
+        "source_uri": "paperless://documents/4",
+        "download_uri": "paperless://documents/4/download"
+      },
+      "resolved": {
+        "Tags": [],
+        "Correspondent": "",
+        "DocumentType": "",
+        "StoragePath": "",
+        "Warnings": null
+      }
+    }
+  ],
+  "downloads": [
+    {
+      "doc_id": 1,
+      "extension": ".docx",
+      "metadata": {
+        "filename": "response.DOCX"
+      }
+    },
+    {
+      "doc_id": 2,
+      "extension": ".docx",
+      "metadata": {
+        "filename": "response.DOCX"
+      }
+    },
+    {
+      "doc_id": 3,
+      "extension": ".docx",
+      "metadata": {
+        "filename": "response.DOCX"
+      }
+    },
+    {
+      "doc_id": 4,
+      "extension": ".docx",
+      "metadata": {
+        "filename": "response.DOCX"
+      }
+    },
+    {
+      "doc_id": 1,
+      "extension": ".pdf",
+      "metadata": {
+        "content_type": "image/png; charset=utf-8"
+      }
+    },
+    {
+      "doc_id": 2,
+      "extension": ".weird",
+      "metadata": {
+        "content_type": "image/png; charset=utf-8"
+      }
+    },
+    {
+      "doc_id": 3,
+      "extension": ".png",
+      "metadata": {
+        "content_type": "image/png; charset=utf-8"
+      }
+    },
+    {
+      "doc_id": 4,
+      "extension": ".custom",
+      "metadata": {
+        "content_type": "image/png; charset=utf-8"
+      }
+    },
+    {
+      "doc_id": 1,
+      "extension": ".no-extension",
+      "metadata": {
+        "filename": "no-extension"
+      }
+    },
+    {
+      "doc_id": 2,
+      "extension": ".no-extension",
+      "metadata": {
+        "filename": "no-extension"
+      }
+    },
+    {
+      "doc_id": 3,
+      "extension": ".no-extension",
+      "metadata": {
+        "filename": "no-extension"
+      }
+    },
+    {
+      "doc_id": 4,
+      "extension": ".no-extension",
+      "metadata": {
+        "filename": "no-extension"
+      }
+    },
+    {
+      "doc_id": 1,
+      "extension": ".pdf",
+      "metadata": {
+        "content_type": " TEXT/PLAIN ; charset=utf-8 "
+      }
+    },
+    {
+      "doc_id": 2,
+      "extension": ".weird",
+      "metadata": {
+        "content_type": " TEXT/PLAIN ; charset=utf-8 "
+      }
+    },
+    {
+      "doc_id": 3,
+      "extension": ".txt",
+      "metadata": {
+        "content_type": " TEXT/PLAIN ; charset=utf-8 "
+      }
+    },
+    {
+      "doc_id": 4,
+      "extension": ".custom",
+      "metadata": {
+        "content_type": " TEXT/PLAIN ; charset=utf-8 "
+      }
+    }
+  ],
+  "empty_audit": {
+    "total_documents": 0,
+    "by_mime": {}
+  },
+  "extensions": [
+    {
+      "input": "",
+      "output": ""
+    },
+    {
+      "input": "PDF",
+      "output": ".pdf"
+    },
+    {
+      "input": ".PDF",
+      "output": ".pdf"
+    },
+    {
+      "input": " .csv ",
+      "output": ".csv"
+    },
+    {
+      "input": "archive.TAR.GZ",
+      "output": ".gz"
+    },
+    {
+      "input": "a/b.JPG",
+      "output": ".jpg"
+    },
+    {
+      "input": "a\\b.PNG",
+      "output": ".png"
+    },
+    {
+      "input": ".",
+      "output": "."
+    },
+    {
+      "input": "../file",
+      "output": ""
+    },
+    {
+      "input": "name.",
+      "output": "."
+    },
+    {
+      "input": "text/plain",
+      "output": ""
+    }
+  ],
+  "lookups": {
+    "correspondents": {
+      "3": "Sender"
+    },
+    "document_types": {
+      "4": "Invoice"
+    },
+    "storage_paths": {
+      "5": "Finance/{{created_year}}"
+    },
+    "tags": {
+      "10": "",
+      "7": "Tax"
+    }
+  },
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "audit.go": "722c477b858df3e6f7352c262121dfb932f33bc0cf129c35e8b0fea31777a4f4",
+    "import.go": "934894daa8e8add10ccb538b1819cf4fcaf53614ded1321d18c0b1adbf91b4e6",
+    "port_contract_test.go": "80c84a56a277a979e0df8494610373659a9f80f42437cb2fb367ef87a60c7275"
+  },
+  "stages": [
+    {
+      "bounded": "download timeout",
+      "explicit_stage": "custom",
+      "input": "download timeout",
+      "stage": "download"
+    },
+    {
+      "bounded": "detect source type: unknown",
+      "explicit_stage": "custom",
+      "input": "detect source type: unknown",
+      "stage": "detect"
+    },
+    {
+      "bounded": "extract text failed",
+      "explicit_stage": "custom",
+      "input": "extract text failed",
+      "stage": "extract"
+    },
+    {
+      "bounded": "archive file failed",
+      "explicit_stage": "custom",
+      "input": "archive file failed",
+      "stage": "archive"
+    },
+    {
+      "bounded": "write note failed",
+      "explicit_stage": "custom",
+      "input": "write note failed",
+      "stage": "write"
+    },
+    {
+      "bounded": "record document failed",
+      "explicit_stage": "custom",
+      "input": "record document failed",
+      "stage": "metadata"
+    },
+    {
+      "bounded": "set vault path failed",
+      "explicit_stage": "custom",
+      "input": "set vault path failed",
+      "stage": "metadata"
+    },
+    {
+      "bounded": "complete job failed",
+      "explicit_stage": "custom",
+      "input": "complete job failed",
+      "stage": "metadata"
+    },
+    {
+      "bounded": "other",
+      "explicit_stage": "custom",
+      "input": "other",
+      "stage": "import"
+    },
+    {
+      "bounded": "download and write note",
+      "explicit_stage": "custom",
+      "input": "download and write note",
+      "stage": "download"
+    },
+    {
+      "bounded": "multi line message",
+      "explicit_stage": "custom",
+      "input": " multi\n line\t message ",
+      "stage": "import"
+    },
+    {
+      "bounded": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+      "explicit_stage": "custom",
+      "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "stage": "import"
+    }
+  ],
+  "storage_paths": [
+    {
+      "input": "",
+      "output": ""
+    },
+    {
+      "input": "Finance/2024",
+      "output": "Finance/2024"
+    },
+    {
+      "input": " ../outside/./ . /\u003cx\u003e:?* ",
+      "output": "outside/_x____"
+    },
+    {
+      "input": "A\\B\\C",
+      "output": "A/B/C"
+    },
+    {
+      "input": "..././..",
+      "output": ""
+    },
+    {
+      "input": " / absolute//file ",
+      "output": "absolute/file"
+    },
+    {
+      "input": "a\u0001b",
+      "output": "a_b"
+    }
+  ]
+}

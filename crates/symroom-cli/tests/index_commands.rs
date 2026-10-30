@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::sync::atomic::{AtomicU64, Ordering};
 static TEMP_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -84,7 +88,7 @@ fn index_cli_matches_go_process_and_db_contract() {
         command
             .args(&case.args[1..])
             .current_dir(&case_root)
-            .env_clear();
+            .isolated_env();
         if case.room_override {
             command.env("SYMROOM_ROOM_DIR", &room);
         }

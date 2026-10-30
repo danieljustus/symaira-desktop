@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -66,25 +65,7 @@ func observeRecipeValidateCLI(t *testing.T) recipeValidateFixture {
 	if err := os.MkdirAll(home, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	binary := filepath.Join(root, "symdesk")
-	if runtime.GOOS == "windows" {
-		binary += ".exe"
-	}
-	currentUser, err := user.Current()
-	if err != nil {
-		t.Fatal(err)
-	}
-	goEnv := exec.Command("go", "env", "GOMODCACHE")
-	goEnv.Env = append(os.Environ(), "HOME="+currentUser.HomeDir)
-	moduleCache, err := goEnv.Output()
-	if err != nil {
-		t.Fatal(err)
-	}
-	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
-	build.Env = append(os.Environ(), "GOMODCACHE="+string(bytes.TrimSpace(moduleCache)), "GOTMPDIR="+root)
-	if out, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build Go CLI: %v\n%s", err, out)
-	}
+	binary := processFixtureBinary(t)
 
 	inputs := []struct{ name, yaml string }{
 		{"valid_json", "version: 1\nname: daily\ntriggers: [manual, save]\ntools: [desk_search]\nwrite_cap: 2\n"},

@@ -84,6 +84,17 @@ generated with and no longer depends on a non-main oracle branch being fetched.
 The production-source verifier is unchanged and still accepts only bytes equal
 to the named commit; the historical `d0092bb1` identity stays rejected.
 
+After the Windows backlink separator correction (#1360), the corrected reference
+follows the central oracle at `6f6a1aff53b3f6ec60184ad052736018be0bf722`,
+retained by branch `oracle-pins/config-paths-foundation-6f6a1aff`. The obsolete
+`c2aa0408` reference no longer describes the complete production source, even
+though the changed sidecar code does not affect rendering. This reference-only
+update preserves every renderer fixture byte. As with #1341, refresh only
+`generator_source_digest` from the value emitted by `make port-fixtures-check`;
+do not regenerate timestamp-bearing archive PDFs for a reference-input change.
+The full `go test ./scripts/rust-port/...` gate includes the corrected-reference
+rejection test as well as the central provenance tooling.
+
 The two original global-pin failures, `TestPortVaultSelectionCLIContract` and
 `TestCurrentUsesCompiledSourceBeforeTestLocalEnvironmentChanges`, now pass, as
 does the complete affected Go caller/producer union. No source verifier or test

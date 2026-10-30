@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "6aea7f97c3cf3213b62119fe718cf71c0b3557d2",
+  "oracle_revision": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
   "source_hashes": {
     "cmd/symroom/cmd_artifact.go": "79405799847b23475088b8f63cfa363b37764443f02daac82d53596239c4becf",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
@@ -31,7 +31,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -65,7 +65,7 @@
         },
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -95,7 +95,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -126,7 +126,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -150,7 +150,7 @@
       "initial_journal": [
         {
           "name": "mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         }
       ],
       "project_config": "default_identity = \"owner\"\n",
@@ -165,7 +165,7 @@
         },
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\"},\"id\":\"ev_8a2e2034c80e8e40\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:71576de0d53a37077bbb5991250590a6c7f1f3daf6c4cb9eb1a22ca3976d558f\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\"},\"id\":\"ev_8a2e2034c80e8e40\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:89392f78e6aa25b918ed516bda32f6c1fa89c291b66e909d2b0027cebf9f505c\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -248,7 +248,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"doc-fixture-1\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"doc-fixture-1\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -283,7 +283,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -318,7 +318,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -353,7 +353,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",
@@ -382,7 +382,7 @@
       "final_files": [
         {
           "name": "journal/mem_42255b0c60e3c594.jsonl",
-          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\",\"v\":1}\n"
         },
         {
           "name": "report.md",

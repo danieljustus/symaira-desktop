@@ -72,7 +72,7 @@ func TestMeetingListDetailedReportsMalformedFiles(t *testing.T) {
 	if len(result.Failures) != 1 {
 		t.Fatalf("expected one list failure, got %d: %+v", len(result.Failures), result.Failures)
 	}
-	if result.Failures[0].Path != filepath.Join("meetings", "broken.md") {
+	if result.Failures[0].Path != "meetings/broken.md" {
 		t.Errorf("failure path = %q, want meetings/broken.md", result.Failures[0].Path)
 	}
 	if result.Failures[0].Message == "" {

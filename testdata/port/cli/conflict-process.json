@@ -1,0 +1,3683 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "mine",
+      "files": {
+        "nested/second 2.md": "---\ntitle: Second Theirs\n---\n",
+        "nested/second.md": "---\ntitle: Second Mine\n---\n",
+        "note conflicted copy.md": "---\ntitle: Theirs\n---\n[[other]]\n",
+        "note.md": "---\ntitle: Mine\n---\n[[target]]\n",
+        "plain.md": "---\ntitle: Plain\n---\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:1/api/embeddings\"\nretry_count = 0\ntimeout_seconds = 1\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note conflicted copy.md",
+            "--action=keep-mine",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"action\":\"keep-mine\",\"conflict_path\":\"$ROOT/vault/note conflicted copy.md\",\"original_path\":\"$ROOT/vault/note.md\",\"status\":\"resolved\"}\n",
+          "stderr": "time=$NOW level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path=$ROOT/home/data/symdesk/retrieval.db new_path=$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "6"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "nested/second 2.md",
+            "--action",
+            "keep-mine"
+          ],
+          "exit_code": 0,
+          "stdout": "map[action:keep-mine conflict_path:$ROOT/vault/nested/second 2.md original_path:$ROOT/vault/nested/second.md status:resolved]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "graph",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"nested/second.md\",\"label\":\"Second Mine\"},{\"id\":\"note.md\",\"label\":\"Mine\"},{\"id\":\"plain.md\",\"label\":\"Plain\"}],\"edges\":[{\"source\":\"note.md\",\"target\":\"target\"}]}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "theirs",
+      "files": {
+        "nested/second 2.md": "---\ntitle: Second Theirs\n---\n",
+        "nested/second.md": "---\ntitle: Second Mine\n---\n",
+        "note conflicted copy.md": "---\ntitle: Theirs\n---\n[[other]]\n",
+        "note.md": "---\ntitle: Mine\n---\n[[target]]\n",
+        "plain.md": "---\ntitle: Plain\n---\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:1/api/embeddings\"\nretry_count = 0\ntimeout_seconds = 1\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note conflicted copy.md",
+            "--action=keep-theirs",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"action\":\"keep-theirs\",\"conflict_path\":\"$ROOT/vault/note conflicted copy.md\",\"original_path\":\"$ROOT/vault/note.md\",\"status\":\"resolved\"}\n",
+          "stderr": "time=$NOW level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path=$ROOT/home/data/symdesk/retrieval.db new_path=$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "6"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "nested/second 2.md",
+            "--action",
+            "keep-theirs"
+          ],
+          "exit_code": 0,
+          "stdout": "map[action:keep-theirs conflict_path:$ROOT/vault/nested/second 2.md original_path:$ROOT/vault/nested/second.md status:resolved]\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "graph",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"nested/second.md\",\"label\":\"Second Theirs\"},{\"id\":\"note.md\",\"label\":\"Theirs\"},{\"id\":\"plain.md\",\"label\":\"Plain\"}],\"edges\":[{\"source\":\"note.md\",\"target\":\"other\"}]}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "absolute-and-plain",
+      "files": {
+        "nested/second 2.md": "---\ntitle: Second Theirs\n---\n",
+        "nested/second.md": "---\ntitle: Second Mine\n---\n",
+        "note conflicted copy.md": "---\ntitle: Theirs\n---\n[[other]]\n",
+        "note.md": "---\ntitle: Mine\n---\n[[target]]\n",
+        "plain.md": "---\ntitle: Plain\n---\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:1/api/embeddings\"\nretry_count = 0\ntimeout_seconds = 1\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "$ROOT/vault/note conflicted copy.md",
+            "--action=bad",
+            "--action=keep-theirs",
+            "--output=json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"action\":\"keep-theirs\",\"conflict_path\":\"$ROOT/vault/note conflicted copy.md\",\"original_path\":\"$ROOT/vault/note.md\",\"status\":\"resolved\"}\n",
+          "stderr": "time=$NOW level=INFO msg=\"seeded per-vault retrieval index from standalone store\" standalone_path=$ROOT/home/data/symdesk/retrieval.db new_path=$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "6"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "plain.md",
+            "--action=keep-theirs",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"action\":\"keep-theirs\",\"conflict_path\":\"$ROOT/vault/plain.md\",\"original_path\":\"$ROOT/vault/plain.md\",\"status\":\"resolved\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "graph",
+            "--json"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"nodes\":[{\"id\":\"nested/second 2.md\",\"label\":\"Second Theirs\"},{\"id\":\"nested/second.md\",\"label\":\"Second Mine\"},{\"id\":\"note.md\",\"label\":\"Theirs\"}],\"edges\":[{\"source\":\"note.md\",\"target\":\"other\"}]}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Theirs"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note.md",
+                "other",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Theirs"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "retrieval-vault/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ]
+            ],
+            "retrieval-vault/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ]
+            ],
+            "retrieval-vault/generation": [
+              [
+                "generation",
+                "7"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "arguments",
+      "files": {
+        "nested/second 2.md": "---\ntitle: Second Theirs\n---\n",
+        "nested/second.md": "---\ntitle: Second Mine\n---\n",
+        "note conflicted copy.md": "---\ntitle: Theirs\n---\n[[other]]\n",
+        "note.md": "---\ntitle: Mine\n---\n[[target]]\n",
+        "plain.md": "---\ntitle: Plain\n---\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:1/api/embeddings\"\nretry_count = 0\ntimeout_seconds = 1\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "conflict",
+            "resolve"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "required flag(s) \"action\" not set\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"required flag(s) \\\"action\\\" not set\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action=invalid"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid action: must be keep-mine or keep-theirs\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action=invalid",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid action: must be keep-mine or keep-theirs\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "a",
+            "b",
+            "--action=keep-mine",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --action\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--unknown"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --unknown\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--json=wat"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"wat\" for \"--json\" flag: strconv.ParseBool: parsing \"wat\": invalid syntax\n",
+          "state": {
+            "files": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "Plain"
+              ]
+            ],
+            "links": [
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "other",
+                "wikilink"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "target",
+                "wikilink"
+              ]
+            ],
+            "properties": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "title",
+                "Second Theirs"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "title",
+                "Second Mine"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "title",
+                "Theirs"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "title",
+                "Mine"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "title",
+                "Plain"
+              ]
+            ],
+            "retrieval-standalone/chunks": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Theirs\ntitle: Second Theirs\ntitle: Second Theirs\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "e05cdd5c508b85f35bd8d85131fb44ead4ad9a0b9b73e9280d9069a04fd39fc9",
+                ""
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Second Mine\ntitle: Second Mine\ntitle: Second Mine\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "1a2f9b94a28f6fb66a7708f40553558070da5fd53df5fd8b444cd2e1a6c9f5d9",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Theirs\ntitle: Theirs\ntitle: Theirs\ntype: note\nsimhash: f5562003ab6b1091\n__SYMDESK_SEARCH_METADATA_END__",
+                "ce1307ad90a6bc614df81d8aaa60297f19a3abff0bfb96d4ae2a207c07dc00ee",
+                ""
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "1",
+                "[[other]]\n",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Mine\ntitle: Mine\ntitle: Mine\ntype: note\nsimhash: 75eb275586b2c884\n__SYMDESK_SEARCH_METADATA_END__",
+                "4ef3dddeb0cd905c4f1192d9fedd5fbfbf00b57f779633914a4e4ab2625fcaa1",
+                ""
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "1",
+                "[[target]]\n",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4",
+                ""
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "0",
+                "__SYMDESK_SEARCH_METADATA_START__\ntitle: Plain\ntitle: Plain\ntitle: Plain\ntype: note\n__SYMDESK_SEARCH_METADATA_END__",
+                "0c3caa89bd0b713d2e1d5c5591def95bf0a5802f28d9802531669dcbfeca2992",
+                ""
+              ]
+            ],
+            "retrieval-standalone/documents": [
+              [
+                "$ROOT/vault/nested/second 2.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/nested/second.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ],
+              [
+                "$ROOT/vault/note conflicted copy.md",
+                "05db0503c704e03a253e0a262a5eca377b573222cfd2b3a2fe7b2c8a5251c847"
+              ],
+              [
+                "$ROOT/vault/note.md",
+                "f4986869c8658f0d336a710eb6f455c9f309d4075e930025f51743c31d7b4ac4"
+              ],
+              [
+                "$ROOT/vault/plain.md",
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              ]
+            ],
+            "retrieval-standalone/generation": [
+              [
+                "generation",
+                "5"
+              ]
+            ],
+            "vault": [
+              [
+                "nested/second 2.md",
+                "---\ntitle: Second Theirs\n---\n"
+              ],
+              [
+                "nested/second.md",
+                "---\ntitle: Second Mine\n---\n"
+              ],
+              [
+                "note conflicted copy.md",
+                "---\ntitle: Theirs\n---\n[[other]]\n"
+              ],
+              [
+                "note.md",
+                "---\ntitle: Mine\n---\n[[target]]\n"
+              ],
+              [
+                "plain.md",
+                "---\ntitle: Plain\n---\n"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "no-vault",
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action=keep-mine"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action=keep-mine",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        },
+        {
+          "args": [
+            "conflict",
+            "resolve",
+            "note.md",
+            "--action=invalid",
+            "--json"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid action: must be keep-mine or keep-theirs\"}\n",
+          "stderr": "",
+          "state": {
+            "vault": []
+          }
+        }
+      ]
+    }
+  ]
+}

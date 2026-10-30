@@ -1,3 +1,7 @@
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -237,7 +241,7 @@ fn replay_case(case: &FixtureCase, alias_vault: bool) {
     fs::write(config_dir.join("config.toml"), config).expect("write private retrieval config");
 
     let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
-        .env_clear()
+        .isolated_env()
         .env("PATH", std::env::var("PATH").unwrap_or_default())
         .env(
             "SYSTEMROOT",

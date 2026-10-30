@@ -1386,7 +1386,8 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 	var docTitle string
 	err := db.conn.QueryRow("SELECT id, title FROM files WHERE path = ?", path).Scan(&fileID, &docTitle)
 	if err == sql.ErrNoRows {
-		err = db.conn.QueryRow("SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1", path, "%/"+baseName).Scan(&fileID, &docTitle)
+		// Indexed paths use native separators; also retain slash-path compatibility.
+		err = db.conn.QueryRow("SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1", path, "%/"+baseName, "%"+string(filepath.Separator)+baseName).Scan(&fileID, &docTitle)
 	}
 	if err == nil && fileID != 0 {
 		if docTitle != "" {

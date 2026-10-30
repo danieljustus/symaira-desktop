@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -152,6 +153,9 @@ func flagGrammarVectors(doc inventory.SymRoomGrammarDocument) []flagGrammarVecto
 			name := flag.Name
 			switch flag.Type {
 			case "bool":
+				for _, r := range flagNonPrintableRunes {
+					failing("--" + name + "=" + string(r))
+				}
 				failing("--"+name+"=x", "--zzz")
 				failing("--" + name + "=")
 				failing("-" + name + "=maybe")
@@ -171,6 +175,9 @@ func flagGrammarVectors(doc inventory.SymRoomGrammarDocument) []flagGrammarVecto
 					add("--"+name, "x", "--"+name)
 				}
 			case "int":
+				for _, r := range flagNonPrintableRunes {
+					failing("--" + name + "=" + string(r))
+				}
 				failing("--" + name + "=x")
 				failing("--" + name + "=")
 				failing("--" + name + "=1.5")
@@ -190,6 +197,9 @@ func flagGrammarVectors(doc inventory.SymRoomGrammarDocument) []flagGrammarVecto
 					add("--"+name, "-")
 				}
 			case "duration":
+				for _, r := range flagNonPrintableRunes {
+					failing("--" + name + "=" + string(r))
+				}
 				failing("--" + name + "=x")
 				failing("--" + name + "=")
 				failing("--" + name + "=5")
@@ -433,4 +443,18 @@ func runFlagGrammarCase(t *testing.T, oracle string, fixture flagGrammarCLIContr
 		}
 	}
 	return c
+}
+
+// Corpus additions for strconv.IsPrint (not Rust's narrower is_control).
+var flagNonPrintableRunes = []rune{0x00a0, 0x00ad, 0x200b, 0x2028, 0x2066, 0x3000, 0xe000, 0xfeff, 0xffff, 0x0378, 0xe0001, 0x10ffff}
+
+func TestFlagGrammarNonPrintableRuneOracle(t *testing.T) {
+	root := memberCLIRoot(t)
+	oracle := buildGrammarProcessOracle(t, root)
+	for _, r := range flagNonPrintableRunes {
+		c := runFlagGrammarCase(t, oracle, flagGrammarCLIContract{}, flagGrammarVector{"empty", []string{"verify", "--json=" + string(r)}})
+		if c.ExitCode != 2 || !strings.Contains(c.Stderr, "invalid boolean value "+strconv.Quote(string(r))) {
+			t.Fatalf("U+%04X: incorrect Go quote: %s", r, c.Stderr)
+		}
+	}
 }

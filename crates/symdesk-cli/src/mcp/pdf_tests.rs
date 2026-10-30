@@ -79,7 +79,7 @@ fn pdf_catalog_and_status_respect_write_permission() {
         ))
         .unwrap();
         let tools = response["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), if allowed { 10 } else { 4 });
+        assert_eq!(tools.len(), if allowed { 57 } else { 29 });
         let pdfs: Vec<_> = tools
             .iter()
             .filter(|tool| NAMES.contains(&tool["name"].as_str().unwrap()))

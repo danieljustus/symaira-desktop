@@ -92,7 +92,7 @@ func Slugify(title string) string {
 
 // notePath returns the vault-relative path for a notebook slug.
 func notePath(slug string) string {
-	return filepath.Join(Dir, slug+".md")
+	return filepath.ToSlash(filepath.Join(Dir, slug+".md"))
 }
 
 // New creates a new notebook note at notebooks/<slug>.md and returns it.
@@ -380,6 +380,8 @@ func render(nb *Notebook) ([]byte, error) {
 // the vault-relative path the note was loaded from (used for ID fallback
 // when notebook_id is absent from an older/hand-edited note).
 func parse(relPath string, data []byte) (*Notebook, error) {
+	// Vault-relative document identifiers are portable, not host paths.
+	relPath = filepath.ToSlash(relPath)
 	doc, err := vault.ParseBytes(relPath, data)
 	if err != nil {
 		return nil, err

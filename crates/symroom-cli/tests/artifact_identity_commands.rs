@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -221,7 +225,7 @@ fn run_symroom(
     command
         .args(&case.args)
         .current_dir(room)
-        .env_clear()
+        .isolated_env()
         .env("HOME", home)
         .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
@@ -367,7 +371,12 @@ fn normalize_journal(content: &str) -> String {
         .map(|line| {
             let mut event: serde_json::Value = serde_json::from_str(line).expect("parse event");
             let object = event.as_object_mut().expect("event object");
-            object.insert("ts".into(), "<dynamic-clock>".into());
+            if matches!(
+                object.get("kind").and_then(serde_json::Value::as_str),
+                Some("room.created" | "member.added" | "note.posted" | "decision.recorded")
+            ) {
+                object.insert("ts".into(), "<dynamic-clock>".into());
+            }
             object.insert("sig".into(), "<signature>".into());
             go_json(&event)
         })

@@ -240,7 +240,7 @@ fn append_signed_event(
         seq: author.seq + 1,
         prev: author.prev,
         lamport: stats.max_lamport + 1,
-        ts: event::current_timestamp(),
+        ts: String::new(),
         kind: kind.to_owned(),
         body,
         sig: None,

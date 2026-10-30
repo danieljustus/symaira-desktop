@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -311,7 +315,7 @@ fn run_symroom(args: &[String], room: &Path, home: &Path, data_home: &Path, temp
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(args)
-        .env_clear()
+        .isolated_env()
         .env("HOME", home)
         .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
@@ -335,7 +339,7 @@ fn run_mutation_symroom(
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(args)
-        .env_clear()
+        .isolated_env()
         .env("HOME", home)
         .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
@@ -385,10 +389,7 @@ fn read_mutation_journal(journal: &Path, identity_member: &str) -> Vec<(String, 
 fn normalize_dynamic_event(line: &str) -> String {
     let mut event: serde_json::Value = serde_json::from_str(line).expect("parse generated event");
     let object = event.as_object_mut().expect("generated event object");
-    object.insert(
-        "ts".to_owned(),
-        serde_json::Value::String("<dynamic-clock>".to_owned()),
-    );
+
     object.insert(
         "sig".to_owned(),
         serde_json::Value::String("<signature-of-dynamic-clock>".to_owned()),

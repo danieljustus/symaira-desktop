@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 #[path = "../../../scripts/rust-port/rust/oracle_identity.rs"]
 mod oracle_identity;
 
@@ -14,7 +18,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use symroom_core::{event::Event, identity};
 
-const NORMALIZATION: &str = "dynamic appended event ts and sig; approval ID, event ID, and expires_at for run.approved; no other event fields normalized";
+const NORMALIZATION: &str = "dynamic appended event sig; empty ts preserved; approval ID, event ID, and expires_at for run.approved; no other event fields normalized";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -162,7 +166,7 @@ fn run_symroom(
     command
         .args(args)
         .current_dir(room)
-        .env_clear()
+        .isolated_env()
         .env("HOME", home)
         .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
@@ -236,7 +240,12 @@ fn normalize_dynamic_event(content: &str, approval: bool) -> String {
         .to_owned();
     let mut event: Value = serde_json::from_str(suffix).expect("parse appended event");
     let object = event.as_object_mut().expect("event object");
-    object.insert("ts".into(), "<dynamic-clock>".into());
+    if matches!(
+        object.get("kind").and_then(serde_json::Value::as_str),
+        Some("room.created" | "member.added" | "note.posted" | "decision.recorded")
+    ) {
+        object.insert("ts".into(), "<dynamic-clock>".into());
+    }
     object.insert("sig".into(), "<signature-of-dynamic-clock>".into());
     if approval && object.get("kind").and_then(Value::as_str) == Some("run.approved") {
         object.insert("id".into(), "<dynamic-event-id>".into());

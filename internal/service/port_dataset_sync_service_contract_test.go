@@ -351,23 +351,8 @@ func portDatasetSyncServiceBuildFixture(t *testing.T) portDatasetSyncServiceFixt
 			GOARCH:    runtime.GOARCH,
 		},
 		GeneratorSHA256: portDatasetSyncServiceSourceHash(t, "internal/service/port_dataset_sync_service_contract_test.go"),
-		SourceSHA256: map[string]string{
-			"cmd/symdesk/dataset.go":                      portDatasetSyncServiceSourceHash(t, "cmd/symdesk/dataset.go"),
-			"go.mod":                                      portDatasetSyncServiceSourceHash(t, "go.mod"),
-			"go.sum":                                      portDatasetSyncServiceSourceHash(t, "go.sum"),
-			"internal/dataset/dataset.go":                 portDatasetSyncServiceSourceHash(t, "internal/dataset/dataset.go"),
-			"internal/service/dataset.go":                 portDatasetSyncServiceSourceHash(t, "internal/service/dataset.go"),
-			"internal/service/dataset_policy.go":          portDatasetSyncServiceSourceHash(t, "internal/service/dataset_policy.go"),
-			"internal/service/dataset_additional_test.go": portDatasetSyncServiceSourceHash(t, "internal/service/dataset_additional_test.go"),
-			"internal/service/datasets.go":                portDatasetSyncServiceSourceHash(t, "internal/service/datasets.go"),
-			"internal/service/datasets_test.go":           portDatasetSyncServiceSourceHash(t, "internal/service/datasets_test.go"),
-			"internal/sidecar/db.go":                      portDatasetSyncServiceSourceHash(t, "internal/sidecar/db.go"),
-			"internal/tools/dataset_tools.go":             portDatasetSyncServiceSourceHash(t, "internal/tools/dataset_tools.go"),
-			"internal/vault/assets.go":                    portDatasetSyncServiceSourceHash(t, "internal/vault/assets.go"),
-			"internal/vault/root.go":                      portDatasetSyncServiceSourceHash(t, "internal/vault/root.go"),
-			"internal/vault/vault.go":                     portDatasetSyncServiceSourceHash(t, "internal/vault/vault.go"),
-		},
-		Cases: cases,
+		SourceSHA256:    portDatasetSyncServiceSourceHashes(t, portDatasetSyncServiceSourceFiles),
+		Cases:           cases,
 		Residuals: []string{
 			"Resource-bound, concurrent DatasetSync calls are not covered by this bounded sequential oracle.",
 			"Unix captures execute with umask 0022 in an isolated child; they do not certify other creation masks or concurrent filesystem writers.",
@@ -892,6 +877,25 @@ func portDatasetSyncServiceRepoRoot(t *testing.T) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 }
 
+// portDatasetSyncServiceSourceFiles are the recorded oracle inputs; each must
+// still match the immutable production-source pin before capture.
+var portDatasetSyncServiceSourceFiles = []string{
+	"cmd/symdesk/dataset.go",
+	"go.mod",
+	"go.sum",
+	"internal/dataset/dataset.go",
+	"internal/service/dataset.go",
+	"internal/service/dataset_policy.go",
+	"internal/service/dataset_additional_test.go",
+	"internal/service/datasets.go",
+	"internal/service/datasets_test.go",
+	"internal/sidecar/db.go",
+	"internal/tools/dataset_tools.go",
+	"internal/vault/assets.go",
+	"internal/vault/root.go",
+	"internal/vault/vault.go",
+}
+
 func portDatasetSyncServiceSourceHash(t *testing.T, relative string) string {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(portDatasetSyncServiceRepoRoot(t), filepath.FromSlash(relative))) //nolint:gosec // fixed repository source paths
@@ -899,18 +903,36 @@ func portDatasetSyncServiceSourceHash(t *testing.T, relative string) string {
 		t.Fatal(err)
 	}
 	sum := sha256.Sum256(data)
-	// The separately hashed generator is new; every recorded oracle input
-	// must still match the immutable production-source pin before capture.
-	if relative != "internal/service/port_dataset_sync_service_contract_test.go" {
-		pinned, err := inventory.OracleGitOutput(portDatasetSyncServiceRepoRoot(t), portDatasetSyncServiceOracleCommit(), "show", portDatasetSyncServiceOracleCommit()+":"+relative)
-		if err != nil {
-			t.Fatalf("read pinned oracle source %s: %v", relative, err)
-		}
-		if !bytes.Equal(data, pinned) {
-			t.Fatalf("oracle source %s differs from pinned commit %s", relative, portDatasetSyncServiceOracleCommit())
-		}
-	}
 	return hex.EncodeToString(sum[:])
+}
+
+// portDatasetSyncServiceSourceHashes reads every pinned blob through one
+// opened oracle store: a recorded oracle bundle is verified and unbundled per
+// open, and opening it once per file exceeded the child's 30s bound in CI.
+func portDatasetSyncServiceSourceHashes(t *testing.T, relatives []string) map[string]string {
+	t.Helper()
+	commit := portDatasetSyncServiceOracleCommit()
+	commands := make([][]string, 0, len(relatives))
+	for _, relative := range relatives {
+		commands = append(commands, []string{"show", commit + ":" + relative})
+	}
+	pinned, err := inventory.OracleGitOutputs(portDatasetSyncServiceRepoRoot(t), commit, commands...)
+	if err != nil {
+		t.Fatalf("read pinned oracle sources: %v", err)
+	}
+	hashes := make(map[string]string, len(relatives))
+	for i, relative := range relatives {
+		data, err := os.ReadFile(filepath.Join(portDatasetSyncServiceRepoRoot(t), filepath.FromSlash(relative))) //nolint:gosec // fixed repository source paths
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(data, pinned[i]) {
+			t.Fatalf("oracle source %s differs from pinned commit %s", relative, commit)
+		}
+		sum := sha256.Sum256(data)
+		hashes[relative] = hex.EncodeToString(sum[:])
+	}
+	return hashes
 }
 
 func portDatasetSyncServiceComparisonDocument(document []byte, goos string) ([]byte, error) {

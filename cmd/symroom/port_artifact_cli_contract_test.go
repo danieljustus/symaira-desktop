@@ -271,7 +271,10 @@ func normalizeArtifactJournal(data []byte) ([]byte, error) {
 		if err := json.Unmarshal(line, &value); err != nil {
 			return nil, err
 		}
-		value["ts"], value["sig"] = "<dynamic-clock>", "<signature>"
+		if goStampsJournalKind(value["kind"]) {
+			value["ts"] = "<dynamic-clock>"
+		}
+		value["sig"] = "<signature>"
 		lines[i], _ = json.Marshal(value)
 	}
 	return bytes.Join(lines, []byte{'\n'}), nil

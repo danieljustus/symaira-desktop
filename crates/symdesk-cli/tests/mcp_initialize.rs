@@ -1,5 +1,9 @@
 #![deny(unsafe_code)]
 
+#[path = "../../test-support/process_env.rs"]
+mod process_env;
+use process_env::IsolatedEnvironment;
+
 use std::{
     fs,
     path::Path,
@@ -49,7 +53,7 @@ fn mcp001_initialize_replays_generated_cases() {
     {
         seen += 1;
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
-        command.args(["mcp"]).env_clear();
+        command.args(["mcp"]).isolated_env();
         for (name, value) in [
             ("HOME", root.join("home")),
             ("USERPROFILE", root.join("home")),
@@ -156,7 +160,7 @@ fn stdout_write_failure_exits_while_stdin_stays_open() {
             fs::write(&stdout, []).unwrap();
             let mut child = Command::new(env!("CARGO_BIN_EXE_symdesk"))
                 .arg("mcp")
-                .env_clear()
+                .isolated_env()
                 .env("HOME", &root)
                 .env("XDG_CONFIG_HOME", &root)
                 .env("XDG_DATA_HOME", &root)

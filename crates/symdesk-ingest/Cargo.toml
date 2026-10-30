@@ -1,0 +1,29 @@
+[package]
+name = "symdesk-ingest"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+symaira-core-sqlite.workspace = true
+symdesk-core.workspace = true
+regex.workspace = true
+scraper = "0.29.0"
+quick-xml = "=0.41.0"
+zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
+sha2.workspace = true
+symdesk-vault.workspace = true
+noyalib.workspace = true
+time.workspace = true
+ureq = { version = "=3.4.1", default-features = false, features = ["rustls", "gzip"] }
+url = "=2.5.8"
+
+[dev-dependencies]
+base64.workspace = true
+rusqlite = { workspace = true, features = ["functions"] }

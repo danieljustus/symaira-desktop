@@ -307,7 +307,7 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 			relPath = d.Path
 		}
 		results = append(results, FileEntry{
-			Path:     relPath,
+			Path:     filepath.ToSlash(relPath),
 			Title:    d.Title,
 			Type:     d.Type,
 			Modified: d.Created, // Re-using Created field for modified_at in docs

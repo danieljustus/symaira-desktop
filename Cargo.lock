@@ -2705,6 +2705,7 @@ name = "symdesk-render"
 version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
+ "fax",
  "flate2",
  "image-webp",
  "libc",

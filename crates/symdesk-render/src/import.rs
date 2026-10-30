@@ -17,9 +17,10 @@
 //!
 //! Declared limits: the lossy WebP YCbCr planes come from `image-webp`'s VP8
 //! decoder (converted with Go's `color.YCbCrToRGB`). TIFF compressions are
-//! uncompressed, PackBits, LZW and Deflate (each pinned by a Go case); Go's
-//! CCITT fax decoder is not exercised by any case and the `tiff` crate's fax
-//! support is unverified against Go. A CMYK TIFF is rejected by Go itself
+//! uncompressed, PackBits, LZW, Deflate and CCITT Group 3/4 (each pinned by a
+//! Go case). Group 4 goes through the `tiff` crate (its output polarity is
+//! flipped to Go's); Group 3 has no crate decoder, so `g3_strip` ports the Go
+//! reader's one-dimensional, EOL-strict flow on the `fax` code tables. A CMYK TIFF is rejected by Go itself
 //! (`tiff-hand-cmyk`), and so here.
 
 use std::io::Cursor;
@@ -687,6 +688,10 @@ struct IfdInfo {
     /// Byte position of the inline PhotometricInterpretation value.
     photometric_at: Option<usize>,
     photometric: u16,
+    compression: u16,
+    compression_at: Option<usize>,
+    /// Group 3 (T.4) strip layout, which the `tiff` crate cannot decode.
+    strips: G3Layout,
     colormap: Option<Vec<u16>>,
 }
 
@@ -734,12 +739,58 @@ fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
         let mut info = IfdInfo {
             photometric_at: None,
             photometric: 0,
+            compression: 1,
+            compression_at: None,
+            strips: G3Layout::default(),
             colormap: None,
         };
         for i in 0..n {
             let e = off + 2 + 12 * i;
             let tag = u16_at(e)?;
-            if tag == 262 {
+            if tag == 259 {
+                info.compression = u16_at(e + 8)?;
+                info.compression_at = Some(e + 8);
+            } else if matches!(
+                tag,
+                256 | 257 | 258 | 266 | 273 | 277 | 278 | 279 | 322 | 323
+            ) {
+                let kind = u16_at(e + 2)?;
+                let count = u32_at(e + 4)? as usize;
+                let width = match kind {
+                    3 => 2usize,
+                    4 => 4,
+                    _ => 0,
+                };
+                let mut values = Vec::new();
+                if width != 0 && count <= 1 << 20 {
+                    let total = count.saturating_mul(width);
+                    let base = if total <= 4 {
+                        e + 8
+                    } else {
+                        u32_at(e + 8)? as usize
+                    };
+                    for k in 0..count {
+                        let at = base + k * width;
+                        values.push(if width == 2 {
+                            u32::from(u16_at(at)?)
+                        } else {
+                            u32_at(at)?
+                        });
+                    }
+                }
+                let first = values.first().copied();
+                match tag {
+                    256 => info.strips.width = first,
+                    257 => info.strips.height = first,
+                    258 => info.strips.bits = first,
+                    266 => info.strips.fill_order = first,
+                    273 => info.strips.offsets = values,
+                    277 => info.strips.samples = first,
+                    278 => info.strips.rows_per_strip = first,
+                    279 => info.strips.counts = values,
+                    _ => info.strips.tiled = true,
+                }
+            } else if tag == 262 {
                 info.photometric_at = Some(e + 8);
                 info.photometric = u16_at(e + 8)?;
             } else if tag == 320 {
@@ -761,6 +812,173 @@ fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
     Ok(out)
 }
 
+/// The tags a Group 3 strip decode needs.
+#[derive(Default)]
+struct G3Layout {
+    width: Option<u32>,
+    height: Option<u32>,
+    bits: Option<u32>,
+    samples: Option<u32>,
+    fill_order: Option<u32>,
+    rows_per_strip: Option<u32>,
+    offsets: Vec<u32>,
+    counts: Vec<u32>,
+    tiled: bool,
+}
+
+/// MSB-first bit source over one strip, shaped for the `fax` code tables:
+/// `peek` zero-pads at the end of the data so a short final code still
+/// resolves, `consume` fails past the end (Go: `ccitt: incomplete code`).
+struct StripBits<'a> {
+    data: &'a [u8],
+    lsb_first: bool,
+    pos: usize,
+}
+
+impl StripBits<'_> {
+    fn remaining(&self) -> usize {
+        self.data.len() * 8 - self.pos
+    }
+    fn bit(&self, at: usize) -> u16 {
+        let byte = self.data[at / 8];
+        let shift = if self.lsb_first { at % 8 } else { 7 - at % 8 };
+        u16::from((byte >> shift) & 1)
+    }
+}
+
+impl fax::BitReader for StripBits<'_> {
+    type Error = ();
+    fn peek(&self, bits: u8) -> Option<u16> {
+        if bits > 16 || self.remaining() == 0 {
+            return None;
+        }
+        let mut v = 0u16;
+        for k in 0..usize::from(bits) {
+            v <<= 1;
+            if self.pos + k < self.data.len() * 8 {
+                v |= self.bit(self.pos + k);
+            }
+        }
+        Some(v)
+    }
+    fn consume(&mut self, bits: u8) -> Result<(), ()> {
+        if usize::from(bits) > self.remaining() {
+            return Err(());
+        }
+        self.pos += usize::from(bits);
+        Ok(())
+    }
+    fn bits_to_byte_boundary(&self) -> u8 {
+        (self.pos % 8) as u8
+    }
+}
+
+/// `ccitt.decodeEOL`: eleven zero bits then a one, nothing in between.
+fn g3_eol(bits: &mut StripBits<'_>) -> bool {
+    if bits.remaining() < 12 {
+        return false;
+    }
+    for k in 0..12 {
+        if bits.bit(bits.pos + k) != u16::from(k == 11) {
+            return false;
+        }
+    }
+    bits.pos += 12;
+    true
+}
+
+/// One strip of `golang.org/x/image/ccitt` Group 3 (one-dimensional, EOL before
+/// every row, optional EOL after the last row), as 1 byte per pixel, 0xFF
+/// white. Errors mirror the Go reader's failures, not its wording.
+fn g3_strip(data: &[u8], lsb_first: bool, width: usize, rows: usize) -> Result<Vec<u8>, String> {
+    use fax::maps::{black, white};
+    let mut bits = StripBits {
+        data,
+        lsb_first,
+        pos: 0,
+    };
+    if !g3_eol(&mut bits) {
+        return Err("ccitt: missing End-of-Line".to_owned());
+    }
+    let mut out = Vec::with_capacity(width * rows);
+    let mut truncated = false;
+    for row in 0..rows {
+        let mut x = 0usize;
+        let mut white_run = true;
+        while x < width {
+            let mut total = 0usize;
+            loop {
+                let code = if white_run {
+                    white::decode(&mut bits)
+                } else {
+                    black::decode(&mut bits)
+                };
+                let Some(n) = code else {
+                    return Err("ccitt: invalid code".to_owned());
+                };
+                total += usize::from(n);
+                if total > 1 << 20 {
+                    return Err("ccitt: run length too long".to_owned());
+                }
+                if n <= 0x3F {
+                    break;
+                }
+            }
+            if total > width - x {
+                return Err("ccitt: run length overflows width".to_owned());
+            }
+            out.resize(out.len() + total, if white_run { 0xFF } else { 0x00 });
+            x += total;
+            white_run = !white_run;
+        }
+        if !g3_eol(&mut bits) {
+            if row + 1 == rows {
+                truncated = true;
+            } else {
+                return Err("ccitt: missing End-of-Line".to_owned());
+            }
+        }
+    }
+    if !truncated {
+        // Return To Control: the five EOLs that follow the last row's EOL.
+        for _ in 0..5 {
+            if !g3_eol(&mut bits) {
+                return Err("ccitt: missing End-of-Line".to_owned());
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// A Group 3 page: the `tiff` crate has no Fax3 decoder, so the strips go
+/// through [`g3_strip`] (bilevel, one sample, strips only).
+fn decode_g3_page(data: &[u8], ifd: &IfdInfo) -> Result<Pixels, String> {
+    let l = &ifd.strips;
+    let (Some(w), Some(h)) = (l.width, l.height) else {
+        return Err("tiff: missing image dimensions".to_owned());
+    };
+    if l.bits.unwrap_or(1) != 1 || l.samples.unwrap_or(1) != 1 || l.tiled || ifd.photometric > 1 {
+        return Err("tiff: unsupported Group 3 layout".to_owned());
+    }
+    let (width, height) = (w as usize, h as usize);
+    let rps = l.rows_per_strip.unwrap_or(u32::MAX).max(1) as usize;
+    let strips = height.div_ceil(rps);
+    if l.offsets.len() < strips || l.counts.len() < strips {
+        return Err("tiff: inconsistent strip layout".to_owned());
+    }
+    let lsb_first = l.fill_order == Some(2);
+    let mut pixels = Vec::with_capacity(width * height);
+    for k in 0..strips {
+        let (off, len) = (l.offsets[k] as usize, l.counts[k] as usize);
+        let chunk = data
+            .get(off..off.saturating_add(len))
+            .ok_or("tiff: strip outside the file")?;
+        let rows = rps.min(height - k * rps);
+        pixels.extend(g3_strip(chunk, lsb_first, width, rows)?);
+    }
+    Ok(Pixels::Gray(pixels))
+}
+
 fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
     use tiff::ColorType;
     use tiff::decoder::{Decoder, DecodingResult};
@@ -777,6 +995,14 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
     let mut patched = data.to_vec();
     let little = &data[..2] == b"II";
     for ifd in &ifds {
+        if let (Some(at), 3) = (ifd.compression_at, ifd.compression) {
+            // Placeholder so the crate parses the IFD; the strips never reach it.
+            patched[at..at + 2].copy_from_slice(&if little {
+                1u16.to_le_bytes()
+            } else {
+                1u16.to_be_bytes()
+            });
+        }
         if let (Some(at), 3) = (ifd.photometric_at, ifd.photometric) {
             let one: [u8; 2] = if little {
                 1u16.to_le_bytes()
@@ -803,6 +1029,14 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
         let extra = decoder
             .find_tag_unsigned::<u16>(Tag::ExtraSamples)
             .map_err(|e| format!("tiff: {e}"))?;
+        if ifd.compression == 3 {
+            out.push(Decoded {
+                width,
+                height,
+                pixels: decode_g3_page(data, ifd)?,
+            });
+            continue;
+        }
         let decoded = decoder.read_image().map_err(|e| format!("tiff: {e}"))?;
         let wide = |v: &DecodingResult| -> Option<Vec<u16>> {
             match v {
@@ -831,12 +1065,17 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
                 Pixels::Paletted(v.clone(), pal)
             }
             (ColorType::Gray(1), DecodingResult::U8(v)) => {
+                let fax = ifd.compression == 4;
                 let row = width.div_ceil(8);
                 let mut g = Vec::with_capacity(width * height);
                 for y in 0..height {
                     for x in 0..width {
                         let bit = (v[y * row + x / 8] >> (7 - x % 8)) & 1;
-                        let value = if photometric == 0 { 1 - bit } else { bit };
+                        let value = if (photometric == 0) != fax {
+                            1 - bit
+                        } else {
+                            bit
+                        };
                         g.push(value * 0xFF);
                     }
                 }

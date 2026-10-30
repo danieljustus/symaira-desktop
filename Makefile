@@ -132,7 +132,7 @@ help-cli-differential:
 .PHONY: retrieval-ask-mcp-fixtures-generate retrieval-ask-mcp-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: render-html-fixtures-generate render-html-fixtures-check render-html-differential
-.PHONY: render-differential render-pdfops-differential
+.PHONY: render-differential render-pdfops-differential render-pdfops-hostile-differential
 .PHONY: render-export-fixtures-generate render-export-differential
 .PHONY: render-export-vault-fixtures-generate render-export-vault-differential
 .PHONY: render-pdf-frontmatter-fixtures-generate render-pdf-frontmatter-differential
@@ -195,11 +195,17 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential
+render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential render-pdfops-hostile-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
 	python3 scripts/rust-port/pdfops/verify.py --output "$(RENDER_EVIDENCE_ROOT)" --runtime-root "$(RENDER_RUNTIME_ROOT)" $(if $(RENDER_BUILD_LAUNCHER),--build-launcher "$(RENDER_BUILD_LAUNCHER)",)
+
+# Go-oracle hostile PDF replay with the REAL installed pdfinfo/pdfseparate/pdfunite/qpdf
+# (hostile_inputs.py corpus). Own sibling roots, so it is independent of the stub-tool target.
+render-pdfops-hostile-differential:
+	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
+	python3 scripts/rust-port/pdfops/hostile_replay.py --output "$(RENDER_EVIDENCE_ROOT)-pdfops-hostile" --runtime-root "$(RENDER_RUNTIME_ROOT)-pdfops-hostile"
 
 # Verifies the identity of the binary actually built: the stamped revision must
 # be this checkout's HEAD and the CLI must run.

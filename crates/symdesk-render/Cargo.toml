@@ -16,6 +16,12 @@ lopdf = { version = "=0.46.0", default-features = false }
 base64.workspace = true
 time.workspace = true
 sha2.workspace = true
+# Image decoders for pdfcpu image-import parity (src/import.rs). Pure Rust,
+# pinned like every other dependency.
+flate2.workspace = true
+png = { version = "=0.18.1", default-features = false }
+tiff = { version = "=0.11.3", default-features = false, features = ["deflate", "lzw", "fax"] }
+image-webp = { version = "=0.2.4", default-features = false }
 
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.189"

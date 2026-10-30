@@ -12,14 +12,16 @@ Normalisations (declared; everything else is compared exactly):
   * Indirect references are expanded in place (sharing is not compared; a
     duplicated and a shared identical object canonicalise equally). /Parent and
     /P back references are dropped, a genuine cycle becomes {"$cycle": true}.
-  * Numbers: integral reals equal integers; other reals are rounded to 5
-    decimals (pdfcpu prints 12 decimals, `%.5f`, or shortest 'f' formats, and
-    Go on arm64 fuses multiply-adds, so the last ulp is host dependent).
+  * Numbers: integral reals equal integers; other reals are rounded to 9
+    decimals (representation noise only). The comparison step, not this tool,
+    allows one unit of the fifth decimal (1.1e-5) between two reals: pdfcpu
+    prints `%.5f` and Go on arm64 fuses multiply-adds, so a value sitting on a
+    rounding boundary may print differently per host.
   * Streams: /Length is dropped; Flate/LZW/ASCII filters are decoded by qpdf and
     their /Filter and /DecodeParms entries dropped (compressor output differs);
     other filters (DCT) stay and their raw bytes are compared. Text streams
-    (content streams) are compared as text with every decimal token rounded the
-    same way as numbers; binary streams by length and SHA-256.
+    (content streams) are compared as whitespace separated tokens, numeric
+    tokens with the same tolerance; binary streams by length and SHA-256.
   * Strings keep qpdf's "u:" / "b:" encoding.
 """
 import base64
@@ -32,8 +34,7 @@ import sys
 DROP_KEYS = {"/Parent", "/P", "/Length"}
 DECODED_FILTERS = {"/FlateDecode", "/LZWDecode", "/ASCII85Decode", "/ASCIIHexDecode"}
 REF = re.compile(r"^(\d+) (\d+) R$")
-DECIMAL = re.compile(r"-?\d+\.\d+")
-NUMBER_DECIMALS = 5
+NUMBER_DECIMALS = 9
 
 
 def norm_number(x):
@@ -47,19 +48,12 @@ def norm_number(x):
     return round(x, NUMBER_DECIMALS)
 
 
-def norm_decimal_token(m):
-    v = round(float(m.group(0)), NUMBER_DECIMALS)
-    if abs(v - round(v)) < 10 ** -(NUMBER_DECIMALS + 1):
-        return str(int(round(v)))
-    return repr(v)
-
-
 def stream_node(dict_node, data):
     node = {"dict": dict_node, "len": len(data)}
     try:
         text = data.decode("ascii")
         if len(data) <= 1 << 20 and all(c in "\t\n\r" or 32 <= ord(c) < 127 for c in text):
-            node["text"] = DECIMAL.sub(norm_decimal_token, text)
+            node["text"] = text
             return node
     except UnicodeDecodeError:
         pass

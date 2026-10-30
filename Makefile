@@ -139,6 +139,7 @@ help-cli-differential:
 .PHONY: render-pdf-frontmatter-fixtures-generate render-pdf-frontmatter-differential
 .PHONY: render-archive-fixtures-generate render-archive-differential
 .PHONY: render-archive-stamp-fixtures-generate render-archive-stamp-differential
+.PHONY: render-archive-pdf-fixtures-generate render-archive-pdf-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -196,7 +197,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-pdfops-differential render-pdfops-hostile-differential
+render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-archive-pdf-differential render-pdfops-differential render-pdfops-hostile-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -956,6 +957,16 @@ render-archive-stamp-fixtures-generate:
 render-archive-stamp-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchiveStampFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked stamp
+
+# pdfcpu image import and archive-stamp geometry/structure: real pdfcpu output
+# (Go) against the Rust port through the writer-independent canonical PDF dump
+# (scripts/rust-port/pdfops/pdfcanon.py, qpdf). Needs python3 + qpdf.
+render-archive-pdf-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_ARCHIVE_PDF_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchivePDFFixture$$'
+
+render-archive-pdf-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchivePDFFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked --test archive_pdf_contract
 
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'

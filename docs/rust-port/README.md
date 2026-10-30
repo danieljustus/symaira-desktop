@@ -14,6 +14,10 @@ at the cutover. Data safety is kept and becomes a cutover gate instead: Rust
 must open existing Go-created state unchanged, and the first Rust run creates
 an automatic backup whose restore is verified. Windows is out of scope.
 Remaining work is completed locally on the MacBook and pushed once complete.
+Native acceptance in this mode is a local macOS arm64 run plus a local Linux
+arm64 run in the `symdesk-linux-gate` container. A row whose only residual was
+native CI or Windows becomes PASS on that evidence; Linux amd64 is covered by
+the single CI run of the final push.
 
 ## Local integration checkpoint — 2026-10-26
 

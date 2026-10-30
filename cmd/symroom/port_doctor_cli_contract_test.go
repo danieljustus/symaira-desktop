@@ -400,11 +400,7 @@ func normalizeDoctorCLIOutputForOS(output []byte, home, dataHome, toolsDir strin
 			text = strings.ReplaceAll(text, windowsPath, "$TOOLS/"+tool)
 			text = strings.ReplaceAll(text, "$TOOLS/"+tool+".exe", "$TOOLS/"+tool)
 		}
-		if jsonOutput {
-			text = strings.ReplaceAll(text, `\\`, "/")
-		} else {
-			text = strings.ReplaceAll(text, `\`, "/")
-		}
+		text = windowsPathSlashes(text)
 	}
 	if hasIdentityFile {
 		text = normalizeIdentityModeOutput(text)

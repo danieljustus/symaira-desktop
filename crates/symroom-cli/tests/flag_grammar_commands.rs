@@ -436,7 +436,7 @@ fn recorded_streams_hold_no_unclassified_slash() {
 }
 
 /// Number of vectors in `flag-grammar-cli.json`; a change must be deliberate.
-const CASE_COUNT: usize = 2231;
+const CASE_COUNT: usize = 2447;
 /// How many of them name a host OS error and replay on Unix only.
 const UNIX_ONLY_COUNT: usize = 47;
 

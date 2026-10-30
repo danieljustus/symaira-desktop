@@ -65,6 +65,27 @@
       "final_files": []
     },
     {
+      "name": "install-dot-symbrain",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_1779618d09c00ce6",
+        "--install"
+      ],
+      "path_mode": "dot",
+      "exit_code": 0,
+      "stdout": "symbrain is not installed on PATH. Profile written to \u003cHOME\u003e/.config/symbrain/profiles/room-project-alpha.toml\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "path": "room-project-alpha.toml",
+          "content": "[profile]\nname = \"room-project-alpha\"\nmember_id = \"mem_1779618d09c00ce6\"\nrole = \"owner\"\n\n[permissions]\napprove_runs = false\nresolve_checkpoints = false\nread_journal = true\nwrite_notes = true\n",
+          "mode": 384
+        }
+      ],
+      "dir_mode": 448
+    },
+    {
       "name": "install-no-symbrain",
       "args": [
         "brain-profile",

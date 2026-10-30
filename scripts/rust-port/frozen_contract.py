@@ -133,7 +133,7 @@ def counts(output):
     results = RESULT.findall(output)
     if not results:
         raise ValueError("no libtest result lines")
-    if any(status != "ok" for status, *_ in results):
+    if any(status != "ok" or int(failed) != 0 for status, _, failed, _ in results):
         raise ValueError("a test binary did not report ok")
     return {key: sum(int(r[i]) for r in results) for i, key in ((1, "passed"), (2, "failed"), (3, "ignored"))}
 
@@ -168,7 +168,20 @@ def record_counts(entry, got):
         entry.update(passed=got["passed"], ignored=got["ignored"])
 
 
-def replay(command, entry, env):
+def cargo_diagnostics(run):
+    """Bound each stream's tail while retaining summaries and failure details."""
+    sections = []
+    for name, output in (("stdout", run.stdout), ("stderr", run.stderr)):
+        summaries = "\n".join(line for line in output.splitlines() if line.startswith("test result:"))
+        failure_start = output.find("\nfailures:\n")
+        failures = output[failure_start:failure_start + 4000] if failure_start >= 0 else ""
+        sections.append(f"{name} tail:\n{output[-6000:]}\n"
+                        f"{name} test results:\n{summaries[-2000:]}\n"
+                        f"{name} failures:\n{failures}")
+    return "\n".join(sections)
+
+
+def replay(command, entry, env, *, verify_counts=True):
     skips = entry.get("live_only_tests", [])
     if skips:
         check_skips(command, skips, env)
@@ -176,12 +189,18 @@ def replay(command, entry, env):
     if skips:
         argv += ["--"] + [arg for skip in skips for arg in ("--skip", skip)]
     run = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True, text=True)
-    output = run.stdout + run.stderr
     if run.returncode:
-        raise RuntimeError(f"{command}: exit {run.returncode}\n{output[-8000:]}")
-    got = counts(run.stdout)
+        raise RuntimeError(f"{command}: exit {run.returncode}\n{cargo_diagnostics(run)}")
+    try:
+        got = counts(run.stdout)
+    except ValueError as error:
+        raise RuntimeError(f"{command}: {error}\n{cargo_diagnostics(run)}") from error
     if got["passed"] == 0:
-        raise RuntimeError(f"{command}: zero passing cases")
+        raise RuntimeError(f"{command}: zero passing cases\n{cargo_diagnostics(run)}")
+    if verify_counts and (got["passed"], got["ignored"]) != expected_counts(entry):
+        want = expected_counts(entry)
+        raise RuntimeError(f"{command}: got {got['passed']} passed/{got['ignored']} ignored, "
+                           f"recorded {want[0]}/{want[1]} on {sys.platform}\n{cargo_diagnostics(run)}")
     return got, len(skips)
 
 
@@ -242,14 +261,13 @@ def main(argv=None):
         env = go_free_env(root)
         for command in commands:
             entry = manifest["replays"][command]
-            got, skipped = replay(command, entry, env)
+            try:
+                got, skipped = replay(command, entry, env, verify_counts=not args.record)
+            except RuntimeError as error:
+                print(f"FAIL {error}", file=sys.stderr)
+                return 1
             if args.record:
                 record_counts(entry, got)
-            elif (got["passed"], got["ignored"]) != expected_counts(entry):
-                want = expected_counts(entry)
-                print(f"FAIL {command}: got {got['passed']} passed/{got['ignored']} ignored, "
-                      f"recorded {want[0]}/{want[1]} on {sys.platform}", file=sys.stderr)
-                return 1
             total += got["passed"]
             live_total += got["passed"] + skipped
             print(f"ok {got['passed']:>5} (+{skipped} live-only)  {command}", flush=True)

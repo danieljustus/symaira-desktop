@@ -110,7 +110,10 @@ fn parse(args: &[OsString]) -> Result<Parsed, ExitCode> {
 }
 
 fn install(name: &str, content: &[u8]) -> Result<String, String> {
-    let command = Command::new("symbrain")
+    let Some(path) = symroom_core::lookpath::look_path("symbrain") else {
+        return write_fallback(name, content, true);
+    };
+    let command = Command::new(path)
         .args(["profile", "add", name])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

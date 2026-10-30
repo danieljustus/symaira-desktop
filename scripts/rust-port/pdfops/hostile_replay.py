@@ -26,13 +26,14 @@ import shutil
 import signal
 import subprocess
 import sys
+import zlib
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / 'scripts/rust-port'))
-from hostile_inputs import corpus as hostile_corpus  # noqa: E402
+from hostile_inputs import document  # noqa: E402
 from real_tools import pdf as make_pdf  # noqa: E402
 from verify import compare, normalized  # noqa: E402
 
@@ -42,7 +43,8 @@ RUN_TIMEOUT = 40
 FSIZE_LIMIT = 64 * 1024 * 1024
 DELTA_LIMIT = 16 * 1024 * 1024
 HASH_LIMIT = 4 * 1024 * 1024
-HOSTILE = ('huge-count', 'pages-loop', 'kids-cycle', 'huge-stream', 'truncated-stream',
+BOMB_BYTES = 96 * 1024 * 1024
+HOSTILE = ('flate-bomb', 'huge-count', 'pages-loop', 'kids-cycle', 'huge-stream', 'truncated-stream',
            'missing-xref', 'malformed-xref', 'deep-pages', 'encrypted', 'garbage', 'empty')
 
 
@@ -53,6 +55,16 @@ def inputs_for(directory):
     """name -> bytes of every named regular input (hostile + valid)."""
     files = {name: path.read_bytes() for name, path in
              ((p.stem, p) for p in sorted(directory.glob('*.pdf')))}
+    # Decompression bomb: 96 MiB of zeros inside a valid FlateDecode page stream (~100 KiB on disk).
+    packer, chunks = zlib.compressobj(9), []
+    for _ in range(BOMB_BYTES // (1 << 20)): chunks.append(packer.compress(bytes(1 << 20)))
+    chunks.append(packer.flush())
+    packed = b''.join(chunks)
+    assert len(packed) <= 128 * 1024, 'bomb fixture exceeds size bound'
+    files['flate-bomb'] = document([
+        b'<< /Type /Catalog /Pages 2 0 R >>', b'<< /Type /Pages /Count 1 /Kids [3 0 R] >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 300] /Resources << >> /Contents 4 0 R >>',
+        f'<< /Length {len(packed)} /Filter /FlateDecode >>\nstream\n'.encode() + packed + b'\nendstream'])
     files['good'] = make_pdf(['one', 'two', 'three', 'four'])
     files['b'] = make_pdf(['five', 'six'])
     files['garbage'] = b'this is not a pdf\x00\xff' * 64

@@ -23,7 +23,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{
     SidecarError,
-    retrieval::{ExtractionRow, RetrievalDb},
+    retrieval::{ChunkSpan, ExtractionRow, RetrievalDb},
 };
 
 /// Vault-relative directory the sidecars are written to.
@@ -207,29 +207,25 @@ fn scan_lines(bytes: &[u8]) -> impl Iterator<Item = Result<&[u8], &'static str>>
 
 /// Go's `bestMatchingChunkID`: the first chunk whose span contains the span
 /// midpoint, else the chunk with the nearest edge. Go's `int` arithmetic wraps.
-fn best_matching_chunk_id(
-    chunks: &[(i64, Option<i64>, Option<i64>)],
-    span_start: i64,
-    span_end: i64,
-) -> Option<i64> {
+fn best_matching_chunk_id(chunks: &[ChunkSpan], span_start: i64, span_end: i64) -> Option<i64> {
     let mid = span_start.wrapping_add(span_end) / 2;
     let mut best: Option<i64> = None;
     let mut best_distance: i64 = -1;
-    for (id, start, end) in chunks {
-        let (Some(start), Some(end)) = (start, end) else {
+    for chunk in chunks {
+        let (Some(start), Some(end)) = (chunk.start, chunk.end) else {
             continue;
         };
-        if mid >= *start && mid < *end {
-            return Some(*id);
+        if mid >= start && mid < end {
+            return Some(chunk.id);
         }
-        let distance = if mid < *start {
+        let distance = if mid < start {
             start.wrapping_sub(mid)
         } else {
-            mid.wrapping_sub(*end)
+            mid.wrapping_sub(end)
         };
         if best_distance == -1 || distance < best_distance {
             best_distance = distance;
-            best = Some(*id);
+            best = Some(chunk.id);
         }
     }
     best
@@ -787,12 +783,28 @@ mod tests {
 
     #[test]
     fn chunk_link_wraps_like_go_ints() {
-        let chunks = [(1, Some(0), Some(10)), (2, Some(100), Some(200))];
+        let span = |id, start, end| ChunkSpan {
+            id,
+            start: Some(start),
+            end: Some(end),
+        };
+        let chunks = [span(1, 0, 10), span(2, 100, 200)];
         assert_eq!(best_matching_chunk_id(&chunks, 5, 7), Some(1));
         assert_eq!(best_matching_chunk_id(&chunks, 150, 150), Some(2));
         assert_eq!(best_matching_chunk_id(&chunks, 1000, 1000), Some(2));
         assert_eq!(best_matching_chunk_id(&chunks, i64::MAX, i64::MAX), Some(1));
-        assert_eq!(best_matching_chunk_id(&[(1, None, None)], 1, 2), None);
+        assert_eq!(
+            best_matching_chunk_id(
+                &[ChunkSpan {
+                    id: 1,
+                    start: None,
+                    end: None
+                }],
+                1,
+                2
+            ),
+            None
+        );
     }
 
     #[test]

@@ -271,6 +271,15 @@ pub struct StoredRetrievalChunk {
     pub embedding_pending: bool,
 }
 
+/// A chunk's id and character span (`None` for synthetic chunks), as Go's
+/// `GetChunkSpansForDocument` returns them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ChunkSpan {
+    pub(crate) id: i64,
+    pub(crate) start: Option<i64>,
+    pub(crate) end: Option<i64>,
+}
+
 /// One row of the retrieval `extractions` table.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExtractionRow {
@@ -779,18 +788,23 @@ impl RetrievalDb {
         Ok(())
     }
 
-    /// Go's `GetChunkSpansForDocument`: `(id, char_start, char_end)` of each
-    /// chunk in `chunk_index` order, for linking extractions to chunks.
+    /// Go's `GetChunkSpansForDocument`: id and character span of each chunk in
+    /// `chunk_index` order, for linking extractions to chunks.
     pub(crate) fn chunk_spans_for_document(
         &self,
         path: &str,
-    ) -> Result<Vec<(i64, Option<i64>, Option<i64>)>, SidecarError> {
+    ) -> Result<Vec<ChunkSpan>, SidecarError> {
         let mut statement = self.connection.prepare(
             "SELECT id, char_start, char_end FROM chunks WHERE document_path = ?1
              ORDER BY chunk_index ASC",
         )?;
-        let rows =
-            statement.query_map([path], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
+        let rows = statement.query_map([path], |row| {
+            Ok(ChunkSpan {
+                id: row.get(0)?,
+                start: row.get(1)?,
+                end: row.get(2)?,
+            })
+        })?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
     }
 

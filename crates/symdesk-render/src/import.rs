@@ -15,9 +15,12 @@
 //! `scripts/rust-port/pdfops/pdfcanon.py` (see `tests/archive_pdf_contract.rs`).
 //! Compressor output is not reproduced; decoded streams are.
 //!
-//! Declared limits: lossy WebP takes its YCbCr planes from `image-webp`'s VP8
-//! decoder and converts with Go's `color.YCbCrToRGB`; CMYK TIFF and TIFF compressions other than the ones the
-//! `tiff` crate enables fail where Go may succeed.
+//! Declared limits: the lossy WebP YCbCr planes come from `image-webp`'s VP8
+//! decoder (converted with Go's `color.YCbCrToRGB`). TIFF compressions are
+//! uncompressed, PackBits, LZW and Deflate (each pinned by a Go case); Go's
+//! CCITT fax decoder is not exercised by any case and the `tiff` crate's fax
+//! support is unverified against Go. A CMYK TIFF is rejected by Go itself
+//! (`tiff-hand-cmyk`), and so here.
 
 use std::io::Cursor;
 
@@ -57,12 +60,19 @@ pub fn import_image_pdf(data: &[u8]) -> Result<Vec<u8>, String> {
 }
 
 fn create_image_resources(data: &[u8]) -> Result<Vec<ImageResource>, String> {
-    let format = sniff(data).ok_or_else(|| "decode image configuration: image: unknown format".to_owned())?;
+    let format = sniff(data)
+        .ok_or_else(|| "decode image configuration: image: unknown format".to_owned())?;
     match format {
         Format::Jpeg => jpeg_resource(data).map(|r| vec![r]),
-        Format::Png => decode_png(data).and_then(|d| decoded_resource(d, true)).map(|r| vec![r]),
-        Format::Bmp => decode_bmp(data).and_then(|d| decoded_resource(d, false)).map(|r| vec![r]),
-        Format::Webp => decode_webp(data).and_then(|d| decoded_resource(d, false)).map(|r| vec![r]),
+        Format::Png => decode_png(data)
+            .and_then(|d| decoded_resource(d, true))
+            .map(|r| vec![r]),
+        Format::Bmp => decode_bmp(data)
+            .and_then(|d| decoded_resource(d, false))
+            .map(|r| vec![r]),
+        Format::Webp => decode_webp(data)
+            .and_then(|d| decoded_resource(d, false))
+            .map(|r| vec![r]),
         Format::Tiff => decode_tiff(data)?
             .into_iter()
             .map(|d| decoded_resource(d, false))
@@ -86,7 +96,10 @@ fn sniff(data: &[u8]) -> Option<Format> {
         Some(Format::Png)
     } else if data.starts_with(&[0xFF, 0xD8]) {
         Some(Format::Jpeg)
-    } else if data.len() >= 6 && data.starts_with(b"BM") && data[6..data.len().min(10)].iter().all(|b| *b == 0) {
+    } else if data.len() >= 6
+        && data.starts_with(b"BM")
+        && data[6..data.len().min(10)].iter().all(|b| *b == 0)
+    {
         Some(Format::Bmp)
     } else if data.starts_with(b"II*\0") || data.starts_with(b"MM\0*") {
         Some(Format::Tiff)
@@ -108,7 +121,10 @@ fn png_go_checks(data: &[u8]) -> Result<(), String> {
     if data.len() < 33 || &data[..8] != b"\x89PNG\r\n\x1a\n" {
         return Ok(());
     }
-    let (w, h) = (le32_be(&data[16..20]) as usize, le32_be(&data[20..24]) as usize);
+    let (w, h) = (
+        le32_be(&data[16..20]) as usize,
+        le32_be(&data[20..24]) as usize,
+    );
     let (depth, ctype, interlace) = (usize::from(data[24]), data[25], data[28]);
     let channels = match ctype {
         0 | 3 => 1,
@@ -124,7 +140,9 @@ fn png_go_checks(data: &[u8]) -> Result<(), String> {
         let len = le32_be(&data[at..at + 4]) as usize;
         let kind = &data[at + 4..at + 8];
         let body = at + 8;
-        let Some(end) = body.checked_add(len).filter(|e| *e <= data.len()) else { return Ok(()) };
+        let Some(end) = body.checked_add(len).filter(|e| *e <= data.len()) else {
+            return Ok(());
+        };
         match kind {
             b"tRNS" => {
                 let ok = match ctype {
@@ -147,8 +165,15 @@ fn png_go_checks(data: &[u8]) -> Result<(), String> {
     let expected: usize = if interlace == 0 {
         h * row(w)
     } else {
-        const PASSES: [(usize, usize, usize, usize); 7] =
-            [(0, 0, 8, 8), (4, 0, 8, 8), (0, 4, 4, 8), (2, 0, 4, 4), (0, 2, 2, 4), (1, 0, 2, 2), (0, 1, 1, 2)];
+        const PASSES: [(usize, usize, usize, usize); 7] = [
+            (0, 0, 8, 8),
+            (4, 0, 8, 8),
+            (0, 4, 4, 8),
+            (2, 0, 4, 4),
+            (0, 2, 2, 4),
+            (1, 0, 2, 2),
+            (0, 1, 1, 2),
+        ];
         PASSES
             .iter()
             .map(|&(xo, yo, xs, ys)| {
@@ -159,7 +184,9 @@ fn png_go_checks(data: &[u8]) -> Result<(), String> {
             .sum()
     };
     let mut out = Vec::new();
-    let read = flate2::read::ZlibDecoder::new(idat.as_slice()).take(expected as u64 + 1).read_to_end(&mut out);
+    let read = flate2::read::ZlibDecoder::new(idat.as_slice())
+        .take(expected as u64 + 1)
+        .read_to_end(&mut out);
     if read.is_ok() && out.len() > expected {
         return Err("png: too much pixel data".to_owned());
     }
@@ -183,11 +210,11 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
     let palette: Option<Vec<u8>> = reader.info().palette.as_ref().map(|p| p.to_vec());
     let trns: Option<Vec<u8>> = reader.info().trns.as_ref().map(|p| p.to_vec());
     let mut buf = vec![0u8; reader.output_buffer_size().ok_or("png: image too large")?];
-    let frame = reader.next_frame(&mut buf).map_err(|e| format!("png: {e}"))?;
-    // Go reads to the end of the IDAT stream and rejects surplus pixel data.
-    reader
-        .finish()
+    let frame = reader
+        .next_frame(&mut buf)
         .map_err(|e| format!("png: {e}"))?;
+    // Go reads to the end of the IDAT stream and rejects surplus pixel data.
+    reader.finish().map_err(|e| format!("png: {e}"))?;
     let line = frame.line_size;
     let d = depth as u8 as usize;
     let sample = |row: &[u8], x: usize| -> u16 {
@@ -255,7 +282,11 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
                         }
                     }
                 }
-                if use_trns { Pixels::Nrgba(nrgba) } else { Pixels::Gray(gray) }
+                if use_trns {
+                    Pixels::Nrgba(nrgba)
+                } else {
+                    Pixels::Gray(gray)
+                }
             }
         }
         png::ColorType::GrayscaleAlpha => {
@@ -287,12 +318,20 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
                 let mut px = Vec::with_capacity(width * height);
                 for row in &mut rows {
                     for x in 0..width {
-                        let p = [sample(row, 3 * x), sample(row, 3 * x + 1), sample(row, 3 * x + 2)];
+                        let p = [
+                            sample(row, 3 * x),
+                            sample(row, 3 * x + 1),
+                            sample(row, 3 * x + 2),
+                        ];
                         let a = if use_trns && p == key { 0 } else { 0xFFFF };
                         px.push([p[0], p[1], p[2], a]);
                     }
                 }
-                if use_trns { Pixels::Nrgba64(px) } else { Pixels::Rgba64(px) }
+                if use_trns {
+                    Pixels::Nrgba64(px)
+                } else {
+                    Pixels::Rgba64(px)
+                }
             } else {
                 let key = [tr_lo(0), tr_lo(1), tr_lo(2)];
                 let mut px = Vec::with_capacity(width * height);
@@ -303,7 +342,11 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
                         px.push([p[0], p[1], p[2], a]);
                     }
                 }
-                if use_trns { Pixels::Nrgba(px) } else { Pixels::Rgba(px) }
+                if use_trns {
+                    Pixels::Nrgba(px)
+                } else {
+                    Pixels::Rgba(px)
+                }
             }
         }
         png::ColorType::Rgba => {
@@ -311,7 +354,12 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
                 let mut px = Vec::with_capacity(width * height);
                 for row in &mut rows {
                     for x in 0..width {
-                        px.push([sample(row, 4 * x), sample(row, 4 * x + 1), sample(row, 4 * x + 2), sample(row, 4 * x + 3)]);
+                        px.push([
+                            sample(row, 4 * x),
+                            sample(row, 4 * x + 1),
+                            sample(row, 4 * x + 2),
+                            sample(row, 4 * x + 3),
+                        ]);
                     }
                 }
                 Pixels::Nrgba64(px)
@@ -331,7 +379,9 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
             if plte.len() % 3 != 0 || entries == 0 || entries > (1usize << d) {
                 return Err("png: invalid format: bad palette length".to_owned());
             }
-            let mut pal: Vec<[u8; 4]> = (0..entries).map(|i| [plte[3 * i], plte[3 * i + 1], plte[3 * i + 2], 0xFF]).collect();
+            let mut pal: Vec<[u8; 4]> = (0..entries)
+                .map(|i| [plte[3 * i], plte[3 * i + 1], plte[3 * i + 2], 0xFF])
+                .collect();
             if let Some(t) = &trns {
                 if t.len() > 256 || t.len() > (1usize << d) {
                     return Err("png: invalid format: bad tRNS length".to_owned());
@@ -360,7 +410,11 @@ fn decode_png(data: &[u8]) -> Result<Decoded, String> {
             Pixels::Paletted(pix, pal)
         }
     };
-    Ok(Decoded { width, height, pixels })
+    Ok(Decoded {
+        width,
+        height,
+        pixels,
+    })
 }
 
 // ----------------------------------------------------------------------------
@@ -376,7 +430,11 @@ fn le32(b: &[u8]) -> u32 {
 fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
     const UNSUPPORTED: &str = "bmp: unsupported BMP image";
     let need = |n: usize| -> Result<(), String> {
-        if data.len() < n { Err("unexpected EOF".to_owned()) } else { Ok(()) }
+        if data.len() < n {
+            Err("unexpected EOF".to_owned())
+        } else {
+            Ok(())
+        }
     };
     need(18)?;
     if &data[..2] != b"BM" {
@@ -398,7 +456,11 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
     if width < 0 || height < 0 || (width == 0) != (height == 0) {
         return Err(UNSUPPORTED.to_owned());
     }
-    if width.checked_mul(height).and_then(|v| v.checked_mul(4)).is_none_or(|v| v > i64::from(i32::MAX)) {
+    if width
+        .checked_mul(height)
+        .and_then(|v| v.checked_mul(4))
+        .is_none_or(|v| v > i64::from(i32::MAX))
+    {
         return Err(UNSUPPORTED.to_owned());
     }
     let planes = le16(&data[26..28]);
@@ -419,7 +481,11 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
     }
     let (w, h) = (width as usize, height as usize);
     let mut pos = 14 + info_len as usize;
-    let rows: Vec<usize> = if top_down { (0..h).collect() } else { (0..h).rev().collect() };
+    let rows: Vec<usize> = if top_down {
+        (0..h).collect()
+    } else {
+        (0..h).rev().collect()
+    };
     match bpp {
         1 | 2 | 4 | 8 => {
             let mut used = le32(&data[46..50]);
@@ -464,7 +530,11 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
                     }
                 }
             }
-            Ok(Decoded { width: w, height: h, pixels: Pixels::Paletted(pix, palette) })
+            Ok(Decoded {
+                width: w,
+                height: h,
+                pixels: Pixels::Paletted(pix, palette),
+            })
         }
         24 => {
             if offset != 14 + info_len {
@@ -482,7 +552,11 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
                     }
                 }
             }
-            Ok(Decoded { width: w, height: h, pixels: Pixels::Rgba(px) })
+            Ok(Decoded {
+                width: w,
+                height: h,
+                pixels: Pixels::Rgba(px),
+            })
         }
         32 => {
             if offset != 14 + info_len {
@@ -501,7 +575,11 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
                     }
                 }
             }
-            Ok(Decoded { width: w, height: h, pixels: Pixels::Nrgba(px) })
+            Ok(Decoded {
+                width: w,
+                height: h,
+                pixels: Pixels::Nrgba(px),
+            })
         }
         _ => Err(UNSUPPORTED.to_owned()),
     }
@@ -511,22 +589,25 @@ fn decode_bmp(data: &[u8]) -> Result<Decoded, String> {
 // WebP (golang.org/x/image/webp)
 
 fn decode_webp(data: &[u8]) -> Result<Decoded, String> {
-    let mut decoder = image_webp::WebPDecoder::new(Cursor::new(data)).map_err(|e| format!("webp: {e}"))?;
+    let mut decoder =
+        image_webp::WebPDecoder::new(Cursor::new(data)).map_err(|e| format!("webp: {e}"))?;
     let (w, h) = decoder.dimensions();
     let has_alpha = decoder.has_alpha();
     let size = decoder
         .output_buffer_size()
         .ok_or_else(|| "webp: image too large".to_owned())?;
     let mut buf = vec![0u8; size];
-    decoder.read_image(&mut buf).map_err(|e| format!("webp: {e}"))?;
+    decoder
+        .read_image(&mut buf)
+        .map_err(|e| format!("webp: {e}"))?;
     let (width, height) = (w as usize, h as usize);
     let mut px = Vec::with_capacity(width * height);
     if has_alpha {
-        for c in buf.chunks_exact(4) {
+        for c in buf.as_chunks::<4>().0 {
             px.push([c[0], c[1], c[2], c[3]]);
         }
     } else {
-        for c in buf.chunks_exact(3) {
+        for c in buf.as_chunks::<3>().0 {
             px.push([c[0], c[1], c[2], 0xFF]);
         }
     }
@@ -536,7 +617,8 @@ fn decode_webp(data: &[u8]) -> Result<Decoded, String> {
     // keeping only the alpha plane of the generic reader. Lossless files are
     // NRGBA already.
     if let Some(vp8) = riff_chunk(data, b"VP8 ") {
-        let frame = image_webp::vp8::Vp8Decoder::decode_frame(Cursor::new(vp8)).map_err(|e| format!("webp: {e}"))?;
+        let frame = image_webp::vp8::Vp8Decoder::decode_frame(Cursor::new(vp8))
+            .map_err(|e| format!("webp: {e}"))?;
         let ystride = usize::from(frame.width).div_ceil(16) * 16;
         let cstride = ystride / 2;
         if usize::from(frame.width) != width || usize::from(frame.height) != height {
@@ -553,7 +635,11 @@ fn decode_webp(data: &[u8]) -> Result<Decoded, String> {
             }
         }
     }
-    Ok(Decoded { width, height, pixels: Pixels::Nrgba(px) })
+    Ok(Decoded {
+        width,
+        height,
+        pixels: Pixels::Nrgba(px),
+    })
 }
 
 /// Payload of the first RIFF chunk with the given FourCC (simple and extended WebP).
@@ -580,7 +666,11 @@ fn ycbcr_to_rgb(y: u8, cb: u8, cr: u8) -> (u8, u8, u8) {
     let cb1 = i32::from(cb) - 128;
     let cr1 = i32::from(cr) - 128;
     let clamp = |v: i32| -> u8 {
-        if (v as u32) & 0xff00_0000 == 0 { (v >> 16) as u8 } else { (!(v >> 31)) as u8 }
+        if (v as u32) & 0xff00_0000 == 0 {
+            (v >> 16) as u8
+        } else {
+            (!(v >> 31)) as u8
+        }
     };
     (
         clamp(yy1 + 91881 * cr1),
@@ -605,12 +695,24 @@ struct IfdInfo {
 fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
     let little = &data[..2] == b"II";
     let u16_at = |o: usize| -> Result<u16, String> {
-        let b = data.get(o..o + 2).ok_or("invalid TIFF file: unexpected EOF")?;
-        Ok(if little { u16::from_le_bytes([b[0], b[1]]) } else { u16::from_be_bytes([b[0], b[1]]) })
+        let b = data
+            .get(o..o + 2)
+            .ok_or("invalid TIFF file: unexpected EOF")?;
+        Ok(if little {
+            u16::from_le_bytes([b[0], b[1]])
+        } else {
+            u16::from_be_bytes([b[0], b[1]])
+        })
     };
     let u32_at = |o: usize| -> Result<u32, String> {
-        let b = data.get(o..o + 4).ok_or("invalid TIFF file: unexpected EOF")?;
-        Ok(if little { u32::from_le_bytes([b[0], b[1], b[2], b[3]]) } else { u32::from_be_bytes([b[0], b[1], b[2], b[3]]) })
+        let b = data
+            .get(o..o + 4)
+            .ok_or("invalid TIFF file: unexpected EOF")?;
+        Ok(if little {
+            u32::from_le_bytes([b[0], b[1], b[2], b[3]])
+        } else {
+            u32::from_be_bytes([b[0], b[1], b[2], b[3]])
+        })
     };
     let mut off = u32_at(4)? as usize;
     if off < 8 || off >= data.len() {
@@ -629,7 +731,11 @@ fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
             return Err("TIFF page count exceeds limit 10000".to_owned());
         }
         let n = usize::from(u16_at(off)?);
-        let mut info = IfdInfo { photometric_at: None, photometric: 0, colormap: None };
+        let mut info = IfdInfo {
+            photometric_at: None,
+            photometric: 0,
+            colormap: None,
+        };
         for i in 0..n {
             let e = off + 2 + 12 * i;
             let tag = u16_at(e)?;
@@ -639,7 +745,7 @@ fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
             } else if tag == 320 {
                 let count = u32_at(e + 4)? as usize;
                 let at = u32_at(e + 8)? as usize;
-                if count % 3 != 0 || count == 0 || count > 768 {
+                if !count.is_multiple_of(3) || count == 0 || count > 768 {
                     return Err("tiff: bad ColorMap length".to_owned());
                 }
                 let mut map = Vec::with_capacity(count);
@@ -656,9 +762,9 @@ fn scan_ifds(data: &[u8]) -> Result<Vec<IfdInfo>, String> {
 }
 
 fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
+    use tiff::ColorType;
     use tiff::decoder::{Decoder, DecodingResult};
     use tiff::tags::Tag;
-    use tiff::ColorType;
 
     if data.len() < 8 {
         return Err("unexpected EOF".to_owned());
@@ -672,7 +778,11 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
     let little = &data[..2] == b"II";
     for ifd in &ifds {
         if let (Some(at), 3) = (ifd.photometric_at, ifd.photometric) {
-            let one: [u8; 2] = if little { 1u16.to_le_bytes() } else { 1u16.to_be_bytes() };
+            let one: [u8; 2] = if little {
+                1u16.to_le_bytes()
+            } else {
+                1u16.to_be_bytes()
+            };
             patched[at..at + 2].copy_from_slice(&one);
         }
     }
@@ -685,8 +795,14 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
         let (w, h) = decoder.dimensions().map_err(|e| format!("tiff: {e}"))?;
         let (width, height) = (w as usize, h as usize);
         let color = decoder.colortype().map_err(|e| format!("tiff: {e}"))?;
-        let photometric = if ifd.photometric == 3 { 3 } else { ifd.photometric };
-        let extra = decoder.find_tag_unsigned::<u16>(Tag::ExtraSamples).map_err(|e| format!("tiff: {e}"))?;
+        let photometric = if ifd.photometric == 3 {
+            3
+        } else {
+            ifd.photometric
+        };
+        let extra = decoder
+            .find_tag_unsigned::<u16>(Tag::ExtraSamples)
+            .map_err(|e| format!("tiff: {e}"))?;
         let decoded = decoder.read_image().map_err(|e| format!("tiff: {e}"))?;
         let wide = |v: &DecodingResult| -> Option<Vec<u16>> {
             match v {
@@ -699,7 +815,16 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
             (ColorType::Gray(8), DecodingResult::U8(v)) if photometric == 3 => {
                 let map = ifd.colormap.as_ref().ok_or("tiff: missing colormap")?;
                 let n = map.len() / 3;
-                let pal: Vec<[u8; 4]> = (0..n).map(|i| [(map[i] >> 8) as u8, (map[n + i] >> 8) as u8, (map[2 * n + i] >> 8) as u8, 0xFF]).collect();
+                let pal: Vec<[u8; 4]> = (0..n)
+                    .map(|i| {
+                        [
+                            (map[i] >> 8) as u8,
+                            (map[n + i] >> 8) as u8,
+                            (map[2 * n + i] >> 8) as u8,
+                            0xFF,
+                        ]
+                    })
+                    .collect();
                 if v.iter().any(|i| usize::from(*i) >= pal.len()) {
                     return Err("tiff: invalid color index".to_owned());
                 }
@@ -717,20 +842,43 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
                 }
                 Pixels::Gray(g)
             }
-            (ColorType::Gray(8), DecodingResult::U8(v)) => {
-                Pixels::Gray(if photometric == 0 { v.iter().map(|b| 255 - b).collect() } else { v.clone() })
-            }
+            (ColorType::Gray(8), DecodingResult::U8(v)) => Pixels::Gray(if photometric == 0 {
+                v.iter().map(|b| 255 - b).collect()
+            } else {
+                v.clone()
+            }),
             (ColorType::Gray(16), _) => {
                 let v = wide(&decoded).ok_or("tiff: unsupported sample type")?;
-                Pixels::Gray16(if photometric == 0 { v.iter().map(|b| 65535 - b).collect() } else { v })
+                Pixels::Gray16(if photometric == 0 {
+                    v.iter().map(|b| 65535 - b).collect()
+                } else {
+                    v
+                })
             }
-            (ColorType::RGB(8), DecodingResult::U8(v)) => Pixels::Rgba(v.chunks_exact(3).map(|c| [c[0], c[1], c[2], 0xFF]).collect()),
+            (ColorType::RGB(8), DecodingResult::U8(v)) => Pixels::Rgba(
+                v.as_chunks::<3>()
+                    .0
+                    .iter()
+                    .map(|c| [c[0], c[1], c[2], 0xFF])
+                    .collect(),
+            ),
             (ColorType::RGB(16), _) => {
                 let v = wide(&decoded).ok_or("tiff: unsupported sample type")?;
-                Pixels::Rgba64(v.chunks_exact(3).map(|c| [c[0], c[1], c[2], 0xFFFF]).collect())
+                Pixels::Rgba64(
+                    v.as_chunks::<3>()
+                        .0
+                        .iter()
+                        .map(|c| [c[0], c[1], c[2], 0xFFFF])
+                        .collect(),
+                )
             }
             (ColorType::RGBA(8), DecodingResult::U8(v)) => {
-                let px: Vec<[u8; 4]> = v.chunks_exact(4).map(|c| [c[0], c[1], c[2], c[3]]).collect();
+                let px: Vec<[u8; 4]> = v
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .map(|c| [c[0], c[1], c[2], c[3]])
+                    .collect();
                 match extra {
                     Some(1) => Pixels::Rgba(px),
                     Some(2) => Pixels::Nrgba(px),
@@ -739,7 +887,12 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
             }
             (ColorType::RGBA(16), _) => {
                 let v = wide(&decoded).ok_or("tiff: unsupported sample type")?;
-                let px: Vec<[u16; 4]> = v.chunks_exact(4).map(|c| [c[0], c[1], c[2], c[3]]).collect();
+                let px: Vec<[u16; 4]> = v
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .map(|c| [c[0], c[1], c[2], c[3]])
+                    .collect();
                 match extra {
                     Some(1) => Pixels::Rgba64(px),
                     Some(2) => Pixels::Nrgba64(px),
@@ -748,7 +901,11 @@ fn decode_tiff(data: &[u8]) -> Result<Vec<Decoded>, String> {
             }
             _ => return Err(format!("tiff: unsupported color model {color:?}")),
         };
-        out.push(Decoded { width, height, pixels });
+        out.push(Decoded {
+            width,
+            height,
+            pixels,
+        });
     }
     Ok(out)
 }
@@ -774,7 +931,9 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
         pos += 2;
         while a != 0xFF {
             a = b;
-            let Some(n) = byte(pos) else { return bad("unexpected EOF") };
+            let Some(n) = byte(pos) else {
+                return bad("unexpected EOF");
+            };
             b = n;
             pos += 1;
         }
@@ -783,7 +942,9 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
             continue;
         }
         while marker == 0xFF {
-            let Some(n) = byte(pos) else { return bad("unexpected EOF") };
+            let Some(n) = byte(pos) else {
+                return bad("unexpected EOF");
+            };
             marker = n;
             pos += 1;
         }
@@ -793,7 +954,9 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
         if (0xD0..=0xD7).contains(&marker) {
             continue;
         }
-        let Some(len) = data.get(pos..pos + 2) else { return bad("unexpected EOF") };
+        let Some(len) = data.get(pos..pos + 2) else {
+            return bad("unexpected EOF");
+        };
         pos += 2;
         let n = (usize::from(len[0]) << 8 | usize::from(len[1])) as i64 - 2;
         if n < 0 {
@@ -802,7 +965,11 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
         let n = n as usize;
         let segment = data.get(pos..).unwrap_or(&[]);
         let ensure = |count: usize| -> Result<(), String> {
-            if segment.len() < count { Err("decode image configuration: unexpected EOF".to_owned()) } else { Ok(()) }
+            if segment.len() < count {
+                Err("decode image configuration: unexpected EOF".to_owned())
+            } else {
+                Ok(())
+            }
         };
         match marker {
             0xC0..=0xC2 => {
@@ -848,7 +1015,8 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
                         3 => match i {
                             0 => v == 4,
                             1 => {
-                                let (h0, v0) = (usize::from(hv_all[0] >> 4), usize::from(hv_all[0] & 15));
+                                let (h0, v0) =
+                                    (usize::from(hv_all[0] >> 4), usize::from(hv_all[0] & 15));
                                 h0 % h != 0 || v0 % v != 0
                             }
                             _ => hv_all[1] != hv_all[2],
@@ -917,12 +1085,29 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
         "Filter" => "DCTDecode",
     };
     if colorspace == "DeviceCMYK" {
-        dict.set("Decode", vec![1.into(), 0.into(), 1.into(), 0.into(), 1.into(), 0.into(), 1.into(), 0.into()]);
+        dict.set(
+            "Decode",
+            vec![
+                1.into(),
+                0.into(),
+                1.into(),
+                0.into(),
+                1.into(),
+                0.into(),
+                1.into(),
+                0.into(),
+            ],
+        );
     }
     if width < 1000 || height < 1000 {
         dict.set("Interpolate", true);
     }
-    Ok(ImageResource { width, height, object: Stream::new(dict, data.to_vec()), smask: None })
+    Ok(ImageResource {
+        width,
+        height,
+        object: Stream::new(dict, data.to_vec()),
+        smask: None,
+    })
 }
 
 // ----------------------------------------------------------------------------
@@ -930,7 +1115,12 @@ fn jpeg_resource(data: &[u8]) -> Result<ImageResource, String> {
 
 /// Go `color.NRGBAModel.Convert` of a premultiplied 8-bit colour.
 fn rgba_to_nrgba(c: [u8; 4]) -> [u8; 4] {
-    let (r, g, b, a) = (u32::from(c[0]) * 0x101, u32::from(c[1]) * 0x101, u32::from(c[2]) * 0x101, u32::from(c[3]) * 0x101);
+    let (r, g, b, a) = (
+        u32::from(c[0]) * 0x101,
+        u32::from(c[1]) * 0x101,
+        u32::from(c[2]) * 0x101,
+        u32::from(c[3]) * 0x101,
+    );
     if a == 0xFFFF {
         return [(r >> 8) as u8, (g >> 8) as u8, (b >> 8) as u8, 0xFF];
     }
@@ -943,7 +1133,12 @@ fn rgba_to_nrgba(c: [u8; 4]) -> [u8; 4] {
 
 /// Go `color.NRGBA64Model.Convert` of a premultiplied 16-bit colour.
 fn rgba64_to_nrgba64(c: [u16; 4]) -> [u16; 4] {
-    let (r, g, b, a) = (u32::from(c[0]), u32::from(c[1]), u32::from(c[2]), u32::from(c[3]));
+    let (r, g, b, a) = (
+        u32::from(c[0]),
+        u32::from(c[1]),
+        u32::from(c[2]),
+        u32::from(c[3]),
+    );
     if a == 0xFFFF {
         return c;
     }
@@ -954,7 +1149,14 @@ fn rgba64_to_nrgba64(c: [u16; 4]) -> [u16; 4] {
     [f(r), f(g), f(b), c[3]]
 }
 
-fn flate_image(width: usize, height: usize, bpc: i64, colorspace: Object, buf: Vec<u8>, smask: Option<Vec<u8>>) -> ImageResource {
+fn flate_image(
+    width: usize,
+    height: usize,
+    bpc: i64,
+    colorspace: Object,
+    buf: Vec<u8>,
+    smask: Option<Vec<u8>>,
+) -> ImageResource {
     let smask_stream = smask.map(|sm| {
         Stream::new(
             dictionary! {
@@ -971,7 +1173,12 @@ fn flate_image(width: usize, height: usize, bpc: i64, colorspace: Object, buf: V
     if width < 1000 || height < 1000 {
         dict.set("Interpolate", true);
     }
-    ImageResource { width, height, object: Stream::new(dict, buf), smask: smask_stream }
+    ImageResource {
+        width,
+        height,
+        object: Stream::new(dict, buf),
+        smask: smask_stream,
+    }
 }
 
 /// The soft mask pdfcpu keeps only when some alpha differs from opaque.
@@ -983,15 +1190,36 @@ fn decoded_resource(d: Decoded, png: bool) -> Result<ImageResource, String> {
     let (w, h) = (d.width, d.height);
     Ok(match d.pixels {
         Pixels::Gray(v) => flate_image(w, h, 8, "DeviceGray".into(), v, None),
-        Pixels::Gray16(v) => flate_image(w, h, 16, "DeviceGray".into(), v.iter().flat_map(|x| x.to_be_bytes()).collect(), None),
+        Pixels::Gray16(v) => flate_image(
+            w,
+            h,
+            16,
+            "DeviceGray".into(),
+            v.iter().flat_map(|x| x.to_be_bytes()).collect(),
+            None,
+        ),
         Pixels::Rgba(v) => {
             let n: Vec<[u8; 4]> = v.iter().map(|c| rgba_to_nrgba(*c)).collect();
             let sm = soft_mask8(n.iter().map(|c| c[3]));
-            flate_image(w, h, 8, "DeviceRGB".into(), n.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(), sm)
+            flate_image(
+                w,
+                h,
+                8,
+                "DeviceRGB".into(),
+                n.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(),
+                sm,
+            )
         }
         Pixels::Nrgba(v) => {
             let sm = soft_mask8(v.iter().map(|c| c[3]));
-            flate_image(w, h, 8, "DeviceRGB".into(), v.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(), sm)
+            flate_image(
+                w,
+                h,
+                8,
+                "DeviceRGB".into(),
+                v.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(),
+                sm,
+            )
         }
         Pixels::Rgba64(v) => {
             let n: Vec<[u16; 4]> = v.iter().map(|c| rgba64_to_nrgba64(*c)).collect();
@@ -1000,7 +1228,9 @@ fn decoded_resource(d: Decoded, png: bool) -> Result<ImageResource, String> {
         Pixels::Nrgba64(v) => rgb16(w, h, &v),
         Pixels::Paletted(pix, palette) => {
             if palette.is_empty() {
-                return Err("create decoded image resources: paletted image: missing palette".to_owned());
+                return Err(
+                    "create decoded image resources: paletted image: missing palette".to_owned(),
+                );
             }
             if png {
                 let lookup: Vec<u8> = palette.iter().flat_map(|c| [c[0], c[1], c[2]]).collect();
@@ -1015,17 +1245,34 @@ fn decoded_resource(d: Decoded, png: bool) -> Result<ImageResource, String> {
                 flate_image(w, h, 8, cs, pix, sm)
             } else {
                 // Other formats go through convertToRGBA: opaque straight RGB.
-                let n: Vec<[u8; 4]> = pix.iter().map(|i| rgba_to_nrgba(palette[*i as usize])).collect();
+                let n: Vec<[u8; 4]> = pix
+                    .iter()
+                    .map(|i| rgba_to_nrgba(palette[*i as usize]))
+                    .collect();
                 let sm = soft_mask8(n.iter().map(|c| c[3]));
-                flate_image(w, h, 8, "DeviceRGB".into(), n.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(), sm)
+                flate_image(
+                    w,
+                    h,
+                    8,
+                    "DeviceRGB".into(),
+                    n.iter().flat_map(|c| [c[0], c[1], c[2]]).collect(),
+                    sm,
+                )
             }
         }
     })
 }
 
 fn rgb16(w: usize, h: usize, v: &[[u16; 4]]) -> ImageResource {
-    let buf: Vec<u8> = v.iter().flat_map(|c| [c[0], c[1], c[2]]).flat_map(u16::to_be_bytes).collect();
-    let sm = v.iter().any(|c| c[3] != 0xFFFF).then(|| v.iter().flat_map(|c| c[3].to_be_bytes()).collect());
+    let buf: Vec<u8> = v
+        .iter()
+        .flat_map(|c| [c[0], c[1], c[2]])
+        .flat_map(u16::to_be_bytes)
+        .collect();
+    let sm = v
+        .iter()
+        .any(|c| c[3] != 0xFFFF)
+        .then(|| v.iter().flat_map(|c| c[3].to_be_bytes()).collect());
     flate_image(w, h, 16, "DeviceRGB".into(), buf, sm)
 }
 
@@ -1056,8 +1303,15 @@ fn build_pdf(resources: Vec<ImageResource>) -> Result<Vec<u8>, String> {
             "ProcSet" => vec![Object::Name(b"PDF".to_vec()), Object::Name(b"Text".to_vec()), Object::Name(b"ImageB".to_vec()), Object::Name(b"ImageC".to_vec()), Object::Name(b"ImageI".to_vec())],
             "XObject" => dictionary! { "Im0" => Object::Reference(image_id) },
         });
-        let content = format!("q {} 0 0 {} 0 0 cm /Im0 Do Q", go_f(res.width as f64), go_f(res.height as f64));
-        let content_id = doc.add_object(compress(Stream::new(Dictionary::new(), content.into_bytes()))?);
+        let content = format!(
+            "q {} 0 0 {} 0 0 cm /Im0 Do Q",
+            go_f(res.width as f64),
+            go_f(res.height as f64)
+        );
+        let content_id = doc.add_object(compress(Stream::new(
+            Dictionary::new(),
+            content.into_bytes(),
+        ))?);
         let page_id = doc.add_object(dictionary! {
             "Type" => "Page",
             "Parent" => Object::Reference(pages_id),
@@ -1077,10 +1331,12 @@ fn build_pdf(resources: Vec<ImageResource>) -> Result<Vec<u8>, String> {
             "MediaBox" => vec![0.into(), 0.into(), Object::Real(595.0), Object::Real(842.0)],
         }),
     );
-    let catalog = doc.add_object(dictionary! { "Type" => "Catalog", "Pages" => Object::Reference(pages_id) });
+    let catalog =
+        doc.add_object(dictionary! { "Type" => "Catalog", "Pages" => Object::Reference(pages_id) });
     doc.trailer.set("Root", Object::Reference(catalog));
     let mut out = Vec::new();
-    doc.save_to(&mut out).map_err(|e| format!("write PDF: {e}"))?;
+    doc.save_to(&mut out)
+        .map_err(|e| format!("write PDF: {e}"))?;
     Ok(out)
 }
 
@@ -1089,7 +1345,9 @@ fn build_pdf(resources: Vec<ImageResource>) -> Result<Vec<u8>, String> {
 pub(crate) fn compress(mut stream: Stream) -> Result<Stream, String> {
     use std::io::Write;
     let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-    encoder.write_all(&stream.content).map_err(|e| e.to_string())?;
+    encoder
+        .write_all(&stream.content)
+        .map_err(|e| e.to_string())?;
     stream.content = encoder.finish().map_err(|e| e.to_string())?;
     stream.dict.set("Filter", "FlateDecode");
     stream.dict.set("Length", stream.content.len() as i64);

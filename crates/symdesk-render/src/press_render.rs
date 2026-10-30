@@ -42,25 +42,73 @@ const TEMPLATES: &[(&str, &[u8])] = &[
 ];
 
 const PACKAGES: &[(&str, &[u8])] = &[
-    ("preview/cmarker/0.1.9/typst.toml", asset!("packages/preview/cmarker/0.1.9/typst.toml")),
-    ("preview/cmarker/0.1.9/lib.typ", asset!("packages/preview/cmarker/0.1.9/lib.typ")),
-    ("preview/cmarker/0.1.9/plugin.wasm", asset!("packages/preview/cmarker/0.1.9/plugin.wasm")),
-    ("preview/mitex/0.2.7/typst.toml", asset!("packages/preview/mitex/0.2.7/typst.toml")),
-    ("preview/mitex/0.2.7/LICENSE", asset!("packages/preview/mitex/0.2.7/LICENSE")),
-    ("preview/mitex/0.2.7/CHANGELOG.md", asset!("packages/preview/mitex/0.2.7/CHANGELOG.md")),
-    ("preview/mitex/0.2.7/mitex.wasm", asset!("packages/preview/mitex/0.2.7/mitex.wasm")),
-    ("preview/mitex/0.2.7/README.md", asset!("packages/preview/mitex/0.2.7/README.md")),
-    ("preview/mitex/0.2.7/lib.typ", asset!("packages/preview/mitex/0.2.7/lib.typ")),
-    ("preview/mitex/0.2.7/mitex.typ", asset!("packages/preview/mitex/0.2.7/mitex.typ")),
-    ("preview/mitex/0.2.7/specs/README.md", asset!("packages/preview/mitex/0.2.7/specs/README.md")),
-    ("preview/mitex/0.2.7/specs/mod.typ", asset!("packages/preview/mitex/0.2.7/specs/mod.typ")),
-    ("preview/mitex/0.2.7/specs/prelude.typ", asset!("packages/preview/mitex/0.2.7/specs/prelude.typ")),
-    ("preview/mitex/0.2.7/specs/latex/standard.typ", asset!("packages/preview/mitex/0.2.7/specs/latex/standard.typ")),
+    (
+        "preview/cmarker/0.1.9/typst.toml",
+        asset!("packages/preview/cmarker/0.1.9/typst.toml"),
+    ),
+    (
+        "preview/cmarker/0.1.9/lib.typ",
+        asset!("packages/preview/cmarker/0.1.9/lib.typ"),
+    ),
+    (
+        "preview/cmarker/0.1.9/plugin.wasm",
+        asset!("packages/preview/cmarker/0.1.9/plugin.wasm"),
+    ),
+    (
+        "preview/mitex/0.2.7/typst.toml",
+        asset!("packages/preview/mitex/0.2.7/typst.toml"),
+    ),
+    (
+        "preview/mitex/0.2.7/LICENSE",
+        asset!("packages/preview/mitex/0.2.7/LICENSE"),
+    ),
+    (
+        "preview/mitex/0.2.7/CHANGELOG.md",
+        asset!("packages/preview/mitex/0.2.7/CHANGELOG.md"),
+    ),
+    (
+        "preview/mitex/0.2.7/mitex.wasm",
+        asset!("packages/preview/mitex/0.2.7/mitex.wasm"),
+    ),
+    (
+        "preview/mitex/0.2.7/README.md",
+        asset!("packages/preview/mitex/0.2.7/README.md"),
+    ),
+    (
+        "preview/mitex/0.2.7/lib.typ",
+        asset!("packages/preview/mitex/0.2.7/lib.typ"),
+    ),
+    (
+        "preview/mitex/0.2.7/mitex.typ",
+        asset!("packages/preview/mitex/0.2.7/mitex.typ"),
+    ),
+    (
+        "preview/mitex/0.2.7/specs/README.md",
+        asset!("packages/preview/mitex/0.2.7/specs/README.md"),
+    ),
+    (
+        "preview/mitex/0.2.7/specs/mod.typ",
+        asset!("packages/preview/mitex/0.2.7/specs/mod.typ"),
+    ),
+    (
+        "preview/mitex/0.2.7/specs/prelude.typ",
+        asset!("packages/preview/mitex/0.2.7/specs/prelude.typ"),
+    ),
+    (
+        "preview/mitex/0.2.7/specs/latex/standard.typ",
+        asset!("packages/preview/mitex/0.2.7/specs/latex/standard.typ"),
+    ),
 ];
 
 const FONTS: &[(&str, &[u8])] = &[
-    ("Inter-Bold.ttf", include_bytes!("../../../internal/draw/fonts/Inter-Bold.ttf")),
-    ("Inter-Regular.ttf", include_bytes!("../../../internal/draw/fonts/Inter-Regular.ttf")),
+    (
+        "Inter-Bold.ttf",
+        include_bytes!("../../../internal/draw/fonts/Inter-Bold.ttf"),
+    ),
+    (
+        "Inter-Regular.ttf",
+        include_bytes!("../../../internal/draw/fonts/Inter-Regular.ttf"),
+    ),
 ];
 
 #[derive(Clone, Debug, Default)]
@@ -132,7 +180,11 @@ impl std::fmt::Display for PressError {
 }
 
 fn render_err(stage: &str, message: impl Into<String>) -> PressError {
-    PressError::Render(RenderError { stage: stage.into(), message: message.into(), ..Default::default() })
+    PressError::Render(RenderError {
+        stage: stage.into(),
+        message: message.into(),
+        ..Default::default()
+    })
 }
 
 /// Go `%q` for a string (printable runes stay as they are).
@@ -149,7 +201,9 @@ pub fn go_quote(s: &str) -> String {
             '\u{8}' => out.push_str("\\b"),
             '\u{c}' => out.push_str("\\f"),
             '\u{b}' => out.push_str("\\v"),
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => out.push_str(&format!("\\x{:02x}", c as u32)),
+            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
+                out.push_str(&format!("\\x{:02x}", c as u32))
+            }
             c => out.push(c),
         }
     }
@@ -159,12 +213,19 @@ pub fn go_quote(s: &str) -> String {
 
 /// The single overwrite policy (Go `CheckOverwrite`).
 pub fn check_overwrite(path: &str, overwrite: bool) -> Result<(), String> {
-    let Ok(meta) = fs::metadata(path) else { return Ok(()) };
+    let Ok(meta) = fs::metadata(path) else {
+        return Ok(());
+    };
     if meta.is_dir() {
         return Err(format!("output path {} is a directory", go_quote(path)));
     }
     let is_pdf = match fs::File::open(path) {
-        Err(e) => return Err(format!("could not read existing file: {}", go_open_error(path, &e))),
+        Err(e) => {
+            return Err(format!(
+                "could not read existing file: {}",
+                go_open_error(path, &e)
+            ));
+        }
         Ok(mut f) => {
             let mut buf = [0u8; 4];
             match f.read(&mut buf) {
@@ -174,7 +235,10 @@ pub fn check_overwrite(path: &str, overwrite: bool) -> Result<(), String> {
         }
     };
     if !is_pdf && !overwrite {
-        return Err(format!("refusing to overwrite existing non-PDF file {}; pass overwrite to force", go_quote(path)));
+        return Err(format!(
+            "refusing to overwrite existing non-PDF file {}; pass overwrite to force",
+            go_quote(path)
+        ));
     }
     Ok(())
 }
@@ -189,7 +253,9 @@ fn go_open_error(path: &str, e: &std::io::Error) -> String {
                 m.truncate(i);
             }
             let mut c = m.chars();
-            c.next().map_or(m.clone(), |f| f.to_lowercase().collect::<String>() + c.as_str())
+            c.next().map_or(m.clone(), |f| {
+                f.to_lowercase().collect::<String>() + c.as_str()
+            })
         }
     };
     format!("open {path}: {text}")
@@ -244,7 +310,7 @@ fn go_duration(d: Duration) -> String {
     if frac == 0 {
         out.push_str(&format!("{s}s"));
     } else {
-        out.push_str(&format!("{s}.{frac:09}").trim_end_matches('0').to_owned());
+        out.push_str(format!("{s}.{frac:09}").trim_end_matches('0'));
         out.push('s');
     }
     out
@@ -263,9 +329,13 @@ impl WorkDir {
     fn create() -> Result<Self, std::io::Error> {
         let base = std::env::temp_dir();
         for _ in 0..100 {
-            let n = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.subsec_nanos() as u64)
+            let n = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_or(0, |d| d.subsec_nanos() as u64)
                 ^ (u64::from(std::process::id()) << 20)
-                ^ NONCE.fetch_add(0x9E37, Ordering::Relaxed).wrapping_mul(2_654_435_761);
+                ^ NONCE
+                    .fetch_add(0x9E37, Ordering::Relaxed)
+                    .wrapping_mul(2_654_435_761);
             let dir = base.join(format!("symprint-{}", n % 4_000_000_000 + 1_000_000));
             let mut b = fs::DirBuilder::new();
             #[cfg(unix)]
@@ -297,13 +367,16 @@ fn write_private(path: &Path, data: &[u8]) -> std::io::Result<()> {
 
 fn write_assets(work: &Path) -> Result<(), PressError> {
     for (name, data) in TEMPLATES {
-        write_private(&work.join("templates").join(name), data).map_err(|_| render_err("write", "could not materialize templates"))?;
+        write_private(&work.join("templates").join(name), data)
+            .map_err(|_| render_err("write", "could not materialize templates"))?;
     }
     for (name, data) in FONTS {
-        write_private(&work.join("fonts").join(name), data).map_err(|_| render_err("write", "could not materialize fonts"))?;
+        write_private(&work.join("fonts").join(name), data)
+            .map_err(|_| render_err("write", "could not materialize fonts"))?;
     }
     for (name, data) in PACKAGES {
-        write_private(&work.join("packages").join(name), data).map_err(|_| render_err("write", "could not materialize vendored packages"))?;
+        write_private(&work.join("packages").join(name), data)
+            .map_err(|_| render_err("write", "could not materialize vendored packages"))?;
     }
     Ok(())
 }
@@ -363,7 +436,8 @@ fn collect_assets(src_dir: &str, dst: &Path, body: &[u8]) -> Result<(), PressErr
             ..Default::default()
         }));
     }
-    let src_root = fs::canonicalize(src_dir).map_err(|_| render_err("assets", "could not resolve source directory"))?;
+    let src_root = fs::canonicalize(src_dir)
+        .map_err(|_| render_err("assets", "could not resolve source directory"))?;
     for r in &refs {
         copy_asset(&src_root, src_dir, dst, r)?;
     }
@@ -371,7 +445,14 @@ fn collect_assets(src_dir: &str, dst: &Path, body: &[u8]) -> Result<(), PressErr
 }
 
 fn copy_asset(src_root: &Path, src_dir: &str, dst: &Path, r: &str) -> Result<(), PressError> {
-    let asset_err = |message: String, hint: &str| PressError::Render(RenderError { stage: "assets".into(), message, hint: hint.into(), ..Default::default() });
+    let asset_err = |message: String, hint: &str| {
+        PressError::Render(RenderError {
+            stage: "assets".into(),
+            message,
+            hint: hint.into(),
+            ..Default::default()
+        })
+    };
     if r.starts_with('/') {
         return Err(asset_err(
             format!("image reference {} is an absolute path", go_quote(r)),
@@ -381,7 +462,10 @@ fn copy_asset(src_root: &Path, src_dir: &str, dst: &Path, r: &str) -> Result<(),
     let clean = go_clean(r);
     if clean == ".." || clean.starts_with("../") {
         return Err(asset_err(
-            format!("image reference {} escapes the source directory (path traversal is not allowed)", go_quote(r)),
+            format!(
+                "image reference {} escapes the source directory (path traversal is not allowed)",
+                go_quote(r)
+            ),
             "keep referenced assets inside the document's directory tree",
         ));
     }
@@ -390,27 +474,48 @@ fn copy_asset(src_root: &Path, src_dir: &str, dst: &Path, r: &str) -> Result<(),
         Ok(p) => p,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             return Err(asset_err(
-                format!("referenced image {} not found next to the input document", go_quote(r)),
+                format!(
+                    "referenced image {} not found next to the input document",
+                    go_quote(r)
+                ),
                 "check the path — it is resolved relative to the Markdown file",
             ));
         }
-        Err(_) => return Err(render_err("assets", format!("could not resolve image reference {}", go_quote(r)))),
+        Err(_) => {
+            return Err(render_err(
+                "assets",
+                format!("could not resolve image reference {}", go_quote(r)),
+            ));
+        }
     };
     if resolved != src_root && !resolved.starts_with(src_root) {
         return Err(asset_err(
-            format!("image reference {} resolves outside the source directory (symlink escape)", go_quote(r)),
+            format!(
+                "image reference {} resolves outside the source directory (symlink escape)",
+                go_quote(r)
+            ),
             "copy the asset into the document's directory tree instead of linking to it",
         ));
     }
-    let info = fs::metadata(&resolved).map_err(|_| render_err("assets", format!("could not stat image {}", go_quote(r))))?;
+    let info = fs::metadata(&resolved)
+        .map_err(|_| render_err("assets", format!("could not stat image {}", go_quote(r))))?;
     if info.is_dir() {
-        return Err(render_err("assets", format!("image reference {} points at a directory", go_quote(r))));
+        return Err(render_err(
+            "assets",
+            format!("image reference {} points at a directory", go_quote(r)),
+        ));
     }
     let dst_path = dst.join(&clean);
     if let Some(parent) = dst_path.parent() {
-        fs::create_dir_all(parent).map_err(|_| render_err("write", "could not create asset directory in work dir"))?;
+        fs::create_dir_all(parent)
+            .map_err(|_| render_err("write", "could not create asset directory in work dir"))?;
     }
-    fs::copy(&resolved, &dst_path).map_err(|_| render_err("write", format!("could not copy image {} into the work dir", go_quote(r))))?;
+    fs::copy(&resolved, &dst_path).map_err(|_| {
+        render_err(
+            "write",
+            format!("could not copy image {} into the work dir", go_quote(r)),
+        )
+    })?;
     Ok(())
 }
 
@@ -438,7 +543,8 @@ pub fn render(req: &Request) -> Result<RenderResult, PressError> {
         return Err(PressError::Render(RenderError {
             stage: "contract".into(),
             message: "no profile selected".into(),
-            hint: "set `profile:` in the frontmatter or pass --profile (see `symprint profiles`)".into(),
+            hint: "set `profile:` in the frontmatter or pass --profile (see `symprint profiles`)"
+                .into(),
             ..Default::default()
         }));
     }
@@ -454,10 +560,16 @@ pub fn render(req: &Request) -> Result<RenderResult, PressError> {
         front.form = prof.form.to_owned();
     }
     front.profile = prof.name.to_owned();
-    let checked = press_front::Document { front: front.clone(), body: doc.body.clone() };
+    let checked = press_front::Document {
+        front: front.clone(),
+        body: doc.body.clone(),
+    };
     let issues = checked.validate(prof);
     if issues.iter().any(|i| i.severity == "error") {
-        return Err(PressError::Contract(ContractError { issues, ..Default::default() }));
+        return Err(PressError::Contract(ContractError {
+            issues,
+            ..Default::default()
+        }));
     }
 
     let mut std_list = req.standard_override.clone();
@@ -500,14 +612,21 @@ fn render_typst(
     let work = WorkDir::create().map_err(|_| render_err("write", "could not create work dir"))?;
     let w = &work.0;
     write_assets(w)?;
-    let meta = press_front::meta_json(front).map_err(|_| render_err("write", "could not encode metadata"))?;
-    write_private(&w.join("meta.json"), meta.as_bytes()).map_err(|_| render_err("write", "could not write metadata"))?;
-    write_private(&w.join("body.md"), body).map_err(|_| render_err("write", "could not write body"))?;
+    let meta = press_front::meta_json(front)
+        .map_err(|_| render_err("write", "could not encode metadata"))?;
+    write_private(&w.join("meta.json"), meta.as_bytes())
+        .map_err(|_| render_err("write", "could not write metadata"))?;
+    write_private(&w.join("body.md"), body)
+        .map_err(|_| render_err("write", "could not write body"))?;
     collect_assets(&req.source_dir, w, body)?;
-    write_private(&w.join("main.typ"), main_typ(prof.template).as_bytes()).map_err(|_| render_err("write", "could not write entry"))?;
+    write_private(&w.join("main.typ"), main_typ(prof.template).as_bytes())
+        .map_err(|_| render_err("write", "could not write entry"))?;
 
     let out = absolute(&req.output_path).map_err(|_| render_err("write", "invalid output path"))?;
-    let out_dir = Path::new(&out).parent().unwrap_or(Path::new("/")).to_path_buf();
+    let out_dir = Path::new(&out)
+        .parent()
+        .unwrap_or(Path::new("/"))
+        .to_path_buf();
     {
         let mut b = fs::DirBuilder::new();
         b.recursive(true);
@@ -516,12 +635,18 @@ fn render_typst(
             use std::os::unix::fs::DirBuilderExt;
             b.mode(0o700);
         }
-        b.create(&out_dir).map_err(|_| render_err("write", "could not create output dir"))?;
+        b.create(&out_dir)
+            .map_err(|_| render_err("write", "could not create output dir"))?;
     }
 
     let work_s = w.to_string_lossy().into_owned();
     let mut args: Vec<String> = vec!["compile".into(), "--root".into(), work_s.clone()];
-    args.extend(["--package-path".into(), format!("{work_s}/packages"), "--package-cache-path".into(), format!("{work_s}/package-cache")]);
+    args.extend([
+        "--package-path".into(),
+        format!("{work_s}/packages"),
+        "--package-cache-path".into(),
+        format!("{work_s}/package-cache"),
+    ]);
     if req.short_diagnostics {
         args.extend(["--diagnostic-format".into(), "short".into()]);
     }
@@ -537,9 +662,17 @@ fn render_typst(
     }
     args.extend([format!("{work_s}/main.typ"), out.clone()]);
 
-    let timeout = req.engine.timeout.filter(|t| !t.is_zero()).unwrap_or(Duration::from_secs(60));
+    let timeout = req
+        .engine
+        .timeout
+        .filter(|t| !t.is_zero())
+        .unwrap_or(Duration::from_secs(60));
     let mut cmd = Command::new(&eng.path);
-    cmd.args(&args).current_dir(w).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::piped());
+    cmd.args(&args)
+        .current_dir(w)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped());
     if repro {
         cmd.env("SOURCE_DATE_EPOCH", "0");
     }

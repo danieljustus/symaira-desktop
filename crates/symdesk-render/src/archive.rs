@@ -68,11 +68,16 @@ pub fn archive_format(input_path: &str) -> Result<ArchiveFormat, String> {
 /// `output_path`. Error texts keep Go's prefixes (`copy source PDF`, `import
 /// image to PDF`, `add watermark to page N`, `unsupported format for archive
 /// generation`).
-pub fn generate(input_path: &std::path::Path, output_path: &std::path::Path, ocr_text: &str) -> Result<(), String> {
+pub fn generate(
+    input_path: &std::path::Path,
+    output_path: &std::path::Path,
+    ocr_text: &str,
+) -> Result<(), String> {
     match archive_format(&input_path.to_string_lossy())? {
         ArchiveFormat::Pdf => add_text_layer(input_path, output_path, ocr_text),
         ArchiveFormat::Image => {
-            let data = std::fs::read(input_path).map_err(|e| format!("import image to PDF: import images: image 1: open: {e}"))?;
+            let data = std::fs::read(input_path)
+                .map_err(|e| format!("import image to PDF: import images: image 1: open: {e}"))?;
             let pdf = crate::import::import_image_pdf(&data).map_err(|e| format!("import image to PDF: import images: image 1: create pages: create image resources: {e}"))?;
             write_output(output_path, &pdf).map_err(|e| format!("import image to PDF: {e}"))?;
             add_text_layer(output_path, output_path, ocr_text)
@@ -89,7 +94,11 @@ fn write_output(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
 
 /// Go `addTextLayerToPDF`: copy the source when it differs from the destination,
 /// then stamp one OCR page per PDF page.
-fn add_text_layer(src: &std::path::Path, dst: &std::path::Path, ocr_text: &str) -> Result<(), String> {
+fn add_text_layer(
+    src: &std::path::Path,
+    dst: &std::path::Path,
+    ocr_text: &str,
+) -> Result<(), String> {
     let data = std::fs::read(src).map_err(|e| format!("copy source PDF: {e}"))?;
     if src != dst {
         write_output(dst, &data).map_err(|e| format!("copy source PDF: {e}"))?;

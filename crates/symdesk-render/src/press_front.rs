@@ -144,7 +144,10 @@ fn replace_all(src: &[u8], from: &[u8], to: &[u8]) -> Vec<u8> {
 /// Split and decode a source document (Go `Parse`).
 pub fn parse(src: &[u8]) -> Result<Document, ContractError> {
     let (fm, body) = split(src);
-    let mut doc = Document { front: Frontmatter::default(), body };
+    let mut doc = Document {
+        front: Frontmatter::default(),
+        body,
+    };
     let fm = fm.unwrap_or_default();
     let text = String::from_utf8_lossy(&fm).into_owned();
     if text.trim().is_empty() {
@@ -153,7 +156,13 @@ pub fn parse(src: &[u8]) -> Result<Document, ContractError> {
     let node = match crate::press_yaml::parse(&text) {
         Ok(Some(n)) => n,
         // A document with only comments is an empty stream: yaml.v3 returns io.EOF.
-        Ok(None) => return Err(ContractError { reason: "invalid frontmatter".into(), detail: "EOF".into(), issues: vec![] }),
+        Ok(None) => {
+            return Err(ContractError {
+                reason: "invalid frontmatter".into(),
+                detail: "EOF".into(),
+                issues: vec![],
+            });
+        }
         Err(e) => {
             return Err(ContractError {
                 reason: "invalid frontmatter".into(),
@@ -164,10 +173,16 @@ pub fn parse(src: &[u8]) -> Result<Document, ContractError> {
     };
     let mut d = Decoder::default();
     match d.front(&node, &mut doc.front) {
-        Err(hard) => Err(ContractError { reason: "invalid frontmatter".into(), detail: hard, issues: vec![] }),
-        Ok(()) if !d.terrors.is_empty() => {
-            Err(ContractError { reason: "invalid frontmatter".into(), detail: clean_yaml_error(&d.terrors), issues: vec![] })
-        }
+        Err(hard) => Err(ContractError {
+            reason: "invalid frontmatter".into(),
+            detail: hard,
+            issues: vec![],
+        }),
+        Ok(()) if !d.terrors.is_empty() => Err(ContractError {
+            reason: "invalid frontmatter".into(),
+            detail: clean_yaml_error(&d.terrors),
+            issues: vec![],
+        }),
         Ok(()) => Ok(doc),
     }
 }
@@ -179,7 +194,10 @@ fn clean_yaml_error(errors: &[String]) -> String {
         msg.push_str("\n  ");
         msg.push_str(e);
     }
-    let msg = msg.strip_prefix("yaml: unmarshal errors:\n").unwrap_or(&msg).to_owned();
+    let msg = msg
+        .strip_prefix("yaml: unmarshal errors:\n")
+        .unwrap_or(&msg)
+        .to_owned();
     let msg = msg.replace("\n  ", "; ");
     let msg = msg.strip_prefix("yaml: ").unwrap_or(&msg);
     msg.trim().to_owned()
@@ -199,25 +217,51 @@ impl Document {
     /// Every issue the profile finds (Go `Validate`).
     pub fn validate(&self, p: &Profile) -> Vec<Issue> {
         let mut issues = Vec::new();
-        let mut add = |sev: &'static str, field: &str, msg: String| issues.push(Issue { severity: sev, field: field.to_owned(), message: msg });
+        let mut add = |sev: &'static str, field: &str, msg: String| {
+            issues.push(Issue {
+                severity: sev,
+                field: field.to_owned(),
+                message: msg,
+            })
+        };
         for f in p.required_fields {
             if self.field_empty(f) {
-                add("error", f, format!("profile {} requires {}", go_quote(p.name), go_quote(f)));
+                add(
+                    "error",
+                    f,
+                    format!("profile {} requires {}", go_quote(p.name), go_quote(f)),
+                );
             }
         }
         let fr = &self.front;
         if !fr.date.is_empty() && !din_date(&fr.date) {
-            add("error", "date", "must be TT.MM.JJJJ or JJJJ-MM-TT with leading zeros (DIN 5008)".into());
+            add(
+                "error",
+                "date",
+                "must be TT.MM.JJJJ or JJJJ-MM-TT with leading zeros (DIN 5008)".into(),
+            );
         }
         if !fr.form.is_empty() && fr.form != "A" && fr.form != "B" {
-            add("error", "form", "DIN 5008 form must be \"A\" or \"B\"".into());
+            add(
+                "error",
+                "form",
+                "DIN 5008 form must be \"A\" or \"B\"".into(),
+            );
         }
         if p.requires_accessibility() {
             if fr.lang.is_empty() {
-                add("error", "lang", "PDF/UA requires a document language (e.g. lang: de)".into());
+                add(
+                    "error",
+                    "lang",
+                    "PDF/UA requires a document language (e.g. lang: de)".into(),
+                );
             }
             if fr.title.is_empty() {
-                add("error", "title", "PDF/UA requires a document title in metadata".into());
+                add(
+                    "error",
+                    "title",
+                    "PDF/UA requires a document title in metadata".into(),
+                );
             }
         }
         issues
@@ -290,17 +334,18 @@ fn parse_uint_body(body: &str) -> Option<u64> {
     if body.is_empty() {
         return None;
     }
-    let (radix, digits) = if let Some(r) = body.strip_prefix("0x").or_else(|| body.strip_prefix("0X")) {
-        (16, r)
-    } else if let Some(r) = body.strip_prefix("0b").or_else(|| body.strip_prefix("0B")) {
-        (2, r)
-    } else if let Some(r) = body.strip_prefix("0o").or_else(|| body.strip_prefix("0O")) {
-        (8, r)
-    } else if body.len() > 1 && body.starts_with('0') {
-        (8, &body[1..])
-    } else {
-        (10, body)
-    };
+    let (radix, digits) =
+        if let Some(r) = body.strip_prefix("0x").or_else(|| body.strip_prefix("0X")) {
+            (16, r)
+        } else if let Some(r) = body.strip_prefix("0b").or_else(|| body.strip_prefix("0B")) {
+            (2, r)
+        } else if let Some(r) = body.strip_prefix("0o").or_else(|| body.strip_prefix("0O")) {
+            (8, r)
+        } else if body.len() > 1 && body.starts_with('0') {
+            (8, &body[1..])
+        } else {
+            (10, body)
+        };
     if digits.is_empty() || !digits.chars().all(|c| c.is_digit(radix)) {
         return None;
     }
@@ -374,7 +419,20 @@ fn parse_timestamp(s: &str) -> Option<String> {
         return None;
     }
     let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
-    let dim = [31, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month as usize - 1];
+    let dim = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ][month as usize - 1];
     if day > dim {
         return None;
     }
@@ -387,10 +445,9 @@ fn parse_timestamp(s: &str) -> Option<String> {
         (rest, "")
     } else if let Some(t) = rest.strip_suffix('Z') {
         (t, "Z")
-    } else if let Some(p) = rest.rfind(['+', '-']).filter(|p| *p > 0) {
-        (&rest[..p], &rest[p..])
     } else {
-        return None;
+        let p = rest.rfind(['+', '-']).filter(|p| *p > 0)?;
+        (&rest[..p], &rest[p..])
     };
     if sep == b' ' && time.contains(['Z', '+']) {
         return None;
@@ -400,7 +457,11 @@ fn parse_timestamp(s: &str) -> Option<String> {
         None => (time, None),
     };
     let mut hp = hms.split(':');
-    let (h, mi, se) = (num(hp.next()?, 2)?, num(hp.next()?, 2)?, num(hp.next()?, 2)?);
+    let (h, mi, se) = (
+        num(hp.next()?, 2)?,
+        num(hp.next()?, 2)?,
+        num(hp.next()?, 2)?,
+    );
     if hp.next().is_some() || h > 23 || mi > 59 || se > 59 {
         return None;
     }
@@ -447,45 +508,51 @@ fn resolve_plain(s: &str) -> Rv {
     if !(first.is_ascii_digit() || first == b'+' || first == b'-' || first == b'.') {
         return Rv::Str(s.to_owned());
     }
-    if first.is_ascii_digit() || first == b'+' || first == b'-' {
-        if let Some(t) = parse_timestamp(s) {
-            return Rv::Time(t);
-        }
+    if (first.is_ascii_digit() || first == b'+' || first == b'-')
+        && let Some(t) = parse_timestamp(s)
+    {
+        return Rv::Time(t);
     }
     let plain = s.replace('_', "");
     if let Some(i) = parse_int0(&plain) {
         return Rv::Int(i);
     }
-    if !plain.starts_with('-') {
-        if let Some(u) = parse_uint_body(plain.strip_prefix('+').unwrap_or(&plain)) {
-            return Rv::Uint(u);
-        }
+    if !plain.starts_with('-')
+        && let Some(u) = parse_uint_body(plain.strip_prefix('+').unwrap_or(&plain))
+    {
+        return Rv::Uint(u);
     }
-    if style_float(&plain) {
-        if let Ok(f) = plain.parse::<f64>() {
-            return Rv::Float(f);
-        }
+    if style_float(&plain)
+        && let Ok(f) = plain.parse::<f64>()
+    {
+        return Rv::Float(f);
     }
-    if let Some(r) = plain.strip_prefix("0b") {
-        if let Ok(i) = i64::from_str_radix(r, 2) {
-            return Rv::Int(i);
-        }
+    if let Some(r) = plain.strip_prefix("0b")
+        && let Ok(i) = i64::from_str_radix(r, 2)
+    {
+        return Rv::Int(i);
     }
-    if let Some(r) = plain.strip_prefix("-0b") {
-        if let Ok(i) = i64::from_str_radix(r, 2) {
-            return Rv::Int(-i);
-        }
+    if let Some(r) = plain.strip_prefix("-0b")
+        && let Ok(i) = i64::from_str_radix(r, 2)
+    {
+        return Rv::Int(-i);
     }
     Rv::Str(s.to_owned())
 }
 
 /// Go-style short tag and resolved value of a scalar node.
 fn resolve(node: &Node) -> Result<(String, Rv), String> {
-    let Kind::Scalar { text, style } = &node.kind else { unreachable!() };
+    let Kind::Scalar { text, style } = &node.kind else {
+        unreachable!()
+    };
     if let Some(tag) = &node.tag {
         let short = match tag.as_str() {
-            "!!str" | "!!int" | "!!float" | "!!bool" | "!!null" | "!!binary" | "!!timestamp" => tag.clone(),
-            t if t.starts_with('!') && !t.starts_with("!!") => return Ok(("!!str".into(), Rv::Str(text.clone()))),
+            "!!str" | "!!int" | "!!float" | "!!bool" | "!!null" | "!!binary" | "!!timestamp" => {
+                tag.clone()
+            }
+            t if t.starts_with('!') && !t.starts_with("!!") => {
+                return Ok(("!!str".into(), Rv::Str(text.clone())));
+            }
             other => other.to_owned(),
         };
         return match short.as_str() {
@@ -494,15 +561,33 @@ fn resolve(node: &Node) -> Result<(String, Rv), String> {
                 let cleaned: String = text.chars().filter(|c| !c.is_whitespace()).collect();
                 match decode_b64(&cleaned) {
                     Some(b) => Ok((short, Rv::Str(String::from_utf8_lossy(&b).into_owned()))),
-                    None => Err(format!("yaml: !!binary value contains invalid base64 data")),
+                    None => Err("yaml: !!binary value contains invalid base64 data".to_owned()),
                 }
             }
             _ => {
                 let r = resolve_plain(text);
-                if rv_tag(&r) == short || (short == "!!float" && matches!(r, Rv::Int(_) | Rv::Uint(_))) {
-                    Ok((short.clone(), if short == "!!float" { if let Rv::Int(i) = r { Rv::Float(i as f64) } else { r } } else { r }))
+                if rv_tag(&r) == short
+                    || (short == "!!float" && matches!(r, Rv::Int(_) | Rv::Uint(_)))
+                {
+                    Ok((
+                        short.clone(),
+                        if short == "!!float" {
+                            if let Rv::Int(i) = r {
+                                Rv::Float(i as f64)
+                            } else {
+                                r
+                            }
+                        } else {
+                            r
+                        },
+                    ))
                 } else {
-                    Err(format!("yaml: cannot decode {} `{}` as a {}", rv_tag(&r), text, short))
+                    Err(format!(
+                        "yaml: cannot decode {} `{}` as a {}",
+                        rv_tag(&r),
+                        text,
+                        short
+                    ))
                 }
             }
         };
@@ -550,7 +635,9 @@ fn node_tag(n: &Node) -> String {
     match &n.kind {
         Kind::Seq(_) => "!!seq".into(),
         Kind::Map(_) => "!!map".into(),
-        Kind::Scalar { .. } => resolve(n).map(|(t, _)| t).unwrap_or_else(|_| "!!str".into()),
+        Kind::Scalar { .. } => resolve(n)
+            .map(|(t, _)| t)
+            .unwrap_or_else(|_| "!!str".into()),
     }
 }
 
@@ -559,10 +646,25 @@ impl Decoder {
         let tag = node_tag(n);
         let line = n.line;
         if let Kind::Scalar { text, .. } = &n.kind {
-            let value = if text.len() > 10 { format!(" `{}...`", &text[..text.char_indices().map(|(i, _)| i).take_while(|i| *i <= 7).last().unwrap_or(0)]) } else { format!(" `{text}`") };
-            self.terrors.push(format!("line {line}: cannot unmarshal {tag}{value} into {target}"));
+            let value = if text.len() > 10 {
+                format!(
+                    " `{}...`",
+                    &text[..text
+                        .char_indices()
+                        .map(|(i, _)| i)
+                        .take_while(|i| *i <= 7)
+                        .last()
+                        .unwrap_or(0)]
+                )
+            } else {
+                format!(" `{text}`")
+            };
+            self.terrors.push(format!(
+                "line {line}: cannot unmarshal {tag}{value} into {target}"
+            ));
         } else {
-            self.terrors.push(format!("line {line}: cannot unmarshal {tag} into {target}"));
+            self.terrors
+                .push(format!("line {line}: cannot unmarshal {tag} into {target}"));
         }
     }
 
@@ -575,10 +677,14 @@ impl Decoder {
             let ni = &pairs[i / 2].0;
             for j in ((i + 2)..pairs.len() * 2).step_by(2) {
                 let nj = &pairs[j / 2].0;
-                if let (Kind::Scalar { text: a, .. }, Kind::Scalar { text: b, .. }) = (&ni.kind, &nj.kind) {
-                    if a == b {
-                        self.terrors.push(format!("line {}: mapping key {:?} already defined at line {}", nj.line, b, ni.line));
-                    }
+                if let (Kind::Scalar { text: a, .. }, Kind::Scalar { text: b, .. }) =
+                    (&ni.kind, &nj.kind)
+                    && a == b
+                {
+                    self.terrors.push(format!(
+                        "line {}: mapping key {:?} already defined at line {}",
+                        nj.line, b, ni.line
+                    ));
                 }
             }
         }
@@ -639,7 +745,9 @@ impl Decoder {
                 Rv::Null => *out = 0,
                 Rv::Int(i) => *out = i,
                 Rv::Uint(_) => self.type_error(n, "int"),
-                Rv::Float(f) if f <= i64::MAX as f64 && f >= i64::MIN as f64 && !f.is_nan() => *out = f as i64,
+                Rv::Float(f) if f <= i64::MAX as f64 && f >= i64::MIN as f64 && !f.is_nan() => {
+                    *out = f as i64
+                }
                 _ => self.type_error(n, "int"),
             },
             _ => self.type_error(n, "int"),
@@ -686,7 +794,10 @@ impl Decoder {
                     match key.as_str() {
                         "name" => self.string(v, &mut a.name)?,
                         "address" => self.string_list(v, &mut a.address)?,
-                        _ => self.terrors.push(format!("line {}: field {key} not found in type press.Address", k.line)),
+                        _ => self.terrors.push(format!(
+                            "line {}: field {key} not found in type press.Address",
+                            k.line
+                        )),
                     }
                 }
                 Ok(Some(a))
@@ -755,7 +866,10 @@ impl Decoder {
                 "duration" => self.string(v, &mut f.duration)?,
                 "location" => self.string(v, &mut f.location)?,
                 "pdf" => self.pdf(v, &mut f.pdf)?,
-                _ => self.terrors.push(format!("line {}: field {key} not found in type press.Frontmatter", k.line)),
+                _ => self.terrors.push(format!(
+                    "line {}: field {key} not found in type press.Frontmatter",
+                    k.line
+                )),
             }
         }
         Ok(())
@@ -774,7 +888,10 @@ impl Decoder {
                                 out.reproducible = b;
                             }
                         }
-                        _ => self.terrors.push(format!("line {}: field {key} not found in type press.PDFOptions", k.line)),
+                        _ => self.terrors.push(format!(
+                            "line {}: field {key} not found in type press.PDFOptions",
+                            k.line
+                        )),
                     }
                 }
             }
@@ -861,7 +978,9 @@ impl Decoder {
                 let mut m = BTreeMap::new();
                 let mut merged: Vec<(String, Json)> = Vec::new();
                 for (k, v) in pairs {
-                    let Kind::Scalar { text, .. } = &k.kind else { continue };
+                    let Kind::Scalar { text, .. } = &k.kind else {
+                        continue;
+                    };
                     if text == "<<" && k.tag.is_none() {
                         match &v.kind {
                             Kind::Map(_) => {
@@ -876,7 +995,12 @@ impl Decoder {
                                     }
                                 }
                             }
-                            _ => return Err("yaml: map merge requires map or sequence of maps as the value".into()),
+                            _ => {
+                                return Err(
+                                    "yaml: map merge requires map or sequence of maps as the value"
+                                        .into(),
+                                );
+                            }
                         }
                         continue;
                     }
@@ -923,7 +1047,10 @@ fn go_float(f: f64) -> Result<String, String> {
         return Err("json: unsupported value: NaN".into());
     }
     if f.is_infinite() {
-        return Err(format!("json: unsupported value: {}", if f > 0.0 { "+Inf" } else { "-Inf" }));
+        return Err(format!(
+            "json: unsupported value: {}",
+            if f > 0.0 { "+Inf" } else { "-Inf" }
+        ));
     }
     let abs = f.abs();
     if abs != 0.0 && (abs < 1e-6 || abs >= 1e21) {
@@ -933,10 +1060,24 @@ fn go_float(f: f64) -> Result<String, String> {
             Some(d) => ('-', d),
             None => ('+', exp),
         };
-        let digits = if digits.len() == 1 && sign == '-' { digits.to_owned() } else if digits.len() == 1 { format!("0{digits}") } else { digits.to_owned() };
+        let digits = if digits.len() == 1 && sign == '-' {
+            digits.to_owned()
+        } else if digits.len() == 1 {
+            format!("0{digits}")
+        } else {
+            digits.to_owned()
+        };
         // Go prints at least two exponent digits and then strips a leading zero of "e-0N".
-        let digits = if sign == '-' { digits.trim_start_matches('0').to_owned() } else { digits };
-        let digits = if digits.is_empty() { "0".to_owned() } else { digits };
+        let digits = if sign == '-' {
+            digits.trim_start_matches('0').to_owned()
+        } else {
+            digits
+        };
+        let digits = if digits.is_empty() {
+            "0".to_owned()
+        } else {
+            digits
+        };
         return Ok(format!("{mant}e{sign}{digits}"));
     }
     Ok(format!("{f}"))
@@ -968,8 +1109,14 @@ fn write_json(j: &Json, indent: usize, out: &mut String) -> Result<(), String> {
                 out.push(']');
             }
         }
-        Json::Obj(m) => write_obj(m.iter().map(|(k, v)| (k.as_str(), v)).collect(), indent, out)?,
-        Json::GenericMap => return Err("json: unsupported type: map[interface {}]interface {}".into()),
+        Json::Obj(m) => write_obj(
+            m.iter().map(|(k, v)| (k.as_str(), v)).collect(),
+            indent,
+            out,
+        )?,
+        Json::GenericMap => {
+            return Err("json: unsupported type: map[interface {}]interface {}".into());
+        }
         Json::Raw(a) => {
             let name = Json::Str(a.name.clone());
             let list = strs(&a.address);
@@ -1042,7 +1189,15 @@ pub fn meta_json(f: &Frontmatter) -> Result<String, String> {
     }
     owned.push(("betreff", Json::Str(f.betreff.clone())));
     if !f.infoblock.is_empty() {
-        owned.push(("infoblock", Json::Obj(f.infoblock.iter().map(|(k, v)| (k.clone(), Json::Str(v.clone()))).collect())));
+        owned.push((
+            "infoblock",
+            Json::Obj(
+                f.infoblock
+                    .iter()
+                    .map(|(k, v)| (k.clone(), Json::Str(v.clone())))
+                    .collect(),
+            ),
+        ));
     }
     if let Some(b) = f.titlepage {
         owned.push(("titlepage", Json::Bool(b)));

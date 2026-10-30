@@ -52,20 +52,18 @@ const FBOX: [f64; 4] = [-166.0, -225.0, 1000.0, 931.0];
 const HELVETICA_WIDTHS: [i64; 256] = [
     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-    278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278,
-    556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,
-    1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778,
-    667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,
-    333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556,
-    556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 1000,
-    556, 1000, 222, 556, 333, 1000, 556, 556, 333, 1000, 667, 333, 1000, 1000, 611, 1000,
-    1000, 222, 222, 333, 333, 350, 556, 1000, 333, 1000, 500, 333, 944, 1000, 500, 667,
-    1000, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 1000, 737, 333,
-    400, 584, 333, 333, 333, 556, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611,
-    667, 667, 667, 667, 667, 667, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278,
-    722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611,
-    556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278,
-    556, 556, 556, 556, 556, 556, 556, 584, 611, 556, 556, 556, 556, 500, 556, 500,
+    278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556,
+    556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667,
+    611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667,
+    667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500,
+    222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
+    1000, 556, 1000, 222, 556, 333, 1000, 556, 556, 333, 1000, 667, 333, 1000, 1000, 611, 1000,
+    1000, 222, 222, 333, 333, 350, 556, 1000, 333, 1000, 500, 333, 944, 1000, 500, 667, 1000, 333,
+    556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 1000, 737, 333, 400, 584, 333, 333, 333,
+    556, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1000, 722,
+    667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722,
+    722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278,
+    278, 278, 556, 556, 556, 556, 556, 556, 556, 584, 611, 556, 556, 556, 556, 500, 556, 500,
 ];
 
 /// The metric tables, exposed so the contract test can compare them with the
@@ -98,7 +96,12 @@ impl Rect {
         self.ury += dy;
     }
     fn bits(&self) -> [u64; 4] {
-        [self.llx.to_bits(), self.lly.to_bits(), self.urx.to_bits(), self.ury.to_bits()]
+        [
+            self.llx.to_bits(),
+            self.lly.to_bits(),
+            self.urx.to_bits(),
+            self.ury.to_bits(),
+        ]
     }
 }
 
@@ -107,7 +110,10 @@ fn user_units(glyph_units: f64, size: f64) -> f64 {
 }
 
 fn text_width_units(bytes: &[u8]) -> i64 {
-    bytes.iter().map(|b| HELVETICA_WIDTHS[usize::from(*b)]).sum()
+    bytes
+        .iter()
+        .map(|b| HELVETICA_WIDTHS[usize::from(*b)])
+        .sum()
 }
 
 /// `Repository.TextBoundingBox`: the box of `bytes` at the origin.
@@ -115,7 +121,12 @@ fn text_bbox(bytes: &[u8], size: f64) -> Rect {
     let width = user_units(text_width_units(bytes) as f64, size);
     let height = user_units(FBOX[3] - FBOX[1], size);
     let y = -user_units(-FBOX[1], size).ceil();
-    Rect { llx: 0.0, lly: y, urx: width, ury: y + height }
+    Rect {
+        llx: 0.0,
+        lly: y,
+        urx: width,
+        ury: y + height,
+    }
 }
 
 fn union_point(r: Rect, x: f64, y: f64) -> Rect {
@@ -193,7 +204,12 @@ fn format_text(text: &str, page_nr: usize, page_count: usize) -> (String, bool) 
     let bytes = text.as_bytes();
     let (mut out, mut digits): (Vec<u8>, Vec<u8>) = (Vec::new(), Vec::new());
     let (mut has_percent, mut unique, mut page_tag) = (false, false, false);
-    let offset_of = |digits: &[u8]| -> usize { std::str::from_utf8(digits).ok().and_then(|s| s.parse().ok()).unwrap_or(0) };
+    let offset_of = |digits: &[u8]| -> usize {
+        std::str::from_utf8(digits)
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(0)
+    };
     for &c in bytes {
         if page_tag {
             if c.is_ascii_digit() {
@@ -281,11 +297,33 @@ fn split_multiline(text: &str) -> Vec<String> {
 /// extras map to their code page byte, everything else becomes a space.
 fn encode_win_ansi(text: &str) -> Vec<u8> {
     const SPECIALS: [(u32, u8); 27] = [
-        (0x20AC, 128), (0x201A, 130), (0x0192, 131), (0x201E, 132), (0x2026, 133), (0x2020, 134),
-        (0x2021, 135), (0x02C6, 136), (0x2030, 137), (0x0160, 138), (0x2039, 139), (0x0152, 140),
-        (0x017D, 142), (0x2018, 145), (0x2019, 146), (0x201C, 147), (0x201D, 148), (0x2022, 149),
-        (0x2013, 150), (0x2014, 151), (0x02DC, 152), (0x2122, 153), (0x0161, 154), (0x203A, 155),
-        (0x0153, 156), (0x017E, 158), (0x0178, 159),
+        (0x20AC, 128),
+        (0x201A, 130),
+        (0x0192, 131),
+        (0x201E, 132),
+        (0x2026, 133),
+        (0x2020, 134),
+        (0x2021, 135),
+        (0x02C6, 136),
+        (0x2030, 137),
+        (0x0160, 138),
+        (0x2039, 139),
+        (0x0152, 140),
+        (0x017D, 142),
+        (0x2018, 145),
+        (0x2019, 146),
+        (0x201C, 147),
+        (0x201D, 148),
+        (0x2022, 149),
+        (0x2013, 150),
+        (0x2014, 151),
+        (0x02DC, 152),
+        (0x2122, 153),
+        (0x0161, 154),
+        (0x203A, 155),
+        (0x0153, 156),
+        (0x017E, 158),
+        (0x0178, 159),
     ];
     text.chars()
         .map(|c| {
@@ -293,7 +331,10 @@ fn encode_win_ansi(text: &str) -> Vec<u8> {
             if code <= 0xFF {
                 code as u8
             } else {
-                SPECIALS.iter().find(|(u, _)| *u == code).map_or(b' ', |(_, b)| *b)
+                SPECIALS
+                    .iter()
+                    .find(|(u, _)| *u == code)
+                    .map_or(b' ', |(_, b)| *b)
             }
         })
         .collect()
@@ -336,8 +377,16 @@ struct Column {
 /// `model.WriteColumn` for the stamp's fixed parameters: centered anchor,
 /// middle vertical alignment, relative scale, no margins, no wrapping.
 fn write_column(text: &str, vp_w: f64, vp_h: f64) -> Column {
-    let r = Rect { llx: 0.0, lly: 0.0, urx: vp_w, ury: vp_h };
-    let lines: Vec<Vec<u8>> = split_multiline(text).iter().map(|l| encode_win_ansi(l)).collect();
+    let r = Rect {
+        llx: 0.0,
+        lly: 0.0,
+        urx: vp_w,
+        ury: vp_h,
+    };
+    let lines: Vec<Vec<u8>> = split_multiline(text)
+        .iter()
+        .map(|l| encode_win_ansi(l))
+        .collect();
     let (mut x, mut y) = (r.llx + 0.0 + 0.0, r.lly + 0.0 + 0.0);
     // scaleFontSize (relative): width of the unscaled block.
     let unscaled = lines_bbox(&lines, x, y, FONT_SIZE);
@@ -396,14 +445,22 @@ fn write_column(text: &str, vp_w: f64, vp_h: f64) -> Column {
         lb.translate(x, y);
         let dx = lb.width() / 2.0;
         out.extend_from_slice(
-            format!("BT 0 Tw 0.50 0.50 0.50 RG 0.50 0.50 0.50 rg {:.2} {:.2} Td 0 Tr (", x - dx, y).as_bytes(),
+            format!(
+                "BT 0 Tw 0.50 0.50 0.50 RG 0.50 0.50 0.50 rg {:.2} {:.2} Td 0 Tr (",
+                x - dx,
+                y
+            )
+            .as_bytes(),
         );
         out.extend(pdf_escape(line));
         out.extend_from_slice(b") Tj ET ");
         y -= line_height;
     }
     out.extend_from_slice(b"Q ");
-    Column { content: out, bb: b }
+    Column {
+        content: out,
+        bb: b,
+    }
 }
 
 // ---- document access ----------------------------------------------------------
@@ -437,15 +494,22 @@ fn inherited<'a>(
     Err("page tree /Parent chain is too deep".to_owned())
 }
 
-
 fn number(doc: &Document, object: &Object) -> Option<f64> {
     let (_, value) = doc.dereference(object).ok()?;
-    value.as_float().map(f64::from).or_else(|_| value.as_i64().map(|v| v as f64)).ok()
+    value
+        .as_float()
+        .map(f64::from)
+        .or_else(|_| value.as_i64().map(|v| v as f64))
+        .ok()
 }
 
 fn rect_attr(doc: &Document, page_id: ObjectId, key: &[u8]) -> Result<Option<Rect>, String> {
-    let Some(object) = inherited(doc, page_id, key)? else { return Ok(None) };
-    let Ok(values) = object.as_array() else { return Ok(None) };
+    let Some(object) = inherited(doc, page_id, key)? else {
+        return Ok(None);
+    };
+    let Ok(values) = object.as_array() else {
+        return Ok(None);
+    };
     if values.len() != 4 {
         return Ok(None);
     }
@@ -456,7 +520,12 @@ fn rect_attr(doc: &Document, page_id: ObjectId, key: &[u8]) -> Result<Option<Rec
             None => return Ok(None),
         }
     }
-    Ok(Some(Rect { llx: v[0].min(v[2]), lly: v[1].min(v[3]), urx: v[0].max(v[2]), ury: v[1].max(v[3]) }))
+    Ok(Some(Rect {
+        llx: v[0].min(v[2]),
+        lly: v[1].min(v[3]),
+        urx: v[0].max(v[2]),
+        ury: v[1].max(v[3]),
+    }))
 }
 
 /// The value as an exact PDF real: lopdf stores reals as `f32`, which is too
@@ -487,7 +556,12 @@ fn rect_array(r: &Rect) -> Object {
 }
 
 fn name_array(names: &[&str]) -> Object {
-    Object::Array(names.iter().map(|n| Object::Name(n.as_bytes().to_vec())).collect())
+    Object::Array(
+        names
+            .iter()
+            .map(|n| Object::Name(n.as_bytes().to_vec()))
+            .collect(),
+    )
 }
 
 fn proc_set() -> Object {
@@ -505,27 +579,32 @@ fn prepare_oc_properties(doc: &mut Document) -> Result<ObjectId, String> {
         .and_then(Object::as_reference)
         .map_err(|_| "catalog: missing Root".to_owned())?;
     let existing = {
-        let catalog = doc.get_dictionary(root).map_err(|e| format!("catalog: {e}"))?;
+        let catalog = doc
+            .get_dictionary(root)
+            .map_err(|e| format!("catalog: {e}"))?;
         match catalog.get(b"OCProperties") {
             Ok(object) => {
-                let (_, props) = doc
-                    .dereference(object)
-                    .map_err(|e| format!("optional content properties: dereference dictionary: {e}"))?;
-                let props = props.as_dict().map_err(|_| "optional content properties: missing dictionary".to_owned())?;
+                let (_, props) = doc.dereference(object).map_err(|e| {
+                    format!("optional content properties: dereference dictionary: {e}")
+                })?;
+                let props = props
+                    .as_dict()
+                    .map_err(|_| "optional content properties: missing dictionary".to_owned())?;
                 match props.get(b"OCGs") {
                     Ok(ocgs) => {
-                        let (_, ocgs) = doc
-                            .dereference(ocgs)
-                            .map_err(|e| format!("corrupt optional content groups: dereference OCGs: {e}"))?;
-                        let ocgs = ocgs
-                            .as_array()
-                            .map_err(|_| "corrupt optional content groups: dereference OCGs: not an array".to_owned())?;
+                        let (_, ocgs) = doc.dereference(ocgs).map_err(|e| {
+                            format!("corrupt optional content groups: dereference OCGs: {e}")
+                        })?;
+                        let ocgs = ocgs.as_array().map_err(|_| {
+                            "corrupt optional content groups: dereference OCGs: not an array"
+                                .to_owned()
+                        })?;
                         match ocgs.first() {
                             Some(Object::Reference(id)) => Some(*id),
                             Some(other) => {
                                 return Err(format!(
                                     "corrupt optional content groups: first OCG has type {}",
-                                    type_name(&other)
+                                    type_name(other)
                                 ));
                             }
                             None => None,
@@ -583,20 +662,41 @@ struct Call<'a> {
 }
 
 /// `AddWatermarks` for one OCR page's text on the selected pages.
-fn add_watermarks(doc: &mut Document, pages: &[ObjectId], selected: &[usize], text: &str) -> Result<(), String> {
+fn add_watermarks(
+    doc: &mut Document,
+    pages: &[ObjectId],
+    selected: &[usize],
+    text: &str,
+) -> Result<(), String> {
     let ocg = prepare_oc_properties(doc).map_err(|e| format!("prepare optional content: {e}"))?;
-    let gstate = doc.add_object(dictionary! { "Type" => "ExtGState", "CA" => Object::Real(1.0), "ca" => Object::Real(1.0) });
+    let gstate = doc.add_object(
+        dictionary! { "Type" => "ExtGState", "CA" => Object::Real(1.0), "ca" => Object::Real(1.0) },
+    );
     let font = doc.add_object(dictionary! {
         "Type" => "Font", "Subtype" => "Type1", "BaseFont" => "Helvetica", "Encoding" => "WinAnsiEncoding",
     });
-    let mut call = Call { ocg, gstate, font, text, page_count: pages.len(), forms: Vec::new(), patched: HashSet::new() };
+    let mut call = Call {
+        ocg,
+        gstate,
+        font,
+        text,
+        page_count: pages.len(),
+        forms: Vec::new(),
+        patched: HashSet::new(),
+    };
     for &page_nr in selected {
-        add_page_watermark(doc, &mut call, pages[page_nr - 1], page_nr).map_err(|e| format!("page {page_nr}: {e}"))?;
+        add_page_watermark(doc, &mut call, pages[page_nr - 1], page_nr)
+            .map_err(|e| format!("page {page_nr}: {e}"))?;
     }
     Ok(())
 }
 
-fn add_page_watermark(doc: &mut Document, call: &mut Call, page_id: ObjectId, page_nr: usize) -> Result<(), String> {
+fn add_page_watermark(
+    doc: &mut Document,
+    call: &mut Call,
+    page_id: ObjectId,
+    page_nr: usize,
+) -> Result<(), String> {
     // Inherited attributes.
     let media = rect_attr(doc, page_id, b"MediaBox")?.unwrap_or(Rect {
         llx: DEFAULT_MEDIA_BOX[0],
@@ -629,7 +729,14 @@ fn add_page_watermark(doc: &mut Document, call: &mut Call, page_id: ObjectId, pa
     let (text, unique) = format_text(call.text, page_nr, call.page_count);
     let column = write_column(&text, vp.width(), vp.height());
     let bb = column.bb;
-    let cached = (!unique).then(|| call.forms.iter().find(|(k, _)| *k == bb.bits()).map(|(_, id)| *id)).flatten();
+    let cached = (!unique)
+        .then(|| {
+            call.forms
+                .iter()
+                .find(|(k, _)| *k == bb.bits())
+                .map(|(_, id)| *id)
+        })
+        .flatten();
     let form_id = match cached {
         Some(id) => id,
         None => {
@@ -657,13 +764,21 @@ fn add_page_watermark(doc: &mut Document, call: &mut Call, page_id: ObjectId, pa
     };
     // addPageWatermarkResources
     let (gs_id, xo_id) = {
-        let fresh = |doc: &Document, dict: &mut Dictionary, category: &str, prefix: &str, target: ObjectId| -> Result<String, String> {
+        let fresh = |doc: &Document,
+                     dict: &mut Dictionary,
+                     category: &str,
+                     prefix: &str,
+                     target: ObjectId|
+         -> Result<String, String> {
             let (mut sub, id) = match dict.get(category.as_bytes()) {
                 Ok(object) => {
                     let (_, value) = doc
                         .dereference(object)
                         .map_err(|e| format!("{category}: dereference dictionary: {e}"))?;
-                    let sub = value.as_dict().map_err(|_| format!("{category}: missing dictionary"))?.clone();
+                    let sub = value
+                        .as_dict()
+                        .map_err(|_| format!("{category}: missing dictionary"))?
+                        .clone();
                     let mut n = 0;
                     while sub.has(format!("{prefix}{n}").as_bytes()) {
                         n += 1;
@@ -684,15 +799,21 @@ fn add_page_watermark(doc: &mut Document, call: &mut Call, page_id: ObjectId, pa
     };
     // Matrix of the drawn stamp (wmContent).
     let r = (vp.height() / vp.width()).atan() * RAD_TO_DEG;
-    let r = if bb.width() / bb.height() < 1.0 { r - 90.0 } else { r };
+    let r = if bb.width() / bb.height() < 1.0 {
+        r - 90.0
+    } else {
+        r
+    };
     let (sin, cos) = ((r * DEG_TO_RAD).sin(), (r * DEG_TO_RAD).cos());
     let dy0 = bb.lly;
     let (llx, lly) = (
         vp.llx + (vp.width() / 2.0 - bb.width() / 2.0),
         vp.lly + (vp.height() / 2.0 - bb.height() / 2.0),
     );
-    let dx = llx + bb.width() / 2.0 + 0.0 + sin * (bb.height() / 2.0 + dy0) - cos * bb.width() / 2.0;
-    let dy = lly + bb.height() / 2.0 + 0.0 - cos * (bb.height() / 2.0 + dy0) - sin * bb.width() / 2.0;
+    let dx =
+        llx + bb.width() / 2.0 + 0.0 + sin * (bb.height() / 2.0 + dy0) - cos * bb.width() / 2.0;
+    let dy =
+        lly + bb.height() / 2.0 + 0.0 - cos * (bb.height() / 2.0 + dy0) - sin * bb.width() / 2.0;
     let m = transform_matrix(sin, cos, dx, dy);
     let wm = format!(
         " /Artifact <</Subtype /Watermark /Type /Pagination >>BDC q {} cm /{gs_id} gs /{xo_id} Do Q EMC ",
@@ -701,7 +822,10 @@ fn add_page_watermark(doc: &mut Document, call: &mut Call, page_id: ObjectId, pa
     // Page dictionary updates.
     {
         let page = doc.get_dictionary_mut(page_id).map_err(|e| e.to_string())?;
-        page.set("Resources", Object::Dictionary(resources.unwrap_or_default()));
+        page.set(
+            "Resources",
+            Object::Dictionary(resources.unwrap_or_default()),
+        );
         if let Some(b) = new_boxes {
             page.set("MediaBox", rect_array(&b));
             page.set("CropBox", rect_array(&b));
@@ -726,13 +850,21 @@ fn rotation_bytes(rot: i64, w: f64, h: f64) -> String {
 
 fn stream_text(stream: &Stream) -> Result<Vec<u8>, String> {
     if stream.dict.get(b"Filter").is_ok() {
-        stream.decompressed_content().map_err(|e| format!("decode stream: {e}"))
+        stream
+            .decompressed_content()
+            .map_err(|e| format!("decode stream: {e}"))
     } else {
         Ok(stream.content.clone())
     }
 }
 
-fn patched_stream(stream: &Stream, wm: &str, rotate: i64, vp: Rect, is_last: bool) -> Result<Stream, String> {
+fn patched_stream(
+    stream: &Stream,
+    wm: &str,
+    rotate: i64,
+    vp: Rect,
+    is_last: bool,
+) -> Result<Stream, String> {
     let old = stream_text(stream)?;
     let content: Vec<u8> = if rotate == 0 {
         let mut c = wm.as_bytes().to_vec();
@@ -753,46 +885,74 @@ fn patched_stream(stream: &Stream, wm: &str, rotate: i64, vp: Rect, is_last: boo
     compress(Stream::new(dict, content))
 }
 
-fn patch_contents(doc: &mut Document, call: &mut Call, page_id: ObjectId, wm: &str, rotate: i64, vp: Rect) -> Result<(), String> {
-    let contents = doc.get_dictionary(page_id).map_err(|e| e.to_string())?.get(b"Contents").ok().cloned();
+fn patch_contents(
+    doc: &mut Document,
+    call: &mut Call,
+    page_id: ObjectId,
+    wm: &str,
+    rotate: i64,
+    vp: Rect,
+) -> Result<(), String> {
+    let contents = doc
+        .get_dictionary(page_id)
+        .map_err(|e| e.to_string())?
+        .get(b"Contents")
+        .ok()
+        .cloned();
     let Some(contents) = contents else {
         // insertPageContentsForWM
         let stream = compress(Stream::new(Dictionary::new(), wm.as_bytes().to_vec()))?;
         let id = doc.add_object(stream);
-        doc.get_dictionary_mut(page_id).map_err(|e| e.to_string())?.set("Contents", Object::Reference(id));
+        doc.get_dictionary_mut(page_id)
+            .map_err(|e| e.to_string())?
+            .set("Contents", Object::Reference(id));
         return Ok(());
     };
-    let patch_one = |doc: &mut Document, call: &mut Call, id: ObjectId, is_last: bool| -> Result<(), String> {
-        if call.patched.contains(&id) {
-            return Ok(());
-        }
-        let stream = doc
-            .get_object(id)
-            .map_err(|e| format!("content stream obj#{}: {e}", id.0))?
-            .as_stream()
-            .map_err(|_| format!("content stream obj#{}: expected stream dictionary", id.0))?;
-        let patched = patched_stream(stream, wm, rotate, vp, is_last)?;
-        doc.objects.insert(id, Object::Stream(patched));
-        call.patched.insert(id);
-        Ok(())
-    };
+    let patch_one =
+        |doc: &mut Document, call: &mut Call, id: ObjectId, is_last: bool| -> Result<(), String> {
+            if call.patched.contains(&id) {
+                return Ok(());
+            }
+            let stream = doc
+                .get_object(id)
+                .map_err(|e| format!("content stream obj#{}: {e}", id.0))?
+                .as_stream()
+                .map_err(|_| format!("content stream obj#{}: expected stream dictionary", id.0))?;
+            let patched = patched_stream(stream, wm, rotate, vp, is_last)?;
+            doc.objects.insert(id, Object::Stream(patched));
+            call.patched.insert(id);
+            Ok(())
+        };
     match contents {
         Object::Reference(id) => {
-            let target = doc.get_object(id).map_err(|e| format!("Contents: {e}"))?.clone();
+            let target = doc
+                .get_object(id)
+                .map_err(|e| format!("Contents: {e}"))?
+                .clone();
             match target {
                 Object::Stream(_) => patch_one(doc, call, id, true),
-                Object::Array(items) => patch_array(doc, call, page_id, items, wm, rotate, patch_one),
-                other => Err(format!("Contents: expected stream dictionary or array, got {}", type_name(&other))),
+                Object::Array(items) => {
+                    patch_array(doc, call, page_id, items, wm, rotate, patch_one)
+                }
+                other => Err(format!(
+                    "Contents: expected stream dictionary or array, got {}",
+                    type_name(&other)
+                )),
             }
         }
         Object::Array(items) => patch_array(doc, call, page_id, items, wm, rotate, patch_one),
         Object::Stream(stream) => {
             // A direct stream cannot occur in a valid PDF; patch it in the page.
             let patched = patched_stream(&stream, wm, rotate, vp, true)?;
-            doc.get_dictionary_mut(page_id).map_err(|e| e.to_string())?.set("Contents", Object::Stream(patched));
+            doc.get_dictionary_mut(page_id)
+                .map_err(|e| e.to_string())?
+                .set("Contents", Object::Stream(patched));
             Ok(())
         }
-        other => Err(format!("Contents: expected stream dictionary or array, got {}", type_name(&other))),
+        other => Err(format!(
+            "Contents: expected stream dictionary or array, got {}",
+            type_name(&other)
+        )),
     }
 }
 
@@ -805,14 +965,24 @@ fn patch_array(
     rotate: i64,
     patch_one: impl Fn(&mut Document, &mut Call, ObjectId, bool) -> Result<(), String>,
 ) -> Result<(), String> {
-    let Some(first) = items.first() else { return Ok(()) };
+    let Some(first) = items.first() else {
+        return Ok(());
+    };
     let Object::Reference(first_id) = first else {
-        return Err(format!("content array entry 1: expected indirect reference, got {}", type_name(first)));
+        return Err(format!(
+            "content array entry 1: expected indirect reference, got {}",
+            type_name(first)
+        ));
     };
     if call.patched.contains(first_id) {
         return Ok(());
     }
-    patch_one(doc, call, *first_id, items.len() == 1).map_err(|e| format!("content array entry 1 obj#{}: patch stream: {e}", first_id.0))?;
+    patch_one(doc, call, *first_id, items.len() == 1).map_err(|e| {
+        format!(
+            "content array entry 1 obj#{}: patch stream: {e}",
+            first_id.0
+        )
+    })?;
     if items.len() == 1 {
         return Ok(());
     }
@@ -822,7 +992,9 @@ fn patch_array(
     let id = doc.add_object(compress(Stream::new(Dictionary::new(), tail.to_vec()))?);
     let mut all = items;
     all.push(Object::Reference(id));
-    doc.get_dictionary_mut(page_id).map_err(|e| e.to_string())?.set("Contents", Object::Array(all));
+    doc.get_dictionary_mut(page_id)
+        .map_err(|e| e.to_string())?
+        .set("Contents", Object::Array(all));
     call.patched.insert(id);
     Ok(())
 }
@@ -845,14 +1017,21 @@ pub fn stamp_pdf(input: &[u8], ocr_text: &str) -> Result<Vec<u8>, String> {
     let Some(&(first_page, _)) = stamps.first() else {
         return Ok(input.to_vec());
     };
-    let mut doc = Document::load_mem(input).map_err(|error| format!("add watermark to page {first_page}: {error}"))?;
+    let mut doc = Document::load_mem(input)
+        .map_err(|error| format!("add watermark to page {first_page}: {error}"))?;
     let pages: Vec<ObjectId> = doc.get_pages().into_values().collect();
     for (page_number, text) in stamps {
-        let selected: Vec<usize> = if page_number <= pages.len() { vec![page_number] } else { (1..=pages.len()).collect() };
-        add_watermarks(&mut doc, &pages, &selected, text).map_err(|error| format!("add watermark to page {page_number}: {error}"))?;
+        let selected: Vec<usize> = if page_number <= pages.len() {
+            vec![page_number]
+        } else {
+            (1..=pages.len()).collect()
+        };
+        add_watermarks(&mut doc, &pages, &selected, text)
+            .map_err(|error| format!("add watermark to page {page_number}: {error}"))?;
     }
     let mut out = Vec::new();
-    doc.save_to(&mut out).map_err(|error| format!("save stamped PDF: {error}"))?;
+    doc.save_to(&mut out)
+        .map_err(|error| format!("save stamped PDF: {error}"))?;
     Ok(fix_reals(out))
 }
 
@@ -868,7 +1047,10 @@ mod tests {
     #[test]
     fn unreadable_input_names_the_first_stamped_page() {
         let error = stamp_pdf(b"not a pdf", " \u{c}hello").unwrap_err();
-        assert!(error.starts_with("add watermark to page 1:"), "unexpected error: {error}");
+        assert!(
+            error.starts_with("add watermark to page 1:"),
+            "unexpected error: {error}"
+        );
     }
 
     #[test]
@@ -880,7 +1062,10 @@ mod tests {
     #[test]
     fn win_ansi_maps_like_the_go_encoder() {
         assert_eq!(encode_win_ansi("Gr\u{fc}\u{df}e"), b"Gr\xfc\xdfe");
-        assert_eq!(encode_win_ansi("5\u{20ac} \u{201c}q\u{201d}"), b"5\x80 \x93q\x94");
+        assert_eq!(
+            encode_win_ansi("5\u{20ac} \u{201c}q\u{201d}"),
+            b"5\x80 \x93q\x94"
+        );
         assert_eq!(encode_win_ansi("\u{81}\u{a0}\u{ad}"), b"\x81\xa0\xad");
         assert_eq!(encode_win_ansi("\u{65e5}\u{1F600}a\u{301}"), b"  a ");
     }
@@ -889,7 +1074,10 @@ mod tests {
     fn format_text_expands_placeholders_like_pdfcpu() {
         assert_eq!(format_text("p%p of %P", 3, 7), ("p3 of 7".to_owned(), true));
         assert_eq!(format_text("%p10x", 3, 7).0, "13x");
-        assert_eq!(format_text("100%% sure%", 1, 1), ("100% sure".to_owned(), false));
+        assert_eq!(
+            format_text("100%% sure%", 1, 1),
+            ("100% sure".to_owned(), false)
+        );
         assert_eq!(format_text("50%x", 1, 1).0, "50x");
         assert_eq!(format_text("%v", 1, 1).0, "v0.16.2");
     }
@@ -913,8 +1101,14 @@ mod tests {
         let mut doc = Document::with_version("1.5");
         let a = doc.new_object_id();
         let b = doc.new_object_id();
-        doc.objects.insert(a, Object::Dictionary(dictionary! {"Parent" => Object::Reference(b)}));
-        doc.objects.insert(b, Object::Dictionary(dictionary! {"Parent" => Object::Reference(a)}));
+        doc.objects.insert(
+            a,
+            Object::Dictionary(dictionary! {"Parent" => Object::Reference(b)}),
+        );
+        doc.objects.insert(
+            b,
+            Object::Dictionary(dictionary! {"Parent" => Object::Reference(a)}),
+        );
         let error = inherited(&doc, a, b"MediaBox").unwrap_err();
         assert!(error.contains("loops"), "unexpected error: {error}");
     }
@@ -922,9 +1116,14 @@ mod tests {
     #[test]
     fn inherited_lookup_caps_the_chain_depth() {
         let mut doc = Document::with_version("1.5");
-        let ids: Vec<ObjectId> = (0..MAX_PAGE_TREE_DEPTH + 8).map(|_| doc.new_object_id()).collect();
+        let ids: Vec<ObjectId> = (0..MAX_PAGE_TREE_DEPTH + 8)
+            .map(|_| doc.new_object_id())
+            .collect();
         for window in ids.windows(2) {
-            doc.objects.insert(window[0], Object::Dictionary(dictionary! {"Parent" => Object::Reference(window[1])}));
+            doc.objects.insert(
+                window[0],
+                Object::Dictionary(dictionary! {"Parent" => Object::Reference(window[1])}),
+            );
         }
         let error = inherited(&doc, ids[0], b"MediaBox").unwrap_err();
         assert!(error.contains("too deep"), "unexpected error: {error}");

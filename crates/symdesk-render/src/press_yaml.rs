@@ -54,7 +54,10 @@ struct Parser {
 }
 
 fn err<T>(line: usize, message: &str) -> Res<T> {
-    Err(SyntaxError { line, message: message.to_owned() })
+    Err(SyntaxError {
+        line,
+        message: message.to_owned(),
+    })
 }
 
 /// Parse the first document of `src`. An empty or comment-only document is `None`.
@@ -67,9 +70,17 @@ pub fn parse(src: &str) -> Res<Option<Node>> {
         if rest.starts_with('\t') && !rest.trim().is_empty() {
             return err(i + 1, "found character that cannot start any token");
         }
-        lines.push(Line { no: i + 1, indent, text: trimmed_end.to_owned() });
+        lines.push(Line {
+            no: i + 1,
+            indent,
+            text: trimmed_end.to_owned(),
+        });
     }
-    let mut p = Parser { lines, at: 0, anchors: HashMap::new() };
+    let mut p = Parser {
+        lines,
+        at: 0,
+        anchors: HashMap::new(),
+    };
     p.skip_blank();
     if p.at >= p.lines.len() {
         return Ok(None);
@@ -145,18 +156,30 @@ impl Parser {
             } else if find_map_colon(after).is_some() && !after.starts_with(['[', '{', '"', '\'']) {
                 // Compact mapping: re-read the rest of the line as a mapping line.
                 let new_indent = indent + consumed;
-                self.lines[self.at] = Line { no, indent: new_indent, text: format!("{}{}", " ".repeat(new_indent), after) };
+                self.lines[self.at] = Line {
+                    no,
+                    indent: new_indent,
+                    text: format!("{}{}", " ".repeat(new_indent), after),
+                };
                 items.push(self.block_map(new_indent)?);
             } else if after.starts_with("- ") || after == "-" {
                 let new_indent = indent + consumed;
-                self.lines[self.at] = Line { no, indent: new_indent, text: format!("{}{}", " ".repeat(new_indent), after) };
+                self.lines[self.at] = Line {
+                    no,
+                    indent: new_indent,
+                    text: format!("{}{}", " ".repeat(new_indent), after),
+                };
                 items.push(self.block_seq(new_indent)?);
             } else {
                 self.at += 1;
                 items.push(self.value_text(after, no, indent, false)?);
             }
         }
-        Ok(Node { kind: Kind::Seq(items), tag: None, line: first })
+        Ok(Node {
+            kind: Kind::Seq(items),
+            tag: None,
+            line: first,
+        })
     }
 
     fn block_map(&mut self, indent: usize) -> Res<Node> {
@@ -187,7 +210,9 @@ impl Parser {
             self.at += 1;
             let value = if after.is_empty() || after.starts_with('#') {
                 self.skip_blank();
-                if self.at < self.lines.len() && (self.lines[self.at].indent > indent || self.is_seq_at(indent)) {
+                if self.at < self.lines.len()
+                    && (self.lines[self.at].indent > indent || self.is_seq_at(indent))
+                {
                     let i = self.lines[self.at].indent;
                     self.block(i)?
                 } else {
@@ -198,7 +223,11 @@ impl Parser {
             };
             pairs.push((key, value));
         }
-        Ok(Node { kind: Kind::Map(pairs), tag: None, line: first })
+        Ok(Node {
+            kind: Kind::Map(pairs),
+            tag: None,
+            line: first,
+        })
     }
 
     fn is_seq_at(&self, indent: usize) -> bool {
@@ -251,7 +280,12 @@ impl Parser {
                 buf.push_str(strip_comment(self.lines[self.at].text.trim()));
                 self.at += 1;
             }
-            let mut fp = Flow { s: buf.as_bytes(), i: 0, line: no, anchors: &mut self.anchors };
+            let mut fp = Flow {
+                s: buf.as_bytes(),
+                i: 0,
+                line: no,
+                anchors: &mut self.anchors,
+            };
             let n = fp.node()?;
             fp.ws();
             if fp.i < fp.s.len() {
@@ -264,7 +298,10 @@ impl Parser {
             let mut buf = text.to_owned();
             while !quote_closed(&buf) {
                 if self.at >= self.lines.len() {
-                    return err(no, "found unexpected end of stream while scanning a quoted scalar");
+                    return err(
+                        no,
+                        "found unexpected end of stream while scanning a quoted scalar",
+                    );
                 }
                 buf.push('\n');
                 buf.push_str(self.lines[self.at].text.trim());
@@ -274,7 +311,14 @@ impl Parser {
             if !buf[used..].trim().is_empty() && !buf[used..].trim_start().starts_with('#') {
                 return err(no, "did not find expected key");
             }
-            Node { kind: Kind::Scalar { text: s, style: Style::Quoted }, tag: None, line: no }
+            Node {
+                kind: Kind::Scalar {
+                    text: s,
+                    style: Style::Quoted,
+                },
+                tag: None,
+                line: no,
+            }
         } else {
             // Plain scalar, possibly continued on more-indented lines. A `: `
             // inside one would start a mapping, which is not allowed here.
@@ -282,19 +326,34 @@ impl Parser {
                 return err(no, "mapping values are not allowed in this context");
             }
             let mut s = text.to_owned();
-            while self.at < self.lines.len() && !is_blank(&self.lines[self.at].text) && self.lines[self.at].indent > indent {
-                let more = strip_comment(self.lines[self.at].text.trim()).trim_end().to_owned();
+            while self.at < self.lines.len()
+                && !is_blank(&self.lines[self.at].text)
+                && self.lines[self.at].indent > indent
+            {
+                let more = strip_comment(self.lines[self.at].text.trim())
+                    .trim_end()
+                    .to_owned();
                 if more.is_empty() {
                     break;
                 }
                 if has_plain_colon(&more) {
-                    return err(self.lines[self.at].no, "mapping values are not allowed in this context");
+                    return err(
+                        self.lines[self.at].no,
+                        "mapping values are not allowed in this context",
+                    );
                 }
                 s.push(' ');
                 s.push_str(&more);
                 self.at += 1;
             }
-            Node { kind: Kind::Scalar { text: s, style: Style::Plain }, tag: None, line: no }
+            Node {
+                kind: Kind::Scalar {
+                    text: s,
+                    style: Style::Plain,
+                },
+                tag: None,
+                line: no,
+            }
         };
         if tag.is_some() {
             node.tag = tag;
@@ -377,7 +436,14 @@ impl Parser {
                 _ => text.push('\n'),
             }
         }
-        Ok(Node { kind: Kind::Scalar { text, style: Style::Block }, tag: None, line: no })
+        Ok(Node {
+            kind: Kind::Scalar {
+                text,
+                style: Style::Block,
+            },
+            tag: None,
+            line: no,
+        })
     }
 }
 
@@ -387,7 +453,14 @@ fn has_plain_colon(s: &str) -> bool {
 }
 
 fn null_node(line: usize) -> Node {
-    Node { kind: Kind::Scalar { text: String::new(), style: Style::Plain }, tag: None, line }
+    Node {
+        kind: Kind::Scalar {
+            text: String::new(),
+            style: Style::Plain,
+        },
+        tag: None,
+        line,
+    }
 }
 
 /// Index of the `:` that separates a block mapping key from its value, if the
@@ -418,7 +491,11 @@ fn find_map_colon(s: &str) -> Option<usize> {
         }
         let rest = &s[i.min(s.len())..];
         let t = rest.trim_start_matches(' ');
-        return if t.starts_with(':') && (t.len() == 1 || t.as_bytes()[1] == b' ') { Some(i + (rest.len() - t.len())) } else { None };
+        return if t.starts_with(':') && (t.len() == 1 || t.as_bytes()[1] == b' ') {
+            Some(i + (rest.len() - t.len()))
+        } else {
+            None
+        };
     }
     if b[0] == b'[' || b[0] == b'{' || b[0] == b'#' {
         return None;
@@ -445,9 +522,23 @@ fn scalar_from_key(text: &str, line: usize) -> Res<Node> {
     }
     if t.starts_with('"') || t.starts_with('\'') {
         let (s, _) = parse_quoted(t, line)?;
-        return Ok(Node { kind: Kind::Scalar { text: s, style: Style::Quoted }, tag, line });
+        return Ok(Node {
+            kind: Kind::Scalar {
+                text: s,
+                style: Style::Quoted,
+            },
+            tag,
+            line,
+        });
     }
-    Ok(Node { kind: Kind::Scalar { text: t.to_owned(), style: Style::Plain }, tag, line })
+    Ok(Node {
+        kind: Kind::Scalar {
+            text: t.to_owned(),
+            style: Style::Plain,
+        },
+        tag,
+        line,
+    })
 }
 
 fn strip_comment(s: &str) -> &str {
@@ -459,7 +550,9 @@ fn strip_comment(s: &str) -> &str {
             b'\\' if dq => i += 1,
             b'"' if !sq => dq = !dq,
             b'\'' if !dq => sq = !sq,
-            b'#' if !sq && !dq && (i == 0 || b[i - 1] == b' ' || b[i - 1] == b'\t') => return &s[..i],
+            b'#' if !sq && !dq && (i == 0 || b[i - 1] == b' ' || b[i - 1] == b'\t') => {
+                return &s[..i];
+            }
             _ => {}
         }
         i += 1;
@@ -541,7 +634,9 @@ fn parse_quoted(s: &str, line: usize) -> Res<(String, usize)> {
                         let Ok(v) = u32::from_str_radix(hex, 16) else {
                             return err(line, "found unknown escape character");
                         };
-                        let Some(ch) = char::from_u32(v) else { return err(line, "found invalid Unicode character escape code") };
+                        let Some(ch) = char::from_u32(v) else {
+                            return err(line, "found invalid Unicode character escape code");
+                        };
                         out.push(ch);
                         i += n;
                     }
@@ -585,7 +680,10 @@ fn parse_quoted(s: &str, line: usize) -> Res<(String, usize)> {
         out.push_str(&s[i..i + ch_len]);
         i += ch_len;
     }
-    err(line, "found unexpected end of stream while scanning a quoted scalar")
+    err(
+        line,
+        "found unexpected end of stream while scanning a quoted scalar",
+    )
 }
 
 struct Flow<'a, 'b> {
@@ -615,7 +713,9 @@ impl Flow<'_, '_> {
             match self.s.get(self.i) {
                 Some(b'!') => {
                     let st = self.i;
-                    while self.i < self.s.len() && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}') {
+                    while self.i < self.s.len()
+                        && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}')
+                    {
                         self.i += 1;
                     }
                     tag = Some(self.text(st, self.i).to_owned());
@@ -623,7 +723,9 @@ impl Flow<'_, '_> {
                 }
                 Some(b'&') => {
                     let st = self.i + 1;
-                    while self.i < self.s.len() && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}') {
+                    while self.i < self.s.len()
+                        && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}')
+                    {
                         self.i += 1;
                     }
                     anchor = Some(self.text(st, self.i).to_owned());
@@ -650,10 +752,16 @@ impl Flow<'_, '_> {
                     let item = self.node()?;
                     self.ws();
                     // `[a: b]` single-pair mapping inside a sequence.
-                    if self.s.get(self.i) == Some(&b':') && matches!(self.s.get(self.i + 1), Some(b' ') | None) {
+                    if self.s.get(self.i) == Some(&b':')
+                        && matches!(self.s.get(self.i + 1), Some(b' ') | None)
+                    {
                         self.i += 1;
                         let v = self.node()?;
-                        items.push(Node { kind: Kind::Map(vec![(item, v)]), tag: None, line });
+                        items.push(Node {
+                            kind: Kind::Map(vec![(item, v)]),
+                            tag: None,
+                            line,
+                        });
                     } else {
                         items.push(item);
                     }
@@ -664,7 +772,11 @@ impl Flow<'_, '_> {
                         _ => return err(line, "did not find expected ',' or ']'"),
                     }
                 }
-                Node { kind: Kind::Seq(items), tag: None, line }
+                Node {
+                    kind: Kind::Seq(items),
+                    tag: None,
+                    line,
+                }
             }
             Some(b'{') => {
                 self.i += 1;
@@ -684,7 +796,11 @@ impl Flow<'_, '_> {
                     let v = if self.s.get(self.i) == Some(&b':') {
                         self.i += 1;
                         self.ws();
-                        if matches!(self.s.get(self.i), Some(b',') | Some(b'}')) { null_node(line) } else { self.node()? }
+                        if matches!(self.s.get(self.i), Some(b',') | Some(b'}')) {
+                            null_node(line)
+                        } else {
+                            self.node()?
+                        }
                     } else {
                         null_node(line)
                     };
@@ -696,17 +812,29 @@ impl Flow<'_, '_> {
                         _ => return err(line, "did not find expected ',' or '}'"),
                     }
                 }
-                Node { kind: Kind::Map(pairs), tag: None, line }
+                Node {
+                    kind: Kind::Map(pairs),
+                    tag: None,
+                    line,
+                }
             }
             Some(b'"') | Some(b'\'') => {
                 let rest = std::str::from_utf8(&self.s[self.i..]).unwrap_or("");
                 let (s, used) = parse_quoted(rest, line)?;
                 self.i += used;
-                Node { kind: Kind::Scalar { text: s, style: Style::Quoted }, tag: None, line }
+                Node {
+                    kind: Kind::Scalar {
+                        text: s,
+                        style: Style::Quoted,
+                    },
+                    tag: None,
+                    line,
+                }
             }
             Some(b'*') => {
                 let st = self.i + 1;
-                while self.i < self.s.len() && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}') {
+                while self.i < self.s.len() && !matches!(self.s[self.i], b' ' | b',' | b']' | b'}')
+                {
                     self.i += 1;
                 }
                 let name = self.text(st, self.i).to_owned();
@@ -722,13 +850,25 @@ impl Flow<'_, '_> {
                     if matches!(c, b',' | b']' | b'}') {
                         break;
                     }
-                    if c == b':' && matches!(self.s.get(self.i + 1), Some(b' ') | Some(b',') | Some(b'}') | Some(b']') | None) {
+                    if c == b':'
+                        && matches!(
+                            self.s.get(self.i + 1),
+                            Some(b' ') | Some(b',') | Some(b'}') | Some(b']') | None
+                        )
+                    {
                         break;
                     }
                     self.i += 1;
                 }
                 let t = self.text(st, self.i).trim().to_owned();
-                Node { kind: Kind::Scalar { text: t, style: Style::Plain }, tag: None, line }
+                Node {
+                    kind: Kind::Scalar {
+                        text: t,
+                        style: Style::Plain,
+                    },
+                    tag: None,
+                    line,
+                }
             }
         };
         if tag.is_some() {

@@ -535,10 +535,90 @@ func buildPNG(s pngSpec) []byte {
 // ---- baseline TIFF writer (multi page capable)
 
 type tiffPage struct {
-	w, h    int
-	spp     int // 1 gray, 3 rgb, 4 rgba (unassociated)
-	palette bool
-	pix     func(x, y int) []byte
+	w, h     int
+	spp      int // 1 gray, 3 rgb, 4 rgba (unassociated)
+	palette  bool
+	cmyk     bool // 4 samples, PhotometricInterpretation CMYK
+	packbits bool
+	lzw      bool
+	pix      func(x, y int) []byte
+}
+
+// lzwTIFF is the TIFF flavour of LZW: MSB-first codes, 9 to 12 bits, a clear
+// code first, an end code last and the code width growing one entry early.
+func lzwTIFF(data []byte) []byte {
+	var out []byte
+	var acc uint32
+	var nbits uint
+	width := uint(9)
+	put := func(code int) {
+		acc = acc<<width | uint32(code)
+		nbits += width
+		for nbits >= 8 {
+			out = append(out, byte(acc>>(nbits-8)))
+			nbits -= 8
+		}
+		acc &= 1<<nbits - 1
+	}
+	table := map[string]int{}
+	next := 258
+	reset := func() {
+		table = map[string]int{}
+		next = 258
+		width = 9
+	}
+	put(256)
+	cur := ""
+	for _, c := range data {
+		ext := cur + string([]byte{c})
+		if len(ext) == 1 {
+			cur = ext
+			continue
+		}
+		if _, ok := table[ext]; ok {
+			cur = ext
+			continue
+		}
+		if len(cur) == 1 {
+			put(int(cur[0]))
+		} else {
+			put(table[cur])
+		}
+		table[ext] = next
+		next++
+		switch next {
+		case 512, 1024, 2048:
+			width++
+		case 4094:
+			put(256)
+			reset()
+		}
+		cur = string([]byte{c})
+	}
+	if cur != "" {
+		if len(cur) == 1 {
+			put(int(cur[0]))
+		} else {
+			put(table[cur])
+		}
+	}
+	put(257)
+	if nbits > 0 {
+		out = append(out, byte(acc<<(8-nbits)))
+	}
+	return out
+}
+
+// packBits is the TIFF PackBits encoding with literal runs only.
+func packBits(data []byte) []byte {
+	var out []byte
+	for len(data) > 0 {
+		n := min(len(data), 128)
+		out = append(out, byte(n-1))
+		out = append(out, data[:n]...)
+		data = data[n:]
+	}
+	return out
 }
 
 func buildTIFF(pages []tiffPage) []byte {
@@ -556,12 +636,21 @@ func buildTIFF(pages []tiffPage) []byte {
 			b.WriteByte(0)
 		}
 		stripOff := uint32(b.Len())
+		var raw bytes.Buffer
 		for y := 0; y < p.h; y++ {
 			for x := 0; x < p.w; x++ {
-				b.Write(p.pix(x, y))
+				raw.Write(p.pix(x, y))
 			}
 		}
-		stripLen := uint32(p.w * p.h * p.spp)
+		strip, compression := raw.Bytes(), uint32(1)
+		if p.packbits {
+			strip, compression = packBits(strip), 32773
+		}
+		if p.lzw {
+			strip, compression = lzwTIFF(strip), 5
+		}
+		b.Write(strip)
+		stripLen := uint32(len(strip))
 		for len(b.Bytes())%2 != 0 {
 			b.WriteByte(0)
 		}
@@ -583,6 +672,8 @@ func buildTIFF(pages []tiffPage) []byte {
 		switch {
 		case p.palette:
 			photometric = 3
+		case p.cmyk:
+			photometric = 5
 		case p.spp >= 3:
 			photometric = 2
 		}
@@ -591,11 +682,11 @@ func buildTIFF(pages []tiffPage) []byte {
 			bpsVal = bpsOff
 		}
 		es := []entry{
-			{256, 4, 1, uint32(p.w)}, {257, 4, 1, uint32(p.h)}, {258, 3, uint32(p.spp), bpsVal}, {259, 3, 1, 1},
+			{256, 4, 1, uint32(p.w)}, {257, 4, 1, uint32(p.h)}, {258, 3, uint32(p.spp), bpsVal}, {259, 3, 1, compression},
 			{262, 3, 1, photometric}, {273, 4, 1, stripOff}, {277, 3, 1, uint32(p.spp)}, {278, 4, 1, uint32(p.h)},
 			{279, 4, 1, stripLen},
 		}
-		if p.spp == 4 {
+		if p.spp == 4 && !p.cmyk {
 			es = append(es, entry{338, 3, 1, 2})
 		}
 		if p.palette {
@@ -657,7 +748,9 @@ func archivePDFImportCorpus(t *testing.T) []archivePDFImportInput {
 		}
 		return m
 	}
-	encPNG := func(img image.Image) []byte { return mustEncode(t, func(w io.Writer) error { return png.Encode(w, img) }) }
+	encPNG := func(img image.Image) []byte {
+		return mustEncode(t, func(w io.Writer) error { return png.Encode(w, img) })
+	}
 	opaque := func(x, y int) color.RGBA {
 		return color.RGBA{uint8(20 + 25*x), uint8(200 - 20*y), uint8(10 * (x + y)), 255}
 	}
@@ -721,7 +814,9 @@ func archivePDFImportCorpus(t *testing.T) []archivePDFImportInput {
 	add("png-extension-jpg", ".jpg", encPNG(rgba(4, 4, opaque)), "")
 	add("png-extension-upper", ".PNG", encPNG(rgba(4, 4, opaque)), "")
 	// --- PNG, hand built variants Go's encoder never writes
-	ramp := func(max int) func(x, y int) []int { return func(x, y int) []int { return []int{(x*3 + y*5) % (max + 1)} } }
+	ramp := func(max int) func(x, y int) []int {
+		return func(x, y int) []int { return []int{(x*3 + y*5) % (max + 1)} }
+	}
 	for _, d := range []int{1, 2, 4} {
 		add(fmt.Sprintf("png-gray%d-bit", d), ".png", buildPNG(pngSpec{w: 11, h: 5, depth: d, ctype: 0, sample: ramp(1<<d - 1)}), "")
 	}
@@ -787,7 +882,9 @@ func archivePDFImportCorpus(t *testing.T) []archivePDFImportInput {
 	add("jpeg-garbage", ".jpg", []byte{0xFF, 0xD8, 0x00, 0x01, 0x02}, "")
 	add("jpeg-extension-png", ".png", enc(rgba(6, 6, opaque), 90), "")
 	// --- BMP
-	encBMP := func(img image.Image) []byte { return mustEncode(t, func(w io.Writer) error { return bmp.Encode(w, img) }) }
+	encBMP := func(img image.Image) []byte {
+		return mustEncode(t, func(w io.Writer) error { return bmp.Encode(w, img) })
+	}
 	add("bmp-rgb24", ".bmp", encBMP(rgba(9, 7, opaque)), "")
 	add("bmp-rgba32", ".bmp", encBMP(nrgba(9, 7, func(x, y int) color.NRGBA { return color.NRGBA{uint8(x * 25), uint8(y * 30), 5, uint8(60 + x*20)} })), "")
 	pb := image.NewPaletted(image.Rect(0, 0, 6, 5), color.Palette{color.RGBA{255, 0, 0, 255}, color.RGBA{0, 255, 0, 255}, color.RGBA{0, 0, 255, 255}})
@@ -816,6 +913,11 @@ func archivePDFImportCorpus(t *testing.T) []archivePDFImportInput {
 	add("tiff-hand-rgb", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 3, pix: pix3}}), "")
 	add("tiff-hand-multipage-rgb-gray-rgba", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 3, pix: pix3}, {w: 6, h: 3, spp: 1, pix: pix1}, {w: 4, h: 4, spp: 4, pix: pix4}}), "p1\n\n--- Page ---\n\np2\n\n--- Page ---\n\np3")
 	add("tiff-hand-palette", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 1, palette: true, pix: pix1}}), "")
+	add("tiff-hand-cmyk", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 4, cmyk: true, pix: pix4}}), "")
+	add("tiff-hand-packbits-rgb", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 3, packbits: true, pix: pix3}}), "")
+	add("tiff-hand-packbits-gray", ".tif", buildTIFF([]tiffPage{{w: 300, h: 3, spp: 1, packbits: true, pix: func(x, y int) []byte { return []byte{byte(x*7 + y)} }}}), "")
+	add("tiff-hand-lzw-rgb", ".tif", buildTIFF([]tiffPage{{w: 5, h: 4, spp: 3, lzw: true, pix: pix3}}), "")
+	add("tiff-hand-lzw-gray-long", ".tif", buildTIFF([]tiffPage{{w: 120, h: 90, spp: 1, lzw: true, pix: func(x, y int) []byte { return []byte{byte((x*x + y*3) % 251)} }}}), "")
 	tb := buildTIFF([]tiffPage{{w: 5, h: 4, spp: 3, pix: pix3}})
 	add("tiff-truncated", ".tif", tb[:len(tb)-30], "")
 	add("tiff-bad-ifd", ".tif", append(append([]byte{}, tb[:4]...), 0xFF, 0xFF, 0xFF, 0x7F), "")
@@ -892,7 +994,9 @@ func archivePDFTransform(t *testing.T, in []byte, f func(inFile, outFile string)
 func archivePDFStampCorpus(t *testing.T) []archivePDFStampInput {
 	t.Helper()
 	var cs []archivePDFStampInput
-	add := func(id string, pdf []byte, ocr string) { cs = append(cs, archivePDFStampInput{id: id, pdf: pdf, ocr: ocr}) }
+	add := func(id string, pdf []byte, ocr string) {
+		cs = append(cs, archivePDFStampInput{id: id, pdf: pdf, ocr: ocr})
+	}
 	solid := func(w, h int, c color.RGBA) []byte {
 		m := image.NewRGBA(image.Rect(0, 0, w, h))
 		for i := 0; i < len(m.Pix); i += 4 {

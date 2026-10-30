@@ -474,3 +474,57 @@ requires source/build separation.
 This is a partial INDEX-002/INDEX-005/RUST-008 slice. Their statuses and parent
 #1136 remain open; this does not establish retry, the full retrieval lifecycle,
 Go retirement, or production cutover.
+
+### IVF prefilter, Hamming shortlist and heap ranking (INDEX-005, #1136)
+
+Go's `SearchVectorWithPath` is not an exact scan once an index grows. Rows are
+cut to a Hamming shortlist of `4 x limit` binary signatures (stable ascending
+sort, kept whole when every shortlist distance ties), scored with
+`CosineSimilarityWithStoredNorm`, selected through a bounded `container/heap`
+min-heap with a strict `>` replacement rule and then stable-sorted by score.
+An unscoped scan of at least 128 chunks additionally builds an in-memory IVF
+index (k = clamp(sqrt N, 4, 256), three k-means passes, empty-bucket splits)
+and persists it to `index_storage` under the current generation; the next
+process loads it when the generation and the chunk count still match, and then
+scores only the chunks of the `nprobe` nearest buckets (full scan when they
+cover more than half of the corpus). Writes keep a loaded index warm
+(`AddChunks`, `RemoveChunk`, re-cluster above 10% churn) and every write bumps
+the generation, which makes the stored snapshot stale for the next opener.
+
+Rust now ports all of it: `symdesk-index/src/retrieval_vector.rs` (IVF,
+snapshot serialize/deserialize, shortlist, heap ranking), `go_sort.rs` (Go
+1.26's pdqsort behind `sort.Slice`, `sort.SliceStable` and `container/heap`
+sifts, so equal scores order like Go) and the `RetrievalDb` hooks in
+`retrieval.rs` (generation tracking, stale-snapshot deletion, incremental
+maintenance inside `save_chunks`, `delete_document` and the Go-shaped
+delete/save/save generation bumps of `replace_document_chunks`). Before this
+slice Rust always did an exact full scan, which diverges from Go on any index
+above `4 x limit` chunks and on every second search of a 128+ chunk index.
+
+`make retrieval-ivf-differential` replays `testdata/port/retrieval/retrieval-ivf.json`,
+a real Go recording (`TestRetrievalIVFFixture`) of three scenarios: a 300-chunk
+lifecycle (first scan builds the index, IVF-backed searches with and without a
+case-insensitive path prefix, zero and wrong-dimension queries, exact duplicate
+vectors for ties, reopen with a valid snapshot, incremental adds, churn
+re-cluster, deletes, replace, reopen with a stale snapshot), a 60-chunk corpus
+that never builds an index, and 140 identical vectors that force empty-bucket
+splits. After every step Rust must reproduce the generation, the chunk count
+and the SHA-256 and size of the persisted snapshot, so the clustering is
+compared byte for byte, besides the ranked rows. The replay also requires that
+some IVF/shortlist result differs from an exact ranking, so an exact-scan
+implementation cannot pass.
+
+Two Go quirks the byte comparison exposed are reproduced on purpose: the
+snapshot carries four trailing zero bytes (buffer sized for eight 32-bit header
+fields, seven written), and splitting an odd-sized bucket drops its last id.
+
+Intentional difference (Go oracle bug, not copied): in Go, an unscoped vector
+search that scans 128 or more chunks including an `embedding_pending` chunk
+panics in `runKMeans` (`index out of range [0] with length 0`; reproduced with
+a throw-away test against the Go sources). Rust treats the missing components
+as zero instead of aborting the process. The fixture does not include pending
+chunks at that size.
+
+Not covered: the quantized search facades (dormant in Go, see above), mixed
+embedding dimensions inside an index of 128+ chunks (Go panics), and snapshots
+written concurrently by two processes.

@@ -52,6 +52,12 @@ jobs:
           clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # Source-provenance tests read several pinned Go revisions with `git show`.
       # Keep every pinned oracle reachable through local branches because
@@ -185,6 +191,12 @@ jobs:
           clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # Windows runs clone-based Go source-provenance checks in the contracts.
       - name: Materialize pinned Go oracle for source guards
@@ -336,6 +348,12 @@ jobs:
           ref: ${{ github.sha }}
           # The pinned Go source oracles are validated from Git history.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # The source-guard tests clone this checkout, so retain every pinned Go
       # source revision through local branches rather than only FETCH_HEAD.
@@ -940,6 +958,12 @@ jobs:
         with:
           clean: ${{ runner.environment != 'self-hosted' }}
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           cache: ${{ runner.environment != 'self-hosted' }}
@@ -1124,6 +1148,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           clean: ${{ runner.environment != 'self-hosted' }}
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       - name: Verify Xcode 26 toolchain
         run: |
@@ -1168,6 +1198,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           clean: ${{ runner.environment != 'self-hosted' }}
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       - name: Verify Xcode 26 toolchain
         run: |

@@ -166,6 +166,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"base and view writes", []string{"run", "./scripts/rust-port/cmd/baseviewwritegen", "--check"}, []string{"testdata/port/vault/base-view-write.json"}, false},
 	{"retrieval embedding state", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalEmbeddingStateFixture$"}, []string{"testdata/port/retrieval/embedding-state.json"}, false},
 	{"retrieval vector fallback", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalVectorFixture$"}, []string{"testdata/port/retrieval/retrieval-vector.json"}, false},
+	{"retrieval IVF prefilter", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalIVFFixture$"}, []string{"testdata/port/retrieval/retrieval-ivf.json"}, false},
 	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
 	{"render note HTML", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderHTMLFixture$"}, []string{"testdata/port/render/html-note.json", "testdata/port/render/v2/html-note.json"}, false},
 	{"render export Markdown", []string{"test", "-count=1", "./internal/export", "-run", "^TestPortRenderExportMarkdownFixture$"}, []string{"testdata/port/render/export-markdown.json"}, false},

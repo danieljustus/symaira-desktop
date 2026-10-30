@@ -127,6 +127,7 @@
     "testdata/port/retrieval/reembed-http-cli.json": "94e55e10f6d7f8122fa4cb2b7e13a77e74660d99c1326e24f7b68a02a2b6bf98",
     "testdata/port/retrieval/retrieval-bm25.json": "a36d55696b59a2cc415d880e3b15b8aad8388c28b8f2f388901de0f4aaa43850",
     "testdata/port/retrieval/retrieval-chunks.json": "3f2c88931efd0b532cacc737f9b1aa30d8f5234e477396312e5601ec3e6b3917",
+    "testdata/port/retrieval/retrieval-ivf.json": "f7d70bbb8e944018e948207cc60146ec60cbbebc059c32dbf9e72ccacc71a67f",
     "testdata/port/retrieval/retrieval-sections.json": "e12de4e3a36af8ca5a37cdace938ec4fba9514e4854ebbda6a188b403ec48ee6",
     "testdata/port/retrieval/retrieval-vector.json": "90e52795423e2e3dcc7f4ffdb54025917deeb81784e80fbf3367eb06c55a9b3a",
     "testdata/port/retrieval/turboquant-codec.json": "ae6f5bccb9f251f0c724df2508e9e2ed63bc8a307e1bf1ee41a50f94d5e8384a",

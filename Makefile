@@ -118,7 +118,7 @@ help-cli-differential:
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
-.PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential retrieval-ivf-fixtures-generate retrieval-ivf-differential
 .PHONY: retrieval-turboquant-differential retrieval-turboquant-benchmark
 .PHONY: retrieval-hybrid-fixtures-generate retrieval-hybrid-differential
 .PHONY: retrieval-pending-rebuild-fixtures-generate retrieval-pending-rebuild-differential
@@ -859,6 +859,15 @@ retrieval-vector-differential:
 	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
 
+# IVF prefilter, Hamming shortlist and heap ranking of the Go vector layer.
+retrieval-ivf-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalIVFFixture$$'
+
+retrieval-ivf-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalIVFFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_ivf
+	$(CARGO) test -p symdesk-index --locked --lib retrieval_vector
+
 # Pinned CoreKit TurboQuant codec parity (#1137): Go oracle bytes, Rust replay,
 # and the Go decoder reading Rust-written sidecars.
 retrieval-turboquant-differential:
@@ -1032,7 +1041,7 @@ index-symlink-cli-differential:
 # `index-status-cli-differential` builds Go (oracle commit) and Rust, then
 # compares 85 index-status cases (needs a clean committed tree).
 RETRIEVAL_DIFFERENTIALS := retrieval-chunks-differential retrieval-bm25-differential \
-	retrieval-embedding-state-differential retrieval-vector-differential \
+	retrieval-embedding-state-differential retrieval-vector-differential retrieval-ivf-differential \
 	retrieval-hybrid-differential retrieval-pending-rebuild-differential \
 	retrieval-sections-differential retrieval-embedding-http-differential \
 	retrieval-reembed-http-differential retrieval-local-hash-differential \

@@ -140,6 +140,7 @@ help-cli-differential:
 .PHONY: render-archive-fixtures-generate render-archive-differential
 .PHONY: render-archive-stamp-fixtures-generate render-archive-stamp-differential
 .PHONY: render-archive-pdf-fixtures-generate render-archive-pdf-differential
+.PHONY: render-press-fixtures-generate render-press-differential
 
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -188,7 +189,7 @@ override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_GENERATE -u port_render_expo
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_EXPORT_VAULT_GENERATE -u port_render_export_vault_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_PDF_FRONTMATTER_GENERATE -u port_render_pdf_frontmatter_generate
 override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_GENERATE -u port_render_archive_generate
-override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_STAMP_GENERATE -u port_render_archive_stamp_generate
+override PORTGEN_CHECK_ENV += -u PORT_RENDER_ARCHIVE_STAMP_GENERATE -u port_render_archive_stamp_generate -u PORT_RENDER_ARCHIVE_PDF_GENERATE -u port_render_archive_pdf_generate -u PORT_RENDER_PRESS_GENERATE -u port_render_press_generate
 override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
@@ -197,7 +198,7 @@ build:
 
 # Current renderer aggregate only; full RUST-011 (PDF artifacts/archive/draw) is open.
 # Supply fresh evidence/runtime roots. Native captures are never overwritten.
-render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-archive-pdf-differential render-pdfops-differential render-pdfops-hostile-differential
+render-differential: render-export-differential render-export-vault-differential render-pdf-frontmatter-differential render-archive-differential render-archive-stamp-differential render-archive-pdf-differential render-press-differential render-pdfops-differential render-pdfops-hostile-differential
 
 render-pdfops-differential:
 	@test -n "$(RENDER_EVIDENCE_ROOT)" -a -n "$(RENDER_RUNTIME_ROOT)" || { printf '%s\n' 'RENDER_EVIDENCE_ROOT and RENDER_RUNTIME_ROOT are required'; exit 2; }
@@ -967,6 +968,16 @@ render-archive-pdf-fixtures-generate:
 render-archive-pdf-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/archive -run '^TestPortArchivePDFFixture$$' -v
 	$(CARGO) test -p symdesk-render --locked --test archive_pdf_contract
+
+# Press (Typst) render pipeline: strict frontmatter contract and meta.json bytes,
+# then full renders through the installed typst (typed errors, resolved options,
+# PDF/A and PDF/UA gates, reproducible PDF digests). Needs typst, python3, qpdf.
+render-press-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_RENDER_PRESS_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/pdf/internal/press -run '^TestPortPressRenderFixture$$'
+
+render-press-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/pdf/internal/press -run '^TestPortPressRenderFixture$$' -v
+	$(CARGO) test -p symdesk-render --locked --test press_render_contract
 
 dataset-aggregate-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'

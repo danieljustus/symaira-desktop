@@ -21,6 +21,7 @@ sha2.workspace = true
 flate2.workspace = true
 png = { version = "=0.18.1", default-features = false }
 tiff = { version = "=0.11.3", default-features = false, features = ["deflate", "lzw", "fax"] }
+regex.workspace = true
 image-webp = { version = "=0.2.4", default-features = false }
 
 [target.'cfg(unix)'.dependencies]

@@ -48,8 +48,24 @@ def norm_number(x):
     return round(x, NUMBER_DECIMALS)
 
 
+XMP_DATE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})")
+
+
+XMP_IDS = re.compile(r"(<(?:xmpMM:(?:Instance|Document)ID|stEvt:instanceID)>)[A-Za-z0-9+/]{22}==(?:_source)?(</)")
+
+
 def stream_node(dict_node, data):
     node = {"dict": dict_node, "len": len(data)}
+    if isinstance(dict_node, dict) and dict_node.get("/Subtype") == "/XML":
+        # XMP packets are UTF-8 text carrying creation/modification dates and
+        # time-derived instance ids; compare them as text with those masked.
+        try:
+            text = XMP_DATE.sub("{DATE}", data.decode("utf-8"))
+            node["text"] = XMP_IDS.sub(r"\1{ID}\2", text)
+            node["len"] = len(node["text"])
+            return node
+        except UnicodeDecodeError:
+            pass
     try:
         text = data.decode("ascii")
         if len(data) <= 1 << 20 and all(c in "\t\n\r" or 32 <= ord(c) < 127 for c in text):

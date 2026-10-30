@@ -6,6 +6,10 @@ FROM ubuntu:24.04
 
 ARG GO_VERSION=1.26.10
 ARG NIGHTLY=nightly-2026-09-03
+# Pinned to the typst the macOS host runs (the press render oracle records it).
+ARG TYPST_VERSION=0.15.1
+ARG TYPST_SHA256_ARM64=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee
+ARG TYPST_SHA256_AMD64=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
 
 # Git from the git-core PPA: worktrees of this repository use the
 # `relativeworktrees` extension, which needs git >= 2.48.
@@ -38,3 +42,15 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-to
  && git config --global safe.directory '*' \
  && git --version \
  && mkdir -p /home/dev/.cargo/registry /home/dev/go /home/dev/target
+
+# Typst for the press render differential (RENDER-002). Last layer, so changing
+# the pin does not rebuild the toolchain layers above.
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils \
+ && sudo rm -rf /var/lib/apt/lists/* \
+ && arch="$(dpkg --print-architecture)" \
+ && case "$arch" in arm64) target=aarch64; sum="$TYPST_SHA256_ARM64";; amd64) target=x86_64; sum="$TYPST_SHA256_AMD64";; *) echo "unsupported arch $arch" >&2; exit 1;; esac \
+ && curl -fsSL -o /tmp/typst.tar.xz "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${target}-unknown-linux-musl.tar.xz" \
+ && echo "${sum}  /tmp/typst.tar.xz" | sha256sum -c - \
+ && sudo tar -C /usr/local/bin --strip-components=1 -xJf /tmp/typst.tar.xz "typst-${target}-unknown-linux-musl/typst" \
+ && rm /tmp/typst.tar.xz \
+ && typst --version | grep -q "typst ${TYPST_VERSION}"

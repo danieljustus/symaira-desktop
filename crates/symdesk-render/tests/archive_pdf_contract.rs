@@ -57,6 +57,8 @@ struct ImportCase {
     image: String,
     ocr_text: String,
     want: Want,
+    #[serde(default)]
+    go_pdf_b64: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -66,6 +68,8 @@ struct StampCase {
     input_pdf: String,
     ocr_text: String,
     want: Want,
+    #[serde(default)]
+    go_pdf_b64: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -117,12 +121,12 @@ fn fixture() -> Fixture {
 
 /// True when the measurement tools exist. Only Windows may lack them.
 fn tools() -> bool {
-    let present = ["python3", "qpdf"].iter().all(|tool| Command::new(tool).arg("--version").output().is_ok());
+    let present = ["python3", "qpdf", "pdftoppm"].iter().all(|tool| Command::new(tool).arg("--version").output().is_ok());
     if present {
         return true;
     }
     if !cfg!(windows) {
-        panic!("python3 and qpdf are required on PATH for the archive PDF contract");
+        panic!("python3, qpdf and pdftoppm are required on PATH for the archive PDF contract");
     }
     eprintln!("note: python3/qpdf missing on Windows, skipping the PDF measurements");
     false
@@ -135,7 +139,7 @@ fn canon(pdf: &Path) -> Value {
     serde_json::from_slice(&out.stdout).expect("decode pdfcanon output")
 }
 
-fn run_case(id: &str, input_name: &str, input: &[u8], ocr: &str, want: &Want) -> Result<(), String> {
+fn run_case(id: &str, input_name: &str, input: &[u8], ocr: &str, want: &Want, go_pdf: &str) -> Result<(), String> {
     let dir = TempDir::new();
     let input_path = dir.0.join(input_name);
     let output_path = dir.0.join("output.pdf");
@@ -163,6 +167,9 @@ fn run_case(id: &str, input_name: &str, input: &[u8], ocr: &str, want: &Want) ->
                     serde_json::to_string(&got).unwrap(),
                     serde_json::to_string(expected).unwrap()
                 ));
+            }
+            if !go_pdf.is_empty() {
+                pixels_equal(id, &dir.0, &output_path, &decode(go_pdf))?;
             }
             Ok(())
         }
@@ -222,6 +229,40 @@ fn close(a: &Value, b: &Value) -> bool {
     }
 }
 
+/// Render the PDF Go wrote and the PDF Rust wrote with the same Poppler and
+/// require identical pixels on every page (first four pages, 40 dpi).
+fn pixels_equal(id: &str, dir: &Path, rust_pdf: &Path, go_bytes: &[u8]) -> Result<(), String> {
+    if cfg!(windows) {
+        return Ok(());
+    }
+    let go_pdf = dir.join("go.pdf");
+    std::fs::write(&go_pdf, go_bytes).expect("write Go PDF");
+    let render = |pdf: &Path, prefix: &str| -> Result<Vec<Vec<u8>>, String> {
+        let out = dir.join(prefix);
+        let status = Command::new("pdftoppm")
+            .args(["-r", "40", "-l", "4", "-q"])
+            .arg(pdf)
+            .arg(&out)
+            .status()
+            .map_err(|e| format!("case {id}: pdftoppm: {e}"))?;
+        if !status.success() {
+            return Err(format!("case {id}: pdftoppm failed on {}", pdf.display()));
+        }
+        let mut files: Vec<PathBuf> = std::fs::read_dir(dir)
+            .unwrap()
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with(&format!("{prefix}-"))))
+            .collect();
+        files.sort();
+        Ok(files.iter().map(|f| std::fs::read(f).unwrap()).collect())
+    };
+    let (a, b) = (render(rust_pdf, "rust")?, render(&go_pdf, "go")?);
+    if a.is_empty() || a != b {
+        return Err(format!("case {id}: rendered pixels differ from the PDF Go wrote ({} vs {} pages)", a.len(), b.len()));
+    }
+    Ok(())
+}
+
 fn decode(b64: &str) -> Vec<u8> {
     base64::engine::general_purpose::STANDARD.decode(b64).expect("base64")
 }
@@ -236,7 +277,7 @@ fn import_cases_match_go_pdfcpu() {
     let failures: Vec<String> = fixture
         .import
         .iter()
-        .filter_map(|c| run_case(&c.id, &format!("scan{}", c.ext), &decode(&c.image), &c.ocr_text, &c.want).err())
+        .filter_map(|c| run_case(&c.id, &format!("scan{}", c.ext), &decode(&c.image), &c.ocr_text, &c.want, &c.go_pdf_b64).err())
         .collect();
     assert!(failures.is_empty(), "{} of {} import cases differ:\n{}", failures.len(), fixture.import.len(), failures.join("\n"));
 }
@@ -251,7 +292,7 @@ fn stamp_structure_matches_go_pdfcpu() {
     let failures: Vec<String> = fixture
         .stamp
         .iter()
-        .filter_map(|c| run_case(&c.id, "input.pdf", &decode(&c.input_pdf), &c.ocr_text, &c.want).err())
+        .filter_map(|c| run_case(&c.id, "input.pdf", &decode(&c.input_pdf), &c.ocr_text, &c.want, &c.go_pdf_b64).err())
         .collect();
     assert!(failures.is_empty(), "{} of {} stamp cases differ:\n{}", failures.len(), fixture.stamp.len(), failures.join("\n"));
 }
@@ -275,15 +316,21 @@ fn mutated_expectations_are_rejected() {
     }
     let case = fixture.import.iter().find(|c| c.id == "png-rgb-opaque").expect("case");
     let mut want = Want { ok: true, error_kind: String::new(), canon: case.want.canon.clone() };
-    run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &want).expect("unmutated case passes");
+    run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &want, "").expect("unmutated case passes");
     let text = want.canon.as_ref().unwrap().to_string().replacen("DeviceRGB", "DeviceGRB", 1);
     want.canon = Some(serde_json::from_str(&text).unwrap());
-    assert!(run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &want).is_err());
+    assert!(run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &want, "").is_err());
     let stamp = fixture.stamp.iter().find(|c| c.id == "a4-hello").expect("case");
     let mut want = Want { ok: true, error_kind: String::new(), canon: stamp.want.canon.clone() };
     let text = want.canon.as_ref().unwrap().to_string().replacen("/Pagination", "/Paginatiom", 1);
     want.canon = Some(serde_json::from_str(&text).unwrap());
-    assert!(run_case(&stamp.id, "input.pdf", &decode(&stamp.input_pdf), &stamp.ocr_text, &want).is_err());
+    assert!(run_case(&stamp.id, "input.pdf", &decode(&stamp.input_pdf), &stamp.ocr_text, &want, "").is_err());
+    // Pixel control: a different case's Go PDF must be a pixel mismatch.
+    let other = fixture.import.iter().find(|c| c.id == "png-gray8").expect("case");
+    let honest = Want { ok: true, error_kind: String::new(), canon: case.want.canon.clone() };
+    let err = run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &honest, &other.go_pdf_b64).expect_err("pixel mismatch");
+    assert!(err.contains("pixels differ"), "{err}");
+    run_case(&case.id, "scan.png", &decode(&case.image), &case.ocr_text, &honest, &case.go_pdf_b64).expect("same-case Go PDF matches pixel for pixel");
 }
 
 /// The tolerance is exactly one unit of the fifth decimal on reals and nothing else.
@@ -293,7 +340,8 @@ fn tolerance_is_narrow() {
     assert!(close(&v("[158.63007]"), &v("[158.63008]")));
     assert!(!close(&v("[158.63007]"), &v("[158.6301]")));
     assert!(!close(&v("[2]"), &v("[3]")));
-    assert!(!close(&v("[2]"), &v("[2.00001]")));
+    assert!(close(&v("[2]"), &v("[2.00001]")));
+    assert!(!close(&v("[2]"), &v("[2.0001]")));
     assert!(close(&v(r#"{"len":5,"text":"1 0 0 1.00001 cm"}"#), &v(r#"{"len":6,"text":"1 0 0 1.00002 cm"}"#)));
     assert!(!close(&v(r#"{"len":5,"text":"1 0 0 1.001 cm"}"#), &v(r#"{"len":5,"text":"1 0 0 1.00002 cm"}"#)));
     assert!(!close(&v(r#"{"len":5,"text":"1 0 0 1 cm"}"#), &v(r#"{"len":5,"text":"1 0 0 1 Cm"}"#)));

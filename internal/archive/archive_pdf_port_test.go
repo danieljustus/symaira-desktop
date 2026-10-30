@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -67,6 +68,10 @@ type archivePDFImport struct {
 	Image string         `json:"image"`
 	OCR   string         `json:"ocr_text"`
 	Want  archivePDFWant `json:"want"`
+	// GoPDF is the PDF Go wrote, so the Rust test can render both files and
+	// compare pixels. Its bytes are not reproducible (dates, ids); the
+	// validator checks that its canonical description equals Want.Canon.
+	GoPDF string `json:"go_pdf_b64,omitempty"`
 }
 
 type archivePDFStampCas struct {
@@ -74,6 +79,7 @@ type archivePDFStampCas struct {
 	InputPDF string         `json:"input_pdf"`
 	OCR      string         `json:"ocr_text"`
 	Want     archivePDFWant `json:"want"`
+	GoPDF    string         `json:"go_pdf_b64,omitempty"`
 }
 
 // ErrorKind is the text before the first colon of Generate's error. Canon is
@@ -136,7 +142,7 @@ func TestPortArchivePDFFixture(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := validateArchivePDFFixture(root, mutatedBytes); err == nil || !strings.Contains(err.Error(), "differs from Go") {
+		if err := validateArchivePDFFixture(root, mutatedBytes); err == nil || !(strings.Contains(err.Error(), "differs from Go") || strings.Contains(err.Error(), "recorded canonical description")) {
 			t.Fatalf("canonical-structure mutation control = %v, want Go-output rejection", err)
 		}
 		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // test fixture file
@@ -176,24 +182,33 @@ func archivePDFCanon(root, pdfPath string) (json.RawMessage, error) {
 }
 
 func archivePDFObserve(root, inputName string, input []byte, ocr string) (archivePDFWant, error) {
+	want, _, err := archivePDFObserveOutput(root, inputName, input, ocr)
+	return want, err
+}
+
+func archivePDFObserveOutput(root, inputName string, input []byte, ocr string) (archivePDFWant, []byte, error) {
 	dir, err := os.MkdirTemp("", "archive-pdf-")
 	if err != nil {
-		return archivePDFWant{}, err
+		return archivePDFWant{}, nil, err
 	}
 	defer func() { _ = os.RemoveAll(dir) }()
 	in := filepath.Join(dir, inputName)
 	out := filepath.Join(dir, "output.pdf")
 	if err := os.WriteFile(in, input, 0o600); err != nil {
-		return archivePDFWant{}, err
+		return archivePDFWant{}, nil, err
 	}
 	if err := Generate(in, out, ocr); err != nil {
-		return archivePDFWant{ErrorKind: strings.SplitN(err.Error(), ":", 2)[0]}, nil
+		return archivePDFWant{ErrorKind: strings.SplitN(err.Error(), ":", 2)[0]}, nil, nil
 	}
 	canon, err := archivePDFCanon(root, out)
 	if err != nil {
-		return archivePDFWant{}, err
+		return archivePDFWant{}, nil, err
 	}
-	return archivePDFWant{OK: true, Canon: canon}, nil
+	written, err := os.ReadFile(out) //nolint:gosec // disposable temp path
+	if err != nil {
+		return archivePDFWant{}, nil, err
+	}
+	return archivePDFWant{OK: true, Canon: canon}, written, nil
 }
 
 func validateArchivePDFFixture(root string, encoded []byte) error {
@@ -229,7 +244,46 @@ func validateArchivePDFFixture(root string, encoded []byte) error {
 		}
 		return nil
 	}
+	storedPDF := func(id string, want archivePDFWant, b64 string) error {
+		if want.OK != (b64 != "") {
+			return fmt.Errorf("case %q: stored Go PDF presence does not match its outcome", id)
+		}
+		if !want.OK {
+			return nil
+		}
+		data, err := base64.StdEncoding.DecodeString(b64)
+		if err != nil {
+			return fmt.Errorf("case %q: %w", id, err)
+		}
+		dir, err := os.MkdirTemp("", "archive-pdf-stored-")
+		if err != nil {
+			return err
+		}
+		defer func() { _ = os.RemoveAll(dir) }()
+		path := filepath.Join(dir, "go.pdf")
+		if err := os.WriteFile(path, data, 0o600); err != nil {
+			return err
+		}
+		canon, err := archivePDFCanon(root, path)
+		if err != nil {
+			return fmt.Errorf("case %q: %w", id, err)
+		}
+		var recorded, stored any
+		if err := json.Unmarshal(want.Canon, &recorded); err != nil {
+			return err
+		}
+		if err := json.Unmarshal(canon, &stored); err != nil {
+			return err
+		}
+		if !reflect.DeepEqual(recorded, stored) {
+			return fmt.Errorf("case %q: stored Go PDF does not match its recorded canonical description", id)
+		}
+		return nil
+	}
 	for _, c := range actual.Import {
+		if err := storedPDF(c.ID, c.Want, c.GoPDF); err != nil {
+			return err
+		}
 		data, err := base64.StdEncoding.DecodeString(c.Image)
 		if err != nil {
 			return fmt.Errorf("case %q: %w", c.ID, err)
@@ -243,6 +297,9 @@ func validateArchivePDFFixture(root string, encoded []byte) error {
 		}
 	}
 	for _, c := range actual.Stamp {
+		if err := storedPDF(c.ID, c.Want, c.GoPDF); err != nil {
+			return err
+		}
 		data, err := base64.StdEncoding.DecodeString(c.InputPDF)
 		if err != nil {
 			return fmt.Errorf("case %q: %w", c.ID, err)
@@ -305,18 +362,18 @@ func buildArchivePDFFixture(t *testing.T, root string) archivePDFFixture {
 		Helvetica: archivePDFHelveticaMetrics(),
 	}
 	for _, c := range archivePDFImportCorpus(t) {
-		want, err := archivePDFObserve(root, "scan"+c.Ext, c.data, c.ocr)
+		want, out, err := archivePDFObserveOutput(root, "scan"+c.Ext, c.data, c.ocr)
 		if err != nil {
 			t.Fatalf("case %q: %v", c.id, err)
 		}
-		f.Import = append(f.Import, archivePDFImport{ID: c.id, Ext: c.Ext, Image: base64.StdEncoding.EncodeToString(c.data), OCR: c.ocr, Want: want})
+		f.Import = append(f.Import, archivePDFImport{ID: c.id, Ext: c.Ext, Image: base64.StdEncoding.EncodeToString(c.data), OCR: c.ocr, Want: want, GoPDF: base64.StdEncoding.EncodeToString(out)})
 	}
 	for _, c := range archivePDFStampCorpus(t) {
-		want, err := archivePDFObserve(root, "input.pdf", c.pdf, c.ocr)
+		want, out, err := archivePDFObserveOutput(root, "input.pdf", c.pdf, c.ocr)
 		if err != nil {
 			t.Fatalf("case %q: %v", c.id, err)
 		}
-		f.Stamp = append(f.Stamp, archivePDFStampCas{ID: c.id, InputPDF: base64.StdEncoding.EncodeToString(c.pdf), OCR: c.ocr, Want: want})
+		f.Stamp = append(f.Stamp, archivePDFStampCas{ID: c.id, InputPDF: base64.StdEncoding.EncodeToString(c.pdf), OCR: c.ocr, Want: want, GoPDF: base64.StdEncoding.EncodeToString(out)})
 	}
 	return f
 }
@@ -906,6 +963,30 @@ func archivePDFStampCorpus(t *testing.T) []archivePDFStampInput {
 		return api.AddBoxesFile(context.Background(), in, out, nil, pb, nil)
 	})
 	add("cropbox", crop, "cropped page text")
+	userUnit := archivePDFTransform(t, a4, func(in, out string) error {
+		qdf := out + ".qdf"
+		if b, err := exec.Command("qpdf", "--qdf", "--object-streams=disable", in, qdf).CombinedOutput(); err != nil { //nolint:gosec // fixed tool
+			return fmt.Errorf("qpdf --qdf: %v: %s", err, b)
+		}
+		raw, err := os.ReadFile(qdf) //nolint:gosec // disposable temp path
+		if err != nil {
+			return err
+		}
+		edited := bytes.Replace(raw, []byte("/MediaBox"), []byte("/UserUnit 2\n  /MediaBox"), 1)
+		if bytes.Equal(edited, raw) {
+			return fmt.Errorf("no MediaBox to edit")
+		}
+		if err := os.WriteFile(qdf, edited, 0o600); err != nil {
+			return err
+		}
+		// The edit shifts offsets; qpdf rebuilds the cross-reference table and exits 3 for that warning.
+		b, err := exec.Command("qpdf", qdf, out).CombinedOutput() //nolint:gosec // fixed tool
+		if ee, ok := err.(*exec.ExitError); err != nil && !(ok && ee.ExitCode() == 3) {
+			return fmt.Errorf("qpdf rebuild: %v: %s", err, b)
+		}
+		return nil
+	})
+	add("userunit-2", userUnit, "scaled page text")
 	// stamping a stamped file again (existing OCProperties, resource ids)
 	stamped := archivePDFTransform(t, two, func(in, out string) error { return Generate(in, out, "first\n\n--- Page ---\n\nsecond") })
 	add("restamp-two-pages", stamped, "again one\n\n--- Page ---\n\nagain two")

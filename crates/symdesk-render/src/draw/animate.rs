@@ -40,10 +40,9 @@ pub fn animate_frames(sc: Option<&Scene>, opts: &AnimateOptions) -> Result<Vec<S
         }
         // A primitive revealed in an earlier step stays visible later.
         for f in 1..frames {
-            for p in 0..count {
-                if visible[f - 1][p] {
-                    visible[f][p] = true;
-                }
+            let (earlier, later) = visible.split_at_mut(f);
+            for (now, before) in later[0].iter_mut().zip(&earlier[f - 1]) {
+                *now |= *before;
             }
         }
     } else {

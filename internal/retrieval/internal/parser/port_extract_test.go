@@ -60,7 +60,7 @@ func extractionInputs() []extractionInput {
 func TestRetrievalExtractionFixture(t *testing.T) {
 	dir := t.TempDir()
 	cases := []extractionCase{}
-	for _, in := range append(append(extractionInputs(), archiveExtractionInputs(t)...), pdfExtractionInputs()...) {
+	for _, in := range append(append(extractionInputs(), archiveExtractionInputs(t)...), append(pdfExtractionInputs(), pdfFontExtractionInputs()...)...) {
 		path := filepath.Join(dir, in.id)
 		if err := os.WriteFile(path, in.data, 0600); err != nil {
 			t.Fatal(err)

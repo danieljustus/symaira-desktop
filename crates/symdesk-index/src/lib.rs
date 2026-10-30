@@ -33,6 +33,7 @@ mod history_sync;
 pub mod index_status;
 mod links;
 mod metadata;
+mod pdf_go_tables;
 mod retrieval;
 mod retrieval_archive;
 mod retrieval_config;

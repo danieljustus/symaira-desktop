@@ -113,7 +113,7 @@
     "testdata/port/render/v2/symdesk-tools.json": "1265ef4e157804a887815fce4a00ef84237d8fd01fd47e2c2e00b35ae4f1238e",
     "testdata/port/representative/cases.json": "268718e9d2521fce27f745fc4a325f72b5acde207f7cca746b532b1c12c418fa",
     "testdata/port/retrieval/csv-sections.json": "18816bf040ee68ce63e8d1ffdc3dec8a11cda5d6b95958fab18d26d7778c3778",
-    "testdata/port/retrieval/document-extraction.json": "447fffd011875fd719dddd2a72457654b3deb2a4c374c99160c6c0030fbfd2fc",
+    "testdata/port/retrieval/document-extraction.json": "1c0c7ada4341db658b127c6a0b04c4991122ff3071142bfd1ea385a58f76c0fe",
     "testdata/port/retrieval/embedding-http.json": "54c3f0799d8e4e53122b33376743ef9840760eb1b1bbf352fb24b2e3776b88d6",
     "testdata/port/retrieval/embedding-state.json": "c2a43a00fdd6ff93f6c88cbf0b5e5b8309457650796495042eeb0ba1a3b9e886",
     "testdata/port/retrieval/hybrid.json": "3629ddee4e8c963da59a4118fcae2ad82306d8728ce4bb0b71fdd0e8e42fab61",

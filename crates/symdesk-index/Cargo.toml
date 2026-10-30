@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 noyalib.workspace = true
+regex.workspace = true
 rusqlite.workspace = true
 sha2.workspace = true
 serde.workspace = true

@@ -24,6 +24,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 const FAIL_MARKER: &str = "provider-fail";
+/// The `extractions_fts` probes the Go fixture records per step.
+const EXTRACTION_TERMS: &[&str] = &["invoice", "grounded", "cafe"];
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 struct ProcessResult {
@@ -72,10 +74,41 @@ struct Chunk {
     content_norm: String,
 }
 
+/// One `extractions` row written by Go's `ImportExtractionSidecar`. `created_at`
+/// is wall-clock time and not compared; `chunk_index` is the chunk the row's
+/// `chunk_id` points at.
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+struct Extraction {
+    id: i64,
+    document_path: String,
+    chunk_index: Option<i64>,
+    class: String,
+    value: String,
+    evidence_text: String,
+    span_start: Option<i64>,
+    span_end: Option<i64>,
+    matched: i64,
+    producer: String,
+    source_ref: String,
+}
+
+/// Bytes `prefix` followed by `x` up to `bytes` in total: a sidecar line over
+/// the 1 MiB `bufio.Scanner` limit without storing it in the fixture.
+#[derive(Debug, Deserialize)]
+struct Fill {
+    path: String,
+    prefix: String,
+    bytes: usize,
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 struct State {
     documents: Vec<Document>,
     chunks: Vec<Chunk>,
+    #[serde(default)]
+    extractions: Vec<Extraction>,
+    #[serde(default)]
+    extraction_fts: BTreeMap<String, Vec<i64>>,
     generation: i64,
     index_storage: i64,
     lifecycle: BTreeMap<String, String>,
@@ -87,6 +120,10 @@ struct Step {
     id: String,
     #[serde(default)]
     writes: Vec<FixtureFile>,
+    #[serde(default)]
+    fills: Vec<Fill>,
+    #[serde(default)]
+    removes: Vec<String>,
     args: Vec<String>,
     result: ProcessResult,
     requests: Vec<Request>,
@@ -252,6 +289,12 @@ fn serve(mut stream: TcpStream, requests: &Mutex<Vec<Request>>) {
     .expect("write fake embedding response");
 }
 
+fn write_vault_file(root: &TempRoot, name: &str, body: &[u8]) {
+    let target = root.path("vault").join(name);
+    fs::create_dir_all(target.parent().expect("parent")).expect("create fixture parent");
+    fs::write(target, body).expect("write fixture file");
+}
+
 fn fixture() -> Fixture {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../testdata/port/cli/index-retrieval-process.json");
@@ -393,6 +436,44 @@ fn read_state(root: &TempRoot) -> State {
         .expect("chunks")
         .collect::<Result<Vec<_>, _>>()
         .expect("chunk rows");
+    let extractions = db
+        .prepare(
+            "SELECT e.id, e.document_path, c.chunk_index, e.class, e.value, e.evidence_text,
+             e.span_start, e.span_end, e.matched, e.producer, e.source_ref
+             FROM extractions e LEFT JOIN chunks c ON c.id = e.chunk_id ORDER BY e.id",
+        )
+        .expect("extractions query")
+        .query_map([], |row| {
+            Ok(Extraction {
+                id: row.get(0)?,
+                document_path: normalize(&row.get::<_, String>(1)?, &root.0),
+                chunk_index: row.get(2)?,
+                class: row.get(3)?,
+                value: row.get(4)?,
+                evidence_text: row.get(5)?,
+                span_start: row.get(6)?,
+                span_end: row.get(7)?,
+                matched: row.get(8)?,
+                producer: row.get(9)?,
+                source_ref: normalize(&row.get::<_, String>(10)?, &root.0),
+            })
+        })
+        .expect("extractions")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("extraction rows");
+    let mut extraction_fts = BTreeMap::new();
+    for term in EXTRACTION_TERMS {
+        let ids = db
+            .prepare(
+                "SELECT rowid FROM extractions_fts WHERE extractions_fts MATCH ?1 ORDER BY rowid",
+            )
+            .expect("fts query")
+            .query_map([term], |row| row.get::<_, i64>(0))
+            .expect("fts hits")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("fts rows");
+        extraction_fts.insert((*term).to_owned(), ids);
+    }
     let generation = db
         .query_row(
             "SELECT value FROM index_meta WHERE key='generation'",
@@ -433,6 +514,8 @@ fn read_state(root: &TempRoot) -> State {
     State {
         documents,
         chunks,
+        extractions,
+        extraction_fts,
         generation,
         index_storage,
         lifecycle,
@@ -446,7 +529,7 @@ fn index_writes_hybrid_retrieval_like_go_process_fixture() {
     assert_eq!(fixture.schema_version, 1);
     let root = TempRoot::new();
     for file in &fixture.files {
-        fs::write(root.path("vault").join(&file.path), &file.body).expect("write vault file");
+        write_vault_file(&root, &file.path, file.body.as_bytes());
     }
     let mut large = b"# Big\n\n".to_vec();
     large.resize(fixture.large_bytes, b'x');
@@ -464,7 +547,15 @@ fn index_writes_hybrid_retrieval_like_go_process_fixture() {
 
     for step in &fixture.steps {
         for file in &step.writes {
-            fs::write(root.path("vault").join(&file.path), &file.body).expect("apply step write");
+            write_vault_file(&root, &file.path, file.body.as_bytes());
+        }
+        for fill in &step.fills {
+            let mut bytes = fill.prefix.clone().into_bytes();
+            bytes.resize(fill.bytes, b'x');
+            write_vault_file(&root, &fill.path, &bytes);
+        }
+        for name in &step.removes {
+            fs::remove_file(root.path("vault").join(name)).expect("apply step removal");
         }
         let mut result = run(&root, &step.args);
         result.stderr = without_provider_diagnostics(&result.stderr);

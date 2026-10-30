@@ -37,6 +37,7 @@ mod retrieval_archive;
 mod retrieval_config;
 mod retrieval_csv;
 mod retrieval_extract;
+mod retrieval_extractions;
 mod retrieval_pdf;
 pub use retrieval_extract::{extract_retrieval_text, parse_document_retrieval_sections};
 mod retrieval_markdown;
@@ -74,6 +75,7 @@ pub use retrieval_config::{
     symseek_config_path,
 };
 pub use retrieval_csv::parse_csv_retrieval_sections;
+pub use retrieval_extractions::{detect_sidecar_path, import_extraction_sidecar};
 pub use retrieval_markdown::{
     MAX_RETRIEVAL_SOURCE_BYTES, parse_markdown_body_retrieval_sections,
     parse_markdown_retrieval_sections, parse_text_retrieval_sections,

@@ -2568,6 +2568,7 @@ dependencies = [
  "notify",
  "noyalib",
  "quick-xml",
+ "regex",
  "rusqlite",
  "scraper",
  "serde",

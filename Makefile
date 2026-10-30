@@ -1048,7 +1048,7 @@ index-crate-test:
 
 INDEX_STATUS_OUTPUT ?= $(RUST_TARGET_DIR)/index-status-evidence/$(shell date -u +%Y%m%dT%H%M%SZ)
 index-status-cli-differential:
-	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/index-status/verify.py --output "$(INDEX_STATUS_OUTPUT)" $(if $(INDEX_STATUS_BUILD_LAUNCHER),--build-launcher $(INDEX_STATUS_BUILD_LAUNCHER))
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/index-status/verify.py --output "$(INDEX_STATUS_OUTPUT)" $(if $(INDEX_STATUS_BUILD_LAUNCHER),--build-launcher $(INDEX_STATUS_BUILD_LAUNCHER)) $(if $(INDEX_STATUS_ORACLE_WORKTREE),--oracle-worktree $(INDEX_STATUS_ORACLE_WORKTREE))
 
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'

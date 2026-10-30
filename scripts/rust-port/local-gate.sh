@@ -53,6 +53,7 @@ run_linux() {
     -v "symdesk-gate-target-$slug:/home/dev/target" \
     -e CARGO_TARGET_DIR=/home/dev/target -e MIRI_TARGET_DIR=/home/dev/target/miri \
     -e CARGO_INCREMENTAL=0 -e GOCACHE=/home/dev/go/cache -e GOMODCACHE=/home/dev/go/pkg/mod \
+    -e GOPROXY=https://proxy.golang.org,direct \
     "$image" make $targets
 }
 

@@ -80,9 +80,23 @@ struct State {
     lifecycle_reasons: BTreeMap<String, String>,
 }
 
+/// A lifecycle row the Go oracle wrote through its sidecar API before the step.
+/// No Go CLI path leaves a failed row for a non-Markdown extension, so the row
+/// is seeded instead of produced by an earlier process.
+#[derive(Debug, Deserialize)]
+struct Seed {
+    path: String,
+    state: String,
+    reason: String,
+}
+
 #[derive(Debug, Deserialize)]
 struct Step {
     id: String,
+    #[serde(default)]
+    dirs: Vec<String>,
+    #[serde(default)]
+    seeds: Vec<Seed>,
     #[serde(default)]
     writes: Vec<FixtureFile>,
     #[serde(default)]
@@ -238,11 +252,20 @@ fn fixture() -> Fixture {
         // The frozen fixture records Unix stat wording. The native Windows Go
         // oracle reports the same missing file through GetFileAttributesEx.
         for step in &mut fixture.steps {
-            for reason in step.state.lifecycle_reasons.values_mut() {
-                *reason = reason.replace(
-                    "lstat $ROOT/vault/gone.md: no such file or directory",
-                    "GetFileAttributesEx $ROOT/vault/gone.md: The system cannot find the file specified.",
-                );
+            for reason in step
+                .state
+                .lifecycle_reasons
+                .values_mut()
+                .chain(std::iter::once(&mut step.result.stdout))
+            {
+                for name in ["gone.md", "missing.txt"] {
+                    *reason = reason.replace(
+                        &format!("lstat $ROOT/vault/{name}: no such file or directory"),
+                        &format!(
+                            "GetFileAttributesEx $ROOT/vault/{name}: The system cannot find the file specified."
+                        ),
+                    );
+                }
             }
         }
     }
@@ -350,6 +373,23 @@ fn sidecar_path(root: &TempRoot) -> PathBuf {
         .join("symdesk/vaults")
         .join(&digest[..16])
         .join("sidecar.db")
+}
+
+/// Writes seeded lifecycle rows to the sidecar the CLI opens for this vault.
+/// The row key is the vault path as the CLI receives it, like a vault walk.
+fn seed_lifecycle(root: &TempRoot, seeds: &[Seed]) {
+    if seeds.is_empty() {
+        return;
+    }
+    let mut sidecar =
+        symdesk_index::Sidecar::open(&sidecar_path(root)).expect("open seeded sidecar");
+    for seed in seeds {
+        let path = root.path("vault").join(&seed.path);
+        sidecar
+            .set_index_status(&path.to_string_lossy(), &seed.state, &seed.reason)
+            .expect("seed lifecycle row");
+    }
+    sidecar.close().expect("close seeded sidecar");
 }
 
 fn read_lifecycle(root: &TempRoot) -> (BTreeMap<String, String>, BTreeMap<String, String>) {
@@ -485,9 +525,13 @@ fn index_retry_replays_go_process_fixture() {
     fs::write(root.path("home/.config/symseek/config.toml"), config).expect("write config");
 
     for step in &fixture.steps {
+        for name in &step.dirs {
+            fs::create_dir_all(root.path("vault").join(name)).expect("apply step directory");
+        }
         for file in &step.writes {
             fs::write(root.path("vault").join(&file.path), &file.body).expect("apply step write");
         }
+        seed_lifecycle(&root, &step.seeds);
         for name in &step.removes {
             fs::remove_file(root.path("vault").join(name)).expect("apply step removal");
         }

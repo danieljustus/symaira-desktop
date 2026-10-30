@@ -432,6 +432,1609 @@
         },
         "lifecycle_reasons": {}
       }
+    },
+    {
+      "id": "retry-nonmarkdown-indexes",
+      "writes": [
+        {
+          "path": "notes.txt",
+          "body": "# Plain notes\n\nplain text retry oracle document.\n"
+        },
+        {
+          "path": "scan.pdf",
+          "body": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n"
+        },
+        {
+          "path": "legacy.doc",
+          "body": "legacy word retry oracle body.\n"
+        },
+        {
+          "path": "README",
+          "body": "extensionless retry oracle readme.\n"
+        },
+        {
+          "path": "UPPER.MD",
+          "body": "---\ntitle: Upper\n---\nuppercase markdown extension retry oracle.\n"
+        }
+      ],
+      "seeds": [
+        {
+          "path": "README",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "UPPER.MD",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "legacy.doc",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "notes.txt",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "scan.pdf",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        }
+      ],
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":5,\"failed\":0,\"status\":\"ok\",\"succeeded\":5}\n",
+        "stderr": "Indexed: $ROOT/vault/README (2 chunks)\nIndexed: $ROOT/vault/UPPER.MD (2 chunks)\nIndexed: $ROOT/vault/legacy.doc (2 chunks)\nIndexed: $ROOT/vault/notes.txt (2 chunks)\nIndexed: $ROOT/vault/scan.pdf (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+              "extensionless retry oracle readme.\n"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+              "uppercase markdown extension retry oracle.\n"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+              "legacy word retry oracle body.\n"
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Plain notes\n\nplain text retry oracle document."
+            ],
+            "dimensions": 3
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+              "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n"
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/README",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c"
+          },
+          {
+            "path": "$ROOT/vault/UPPER.MD",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96"
+          },
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          },
+          {
+            "path": "$ROOT/vault/legacy.doc",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e"
+          },
+          {
+            "path": "$ROOT/vault/notes.txt",
+            "hash": "9d8f3cd5c2a7a35f9b08dcd143db1027a91f41c0d18564b5dcef9b660115c249"
+          },
+          {
+            "path": "$ROOT/vault/scan.pdf",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "88cf58b47fe075008258455135a45b6460ec2b9a0d8825692276e0480dd094ca",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl readm type note simhash 0424753850067603 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 1,
+            "content": "extensionless retry oracle readme.\n",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 35,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "extensionles retry oracl readm"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "6a8f2e807da367c593cbe77a008a884fedbe9ec7d663dc63973975270a2994f7",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl upper type note simhash 1e8af94eceb51c1b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 1,
+            "content": "uppercase markdown extension retry oracle.\n",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "uppercas markdown extension retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "bf6e750e1ed4f23f74b849329f4c794c522847c2b4e57edd66a5b27fd4adb48a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl legacy.doc type note simhash 1451ecb696e37f5d symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 1,
+            "content": "legacy word retry oracle body.\n",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 31,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "legacy word retry oracl body"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d89029d56e5cb2f9f8388cf5771681b526364f5b0d2733cf91fe113ca58630c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl notes.txt type note simhash 8c44996e1453f306 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 1,
+            "content": "# Plain notes\n\nplain text retry oracle document.",
+            "hash": "37498057b3dacd594de8a810c44708ca786349de03d3cd92aa04fdc44d32e95a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 48,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Plain notes",
+            "content_norm": "plain note text retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "9040d76ed28751dda6be6e7b439726bac03a5863733fa4c7688be1c58788fe4a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl scan.pdf type note simhash 0745f09a5689f2d5 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 1,
+            "content": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 58,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "pdf-1.4 stub pdf retry oracl body without a text layer"
+          }
+        ],
+        "generation": 6,
+        "index_storage": 0,
+        "lifecycle": {
+          "README": "indexed",
+          "UPPER.MD": "indexed",
+          "bad.md": "indexed",
+          "legacy.doc": "indexed",
+          "notes.txt": "indexed",
+          "scan.pdf": "indexed"
+        },
+        "lifecycle_reasons": {}
+      }
+    },
+    {
+      "id": "retry-nonmarkdown-failures",
+      "dirs": [
+        "folder.txt"
+      ],
+      "writes": [
+        {
+          "path": "broken.txt",
+          "body": "---\ntitle: first\ntitle: second\n---\n# Broken\n\nbroken retry oracle document.\n"
+        },
+        {
+          "path": "broken.doc",
+          "body": "---\ntitle: first\ntitle: second\n---\n# Broken\n\nbroken retry oracle document.\n"
+        }
+      ],
+      "seeds": [
+        {
+          "path": "broken.doc",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "broken.txt",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "folder.txt",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        },
+        {
+          "path": "missing.txt",
+          "state": "failed",
+          "reason": "interrupted by an earlier index worker"
+        }
+      ],
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":4,\"failed\":4,\"failures\":[{\"path\":\"$ROOT/vault/broken.doc\",\"reason\":\"failed to parse $ROOT/vault/broken.doc: invalid frontmatter in $ROOT/vault/broken.doc: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"$ROOT/vault/broken.txt\",\"reason\":\"failed to parse $ROOT/vault/broken.txt: invalid frontmatter in $ROOT/vault/broken.txt: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"$ROOT/vault/folder.txt\",\"reason\":\"failed to parse $ROOT/vault/folder.txt: vault path is not a regular file: $ROOT/vault/folder.txt\"},{\"path\":\"$ROOT/vault/missing.txt\",\"reason\":\"lstat vault file $ROOT/vault/missing.txt: lstat $ROOT/vault/missing.txt: no such file or directory\"}],\"status\":\"ok\",\"succeeded\":0}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/README",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c"
+          },
+          {
+            "path": "$ROOT/vault/UPPER.MD",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96"
+          },
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          },
+          {
+            "path": "$ROOT/vault/legacy.doc",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e"
+          },
+          {
+            "path": "$ROOT/vault/notes.txt",
+            "hash": "9d8f3cd5c2a7a35f9b08dcd143db1027a91f41c0d18564b5dcef9b660115c249"
+          },
+          {
+            "path": "$ROOT/vault/scan.pdf",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "88cf58b47fe075008258455135a45b6460ec2b9a0d8825692276e0480dd094ca",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl readm type note simhash 0424753850067603 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 1,
+            "content": "extensionless retry oracle readme.\n",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 35,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "extensionles retry oracl readm"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "6a8f2e807da367c593cbe77a008a884fedbe9ec7d663dc63973975270a2994f7",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl upper type note simhash 1e8af94eceb51c1b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 1,
+            "content": "uppercase markdown extension retry oracle.\n",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "uppercas markdown extension retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "bf6e750e1ed4f23f74b849329f4c794c522847c2b4e57edd66a5b27fd4adb48a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl legacy.doc type note simhash 1451ecb696e37f5d symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 1,
+            "content": "legacy word retry oracle body.\n",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 31,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "legacy word retry oracl body"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d89029d56e5cb2f9f8388cf5771681b526364f5b0d2733cf91fe113ca58630c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl notes.txt type note simhash 8c44996e1453f306 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 1,
+            "content": "# Plain notes\n\nplain text retry oracle document.",
+            "hash": "37498057b3dacd594de8a810c44708ca786349de03d3cd92aa04fdc44d32e95a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 48,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Plain notes",
+            "content_norm": "plain note text retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "9040d76ed28751dda6be6e7b439726bac03a5863733fa4c7688be1c58788fe4a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl scan.pdf type note simhash 0745f09a5689f2d5 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 1,
+            "content": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 58,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "pdf-1.4 stub pdf retry oracl body without a text layer"
+          }
+        ],
+        "generation": 6,
+        "index_storage": 0,
+        "lifecycle": {
+          "README": "indexed",
+          "UPPER.MD": "indexed",
+          "bad.md": "indexed",
+          "broken.doc": "unsupported",
+          "broken.txt": "failed",
+          "folder.txt": "failed",
+          "legacy.doc": "indexed",
+          "missing.txt": "failed",
+          "notes.txt": "indexed",
+          "scan.pdf": "indexed"
+        },
+        "lifecycle_reasons": {
+          "broken.doc": "invalid frontmatter in $ROOT/vault/broken.doc: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+          "broken.txt": "invalid frontmatter in $ROOT/vault/broken.txt: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+          "folder.txt": "vault path is not a regular file: $ROOT/vault/folder.txt",
+          "missing.txt": "lstat vault file $ROOT/vault/missing.txt: lstat $ROOT/vault/missing.txt: no such file or directory"
+        }
+      }
+    },
+    {
+      "id": "retry-nonmarkdown-again",
+      "args": [
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "Retried 3 failed document(s): 0 succeeded, 3 failed.\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/README",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c"
+          },
+          {
+            "path": "$ROOT/vault/UPPER.MD",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96"
+          },
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          },
+          {
+            "path": "$ROOT/vault/legacy.doc",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e"
+          },
+          {
+            "path": "$ROOT/vault/notes.txt",
+            "hash": "9d8f3cd5c2a7a35f9b08dcd143db1027a91f41c0d18564b5dcef9b660115c249"
+          },
+          {
+            "path": "$ROOT/vault/scan.pdf",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "88cf58b47fe075008258455135a45b6460ec2b9a0d8825692276e0480dd094ca",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl readm type note simhash 0424753850067603 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 1,
+            "content": "extensionless retry oracle readme.\n",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 35,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "extensionles retry oracl readm"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "6a8f2e807da367c593cbe77a008a884fedbe9ec7d663dc63973975270a2994f7",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl upper type note simhash 1e8af94eceb51c1b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 1,
+            "content": "uppercase markdown extension retry oracle.\n",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "uppercas markdown extension retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "bf6e750e1ed4f23f74b849329f4c794c522847c2b4e57edd66a5b27fd4adb48a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl legacy.doc type note simhash 1451ecb696e37f5d symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 1,
+            "content": "legacy word retry oracle body.\n",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 31,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "legacy word retry oracl body"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d89029d56e5cb2f9f8388cf5771681b526364f5b0d2733cf91fe113ca58630c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl notes.txt type note simhash 8c44996e1453f306 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 1,
+            "content": "# Plain notes\n\nplain text retry oracle document.",
+            "hash": "37498057b3dacd594de8a810c44708ca786349de03d3cd92aa04fdc44d32e95a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 48,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Plain notes",
+            "content_norm": "plain note text retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "9040d76ed28751dda6be6e7b439726bac03a5863733fa4c7688be1c58788fe4a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl scan.pdf type note simhash 0745f09a5689f2d5 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 1,
+            "content": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 58,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "pdf-1.4 stub pdf retry oracl body without a text layer"
+          }
+        ],
+        "generation": 6,
+        "index_storage": 0,
+        "lifecycle": {
+          "README": "indexed",
+          "UPPER.MD": "indexed",
+          "bad.md": "indexed",
+          "broken.doc": "unsupported",
+          "broken.txt": "failed",
+          "folder.txt": "failed",
+          "legacy.doc": "indexed",
+          "missing.txt": "failed",
+          "notes.txt": "indexed",
+          "scan.pdf": "indexed"
+        },
+        "lifecycle_reasons": {
+          "broken.doc": "invalid frontmatter in $ROOT/vault/broken.doc: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+          "broken.txt": "invalid frontmatter in $ROOT/vault/broken.txt: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+          "folder.txt": "vault path is not a regular file: $ROOT/vault/folder.txt",
+          "missing.txt": "lstat vault file $ROOT/vault/missing.txt: lstat $ROOT/vault/missing.txt: no such file or directory"
+        }
+      }
+    },
+    {
+      "id": "prune-nonmarkdown",
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "--prune"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"indexed\":0,\"pruned\":7,\"skipped\":1,\"status\":\"ok\"}\n",
+        "stderr": ""
+      },
+      "requests": [],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/README",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c"
+          },
+          {
+            "path": "$ROOT/vault/UPPER.MD",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96"
+          },
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          },
+          {
+            "path": "$ROOT/vault/legacy.doc",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e"
+          },
+          {
+            "path": "$ROOT/vault/notes.txt",
+            "hash": "9d8f3cd5c2a7a35f9b08dcd143db1027a91f41c0d18564b5dcef9b660115c249"
+          },
+          {
+            "path": "$ROOT/vault/scan.pdf",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "88cf58b47fe075008258455135a45b6460ec2b9a0d8825692276e0480dd094ca",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl readm type note simhash 0424753850067603 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 1,
+            "content": "extensionless retry oracle readme.\n",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 35,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "extensionles retry oracl readm"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "6a8f2e807da367c593cbe77a008a884fedbe9ec7d663dc63973975270a2994f7",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl upper type note simhash 1e8af94eceb51c1b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 1,
+            "content": "uppercase markdown extension retry oracle.\n",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "uppercas markdown extension retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "bf6e750e1ed4f23f74b849329f4c794c522847c2b4e57edd66a5b27fd4adb48a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl legacy.doc type note simhash 1451ecb696e37f5d symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 1,
+            "content": "legacy word retry oracle body.\n",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 31,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "legacy word retry oracl body"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d89029d56e5cb2f9f8388cf5771681b526364f5b0d2733cf91fe113ca58630c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl notes.txt type note simhash 8c44996e1453f306 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 1,
+            "content": "# Plain notes\n\nplain text retry oracle document.",
+            "hash": "37498057b3dacd594de8a810c44708ca786349de03d3cd92aa04fdc44d32e95a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 48,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Plain notes",
+            "content_norm": "plain note text retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "9040d76ed28751dda6be6e7b439726bac03a5863733fa4c7688be1c58788fe4a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl scan.pdf type note simhash 0745f09a5689f2d5 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 1,
+            "content": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 58,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "pdf-1.4 stub pdf retry oracl body without a text layer"
+          }
+        ],
+        "generation": 6,
+        "index_storage": 0,
+        "lifecycle": {
+          "README": "indexed",
+          "UPPER.MD": "indexed",
+          "bad.md": "indexed",
+          "broken.doc": "unsupported",
+          "broken.txt": "failed",
+          "legacy.doc": "unsupported",
+          "notes.txt": "indexed",
+          "scan.pdf": "indexed"
+        },
+        "lifecycle_reasons": {
+          "broken.doc": "legacy binary Office parser is not available",
+          "broken.txt": "invalid frontmatter in $ROOT/vault/broken.txt: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+          "legacy.doc": "legacy binary Office parser is not available"
+        }
+      }
+    },
+    {
+      "id": "repair-nonmarkdown",
+      "writes": [
+        {
+          "path": "broken.txt",
+          "body": "# Fixed text\n\nrepaired plain text retry oracle.\n"
+        }
+      ],
+      "args": [
+        "--json",
+        "--vault",
+        "$ROOT/vault",
+        "index",
+        "retry"
+      ],
+      "result": {
+        "exit_code": 0,
+        "stdout": "{\"attempted\":1,\"failed\":0,\"status\":\"ok\",\"succeeded\":1}\n",
+        "stderr": "Indexed: $ROOT/vault/broken.txt (2 chunks)\n"
+      },
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/embeddings",
+          "content_type": "application/json",
+          "body": {
+            "model": "fixture",
+            "input": [
+              "__SYMDESK_SEARCH_METADATA_START__\ntitle: broken.txt\ntitle: broken.txt\ntitle: broken.txt\ntype: note\nsimhash: be04906e8615001b\n__SYMDESK_SEARCH_METADATA_END__",
+              "# Fixed text\n\nrepaired plain text retry oracle."
+            ],
+            "dimensions": 3
+          }
+        }
+      ],
+      "state": {
+        "documents": [
+          {
+            "path": "$ROOT/vault/README",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c"
+          },
+          {
+            "path": "$ROOT/vault/UPPER.MD",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96"
+          },
+          {
+            "path": "$ROOT/vault/bad.md",
+            "hash": "b57a8a92b51b6e07aa6bfed1a09771bf52e13786c0edc90e3793dffb5b63f71d"
+          },
+          {
+            "path": "$ROOT/vault/broken.txt",
+            "hash": "b6bc63d8a40e88d4924f9b85a793fb281f1e1caa8fe42c40c4d1decb55dfbdf3"
+          },
+          {
+            "path": "$ROOT/vault/legacy.doc",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e"
+          },
+          {
+            "path": "$ROOT/vault/notes.txt",
+            "hash": "9d8f3cd5c2a7a35f9b08dcd143db1027a91f41c0d18564b5dcef9b660115c249"
+          },
+          {
+            "path": "$ROOT/vault/scan.pdf",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f"
+          }
+        ],
+        "chunks": [
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: README\ntitle: README\ntitle: README\ntype: note\nsimhash: 0424753850067603\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "88cf58b47fe075008258455135a45b6460ec2b9a0d8825692276e0480dd094ca",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl readm type note simhash 0424753850067603 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/README",
+            "chunk_index": 1,
+            "content": "extensionless retry oracle readme.\n",
+            "hash": "415ab5c70e025b9057e690bd3c739b38f57dcf0c20e062174b3daee46ddf068c",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 35,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "extensionles retry oracl readm"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Upper\ntitle: Upper\ntitle: Upper\ntype: note\nsimhash: 1e8af94eceb51c1b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "6a8f2e807da367c593cbe77a008a884fedbe9ec7d663dc63973975270a2994f7",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl upper type note simhash 1e8af94eceb51c1b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/UPPER.MD",
+            "chunk_index": 1,
+            "content": "uppercase markdown extension retry oracle.\n",
+            "hash": "6e8f77ac753a2e89d87d9eb7c39dcb20e964729ba7df38a2c4f8fe3e9643db96",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "uppercas markdown extension retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: bad\ntitle: bad\ntitle: bad\ntype: note\nsimhash: 82309076820bd105\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "05015e4d5d7264cc232df4360ce75009dc167b99db2d1f3d1d9e65a6110a01c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl bad type note simhash 82309076820bd105 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/bad.md",
+            "chunk_index": 1,
+            "content": "# Repaired\n\nrepaired retry oracle document.",
+            "hash": "38c38291cc634174df6124edb46105292c8b8ebb5c16e677c69e30e0b4172c47",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 43,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Repaired",
+            "content_norm": "repaired retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/broken.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: broken.txt\ntitle: broken.txt\ntitle: broken.txt\ntype: note\nsimhash: be04906e8615001b\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d36bbdce2504ebc87e27acd07bb43e92122a5575be46ad2efe8f89606511f980",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl broken.txt type note simhash be04906e8615001b symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/broken.txt",
+            "chunk_index": 1,
+            "content": "# Fixed text\n\nrepaired plain text retry oracle.",
+            "hash": "15e4af6aadd5adb82f3b54ab9bddd8c79ab8b128667227106c46804858318ab0",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 47,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Fixed text",
+            "content_norm": "fixed text repaired plain retry oracl"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: legacy.doc\ntitle: legacy.doc\ntitle: legacy.doc\ntype: note\nsimhash: 1451ecb696e37f5d\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "bf6e750e1ed4f23f74b849329f4c794c522847c2b4e57edd66a5b27fd4adb48a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl legacy.doc type note simhash 1451ecb696e37f5d symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/legacy.doc",
+            "chunk_index": 1,
+            "content": "legacy word retry oracle body.\n",
+            "hash": "44a656359d83aa7e77e9ff15616a02b9a8a70821eeaf1f5af2c2022d5961720e",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 31,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "legacy word retry oracl body"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: notes.txt\ntitle: notes.txt\ntitle: notes.txt\ntype: note\nsimhash: 8c44996e1453f306\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "d89029d56e5cb2f9f8388cf5771681b526364f5b0d2733cf91fe113ca58630c3",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl notes.txt type note simhash 8c44996e1453f306 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/notes.txt",
+            "chunk_index": 1,
+            "content": "# Plain notes\n\nplain text retry oracle document.",
+            "hash": "37498057b3dacd594de8a810c44708ca786349de03d3cd92aa04fdc44d32e95a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 48,
+            "embedding_pending": 0,
+            "anchor_kind": "heading",
+            "anchor_value": "Plain notes",
+            "content_norm": "plain note text retry oracl document"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 0,
+            "content": "__SYMDESK_SEARCH_METADATA_START__\ntitle: scan.pdf\ntitle: scan.pdf\ntitle: scan.pdf\ntype: note\nsimhash: 0745f09a5689f2d5\n__SYMDESK_SEARCH_METADATA_END__",
+            "hash": "9040d76ed28751dda6be6e7b439726bac03a5863733fa4c7688be1c58788fe4a",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": null,
+            "char_end": null,
+            "embedding_pending": 0,
+            "anchor_kind": "section",
+            "anchor_value": "metadata",
+            "content_norm": "symdesk_search_metadata_start titl scan.pdf type note simhash 0745f09a5689f2d5 symdesk_search_metadata_"
+          },
+          {
+            "document_path": "$ROOT/vault/scan.pdf",
+            "chunk_index": 1,
+            "content": "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n",
+            "hash": "9d57c4c8fa848a650a44e97b33a47955139c3686b949b04c541ae9cfc5229a0f",
+            "embedding": "0000803e000000bf0000803f",
+            "norm": "3ff2548ec0000000",
+            "binary_signature": "0500000000000000",
+            "binary_signature_type": "blob",
+            "dim": 3,
+            "model": "fixture",
+            "char_start": 0,
+            "char_end": 58,
+            "embedding_pending": 0,
+            "anchor_kind": "text",
+            "anchor_value": "offset:0",
+            "content_norm": "pdf-1.4 stub pdf retry oracl body without a text layer"
+          }
+        ],
+        "generation": 7,
+        "index_storage": 0,
+        "lifecycle": {
+          "README": "indexed",
+          "UPPER.MD": "indexed",
+          "bad.md": "indexed",
+          "broken.doc": "unsupported",
+          "broken.txt": "indexed",
+          "legacy.doc": "unsupported",
+          "notes.txt": "indexed",
+          "scan.pdf": "indexed"
+        },
+        "lifecycle_reasons": {
+          "broken.doc": "legacy binary Office parser is not available",
+          "legacy.doc": "legacy binary Office parser is not available"
+        }
+      }
     }
   ]
 }

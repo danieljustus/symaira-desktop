@@ -438,14 +438,21 @@ fn run_retry(vault: Option<&str>, json_output: bool) -> ExitCode {
 /// Go's `indexOneFile`.
 fn index_one_file(sidecar: &mut symdesk_index::Sidecar, path: &str) -> Result<(), String> {
     record_index_status(sidecar, path, "indexing", "");
-    let document = match fs::read(path)
-        .map_err(|error| error.to_string())
-        .and_then(|bytes| {
-            symdesk_vault::parse_bytes(path, &bytes).map_err(|error| error.to_string())
-        }) {
+    // Go parses the stored path as Markdown whatever its extension: only a
+    // recognised-but-unsupported extension changes the state a parse failure is
+    // recorded with.
+    let document = match read_vault_file(path).and_then(|bytes| {
+        symdesk_vault::parse_bytes(path, &bytes).map_err(|error| error.to_string())
+    }) {
         Ok(document) => document,
         Err(reason) => {
-            record_index_status(sidecar, path, "failed", &reason);
+            let state =
+                if symdesk_core::document_format::unsupported(go_path_extension(path)).is_some() {
+                    "unsupported"
+                } else {
+                    "failed"
+                };
+            record_index_status(sidecar, path, state, &reason);
             return Err(format!("failed to parse {path}: {reason}"));
         }
     };
@@ -476,6 +483,22 @@ fn index_one_file(sidecar: &mut symdesk_index::Sidecar, path: &str) -> Result<()
         }
     }
     Ok(())
+}
+
+/// Go's confined `Root.ReadFile` checks: a non-regular file or one above the
+/// read limit is rejected with the vault wording before any byte is read.
+fn read_vault_file(path: &str) -> Result<Vec<u8>, String> {
+    const MAX_ROOT_READ_BYTES: u64 = 64 << 20;
+    let metadata = fs::metadata(path).map_err(|error| error.to_string())?;
+    if !metadata.is_file() {
+        return Err(format!("vault path is not a regular file: {path}"));
+    }
+    if metadata.len() > MAX_ROOT_READ_BYTES {
+        return Err(format!(
+            "vault file exceeds {MAX_ROOT_READ_BYTES} byte read limit: {path}"
+        ));
+    }
+    fs::read(path).map_err(|error| error.to_string())
 }
 
 fn record_index_status(sidecar: &symdesk_index::Sidecar, path: &str, state: &str, reason: &str) {

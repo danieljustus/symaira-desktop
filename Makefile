@@ -1027,6 +1027,29 @@ index-symlink-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestIndexSymlinkProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_symlink
 
+# RUST-008 acceptance aggregates. `retrieval-differential` runs every retrieval
+# differential; `index-crate-test` is `cargo nextest run -p symdesk-index`;
+# `index-status-cli-differential` builds Go (oracle commit) and Rust, then
+# compares 85 index-status cases (needs a clean committed tree).
+RETRIEVAL_DIFFERENTIALS := retrieval-chunks-differential retrieval-bm25-differential \
+	retrieval-embedding-state-differential retrieval-vector-differential \
+	retrieval-hybrid-differential retrieval-pending-rebuild-differential \
+	retrieval-sections-differential retrieval-embedding-http-differential \
+	retrieval-reembed-http-differential retrieval-local-hash-differential \
+	retrieval-document-extraction-differential retrieval-csv-sections-differential \
+	retrieval-search-cli-differential retrieval-search-mcp-differential \
+	retrieval-ask-offline-differential retrieval-ask-mcp-differential \
+	retrieval-turboquant-differential
+.PHONY: retrieval-differential index-crate-test index-status-cli-differential
+retrieval-differential: $(RETRIEVAL_DIFFERENTIALS)
+
+index-crate-test:
+	$(CARGO) nextest run -p symdesk-index --all-features --locked --no-fail-fast
+
+INDEX_STATUS_OUTPUT ?= $(RUST_TARGET_DIR)/index-status-evidence/$(shell date -u +%Y%m%dT%H%M%SZ)
+index-status-cli-differential:
+	PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/index-status/verify.py --output "$(INDEX_STATUS_OUTPUT)" $(if $(INDEX_STATUS_BUILD_LAUNCHER),--build-launcher $(INDEX_STATUS_BUILD_LAUNCHER))
+
 room-run-approval-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
 

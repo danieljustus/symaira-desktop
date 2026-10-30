@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 use rusqlite::{Connection, params};
 use serde::Deserialize;
 
-use crate::{event::Event, journal, members::State};
+use crate::{event::Event, goio, journal, members::State};
 
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS events (
@@ -51,6 +51,13 @@ pub enum IndexError {
     Io(#[from] std::io::Error),
     #[error("sqlite connection: {0}")]
     Connection(#[from] symaira_core_sqlite::Error),
+    /// Go: `fmt.Errorf("mkdir db dir: %w", err)` around `os.MkdirAll`.
+    #[error("mkdir db dir: {0}")]
+    MkdirDbDir(std::io::Error),
+    /// Go: `fmt.Errorf("open sqlite db: %w", err)`; the text is the modernc
+    /// driver's `<sqlite message> (<result code>)`.
+    #[error("open sqlite db: failed to open sqlite database: {0}")]
+    OpenDb(String),
     #[error("merge all events: {0}")]
     Merge(#[from] journal::ReadSegmentsError),
     #[error("event {event_id} {field} exceeds SQLite INTEGER range")]
@@ -80,7 +87,15 @@ struct DecisionBody {
 /// corrupt journal leaves a new empty-schema database and returns the merge
 /// error; journal files are never changed.
 pub fn rebuild(db_path: &Path, room_dir: &Path) -> Result<(), IndexError> {
-    let _ = fs::remove_file(db_path);
+    // Go `os.Remove`: a file, a symlink or an empty directory goes away.
+    if fs::remove_file(db_path).is_err() {
+        let _ = fs::remove_dir(db_path);
+    }
+    let parent = db_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    goio::mkdir_all(&goio::clean(parent), 0o700).map_err(IndexError::MkdirDbDir)?;
     let mut connection = open_connection(db_path)?;
     connection.execute_batch(SCHEMA)?;
 
@@ -137,7 +152,16 @@ fn insert_event(transaction: &rusqlite::Transaction<'_>, event: &Event) -> Resul
 }
 
 fn open_connection(path: &Path) -> Result<Connection, IndexError> {
-    Ok(symaira_core_sqlite::open(path)?)
+    symaira_core_sqlite::open(path).map_err(|error| match error {
+        symaira_core_sqlite::Error::Open(rusqlite::Error::SqliteFailure(failure, _)) => {
+            let primary = failure.extended_code & 0xff;
+            IndexError::OpenDb(format!(
+                "{} ({primary})",
+                rusqlite::ffi::code_to_str(primary)
+            ))
+        }
+        other => IndexError::Connection(other),
+    })
 }
 
 /// Query helpers intentionally sort by stable keys so callers never depend on

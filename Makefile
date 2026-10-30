@@ -112,6 +112,7 @@ help-cli-differential:
 .PHONY: duplicates-cli-fixtures-generate duplicates-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
 .PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential
+.PHONY: room-store-cli-fixtures-generate room-store-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
@@ -1040,6 +1041,13 @@ room-identity-provider-cli-fixtures-generate:
 room-identity-provider-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 -v ./cmd/symroom -run '^TestPortIdentityProviderCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test identity_provider_commands
+
+room-store-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortStoreCLIContract$$'
+
+room-store-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 -v ./cmd/symroom -run '^TestPortStoreCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test store_commands
 
 history-prune-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

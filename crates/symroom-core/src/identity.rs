@@ -4,8 +4,12 @@
 //! resolution chains. Port of `internal/room/identity`.
 
 use std::fmt;
-use std::{fs, path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
+use crate::goio;
 use crate::lookpath::look_path;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
@@ -104,17 +108,23 @@ pub fn compute_member_id(public_key: &[u8]) -> String {
 
 /// Go: `identity.IdentitiesDir`.
 pub fn identities_dir() -> PathBuf {
-    if let Ok(data_home) = std::env::var("XDG_DATA_HOME")
-        && !data_home.is_empty()
-    {
-        return PathBuf::from(data_home).join("symroom").join("identities");
+    PathBuf::from(identities_dir_text())
+}
+
+/// Go `IdentitiesDir`: `filepath.Join` cleans the path lexically, so `..`
+/// elements of `XDG_DATA_HOME` never reach the file system. `os.UserHomeDir`
+/// fails for an empty `$HOME` and the directory is then relative to ".".
+fn identities_dir_text() -> String {
+    if let Some(data_home) = std::env::var_os("XDG_DATA_HOME").filter(|value| !value.is_empty()) {
+        return goio::join(&data_home.to_string_lossy(), "symroom/identities");
     }
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_owned());
-    PathBuf::from(home)
-        .join(".local")
-        .join("share")
-        .join("symroom")
-        .join("identities")
+    let home = std::env::var_os("HOME")
+        .filter(|value| !value.is_empty())
+        .map_or_else(
+            || ".".to_owned(),
+            |value| value.to_string_lossy().into_owned(),
+        );
+    goio::join(&home, ".local/share/symroom/identities")
 }
 
 /// Build an identity from raw private key bytes (32-byte seed or 64-byte key).
@@ -232,10 +242,9 @@ fn signing_key_from(private_key: &[u8]) -> Result<SigningKey, SignError> {
 /// Go: `identity.Save` — two-space indented JSON in a `0700` directory, the file
 /// itself written with `0600`.
 pub fn save(identity: &Identity) -> Result<(), IdentityError> {
-    let dir = identities_dir();
-    fs::create_dir_all(&dir)
+    let dir = identities_dir_text();
+    goio::mkdir_all(&dir, 0o700)
         .map_err(|err| IdentityError::Message(format!("create identities dir: {err}")))?;
-    restrict_mode(&dir, 0o700);
 
     let stored = StoredIdentity {
         name: identity.name.clone(),
@@ -244,12 +253,12 @@ pub fn save(identity: &Identity) -> Result<(), IdentityError> {
         private_key: hex::encode(&identity.private_key),
     };
     let data = serde_json::to_string_pretty(&stored)
+        .map(|text| go_html_escape(&text))
         .map_err(|err| IdentityError::Message(format!("marshal identity: {err}")))?;
 
-    let path = dir.join(format!("{}.json", identity.name));
-    fs::write(&path, data)
+    let path = goio::join(&dir, &format!("{}.json", identity.name));
+    goio::write_file(&path, data.as_bytes(), 0o600)
         .map_err(|err| IdentityError::Message(format!("write identity file: {err}")))?;
-    restrict_mode(&path, 0o600);
     Ok(())
 }
 
@@ -297,8 +306,8 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
         return Ok(identity);
     }
 
-    let path = identities_dir().join(format!("{name}.json"));
-    let data = match fs::read(&path) {
+    let path = goio::join(&identities_dir_text(), &format!("{name}.json"));
+    let data = match goio::read_file(Path::new(&path)) {
         Ok(data) => data,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             return Err(IdentityError::NotFound);
@@ -352,41 +361,43 @@ fn identity_from_provider_output(name: &str, output: &[u8]) -> Option<Identity> 
         .flatten()
 }
 
-/// Go: `identity.List` — every `*.json` in the identities directory, in the
-/// byte order Go's `os.ReadDir` returns (sorted by name); a missing directory is
-/// an empty list.
+/// Go: `identity.List` — every `*.json` entry that is not a directory (a
+/// symbolic link counts as a file, as `DirEntry.IsDir` reports the entry itself)
+/// in the byte order of Go's `os.ReadDir`, which sorts by the full file name; a
+/// missing directory is an empty list.
 pub fn list() -> Result<Vec<String>, IdentityError> {
-    let dir = identities_dir();
-    let entries = match fs::read_dir(&dir) {
+    let dir = identities_dir_text();
+    let entries = match goio::read_dir(Path::new(&dir)) {
         Ok(entries) => entries,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(err) => return Err(IdentityError::Message(err.to_string())),
     };
 
-    let mut names = Vec::new();
+    let mut files = Vec::new();
     for entry in entries {
         let entry = entry.map_err(|err| IdentityError::Message(err.to_string()))?;
-        let file_name = entry.file_name().to_string_lossy().into_owned();
-        if entry.path().is_dir() {
-            continue;
-        }
-        if let Some(stripped) = file_name.strip_suffix(".json") {
-            names.push(stripped.to_owned());
+        let is_dir = entry
+            .file_type()
+            .map_err(|err| IdentityError::Message(err.to_string()))?
+            .is_dir();
+        if !is_dir {
+            files.push(entry.file_name().to_string_lossy().into_owned());
         }
     }
-    names.sort();
-    Ok(names)
+    files.sort();
+    Ok(files
+        .into_iter()
+        .filter_map(|file| file.strip_suffix(".json").map(str::to_owned))
+        .collect())
 }
 
-#[cfg(unix)]
-fn restrict_mode(path: &std::path::Path, mode: u32) {
-    use std::os::unix::fs::PermissionsExt;
-    let _ = fs::set_permissions(path, fs::Permissions::from_mode(mode));
-}
-
-#[cfg(not(unix))]
-fn restrict_mode(_path: &std::path::Path, _mode: u32) {
-    // Windows carries no Unix permission bits; Go writes the same bytes there.
+/// `encoding/json` escapes `<`, `>`, `&`, U+2028 and U+2029 in strings.
+fn go_html_escape(text: &str) -> String {
+    text.replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('&', "\\u0026")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029")
 }
 
 #[cfg(test)]

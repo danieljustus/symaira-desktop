@@ -418,6 +418,7 @@
         "make room-run-approval-cli-differential",
         "make room-flag-grammar-cli-differential",
         "make room-identity-provider-cli-differential",
+        "make room-store-cli-differential",
         "make room-checkpoint-cli-differential",
         "make room-note-cli-differential",
         "make room-watch-stream-differential",

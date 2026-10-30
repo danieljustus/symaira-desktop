@@ -370,6 +370,90 @@ pub fn read_dir(path: &Path) -> io::Result<fs::ReadDir> {
     fs::read_dir(path).map_err(|error| path_error("open", path, &error))
 }
 
+/// Go `os.MkdirAll(path, perm)`: creates every missing ancestor with `mode`
+/// (the umask still applies), never touches the mode of a directory that
+/// exists, and fails with `mkdir <path>: ...` naming the component that could
+/// not be created (a non-directory in the way is `not a directory`).
+///
+/// # Errors
+/// Returns the Go-formatted `mkdir` error.
+pub fn mkdir_all(path: &str, mode: u32) -> io::Result<()> {
+    if let Ok(meta) = fs::metadata(path) {
+        if meta.is_dir() {
+            return Ok(());
+        }
+        #[cfg(unix)]
+        let not_a_directory = io::Error::from_raw_os_error(20);
+        #[cfg(not(unix))]
+        let not_a_directory = io::Error::from(io::ErrorKind::NotADirectory);
+        return Err(path_error("mkdir", Path::new(path), &not_a_directory));
+    }
+    let bytes = path.as_bytes();
+    let mut end = bytes.len();
+    while end > 0 && is_path_separator(bytes[end - 1], cfg!(windows)) {
+        end -= 1;
+    }
+    let mut parent = end;
+    while parent > 0 && !is_path_separator(bytes[parent - 1], cfg!(windows)) {
+        parent -= 1;
+    }
+    if parent > 1 {
+        mkdir_all(&path[..parent - 1], mode)?;
+    }
+    match mkdir(Path::new(path), mode) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if fs::symlink_metadata(path).is_ok_and(|meta| meta.is_dir()) {
+                return Ok(());
+            }
+            Err(path_error("mkdir", Path::new(path), &error))
+        }
+    }
+}
+
+#[cfg(unix)]
+fn mkdir(path: &Path, mode: u32) -> io::Result<()> {
+    use std::os::unix::fs::DirBuilderExt;
+    fs::DirBuilder::new().mode(mode).create(path)
+}
+
+#[cfg(not(unix))]
+fn mkdir(path: &Path, _mode: u32) -> io::Result<()> {
+    fs::create_dir(path)
+}
+
+/// Go `filepath.Join` of two path strings: concatenated with a separator and
+/// lexically cleaned, so an absolute second element does not replace the first
+/// and `..` never reaches the file system.
+#[must_use]
+pub fn join(base: &str, element: &str) -> String {
+    clean(Path::new(&format!("{base}/{element}")))
+}
+
+/// Go `os.OpenFile(path, O_WRONLY|O_CREATE|O_TRUNC, mode)` followed by a
+/// write: the mode applies (minus the umask) only when the file is created, and
+/// failures read `open <path>: ...` or `write <path>: ...`.
+///
+/// # Errors
+/// Returns the Go-formatted open or write error.
+pub fn write_file(path: &str, data: &[u8], mode: u32) -> io::Result<()> {
+    use io::Write;
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(mode);
+    }
+    #[cfg(not(unix))]
+    let _ = mode;
+    let mut file = options
+        .open(path)
+        .map_err(|error| path_error("open", Path::new(path), &error))?;
+    file.write_all(data)
+        .map_err(|error| path_error("write", Path::new(path), &error))
+}
+
 /// Go `os.Getwd` on Unix: `$PWD` wins when it is absolute and names the same
 /// directory as `.` (same device and inode), so a symlinked working directory
 /// keeps its symlink name. Otherwise the kernel's working directory is used.

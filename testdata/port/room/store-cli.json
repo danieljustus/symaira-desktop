@@ -1,0 +1,4469 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "source_hashes": {
+    "cmd/symroom/cmd_identity.go": "ae3db2a804bdd6d2d526eeef6c1a12b00b47a6656eddaac7ce79f7b372a39433",
+    "cmd/symroom/cmd_index.go": "3ed658d515284bc6d7473156e8db311366e3d5edbc23e405ae92235a18085494",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
+    "internal/room/index/index.go": "7d90f4e3cd1f475a6d16ec1c2480fe615d645ae5e965d8eb7f3e67fbdc6b0637"
+  },
+  "journal_line": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+  "cases": [
+    {
+      "name": "create-\"fresh\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        ""
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity  (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\".\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "."
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity . (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/..json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \".\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"..\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        ".."
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity .. (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/...json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"..\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"a/b\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a/b"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/a/b.json: no such file or directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-\"a/../b\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a/../b"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity a/../b (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"a/../b\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"../x\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "../x"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity ../x (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/x.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"../x\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"./x\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "./x"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity ./x (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/x.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"./x\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"-x\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "-x"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity -x (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/-x.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"-x\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"--public\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "--public"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity --public (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/--public.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"--public\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"-\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "-"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity - (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/-.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"-\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"--\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "--"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity -- (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/--.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"--\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"ünï\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "ünï"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity ünï (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/ünï.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"ünï\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"a b\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a b"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity a b (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/a b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"a b\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"a\\nb\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a\nb"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity a\nb (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/a\nb.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"a\\nb\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"tab\\there\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "tab\there"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity tab\there (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/tab\there.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"tab\\there\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"name.json\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "name.json"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity name.json (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/name.json.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"name.json\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"/abs\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "/abs"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity /abs (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/abs.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"/abs\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"abs/\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "abs/"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/abs/.json: no such file or directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-\"a//b\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a//b"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/a/b.json: no such file or directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-\"a\u003cb\u003e\u0026c\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "a\u003cb\u003e\u0026c"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity a\u003cb\u003e\u0026c (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/a\u003cb\u003e\u0026c.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"a\\u003cb\\u003e\\u0026c\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"q\\\"uote\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "q\"uote"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity q\"uote (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/q\"uote.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"q\\\"uote\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"back\\\\slash\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "back\\slash"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity back\\slash (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/back\\slash.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"back\\\\slash\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"line\\u2028sep\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "line\u2028sep"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity line\u2028sep (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/line\u2028sep.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"line\\u2028sep\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-\"bell\\a\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "bell\u0007"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity bell\u0007 (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/bell\u0007.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"bell\\u0007\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-long-251",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.json: file name too long\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-long-300",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.json: file name too long\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-extra-args",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh",
+        "extra",
+        "--flag",
+        "-h"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-help-flag-is-the-name",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "-h"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity -h (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/-h.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"-h\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-help-long-flag-is-the-name",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity --help (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/--help.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"--help\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-unset",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "unset",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-empty",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "empty",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home/.local/share/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-relative",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "relative",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "rel",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "rel/xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "rel/xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "rel/xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "rel/xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-dotdot",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "dotdot",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-unset-home-empty",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "unset",
+      "home": "empty",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".local",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-unset-home-unset",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "xdg": "unset",
+      "home": "unset",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".local",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".local/share/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-symroom-is-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: create identities dir: mkdir \u003croot\u003e/xdg/symroom: not a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        }
+      ]
+    },
+    {
+      "name": "create-identities-is-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: create identities dir: mkdir \u003croot\u003e/xdg/symroom/identities: not a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-is-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "remove",
+          "path": "xdg"
+        },
+        {
+          "op": "file",
+          "path": "xdg",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: create identities dir: mkdir \u003croot\u003e/xdg: not a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        }
+      ]
+    },
+    {
+      "name": "create-xdg-readonly",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "chmod",
+          "path": "xdg",
+          "mode": "0500"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: create identities dir: mkdir \u003croot\u003e/xdg/symroom: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-store-readonly",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities",
+          "mode": "0700"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities",
+          "mode": "0500"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/fresh.json: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-store-mode-is-kept",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0755"
+        },
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities",
+          "mode": "0755"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-overwrites-and-keeps-its-mode",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old old ",
+          "mode": "0644"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities/alpha.json",
+          "mode": "0644"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity alpha (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0644",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-overwrite-readonly-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities/alpha.json",
+          "mode": "0400"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/alpha.json: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0400",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "create-name-is-a-directory",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities/alpha.json",
+          "mode": "0700"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: write identity file: open \u003croot\u003e/xdg/symroom/identities/alpha.json: is a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-through-a-dangling-link",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities",
+          "mode": "0700"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities/alpha.json",
+          "target": "elsewhere.json"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity alpha (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "symlink",
+          "target": "elsewhere.json"
+        },
+        {
+          "path": "xdg/symroom/identities/elsewhere.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-through-a-link-to-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "xdg/target.json",
+          "content": "keep?",
+          "mode": "0640"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities/alpha.json",
+          "target": "../../target.json"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity alpha (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "symlink",
+          "target": "../../target.json"
+        },
+        {
+          "path": "xdg/target.json",
+          "kind": "file",
+          "mode": "0640",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-identities-is-a-link-to-a-dir",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0700"
+        },
+        {
+          "op": "dir",
+          "path": "xdg/real",
+          "mode": "0700"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities",
+          "target": "../real"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/real",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/real/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "symlink",
+          "target": "../real"
+        }
+      ]
+    },
+    {
+      "name": "create-umask-077",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "umask": "077",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-umask-277",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "umask": "277",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error saving identity: create identities dir: mkdir \u003croot\u003e/xdg/symroom/identities: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "create-umask-000",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "umask": "000",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-umask-0",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "umask": "0",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "create-umask-077-existing-parent",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0755"
+        }
+      ],
+      "umask": "077",
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/fresh.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "name": "show-\"alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"../identities/alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "../identities/alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"a/../alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "a/../alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"./alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "./alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"/alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "/alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"alpha/\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha/"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"nested/../alpha\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "nested/../alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        ""
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"alpha.json\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha.json"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"missing\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "missing"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-\"a//b\"",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "a//b"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-public-path-name",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "export",
+        "--public",
+        "x/../alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-extra-args",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha",
+        "extra"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Name: alpha\nMember ID: \u003cmember_id\u003e\nPublic Key: 9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-store-unreadable",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities",
+          "mode": "0000"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: read identity file: open \u003croot\u003e/xdg/symroom/identities/alpha.json: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"\u003cmember_id\u003e\",\n  \"public_key\": \"\u003cpublic_key\u003e\",\n  \"private_key\": \"\u003cprivate_key\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-file-unreadable",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "alpha"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_44064a3098f1300b\",\n  \"public_key\": \"9510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\",\n  \"private_key\": \"624d1bf6c32cf2d48044d7f6b8fb4450a8405fb14003f8d316a5a64438df2de09510338aa0027597ff787838baa44a8da8f082cc99663a93cef81d132999d249\"\n}",
+          "mode": "0600"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities/alpha.json",
+          "mode": "0000"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: read identity file: open \u003croot\u003e/xdg/symroom/identities/alpha.json: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/alpha.json",
+          "kind": "file",
+          "mode": "0000"
+        }
+      ]
+    },
+    {
+      "name": "show-name-is-a-directory",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "show",
+        "d"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities/d.json",
+          "mode": "0700"
+        }
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: read identity file: read \u003croot\u003e/xdg/symroom/identities/d.json: is a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/d.json",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "list-mixed-store",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/b.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a-b.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a.b.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/C.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/é.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/note.txt",
+          "content": "x",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/x.json.bak",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a b.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "dir",
+          "path": "xdg/symroom/identities/dir.json",
+          "mode": "0700"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities/linkdir.json",
+          "target": "dir.json"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities/linkfile.json",
+          "target": "a.json"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities/dangling.json",
+          "target": "nowhere"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "\nC\na b\na-b\na.b\na\nb\ndangling\nlinkdir\nlinkfile\né\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/C.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/a b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/a-b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/a.b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/a.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/dangling.json",
+          "kind": "symlink",
+          "target": "nowhere"
+        },
+        {
+          "path": "xdg/symroom/identities/dir.json",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/linkdir.json",
+          "kind": "symlink",
+          "target": "dir.json"
+        },
+        {
+          "path": "xdg/symroom/identities/linkfile.json",
+          "kind": "symlink",
+          "target": "a.json"
+        },
+        {
+          "path": "xdg/symroom/identities/note.txt",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        },
+        {
+          "path": "xdg/symroom/identities/x.json.bak",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/é.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        }
+      ]
+    },
+    {
+      "name": "list-extra-args",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list",
+        "ignored",
+        "--x"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/b.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a-b.json",
+          "content": "{}",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "a-b\na\nb\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/a-b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/a.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom/identities/b.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        }
+      ]
+    },
+    {
+      "name": "list-no-store",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "list-symroom-is-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error listing identities: open \u003croot\u003e/xdg/symroom/identities: not a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        }
+      ]
+    },
+    {
+      "name": "list-identities-is-a-file",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error listing identities: open \u003croot\u003e/xdg/symroom/identities: not a directory\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        }
+      ]
+    },
+    {
+      "name": "list-store-unreadable",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "ops": [
+        {
+          "op": "file",
+          "path": "xdg/symroom/identities/a.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "chmod",
+          "path": "xdg/symroom/identities",
+          "mode": "0000"
+        }
+      ],
+      "needs_non_root": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error listing identities: open \u003croot\u003e/xdg/symroom/identities: permission denied\n",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities/a.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        }
+      ]
+    },
+    {
+      "name": "list-link-to-dir-store",
+      "unix_only": true,
+      "args": [
+        "identity",
+        "list"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "xdg/symroom",
+          "mode": "0700"
+        },
+        {
+          "op": "dir",
+          "path": "xdg/real",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "xdg/real/z.json",
+          "content": "{}",
+          "mode": "0600"
+        },
+        {
+          "op": "symlink",
+          "path": "xdg/symroom/identities",
+          "target": "../real"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "z\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/real",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/real/z.json",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{}"
+        },
+        {
+          "path": "xdg/symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg/symroom/identities",
+          "kind": "symlink",
+          "target": "../real"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-success",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-extra-args",
+      "args": [
+        "index",
+        "rebuild",
+        "ignored",
+        "--x"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-cwd-room",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        }
+      ],
+      "cwd": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/.symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/.symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-twice",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "run",
+          "path": "index rebuild"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-empty-journal",
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-no-journal-dir",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room",
+          "mode": "0700"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-missing-room",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-state-dir-is-a-file",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": ".symroom",
+          "content": "x",
+          "mode": "0600"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error rebuilding index: mkdir db dir: mkdir .symroom: not a directory\n",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "file",
+          "mode": "0600",
+          "content": "x"
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-state-dir-readonly",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "dir",
+          "path": ".symroom",
+          "mode": "0700"
+        },
+        {
+          "op": "chmod",
+          "path": ".symroom",
+          "mode": "0500"
+        }
+      ],
+      "room_env": "room",
+      "needs_non_root": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error rebuilding index: open sqlite db: failed to open sqlite database: unable to open database file (14)\n",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-db-is-a-directory",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "dir",
+          "path": ".symroom/index.sqlite",
+          "mode": "0700"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-replaces-a-stale-db",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "file",
+          "path": ".symroom/index.sqlite",
+          "content": "not a database",
+          "mode": "0600"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-state-dir-mode",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        },
+        {
+          "op": "dir",
+          "path": ".symroom",
+          "mode": "0755"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-umask-077",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n",
+          "mode": "0600"
+        }
+      ],
+      "umask": "077",
+      "room_env": "room",
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr": "",
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0600",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":1,\"id\":\"ev_cli_note\",\"room\":\"rm_cli\",\"author\":\"mem_cli\",\"seq\":1,\"prev\":\"\",\"lamport\":1,\"ts\":\"2026-09-23T10:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{\"text\":\"from another room\"}}\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    },
+    {
+      "name": "index-rebuild-corrupt-journal",
+      "unix_only": true,
+      "args": [
+        "index",
+        "rebuild"
+      ],
+      "ops": [
+        {
+          "op": "dir",
+          "path": "room/journal",
+          "mode": "0700"
+        },
+        {
+          "op": "file",
+          "path": "room/journal/mem_cli.jsonl",
+          "content": "{\"v\":\n",
+          "mode": "0600"
+        }
+      ],
+      "room_env": "room",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error rebuilding index: merge all events: read segment mem_cli: unmarshal line:",
+      "stderr_is_prefix": true,
+      "tree": [
+        {
+          "path": ".symroom",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": ".symroom/index.sqlite",
+          "kind": "file",
+          "mode": "0644",
+          "content": "\u003csqlite database\u003e",
+          "fresh": true
+        },
+        {
+          "path": "home",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal",
+          "kind": "dir",
+          "mode": "0700"
+        },
+        {
+          "path": "room/journal/mem_cli.jsonl",
+          "kind": "file",
+          "mode": "0600",
+          "content": "{\"v\":\n"
+        },
+        {
+          "path": "xdg",
+          "kind": "dir",
+          "mode": "0700"
+        }
+      ]
+    }
+  ]
+}

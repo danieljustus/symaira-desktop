@@ -637,6 +637,10 @@ jobs:
         shell: bash
         run: make room-identity-provider-cli-differential
 
+      - name: Run native room identity store and index CLI differential
+        shell: bash
+        run: make room-store-cli-differential
+
       - name: Run native retrieval chunk differential
         shell: bash
         run: make retrieval-chunks-differential

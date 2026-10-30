@@ -541,7 +541,9 @@ fn fix_reals(bytes: Vec<u8>) -> Vec<u8> {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i..].starts_with(MARK) {
-            out.push(b' ');
+            // Blank the marker out at its own width: every byte offset the
+            // cross-reference table recorded stays valid.
+            out.extend(std::iter::repeat_n(b' ', MARK.len()));
             i += MARK.len();
         } else {
             out.push(bytes[i]);

@@ -292,6 +292,32 @@ fn pixels_equal(id: &str, dir: &Path, rust_pdf: &Path, go_bytes: &[u8]) -> Resul
         files.sort();
         Ok(files.iter().map(|f| std::fs::read(f).unwrap()).collect())
     };
+    // Neither qpdf (which silently repairs a damaged cross-reference table
+    // before describing a file) nor Poppler may find a defect in the Rust file
+    // that the Go file does not have.
+    let clean = |pdf: &Path| -> (bool, bool) {
+        let q = Command::new("qpdf")
+            .arg("--check")
+            .arg(pdf)
+            .output()
+            .expect("run qpdf --check");
+        let p = Command::new("pdftoppm")
+            .args(["-r", "20", "-l", "1", "-q"])
+            .arg(pdf)
+            .arg(dir.join("probe"))
+            .output()
+            .expect("run pdftoppm");
+        (
+            q.status.success() && q.stderr.is_empty(),
+            p.status.success() && p.stderr.is_empty(),
+        )
+    };
+    let (rust_clean, go_clean) = (clean(rust_pdf), clean(&go_pdf));
+    if rust_clean != go_clean {
+        return Err(format!(
+            "case {id}: (qpdf, poppler) clean = {rust_clean:?} for the Rust file, {go_clean:?} for the Go file"
+        ));
+    }
     let (a, b) = (render(rust_pdf, "rust")?, render(&go_pdf, "go")?);
     if a.is_empty() || a != b {
         return Err(format!(

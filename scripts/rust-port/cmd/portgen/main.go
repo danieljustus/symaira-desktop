@@ -172,6 +172,7 @@ var fixturePaths = []string{
 	"testdata/port/render/scene-bounds.json",
 	"testdata/port/render/layout.json",
 	"testdata/port/render/emit.json",
+	"testdata/port/render/png.json",
 	"testdata/port/render/v2/html-note.json",
 	"testdata/port/render/v2/json-ir.json",
 	"testdata/port/render/v2/symdesk-command-tree.json",

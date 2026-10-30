@@ -5,6 +5,16 @@
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
+## Cutover decision (2026-10-30)
+
+The maintainer replaced the dual-binary cutover with the EraseMe model. The
+stable release ships Rust only: no Go fallback binary, no Go-to-Rust-to-Go
+rollback exercise and no seven-day observation window. Go sources are removed
+at the cutover. Data safety is kept and becomes a cutover gate instead: Rust
+must open existing Go-created state unchanged, and the first Rust run creates
+an automatic backup whose restore is verified. Windows is out of scope.
+Remaining work is completed locally on the MacBook and pushed once complete.
+
 ## Local integration checkpoint — 2026-10-26
 
 Execution mode: local-first on branch `rust/integration` (worktree

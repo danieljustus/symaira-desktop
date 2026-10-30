@@ -424,14 +424,13 @@
         "make room-watch-cli-differential",
         "make room-identity-cli-differential",
         "make room-mcp-differential",
-        "python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
         "cargo nextest run -p symroom-core -p symroom-cli",
         "cargo +nightly fuzz run room_event"
       ]
     },
     {
       "id": "RUST-017",
-      "title": "Run full value gate and ship dual-binary prerelease",
+      "title": "Run full value gate and ship Rust-only prerelease",
       "status": "blocked",
       "depends_on": [
         "RUST-014",
@@ -460,7 +459,7 @@
     },
     {
       "id": "RUST-018",
-      "title": "Stable Rust cutover with Go fallbacks",
+      "title": "Stable Rust-only cutover",
       "status": "blocked",
       "depends_on": [
         "RUST-017"
@@ -482,12 +481,14 @@
         "all contract matrix rows PASS",
         "native installed release smoke green",
         "Swift macOS and iOS consumer gates green",
-        "published fallback rollback exercise green"
-      ]
+        "Rust opens existing Go-created sidecar, index and room state unchanged",
+        "automatic pre-migration backup created and restore exercise green"
+      ],
+      "decision": "Rust-only cutover per maintainer decision 2026-10-30: no Go fallback binary, no Go rollback, no observation window; data safety via automatic backup before first Rust migration plus verified restore."
     },
     {
       "id": "RUST-019",
-      "title": "Remove Go backend after one stable Rust release",
+      "title": "Remove Go backend at the Rust-only cutover",
       "status": "blocked",
       "depends_on": [
         "RUST-018"
@@ -496,8 +497,7 @@
       "acceptance": [
         "zero tracked backend .go files",
         "Rust full gate green",
-        "Swift consumer gates green",
-        "immutable final dual-binary rollback release verified"
+        "Swift consumer gates green"
       ]
     }
   ]

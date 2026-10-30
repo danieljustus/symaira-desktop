@@ -607,9 +607,11 @@ room-grammar-process-differential:
 
 room-mcp-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symroom -run '^TestPortMCPProcessContract$$'
 
 room-mcp-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/room/mcp -run '^Test(SymRoomMCP(Representative|Mutation)Oracle|StdioStreamHygiene)$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 -v ./cmd/symroom -run '^TestPortMCPProcessContract$$'
 	$(CARGO) test -p symroom-cli --locked --test mcp
 
 room-merge-read-fixtures-generate:

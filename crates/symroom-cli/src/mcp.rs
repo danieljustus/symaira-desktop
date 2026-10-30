@@ -2,7 +2,7 @@
 
 use std::{
     borrow::Cow,
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     ffi::{OsStr, OsString},
     fs,
     io::{self, BufRead, Write},
@@ -31,11 +31,12 @@ const MAX_HEADER_LINES: usize = 100;
 /// Go `encoding/json` `maxNestingDepth`: a scanner error past this many open
 /// containers.
 const MAX_NESTING_DEPTH: usize = 10_000;
-/// Upper bound on `tools/call` requests executing at once. Go starts one
+/// Upper bound on worker threads running `tools/call` requests. Go starts one
 /// goroutine per call; an OS thread per call would exhaust the thread limit
 /// (a panic-abort in release builds) under a flood of long-running
-/// `room_run_wait` calls, so the reader blocks instead once this many are in
-/// flight. The test build uses a small cap to keep the regression test fast.
+/// `room_run_wait` calls, so calls beyond this many wait in a queue (the
+/// reader keeps answering everything else). The test build uses a small cap
+/// to keep the regression test fast.
 #[cfg(not(test))]
 pub const MAX_IN_FLIGHT_CALLS: usize = 512;
 #[cfg(test)]
@@ -80,13 +81,94 @@ pub fn run_cli(
         Ok(identity) => identity,
         Err(code) => return code,
     };
+    restore_default_sigpipe();
     let stdin = io::stdin();
-    let stdout = io::stdout();
-    match serve_io_with_identity(stdin.lock(), stdout, &room, &artifact_root, Some(&identity)) {
+    match serve_io_with_identity(
+        stdin.lock(),
+        GoStdout::new(),
+        &room,
+        &artifact_root,
+        Some(&identity),
+    ) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");
             ExitCode::FAILURE
+        }
+    }
+}
+
+/// Go's runtime kills a process that writes to a broken pipe on file
+/// descriptor 1 or 2 with `SIGPIPE`; Rust ignores the signal at startup and
+/// reports `EPIPE` instead. The MCP server restores the default action so a
+/// closed client pipe ends it the same way (no stderr text, signal status).
+#[cfg(unix)]
+#[allow(unsafe_code)]
+fn restore_default_sigpipe() {
+    // SAFETY: `signal` with `SIG_DFL` only resets the disposition of SIGPIPE;
+    // no handler code is installed and no memory is shared.
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
+}
+
+#[cfg(not(unix))]
+fn restore_default_sigpipe() {}
+
+/// Standard output as Go's `os.Stdout` sees it. Rust's `io::stdout()` hides
+/// `EBADF` (a closed or read-only descriptor) as success and buffers lines;
+/// Go reports `write /dev/stdout: bad file descriptor`, which cancels the
+/// serve context. This writer talks to a duplicate of descriptor 1 directly
+/// and words its errors like Go's `*fs.PathError`.
+struct GoStdout {
+    file: Option<fs::File>,
+}
+
+impl GoStdout {
+    #[cfg(unix)]
+    fn new() -> Self {
+        use std::os::fd::AsFd;
+        Self {
+            file: io::stdout()
+                .as_fd()
+                .try_clone_to_owned()
+                .ok()
+                .map(fs::File::from),
+        }
+    }
+
+    #[cfg(not(unix))]
+    fn new() -> Self {
+        Self { file: None }
+    }
+
+    fn path_error(error: &io::Error) -> io::Error {
+        io::Error::new(
+            error.kind(),
+            format!(
+                "write /dev/stdout: {}",
+                goio::os_message(error, cfg!(windows))
+            ),
+        )
+    }
+}
+
+impl Write for GoStdout {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match &mut self.file {
+            Some(file) => file.write(buf).map_err(|error| Self::path_error(&error)),
+            // Without a duplicable descriptor 1 (closed) Go's write fails with
+            // EBADF; elsewhere fall back to the standard handle.
+            None if cfg!(unix) => Err(Self::path_error(&io::Error::from_raw_os_error(9))),
+            None => io::stdout().write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        match &mut self.file {
+            Some(file) => file.flush(),
+            None if cfg!(unix) => Ok(()),
+            None => io::stdout().flush(),
         }
     }
 }
@@ -1247,7 +1329,10 @@ fn write_shared<W: Write>(output: &SharedOutput<W>, mode: Mode, body: &str) -> i
     let mut output = output
         .lock()
         .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
-    write_frame(&mut *output, mode, body)
+    // Go `recordWriteErr` wraps the first failed response write.
+    write_frame(&mut *output, mode, body).map_err(|error| {
+        io::Error::new(error.kind(), format!("mcpserver: write response: {error}"))
+    })
 }
 
 pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
@@ -1260,48 +1345,90 @@ pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
     serve_io_with_search_path(input, output, room_dir, artifact_root, identity, None)
 }
 
-/// Bounded count of `tools/call` requests executing at once.
-struct CallSlots {
-    in_flight: Mutex<usize>,
-    freed: Condvar,
+/// One accepted `tools/call` with the instant it was read; Go starts the
+/// handler's `room_run_wait` deadline when the goroutine starts, i.e. at
+/// receipt, so a queued call keeps its original clock.
+struct Job {
+    request: Request,
+    mode: Mode,
+    received: Instant,
 }
 
-/// A held slot; dropping it (including when its worker never started) frees it.
-struct CallSlot(Arc<CallSlots>);
-
-impl Drop for CallSlot {
-    fn drop(&mut self) {
-        let mut in_flight = self
-            .0
-            .in_flight
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        *in_flight -= 1;
-        self.0.freed.notify_one();
-    }
+struct SchedulerState {
+    running: usize,
+    pending: VecDeque<Job>,
 }
 
-impl CallSlots {
-    /// Blocks until fewer than `MAX_IN_FLIGHT_CALLS` calls are running.
-    /// `abort` is polled while waiting so a failed response write still ends
-    /// the stream; it returns `None` then.
-    fn acquire(self: &Arc<Self>, abort: impl Fn() -> bool) -> Option<CallSlot> {
-        let mut in_flight = self
-            .in_flight
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        while *in_flight >= MAX_IN_FLIGHT_CALLS {
-            if abort() {
-                return None;
-            }
-            in_flight = self
-                .freed
-                .wait_timeout(in_flight, Duration::from_millis(50))
-                .unwrap_or_else(PoisonError::into_inner)
-                .0;
+/// Runs `tools/call` requests on at most `MAX_IN_FLIGHT_CALLS` threads. Go
+/// starts one goroutine per call; the reader here never blocks on the cap
+/// (so `ping`, `tools/list` and parse errors are still answered at once) and
+/// calls beyond the cap wait in an in-memory queue until a worker frees up.
+struct Scheduler {
+    state: Mutex<SchedulerState>,
+    idle: Condvar,
+}
+
+impl Scheduler {
+    fn new() -> Self {
+        Self {
+            state: Mutex::new(SchedulerState {
+                running: 0,
+                pending: VecDeque::new(),
+            }),
+            idle: Condvar::new(),
         }
-        *in_flight += 1;
-        Some(CallSlot(Arc::clone(self)))
+    }
+
+    fn lock(&self) -> std::sync::MutexGuard<'_, SchedulerState> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Takes a worker slot, or queues `job` when every slot is busy.
+    fn admit(&self, job: Job) -> Option<Job> {
+        let mut state = self.lock();
+        if state.running >= MAX_IN_FLIGHT_CALLS {
+            state.pending.push_back(job);
+            return None;
+        }
+        state.running += 1;
+        Some(job)
+    }
+
+    /// Called by a worker after a job: the next queued job, or releases the
+    /// slot.
+    fn next_or_release(&self) -> Option<Job> {
+        let mut state = self.lock();
+        if let Some(job) = state.pending.pop_front() {
+            return Some(job);
+        }
+        state.running -= 1;
+        self.idle.notify_all();
+        None
+    }
+
+    /// A worker could not be started: releases its slot and, when no worker
+    /// is left to drain the queue, hands the queued jobs back.
+    fn spawn_failed(&self) -> Vec<Job> {
+        let mut state = self.lock();
+        state.running -= 1;
+        let orphans = if state.running == 0 {
+            state.pending.drain(..).collect()
+        } else {
+            Vec::new()
+        };
+        self.idle.notify_all();
+        orphans
+    }
+
+    /// Blocks until no call is running or queued (Go `wg.Wait()`).
+    fn wait_idle(&self) {
+        let mut state = self.lock();
+        while state.running > 0 || !state.pending.is_empty() {
+            state = self
+                .idle
+                .wait(state)
+                .unwrap_or_else(PoisonError::into_inner);
+        }
     }
 }
 
@@ -1319,20 +1446,30 @@ pub fn serve_io_with_search_path<R: BufRead, W: Write + Send>(
 ) -> io::Result<()> {
     let output: SharedOutput<W> = Arc::new(Mutex::new(output));
     let cancelled = Arc::new(AtomicBool::new(false));
-    let worker_failed = Arc::new(AtomicBool::new(false));
-    let slots = Arc::new(CallSlots {
-        in_flight: Mutex::new(0),
-        freed: Condvar::new(),
-    });
+    let scheduler = Scheduler::new();
     let (errors, worker_errors) = mpsc::channel::<io::Error>();
 
+    // Runs one call and writes its response. A failed write cancels the serve
+    // context like Go's `recordWriteErr`, so waiting tools stop at once.
+    let run_job = |job: Job, errors: &mpsc::Sender<io::Error>| {
+        let response = guarded_call(
+            &job.request,
+            room_dir,
+            artifact_root,
+            identity,
+            search_path,
+            &cancelled,
+            job.received,
+        );
+        if job.request.has_id
+            && let Err(error) = write_shared(&output, job.mode, &response)
+        {
+            cancelled.store(true, Ordering::SeqCst);
+            let _ = errors.send(error);
+        }
+    };
+
     thread::scope(|scope| {
-        let mut in_flight = Vec::new();
-        let join_all = |in_flight: &mut Vec<thread::ScopedJoinHandle<'_, ()>>| {
-            for handle in in_flight.drain(..) {
-                let _ = handle.join();
-            }
-        };
         let outcome = (|| -> io::Result<()> {
             loop {
                 if let Ok(error) = worker_errors.try_recv() {
@@ -1341,12 +1478,12 @@ pub fn serve_io_with_search_path<R: BufRead, W: Write + Send>(
                 match read_request(&mut input) {
                     Ok(None) => return Ok(()),
                     Err(ReadError::Parse(message, mode)) => {
-                        join_all(&mut in_flight);
+                        scheduler.wait_idle();
                         let body = render_error("null", -32700, &format!("Parse error: {message}"));
                         write_shared(&output, mode, &body)?;
                     }
                     Err(ReadError::InvalidRequest(mode)) => {
-                        join_all(&mut in_flight);
+                        scheduler.wait_idle();
                         let body = render_error("null", -32600, "Invalid Request");
                         write_shared(&output, mode, &body)?;
                     }
@@ -1358,49 +1495,47 @@ pub fn serve_io_with_search_path<R: BufRead, W: Write + Send>(
                     }
                     Ok(Some((request, mode))) => {
                         if request.method == "tools/call" {
-                            in_flight.retain(|handle| !handle.is_finished());
-                            let Some(slot) = slots.acquire(|| worker_failed.load(Ordering::SeqCst))
-                            else {
-                                return worker_errors.try_recv().map_or(Ok(()), Err);
-                            };
-                            let worker_output = Arc::clone(&output);
-                            let errors = errors.clone();
-                            let cancelled = Arc::clone(&cancelled);
-                            let worker_failed = Arc::clone(&worker_failed);
                             let (id, has_id) = (request.id.clone(), request.has_id);
+                            let job = Job {
+                                request,
+                                mode,
+                                received: Instant::now(),
+                            };
+                            let Some(job) = scheduler.admit(job) else {
+                                continue;
+                            };
+                            let errors = errors.clone();
+                            let (scheduler, run_job) = (&scheduler, &run_job);
                             let spawned = thread::Builder::new().spawn_scoped(scope, move || {
-                                let _slot = slot;
-                                let response = guarded_call(
-                                    &request,
-                                    room_dir,
-                                    artifact_root,
-                                    identity,
-                                    search_path,
-                                    &cancelled,
-                                );
-                                if request.has_id
-                                    && let Err(error) =
-                                        write_shared(&worker_output, mode, &response)
-                                {
-                                    let _ = errors.send(error);
-                                    worker_failed.store(true, Ordering::SeqCst);
+                                let mut job = job;
+                                loop {
+                                    run_job(job, &errors);
+                                    match scheduler.next_or_release() {
+                                        Some(next) => job = next,
+                                        None => return,
+                                    }
                                 }
                             });
-                            match spawned {
-                                Ok(handle) => in_flight.push(handle),
-                                // The OS refused another thread: answer this call
-                                // with an internal error instead of aborting.
-                                Err(error) => {
-                                    if has_id {
-                                        let body = render_error(
-                                            &id,
-                                            -32603,
-                                            &format!(
-                                                "Internal error: cannot start handler: {error}"
-                                            ),
-                                        );
-                                        write_shared(&output, mode, &body)?;
-                                    }
+                            if let Err(error) = spawned {
+                                // The OS refused another thread: answer the
+                                // calls nobody can run with an internal error
+                                // instead of aborting.
+                                let mut refused: Vec<(String, Mode)> = scheduler
+                                    .spawn_failed()
+                                    .into_iter()
+                                    .filter(|job| job.request.has_id)
+                                    .map(|job| (job.request.id, job.mode))
+                                    .collect();
+                                if has_id {
+                                    refused.push((id, mode));
+                                }
+                                for (id, mode) in refused {
+                                    let body = render_error(
+                                        &id,
+                                        -32603,
+                                        &format!("Internal error: cannot start handler: {error}"),
+                                    );
+                                    write_shared(&output, mode, &body)?;
                                 }
                             }
                         } else {
@@ -1418,7 +1553,7 @@ pub fn serve_io_with_search_path<R: BufRead, W: Write + Send>(
         if outcome.is_err() {
             cancelled.store(true, Ordering::SeqCst);
         }
-        join_all(&mut in_flight);
+        scheduler.wait_idle();
         drop(errors);
         match outcome {
             Ok(()) => worker_errors.try_recv().map_or(Ok(()), Err),
@@ -1453,6 +1588,7 @@ fn guarded_call(
     identity: Option<&symroom_core::identity::Identity>,
     search_path: Option<&OsStr>,
     cancelled: &AtomicBool,
+    received: Instant,
 ) -> String {
     let outcome = panic::catch_unwind(AssertUnwindSafe(|| {
         call(
@@ -1462,6 +1598,7 @@ fn guarded_call(
             identity,
             search_path,
             cancelled,
+            received,
         )
     }));
     outcome
@@ -1560,6 +1697,7 @@ fn call(
     identity: Option<&symroom_core::identity::Identity>,
     search_path: Option<&OsStr>,
     cancelled: &AtomicBool,
+    received: Instant,
 ) -> String {
     let id = request.id.as_str();
     let (name, arguments) = match decode_call_params(request.params.as_deref()) {
@@ -1579,7 +1717,7 @@ fn call(
         "room_status" => room_status(room_dir).map_err(Failure::Tool),
         "room_journal_tail" => journal_tail(room_dir, &mut args),
         "room_artifact_list" => artifact_list(room_dir, artifact_root).map_err(Failure::Tool),
-        "room_run_wait" => run_wait(room_dir, &mut args, cancelled),
+        "room_run_wait" => run_wait(room_dir, &mut args, cancelled, received),
         "room_note_post" => mutate_note(room_dir, &mut args, identity),
         "room_artifact_link" => {
             mutate_artifact(room_dir, artifact_root, &mut args, identity, search_path)
@@ -1615,11 +1753,14 @@ fn journal_tail(room_dir: &Path, args: &mut GoObject) -> Result<String, Failure>
 }
 
 /// Go `run.Wait` inside a per-call timeout context, polling in short slices so
-/// a cancelled stream stops waiting like Go's `ctx.Done()`.
+/// a cancelled stream stops waiting like Go's `ctx.Done()`. `started` is the
+/// instant the call was read: the deadline does not restart for a call that
+/// waited in the scheduler queue.
 fn run_wait(
     room_dir: &Path,
     args: &mut GoObject,
     cancelled: &AtomicBool,
+    started: Instant,
 ) -> Result<String, Failure> {
     let run_id = args.string("run_id");
     let mut seconds = args.float("timeout_seconds");
@@ -1631,7 +1772,6 @@ fn run_wait(
     }
     let timeout =
         Duration::try_from_secs_f64(seconds).unwrap_or(Duration::from_secs(u32::MAX.into()));
-    let started = Instant::now();
     loop {
         let remaining = timeout.saturating_sub(started.elapsed());
         let slice = remaining.min(Duration::from_millis(100));

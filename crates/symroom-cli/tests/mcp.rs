@@ -1303,15 +1303,16 @@ fn go_mcp_catalog_has_the_eight_room_tools_in_order_and_no_approval_tool() {
     }));
 }
 
-// Go starts a goroutine per `tools/call`; the Rust server bounds the number of
-// calls executing at once (`MAX_IN_FLIGHT_CALLS`, small in the test build) and
-// stops reading while it is full, so a flood of long-running waits can never
-// exhaust the OS thread limit (a panic-abort in release builds). Every call is
-// still answered, in batches, and a later cheap request is not lost.
+// Go starts a goroutine per `tools/call`; the Rust server runs them on at most
+// `MAX_IN_FLIGHT_CALLS` worker threads (small in the test build) and queues the
+// rest, so a flood of long-running waits can never exhaust the OS thread limit
+// (a panic-abort in release builds). The reader never blocks on the cap: a
+// later `ping` is answered before any wait, every call is still answered, and a
+// queued wait keeps the deadline of its arrival instead of restarting it.
 #[test]
-fn tool_calls_in_flight_are_bounded_and_every_call_is_answered() {
+fn tool_calls_beyond_the_worker_cap_are_queued_without_blocking_the_reader() {
     let room = fixture_room("in-flight-cap", &[]);
-    let wait_seconds = 0.25;
+    let wait_seconds = 0.5;
     let calls = mcp::MAX_IN_FLIGHT_CALLS * 4;
     let mut input = Vec::new();
     for id in 1..=calls {
@@ -1349,6 +1350,11 @@ fn tool_calls_in_flight_are_bounded_and_every_call_is_answered() {
         .map(|frame| frame["id"].as_u64().expect("numeric id"))
         .collect::<std::collections::BTreeSet<_>>();
     assert_eq!(ids, (1..=calls as u64 + 1).collect());
+    assert_eq!(
+        frames[0]["id"].as_u64(),
+        Some(calls as u64 + 1),
+        "ping is answered before any wait finishes"
+    );
     for frame in &frames {
         if frame["id"].as_u64() == Some(calls as u64 + 1) {
             assert_eq!(frame["result"], json!({}));
@@ -1360,12 +1366,11 @@ fn tool_calls_in_flight_are_bounded_and_every_call_is_answered() {
             );
         }
     }
-    // With the cap each full batch takes a whole wait: four batches of eight.
-    // Unbounded, all calls would overlap and finish in about one wait.
-    let minimum = std::time::Duration::from_secs_f64(wait_seconds * 3.0);
+    // All waits share the deadline of their arrival: queued calls do not start
+    // a second full wait once a worker frees up.
     assert!(
-        elapsed >= minimum,
-        "in-flight calls were not bounded: {calls} waits of {wait_seconds}s finished in {elapsed:?}"
+        elapsed < std::time::Duration::from_secs_f64(wait_seconds * 1.9),
+        "queued waits restarted their deadline: {calls} waits of {wait_seconds}s took {elapsed:?}"
     );
     let _ = std::fs::remove_dir_all(room);
 }

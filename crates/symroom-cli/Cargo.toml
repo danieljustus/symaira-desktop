@@ -23,3 +23,6 @@ hex.workspace = true
 toml.workspace = true
 tokio.workspace = true
 getrandom = "=0.4.3"
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"

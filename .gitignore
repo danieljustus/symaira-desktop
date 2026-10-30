@@ -67,3 +67,7 @@ PLANUNG.md
 ARCHITEKTUR.md
 .claude/
 fuzz/target/
+
+# Python bytecode from CI helpers; self-hosted runners keep the checkout between jobs.
+__pycache__/
+*.py[co]

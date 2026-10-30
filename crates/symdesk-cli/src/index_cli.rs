@@ -12,8 +12,9 @@ use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_index::{
     MAX_RETRIEVAL_SOURCE_BYTES, RetrievalDb, RetrievalDocument, RetrievalEmbeddingConfig,
-    StoredRetrievalChunk, backup_database, index_location_for_vault, materialize_byte_chunks,
-    materialize_chunks, parse_csv_retrieval_sections, parse_document_retrieval_sections,
+    StoredRetrievalChunk, backup_database, detect_sidecar_path, import_extraction_sidecar,
+    index_location_for_vault, materialize_byte_chunks, materialize_chunks,
+    parse_csv_retrieval_sections, parse_document_retrieval_sections,
     parse_markdown_body_retrieval_sections, parse_markdown_retrieval_sections,
     parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
     retrieval_embedding_config,
@@ -617,6 +618,18 @@ fn index_markdown_retrieval(
         database
             .save_chunks(&stored)
             .map_err(|error| format!("failed to save chunks: {error}"))?;
+    }
+    // Go's commitIndex imports a detected extraction sidecar once the chunks
+    // are saved, so the new chunk spans are available for linking. A failed
+    // import only warns: the document stays indexed.
+    if let Some(sidecar) = detect_sidecar_path(&source, &document.body) {
+        let shown = sidecar.to_string_lossy();
+        match import_extraction_sidecar(database, &source, &sidecar) {
+            Ok(()) => eprintln!("Imported extraction sidecar: {shown}"),
+            Err(error) => eprintln!(
+                "Warning: failed to import extraction sidecar {shown} for {source}: {error}"
+            ),
+        }
     }
     let pending = stored
         .iter()

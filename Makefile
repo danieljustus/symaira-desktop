@@ -877,7 +877,14 @@ render-emit-differential:
 	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/renderemitgen --check
 	$(CARGO) test -p symdesk-render --test draw_emit_contract --locked
 
-render-ir-differential: render-emit-differential
+# PNG bytes depend on the recording architecture (see renderpnggen); the Go
+# check is skipped off arm64 while the Rust replay always runs.
+.PHONY: render-png-differential
+render-png-differential:
+	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/renderpnggen --check
+	$(CARGO) test -p symdesk-render --test draw_png_contract --locked
+
+render-ir-differential: render-emit-differential render-png-differential
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen --check

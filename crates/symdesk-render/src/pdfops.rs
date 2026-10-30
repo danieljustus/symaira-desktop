@@ -406,28 +406,55 @@ fn path_error(op: &str, path: &str, error: io::Error) -> String {
         io::ErrorKind::PermissionDenied => "permission denied".into(),
         io::ErrorKind::AlreadyExists => "file exists".into(),
         io::ErrorKind::NotADirectory => "not a directory".into(),
-        _ => error.to_string(),
+        _ => go_errno_text(&error),
     };
     format!("{op} {path}: {message}")
 }
+/// Go's errno text: the C `strerror` string without Rust's ` (os error N)`
+/// suffix and with a lower-case first letter (`file name too long`).
+fn go_errno_text(error: &io::Error) -> String {
+    let mut message = error.to_string();
+    if let Some(index) = message.rfind(" (os error ") {
+        message.truncate(index);
+    }
+    let mut chars = message.chars();
+    match chars.next() {
+        Some(first) => first.to_lowercase().collect::<String>() + chars.as_str(),
+        None => message,
+    }
+}
+/// Mirrors Go's `os.MkdirAll`: the error names the first path that is not a
+/// directory (or whose `mkdir` failed), not the requested leaf.
 fn mkdir_all(path: &Path) -> Result<(), String> {
+    let name = text(path);
     if let Ok(metadata) = fs::metadata(path) {
         return if metadata.is_dir() {
             Ok(())
         } else {
-            Err(format!("mkdir {}: not a directory", text(path)))
+            Err(format!("mkdir {name}: not a directory"))
         };
     }
+    let trimmed = name.trim_end_matches('/');
+    let leaf_start = trimmed.rfind('/').map_or(0, |index| index + 1);
+    if leaf_start > 1 {
+        mkdir_all(Path::new(&trimmed[..leaf_start - 1]))?;
+    }
     let mut builder = fs::DirBuilder::new();
-    builder.recursive(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;
         builder.mode(0o700);
     }
-    builder
-        .create(path)
-        .map_err(|e| path_error("mkdir", &text(path), e))
+    match builder.create(path) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if fs::symlink_metadata(path).is_ok_and(|m| m.is_dir()) {
+                Ok(())
+            } else {
+                Err(path_error("mkdir", &name, error))
+            }
+        }
+    }
 }
 fn executable(path: &Path) -> bool {
     fs::metadata(path).is_ok_and(|m| {
@@ -572,6 +599,23 @@ mod tests {
             "page selector exceeds 1000000 pages"
         );
         assert_eq!(clean(PathBuf::from("a/../b/./c")), Path::new("b/c"));
+    }
+
+    #[test]
+    fn go_filesystem_error_text() {
+        let long = io::Error::from_raw_os_error(36);
+        assert!(
+            !path_error("lstat", "/x", long).contains("os error"),
+            "Rust errno suffix must not leak into Go-shaped text"
+        );
+        let directory = std::env::temp_dir().join(format!("symdesk-mkdir-{}", std::process::id()));
+        let file = directory.join("file");
+        fs::create_dir_all(&directory).unwrap();
+        fs::write(&file, b"x").unwrap();
+        // Go names the first non-directory ancestor, not the requested leaf.
+        let error = mkdir_all(&file.join("a/b")).unwrap_err();
+        assert_eq!(error, format!("mkdir {}: not a directory", file.display()));
+        fs::remove_dir_all(&directory).unwrap();
     }
 
     #[test]

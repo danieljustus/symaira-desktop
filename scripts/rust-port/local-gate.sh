@@ -54,6 +54,8 @@ run_linux() {
     -e CARGO_TARGET_DIR=/home/dev/target -e MIRI_TARGET_DIR=/home/dev/target/miri \
     -e CARGO_INCREMENTAL=0 -e GOCACHE=/home/dev/go/cache -e GOMODCACHE=/home/dev/go/pkg/mod \
     -e GOPROXY=https://proxy.golang.org,direct \
+    -e RENDER_EVIDENCE_ROOT="${RENDER_EVIDENCE_ROOT:+${RENDER_EVIDENCE_ROOT}-linux}" \
+    -e RENDER_RUNTIME_ROOT="${RENDER_RUNTIME_ROOT:+${RENDER_RUNTIME_ROOT}-linux}" \
     "$image" make $targets
 }
 

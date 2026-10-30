@@ -19,6 +19,18 @@ arm64 run in the `symdesk-linux-gate` container. A row whose only residual was
 native CI or Windows becomes PASS on that evidence; Linux amd64 is covered by
 the single CI run of the final push.
 
+## Local completion checkpoint — 2026-10-30
+
+Local `main` a586b0f0 (not pushed). RUST-016 passed; RENDER-001 and the
+SymDraw PNG slice (RENDER-003) are PASS (local); 35 matrix rows are PASS or
+PASS (local). Two-host local gate receipts at a586b0f0: `port-contract`,
+`render-ir-differential`, `render-differential` exit 0 on macOS arm64 and
+Linux arm64; `rust-check rust-lint rust-test` exit 0 at 893d442b (Linux) and
+`rust-test` at 2912360a (macOS) after the timed SymRoom MCP replay was made
+exclusive in `.config/nextest.toml`. Open: RUST-008, RUST-011 (RENDER-002 and
+the rest of RENDER-003), then RUST-009/010/012 and everything behind them.
+`verify.py` needs a fresh `RENDER_EVIDENCE_ROOT` per run.
+
 ## Local integration checkpoint — 2026-10-26
 
 Execution mode: local-first on branch `rust/integration` (worktree

@@ -44,8 +44,12 @@ jobs:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
         go-version: ["1.26.10"]
-    needs: [decide]
-    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
+    # The Go suite has wall-clock watchdogs (5 s worker, 30 s oracle child,
+    # 1.5 s watcher debounce) that time out on the shared MacBook runner
+    # under interactive load (main run 41022077920, two attempts). It only
+    # runs on main pushes and the schedule, so the hosted queue never gates
+    # a PR; the Rust jobs keep the self-hosted routing.
+    runs-on: ${{ matrix.os == 'macos-latest' && 'macos-26' || matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

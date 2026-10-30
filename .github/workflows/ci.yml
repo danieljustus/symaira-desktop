@@ -27,18 +27,37 @@ permissions:
 # verify the macOS and iOS builds against the pinned public AppKit package.
 
 jobs:
+  decide:
+    name: Select macOS capacity
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/macos-runner.yml
+    secrets:
+      RUNNER_INVENTORY_TOKEN: ${{ secrets.RUNNER_INVENTORY_TOKEN }}
+    with:
+      hosted: macos-26
+
   test:
     strategy:
       matrix:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
         go-version: ["1.26.10"]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # Source-provenance tests read several pinned Go revisions with `git show`.
       # Keep every pinned oracle reachable through local branches because
@@ -57,6 +76,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: ${{ matrix.go-version }}
 
       - name: Download dependencies
@@ -163,12 +183,20 @@ jobs:
         # Exercise the portable source and oracle contracts on every native runner.
         # Supported native targets on push, schedule, and workflow_dispatch.
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # Windows runs clone-based Go source-provenance checks in the contracts.
       - name: Materialize pinned Go oracle for source guards
@@ -186,6 +214,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
@@ -309,14 +338,22 @@ jobs:
       matrix:
         # Supported native targets on push, schedule, and workflow_dispatch.
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           # Detach even on main pushes; the gate owns an exact-SHA temporary branch.
           ref: ${{ github.sha }}
           # The pinned Go source oracles are validated from Git history.
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       # The source-guard tests clone this checkout, so retain every pinned Go
       # source revision through local branches rather than only FETCH_HEAD.
@@ -335,6 +372,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
 
       - name: Install pinned Rust toolchain
@@ -913,13 +951,22 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    needs: [decide]
+    runs-on: ${{ fromJSON(matrix.os == 'macos-latest' && needs.decide.outputs.runs_on || toJSON(matrix.os)) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          clean: ${{ runner.environment != 'self-hosted' }}
           fetch-depth: 0
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          cache: ${{ runner.environment != 'self-hosted' }}
           go-version: "1.26.10"
       - name: Install pinned Rust and real PDF tools
         shell: bash
@@ -1093,9 +1140,20 @@ jobs:
   app:
     # Native macOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
+    # Xcode test hosts and iOS simulators stay on the hosted image: the
+    # MacBook runner's LaunchAgent session cannot host the app test runner
+    # and has no iPhone simulator installed.
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          clean: ${{ runner.environment != 'self-hosted' }}
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       - name: Verify Xcode 26 toolchain
         run: |
@@ -1134,9 +1192,18 @@ jobs:
     # Native iOS acceptance remains on main, weekly, and manual suites.
     if: github.event_name != 'pull_request'
     name: iOS app
+    # The MacBook runner has no iPhone simulator; keep the hosted image.
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          clean: ${{ runner.environment != 'self-hosted' }}
+      - name: Prune stale gate worktrees on the persistent self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        # Gates add oracle worktrees under runner.temp, which is wiped after
+        # each job while the registration in the kept checkout survives.
+        run: git worktree prune
+
 
       - name: Verify Xcode 26 toolchain
         run: |

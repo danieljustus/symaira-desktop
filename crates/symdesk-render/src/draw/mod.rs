@@ -6,9 +6,12 @@
 //! `internal/draw/scene` graph (primitives, bounds, JSON) and the
 //! `internal/draw/layout` engines (layered graph layout, closed-form sequence
 //! layout). The builder lowers graph, sequence and chart diagrams into scenes;
-//! the SVG emitter serializes text elements or glyph outlines. Raster/PDF output
+//! the SVG emitter serializes text elements or glyph outlines; the PNG emitter
+//! rasterizes a scene (`x/image/vector` coverage arithmetic) and encodes it with
+//! a byte-exact port of Go's `image/png` + `compress/flate`. GIF/PDF output
 //! remain outside this port.
 
+mod go_flate;
 mod gotext;
 #[rustfmt::skip]
 mod go_unicode;
@@ -20,6 +23,7 @@ mod json;
 pub mod layout;
 pub mod measure;
 mod mermaid;
+pub mod png;
 pub mod scene;
 mod sequence;
 pub mod sfnt;

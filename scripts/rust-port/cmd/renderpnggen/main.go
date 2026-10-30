@@ -11,6 +11,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/danieljustus/symaira-desktop/internal/draw"
 	"github.com/danieljustus/symaira-desktop/internal/draw/emit"
@@ -47,6 +48,18 @@ func run() error {
 	output := flag.String("output", "testdata/port/render/png.json", "fixture path")
 	check := flag.Bool("check", false, "compare without writing")
 	flag.Parse()
+	// The recorded bytes depend on the host architecture: the Go compiler
+	// fuses float32 multiply-adds into FMA instructions on arm64 (x/image's
+	// lerp/devSquared and png.go carry no float32 conversions), and the amd64
+	// rasterizer sums coverage in a different order. The corpus is recorded
+	// on arm64 and the Rust port reproduces exactly that arithmetic.
+	if runtime.GOARCH != "arm64" {
+		if *check {
+			fmt.Printf("SKIP render PNG oracle check: fixture is recorded on arm64, host is %s\n", runtime.GOARCH)
+			return nil
+		}
+		return fmt.Errorf("render PNG fixture must be generated on arm64, host is %s", runtime.GOARCH)
+	}
 	root, err := fixtureoracle.FindRepositoryRoot(".")
 	if err != nil {
 		return err

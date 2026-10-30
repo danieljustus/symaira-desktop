@@ -1096,8 +1096,14 @@ mod tests {
     fn real_travels_with_full_precision() {
         let doc_bytes = fix_reals(b"[/SymdeskReal=0.774143603638475 /SymdeskReal=-1.5]".to_vec());
         // The marker is blanked at its own width, so byte offsets do not move.
-        assert_eq!(doc_bytes, b"[             0.774143603638475              -1.5]");
-        assert_eq!(doc_bytes.len(), b"[/SymdeskReal=0.774143603638475 /SymdeskReal=-1.5]".len());
+        assert_eq!(
+            doc_bytes,
+            b"[             0.774143603638475              -1.5]"
+        );
+        assert_eq!(
+            doc_bytes.len(),
+            b"[/SymdeskReal=0.774143603638475 /SymdeskReal=-1.5]".len()
+        );
     }
 
     #[test]

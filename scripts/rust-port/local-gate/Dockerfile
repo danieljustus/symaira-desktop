@@ -44,13 +44,14 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-to
  && mkdir -p /home/dev/.cargo/registry /home/dev/go /home/dev/target
 
 # Typst for the press render differential (RENDER-002). Last layer, so changing
-# the pin does not rebuild the toolchain layers above.
+# the pin does not rebuild the toolchain layers above. It goes to /usr/bin: the
+# fixture checks (portgen) run with a PATH reduced to git's directory and GOROOT.
 RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends xz-utils \
  && sudo rm -rf /var/lib/apt/lists/* \
  && arch="$(dpkg --print-architecture)" \
  && case "$arch" in arm64) target=aarch64; sum="$TYPST_SHA256_ARM64";; amd64) target=x86_64; sum="$TYPST_SHA256_AMD64";; *) echo "unsupported arch $arch" >&2; exit 1;; esac \
  && curl -fsSL -o /tmp/typst.tar.xz "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${target}-unknown-linux-musl.tar.xz" \
  && echo "${sum}  /tmp/typst.tar.xz" | sha256sum -c - \
- && sudo tar -C /usr/local/bin --strip-components=1 -xJf /tmp/typst.tar.xz "typst-${target}-unknown-linux-musl/typst" \
+ && sudo tar -C /usr/bin --strip-components=1 -xJf /tmp/typst.tar.xz "typst-${target}-unknown-linux-musl/typst" \
  && rm /tmp/typst.tar.xz \
  && typst --version | grep -q "typst ${TYPST_VERSION}"

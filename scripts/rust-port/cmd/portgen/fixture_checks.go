@@ -183,6 +183,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"render layout", []string{"run", "./scripts/rust-port/cmd/renderlayoutgen", "--check"}, []string{"testdata/port/render/layout.json"}, false},
 	{"render PNG", []string{"run", "./scripts/rust-port/cmd/renderpnggen", "--check"}, []string{"testdata/port/render/png.json"}, false},
 	{"render GIF", []string{"run", "./scripts/rust-port/cmd/rendergifgen", "--check"}, []string{"testdata/port/render/gif.json"}, false},
+	{"render Typst", []string{"run", "./scripts/rust-port/cmd/rendertypstgen", "--check"}, []string{"testdata/port/render/typst.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},

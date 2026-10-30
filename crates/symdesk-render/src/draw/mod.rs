@@ -11,7 +11,8 @@
 //! a byte-exact port of Go's `image/png` + `compress/flate`. The GIF emitter
 //! dithers each rasterized frame onto the Plan 9 palette and encodes it with a
 //! port of `image/gif` + `compress/lzw`; `animate` derives the frames and
-//! `typst` emits Typst markup. PDF output remains outside this port.
+//! `typst` emits Typst markup and `facade` is the public entry point
+//! (`internal/draw/draw.go`). PDF output remains outside this port.
 
 mod go_flate;
 mod gotext;
@@ -21,6 +22,7 @@ pub mod animate;
 pub mod builder;
 pub mod chart;
 pub mod emit;
+pub mod facade;
 pub mod gif;
 pub mod ir;
 mod json;

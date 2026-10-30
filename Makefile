@@ -904,7 +904,12 @@ render-typst-differential:
 	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/rendertypstgen --check
 	$(CARGO) test -p symdesk-render --test draw_typst_contract --locked
 
-render-ir-differential: render-emit-differential render-png-differential render-gif-differential render-typst-differential
+.PHONY: render-facade-differential
+render-facade-differential:
+	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/renderfacadegen --check
+	$(CARGO) test -p symdesk-render --test draw_facade_contract --locked
+
+render-ir-differential: render-emit-differential render-png-differential render-gif-differential render-typst-differential render-facade-differential
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen --check

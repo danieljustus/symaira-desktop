@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 type indexRetryProcessFile struct {
@@ -20,9 +22,21 @@ type indexRetryProcessFile struct {
 	Body string `json:"body"`
 }
 
+// indexRetryProcessSeed records a lifecycle row written through the Go
+// sidecar API before a step runs. The current `symdesk index` walk only visits
+// Markdown files, so no Go CLI path leaves a failed row for another extension;
+// the row stands in for state written by an earlier binary or another surface.
+type indexRetryProcessSeed struct {
+	Path   string `json:"path"`
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
 type indexRetryProcessStep struct {
 	ID       string                         `json:"id"`
+	Dirs     []string                       `json:"dirs,omitempty"`
 	Writes   []indexRetryProcessFile        `json:"writes,omitempty"`
+	Seeds    []indexRetryProcessSeed        `json:"seeds,omitempty"`
 	Removes  []string                       `json:"removes,omitempty"`
 	Args     []string                       `json:"args"`
 	Result   indexBuildProcessResult        `json:"result"`
@@ -130,11 +144,19 @@ func observeIndexRetryProcess(t *testing.T) indexRetryProcessFixture {
 
 	binary := buildIndexRetrievalBinary(t, root)
 	environment := []string{"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempRoot, "TMP=" + tempRoot, "TEMP=" + tempRoot, "LANG=C", "LC_ALL=C", "TZ=UTC", "TERM=dumb", "NO_COLOR=1"}
-	step := func(id string, writes []indexRetryProcessFile, removes []string, args ...string) {
+	stepWithSeeds := func(id string, dirs []string, writes []indexRetryProcessFile, seeds []indexRetryProcessSeed, removes []string, args ...string) {
+		for _, name := range dirs {
+			if err := os.MkdirAll(filepath.Join(vault, filepath.FromSlash(name)), 0o700); err != nil {
+				t.Fatal(err)
+			}
+		}
 		for _, file := range writes {
 			if err := os.WriteFile(filepath.Join(vault, filepath.FromSlash(file.Path)), []byte(file.Body), 0o600); err != nil {
 				t.Fatal(err)
 			}
+		}
+		if len(seeds) > 0 {
+			seedIndexRetryLifecycle(t, vault, seeds)
 		}
 		for _, name := range removes {
 			if err := os.Remove(filepath.Join(vault, filepath.FromSlash(name))); err != nil {
@@ -167,9 +189,12 @@ func observeIndexRetryProcess(t *testing.T) indexRetryProcessFixture {
 			recorded = append(recorded, normalizeRetryText(arg, root))
 		}
 		fixture.Steps = append(fixture.Steps, indexRetryProcessStep{
-			ID: id, Writes: writes, Removes: removes, Args: recorded, Result: result, Requests: observed,
+			ID: id, Dirs: dirs, Writes: writes, Seeds: seeds, Removes: removes, Args: recorded, Result: result, Requests: observed,
 			State: readIndexRetryState(t, root, filepath.Join(dataHome, "retrieval.db"), vault),
 		})
+	}
+	step := func(id string, writes []indexRetryProcessFile, removes []string, args ...string) {
+		stepWithSeeds(id, nil, writes, nil, removes, args...)
 	}
 	// The vault walk stops at the first parse failure, so each run leaves the
 	// failing file recorded and the rest of the vault for a later run.
@@ -180,7 +205,53 @@ func observeIndexRetryProcess(t *testing.T) indexRetryProcessFixture {
 	step("retry-after-stat-failure", nil, []string{"gone.md"}, "--vault", vault, "index", "retry")
 	step("prune-vault", nil, nil, "--json", "--vault", vault, "index", "--prune")
 	step("retry-nothing-failed", nil, nil, "--json", "--vault", vault, "index", "retry")
+
+	// Non-Markdown failed rows. Go's retry does not look at the extension: it
+	// stats each row, then runs the Markdown parser and hybrid indexer on the
+	// stored path. Only a recognised-but-unsupported extension changes the
+	// state a parse failure is recorded with.
+	seedFailed := func(paths ...string) []indexRetryProcessSeed {
+		seeds := make([]indexRetryProcessSeed, 0, len(paths))
+		for _, path := range paths {
+			seeds = append(seeds, indexRetryProcessSeed{Path: path, State: "failed", Reason: "interrupted by an earlier index worker"})
+		}
+		return seeds
+	}
+	stepWithSeeds("retry-nonmarkdown-indexes", nil, []indexRetryProcessFile{
+		{Path: "notes.txt", Body: "# Plain notes\n\nplain text retry oracle document.\n"},
+		{Path: "scan.pdf", Body: "%PDF-1.4\nstub pdf retry oracle body without a text layer.\n"},
+		{Path: "legacy.doc", Body: "legacy word retry oracle body.\n"},
+		{Path: "README", Body: "extensionless retry oracle readme.\n"},
+		{Path: "UPPER.MD", Body: "---\ntitle: Upper\n---\nuppercase markdown extension retry oracle.\n"},
+	}, seedFailed("README", "UPPER.MD", "legacy.doc", "notes.txt", "scan.pdf"), nil, "--json", "--vault", vault, "index", "retry")
+	stepWithSeeds("retry-nonmarkdown-failures", []string{"folder.txt"}, []indexRetryProcessFile{
+		{Path: "broken.txt", Body: indexRetryBrokenFrontmatter},
+		{Path: "broken.doc", Body: indexRetryBrokenFrontmatter},
+	}, seedFailed("broken.doc", "broken.txt", "folder.txt", "missing.txt"), nil, "--json", "--vault", vault, "index", "retry")
+	step("retry-nonmarkdown-again", nil, nil, "--vault", vault, "index", "retry")
+	step("prune-nonmarkdown", nil, nil, "--json", "--vault", vault, "index", "--prune")
+	step("repair-nonmarkdown", []indexRetryProcessFile{{Path: "broken.txt", Body: "# Fixed text\n\nrepaired plain text retry oracle.\n"}}, nil, "--json", "--vault", vault, "index", "retry")
 	return fixture
+}
+
+// seedIndexRetryLifecycle records lifecycle rows through the Go sidecar API in
+// the same disposable HOME/XDG roots the CLI process uses.
+func seedIndexRetryLifecycle(t *testing.T, vaultRoot string, seeds []indexRetryProcessSeed) {
+	t.Helper()
+	db, err := sidecar.OpenForVault(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close seeded sidecar: %v", err)
+		}
+	}()
+	for _, seed := range seeds {
+		if err := db.SetIndexStatus(filepath.Join(vaultRoot, filepath.FromSlash(seed.Path)), sidecar.IndexState(seed.State), seed.Reason); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 // readIndexRetryState reads the same state as readIndexRetrievalState, but
@@ -215,9 +286,12 @@ func normalizeRetryText(value, root string) string {
 	value = strings.ReplaceAll(value, root, "$ROOT")
 	value = strings.ReplaceAll(value, strings.ReplaceAll(root, `\`, `\\`), "$ROOT")
 	value = slashRootPaths(value)
-	return strings.ReplaceAll(value,
-		"GetFileAttributesEx $ROOT/vault/gone.md: The system cannot find the file specified.",
-		"lstat $ROOT/vault/gone.md: no such file or directory")
+	for _, name := range []string{"gone.md", "missing.txt"} {
+		value = strings.ReplaceAll(value,
+			"GetFileAttributesEx $ROOT/vault/"+name+": The system cannot find the file specified.",
+			"lstat $ROOT/vault/"+name+": no such file or directory")
+	}
+	return value
 }
 
 // slashRootPaths rewrites the separators of every $ROOT path token to "/".

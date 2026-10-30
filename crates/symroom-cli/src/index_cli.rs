@@ -35,7 +35,10 @@ fn rebuilt_message(separator: char) -> String {
 }
 
 fn write(mut output: impl Write, message: &str, code: u8) -> ExitCode {
-    if output.write_all(message.as_bytes()).is_err() {
+    if output
+        .write_all(&symroom_core::goio::out_bytes(message))
+        .is_err()
+    {
         return ExitCode::from(1);
     }
     ExitCode::from(code)

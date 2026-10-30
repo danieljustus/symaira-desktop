@@ -4,15 +4,12 @@
 //! resolution chains. Port of `internal/room/identity`.
 
 use std::fmt;
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{path::PathBuf, process::Command};
 
 use crate::goio;
 use crate::lookpath::look_path;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use sha2::{Digest, Sha256};
+use sha2::{Digest, Sha256, Sha512};
 
 /// Go: `identity.ErrIdentityNotFound`.
 pub const IDENTITY_NOT_FOUND: &str = "identity not found";
@@ -132,8 +129,8 @@ fn identities_dir_text() -> String {
 /// A 64-byte key is taken as Go's `ed25519.PrivateKey(keyBytes)` conversion
 /// does: the public half is whatever the last 32 bytes say, with no check that
 /// it belongs to the seed (`Public()` returns those bytes verbatim). Go only
-/// notices the mismatch, as an unverifiable signature, when it signs; Rust
-/// refuses to sign with such a key (see [`sign`]).
+/// notices the mismatch, as an unverifiable signature, when it signs, and so
+/// does [`sign`].
 pub fn identity_from_private_key(name: &str, private_key: &[u8]) -> Option<Identity> {
     let (public_key, private_key) = match private_key.len() {
         SEED_SIZE => {
@@ -169,13 +166,11 @@ pub fn generate(name: &str) -> Result<Identity, IdentityError> {
     identity_from_private_key(name, &seed).ok_or(IdentityError::InvalidKey)
 }
 
-/// Why [`sign`] refused a key.
+/// Why [`sign`] failed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SignError {
     /// Neither a 32-byte seed nor a 64-byte key (Go's `ed25519.Sign` panics).
     BadKeyLength,
-    /// A 64-byte key whose public half does not belong to its seed.
-    MismatchedPublicHalf,
 }
 
 impl fmt::Display for SignError {
@@ -184,25 +179,56 @@ impl fmt::Display for SignError {
             Self::BadKeyLength => {
                 f.write_str("refusing to sign: private key must be a 32-byte seed or a 64-byte key")
             }
-            Self::MismatchedPublicHalf => f.write_str(
-                "refusing to sign: the private key's public half does not match its seed",
-            ),
         }
     }
 }
 
 impl std::error::Error for SignError {}
 
-/// Go: `identity.Sign`.
+/// Go: `identity.Sign` (`ed25519.Sign`).
 ///
-/// Documented deviation: a 64-byte key whose public half does not belong to its
-/// seed is refused ([`SignError::MismatchedPublicHalf`]). Go signs it anyway,
-/// hashing the *stored* public half into the signature, which yields a
-/// signature that verifies against neither key; Rust returns an error instead
-/// of journaling an unverifiable event.
+/// A 64-byte key is `seed || public half` and Go trusts the stored half: it is
+/// hashed into the challenge as is, so a key whose half does not belong to its
+/// seed (or is not even a curve point) still signs, yielding a signature that
+/// verifies against neither key. [`sign_with_stored_half`] reproduces that
+/// equation; a consistent key takes the library path, which is the same value.
 pub fn sign(private_key: &[u8], message: &[u8]) -> Result<Signature, SignError> {
-    let signing_key = signing_key_from(private_key)?;
-    Ok(signing_key.sign(message))
+    match private_key.len() {
+        SEED_SIZE => Ok(SigningKey::from_bytes(
+            &<[u8; SEED_SIZE]>::try_from(private_key).expect("length checked above"),
+        )
+        .sign(message)),
+        PRIVATE_KEY_SIZE => Ok(sign_with_stored_half(private_key, message)),
+        _ => Err(SignError::BadKeyLength),
+    }
+}
+
+/// RFC 8032 signing, but with the public key taken from the key bytes instead
+/// of derived from the seed (what Go's `ed25519.sign` does for a 64-byte key).
+fn sign_with_stored_half(private_key: &[u8], message: &[u8]) -> Signature {
+    use curve25519_dalek::{constants::ED25519_BASEPOINT_TABLE, scalar::Scalar};
+    let (seed, stored_public) = private_key.split_at(SEED_SIZE);
+    let hash = Sha512::digest(seed);
+    let mut clamped = [0_u8; 32];
+    clamped.copy_from_slice(&hash[..32]);
+    let secret = Scalar::from_bytes_mod_order(curve25519_dalek::scalar::clamp_integer(clamped));
+    let wide = |parts: &[&[u8]]| {
+        let mut digest = Sha512::new();
+        for part in parts {
+            digest.update(part);
+        }
+        let mut bytes = [0_u8; 64];
+        bytes.copy_from_slice(&digest.finalize());
+        Scalar::from_bytes_mod_order_wide(&bytes)
+    };
+    let nonce = wide(&[&hash[32..], message]);
+    let commitment = (&nonce * ED25519_BASEPOINT_TABLE).compress();
+    let challenge = wide(&[commitment.as_bytes(), stored_public, message]);
+    let response = nonce + challenge * secret;
+    let mut signature = [0_u8; 64];
+    signature[..32].copy_from_slice(commitment.as_bytes());
+    signature[32..].copy_from_slice(response.as_bytes());
+    Signature::from_bytes(&signature)
 }
 
 /// Go: `identity.Verify`. Uses the permissive RFC 8032 check, like
@@ -220,25 +246,6 @@ pub fn verify(public_key: &[u8], message: &[u8], signature: &[u8]) -> bool {
     key.verify(message, &signature).is_ok()
 }
 
-fn signing_key_from(private_key: &[u8]) -> Result<SigningKey, SignError> {
-    match private_key.len() {
-        SEED_SIZE => Ok(SigningKey::from_bytes(
-            &<[u8; SEED_SIZE]>::try_from(private_key).expect("length checked above"),
-        )),
-        PRIVATE_KEY_SIZE => {
-            let seed: [u8; SEED_SIZE] = private_key[..SEED_SIZE]
-                .try_into()
-                .map_err(|_| SignError::BadKeyLength)?;
-            let key = SigningKey::from_bytes(&seed);
-            if key.verifying_key().to_bytes().as_slice() != &private_key[SEED_SIZE..] {
-                return Err(SignError::MismatchedPublicHalf);
-            }
-            Ok(key)
-        }
-        _ => Err(SignError::BadKeyLength),
-    }
-}
-
 /// Go: `identity.Save` — two-space indented JSON in a `0700` directory, the file
 /// itself written with `0600`.
 pub fn save(identity: &Identity) -> Result<(), IdentityError> {
@@ -253,7 +260,7 @@ pub fn save(identity: &Identity) -> Result<(), IdentityError> {
         private_key: hex::encode(&identity.private_key),
     };
     let data = serde_json::to_string_pretty(&stored)
-        .map(|text| go_html_escape(&text))
+        .map(|text| goio::json_finish(&go_html_escape(&text)).into_owned())
         .map_err(|err| IdentityError::Message(format!("marshal identity: {err}")))?;
 
     let path = goio::join(&dir, &format!("{}.json", identity.name));
@@ -277,11 +284,9 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
     // Go resolves both providers with `exec.LookPath`, which refuses a hit found
     // through a relative or empty PATH entry (`ErrDot`); the chain then simply
     // falls through, so the spawn below only ever runs an absolute path.
-    let vault_key = format!("symroom/identities/{name}");
+    let vault_key = goio::text_os(&format!("symroom/identities/{name}"));
     if let Some(symvault) = look_path("symvault")
-        && let Ok(output) = Command::new(symvault)
-            .args(["get", vault_key.as_str()])
-            .output()
+        && let Ok(output) = Command::new(symvault).arg("get").arg(&vault_key).output()
         && output.status.success()
         && let Some(identity) = identity_from_provider_output(name, &output.stdout)
     {
@@ -291,14 +296,9 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
     #[cfg(target_os = "macos")]
     if let Some(security) = look_path("security")
         && let Ok(output) = Command::new(security)
-            .args([
-                "find-generic-password",
-                "-s",
-                "symroom-identity",
-                "-a",
-                name,
-                "-w",
-            ])
+            .args(["find-generic-password", "-s", "symroom-identity", "-a"])
+            .arg(goio::text_os(name))
+            .arg("-w")
             .output()
         && output.status.success()
         && let Some(identity) = identity_from_provider_output(name, &output.stdout)
@@ -307,7 +307,7 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
     }
 
     let path = goio::join(&identities_dir_text(), &format!("{name}.json"));
-    let data = match goio::read_file(Path::new(&path)) {
+    let data = match goio::read_file(&goio::text_path(&path)) {
         Ok(data) => data,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
             return Err(IdentityError::NotFound);
@@ -367,7 +367,7 @@ fn identity_from_provider_output(name: &str, output: &[u8]) -> Option<Identity> 
 /// missing directory is an empty list.
 pub fn list() -> Result<Vec<String>, IdentityError> {
     let dir = identities_dir_text();
-    let entries = match goio::read_dir(Path::new(&dir)) {
+    let entries = match goio::read_dir(&goio::text_path(&dir)) {
         Ok(entries) => entries,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(err) => return Err(IdentityError::Message(err.to_string())),
@@ -381,7 +381,7 @@ pub fn list() -> Result<Vec<String>, IdentityError> {
             .map_err(|err| IdentityError::Message(err.to_string()))?
             .is_dir();
         if !is_dir {
-            files.push(entry.file_name().to_string_lossy().into_owned());
+            files.push(goio::os_text(&entry.file_name()));
         }
     }
     files.sort();
@@ -405,7 +405,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn mismatched_public_half_loads_like_go_but_refuses_to_sign() {
+    fn mismatched_public_half_signs_like_go_with_the_stored_half() {
         let seed = [7_u8; SEED_SIZE];
         let other = identity_from_private_key("other", &[9_u8; SEED_SIZE]).expect("other");
         let mut key = seed.to_vec();
@@ -414,15 +414,38 @@ mod tests {
         let loaded = identity_from_private_key("probe", &key).expect("Go accepts the key");
         assert_eq!(loaded.public_key, other.public_key);
         assert_eq!(loaded.member_id, other.member_id);
-        // Documented deviation: Go would sign with the stored public half and
-        // emit a signature that verifies against neither key.
-        assert_eq!(
-            sign(&loaded.private_key, b"message"),
-            Err(SignError::MismatchedPublicHalf)
+        let signature = sign(&loaded.private_key, b"message").expect("Go signs it anyway");
+        // The challenge hashes the stored half, so neither key verifies it.
+        assert!(!verify(
+            &other.public_key,
+            b"message",
+            &signature.to_bytes()
+        ));
+        let derived = identity_from_private_key("seed", &seed).expect("seed");
+        assert!(!verify(
+            &derived.public_key,
+            b"message",
+            &signature.to_bytes()
+        ));
+        assert_ne!(
+            signature.to_bytes(),
+            sign(&derived.private_key, b"message").unwrap().to_bytes()
         );
 
-        let consistent = identity_from_private_key("seed", &seed).expect("seed");
-        assert!(sign(&consistent.private_key, b"message").is_ok());
+        // A consistent 64-byte key is the ordinary signature.
+        assert_eq!(
+            sign(&derived.private_key, b"message").unwrap().to_bytes(),
+            SigningKey::from_bytes(&seed).sign(b"message").to_bytes()
+        );
+        assert!(verify(
+            &derived.public_key,
+            b"message",
+            &sign(&derived.private_key, b"message").unwrap().to_bytes()
+        ));
+        // A stored half that is not a curve point still signs.
+        let mut garbage = seed.to_vec();
+        garbage.extend_from_slice(&[0xff; 32]);
+        assert!(sign(&garbage, b"message").is_ok());
         assert_eq!(sign(&[1_u8; 5], b"message"), Err(SignError::BadKeyLength));
     }
 

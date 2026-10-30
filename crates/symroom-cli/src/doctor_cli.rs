@@ -592,7 +592,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn write(mut output: impl Write, value: &str, code: CoreExitCode) -> ExitCode {
-    if output.write_all(value.as_bytes()).is_err() {
+    if output
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

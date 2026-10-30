@@ -18,7 +18,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
             CoreExitCode::Ok,
         );
     };
-    match action.to_string_lossy().as_ref() {
+    match symroom_core::goio::os_text(action).as_str() {
         "create" => create(args.get(1)),
         "list" => list(),
         "show" => show(args.get(1)),
@@ -37,7 +37,7 @@ fn create(name: Option<&OsString>) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let name = name.to_string_lossy();
+    let name = symroom_core::goio::os_text(name);
     let id = match identity::generate(&name) {
         Ok(id) => id,
         Err(error) => {
@@ -82,7 +82,7 @@ fn show(name: Option<&OsString>) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let name = name.to_string_lossy();
+    let name = symroom_core::goio::os_text(name);
     match identity::load(&name) {
         Ok(id) => stdout(
             &format!(
@@ -139,7 +139,10 @@ fn export(args: &[OsString]) -> ExitCode {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -147,7 +150,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

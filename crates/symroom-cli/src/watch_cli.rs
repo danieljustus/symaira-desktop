@@ -224,7 +224,7 @@ fn parse(args: &[OsString]) -> Result<Parsed, ExitCode> {
     )?;
     Ok(Parsed {
         desk: parsed.string("desk").to_owned(),
-        identity: parsed.string("identity").to_owned(),
+        identity: parsed.text("identity").to_owned(),
     })
 }
 
@@ -244,7 +244,10 @@ fn go_duration(duration: Duration) -> String {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -252,7 +255,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

@@ -2687,6 +2687,7 @@ dependencies = [
 name = "symroom-core"
 version = "0.0.0"
 dependencies = [
+ "curve25519-dalek",
  "ed25519-dalek",
  "getrandom 0.4.3",
  "hex",

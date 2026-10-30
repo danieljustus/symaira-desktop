@@ -78,6 +78,12 @@ struct Case {
     cwd: String,
     #[serde(default)]
     needs_non_root: bool,
+    #[serde(default)]
+    host: String,
+    #[serde(default)]
+    identity_key: bool,
+    #[serde(default)]
+    key_hex: String,
     exit_code: i32,
     stdout: String,
     stderr: String,
@@ -155,30 +161,75 @@ fn running_as_root(scratch: &Path) -> bool {
     readable
 }
 
-fn member_ids_masked(text: &str) -> String {
-    let bytes = text.as_bytes();
-    let mut out = String::with_capacity(text.len());
+/// Masks `mem_<16 hex>` in `bytes`.
+fn member_ids_masked(bytes: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(bytes.len());
     let mut index = 0;
     while index < bytes.len() {
-        if text[index..].starts_with("mem_")
+        if bytes[index..].starts_with(b"mem_")
             && bytes.len() >= index + 20
             && bytes[index + 4..index + 20]
                 .iter()
                 .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
         {
-            out.push_str("<member_id>");
+            out.extend_from_slice(b"<member_id>");
             index += 20;
         } else {
-            let ch = text[index..].chars().next().expect("char");
-            out.push(ch);
-            index += ch.len_utf8();
+            out.push(bytes[index]);
+            index += 1;
         }
     }
     out
 }
 
-fn normalize(text: &str, root: &Path) -> String {
-    member_ids_masked(&text.replace(&root.to_string_lossy().into_owned(), "<root>"))
+fn replace_bytes(haystack: &[u8], needle: &[u8], with: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(haystack.len());
+    let mut index = 0;
+    while index < haystack.len() {
+        if haystack[index..].starts_with(needle) {
+            out.extend_from_slice(with);
+            index += needle.len();
+        } else {
+            out.push(haystack[index]);
+            index += 1;
+        }
+    }
+    out
+}
+
+/// Masks the scratch root and member ids; output that is not valid UTF-8 is
+/// compared as `hex:<digits>`, like the Go generator records it.
+fn normalize(bytes: &[u8], root: &Path) -> String {
+    let root = root.to_string_lossy().into_owned();
+    let masked = replace_bytes(bytes, root.as_bytes(), b"<root>");
+    let masked = member_ids_masked(&masked);
+    match String::from_utf8(masked) {
+        Ok(text) => text,
+        Err(error) => format!("hex:{}", hex::encode(error.into_bytes())),
+    }
+}
+
+/// Replaces every `<hex:digits>` token with the bytes it names.
+#[cfg(unix)]
+fn decode_arg(arg: &str) -> std::ffi::OsString {
+    use std::os::unix::ffi::OsStringExt;
+    let mut bytes = Vec::new();
+    let mut rest = arg;
+    while let Some(start) = rest.find("<hex:") {
+        let Some(end) = rest[start..].find('>') else {
+            break;
+        };
+        bytes.extend_from_slice(rest[..start].as_bytes());
+        bytes.extend(hex::decode(&rest[start + 5..start + end]).expect("hex token"));
+        rest = &rest[start + end + 1..];
+    }
+    bytes.extend_from_slice(rest.as_bytes());
+    std::ffi::OsString::from_vec(bytes)
+}
+
+#[cfg(not(unix))]
+fn decode_arg(arg: &str) -> std::ffi::OsString {
+    std::ffi::OsString::from(arg)
 }
 
 /// Mirrors the Go generator: a file holding a consistent stored identity has
@@ -220,7 +271,12 @@ fn mask_stored_identity(content: &str) -> String {
         .replace(&stored.member_id, "<member_id>")
 }
 
-fn apply_ops(root: &Path, ops: &[Op], run_again: &dyn Fn()) -> BTreeMap<String, String> {
+fn apply_ops(
+    root: &Path,
+    ops: &[Op],
+    run_again: &dyn Fn(),
+    run_other: &dyn Fn(&str),
+) -> BTreeMap<String, String> {
     let mut before = BTreeMap::new();
     for op in ops {
         let path = root.join(&op.path);
@@ -247,6 +303,7 @@ fn apply_ops(root: &Path, ops: &[Op], run_again: &dyn Fn()) -> BTreeMap<String, 
                 let _ = fs::remove_file(&path);
             }
             "run" => run_again(),
+            "cli" => run_other(&op.content),
             other => panic!("unknown op {other}"),
         }
     }
@@ -256,7 +313,7 @@ fn apply_ops(root: &Path, ops: &[Op], run_again: &dyn Fn()) -> BTreeMap<String, 
 fn command(case: &Case, root: &Path, args: &[String]) -> Command {
     let mut command = if case.umask.is_empty() {
         let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
-        command.args(args);
+        command.args(args.iter().map(|arg| decode_arg(arg)));
         command
     } else {
         let mut command = Command::new("/bin/sh");
@@ -267,7 +324,7 @@ fn command(case: &Case, root: &Path, args: &[String]) -> Command {
                 "sh".to_owned(),
                 env!("CARGO_BIN_EXE_symroom").to_owned(),
             ])
-            .args(args);
+            .args(args.iter().map(|arg| decode_arg(arg)));
         command
     };
     command.isolated_env();
@@ -308,6 +365,15 @@ fn command(case: &Case, root: &Path, args: &[String]) -> Command {
     }
     if !case.room_env.is_empty() {
         command.env("SYMROOM_ROOM_DIR", path(root.join(&case.room_env)));
+    }
+    if !case.key_hex.is_empty() {
+        command.env("SYMROOM_IDENTITY_KEY", &case.key_hex);
+    }
+    if case.identity_key {
+        command.env(
+            "SYMROOM_IDENTITY_KEY",
+            "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+        );
     }
     command.current_dir(if case.cwd.is_empty() {
         root.to_path_buf()
@@ -406,6 +472,14 @@ fn identity_store_and_index_rebuild_match_go_process_contract() {
             skipped += 1;
             continue;
         }
+        if !case.host.is_empty()
+            && case.host != std::env::consts::OS
+            && !(case.host == "darwin" && cfg!(target_os = "macos"))
+        {
+            eprintln!("SKIP {}: file-name policy of {}", case.name, case.host);
+            skipped += 1;
+            continue;
+        }
         if case.needs_non_root && is_root {
             eprintln!("SKIP {}: root ignores file permissions", case.name);
             skipped += 1;
@@ -421,17 +495,21 @@ fn identity_store_and_index_rebuild_match_go_process_contract() {
         let again = || {
             let _ = command(case, &root, &case.args).output();
         };
-        let before = apply_ops(&root, &case.ops, &again);
+        let other = |args: &str| {
+            let args: Vec<String> = args.split(' ').map(str::to_owned).collect();
+            let _ = command(case, &root, &args).output();
+        };
+        let before = apply_ops(&root, &case.ops, &again, &other);
         let output = command(case, &root, &case.args)
             .output()
             .expect("run symroom");
         restore_dir_modes(&root);
-        let mut stdout = normalize(&String::from_utf8_lossy(&output.stdout), &root);
+        let mut stdout = normalize(&output.stdout, &root);
         if cfg!(windows) {
             // `index rebuild` prints the host separator; the fixture holds `/`.
             stdout = stdout.replace('\\', "/");
         }
-        let stderr = normalize(&String::from_utf8_lossy(&output.stderr), &root);
+        let stderr = normalize(&output.stderr, &root);
         let tree = snapshot(&root, &before);
         let mut problems = Vec::new();
         if output.status.code() != Some(case.exit_code) {

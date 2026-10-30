@@ -23,6 +23,8 @@
 
 use std::{collections::BTreeMap, ffi::OsString, time::Duration};
 
+use symroom_core::goio;
+
 /// How a flag consumes its value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
@@ -82,14 +84,24 @@ pub enum Failure {
 #[derive(Debug, Default)]
 pub struct Parsed {
     /// Last value of every flag that was set; bool flags hold `"true"` or
-    /// `"false"`.
+    /// `"false"`. A byte that is not UTF-8 is kept as an escape character (see
+    /// [`symroom_core::goio::os_text`]); the event encoder turns it into the
+    /// `\ufffd` Go's JSON writes.
     pub values: BTreeMap<String, String>,
     pub positionals: Vec<String>,
+    /// The same values (kept for callers that need the raw spelling).
+    pub raw_values: BTreeMap<String, String>,
+    pub raw_positionals: Vec<String>,
 }
 
 impl Parsed {
     pub fn string(&self, name: &str) -> &str {
         self.values.get(name).map_or("", String::as_str)
+    }
+
+    /// Like [`Parsed::string`], keeping bytes that are not UTF-8.
+    pub fn text(&self, name: &str) -> &str {
+        self.raw_values.get(name).map_or("", String::as_str)
     }
 
     pub fn is_set(&self, name: &str) -> bool {
@@ -304,6 +316,10 @@ pub fn go_quote(text: &str) -> String {
     quoted.push('"');
     for ch in text.chars() {
         match ch {
+            // A byte that was not UTF-8: Go prints it as `\xNN`.
+            ch if goio::escaped_byte(ch).is_some() => {
+                quoted.push_str(&format!("\\x{:02x}", goio::escaped_byte(ch).unwrap_or(0)));
+            }
             '"' => quoted.push_str("\\\""),
             '\\' => quoted.push_str("\\\\"),
             '\u{7}' => quoted.push_str("\\a"),
@@ -343,7 +359,7 @@ pub fn parse_or_exit(
             Failure::Help => (usage.to_owned(), 0),
             Failure::Error(message) => (format!("{message}\n{usage}"), 2),
         };
-        if std::io::Write::write_all(&mut std::io::stderr(), text.as_bytes()).is_err() {
+        if std::io::Write::write_all(&mut std::io::stderr(), &goio::out_bytes(&text)).is_err() {
             return std::process::ExitCode::from(1);
         }
         std::process::ExitCode::from(code)
@@ -355,7 +371,7 @@ pub fn parse(args: &[OsString], specs: &[Spec<'_>]) -> Result<Parsed, Failure> {
     let mut parsed = Parsed::default();
     let mut index = 0;
     while index < args.len() {
-        let argument = args[index].to_string_lossy();
+        let argument = goio::os_text(&args[index]);
         let bytes = argument.as_bytes();
         if bytes.len() < 2 || bytes[0] != b'-' {
             break;
@@ -396,13 +412,14 @@ pub fn parse(args: &[OsString], specs: &[Spec<'_>]) -> Result<Parsed, Failure> {
                     None => true,
                 };
                 parsed.values.insert(name.to_owned(), value.to_string());
+                parsed.raw_values.insert(name.to_owned(), value.to_string());
             }
             Kind::Value => {
                 let value = if let Some(value) = inline {
                     value.to_owned()
                 } else if let Some(next) = args.get(index) {
                     index += 1;
-                    next.to_string_lossy().into_owned()
+                    goio::os_text(next)
                 } else {
                     return Err(Failure::Error(format!("flag needs an argument: -{name}")));
                 };
@@ -414,14 +431,16 @@ pub fn parse(args: &[OsString], specs: &[Spec<'_>]) -> Result<Parsed, Failure> {
                         go_quote(&value)
                     )));
                 }
-                parsed.values.insert(name.to_owned(), value);
+                parsed.values.insert(name.to_owned(), value.clone());
+                parsed.raw_values.insert(name.to_owned(), value);
             }
         }
     }
-    parsed.positionals = args[index..]
+    parsed.raw_positionals = args[index..]
         .iter()
-        .map(|argument| argument.to_string_lossy().into_owned())
+        .map(|argument| goio::os_text(argument))
         .collect();
+    parsed.positionals = parsed.raw_positionals.clone();
     Ok(parsed)
 }
 

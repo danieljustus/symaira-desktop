@@ -22,13 +22,14 @@ const ROLE_FLAGS: &str = "Usage of member role:\n  -identity string\n    \tCalle
 struct Parsed {
     values: BTreeMap<String, String>,
     positionals: Vec<String>,
+    raw_values: std::collections::BTreeMap<String, String>,
 }
 
 pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
         return stdout(USAGE, CoreExitCode::Ok);
     };
-    match action.to_string_lossy().as_ref() {
+    match symroom_core::goio::os_text(action).as_str() {
         "--help" | "-h" => stdout(USAGE, CoreExitCode::Ok),
         "add" => add(&args[1..]),
         "list" => list(&args[1..]),
@@ -63,7 +64,7 @@ fn add(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     }
-    let identity_name = parsed.values.get("identity").map_or("", String::as_str);
+    let identity_name = parsed.raw_values.get("identity").map_or("", String::as_str);
     let signer = match resolve_identity(identity_name) {
         Ok(signer) => signer,
         Err(code) => return code,
@@ -160,10 +161,11 @@ fn remove(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     };
-    let signer = match resolve_identity(parsed.values.get("identity").map_or("", String::as_str)) {
-        Ok(signer) => signer,
-        Err(code) => return code,
-    };
+    let signer =
+        match resolve_identity(parsed.raw_values.get("identity").map_or("", String::as_str)) {
+            Ok(signer) => signer,
+            Err(code) => return code,
+        };
     match members::remove_member(&room_dir(), member_id, &signer) {
         Ok(event) => stdout(
             &format!("Member removed: {member_id} (event: {})\n", event.id),
@@ -186,10 +188,11 @@ fn role(args: &[OsString]) -> ExitCode {
     }
     let member_id = &parsed.positionals[0];
     let role_value = &parsed.positionals[1];
-    let signer = match resolve_identity(parsed.values.get("identity").map_or("", String::as_str)) {
-        Ok(signer) => signer,
-        Err(code) => return code,
-    };
+    let signer =
+        match resolve_identity(parsed.raw_values.get("identity").map_or("", String::as_str)) {
+            Ok(signer) => signer,
+            Err(code) => return code,
+        };
     match members::set_member_role(&room_dir(), member_id, role_value, &signer) {
         Ok(event) => stdout(
             &format!(
@@ -218,6 +221,7 @@ fn parse_flags(
     Ok(Parsed {
         values: parsed.values,
         positionals: parsed.positionals,
+        raw_values: parsed.raw_values,
     })
 }
 
@@ -397,7 +401,10 @@ fn room_dir() -> PathBuf {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -405,7 +412,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

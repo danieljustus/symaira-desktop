@@ -67,12 +67,12 @@ pub fn run_cli(
         Err(code) => return code,
     };
     let room = if parsed.is_set("room") {
-        PathBuf::from(parsed.string("room"))
+        PathBuf::from(goio::text_os(parsed.text("room")))
     } else {
         PathBuf::from(".")
     };
-    let mut artifact_root = PathBuf::from(parsed.string("artifact-root"));
-    let identity_name = parsed.string("identity").to_owned();
+    let mut artifact_root = PathBuf::from(goio::text_os(parsed.text("artifact-root")));
+    let identity_name = parsed.text("identity").to_owned();
     if artifact_root.as_os_str().is_empty() {
         artifact_root.clone_from(&room);
     }

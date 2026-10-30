@@ -24,13 +24,13 @@ pub fn run(args: &[OsString]) -> ExitCode {
         Ok(parsed) => parsed,
         Err(code) => return code,
     };
-    let mut identity_name = parsed.string("identity").to_owned();
+    let mut identity_name = parsed.text("identity").to_owned();
     let name = if parsed.is_set("name") {
         parsed.string("name").to_owned()
     } else {
         "Default Room".to_owned()
     };
-    let directory = parsed.positionals.first().cloned();
+    let directory = parsed.raw_positionals.first().cloned();
 
     if identity_name.is_empty() {
         identity_name = match member_cli::default_identity() {
@@ -52,8 +52,11 @@ pub fn run(args: &[OsString]) -> ExitCode {
             CoreExitCode::NoInput,
         );
     }
-    let directory = directory
-        .unwrap_or_else(|| std::env::var("SYMROOM_ROOM_DIR").unwrap_or_else(|_| ".".to_owned()));
+    let directory = directory.unwrap_or_else(|| {
+        std::env::var_os("SYMROOM_ROOM_DIR")
+            .map(|value| symroom_core::goio::os_text(&value))
+            .unwrap_or_else(|| ".".to_owned())
+    });
     let owner = match identity::load(&identity_name) {
         Ok(owner) => owner,
         Err(error) => {
@@ -63,7 +66,8 @@ pub fn run(args: &[OsString]) -> ExitCode {
             );
         }
     };
-    let directory = PathBuf::from(&directory);
+    let directory_text = directory;
+    let directory = PathBuf::from(symroom_core::goio::text_os(&directory_text));
     let (room_id, event_id) = match generate_ids() {
         Ok(ids) => ids,
         Err(error) => {
@@ -92,9 +96,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
     stdout(
         &format!(
             "Initialized room {} in {} (owner: {})\n",
-            config.id,
-            directory.display(),
-            owner.name
+            config.id, directory_text, owner.name
         ),
         CoreExitCode::Ok,
     )
@@ -118,7 +120,10 @@ fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn write(mut output: impl Write, value: &str, code: CoreExitCode) -> ExitCode {
-    if output.write_all(value.as_bytes()).is_err() {
+    if output
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         return ExitCode::from(CoreExitCode::Generic.as_u8());
     }
     ExitCode::from(code.as_u8())

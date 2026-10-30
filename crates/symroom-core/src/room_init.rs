@@ -66,8 +66,14 @@ pub fn init(
     {
         return Err(RoomInitError::NotEmpty);
     }
-    fs::create_dir_all(&dir)
-        .map_err(|error| RoomInitError::Io(format!("mkdir room dir: {error}")))?;
+    // Go `fsutil.SafeMkdirAll` reports the failing component as a `mkdir
+    // <path>: ...` path error; the leaf is what a fresh directory name fails on.
+    fs::create_dir_all(&dir).map_err(|error| {
+        RoomInitError::Io(format!(
+            "mkdir room dir: {}",
+            crate::goio::path_error("mkdir", &dir, &error)
+        ))
+    })?;
 
     let created = event::format_timestamp(now);
     let body = serde_json::json!({

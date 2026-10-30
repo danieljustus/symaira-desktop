@@ -237,7 +237,10 @@ fn room_dir() -> PathBuf {
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)
@@ -245,7 +248,10 @@ fn stdout(value: &str, code: CoreExitCode) -> ExitCode {
 }
 
 fn stderr(value: &str, code: CoreExitCode) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         process_exit(CoreExitCode::Generic)
     } else {
         process_exit(code)

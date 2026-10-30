@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
@@ -55,9 +56,16 @@ type storeCase struct {
 	RoomEnv  string    `json:"room_env,omitempty"`
 	Cwd      string    `json:"cwd,omitempty"`
 	NeedsOwn bool      `json:"needs_non_root,omitempty"`
-	ExitCode int       `json:"exit_code"`
-	Stdout   string    `json:"stdout"`
-	Stderr   string    `json:"stderr"`
+	// Host restricts a case to one operating system (file-name policy, such as
+	// APFS rejecting names that are not UTF-8, differs per OS).
+	Host        string `json:"host,omitempty"`
+	IdentityKey bool   `json:"identity_key,omitempty"`
+	// KeyHex is a SYMROOM_IDENTITY_KEY other than the default seed (a 64-byte
+	// key whose public half need not belong to its seed).
+	KeyHex   string `json:"key_hex,omitempty"`
+	ExitCode int    `json:"exit_code"`
+	Stdout   string `json:"stdout"`
+	Stderr   string `json:"stderr"`
 	// StderrPrefixAt marks a failure whose tail is Go's JSON wording for an
 	// event line (not ported): only the text up to it is compared.
 	StderrPrefixAt string       `json:"-"`
@@ -194,8 +202,77 @@ func storeCases(journalLine string) []storeCase {
 	add(storeCase{Name: "index-rebuild-state-dir-mode", Args: []string{"index", "rebuild"}, Ops: append(append([]storeOp(nil), roomOps...), storeOp{Op: "dir", Path: ".symroom", Mode: "0755"}), RoomEnv: "room", UnixOnly: true})
 	add(storeCase{Name: "index-rebuild-umask-077", Args: []string{"index", "rebuild"}, Ops: roomOps, RoomEnv: "room", Umask: "077", UnixOnly: true})
 	add(storeCase{Name: "index-rebuild-corrupt-journal", Args: []string{"index", "rebuild"}, Ops: []storeOp{{Op: "dir", Path: "room/journal", Mode: "0700"}, {Op: "file", Path: "room/journal/mem_cli.jsonl", Content: "{\"v\":\n", Mode: "0600"}}, RoomEnv: "room", UnixOnly: true, StderrPrefixAt: "unmarshal line:"})
+	// Arguments that are not valid UTF-8 (Go strings are bytes): flag and
+	// action messages quote them as \xNN, names reach the file system as bytes.
+	bad, mid := "<hex:fffe>", "<hex:61e28262>"
+	for _, c := range []storeCase{
+		{Name: "bytes-undefined-flag", Args: []string{"note", "--" + bad}},
+		{Name: "bytes-undefined-flag-with-value", Args: []string{"note", "--" + mid + "=x"}},
+		{Name: "bytes-bad-bool", Args: []string{"version", "--json=" + bad}},
+		{Name: "bytes-bad-int", Args: []string{"log", "--limit", mid}},
+		{Name: "bytes-bad-int-inline", Args: []string{"log", "--limit=" + bad}},
+		{Name: "bytes-bad-duration", Args: []string{"run", "approve", "--ttl", bad}},
+		{Name: "bytes-bad-bool-in-run", Args: []string{"run", "list", "--json=" + mid}},
+		{Name: "bytes-unknown-command", Args: []string{bad}},
+		{Name: "bytes-unknown-identity-action", Args: []string{"identity", mid}},
+		{Name: "bytes-unknown-run-action", Args: []string{"run", bad}},
+		{Name: "bytes-unknown-member-action", Args: []string{"member", mid}},
+		{Name: "bytes-unknown-checkpoint-action", Args: []string{"checkpoint", bad}},
+		{Name: "bytes-unknown-artifact-action", Args: []string{"artifact", mid}},
+		{Name: "bytes-show-name-from-env-key", Args: []string{"identity", "show", bad}, IdentityKey: true},
+		{Name: "bytes-show-mid-name-from-env-key", Args: []string{"identity", "show", mid}, IdentityKey: true},
+		{Name: "bytes-export-name-from-env-key", Args: []string{"identity", "export", "--public", bad}, IdentityKey: true},
+		{Name: "bytes-show-missing-name", Args: []string{"identity", "show", bad}},
+		{Name: "bytes-export-missing-name", Args: []string{"identity", "export", "--public", mid}},
+		{Name: "bytes-run-title", Args: []string{"run", "request", "--identity", "x", "--title", mid}, IdentityKey: true, RoomEnv: "room", Ops: []storeOp{
+			{Op: "file", Path: "room/room.toml", Content: "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n", Mode: "0600"},
+			{Op: "dir", Path: "room/journal", Mode: "0700"}}},
+		{Name: "bytes-run-plan-file", Args: []string{"run", "request", "--identity", "x", "--title", "t", "--plan-file", bad + "/" + mid}, IdentityKey: true, RoomEnv: "room", Ops: []storeOp{
+			{Op: "file", Path: "room/room.toml", Content: "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n", Mode: "0600"},
+			{Op: "dir", Path: "room/journal", Mode: "0700"}}},
+		{Name: "bytes-init-identity-flag", Args: []string{"init", "--identity", bad, "dest"}},
+		{Name: "bytes-note-identity-flag", Args: []string{"note", "--identity", mid, "text"}},
+		{Name: "bytes-artifact-missing-path", Args: []string{"artifact", "link", "--identity", "x", "missing-" + bad}, IdentityKey: true, RoomEnv: "room", Ops: roomOps},
+		{Name: "bytes-create-name", Args: create(bad), Host: "darwin"},
+		{Name: "bytes-create-mid-name", Args: create(mid), Host: "darwin"},
+		{Name: "bytes-init-dir", Args: []string{"init", "--identity", "x", "dest-" + bad}, IdentityKey: true, Host: "darwin"},
+	} {
+		c.UnixOnly = true
+		add(c)
+	}
+	// ROOM-001: a 64-byte key is seed || public half and Go trusts the stored
+	// half when it signs, so a half that does not belong to the seed still
+	// produces a (deterministic) signature that verifies against nothing.
+	signSeed := sha256.Sum256([]byte("room-001-sign-seed"))
+	otherSeed := sha256.Sum256([]byte("room-001-other-seed"))
+	derived := ed25519.NewKeyFromSeed(signSeed[:])
+	other := ed25519.NewKeyFromSeed(otherSeed[:])
+	roomFiles := []storeOp{
+		{Op: "file", Path: "room/room.toml", Content: "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n", Mode: "0600"},
+		{Op: "dir", Path: "room/journal", Mode: "0700"},
+	}
+	for _, k := range []struct {
+		name string
+		half []byte
+	}{
+		{"consistent", derived.Public().(ed25519.PublicKey)},
+		{"other-valid-point", other.Public().(ed25519.PublicKey)},
+		{"zero-half", make([]byte, 32)},
+		{"not-a-point", bytes.Repeat([]byte{0xff}, 32)},
+		{"seed-as-half", signSeed[:]},
+	} {
+		keyHex := hex.EncodeToString(append(append([]byte(nil), signSeed[:]...), k.half...))
+		ops := append(append([]storeOp(nil), roomFiles...), storeOp{Op: "cli", Content: "run request --identity x --title t"})
+		add(storeCase{Name: "sign-" + k.name + "-journal", Args: []string{"run", "request", "--identity", "x", "--title", "t"}, KeyHex: keyHex, RoomEnv: "room", Ops: roomFiles, UnixOnly: true})
+		add(storeCase{Name: "sign-" + k.name + "-verify", Args: []string{"verify"}, KeyHex: keyHex, RoomEnv: "room", Ops: ops, UnixOnly: true})
+		add(storeCase{Name: "sign-" + k.name + "-show", Args: []string{"identity", "show", "x"}, KeyHex: keyHex, UnixOnly: true})
+	}
 	return cases
 }
+
+// storeIdentityKey is a fixed seed for cases that resolve an identity from the
+// environment instead of the store.
+const storeIdentityKey = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
 
 var (
 	storeMemberID = regexp.MustCompile(`mem_[0-9a-f]{16}`)
@@ -283,7 +360,7 @@ func storeSnapshot(t *testing.T, root string, before map[string]string) []storeE
 	return entries
 }
 
-func applyStoreOps(t *testing.T, root string, ops []storeOp, runIndex func()) map[string]string {
+func applyStoreOps(t *testing.T, root string, ops []storeOp, runIndex func(), runCLI func(string)) map[string]string {
 	t.Helper()
 	before := map[string]string{}
 	for _, op := range ops {
@@ -331,6 +408,8 @@ func applyStoreOps(t *testing.T, root string, ops []storeOp, runIndex func()) ma
 			}
 		case "run":
 			runIndex()
+		case "cli":
+			runCLI(op.Content)
 		default:
 			t.Fatalf("unknown store op %q", op.Op)
 		}
@@ -367,10 +446,34 @@ func storeEnvironment(root string, c storeCase) []string {
 	if c.RoomEnv != "" {
 		env = append(env, "SYMROOM_ROOM_DIR="+filepath.Join(root, c.RoomEnv))
 	}
+	if c.IdentityKey {
+		env = append(env, "SYMROOM_IDENTITY_KEY="+storeIdentityKey)
+	}
+	if c.KeyHex != "" {
+		env = append(env, "SYMROOM_IDENTITY_KEY="+c.KeyHex)
+	}
 	return env
 }
 
-func storeCommand(binary string, c storeCase, root string, args []string) *exec.Cmd {
+var storeHexToken = regexp.MustCompile(`<hex:([0-9a-f]*)>`)
+
+// decodeStoreArg replaces every "<hex:digits>" token with the raw bytes it
+// names, so an argument can carry bytes that are not valid UTF-8.
+func decodeStoreArg(arg string) string {
+	return storeHexToken.ReplaceAllStringFunc(arg, func(token string) string {
+		raw, err := hex.DecodeString(storeHexToken.FindStringSubmatch(token)[1])
+		if err != nil {
+			panic(err)
+		}
+		return string(raw)
+	})
+}
+
+func storeCommand(binary string, c storeCase, root string, rawArgs []string) *exec.Cmd {
+	args := make([]string, len(rawArgs))
+	for i, arg := range rawArgs {
+		args[i] = decodeStoreArg(arg)
+	}
 	argv := append([]string{binary}, args...)
 	var cmd *exec.Cmd
 	if c.Umask != "" && runtime.GOOS != "windows" {
@@ -386,10 +489,16 @@ func storeCommand(binary string, c storeCase, root string, args []string) *exec.
 	return cmd
 }
 
-func normalizeStoreText(text, root string) string {
-	text = strings.ReplaceAll(text, root, "<root>")
-	text = strings.ReplaceAll(text, filepath.ToSlash(root), "<root>")
-	return storeMemberID.ReplaceAllString(text, "<member_id>")
+// normalizeStoreText masks the scratch root and member ids; output that is not
+// valid UTF-8 is recorded as "hex:<digits>".
+func normalizeStoreText(text []byte, root string) string {
+	text = bytes.ReplaceAll(text, []byte(root), []byte("<root>"))
+	text = bytes.ReplaceAll(text, []byte(filepath.ToSlash(root)), []byte("<root>"))
+	text = storeMemberID.ReplaceAll(text, []byte("<member_id>"))
+	if utf8.Valid(text) {
+		return string(text)
+	}
+	return "hex:" + hex.EncodeToString(text)
 }
 
 func runStoreCase(t *testing.T, binary string, c storeCase) storeCase {
@@ -407,7 +516,11 @@ func runStoreCase(t *testing.T, binary string, c storeCase) storeCase {
 		cmd := storeCommand(binary, c, root, c.Args)
 		_, _ = cmd.CombinedOutput()
 	}
-	before := applyStoreOps(t, root, c.Ops, runAgain)
+	runOther := func(args string) {
+		cmd := storeCommand(binary, c, root, strings.Split(args, " "))
+		_, _ = cmd.CombinedOutput()
+	}
+	before := applyStoreOps(t, root, c.Ops, runAgain, runOther)
 	cmd := storeCommand(binary, c, root, c.Args)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -428,8 +541,8 @@ func runStoreCase(t *testing.T, binary string, c storeCase) storeCase {
 	})
 	c.Ops = append([]storeOp(nil), c.Ops...)
 	c.ExitCode = code
-	c.Stdout = normalizeStoreText(stdout.String(), root)
-	c.Stderr = normalizeStoreText(stderr.String(), root)
+	c.Stdout = normalizeStoreText(stdout.Bytes(), root)
+	c.Stderr = normalizeStoreText(stderr.Bytes(), root)
 	if c.StderrPrefixAt != "" {
 		end := strings.Index(c.Stderr, c.StderrPrefixAt)
 		if end < 0 {
@@ -488,6 +601,8 @@ func TestPortStoreCLIContract(t *testing.T) {
 	isRoot := runtime.GOOS != "windows" && os.Geteuid() == 0
 	for i, c := range cases {
 		switch {
+		case c.Host != "" && runtime.GOOS != c.Host:
+			t.Logf("SKIP %s: file-name policy of %s", c.Name, c.Host)
 		case c.UnixOnly && runtime.GOOS == "windows":
 			t.Logf("SKIP %s: Unix path, mode and errno semantics", c.Name)
 		case c.NeedsOwn && isRoot:

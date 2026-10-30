@@ -51,7 +51,10 @@ pub fn run(args: &[OsString]) -> ExitCode {
             "Warning: {} invalid event(s) omitted from log. Run 'symroom verify' for details.\n",
             result.invalid_count
         );
-        if io::stderr().write_all(warning.as_bytes()).is_err() {
+        if io::stderr()
+            .write_all(&symroom_core::goio::out_bytes(&warning))
+            .is_err()
+        {
             return ExitCode::from(1);
         }
     }
@@ -72,7 +75,10 @@ pub fn run(args: &[OsString]) -> ExitCode {
 }
 
 fn stderr(message: &str, code: u8) -> ExitCode {
-    if io::stderr().write_all(message.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(message))
+        .is_err()
+    {
         return ExitCode::from(1);
     }
     ExitCode::from(code)

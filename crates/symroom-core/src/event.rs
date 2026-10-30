@@ -233,7 +233,6 @@ impl Event {
         }
         let canonical = canonical_bytes(self)
             .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
-        // Documented deviation (see `identity::sign`): Go has no refusal here.
         let signature = identity::sign(&signer.private_key, &canonical)
             .map_err(|err| EventError::Message(err.to_string()))?;
         self.sig = Some(format!(
@@ -389,11 +388,21 @@ fn escape_go_json(data: Vec<u8>) -> Vec<u8> {
             b'&' => Some(br"\u0026"),
             0xe2 if data.get(i..i + 3) == Some(&[0xe2, 0x80, 0xa8]) => Some(br"\u2028"),
             0xe2 if data.get(i..i + 3) == Some(&[0xe2, 0x80, 0xa9]) => Some(br"\u2029"),
+            // A byte that was not UTF-8 (see `goio::os_text`) is `\ufffd` in Go.
+            0xf4 if matches!(data.get(i..i + 3), Some([0xf4, 0x8f, 0xa2 | 0xa3]))
+                && data.get(i + 3).is_some_and(|byte| byte & 0xc0 == 0x80) =>
+            {
+                Some(br"\ufffd")
+            }
             _ => None,
         };
         if let Some(replacement) = replacement {
             escaped.extend_from_slice(replacement);
-            i += if data[i] == 0xe2 { 3 } else { 1 };
+            i += match data[i] {
+                0xe2 => 3,
+                0xf4 => 4,
+                _ => 1,
+            };
         } else {
             escaped.push(data[i]);
             i += 1;

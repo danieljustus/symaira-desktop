@@ -95,7 +95,7 @@ fn main() -> ExitCode {
         return write_stderr(
             &format!(
                 "Unknown subcommand: {}\n\n{USAGE}",
-                command.to_string_lossy()
+                symroom_core::goio::os_text(command)
             ),
             2,
         );
@@ -120,14 +120,20 @@ fn main() -> ExitCode {
 }
 
 fn write_stdout(value: String) -> ExitCode {
-    if io::stdout().write_all(value.as_bytes()).is_err() {
+    if io::stdout()
+        .write_all(&symroom_core::goio::out_bytes(&value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     process_exit(CoreExitCode::Ok)
 }
 
 fn write_stderr(value: &str, code: u8) -> ExitCode {
-    if io::stderr().write_all(value.as_bytes()).is_err() {
+    if io::stderr()
+        .write_all(&symroom_core::goio::out_bytes(value))
+        .is_err()
+    {
         return process_exit(CoreExitCode::Generic);
     }
     ExitCode::from(code)

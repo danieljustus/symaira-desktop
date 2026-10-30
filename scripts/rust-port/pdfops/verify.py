@@ -295,7 +295,8 @@ def main():
         manifest = ['--manifest-path',str(ROOT/'Cargo.toml')]
         run(cargo+['nextest','run',*manifest,'--locked','-p','symdesk-render','--test-threads','2'],'nextest',build=True)
         summary = (output/'nextest.stderr').read_text()
-        matched = re.search(r'Summary .*?(\d+) tests run: (\d+) passed, (\d+) skipped',summary)
+        # nextest appends annotations such as "(2 slow)" after the passed count.
+        matched = re.search(r'Summary .*?(\d+) tests run: (\d+) passed(?: \([^)]*\))?, (\d+) skipped',summary)
         assert matched and int(matched[1]) > 0 and matched[1] == matched[2] and matched[3] == '0', summary
         report['rust_tests'] = int(matched[1])
         run(cargo+['clippy',*manifest,'--locked','-p','symdesk-render','--all-targets','--all-features','--','-D','warnings'],'clippy',build=True)

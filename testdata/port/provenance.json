@@ -104,6 +104,7 @@
     "testdata/port/render/json-ir.json": "f249ff55aa4ccbb41a267f8d7e91da592f72d0ad561d7ea9d88c3081be71a0ea",
     "testdata/port/render/layout.json": "e0b6137674256f0944213ba11bc2f3495a6e32f495082cdb2b5721171b0af892",
     "testdata/port/render/pdf-frontmatter.json": "00bc0be6f508a220bf472f63ac46ee0526c3fd210f46a31c0adfb4873d457a45",
+    "testdata/port/render/png.json": "2994d0ce398e6b29c4ed5fffa2ac608176f2d2c2e86fecb456b984f47a7945fa",
     "testdata/port/render/scene-bounds.json": "bdc3ca18757b37c9e7cea6f99c1b871d29e3d249a73e56134aafbd31394a8aef",
     "testdata/port/render/text-measure.json": "a9f5d3d045d72665a21b9a9786b73a7549839c303dbd76e35f0befa074482255",
     "testdata/port/render/v2/html-note.json": "ac250de0d6be90a48d3bc9e1030206df192169202f7ce0a2f9969e04a48dd199",

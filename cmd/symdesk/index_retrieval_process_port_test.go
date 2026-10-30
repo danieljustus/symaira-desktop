@@ -55,18 +55,52 @@ type indexRetrievalProcessChunk struct {
 	ContentNorm      string `json:"content_norm"`
 }
 
+// indexRetrievalProcessFill writes Prefix followed by 'x' bytes up to Bytes
+// total, so a sidecar line over bufio.Scanner's 1 MiB token limit does not
+// have to be stored in the fixture.
+type indexRetrievalProcessFill struct {
+	Path   string `json:"path"`
+	Prefix string `json:"prefix"`
+	Bytes  int    `json:"bytes"`
+}
+
+// indexRetrievalProcessExtraction is one row of the extractions table that
+// Go's ImportExtractionSidecar writes. created_at is wall-clock time and is
+// not compared; chunk_id is compared as the chunk_index it points at.
+type indexRetrievalProcessExtraction struct {
+	ID           int64  `json:"id"`
+	DocumentPath string `json:"document_path"`
+	ChunkIndex   *int   `json:"chunk_index"`
+	Class        string `json:"class"`
+	Value        string `json:"value"`
+	EvidenceText string `json:"evidence_text"`
+	SpanStart    *int64 `json:"span_start"`
+	SpanEnd      *int64 `json:"span_end"`
+	Matched      int    `json:"matched"`
+	Producer     string `json:"producer"`
+	SourceRef    string `json:"source_ref"`
+}
+
+// indexRetrievalExtractionTerms are the extractions_fts probes recorded per
+// step; the FTS triggers must keep the external-content index in step.
+var indexRetrievalExtractionTerms = []string{"invoice", "grounded", "cafe"}
+
 type indexRetrievalProcessState struct {
-	Documents    []indexRetrievalProcessDocument `json:"documents"`
-	Chunks       []indexRetrievalProcessChunk    `json:"chunks"`
-	Generation   int64                           `json:"generation"`
-	IndexStorage int                             `json:"index_storage"`
-	Lifecycle    map[string]string               `json:"lifecycle"`
-	Reasons      map[string]string               `json:"lifecycle_reasons"`
+	Documents     []indexRetrievalProcessDocument   `json:"documents"`
+	Chunks        []indexRetrievalProcessChunk      `json:"chunks"`
+	Extractions   []indexRetrievalProcessExtraction `json:"extractions,omitempty"`
+	ExtractionFTS map[string][]int64                `json:"extraction_fts,omitempty"`
+	Generation    int64                             `json:"generation"`
+	IndexStorage  int                               `json:"index_storage"`
+	Lifecycle     map[string]string                 `json:"lifecycle"`
+	Reasons       map[string]string                 `json:"lifecycle_reasons"`
 }
 
 type indexRetrievalProcessStep struct {
 	ID       string                         `json:"id"`
 	Writes   []indexRetrievalProcessFile    `json:"writes,omitempty"`
+	Fills    []indexRetrievalProcessFill    `json:"fills,omitempty"`
+	Removes  []string                       `json:"removes,omitempty"`
 	Args     []string                       `json:"args"`
 	Result   indexBuildProcessResult        `json:"result"`
 	Requests []indexRetrievalProcessRequest `json:"requests"`
@@ -196,9 +230,24 @@ func observeIndexRetrievalProcess(t *testing.T) indexRetrievalProcessFixture {
 
 	binary := buildIndexRetrievalBinary(t, root)
 	environment := []string{"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempRoot, "TMP=" + tempRoot, "TEMP=" + tempRoot, "LANG=C", "LC_ALL=C", "TZ=UTC", "TERM=dumb", "NO_COLOR=1"}
-	step := func(id string, writes []indexRetrievalProcessFile, args ...string) {
+	writeVaultFile := func(name, body string) {
+		target := filepath.Join(vault, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stepWith := func(id string, writes []indexRetrievalProcessFile, fills []indexRetrievalProcessFill, removes []string, args ...string) {
 		for _, file := range writes {
-			if err := os.WriteFile(filepath.Join(vault, filepath.FromSlash(file.Path)), []byte(file.Body), 0o600); err != nil {
+			writeVaultFile(file.Path, file.Body)
+		}
+		for _, fill := range fills {
+			writeVaultFile(fill.Path, fill.Prefix+strings.Repeat("x", fill.Bytes-len(fill.Prefix)))
+		}
+		for _, name := range removes {
+			if err := os.Remove(filepath.Join(vault, filepath.FromSlash(name))); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -223,16 +272,23 @@ func observeIndexRetrievalProcess(t *testing.T) indexRetrievalProcessFixture {
 		mu.Lock()
 		observed := append([]indexRetrievalProcessRequest{}, requests[before:]...)
 		mu.Unlock()
+		state := readIndexRetrievalState(t, root, filepath.Join(dataHome, "retrieval.db"), vault)
+		addIndexRetrievalExtractions(t, root, filepath.Join(dataHome, "retrieval.db"), &state)
 		fixture.Steps = append(fixture.Steps, indexRetrievalProcessStep{
-			ID: id, Writes: writes, Args: args, Result: result, Requests: observed,
-			State: readIndexRetrievalState(t, root, filepath.Join(dataHome, "retrieval.db"), vault),
+			ID: id, Writes: writes, Fills: fills, Removes: removes, Args: args, Result: result, Requests: observed,
+			State: state,
 		})
+	}
+	step := func(id string, writes []indexRetrievalProcessFile, args ...string) {
+		stepWith(id, writes, nil, nil, args...)
 	}
 	step("initial", nil, "--json", "index")
 	step("unchanged", nil, "--json", "index")
 	alpha := strings.Replace(fixture.Files[0].Body, "title: Alpha Oracle", "title: Alpha Renamed", 1)
 	step("frontmatter-only", []indexRetrievalProcessFile{{Path: "alpha.md", Body: alpha}}, "--json", "index")
 	step("body-change", []indexRetrievalProcessFile{{Path: "nested/beta.md", Body: "changed beta body\n"}}, "index")
+
+	observeIndexRetrievalSidecarSteps(t, &fixture, stepWith)
 
 	if len(fixture.Steps[0].Requests) == 0 || len(fixture.Steps[1].Requests) != 0 || len(fixture.Steps[2].Requests) != 0 || len(fixture.Steps[3].Requests) != 1 {
 		t.Fatalf("unexpected Go provider request counts: %d/%d/%d/%d", len(fixture.Steps[0].Requests), len(fixture.Steps[1].Requests), len(fixture.Steps[2].Requests), len(fixture.Steps[3].Requests))
@@ -302,4 +358,52 @@ func readIndexRetrievalState(t *testing.T, root, retrievalPath, vault string) in
 		state.Reasons[name] = normalizeProcessOutput(reason, root)
 	}
 	return state
+}
+
+// addIndexRetrievalExtractions records the extractions table and its FTS probes
+// for the sidecar steps. Only this fixture does so: the retry and symlink
+// fixtures share readIndexRetrievalState and must stay byte-identical.
+func addIndexRetrievalExtractions(t *testing.T, root, retrievalPath string, state *indexRetrievalProcessState) {
+	t.Helper()
+	db, err := sqlitekit.Open(retrievalPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	state.Extractions = nil
+	rows, err := db.Query("SELECT e.id, e.document_path, c.chunk_index, e.class, e.value, e.evidence_text, e.span_start, e.span_end, e.matched, e.producer, e.source_ref FROM extractions e LEFT JOIN chunks c ON c.id = e.chunk_id ORDER BY e.id")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var extraction indexRetrievalProcessExtraction
+		if err := rows.Scan(&extraction.ID, &extraction.DocumentPath, &extraction.ChunkIndex, &extraction.Class, &extraction.Value, &extraction.EvidenceText, &extraction.SpanStart, &extraction.SpanEnd, &extraction.Matched, &extraction.Producer, &extraction.SourceRef); err != nil {
+			t.Fatal(err)
+		}
+		extraction.DocumentPath = normalizeProcessOutput(extraction.DocumentPath, root)
+		extraction.SourceRef = normalizeProcessOutput(extraction.SourceRef, root)
+		state.Extractions = append(state.Extractions, extraction)
+	}
+	if err := rows.Close(); err != nil {
+		t.Fatal(err)
+	}
+	state.ExtractionFTS = map[string][]int64{}
+	for _, term := range indexRetrievalExtractionTerms {
+		ids := []int64{}
+		hits, err := db.Query("SELECT rowid FROM extractions_fts WHERE extractions_fts MATCH ? ORDER BY rowid", term)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for hits.Next() {
+			var id int64
+			if err := hits.Scan(&id); err != nil {
+				t.Fatal(err)
+			}
+			ids = append(ids, id)
+		}
+		if err := hits.Close(); err != nil {
+			t.Fatal(err)
+		}
+		state.ExtractionFTS[term] = ids
+	}
 }

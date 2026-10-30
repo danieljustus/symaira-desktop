@@ -271,6 +271,22 @@ pub struct StoredRetrievalChunk {
     pub embedding_pending: bool,
 }
 
+/// One row of the retrieval `extractions` table.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ExtractionRow {
+    pub(crate) document_path: String,
+    pub(crate) chunk_id: Option<i64>,
+    pub(crate) class: String,
+    pub(crate) value: String,
+    pub(crate) evidence_text: String,
+    pub(crate) span_start: Option<i64>,
+    pub(crate) span_end: Option<i64>,
+    pub(crate) matched: bool,
+    pub(crate) producer: String,
+    pub(crate) source_ref: String,
+    pub(crate) created_at: String,
+}
+
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct RetrievalSearchResult {
@@ -759,6 +775,60 @@ impl RetrievalDb {
             "UPDATE index_meta SET value = value + 2 WHERE key = 'generation'",
             [],
         )?;
+        transaction.commit()?;
+        Ok(())
+    }
+
+    /// Go's `GetChunkSpansForDocument`: `(id, char_start, char_end)` of each
+    /// chunk in `chunk_index` order, for linking extractions to chunks.
+    pub(crate) fn chunk_spans_for_document(
+        &self,
+        path: &str,
+    ) -> Result<Vec<(i64, Option<i64>, Option<i64>)>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id, char_start, char_end FROM chunks WHERE document_path = ?1
+             ORDER BY chunk_index ASC",
+        )?;
+        let rows =
+            statement.query_map([path], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    /// Go's `DeleteExtractionsForDocument` followed by `SaveExtractions`:
+    /// replaces every extraction row of one document in a single transaction.
+    pub(crate) fn replace_extractions(
+        &self,
+        path: &str,
+        rows: &[ExtractionRow],
+    ) -> Result<(), SidecarError> {
+        let transaction = self.connection.unchecked_transaction()?;
+        transaction.execute("DELETE FROM extractions WHERE document_path = ?1", [path])?;
+        {
+            let mut insert = transaction.prepare(
+                "INSERT INTO extractions (document_path, chunk_id, class, value, evidence_text,
+                 span_start, span_end, matched, producer, source_ref, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            )?;
+            for row in rows {
+                insert
+                    .execute(params![
+                        row.document_path,
+                        row.chunk_id,
+                        row.class,
+                        row.value,
+                        row.evidence_text,
+                        row.span_start,
+                        row.span_end,
+                        row.matched,
+                        row.producer,
+                        row.source_ref,
+                        row.created_at,
+                    ])
+                    .map_err(|error| {
+                        SidecarError::Contract(format!("failed to insert extraction: {error}"))
+                    })?;
+            }
+        }
         transaction.commit()?;
         Ok(())
     }

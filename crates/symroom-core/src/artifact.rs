@@ -125,7 +125,7 @@ pub fn unlink(
 ) -> Result<Event, ArtifactError> {
     let body = serde_json::json!({"artifact_id": artifact_id});
     let raw_body = json_body(&body)?;
-    let digest = Sha256::digest(&goio::out_bytes(artifact_id));
+    let digest = Sha256::digest(goio::out_bytes(artifact_id));
     let event_id = format!("ev_{}", &hex::encode(digest)[..16]);
     append_signed_event(room_dir, signer, event_id, "artifact.unlinked", raw_body)
 }

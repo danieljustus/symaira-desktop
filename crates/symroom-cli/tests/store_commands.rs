@@ -219,7 +219,7 @@ fn decode_arg(arg: &str) -> std::ffi::OsString {
         let Some(end) = rest[start..].find('>') else {
             break;
         };
-        bytes.extend_from_slice(rest[..start].as_bytes());
+        bytes.extend_from_slice(&rest.as_bytes()[..start]);
         bytes.extend(hex::decode(&rest[start + 5..start + end]).expect("hex token"));
         rest = &rest[start + end + 1..];
     }

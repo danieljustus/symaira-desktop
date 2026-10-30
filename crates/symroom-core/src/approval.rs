@@ -148,7 +148,7 @@ pub fn deny(
 }
 
 fn approval_id(input: &str) -> String {
-    let digest = Sha256::digest(&crate::goio::out_bytes(&input));
+    let digest = Sha256::digest(crate::goio::out_bytes(input));
     format!("app_{}", &hex::encode(digest)[..16])
 }
 

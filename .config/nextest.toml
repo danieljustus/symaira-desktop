@@ -1,0 +1,7 @@
+# The SymRoom MCP process replay asserts Go's wall-clock windows (e.g. 600
+# concurrent waits must finish within [2900, 5000] ms). Under a fully parallel
+# workspace run the host is saturated and the window is missed, so this test
+# takes every test thread and runs alone.
+[[profile.default.overrides]]
+filter = 'binary(mcp_process) & test(=mcp_process_matches_go_for_cancellation_shutdown_and_concurrency)'
+threads-required = "num-test-threads"

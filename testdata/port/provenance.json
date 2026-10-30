@@ -100,6 +100,7 @@
     "testdata/port/render/emit.json": "b1d8c2b232e99a62e0beeba8f85155ad6b3468d2894d0031bc371f490d79195f",
     "testdata/port/render/export-markdown.json": "dacbb62d83ff8eb42f1ef6de1337e7ada0cf90bba4bbc44f455ab6206864efca",
     "testdata/port/render/export-vault.json": "52b641106c8b3fc573bb9a21abf2426579c8448184f1b51e8b7a7238f9b41c86",
+    "testdata/port/render/gif.json": "11cce68da5ba156a1fb8c2e293833dba44628cfba9a84525cbbbc8d27c150585",
     "testdata/port/render/html-note.json": "ac250de0d6be90a48d3bc9e1030206df192169202f7ce0a2f9969e04a48dd199",
     "testdata/port/render/json-ir.json": "f249ff55aa4ccbb41a267f8d7e91da592f72d0ad561d7ea9d88c3081be71a0ea",
     "testdata/port/render/layout.json": "e0b6137674256f0944213ba11bc2f3495a6e32f495082cdb2b5721171b0af892",

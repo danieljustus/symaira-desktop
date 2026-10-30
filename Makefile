@@ -893,7 +893,13 @@ render-png-differential:
 	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/renderpnggen --check
 	$(CARGO) test -p symdesk-render --test draw_png_contract --locked
 
-render-ir-differential: render-emit-differential render-png-differential
+# GIF frames reuse the PNG rasterizer, so the same arm64 recording applies.
+.PHONY: render-gif-differential
+render-gif-differential:
+	GOTOOLCHAIN=go1.26.10 $(GO) run ./scripts/rust-port/cmd/rendergifgen --check
+	$(CARGO) test -p symdesk-render --test draw_gif_contract --locked
+
+render-ir-differential: render-emit-differential render-png-differential render-gif-differential
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderirgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/renderdslgen --check
 	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/rendermeasuregen --check

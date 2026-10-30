@@ -8,16 +8,20 @@
 //! layout). The builder lowers graph, sequence and chart diagrams into scenes;
 //! the SVG emitter serializes text elements or glyph outlines; the PNG emitter
 //! rasterizes a scene (`x/image/vector` coverage arithmetic) and encodes it with
-//! a byte-exact port of Go's `image/png` + `compress/flate`. GIF/PDF output
-//! remain outside this port.
+//! a byte-exact port of Go's `image/png` + `compress/flate`. The GIF emitter
+//! dithers each rasterized frame onto the Plan 9 palette and encodes it with a
+//! port of `image/gif` + `compress/lzw`; `animate` derives the frames and
+//! `typst` emits Typst markup. PDF output remains outside this port.
 
 mod go_flate;
 mod gotext;
 #[rustfmt::skip]
 mod go_unicode;
+pub mod animate;
 pub mod builder;
 pub mod chart;
 pub mod emit;
+pub mod gif;
 pub mod ir;
 mod json;
 pub mod layout;
@@ -28,6 +32,7 @@ pub mod scene;
 mod sequence;
 pub mod sfnt;
 pub mod theme;
+pub mod typst;
 
 pub use ir::{Diagram, ValidationError, Value, validate};
 pub use mermaid::DIALECT_VERSION;

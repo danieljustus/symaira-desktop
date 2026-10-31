@@ -14,6 +14,10 @@ use std::{
 
 use serde::Deserialize;
 
+/// Two replays in one test binary can share a clock tick; the counter keeps
+/// their scratch roots (and Hermes transcripts) distinct.
+static ROOT_SEQUENCE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
 #[derive(Deserialize)]
 struct Fixture {
     schema_version: u32,
@@ -59,12 +63,13 @@ fn fixture() -> Fixture {
 
 fn scratch(label: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!(
-        "symdesk-recipe-run-{label}-{}-{}",
+        "symdesk-recipe-run-{label}-{}-{}-{}",
         std::process::id(),
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_nanos()
+            .as_nanos(),
+        ROOT_SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     ));
     fs::create_dir_all(&dir).unwrap();
     fs::canonicalize(dir).unwrap()

@@ -1,0 +1,9540 @@
+{
+  "cases": [
+    {
+      "name": "defaults",
+      "kind": "service",
+      "slug": "orders",
+      "options": {},
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "amount",
+          "done",
+          "due",
+          "id",
+          "name",
+          "note",
+          "qty",
+          "ratio",
+          "seen",
+          "status",
+          "tags"
+        ],
+        "rows": [
+          {
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "id": "r1",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          },
+          {
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "id": "r2",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "tags": "red"
+          },
+          {
+            "amount": "30",
+            "done": "yes",
+            "due": "not-a-date",
+            "id": "r3",
+            "name": "İstanbul",
+            "note": "",
+            "qty": "x",
+            "ratio": 2,
+            "seen": null,
+            "status": null,
+            "tags": []
+          },
+          {
+            "amount": -5,
+            "done": 1,
+            "due": "2025-12-31",
+            "id": "r4",
+            "name": "Zed",
+            "note": "line\nbreak",
+            "qty": 0,
+            "ratio": null,
+            "seen": null,
+            "status": null,
+            "tags": [
+              "blue",
+              "green"
+            ]
+          },
+          {
+            "amount": 20.5,
+            "done": "true",
+            "due": "2026-01-15",
+            "id": "r5",
+            "name": "zed",
+            "note": "x",
+            "qty": 7,
+            "ratio": 1000,
+            "seen": "2026-01-15T09:00:00Z",
+            "status": "OPEN",
+            "tags": "red,green"
+          },
+          {
+            "amount": 9007199254740992,
+            "done": false,
+            "due": "2026-03-05",
+            "id": "r7",
+            "name": "a_b",
+            "note": "%",
+            "qty": 2,
+            "ratio": 0.1,
+            "seen": null,
+            "status": "Paid",
+            "tags": [
+              "Red"
+            ]
+          },
+          {
+            "amount": 1234567.5,
+            "done": true,
+            "due": "2026-04-01",
+            "id": "r8",
+            "name": "fl",
+            "note": "floats",
+            "qty": 123456,
+            "ratio": 0.00001,
+            "seen": null,
+            "status": "open",
+            "tags": [
+              "red"
+            ]
+          },
+          {
+            "amount": null,
+            "done": null,
+            "due": null,
+            "id": "r6",
+            "name": "mid dle",
+            "note": null,
+            "qty": null,
+            "ratio": null,
+            "seen": null,
+            "status": "closed",
+            "tags": {
+              "a": 1
+            }
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "limit-and-cap",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "status"
+        ],
+        "limit": 2
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "status"
+        ],
+        "rows": [
+          {
+            "id": "r1",
+            "status": "open"
+          },
+          {
+            "id": "r2",
+            "status": "paid"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 2,
+        "limit": 2,
+        "capped": true
+      }
+    },
+    {
+      "name": "limit-above-maximum",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "limit": 5000
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 1000,
+        "capped": false
+      }
+    },
+    {
+      "name": "negative-limit",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "limit": -3
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "duplicate-and-blank-columns",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          " id ",
+          "id",
+          "",
+          "status"
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "status"
+        ],
+        "rows": [
+          {
+            "id": "r1",
+            "status": "open"
+          },
+          {
+            "id": "r2",
+            "status": "paid"
+          },
+          {
+            "id": "r3",
+            "status": null
+          },
+          {
+            "id": "r4",
+            "status": null
+          },
+          {
+            "id": "r5",
+            "status": "OPEN"
+          },
+          {
+            "id": "r7",
+            "status": "Paid"
+          },
+          {
+            "id": "r8",
+            "status": "open"
+          },
+          {
+            "id": "r6",
+            "status": "closed"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "all-blank-columns",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          " ",
+          ""
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [],
+        "rows": [
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {},
+          {}
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "pseudo-columns",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "_key",
+          "identity",
+          "_identity",
+          "id"
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "_key",
+          "identity",
+          "_identity",
+          "id"
+        ],
+        "rows": [
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "id": "r1",
+            "identity": "r1"
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "id": "r2",
+            "identity": "r2"
+          },
+          {
+            "_identity": "r3",
+            "_key": "identity:r3",
+            "id": "r3",
+            "identity": "r3"
+          },
+          {
+            "_identity": "r4",
+            "_key": "identity:r4",
+            "id": "r4",
+            "identity": "r4"
+          },
+          {
+            "_identity": "r5",
+            "_key": "identity:r5",
+            "id": "r5",
+            "identity": "r5"
+          },
+          {
+            "_identity": "r7",
+            "_key": "identity:r7",
+            "id": "r7",
+            "identity": "r7"
+          },
+          {
+            "_identity": "r8",
+            "_key": "identity:r8",
+            "id": "r8",
+            "identity": "r8"
+          },
+          {
+            "_identity": "",
+            "_key": "key:6",
+            "id": "r6",
+            "identity": ""
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "unknown-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "absent"
+        ]
+      },
+      "error": "dataset column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-filter-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "filters": [
+          {
+            "key": "absent",
+            "operator": "equals",
+            "value": "x"
+          }
+        ]
+      },
+      "error": "dataset column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-filter-column-padded",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "filters": [
+          {
+            "key": " status",
+            "operator": "equals",
+            "value": "x"
+          }
+        ]
+      },
+      "error": "dataset column \" status\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-group-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "absent"
+      },
+      "error": "dataset group column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-sort-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "sorts": [
+          {
+            "key": "absent",
+            "ascending": true
+          }
+        ]
+      },
+      "error": "dataset sort column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-aggregate-function",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "median"
+          }
+        ]
+      },
+      "error": "unsupported dataset aggregate \"median\"",
+      "result": null
+    },
+    {
+      "name": "unknown-aggregate-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "absent",
+            "function": "sum"
+          }
+        ]
+      },
+      "error": "dataset aggregate column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "unknown-group-filter-column",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "filter_group": {
+          "operator": "all",
+          "filters": [
+            {
+              "key": "absent",
+              "operator": "equals",
+              "value": "x"
+            }
+          ]
+        }
+      },
+      "error": "dataset column \"absent\" not found",
+      "result": null
+    },
+    {
+      "name": "text-equals-case-insensitive",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "equals",
+            "value": "OPEN"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-is-case-insensitive",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "is",
+            "value": "OPEN"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-=-case-insensitive",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "=",
+            "value": "OPEN"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-==-case-insensitive",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "==",
+            "value": "OPEN"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text--case-insensitive",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "value": "OPEN"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-equals-empty-value",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "equals",
+            "value": "  "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-equals-non-ascii-fold",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "name",
+            "operator": "equals",
+            "value": "Äpfel"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-equals-turkish-dotted-i",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "name",
+            "operator": "equals",
+            "value": "İstanbul"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "not_equals",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-is_not",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "is_not",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-!=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "!=",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-is_empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "is_empty",
+            "value": ""
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "empty",
+            "value": ""
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-is_not_empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "is_not_empty",
+            "value": ""
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "not_empty",
+            "value": ""
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-contains-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "contains",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-contains-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "contains",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-contains-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "contains",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_contains-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "not_contains",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_contains-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "not_contains",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_contains-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "not_contains",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-starts_with-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "starts_with",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-starts_with-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "starts_with",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-starts_with-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "starts_with",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-prefix-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "prefix",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-prefix-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "prefix",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-prefix-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "prefix",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-ends_with-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "ends_with",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-ends_with-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "ends_with",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-ends_with-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "ends_with",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-suffix-wildcards",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "suffix",
+            "value": "_"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-suffix-percent",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "note",
+            "operator": "suffix",
+            "value": "%"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-suffix-plain",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "suffix",
+            "value": "Pa"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "equals",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "equals",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "equals",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "equals",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "equals",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "not_equals",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "not_equals",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "not_equals",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "not_equals",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-not_equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "not_equals",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-greater_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "greater_than",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-greater_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "greater_than",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-greater_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "greater_than",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-greater_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "greater_than",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-greater_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "greater_than",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-gt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "gt",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-gt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "gt",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-gt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "gt",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-gt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "gt",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-gt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "gt",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-\u003e",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "\u003e",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-\u003e",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "\u003e",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-\u003e",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "\u003e",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-\u003e",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "\u003e",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-\u003e",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "\u003e",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-greater_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "greater_than_or_equal",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-greater_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "greater_than_or_equal",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-greater_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "greater_than_or_equal",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-greater_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "greater_than_or_equal",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-greater_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "greater_than_or_equal",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-gte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "gte",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-gte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "gte",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-gte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "gte",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-gte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "gte",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-gte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "gte",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-\u003e=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "\u003e=",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-\u003e=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "\u003e=",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-\u003e=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "\u003e=",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-\u003e=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "\u003e=",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-\u003e=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "\u003e=",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-less_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "less_than",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-less_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "less_than",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-less_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "less_than",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-less_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "less_than",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-less_than",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "less_than",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-lt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "lt",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-lt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "lt",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-lt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "lt",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-lt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "lt",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-lt",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "lt",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-\u003c",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "\u003c",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-\u003c",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "\u003c",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-\u003c",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "\u003c",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-\u003c",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "\u003c",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-\u003c",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "\u003c",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-less_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "less_than_or_equal",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-less_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "less_than_or_equal",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-less_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "less_than_or_equal",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-less_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "less_than_or_equal",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-less_than_or_equal",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "less_than_or_equal",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-lte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "lte",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-lte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "lte",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-lte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "lte",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-lte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "lte",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-lte",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "lte",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-\u003c=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "\u003c=",
+            "value": "20.5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "integer-\u003c=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "\u003c=",
+            "value": "3"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-\u003c=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "\u003c=",
+            "value": "open"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-\u003c=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "\u003c=",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "datetime-\u003c=",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "\u003c=",
+            "value": "2026-01-15T10:00:00Z"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "number-non-numeric-operand",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "greater_than",
+            "value": "abc"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-non-date-operand",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "after",
+            "value": "garbage"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-after",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "after",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-column-after",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "after",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-before",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "before",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r4"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-column-before",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "before",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-on_or_after",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "on_or_after",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-column-on_or_after",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "on_or_after",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "date-on_or_before",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "due",
+            "operator": "on_or_before",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "text-column-on_or_before",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "seen",
+            "operator": "on_or_before",
+            "value": "2026-01-15"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "unknown-operator-falls-back-to-equals",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "matches",
+            "value": "paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r7"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-text",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "in",
+            "value": "red, BLUE"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-bracketed",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "in",
+            "value": "[red green]"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "in",
+            "value": " [] "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-status",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "in",
+            "value": "open,paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-number",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "in",
+            "value": "20.5, -5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "done",
+            "operator": "in",
+            "value": "TRUE false"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "in",
+            "value": "r1,r2"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-in-key",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_key",
+            "operator": "in",
+            "value": "key:6 identity:r1"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-text",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "not_in",
+            "value": "red, BLUE"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-bracketed",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "not_in",
+            "value": "[red green]"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "not_in",
+            "value": " [] "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-status",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "not_in",
+            "value": "open,paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-number",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "not_in",
+            "value": "20.5, -5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "done",
+            "operator": "not_in",
+            "value": "TRUE false"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "not_in",
+            "value": "r1,r2"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-not_in-key",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_key",
+            "operator": "not_in",
+            "value": "key:6 identity:r1"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-text",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_any",
+            "value": "red, BLUE"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-bracketed",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_any",
+            "value": "[red green]"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_any",
+            "value": " [] "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-status",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "contains_any",
+            "value": "open,paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-number",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "contains_any",
+            "value": "20.5, -5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          }
+        ],
+        "total_rows": 3,
+        "returned_rows": 3,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "done",
+            "operator": "contains_any",
+            "value": "TRUE false"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "contains_any",
+            "value": "r1,r2"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_any-key",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_key",
+            "operator": "contains_any",
+            "value": "key:6 identity:r1"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 2,
+        "returned_rows": 2,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-text",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_none",
+            "value": "red, BLUE"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-bracketed",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_none",
+            "value": "[red green]"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 4,
+        "returned_rows": 4,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_none",
+            "value": " [] "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-status",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "contains_none",
+            "value": "open,paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-number",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "contains_none",
+            "value": "20.5, -5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "done",
+            "operator": "contains_none",
+            "value": "TRUE false"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "contains_none",
+            "value": "r1,r2"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_none-key",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_key",
+            "operator": "contains_none",
+            "value": "key:6 identity:r1"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-text",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_all",
+            "value": "red, BLUE"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-bracketed",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_all",
+            "value": "[red green]"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "tags",
+            "operator": "contains_all",
+            "value": " [] "
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-status",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "contains_all",
+            "value": "open,paid"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-number",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "contains_all",
+            "value": "20.5, -5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "done",
+            "operator": "contains_all",
+            "value": "TRUE false"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "contains_all",
+            "value": "r1,r2"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "set-contains_all-key",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_key",
+            "operator": "contains_all",
+            "value": "key:6 identity:r1"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [],
+        "total_rows": 0,
+        "returned_rows": 0,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "identity-and-key-filters",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "identity",
+            "operator": "starts_with",
+            "value": "R"
+          },
+          {
+            "key": "_key",
+            "operator": "contains",
+            "value": "r"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "identity-empty",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "_identity",
+            "operator": "is_empty",
+            "value": ""
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "combined-flat-filters",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "status",
+            "operator": "is_not_empty",
+            "value": ""
+          },
+          {
+            "key": "amount",
+            "operator": "gt",
+            "value": "5"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "nested-group",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filter_group": {
+          "operator": "any",
+          "filters": [
+            {
+              "key": "status",
+              "operator": "equals",
+              "value": "paid"
+            }
+          ],
+          "groups": [
+            {
+              "operator": "all",
+              "filters": [
+                {
+                  "key": "amount",
+                  "operator": "greater_than",
+                  "value": "20"
+                }
+              ],
+              "groups": [
+                {
+                  "operator": "any",
+                  "filters": [
+                    {
+                      "key": "status",
+                      "operator": "is_empty",
+                      "value": ""
+                    },
+                    {
+                      "key": "status",
+                      "operator": "equals",
+                      "value": "OPEN"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "empty-group-is-true",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filter_group": {
+          "operator": "any"
+        }
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-operator-unknown-is-all",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filter_group": {
+          "operator": "xor",
+          "filters": [
+            {
+              "key": "status",
+              "operator": "equals",
+              "value": "open"
+            },
+            {
+              "key": "qty",
+              "operator": "equals",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-plus-flat",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "gte",
+            "value": "2"
+          }
+        ],
+        "filter_group": {
+          "operator": "any",
+          "filters": [
+            {
+              "key": "status",
+              "operator": "equals",
+              "value": "paid"
+            },
+            {
+              "key": "status",
+              "operator": "equals",
+              "value": "open"
+            }
+          ]
+        }
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r1"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r8"
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-amount-desc",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "amount"
+        ],
+        "sorts": [
+          {
+            "key": "amount",
+            "ascending": false
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "amount"
+        ],
+        "rows": [
+          {
+            "amount": 9007199254740992,
+            "id": "r7"
+          },
+          {
+            "amount": 1234567.5,
+            "id": "r8"
+          },
+          {
+            "amount": "30",
+            "id": "r3"
+          },
+          {
+            "amount": 20.5,
+            "id": "r2"
+          },
+          {
+            "amount": 20.5,
+            "id": "r5"
+          },
+          {
+            "amount": 10,
+            "id": "r1"
+          },
+          {
+            "amount": -5,
+            "id": "r4"
+          },
+          {
+            "amount": null,
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-amount-asc",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "amount"
+        ],
+        "sorts": [
+          {
+            "key": "amount",
+            "ascending": true
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "amount"
+        ],
+        "rows": [
+          {
+            "amount": -5,
+            "id": "r4"
+          },
+          {
+            "amount": 10,
+            "id": "r1"
+          },
+          {
+            "amount": 20.5,
+            "id": "r2"
+          },
+          {
+            "amount": 20.5,
+            "id": "r5"
+          },
+          {
+            "amount": "30",
+            "id": "r3"
+          },
+          {
+            "amount": 1234567.5,
+            "id": "r8"
+          },
+          {
+            "amount": 9007199254740992,
+            "id": "r7"
+          },
+          {
+            "amount": null,
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-text-asc",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "name"
+        ],
+        "sorts": [
+          {
+            "key": "name",
+            "ascending": true
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "name"
+        ],
+        "rows": [
+          {
+            "id": "r7",
+            "name": "a_b"
+          },
+          {
+            "id": "r8",
+            "name": "fl"
+          },
+          {
+            "id": "r6",
+            "name": "mid dle"
+          },
+          {
+            "id": "r4",
+            "name": "Zed"
+          },
+          {
+            "id": "r5",
+            "name": "zed"
+          },
+          {
+            "id": "r1",
+            "name": "ÄPFEL"
+          },
+          {
+            "id": "r2",
+            "name": "äpfel"
+          },
+          {
+            "id": "r3",
+            "name": "İstanbul"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-date-desc-then-id",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "due"
+        ],
+        "sorts": [
+          {
+            "key": "due",
+            "ascending": false
+          },
+          {
+            "key": "id",
+            "ascending": true
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "due"
+        ],
+        "rows": [
+          {
+            "due": "2026-04-01",
+            "id": "r8"
+          },
+          {
+            "due": "2026-03-05",
+            "id": "r7"
+          },
+          {
+            "due": "2026-02-01",
+            "id": "r2"
+          },
+          {
+            "due": "2026-01-15",
+            "id": "r1"
+          },
+          {
+            "due": "2026-01-15",
+            "id": "r5"
+          },
+          {
+            "due": "2025-12-31",
+            "id": "r4"
+          },
+          {
+            "due": "not-a-date",
+            "id": "r3"
+          },
+          {
+            "due": null,
+            "id": "r6"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-missing-last-both-directions",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "status"
+        ],
+        "sorts": [
+          {
+            "key": "status",
+            "ascending": true
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "status"
+        ],
+        "rows": [
+          {
+            "id": "r6",
+            "status": "closed"
+          },
+          {
+            "id": "r1",
+            "status": "open"
+          },
+          {
+            "id": "r5",
+            "status": "OPEN"
+          },
+          {
+            "id": "r8",
+            "status": "open"
+          },
+          {
+            "id": "r2",
+            "status": "paid"
+          },
+          {
+            "id": "r7",
+            "status": "Paid"
+          },
+          {
+            "id": "r3",
+            "status": null
+          },
+          {
+            "id": "r4",
+            "status": null
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-pseudo",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "sorts": [
+          {
+            "key": "_key",
+            "ascending": false
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id"
+        ],
+        "rows": [
+          {
+            "id": "r6"
+          },
+          {
+            "id": "r8"
+          },
+          {
+            "id": "r7"
+          },
+          {
+            "id": "r5"
+          },
+          {
+            "id": "r4"
+          },
+          {
+            "id": "r3"
+          },
+          {
+            "id": "r2"
+          },
+          {
+            "id": "r1"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sort-with-limit",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id",
+          "qty"
+        ],
+        "sorts": [
+          {
+            "key": "qty",
+            "ascending": false
+          }
+        ],
+        "limit": 3
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "id",
+          "qty"
+        ],
+        "rows": [
+          {
+            "id": "r8",
+            "qty": 123456
+          },
+          {
+            "id": "r2",
+            "qty": 7
+          },
+          {
+            "id": "r5",
+            "qty": 7
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 3,
+        "limit": 3,
+        "capped": true
+      }
+    },
+    {
+      "name": "group-default-count",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "status"
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "status",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": null
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "OPEN"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "Paid"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "closed"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": "open"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "paid"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-count-star",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "status",
+        "aggregates": [
+          {
+            "column": "",
+            "function": "count"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "status",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": null
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "OPEN"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "Paid"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "closed"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": "open"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "paid"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-count-column-and-alias",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "status",
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "COUNT"
+          },
+          {
+            "column": "note",
+            "function": "count",
+            "as": "notes"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "status",
+          "count_amount",
+          "notes"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 2,
+            "identity": "",
+            "notes": 2,
+            "status": null
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 1,
+            "identity": "",
+            "notes": 1,
+            "status": "OPEN"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 1,
+            "identity": "",
+            "notes": 1,
+            "status": "Paid"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 0,
+            "identity": "",
+            "notes": 0,
+            "status": "closed"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 2,
+            "identity": "",
+            "notes": 2,
+            "status": "open"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count_amount": 1,
+            "identity": "",
+            "notes": 1,
+            "status": "paid"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-all-functions",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "qty",
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "sum"
+          },
+          {
+            "column": "amount",
+            "function": "min"
+          },
+          {
+            "column": "amount",
+            "function": "max"
+          },
+          {
+            "column": "amount",
+            "function": " Average ",
+            "as": "avg_amount"
+          },
+          {
+            "column": "",
+            "function": "count"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "qty",
+          "sum_amount",
+          "min_amount",
+          "max_amount",
+          "avg_amount",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": null,
+            "count": 1,
+            "identity": "",
+            "max_amount": null,
+            "min_amount": null,
+            "qty": null,
+            "sum_amount": null
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": -5,
+            "count": 1,
+            "identity": "",
+            "max_amount": -5,
+            "min_amount": -5,
+            "qty": 0,
+            "sum_amount": -5
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": 9007199254740992,
+            "count": 1,
+            "identity": "",
+            "max_amount": 9007199254740992,
+            "min_amount": 9007199254740992,
+            "qty": 2,
+            "sum_amount": 9007199254740992
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": 10,
+            "count": 1,
+            "identity": "",
+            "max_amount": 10,
+            "min_amount": 10,
+            "qty": 3,
+            "sum_amount": 10
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": 20.5,
+            "count": 2,
+            "identity": "",
+            "max_amount": 20.5,
+            "min_amount": 20.5,
+            "qty": 7,
+            "sum_amount": 41
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": 1234567.5,
+            "count": 1,
+            "identity": "",
+            "max_amount": 1234567.5,
+            "min_amount": 1234567.5,
+            "qty": 123456,
+            "sum_amount": 1234567.5
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "avg_amount": 30,
+            "count": 1,
+            "identity": "",
+            "max_amount": "30",
+            "min_amount": "30",
+            "qty": "x",
+            "sum_amount": 30
+          }
+        ],
+        "total_rows": 7,
+        "returned_rows": 7,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-by-multiselect-json",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "tags"
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "tags",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "[\"Red\"]"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "[\"blue\",\"green\"]"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "[\"red\",\"Blue\"]"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "[\"red\"]"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "[]"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "red"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "red,green"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "tags": "{\"a\":1}"
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-by-bool",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "done"
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "done",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "done": null,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "done": 0,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 3,
+            "done": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "done": "true",
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "done": "yes",
+            "identity": ""
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-by-identity",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "identity"
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "identity",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 8,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "group-by-key-with-limit",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "group_by": "_key",
+        "limit": 3
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "_key",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": ""
+          }
+        ],
+        "total_rows": 8,
+        "returned_rows": 3,
+        "limit": 3,
+        "capped": true
+      }
+    },
+    {
+      "name": "group-with-filter",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "filters": [
+          {
+            "key": "amount",
+            "operator": "gte",
+            "value": "10"
+          }
+        ],
+        "group_by": "status",
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "sum",
+            "as": "total"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "status",
+          "total"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "status": null,
+            "total": 30
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "status": "OPEN",
+            "total": 20.5
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "status": "Paid",
+            "total": 9007199254740992
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "status": "open",
+            "total": 1234577.5
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "status": "paid",
+            "total": 20.5
+          }
+        ],
+        "total_rows": 5,
+        "returned_rows": 5,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "aggregate-only-sum",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "sum"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "sum_amount"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "sum_amount": 9007199255975636
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "aggregate-only-everything",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "",
+            "function": "count"
+          },
+          {
+            "column": "status",
+            "function": "count"
+          },
+          {
+            "column": "qty",
+            "function": "sum"
+          },
+          {
+            "column": "ratio",
+            "function": "average"
+          },
+          {
+            "column": "due",
+            "function": "min"
+          },
+          {
+            "column": "name",
+            "function": "max"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "count",
+          "count_status",
+          "sum_qty",
+          "average_ratio",
+          "min_due",
+          "max_name"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "average_ratio": 167.308335,
+            "count": 8,
+            "count_status": 6,
+            "identity": "",
+            "max_name": "İstanbul",
+            "min_due": "2025-12-31",
+            "sum_qty": 123475
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "aggregate-of-nothing-matching",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "filters": [
+          {
+            "key": "id",
+            "operator": "equals",
+            "value": "nope"
+          }
+        ],
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "sum"
+          },
+          {
+            "column": "",
+            "function": "count"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "sum_amount",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 0,
+            "identity": "",
+            "sum_amount": null
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "aggregate-duplicate-names",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "amount",
+            "function": "sum",
+            "as": "x"
+          },
+          {
+            "column": "",
+            "function": "count",
+            "as": "x"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "x",
+          "x"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "identity": "",
+            "x": 8
+          }
+        ],
+        "total_rows": 1,
+        "returned_rows": 1,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "aggregate-ignores-columns",
+      "kind": "service",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "group_by": "status",
+        "aggregates": [
+          {
+            "column": "",
+            "function": "count"
+          }
+        ]
+      },
+      "error": "",
+      "result": {
+        "dataset": "orders",
+        "columns": [
+          "status",
+          "count"
+        ],
+        "rows": [
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": null
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "OPEN"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "Paid"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "closed"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 2,
+            "identity": "",
+            "status": "open"
+          },
+          {
+            "_identity": "",
+            "_key": "",
+            "count": 1,
+            "identity": "",
+            "status": "paid"
+          }
+        ],
+        "total_rows": 6,
+        "returned_rows": 6,
+        "limit": 10,
+        "capped": false
+      }
+    },
+    {
+      "name": "sidecar-offset-page",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "limit": 2
+      },
+      "offset": 2,
+      "error": "",
+      "result": {
+        "limit": 2,
+        "offset": 2,
+        "rows": [
+          {
+            "row_key": "identity:r3",
+            "identity": "r3",
+            "values": {
+              "amount": "30",
+              "done": "yes",
+              "due": "not-a-date",
+              "id": "r3",
+              "name": "İstanbul",
+              "note": "",
+              "qty": "x",
+              "ratio": 2,
+              "status": null,
+              "tags": []
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 4
+          },
+          {
+            "row_key": "identity:r4",
+            "identity": "r4",
+            "values": {
+              "amount": -5,
+              "done": 1,
+              "due": "2025-12-31",
+              "id": "r4",
+              "name": "Zed",
+              "note": "line\nbreak",
+              "qty": 0,
+              "tags": [
+                "blue",
+                "green"
+              ]
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 5
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "sidecar-offset-past-end",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "limit": 2
+      },
+      "offset": 50,
+      "error": "",
+      "result": {
+        "limit": 2,
+        "offset": 50,
+        "rows": [],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "sidecar-negative-offset",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "limit": 2
+      },
+      "offset": -4,
+      "error": "",
+      "result": {
+        "limit": 2,
+        "offset": 0,
+        "rows": [
+          {
+            "row_key": "identity:r1",
+            "identity": "r1",
+            "values": {
+              "amount": 10,
+              "done": true,
+              "due": "2026-01-15",
+              "id": "r1",
+              "name": "ÄPFEL",
+              "note": "Alpha_beta",
+              "qty": 3,
+              "ratio": 0.5,
+              "seen": "2026-01-15T10:00:00Z",
+              "status": "open",
+              "tags": [
+                "red",
+                "Blue"
+              ]
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 2
+          },
+          {
+            "row_key": "identity:r2",
+            "identity": "r2",
+            "values": {
+              "amount": 20.5,
+              "done": false,
+              "due": "2026-02-01",
+              "id": "r2",
+              "name": "äpfel",
+              "note": "100% sure",
+              "qty": 7,
+              "ratio": 1.25,
+              "seen": "2026-02-01T08:30:00+01:00",
+              "status": "paid",
+              "tags": "red"
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 3
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "sidecar-offset-sorted",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "columns": [
+          "id"
+        ],
+        "sorts": [
+          {
+            "key": "amount",
+            "ascending": true
+          }
+        ],
+        "limit": 3
+      },
+      "offset": 1,
+      "error": "",
+      "result": {
+        "limit": 3,
+        "offset": 1,
+        "rows": [
+          {
+            "row_key": "identity:r1",
+            "identity": "r1",
+            "values": {
+              "amount": 10,
+              "done": true,
+              "due": "2026-01-15",
+              "id": "r1",
+              "name": "ÄPFEL",
+              "note": "Alpha_beta",
+              "qty": 3,
+              "ratio": 0.5,
+              "seen": "2026-01-15T10:00:00Z",
+              "status": "open",
+              "tags": [
+                "red",
+                "Blue"
+              ]
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 2
+          },
+          {
+            "row_key": "identity:r2",
+            "identity": "r2",
+            "values": {
+              "amount": 20.5,
+              "done": false,
+              "due": "2026-02-01",
+              "id": "r2",
+              "name": "äpfel",
+              "note": "100% sure",
+              "qty": 7,
+              "ratio": 1.25,
+              "seen": "2026-02-01T08:30:00+01:00",
+              "status": "paid",
+              "tags": "red"
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 3
+          },
+          {
+            "row_key": "identity:r5",
+            "identity": "r5",
+            "values": {
+              "amount": 20.5,
+              "done": "true",
+              "due": "2026-01-15",
+              "id": "r5",
+              "name": "zed",
+              "note": "x",
+              "qty": 7,
+              "ratio": 1000,
+              "seen": "2026-01-15T09:00:00Z",
+              "status": "OPEN",
+              "tags": "red,green"
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 6
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "sidecar-grouped-offset",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "group_by": "status",
+        "limit": 2
+      },
+      "offset": 1,
+      "error": "",
+      "result": {
+        "limit": 2,
+        "offset": 1,
+        "rows": [
+          {
+            "row_key": "",
+            "identity": "",
+            "values": {
+              "count": 1,
+              "status": "OPEN"
+            },
+            "source_path": "",
+            "row_number": 0
+          },
+          {
+            "row_key": "",
+            "identity": "",
+            "values": {
+              "count": 1,
+              "status": "Paid"
+            },
+            "source_path": "",
+            "row_number": 0
+          }
+        ],
+        "total_rows": 6
+      }
+    },
+    {
+      "name": "sidecar-aggregate-offset-hides-row",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {
+        "aggregates": [
+          {
+            "column": "",
+            "function": "count"
+          }
+        ]
+      },
+      "offset": 1,
+      "error": "",
+      "result": {
+        "limit": 10,
+        "offset": 1,
+        "rows": [],
+        "total_rows": 1
+      }
+    },
+    {
+      "name": "sidecar-row-metadata",
+      "kind": "sidecar",
+      "slug": "orders",
+      "options": {},
+      "error": "",
+      "result": {
+        "limit": 10,
+        "offset": 0,
+        "rows": [
+          {
+            "row_key": "identity:r1",
+            "identity": "r1",
+            "values": {
+              "amount": 10,
+              "done": true,
+              "due": "2026-01-15",
+              "id": "r1",
+              "name": "ÄPFEL",
+              "note": "Alpha_beta",
+              "qty": 3,
+              "ratio": 0.5,
+              "seen": "2026-01-15T10:00:00Z",
+              "status": "open",
+              "tags": [
+                "red",
+                "Blue"
+              ]
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 2
+          },
+          {
+            "row_key": "identity:r2",
+            "identity": "r2",
+            "values": {
+              "amount": 20.5,
+              "done": false,
+              "due": "2026-02-01",
+              "id": "r2",
+              "name": "äpfel",
+              "note": "100% sure",
+              "qty": 7,
+              "ratio": 1.25,
+              "seen": "2026-02-01T08:30:00+01:00",
+              "status": "paid",
+              "tags": "red"
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 3
+          },
+          {
+            "row_key": "identity:r3",
+            "identity": "r3",
+            "values": {
+              "amount": "30",
+              "done": "yes",
+              "due": "not-a-date",
+              "id": "r3",
+              "name": "İstanbul",
+              "note": "",
+              "qty": "x",
+              "ratio": 2,
+              "status": null,
+              "tags": []
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 4
+          },
+          {
+            "row_key": "identity:r4",
+            "identity": "r4",
+            "values": {
+              "amount": -5,
+              "done": 1,
+              "due": "2025-12-31",
+              "id": "r4",
+              "name": "Zed",
+              "note": "line\nbreak",
+              "qty": 0,
+              "tags": [
+                "blue",
+                "green"
+              ]
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 5
+          },
+          {
+            "row_key": "identity:r5",
+            "identity": "r5",
+            "values": {
+              "amount": 20.5,
+              "done": "true",
+              "due": "2026-01-15",
+              "id": "r5",
+              "name": "zed",
+              "note": "x",
+              "qty": 7,
+              "ratio": 1000,
+              "seen": "2026-01-15T09:00:00Z",
+              "status": "OPEN",
+              "tags": "red,green"
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 6
+          },
+          {
+            "row_key": "identity:r7",
+            "identity": "r7",
+            "values": {
+              "amount": 9007199254740992,
+              "done": false,
+              "due": "2026-03-05",
+              "id": "r7",
+              "name": "a_b",
+              "note": "%",
+              "qty": 2,
+              "ratio": 0.1,
+              "status": "Paid",
+              "tags": [
+                "Red"
+              ]
+            },
+            "source_path": "datasets/extra.csv",
+            "row_number": 2
+          },
+          {
+            "row_key": "identity:r8",
+            "identity": "r8",
+            "values": {
+              "amount": 1234567.5,
+              "done": true,
+              "due": "2026-04-01",
+              "id": "r8",
+              "name": "fl",
+              "note": "floats",
+              "qty": 123456,
+              "ratio": 0.00001,
+              "status": "open",
+              "tags": [
+                "red"
+              ]
+            },
+            "source_path": "datasets/extra.csv",
+            "row_number": 3
+          },
+          {
+            "row_key": "key:6",
+            "identity": "",
+            "values": {
+              "amount": null,
+              "id": "r6",
+              "name": "mid dle",
+              "status": "closed",
+              "tags": {
+                "a": 1
+              }
+            },
+            "source_path": "datasets/orders.csv",
+            "row_number": 7
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "view-plain",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:orders"
+      },
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "_path": "datasets/orders.csv",
+            "_title": "r1",
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "id": "r1",
+            "identity": "r1",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "_path": "datasets/orders.csv",
+            "_title": "r2",
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "id": "r2",
+            "identity": "r2",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "tags": "red"
+          },
+          {
+            "_identity": "r3",
+            "_key": "identity:r3",
+            "_path": "datasets/orders.csv",
+            "_title": "r3",
+            "amount": "30",
+            "done": "yes",
+            "due": "not-a-date",
+            "id": "r3",
+            "identity": "r3",
+            "name": "İstanbul",
+            "note": "",
+            "qty": "x",
+            "ratio": 2,
+            "status": null,
+            "tags": []
+          },
+          {
+            "_identity": "r4",
+            "_key": "identity:r4",
+            "_path": "datasets/orders.csv",
+            "_title": "r4",
+            "amount": -5,
+            "done": 1,
+            "due": "2025-12-31",
+            "id": "r4",
+            "identity": "r4",
+            "name": "Zed",
+            "note": "line\nbreak",
+            "qty": 0,
+            "tags": [
+              "blue",
+              "green"
+            ]
+          },
+          {
+            "_identity": "r5",
+            "_key": "identity:r5",
+            "_path": "datasets/orders.csv",
+            "_title": "r5",
+            "amount": 20.5,
+            "done": "true",
+            "due": "2026-01-15",
+            "id": "r5",
+            "identity": "r5",
+            "name": "zed",
+            "note": "x",
+            "qty": 7,
+            "ratio": 1000,
+            "seen": "2026-01-15T09:00:00Z",
+            "status": "OPEN",
+            "tags": "red,green"
+          },
+          {
+            "_identity": "r7",
+            "_key": "identity:r7",
+            "_path": "datasets/extra.csv",
+            "_title": "r7",
+            "amount": 9007199254740992,
+            "done": false,
+            "due": "2026-03-05",
+            "id": "r7",
+            "identity": "r7",
+            "name": "a_b",
+            "note": "%",
+            "qty": 2,
+            "ratio": 0.1,
+            "status": "Paid",
+            "tags": [
+              "Red"
+            ]
+          },
+          {
+            "_identity": "r8",
+            "_key": "identity:r8",
+            "_path": "datasets/extra.csv",
+            "_title": "r8",
+            "amount": 1234567.5,
+            "done": true,
+            "due": "2026-04-01",
+            "id": "r8",
+            "identity": "r8",
+            "name": "fl",
+            "note": "floats",
+            "qty": 123456,
+            "ratio": 0.00001,
+            "status": "open",
+            "tags": [
+              "red"
+            ]
+          },
+          {
+            "_key": "key:6",
+            "_path": "datasets/orders.csv",
+            "amount": null,
+            "id": "r6",
+            "name": "mid dle",
+            "status": "closed",
+            "tags": {
+              "a": 1
+            }
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "view-source-whitespace-and-limit",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "  dataset:orders  "
+      },
+      "limit": 3,
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "_path": "datasets/orders.csv",
+            "_title": "r1",
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "id": "r1",
+            "identity": "r1",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "_path": "datasets/orders.csv",
+            "_title": "r2",
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "id": "r2",
+            "identity": "r2",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "tags": "red"
+          },
+          {
+            "_identity": "r3",
+            "_key": "identity:r3",
+            "_path": "datasets/orders.csv",
+            "_title": "r3",
+            "amount": "30",
+            "done": "yes",
+            "due": "not-a-date",
+            "id": "r3",
+            "identity": "r3",
+            "name": "İstanbul",
+            "note": "",
+            "qty": "x",
+            "ratio": 2,
+            "status": null,
+            "tags": []
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "view-bare-slug",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "orders"
+      },
+      "limit": 3,
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "_path": "datasets/orders.csv",
+            "_title": "r1",
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "id": "r1",
+            "identity": "r1",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "_path": "datasets/orders.csv",
+            "_title": "r2",
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "id": "r2",
+            "identity": "r2",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "tags": "red"
+          },
+          {
+            "_identity": "r3",
+            "_key": "identity:r3",
+            "_path": "datasets/orders.csv",
+            "_title": "r3",
+            "amount": "30",
+            "done": "yes",
+            "due": "not-a-date",
+            "id": "r3",
+            "identity": "r3",
+            "name": "İstanbul",
+            "note": "",
+            "qty": "x",
+            "ratio": 2,
+            "status": null,
+            "tags": []
+          }
+        ],
+        "total_rows": 8
+      }
+    },
+    {
+      "name": "view-empty-slug",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:  "
+      },
+      "limit": 3,
+      "error": "view source dataset slug cannot be empty",
+      "result": null
+    },
+    {
+      "name": "view-filters-sorts",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:orders",
+        "filters": [
+          {
+            "key": "qty",
+            "operator": "gte",
+            "value": "2"
+          }
+        ],
+        "sorts": [
+          {
+            "key": "amount",
+            "ascending": false
+          }
+        ]
+      },
+      "limit": 10,
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "_identity": "r7",
+            "_key": "identity:r7",
+            "_path": "datasets/extra.csv",
+            "_title": "r7",
+            "amount": 9007199254740992,
+            "done": false,
+            "due": "2026-03-05",
+            "id": "r7",
+            "identity": "r7",
+            "name": "a_b",
+            "note": "%",
+            "qty": 2,
+            "ratio": 0.1,
+            "status": "Paid",
+            "tags": [
+              "Red"
+            ]
+          },
+          {
+            "_identity": "r8",
+            "_key": "identity:r8",
+            "_path": "datasets/extra.csv",
+            "_title": "r8",
+            "amount": 1234567.5,
+            "done": true,
+            "due": "2026-04-01",
+            "id": "r8",
+            "identity": "r8",
+            "name": "fl",
+            "note": "floats",
+            "qty": 123456,
+            "ratio": 0.00001,
+            "status": "open",
+            "tags": [
+              "red"
+            ]
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "_path": "datasets/orders.csv",
+            "_title": "r2",
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "id": "r2",
+            "identity": "r2",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "tags": "red"
+          },
+          {
+            "_identity": "r5",
+            "_key": "identity:r5",
+            "_path": "datasets/orders.csv",
+            "_title": "r5",
+            "amount": 20.5,
+            "done": "true",
+            "due": "2026-01-15",
+            "id": "r5",
+            "identity": "r5",
+            "name": "zed",
+            "note": "x",
+            "qty": 7,
+            "ratio": 1000,
+            "seen": "2026-01-15T09:00:00Z",
+            "status": "OPEN",
+            "tags": "red,green"
+          },
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "_path": "datasets/orders.csv",
+            "_title": "r1",
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "id": "r1",
+            "identity": "r1",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          }
+        ],
+        "total_rows": 5
+      }
+    },
+    {
+      "name": "view-group-by",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:orders",
+        "group_by": "status"
+      },
+      "limit": 10,
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "count": 2,
+            "status": null
+          },
+          {
+            "count": 1,
+            "status": "OPEN"
+          },
+          {
+            "count": 1,
+            "status": "Paid"
+          },
+          {
+            "count": 1,
+            "status": "closed"
+          },
+          {
+            "count": 2,
+            "status": "open"
+          },
+          {
+            "count": 1,
+            "status": "paid"
+          }
+        ],
+        "total_rows": 6
+      }
+    },
+    {
+      "name": "view-computed-formula-and-rollup",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:orders",
+        "filters": [
+          {
+            "key": "id",
+            "operator": "in",
+            "value": "r1,r2,r7,r8"
+          }
+        ],
+        "computed": {
+          "floats": {
+            "formula": "{amount}|{qty}|{ratio}|{done}"
+          },
+          "label": {
+            "formula": "{id}/{amount}"
+          },
+          "links": {
+            "rollup": "count"
+          },
+          "nofn": {},
+          "ratio2": {
+            "formula": "r={ratio} missing={absent}"
+          },
+          "stock": {
+            "formula": "{status}|{done}|{tags}|{qty}"
+          }
+        }
+      },
+      "limit": 10,
+      "error": "",
+      "result": {
+        "rows": [
+          {
+            "_identity": "r1",
+            "_key": "identity:r1",
+            "_path": "datasets/orders.csv",
+            "_title": "r1",
+            "amount": 10,
+            "done": true,
+            "due": "2026-01-15",
+            "floats": "10|3|0.5|true",
+            "id": "r1",
+            "identity": "r1",
+            "label": "r1/10",
+            "links": "",
+            "name": "ÄPFEL",
+            "note": "Alpha_beta",
+            "qty": 3,
+            "ratio": 0.5,
+            "ratio2": "r=0.5 missing={absent}",
+            "seen": "2026-01-15T10:00:00Z",
+            "status": "open",
+            "stock": "open|true|[red Blue]|3",
+            "tags": [
+              "red",
+              "Blue"
+            ]
+          },
+          {
+            "_identity": "r2",
+            "_key": "identity:r2",
+            "_path": "datasets/orders.csv",
+            "_title": "r2",
+            "amount": 20.5,
+            "done": false,
+            "due": "2026-02-01",
+            "floats": "20.5|7|1.25|false",
+            "id": "r2",
+            "identity": "r2",
+            "label": "r2/20.5",
+            "links": "",
+            "name": "äpfel",
+            "note": "100% sure",
+            "qty": 7,
+            "ratio": 1.25,
+            "ratio2": "r=1.25 missing={absent}",
+            "seen": "2026-02-01T08:30:00+01:00",
+            "status": "paid",
+            "stock": "paid|false|red|7",
+            "tags": "red"
+          },
+          {
+            "_identity": "r7",
+            "_key": "identity:r7",
+            "_path": "datasets/extra.csv",
+            "_title": "r7",
+            "amount": 9007199254740992,
+            "done": false,
+            "due": "2026-03-05",
+            "floats": "9.007199254740992e+15|2|0.1|false",
+            "id": "r7",
+            "identity": "r7",
+            "label": "r7/9.007199254740992e+15",
+            "links": "",
+            "name": "a_b",
+            "note": "%",
+            "qty": 2,
+            "ratio": 0.1,
+            "ratio2": "r=0.1 missing={absent}",
+            "status": "Paid",
+            "stock": "Paid|false|[Red]|2",
+            "tags": [
+              "Red"
+            ]
+          },
+          {
+            "_identity": "r8",
+            "_key": "identity:r8",
+            "_path": "datasets/extra.csv",
+            "_title": "r8",
+            "amount": 1234567.5,
+            "done": true,
+            "due": "2026-04-01",
+            "floats": "1.2345675e+06|123456|1e-05|true",
+            "id": "r8",
+            "identity": "r8",
+            "label": "r8/1.2345675e+06",
+            "links": "",
+            "name": "fl",
+            "note": "floats",
+            "qty": 123456,
+            "ratio": 0.00001,
+            "ratio2": "r=1e-05 missing={absent}",
+            "status": "open",
+            "stock": "open|true|[red]|123456",
+            "tags": [
+              "red"
+            ]
+          }
+        ],
+        "total_rows": 4
+      }
+    },
+    {
+      "name": "view-unknown-filter-column",
+      "kind": "view",
+      "slug": "orders",
+      "view": {
+        "source": "dataset:orders",
+        "filters": [
+          {
+            "key": "absent",
+            "operator": "equals",
+            "value": "x"
+          }
+        ]
+      },
+      "limit": 10,
+      "error": "dataset column \"absent\" not found",
+      "result": null
+    }
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "rows": [
+    {
+      "identity": "r1",
+      "row_key": "identity:r1",
+      "row_number": 2,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r1\",\"status\":\"open\",\"amount\":10,\"qty\":3,\"ratio\":0.5,\"due\":\"2026-01-15\",\"seen\":\"2026-01-15T10:00:00Z\",\"done\":true,\"tags\":[\"red\",\"Blue\"],\"note\":\"Alpha_beta\",\"name\":\"ÄPFEL\"}"
+    },
+    {
+      "identity": "r2",
+      "row_key": "identity:r2",
+      "row_number": 3,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r2\",\"status\":\"paid\",\"amount\":20.5,\"qty\":7,\"ratio\":1.25,\"due\":\"2026-02-01\",\"seen\":\"2026-02-01T08:30:00+01:00\",\"done\":false,\"tags\":\"red\",\"note\":\"100% sure\",\"name\":\"äpfel\"}"
+    },
+    {
+      "identity": "r3",
+      "row_key": "identity:r3",
+      "row_number": 4,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r3\",\"status\":null,\"amount\":\"30\",\"qty\":\"x\",\"ratio\":2,\"due\":\"not-a-date\",\"done\":\"yes\",\"tags\":[],\"note\":\"\",\"name\":\"İstanbul\"}"
+    },
+    {
+      "identity": "r4",
+      "row_key": "identity:r4",
+      "row_number": 5,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r4\",\"amount\":-5,\"qty\":0,\"due\":\"2025-12-31\",\"done\":1,\"tags\":[\"blue\",\"green\"],\"note\":\"line\\nbreak\",\"name\":\"Zed\"}"
+    },
+    {
+      "identity": "r5",
+      "row_key": "identity:r5",
+      "row_number": 6,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r5\",\"status\":\"OPEN\",\"amount\":20.5,\"qty\":7,\"ratio\":1000,\"due\":\"2026-01-15\",\"seen\":\"2026-01-15T09:00:00Z\",\"done\":\"true\",\"tags\":\"red,green\",\"note\":\"x\",\"name\":\"zed\"}"
+    },
+    {
+      "identity": "",
+      "row_key": "key:6",
+      "row_number": 7,
+      "source_path": "datasets/orders.csv",
+      "values_json": "{\"id\":\"r6\",\"status\":\"closed\",\"amount\":null,\"tags\":{\"a\":1},\"name\":\"mid dle\"}"
+    },
+    {
+      "identity": "r7",
+      "row_key": "identity:r7",
+      "row_number": 2,
+      "source_path": "datasets/extra.csv",
+      "values_json": "{\"id\":\"r7\",\"status\":\"Paid\",\"amount\":9007199254740993,\"qty\":2,\"ratio\":0.1,\"due\":\"2026-03-05\",\"done\":false,\"tags\":[\"Red\"],\"note\":\"%\",\"name\":\"a_b\"}"
+    },
+    {
+      "identity": "r8",
+      "row_key": "identity:r8",
+      "row_number": 3,
+      "source_path": "datasets/extra.csv",
+      "values_json": "{\"id\":\"r8\",\"status\":\"open\",\"amount\":1234567.5,\"qty\":123456,\"ratio\":0.00001,\"due\":\"2026-04-01\",\"done\":true,\"tags\":[\"red\"],\"note\":\"floats\",\"name\":\"fl\"}"
+    }
+  ],
+  "schema": {
+    "amount": "number",
+    "done": "bool",
+    "due": "date",
+    "id": "text",
+    "name": "text",
+    "note": "text",
+    "qty": "integer",
+    "ratio": "float",
+    "seen": "datetime",
+    "status": "text",
+    "tags": "multiselect"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",
+    "internal/service/dataset_view_exec.go": "6917e2ebd4040febf981a1da1caca8848560a67cd0259b483bdc0394c29bcb4c",
+    "internal/service/datasets.go": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
+    "internal/sidecar/dataset_query.go": "e5435faa58a97d6061be3fc9e9068ee56809f361f98a84394e4411741ce1d538"
+  }
+}

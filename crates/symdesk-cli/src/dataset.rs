@@ -7,8 +7,8 @@ use clap::{Arg, Command};
 use serde::Serialize;
 use serde_json::Value;
 use symdesk_index::{
-    DatasetQueryFilter, DatasetQueryFilterGroup, DatasetSyncOptions, DatasetSyncRow,
-    DatasetSyncService, open_for_vault,
+    DatasetAggregate, DatasetQueryFilter, DatasetQueryFilterGroup, DatasetServiceOptions,
+    DatasetServiceResult, DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, open_for_vault,
 };
 use symdesk_vault::{Coverage, PropertyConfig, Provenance, parse_dataset_handle};
 
@@ -52,10 +52,13 @@ pub fn cli() -> Command {
                 .arg(Arg::new("columns").long("columns").num_args(1))
                 .arg(Arg::new("filters").long("filters").num_args(1))
                 .arg(Arg::new("filter-group").long("filter-group").num_args(1))
+                .arg(Arg::new("group-by").long("group-by").num_args(1))
+                .arg(Arg::new("aggregates").long("aggregates").num_args(1))
                 .arg(
                     Arg::new("limit")
                         .long("limit")
                         .num_args(1)
+                        .allow_negative_numbers(true)
                         .value_parser(clap::value_parser!(i64)),
                 ),
         )
@@ -178,7 +181,7 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
     if handle.schema.is_empty() {
         return emit_error("dataset schema is required".to_owned(), json_output);
     }
-    let mut columns: Vec<String> = args
+    let columns: Vec<String> = args
         .get_one::<String>("columns")
         .map(|value| {
             value
@@ -189,107 +192,80 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
                 .collect()
         })
         .unwrap_or_default();
-    let mut seen = std::collections::BTreeSet::new();
-    columns.retain(|column| seen.insert(column.clone()));
-    if columns.is_empty() {
-        columns.extend(handle.schema.keys().cloned());
-        columns.sort();
-    }
-    for column in &columns {
-        if !matches!(column.as_str(), "identity" | "_identity" | "_key")
-            && !handle.schema.contains_key(column)
-        {
-            return emit_error(format!("dataset column {column:?} not found"), json_output);
-        }
-    }
-    let requested = args.get_one::<i64>("limit").copied().unwrap_or(0);
-    let limit = if requested <= 0 {
-        10
-    } else {
-        requested.min(1000) as usize
-    };
     let sidecar = match open_for_vault(&root) {
         Ok(sidecar) => sidecar,
         Err(error) => return emit_error(error.to_string(), json_output),
     };
     let filters = match args.get_one::<String>("filters") {
-        Some(input) => match serde_json::from_str::<Vec<DatasetQueryFilter>>(input) {
-            Ok(filters) => filters,
-            Err(error) => {
-                return emit_error(format!("parse --filters: {error}"), json_output);
+        Some(input) if !input.is_empty() => {
+            match serde_json::from_str::<Vec<DatasetQueryFilter>>(input) {
+                Ok(filters) => filters,
+                Err(error) => {
+                    return emit_error(
+                        format!("parse --filters: {}", go_json_error(&error)),
+                        json_output,
+                    );
+                }
             }
-        },
-        None => Vec::new(),
+        }
+        _ => Vec::new(),
     };
     let filter_group = match args.get_one::<String>("filter-group") {
-        Some(input) => match serde_json::from_str::<DatasetQueryFilterGroup>(input) {
-            Ok(group) => Some(group),
-            Err(error) => {
-                return emit_error(format!("parse --filter-group: {error}"), json_output);
+        Some(input) if !input.is_empty() => {
+            match serde_json::from_str::<Option<DatasetQueryFilterGroup>>(input) {
+                Ok(group) => group,
+                Err(error) => {
+                    return emit_error(
+                        format!("parse --filter-group: {}", go_json_error(&error)),
+                        json_output,
+                    );
+                }
             }
-        },
-        None => None,
+        }
+        _ => None,
+    };
+    let aggregates = match args.get_one::<String>("aggregates") {
+        Some(input) if !input.is_empty() => {
+            match serde_json::from_str::<Option<Vec<DatasetAggregate>>>(input) {
+                Ok(aggregates) => aggregates.unwrap_or_default(),
+                Err(error) => {
+                    return emit_error(
+                        format!("parse --aggregates: {}", go_json_error(&error)),
+                        json_output,
+                    );
+                }
+            }
+        }
+        _ => Vec::new(),
     };
     let schema = handle
         .schema
         .iter()
-        .map(|(key, property)| {
-            (
-                key.clone(),
-                if property.r#type.is_empty() {
-                    "text".to_owned()
-                } else {
-                    property.r#type.clone()
-                },
-            )
-        })
+        .map(|(key, property)| (key.clone(), property.r#type.clone()))
         .collect();
-    let (total_rows, source_rows) = match sidecar.dataset_query_page_filtered_with_group(
-        &handle.slug,
-        &schema,
-        &filters,
-        filter_group.as_ref(),
-        limit,
-    ) {
-        Ok(rows) => rows,
-        Err(error) => return emit_error(error.to_string(), json_output),
+    let options = DatasetServiceOptions {
+        columns,
+        filters,
+        filter_group,
+        sorts: Vec::new(),
+        group_by: value_or_empty(args, "group-by"),
+        aggregates,
+        limit: args.get_one::<i64>("limit").copied().unwrap_or(0),
     };
-    let mut rows = Vec::with_capacity(source_rows.len());
-    for source in source_rows {
-        let values: BTreeMap<String, Value> = match serde_json::from_str(&source.values_json) {
-            Ok(values) => values,
-            Err(error) => {
-                return emit_error(
-                    format!("decode dataset row {:?}: {error}", source.row_key),
-                    json_output,
-                );
-            }
-        };
-        let projected = columns
-            .iter()
-            .map(|column| {
-                let value = match column.as_str() {
-                    "identity" | "_identity" => Value::String(source.identity.clone()),
-                    "_key" => Value::String(source.row_key.clone()),
-                    _ => values.get(column).cloned().unwrap_or(Value::Null),
-                };
-                (column.clone(), value)
-            })
-            .collect();
-        rows.push(projected);
+    match sidecar.dataset_service_query(&handle.slug, &schema, &options) {
+        Ok(result) => output_query_result(&result, json_output),
+        Err(error) => emit_error(error.to_string(), json_output),
     }
-    output_query_result(
-        &QueryJson {
-            dataset: &handle.slug,
-            columns: &columns,
-            total_rows,
-            limit,
-            returned_rows: rows.len(),
-            capped: rows.len() < total_rows,
-            rows,
-        },
-        json_output,
-    )
+}
+
+/// Go's `encoding/json` words a truncated document as "unexpected end of JSON
+/// input"; other syntax and type errors keep the serde wording (declared limit).
+fn go_json_error(error: &serde_json::Error) -> String {
+    if error.is_eof() {
+        "unexpected end of JSON input".to_owned()
+    } else {
+        error.to_string()
+    }
 }
 
 fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String> {
@@ -334,18 +310,7 @@ fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String
     Ok(Some(bytes))
 }
 
-#[derive(Serialize)]
-struct QueryJson<'a> {
-    dataset: &'a str,
-    columns: &'a [String],
-    rows: Vec<BTreeMap<String, Value>>,
-    total_rows: usize,
-    returned_rows: usize,
-    limit: usize,
-    capped: bool,
-}
-
-fn output_query_result(result: &QueryJson<'_>, json_output: bool) -> ExitCode {
+fn output_query_result(result: &DatasetServiceResult, json_output: bool) -> ExitCode {
     if json_output {
         return write_go_json(result);
     }
@@ -395,7 +360,7 @@ fn go_debug_value(value: &Value) -> String {
                 .collect::<Vec<_>>()
                 .join(" ")
         ),
-        _ => value.to_string(),
+        _ => symdesk_index::go_percent_v(value),
     }
 }
 

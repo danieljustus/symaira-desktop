@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "input": "",
+      "output": ""
+    },
+    {
+      "input": "plain text without contact data",
+      "output": "plain text without contact data"
+    },
+    {
+      "input": "mail ada@example.com now",
+      "output": "mail [redacted-email] now"
+    },
+    {
+      "input": "ADA.LOVELACE+tag@Sub.Example.CO.UK and bob@x.io",
+      "output": "[redacted-email] and [redacted-email]"
+    },
+    {
+      "input": "ends with dot ada@example.com.",
+      "output": "ends with dot [redacted-email]."
+    },
+    {
+      "input": "not an email: @example.com, ada@, ada@example, ada@.com",
+      "output": "not an email: @example.com, ada@, ada@example, ada@.com"
+    },
+    {
+      "input": "ada@exa_mple.com",
+      "output": "ada@exa_mple.com"
+    },
+    {
+      "input": "unicode local ädä@example.com and ada@exämple.com",
+      "output": "unicode local ädä@example.com and ada@exämple.com"
+    },
+    {
+      "input": "call +49 170 1234567 today",
+      "output": "call [redacted-phone] today"
+    },
+    {
+      "input": "call (555) 123-4567 or 555.123.4567",
+      "output": "call ([redacted-phone] or [redacted-phone]"
+    },
+    {
+      "input": "+1-800-555-0199x",
+      "output": "[redacted-phone]x"
+    },
+    {
+      "input": "short 123456 and 1234567 and 12345678",
+      "output": "short 123456 and 1234567 and 12345678"
+    },
+    {
+      "input": "exactly eight 12345678 digits and 123456789",
+      "output": "exactly eight 12345678 digits and [redacted-phone]"
+    },
+    {
+      "input": "date 2026-01-02 and 2026-01-02 03:04:05",
+      "output": "date [redacted-phone] and [redacted-phone]:04:05"
+    },
+    {
+      "input": "ip 192.168.1.1 stays",
+      "output": "ip 192.168.1.1 stays"
+    },
+    {
+      "input": "ip with port 10.0.0.1:8080 stays",
+      "output": "ip with port 10.0.0.1:8080 stays"
+    },
+    {
+      "input": "address bind: 127.0.0.1 phone 0170 123 4567 end",
+      "output": "address bind: 127.0.0.1 phone [redacted-phone] end"
+    },
+    {
+      "input": "three digits 1 2 3 and 12 34 56 78 90",
+      "output": "three digits 1 2 3 and [redacted-phone]"
+    },
+    {
+      "input": "tab\tseparated 555\t123\t4567 phone",
+      "output": "tab\tseparated [redacted-phone] phone"
+    },
+    {
+      "input": "newline 555\n123\n4567 split",
+      "output": "newline [redacted-phone] split"
+    },
+    {
+      "input": "vertical\u000btab 555\u000b123\u000b4567 phone",
+      "output": "vertical\u000btab 555\u000b123\u000b4567 phone"
+    },
+    {
+      "input": "form\ffeed 555\f123\f4567 phone",
+      "output": "form\ffeed [redacted-phone] phone"
+    },
+    {
+      "input": "nbsp 555 123 4567 phone",
+      "output": "nbsp 555 123 4567 phone"
+    },
+    {
+      "input": "arabic-indic digits ٠١٢٣٤٥٦٧٨٩ and fullwidth １２３４５６７８９０",
+      "output": "arabic-indic digits ٠١٢٣٤٥٦٧٨٩ and fullwidth １２３４５６７８９０"
+    },
+    {
+      "input": "+٤٩ 170 1234567",
+      "output": "+٤٩ [redacted-phone]"
+    },
+    {
+      "input": "mixed ada@example.com and +49 170 1234567 and 10.1.1.1",
+      "output": "mixed [redacted-email] and [redacted-phone] and 10.1.1.1"
+    },
+    {
+      "input": "error: lookup failed for ada@example.com (+1 555 123 4567): timeout",
+      "output": "error: lookup failed for [redacted-email] ([redacted-phone]): timeout"
+    },
+    {
+      "input": "trailing digits 99 and a long run 123456789012345678901234567890",
+      "output": "trailing digits 99 and a long run [redacted-phone]"
+    },
+    {
+      "input": "minus-only 1-2-3-4-5-6-7-8-9",
+      "output": "minus-only [redacted-phone]"
+    },
+    {
+      "input": "+ alone, + 1, ++1234567890",
+      "output": "+ alone, + 1, +[redacted-phone]"
+    },
+    {
+      "input": "double@@example.com and x@y@z.com",
+      "output": "double@@example.com and x@[redacted-email]"
+    },
+    {
+      "input": "e-mail: \u003cada@example.com\u003e",
+      "output": "e-mail: \u003c[redacted-email]\u003e"
+    },
+    {
+      "input": "json {\"email\":\"ada@example.com\",\"phone\":\"+4917012345678\"}",
+      "output": "json {\"email\":\"[redacted-email]\",\"phone\":\"[redacted-phone]\"}"
+    },
+    {
+      "input": "ipv4-looking phone 123.456.789.012 stays dotted quad",
+      "output": "ipv4-looking phone 123.456.789.012 stays dotted quad"
+    },
+    {
+      "input": "1.2.3.4 and 1.2.3.4.5",
+      "output": "1.2.3.4 and [redacted-phone]"
+    }
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "source_hashes": {
+    "internal/contacts/internal/domain/security/redact.go": "f5d3bfbdf78dbc2f1fde6f6a89c8fda1a8f1b7e3d500ed97549e73bfdf136a4a"
+  }
+}

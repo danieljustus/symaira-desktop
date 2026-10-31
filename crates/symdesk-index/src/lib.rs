@@ -25,6 +25,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 mod backup;
 mod dataset_purge;
+mod dataset_query;
 mod dataset_sync;
 pub mod docs;
 mod duplicates;
@@ -50,6 +51,11 @@ pub mod turboquant;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
+pub use dataset_query::{
+    DATASET_QUERY_MAX_ROWS, DatasetAggregate, DatasetQueryOptions, DatasetQueryOutcome,
+    DatasetQueryRow, DatasetServiceOptions, DatasetServiceResult, DatasetSort, DatasetViewSpec,
+    go_number, go_percent_v,
+};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
     DatasetSyncResult, DatasetSyncRow, DatasetSyncService,

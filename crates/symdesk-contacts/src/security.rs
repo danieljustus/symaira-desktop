@@ -45,7 +45,7 @@ pub struct AuditEvent {
 }
 
 pub struct Service<'a, I, T, A> {
-    db: &'a Connection,
+    pub(crate) db: &'a Connection,
     id: I,
     timestamp: T,
     actor: A,
@@ -58,6 +58,16 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String, A: FnMut() -> String> Servi
             timestamp,
             actor,
         }
+    }
+    /// Insert an audit event with no entity; `detail` must already be scrubbed.
+    pub(crate) fn record_audit(&mut self, operation: &str, detail: &str) -> Result<(), Error> {
+        self.db
+            .execute(
+                "INSERT INTO audit_events(id,occurred_at,operation,actor,entity_type,entity_id,detail) VALUES(?,?,?,?,NULL,NULL,?)",
+                params![(self.id)(), (self.timestamp)(), operation, (self.actor)(), detail],
+            )
+            .map(|_| ())
+            .map_err(sql_error)
     }
     pub fn erase(&mut self, entity: Entity, id: &str) -> Result<EraseSummary, Error> {
         let (table, column, noun, op) = match entity {

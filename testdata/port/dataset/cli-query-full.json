@@ -1,0 +1,876 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "cases": [
+    {
+      "id": "query-full-group-by-count-default",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "status",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-group-by-count-star",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "status",
+        "--aggregates",
+        "[{\"function\":\"count\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-group-by-qty-all-functions",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "qty",
+        "--aggregates",
+        "[{\"function\":\"sum\",\"column\":\"amount\"},{\"function\":\"min\",\"column\":\"amount\"},{\"function\":\"max\",\"column\":\"amount\"},{\"function\":\"average\",\"column\":\"amount\",\"as\":\"mean\"},{\"function\":\"count\",\"column\":\"status\",\"as\":\"statuses\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-aggregate-only",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--aggregates",
+        "[{\"function\":\"sum\",\"column\":\"amount\"},{\"function\":\"count\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-aggregate-with-filter",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--aggregates",
+        "[{\"function\":\"sum\",\"column\":\"amount\",\"as\":\"total\"}]",
+        "--filters",
+        "[{\"key\":\"qty\",\"operator\":\"gte\",\"value\":\"3\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-group-limit",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "qty",
+        "--limit",
+        "1",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-unknown-aggregate",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--aggregates",
+        "[{\"function\":\"median\",\"column\":\"amount\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-unknown-aggregate-column",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--aggregates",
+        "[{\"function\":\"sum\",\"column\":\"absent\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-unknown-group-column",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "absent",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-bad-aggregates-json",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--aggregates",
+        "[{\"function\":",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-number-comparison-operators",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"amount\",\"operator\":\"gte\",\"value\":\"20\"},{\"key\":\"amount\",\"operator\":\"lt\",\"value\":\"50\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-less-than-or-equal-alias",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"amount\",\"operator\":\"\u003c=\",\"value\":\"10\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-date-operators",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id,due",
+        "--filters",
+        "[{\"key\":\"due\",\"operator\":\"on_or_after\",\"value\":\"2026-01-15\"},{\"key\":\"due\",\"operator\":\"before\",\"value\":\"2026-03-01\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-date-greater-than",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"due\",\"operator\":\"greater_than\",\"value\":\"2026-01-15\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-in-and-not-in",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"status\",\"operator\":\"in\",\"value\":\"open, paid\"},{\"key\":\"id\",\"operator\":\"not_in\",\"value\":\"e\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-contains-all-any-none",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"tags\",\"operator\":\"contains_any\",\"value\":\"red green\"},{\"key\":\"tags\",\"operator\":\"contains_none\",\"value\":\"blue\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-unknown-operator-equals",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--filters",
+        "[{\"key\":\"status\",\"operator\":\"matches\",\"value\":\"PAID\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-identity-pseudo-filter",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "_key,identity",
+        "--filters",
+        "[{\"key\":\"identity\",\"operator\":\"in\",\"value\":\"a,f\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-limit-clamped",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--limit",
+        "5000",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-negative-limit",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id",
+        "--limit",
+        "-1",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-large-number-column",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--columns",
+        "id,amount",
+        "--filters",
+        "[{\"key\":\"amount\",\"operator\":\"gt\",\"value\":\"30\"}]",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    },
+    {
+      "id": "query-full-group-by-console-output",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset",
+        "sync",
+        "orders",
+        "--rows",
+        "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"qty\":3,\"status\":\"open\",\"due\":\"2026-01-15\",\"tags\":\"red\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"qty\":7,\"status\":null,\"due\":\"2026-02-01\",\"tags\":\"blue\"}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30.5,\"qty\":7,\"due\":\"2026-02-28\"}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":-4,\"qty\":0,\"status\":\"\",\"due\":\"2025-12-31\",\"tags\":\"red\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"qty\":3,\"status\":\"paid\",\"due\":\"2026-01-15\"}},{\"identity\":\"f\",\"values\":{\"id\":\"f\",\"amount\":50,\"qty\":3,\"status\":\"PAID\",\"due\":\"2026-03-01\",\"tags\":\"green\"}}]",
+        "--provenance",
+        "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field",
+        "id",
+        "--schema",
+        "{\"amount\":{\"type\":\"number\"},\"qty\":{\"type\":\"integer\"},\"status\":{\"type\":\"text\"},\"due\":{\"type\":\"date\"},\"tags\":{\"type\":\"text\"}}",
+        "--json",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "args": [
+        "dataset",
+        "query",
+        "orders",
+        "--group-by",
+        "qty",
+        "--aggregates",
+        "[{\"function\":\"average\",\"column\":\"amount\"},{\"function\":\"count\"}]",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {
+          "path": "vault/.seed",
+          "content": "seed\n",
+          "mode": 420
+        }
+      ]
+    }
+  ]
+}

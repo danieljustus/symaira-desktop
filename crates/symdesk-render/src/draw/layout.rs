@@ -446,6 +446,7 @@ impl Interned {
     }
 }
 
+#[allow(clippy::needless_range_loop)] // `layer` indexes both `layers` and `interned.layers`
 fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
     let mut interned = Interned::new(layers, segments);
     let mut full = Crossings::new(interned.nodes, interned.layers.len());

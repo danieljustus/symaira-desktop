@@ -1,0 +1,2084 @@
+{
+  "actions": [
+    {
+      "op": "timeline",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-01-01T00:00:00Z",
+        "Summary": "a-oldest"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "call",
+        "OccurredAt": "2025-06-01T12:00:00Z",
+        "Summary": "b-same-instant-as-followup"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "email",
+        "OccurredAt": "2025-06-01T12:00:00.5Z",
+        "Summary": "c-fraction-after"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "meeting",
+        "OccurredAt": "2025-06-01T14:00:00+02:00",
+        "Summary": "d-offset-same-instant"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "e-tie-first"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "f-tie-second"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "ExternalRef": "opaque-1",
+        "Kind": "external_reference",
+        "OccurredAt": "2030-01-01T00:00:00Z",
+        "Summary": "g-ext"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2025-06-01T12:00:00Z",
+        "Notes": "same instant",
+        "ref": "person-f1"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2026-12-31T23:59:59.999999999Z",
+        "Notes": "nanos"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2025-03-03T03:03:03Z",
+        "Notes": "tie with e/f"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "DueAt": "2024-01-01T00:00:00Z",
+        "Notes": "oldest followup",
+        "ref": "person-f4"
+      }
+    },
+    {
+      "op": "complete",
+      "entity": "person",
+      "id": "person-f4",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-01-01T00:00:00Z",
+        "Summary": "a-oldest"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "call",
+        "OccurredAt": "2025-06-01T12:00:00Z",
+        "Summary": "b-same-instant-as-followup"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "email",
+        "OccurredAt": "2025-06-01T12:00:00.5Z",
+        "Summary": "c-fraction-after"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "meeting",
+        "OccurredAt": "2025-06-01T14:00:00+02:00",
+        "Summary": "d-offset-same-instant"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "e-tie-first"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "f-tie-second"
+      }
+    },
+    {
+      "op": "interaction",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "ExternalRef": "opaque-1",
+        "Kind": "external_reference",
+        "OccurredAt": "2030-01-01T00:00:00Z",
+        "Summary": "g-ext"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2025-06-01T12:00:00Z",
+        "Notes": "same instant",
+        "ref": "organization-f1"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2026-12-31T23:59:59.999999999Z",
+        "Notes": "nanos"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2025-03-03T03:03:03Z",
+        "Notes": "tie with e/f"
+      }
+    },
+    {
+      "op": "followup",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "DueAt": "2024-01-01T00:00:00Z",
+        "Notes": "oldest followup",
+        "ref": "organization-f4"
+      }
+    },
+    {
+      "op": "complete",
+      "entity": "organization",
+      "id": "organization-f4",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "timeline",
+      "entity": "organization",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-07-01T09:00:00Z",
+        "Summary": "Reviewed notes",
+        "Title": "Kickoff"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-08-01T09:00:00Z",
+        "Summary": "Ignored",
+        "Title": "Ignored retitle"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "m-2",
+        "OccurredAt": "2025-07-02T09:00:00Z",
+        "Title": "Title only"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "m-3",
+        "OccurredAt": "2025-07-03T09:00:00Z"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "  ",
+        "OccurredAt": "2025-07-03T09:00:00Z",
+        "Summary": "no id"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": " m-4 ",
+        "OccurredAt": "2025-07-04T09:00:00Z",
+        "Summary": "padded id"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": " m-4 ",
+        "OccurredAt": "2025-07-04T09:00:00Z",
+        "Summary": "padded id again"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "q",
+      "input": {
+        "MeetingID": "m-4",
+        "OccurredAt": "2025-07-05T09:00:00Z",
+        "Summary": "trimmed differs"
+      }
+    },
+    {
+      "op": "timeline",
+      "entity": "person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-07-01T09:00:00Z",
+        "Summary": "Reviewed notes",
+        "Title": "Kickoff"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-08-01T09:00:00Z",
+        "Summary": "Ignored",
+        "Title": "Ignored retitle"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "m-2",
+        "OccurredAt": "2025-07-02T09:00:00Z",
+        "Title": "Title only"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "m-3",
+        "OccurredAt": "2025-07-03T09:00:00Z"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "  ",
+        "OccurredAt": "2025-07-03T09:00:00Z",
+        "Summary": "no id"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": " m-4 ",
+        "OccurredAt": "2025-07-04T09:00:00Z",
+        "Summary": "padded id"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": " m-4 ",
+        "OccurredAt": "2025-07-04T09:00:00Z",
+        "Summary": "padded id again"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "o",
+      "input": {
+        "MeetingID": "m-4",
+        "OccurredAt": "2025-07-05T09:00:00Z",
+        "Summary": "trimmed differs"
+      }
+    },
+    {
+      "op": "timeline",
+      "entity": "organization",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "p",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-07-01T09:00:00Z",
+        "Summary": "other person"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "person",
+      "id": "missing",
+      "input": {
+        "MeetingID": "m-1",
+        "OccurredAt": "2025-07-01T09:00:00Z",
+        "Summary": "ghost"
+      }
+    },
+    {
+      "op": "meeting",
+      "entity": "organization",
+      "id": "missing",
+      "input": {
+        "MeetingID": "m-9",
+        "OccurredAt": "2025-07-01T09:00:00Z",
+        "Summary": "ghost"
+      }
+    }
+  ],
+  "ids": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005",
+    "00000000-0000-4000-8000-000000000006",
+    "00000000-0000-4000-8000-000000000007",
+    "00000000-0000-4000-8000-000000000008",
+    "00000000-0000-4000-8000-000000000009",
+    "00000000-0000-4000-8000-00000000000a",
+    "00000000-0000-4000-8000-00000000000b",
+    "00000000-0000-4000-8000-00000000000c",
+    "00000000-0000-4000-8000-00000000000d",
+    "00000000-0000-4000-8000-00000000000e",
+    "00000000-0000-4000-8000-00000000000f",
+    "00000000-0000-4000-8000-000000000010",
+    "00000000-0000-4000-8000-000000000011",
+    "00000000-0000-4000-8000-000000000012",
+    "00000000-0000-4000-8000-000000000013",
+    "00000000-0000-4000-8000-000000000014",
+    "00000000-0000-4000-8000-000000000015",
+    "00000000-0000-4000-8000-000000000016",
+    "00000000-0000-4000-8000-000000000017",
+    "00000000-0000-4000-8000-000000000018",
+    "00000000-0000-4000-8000-000000000019",
+    "00000000-0000-4000-8000-00000000001a",
+    "00000000-0000-4000-8000-00000000001b",
+    "00000000-0000-4000-8000-00000000001c",
+    "00000000-0000-4000-8000-00000000001d",
+    "00000000-0000-4000-8000-00000000001e",
+    "00000000-0000-4000-8000-00000000001f",
+    "00000000-0000-4000-8000-000000000020",
+    "00000000-0000-4000-8000-000000000021",
+    "00000000-0000-4000-8000-000000000022",
+    "00000000-0000-4000-8000-000000000023"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "queries": [
+    "SELECT * FROM interactions ORDER BY id",
+    "SELECT * FROM follow_ups ORDER BY id"
+  ],
+  "results": [
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Kind": "note",
+        "OccurredAt": "2025-01-01T00:00:00Z",
+        "Summary": "a-oldest"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000002",
+        "Kind": "call",
+        "OccurredAt": "2025-06-01T12:00:00Z",
+        "Summary": "b-same-instant-as-followup"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000003",
+        "Kind": "email",
+        "OccurredAt": "2025-06-01T12:00:00.5Z",
+        "Summary": "c-fraction-after"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000004",
+        "Kind": "meeting",
+        "OccurredAt": "2025-06-01T14:00:00+02:00",
+        "Summary": "d-offset-same-instant"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000005",
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "e-tie-first"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000006",
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "f-tie-second"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-1",
+        "ID": "00000000-0000-4000-8000-000000000007",
+        "Kind": "external_reference",
+        "OccurredAt": "2030-01-01T00:00:00Z",
+        "Summary": "g-ext"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2025-06-01T12:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000008",
+        "Notes": "same instant",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2026-12-31T23:59:59.999999999Z",
+        "ID": "00000000-0000-4000-8000-000000000009",
+        "Notes": "nanos",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2025-03-03T03:03:03Z",
+        "ID": "00000000-0000-4000-8000-00000000000a",
+        "Notes": "tie with e/f",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2024-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000b",
+        "Notes": "oldest followup",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": "2026-01-02T03:04:05Z",
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2024-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-00000000000b",
+        "Notes": "oldest followup",
+        "Status": "completed",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "At": "2030-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "opaque-1",
+            "ID": "00000000-0000-4000-8000-000000000007",
+            "Kind": "external_reference",
+            "OccurredAt": "2030-01-01T00:00:00Z",
+            "Summary": "g-ext"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2026-12-31T23:59:59.999999999Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2026-12-31T23:59:59.999999999Z",
+            "ID": "00000000-0000-4000-8000-000000000009",
+            "Notes": "nanos",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-06-01T12:00:00.5Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000003",
+            "Kind": "email",
+            "OccurredAt": "2025-06-01T12:00:00.5Z",
+            "Summary": "c-fraction-after"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Kind": "call",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "b-same-instant-as-followup"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000004",
+            "Kind": "meeting",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "d-offset-same-instant"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-06-01T12:00:00Z",
+            "ID": "00000000-0000-4000-8000-000000000008",
+            "Notes": "same instant",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000005",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "e-tie-first"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000006",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "f-tie-second"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-03-03T03:03:03Z",
+            "ID": "00000000-0000-4000-8000-00000000000a",
+            "Notes": "tie with e/f",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Kind": "note",
+            "OccurredAt": "2025-01-01T00:00:00Z",
+            "Summary": "a-oldest"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2024-01-01T00:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": "2026-01-02T03:04:05Z",
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2024-01-01T00:00:00Z",
+            "ID": "00000000-0000-4000-8000-00000000000b",
+            "Notes": "oldest followup",
+            "Status": "completed",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-00000000000c",
+        "Kind": "note",
+        "OccurredAt": "2025-01-01T00:00:00Z",
+        "Summary": "a-oldest"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-00000000000d",
+        "Kind": "call",
+        "OccurredAt": "2025-06-01T12:00:00Z",
+        "Summary": "b-same-instant-as-followup"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-00000000000e",
+        "Kind": "email",
+        "OccurredAt": "2025-06-01T12:00:00.5Z",
+        "Summary": "c-fraction-after"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-00000000000f",
+        "Kind": "meeting",
+        "OccurredAt": "2025-06-01T14:00:00+02:00",
+        "Summary": "d-offset-same-instant"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000010",
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "e-tie-first"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "",
+        "ID": "00000000-0000-4000-8000-000000000011",
+        "Kind": "note",
+        "OccurredAt": "2025-03-03T03:03:03Z",
+        "Summary": "f-tie-second"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ExternalRef": "opaque-1",
+        "ID": "00000000-0000-4000-8000-000000000012",
+        "Kind": "external_reference",
+        "OccurredAt": "2030-01-01T00:00:00Z",
+        "Summary": "g-ext"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2025-06-01T12:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000013",
+        "Notes": "same instant",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2026-12-31T23:59:59.999999999Z",
+        "ID": "00000000-0000-4000-8000-000000000014",
+        "Notes": "nanos",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2025-03-03T03:03:03Z",
+        "ID": "00000000-0000-4000-8000-000000000015",
+        "Notes": "tie with e/f",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2024-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000016",
+        "Notes": "oldest followup",
+        "Status": "open",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CancelledAt": null,
+        "CompletedAt": "2026-01-02T03:04:05Z",
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DueAt": "2024-01-01T00:00:00Z",
+        "ID": "00000000-0000-4000-8000-000000000016",
+        "Notes": "oldest followup",
+        "Status": "completed",
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "At": "2030-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "opaque-1",
+            "ID": "00000000-0000-4000-8000-000000000012",
+            "Kind": "external_reference",
+            "OccurredAt": "2030-01-01T00:00:00Z",
+            "Summary": "g-ext"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2026-12-31T23:59:59.999999999Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2026-12-31T23:59:59.999999999Z",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "Notes": "nanos",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-06-01T12:00:00.5Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000e",
+            "Kind": "email",
+            "OccurredAt": "2025-06-01T12:00:00.5Z",
+            "Summary": "c-fraction-after"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000d",
+            "Kind": "call",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "b-same-instant-as-followup"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000f",
+            "Kind": "meeting",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "d-offset-same-instant"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-06-01T12:00:00Z",
+            "ID": "00000000-0000-4000-8000-000000000013",
+            "Notes": "same instant",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000010",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "e-tie-first"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000011",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "f-tie-second"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-03-03T03:03:03Z",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "Notes": "tie with e/f",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000c",
+            "Kind": "note",
+            "OccurredAt": "2025-01-01T00:00:00Z",
+            "Summary": "a-oldest"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2024-01-01T00:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": "2026-01-02T03:04:05Z",
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2024-01-01T00:00:00Z",
+            "ID": "00000000-0000-4000-8000-000000000016",
+            "Notes": "oldest followup",
+            "Status": "completed",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-1",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-01T09:00:00Z",
+          "Summary": "Reviewed notes"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": false,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-1",
+          "ID": "00000000-0000-4000-8000-000000000017",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-01T09:00:00Z",
+          "Summary": "Reviewed notes"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-2",
+          "ID": "00000000-0000-4000-8000-000000000018",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-02T09:00:00Z",
+          "Summary": "Title only"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-3",
+          "ID": "00000000-0000-4000-8000-000000000019",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-03T09:00:00Z",
+          "Summary": "Meeting"
+        }
+      }
+    },
+    {
+      "error": "relationship.importMeeting: meeting id must not be empty",
+      "kind": "invalid",
+      "value": {
+        "created": false,
+        "interaction": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": " m-4 ",
+          "ID": "00000000-0000-4000-8000-00000000001a",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-04T09:00:00Z",
+          "Summary": "padded id"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": false,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": " m-4 ",
+          "ID": "00000000-0000-4000-8000-00000000001a",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-04T09:00:00Z",
+          "Summary": "padded id"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-4",
+          "ID": "00000000-0000-4000-8000-00000000001b",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-05T09:00:00Z",
+          "Summary": "trimmed differs"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "At": "2025-07-05T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-4",
+            "ID": "00000000-0000-4000-8000-00000000001b",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-05T09:00:00Z",
+            "Summary": "trimmed differs"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-04T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": " m-4 ",
+            "ID": "00000000-0000-4000-8000-00000000001a",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-04T09:00:00Z",
+            "Summary": "padded id"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-03T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-3",
+            "ID": "00000000-0000-4000-8000-000000000019",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-03T09:00:00Z",
+            "Summary": "Meeting"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-02T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-2",
+            "ID": "00000000-0000-4000-8000-000000000018",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-02T09:00:00Z",
+            "Summary": "Title only"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-01T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-1",
+            "ID": "00000000-0000-4000-8000-000000000017",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-01T09:00:00Z",
+            "Summary": "Reviewed notes"
+          },
+          "Kind": "interaction"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-1",
+          "ID": "00000000-0000-4000-8000-00000000001c",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-01T09:00:00Z",
+          "Summary": "Reviewed notes"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": false,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-1",
+          "ID": "00000000-0000-4000-8000-00000000001c",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-01T09:00:00Z",
+          "Summary": "Reviewed notes"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-2",
+          "ID": "00000000-0000-4000-8000-00000000001d",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-02T09:00:00Z",
+          "Summary": "Title only"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-3",
+          "ID": "00000000-0000-4000-8000-00000000001e",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-03T09:00:00Z",
+          "Summary": "Meeting"
+        }
+      }
+    },
+    {
+      "error": "relationship.importMeeting: meeting id must not be empty",
+      "kind": "invalid",
+      "value": {
+        "created": false,
+        "interaction": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": " m-4 ",
+          "ID": "00000000-0000-4000-8000-00000000001f",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-04T09:00:00Z",
+          "Summary": "padded id"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": false,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": " m-4 ",
+          "ID": "00000000-0000-4000-8000-00000000001f",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-04T09:00:00Z",
+          "Summary": "padded id"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-4",
+          "ID": "00000000-0000-4000-8000-000000000020",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-05T09:00:00Z",
+          "Summary": "trimmed differs"
+        }
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "At": "2030-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "opaque-1",
+            "ID": "00000000-0000-4000-8000-000000000012",
+            "Kind": "external_reference",
+            "OccurredAt": "2030-01-01T00:00:00Z",
+            "Summary": "g-ext"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2026-12-31T23:59:59.999999999Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2026-12-31T23:59:59.999999999Z",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "Notes": "nanos",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-07-05T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-4",
+            "ID": "00000000-0000-4000-8000-000000000020",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-05T09:00:00Z",
+            "Summary": "trimmed differs"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-04T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": " m-4 ",
+            "ID": "00000000-0000-4000-8000-00000000001f",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-04T09:00:00Z",
+            "Summary": "padded id"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-03T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-3",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-03T09:00:00Z",
+            "Summary": "Meeting"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-02T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-2",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-02T09:00:00Z",
+            "Summary": "Title only"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-07-01T09:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "m-1",
+            "ID": "00000000-0000-4000-8000-00000000001c",
+            "Kind": "meeting",
+            "OccurredAt": "2025-07-01T09:00:00Z",
+            "Summary": "Reviewed notes"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00.5Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000e",
+            "Kind": "email",
+            "OccurredAt": "2025-06-01T12:00:00.5Z",
+            "Summary": "c-fraction-after"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000d",
+            "Kind": "call",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "b-same-instant-as-followup"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000f",
+            "Kind": "meeting",
+            "OccurredAt": "2025-06-01T12:00:00Z",
+            "Summary": "d-offset-same-instant"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-06-01T12:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-06-01T12:00:00Z",
+            "ID": "00000000-0000-4000-8000-000000000013",
+            "Notes": "same instant",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000010",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "e-tie-first"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-000000000011",
+            "Kind": "note",
+            "OccurredAt": "2025-03-03T03:03:03Z",
+            "Summary": "f-tie-second"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2025-03-03T03:03:03Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2025-03-03T03:03:03Z",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "Notes": "tie with e/f",
+            "Status": "open",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        },
+        {
+          "At": "2025-01-01T00:00:00Z",
+          "FollowUp": null,
+          "Interaction": {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ExternalRef": "",
+            "ID": "00000000-0000-4000-8000-00000000000c",
+            "Kind": "note",
+            "OccurredAt": "2025-01-01T00:00:00Z",
+            "Summary": "a-oldest"
+          },
+          "Kind": "interaction"
+        },
+        {
+          "At": "2024-01-01T00:00:00Z",
+          "FollowUp": {
+            "CancelledAt": null,
+            "CompletedAt": "2026-01-02T03:04:05Z",
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DueAt": "2024-01-01T00:00:00Z",
+            "ID": "00000000-0000-4000-8000-000000000016",
+            "Notes": "oldest followup",
+            "Status": "completed",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          "Interaction": null,
+          "Kind": "follow_up"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "created": true,
+        "interaction": {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ExternalRef": "m-1",
+          "ID": "00000000-0000-4000-8000-000000000021",
+          "Kind": "meeting",
+          "OccurredAt": "2025-07-01T09:00:00Z",
+          "Summary": "other person"
+        }
+      }
+    },
+    {
+      "error": "relationship.addInteraction: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": {
+        "created": false,
+        "interaction": null
+      }
+    },
+    {
+      "error": "relationship.addInteraction: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": {
+        "created": false,
+        "interaction": null
+      }
+    }
+  ],
+  "seed": "INSERT INTO persons(id,display_name,created_at,updated_at) VALUES('p','Ada','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'),('q','Bob','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'); INSERT INTO organizations(id,name,created_at,updated_at) VALUES('o','Example','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z');",
+  "snapshots": [
+    [
+      [
+        "00000000-0000-4000-8000-000000000001",
+        "p",
+        null,
+        "note",
+        "2025-01-01T00:00:00Z",
+        "a-oldest",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000002",
+        "p",
+        null,
+        "call",
+        "2025-06-01T12:00:00Z",
+        "b-same-instant-as-followup",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000003",
+        "p",
+        null,
+        "email",
+        "2025-06-01T12:00:00.5Z",
+        "c-fraction-after",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000004",
+        "p",
+        null,
+        "meeting",
+        "2025-06-01T12:00:00Z",
+        "d-offset-same-instant",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000005",
+        "p",
+        null,
+        "note",
+        "2025-03-03T03:03:03Z",
+        "e-tie-first",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000006",
+        "p",
+        null,
+        "note",
+        "2025-03-03T03:03:03Z",
+        "f-tie-second",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000007",
+        "p",
+        null,
+        "external_reference",
+        "2030-01-01T00:00:00Z",
+        "g-ext",
+        "opaque-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000c",
+        null,
+        "o",
+        "note",
+        "2025-01-01T00:00:00Z",
+        "a-oldest",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000d",
+        null,
+        "o",
+        "call",
+        "2025-06-01T12:00:00Z",
+        "b-same-instant-as-followup",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000e",
+        null,
+        "o",
+        "email",
+        "2025-06-01T12:00:00.5Z",
+        "c-fraction-after",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000f",
+        null,
+        "o",
+        "meeting",
+        "2025-06-01T12:00:00Z",
+        "d-offset-same-instant",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000010",
+        null,
+        "o",
+        "note",
+        "2025-03-03T03:03:03Z",
+        "e-tie-first",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000011",
+        null,
+        "o",
+        "note",
+        "2025-03-03T03:03:03Z",
+        "f-tie-second",
+        "",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000012",
+        null,
+        "o",
+        "external_reference",
+        "2030-01-01T00:00:00Z",
+        "g-ext",
+        "opaque-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000017",
+        "q",
+        null,
+        "meeting",
+        "2025-07-01T09:00:00Z",
+        "Reviewed notes",
+        "m-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000018",
+        "q",
+        null,
+        "meeting",
+        "2025-07-02T09:00:00Z",
+        "Title only",
+        "m-2",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000019",
+        "q",
+        null,
+        "meeting",
+        "2025-07-03T09:00:00Z",
+        "Meeting",
+        "m-3",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001a",
+        "q",
+        null,
+        "meeting",
+        "2025-07-04T09:00:00Z",
+        "padded id",
+        " m-4 ",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001b",
+        "q",
+        null,
+        "meeting",
+        "2025-07-05T09:00:00Z",
+        "trimmed differs",
+        "m-4",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001c",
+        null,
+        "o",
+        "meeting",
+        "2025-07-01T09:00:00Z",
+        "Reviewed notes",
+        "m-1",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001d",
+        null,
+        "o",
+        "meeting",
+        "2025-07-02T09:00:00Z",
+        "Title only",
+        "m-2",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001e",
+        null,
+        "o",
+        "meeting",
+        "2025-07-03T09:00:00Z",
+        "Meeting",
+        "m-3",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001f",
+        null,
+        "o",
+        "meeting",
+        "2025-07-04T09:00:00Z",
+        "padded id",
+        " m-4 ",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000020",
+        null,
+        "o",
+        "meeting",
+        "2025-07-05T09:00:00Z",
+        "trimmed differs",
+        "m-4",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000021",
+        "p",
+        null,
+        "meeting",
+        "2025-07-01T09:00:00Z",
+        "other person",
+        "m-1",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-000000000008",
+        "p",
+        null,
+        "2025-06-01T12:00:00Z",
+        "same instant",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000009",
+        "p",
+        null,
+        "2026-12-31T23:59:59.999999999Z",
+        "nanos",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000a",
+        "p",
+        null,
+        "2025-03-03T03:03:03Z",
+        "tie with e/f",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000000b",
+        "p",
+        null,
+        "2024-01-01T00:00:00Z",
+        "oldest followup",
+        "completed",
+        "2026-01-02T03:04:05Z",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000013",
+        null,
+        "o",
+        "2025-06-01T12:00:00Z",
+        "same instant",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000014",
+        null,
+        "o",
+        "2026-12-31T23:59:59.999999999Z",
+        "nanos",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000015",
+        null,
+        "o",
+        "2025-03-03T03:03:03Z",
+        "tie with e/f",
+        "open",
+        null,
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000016",
+        null,
+        "o",
+        "2024-01-01T00:00:00Z",
+        "oldest followup",
+        "completed",
+        "2026-01-02T03:04:05Z",
+        null,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ]
+  ],
+  "source_hashes": {
+    "internal/contacts/internal/domain/relationship/types.go": "f4437a408d0dc83c981ec8eb6d7cc2cf3d5a637b053d6a7d1b98ab27cb6a7bfe",
+    "internal/contacts/internal/service/relationship/interactions.go": "377086c08735c428fdd3ac15bf75760d1e3c7eea2eaaf589a2d2102ef9129a77",
+    "internal/contacts/internal/service/relationship/meetings.go": "dd62b057ca202e8fb9c60c7e5bf6821a10f782ea3bfd507412fad9464c0dc3e8",
+    "internal/contacts/internal/service/relationship/timeline.go": "204f3ada355452de4e247553863508964cdab27b337fa863c7faf1bea417eca7"
+  },
+  "timestamp": "2026-01-02T03:04:05Z"
+}

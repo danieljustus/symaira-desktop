@@ -1,0 +1,1486 @@
+{
+ "cases": [
+  {
+   "scenario": {
+    "id": "missing",
+    "tool": "missing",
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": false,
+   "prediction": null,
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "noexec",
+    "tool": "noexec",
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": false,
+   "prediction": null,
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "dir",
+    "tool": "dir",
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": false,
+   "prediction": null,
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "agree-pdf",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"pdf\",\"score\":0.99},\"output\":{\"ct_label\":\"pdf\",\"group\":\"g\",\"mime_type\":\"application/pdf\",\"score\":0.99}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "pdf",
+    "MIMEType": "application/pdf",
+    "Score": 0.99
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "mismatch-png-as-pdf",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"png\",\"score\":0.5},\"output\":{\"ct_label\":\"png\",\"group\":\"g\",\"mime_type\":\"image/png\",\"score\":0.5}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "image/png",
+    "Score": 0.5
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "mismatch-score-rounding",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"png\",\"score\":0.12349},\"output\":{\"ct_label\":\"png\",\"group\":\"g\",\"mime_type\":\"image/png\",\"score\":0.12349}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "b.png",
+    "content": "iVBORw0KGgowMDAw",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "image/png",
+    "Score": 0.12349
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: b.png extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.123); proceeding with extension-based guess"
+   ],
+   "kind": "image/png",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/b.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "mismatch-score-rounding-up",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"jpeg\",\"score\":0.9996},\"output\":{\"ct_label\":\"jpeg\",\"group\":\"g\",\"mime_type\":\"image/jpeg\",\"score\":0.9996}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "b.png",
+    "content": "iVBORw0KGgowMDAw",
+    "ext_mime": "image/png"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "jpeg",
+    "MIMEType": "image/jpeg",
+    "Score": 0.9996
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: b.png extension suggests \"image/png\" but magika detected \"image/jpeg\" (label=\"jpeg\", score=1.000); proceeding with extension-based guess"
+   ],
+   "kind": "image/png",
+   "detect_error": "",
+   "detect_stderr": "Warning: b.png extension suggests \"image/png\" but magika detected \"image/jpeg\" (label=\"jpeg\", score=1.000); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/b.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "mismatch-score-zero",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"txt\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "c.png",
+    "content": "iVBORw0KGgowMDAw",
+    "ext_mime": "image/png"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "txt",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: c.png extension suggests \"image/png\" but magika detected \"text/plain\" (label=\"txt\", score=0.000); proceeding with extension-based guess"
+   ],
+   "kind": "image/png",
+   "detect_error": "",
+   "detect_stderr": "Warning: c.png extension suggests \"image/png\" but magika detected \"text/plain\" (label=\"txt\", score=0.000); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/c.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "label-uppercase",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"PDF\",\"score\":0.7},\"output\":{\"ct_label\":\"PDF\",\"group\":\"g\",\"mime_type\":\"application/pdf\",\"score\":0.7}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "PDF",
+    "MIMEType": "application/pdf",
+    "Score": 0.7
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "label-uppercase-mismatch",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"DOCX\",\"score\":0.7},\"output\":{\"ct_label\":\"DOCX\",\"group\":\"g\",\"mime_type\":\"x\",\"score\":0.7}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "DOCX",
+    "MIMEType": "x",
+    "Score": 0.7
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\" (label=\"DOCX\", score=0.700); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\" (label=\"DOCX\", score=0.700); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "label-text",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"text\",\"score\":0.9},\"output\":{\"ct_label\":\"text\",\"group\":\"g\",\"mime_type\":\"text/plain\",\"score\":0.9}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "n.png",
+    "content": "iVBORw0KGgowMDAw",
+    "ext_mime": "image/png"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "text",
+    "MIMEType": "text/plain",
+    "Score": 0.9
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: n.png extension suggests \"image/png\" but magika detected \"text/plain\" (label=\"text\", score=0.900); proceeding with extension-based guess"
+   ],
+   "kind": "image/png",
+   "detect_error": "",
+   "detect_stderr": "Warning: n.png extension suggests \"image/png\" but magika detected \"text/plain\" (label=\"text\", score=0.900); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/n.png"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "label-unmapped",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"elf\",\"score\":0.9},\"output\":{\"ct_label\":\"elf\",\"group\":\"g\",\"mime_type\":\"application/x-elf\",\"score\":0.9}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "elf",
+    "MIMEType": "application/x-elf",
+    "Score": 0.9
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "label-empty",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "invalid-json",
+    "tool": "ok",
+    "stdout": "not json",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: invalid character 'o' in literal null (expecting 'u')"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: invalid character 'o' in literal null (expecting 'u')"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: invalid character 'o' in literal null (expecting 'u')\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "empty-stdout",
+    "tool": "ok",
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: unexpected end of JSON input"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: unexpected end of JSON input"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: unexpected end of JSON input\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-array",
+    "tool": "ok",
+    "stdout": "[]",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go value of type filetype.magikaResult"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go value of type filetype.magikaResult"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal array into Go value of type filetype.magikaResult\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "null-result",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":null}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "verify_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: unexpected empty result for $DIR/files/a.pdf\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "no-output-field",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"dl\":{\"ct_label\":\"pdf\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "verify_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: unexpected empty result for $DIR/files/a.pdf\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "error-field",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":null,\"error\":{\"code\":1}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "verify_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: unexpected empty result for $DIR/files/a.pdf\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "exit-nonzero-stderr",
+    "tool": "ok",
+    "stdout": "",
+    "stderr": "  model missing \n",
+    "exit": 2,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: model missing"
+   ],
+   "verify_log": [
+    "magika: model missing"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: model missing\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "exit-nonzero-silent",
+    "tool": "ok",
+    "stdout": "",
+    "stderr": "",
+    "exit": 3,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: exit status 3"
+   ],
+   "verify_log": [
+    "magika: exit status 3"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: exit status 3\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "exit-nonzero-valid-json",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"png\",\"score\":0.5},\"output\":{\"ct_label\":\"png\",\"group\":\"g\",\"mime_type\":\"image/png\",\"score\":0.5}}}",
+    "stderr": "",
+    "exit": 1,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: exit status 1"
+   ],
+   "verify_log": [
+    "magika: exit status 1"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: exit status 1\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "stderr-on-success",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"png\",\"score\":0.5},\"output\":{\"ct_label\":\"png\",\"group\":\"g\",\"mime_type\":\"image/png\",\"score\":0.5}}}",
+    "stderr": "warn\n",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "image/png",
+    "Score": 0.5
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-string-top",
+    "tool": "ok",
+    "stdout": "\"x\"",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go value of type filetype.magikaResult"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go value of type filetype.magikaResult"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal string into Go value of type filetype.magikaResult\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-number-top",
+    "tool": "ok",
+    "stdout": "12",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go value of type filetype.magikaResult"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go value of type filetype.magikaResult"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal number into Go value of type filetype.magikaResult\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-bool-top",
+    "tool": "ok",
+    "stdout": "true",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal bool into Go value of type filetype.magikaResult"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal bool into Go value of type filetype.magikaResult"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal bool into Go value of type filetype.magikaResult\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-null-top",
+    "tool": "ok",
+    "stdout": "null",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "verify_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: unexpected empty result for $DIR/files/a.pdf\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-trailing",
+    "tool": "ok",
+    "stdout": "{} x",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: invalid character 'x' after top-level value"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: invalid character 'x' after top-level value"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: invalid character 'x' after top-level value\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-truncated-object",
+    "tool": "ok",
+    "stdout": "{\"result\":",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: unexpected end of JSON input"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: unexpected end of JSON input"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: unexpected end of JSON input\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "json-bad-key",
+    "tool": "ok",
+    "stdout": "{result:1}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: invalid character 'r' looking for beginning of object key string"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: invalid character 'r' looking for beginning of object key string"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: invalid character 'r' looking for beginning of object key string\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-path-number",
+    "tool": "ok",
+    "stdout": "{\"path\":5,\"result\":{\"output\":{\"ct_label\":\"png\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaResult.path of type string"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaResult.path of type string"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaResult.path of type string\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-result-string",
+    "tool": "ok",
+    "stdout": "{\"result\":\"x\"}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaResult.result of type filetype.magikaOutput"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaResult.result of type filetype.magikaOutput"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaResult.result of type filetype.magikaOutput\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-result-array",
+    "tool": "ok",
+    "stdout": "{\"result\":[]}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaResult.result of type filetype.magikaOutput"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaResult.result of type filetype.magikaOutput"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaResult.result of type filetype.magikaOutput\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-output-bool",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":true}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal bool into Go struct field magikaOutput.result.output of type filetype.magikaPrediction"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal bool into Go struct field magikaOutput.result.output of type filetype.magikaPrediction"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal bool into Go struct field magikaOutput.result.output of type filetype.magikaPrediction\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-dl-number",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"dl\":7,\"output\":{\"ct_label\":\"png\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaOutput.result.dl of type filetype.magikaPrediction"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaOutput.result.dl of type filetype.magikaPrediction"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaOutput.result.dl of type filetype.magikaPrediction\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-label-number",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":3}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaPrediction.result.output.ct_label of type string"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaPrediction.result.output.ct_label of type string"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal number into Go struct field magikaPrediction.result.output.ct_label of type string\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-score-string",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\",\"score\":\"0.5\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaPrediction.result.output.score of type float64"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaPrediction.result.output.score of type float64"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal string into Go struct field magikaPrediction.result.output.score of type float64\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-score-overflow",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\",\"score\":1e999}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number 1e999 into Go struct field magikaPrediction.result.output.score of type float64"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal number 1e999 into Go struct field magikaPrediction.result.output.score of type float64"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal number 1e999 into Go struct field magikaPrediction.result.output.score of type float64\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-first-error-wins",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"mime_type\":[],\"ct_label\":3}},\"path\":4}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaPrediction.result.output.mime_type of type string"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaPrediction.result.output.mime_type of type string"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: json: cannot unmarshal array into Go struct field magikaPrediction.result.output.mime_type of type string\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "type-null-members",
+    "tool": "ok",
+    "stdout": "{\"path\":null,\"result\":{\"output\":{\"ct_label\":null,\"score\":null,\"mime_type\":null}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "keys-case-insensitive",
+    "tool": "ok",
+    "stdout": "{\"RESULT\":{\"Output\":{\"CT_LABEL\":\"png\",\"Score\":0.25}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "",
+    "Score": 0.25
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.250); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.250); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "keys-duplicate-last-wins",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\"}},\"result\":{\"output\":{\"ct_label\":\"pdf\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "pdf",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "keys-duplicate-null-resets",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\"}},\"result\":null}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "verify_log": [
+    "magika: unexpected empty result for $DIR/files/a.pdf"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: unexpected empty result for $DIR/files/a.pdf\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "keys-duplicate-object-merges",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\",\"score\":0.5}},\"result\":{\"output\":{\"ct_label\":\"pdf\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "pdf",
+    "MIMEType": "",
+    "Score": 0.5
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "unknown-members-ignored",
+    "tool": "ok",
+    "stdout": "{\"x\":[1,{\"a\":null}],\"result\":{\"extra\":1,\"output\":{\"ct_label\":\"png\",\"unknown\":{}}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "string-escapes",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"p\\u006eg\",\"mime_type\":\"\\ud83d\\ude00\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "😀",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "invalid-utf8-label",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"\ufffd\"}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "�",
+    "MIMEType": "",
+    "Score": 0
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "leading-whitespace-bom",
+    "tool": "ok",
+    "stdout": "﻿{}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": null,
+   "prediction_log": [
+    "magika: failed to parse JSON output: invalid character 'ï' looking for beginning of value"
+   ],
+   "verify_log": [
+    "magika: failed to parse JSON output: invalid character 'ï' looking for beginning of value"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "magika: failed to parse JSON output: invalid character 'ï' looking for beginning of value\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "unicode-file-name",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"png\",\"score\":0.5},\"output\":{\"ct_label\":\"png\",\"group\":\"g\",\"mime_type\":\"image/png\",\"score\":0.5}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "dä tei.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "image/png",
+    "Score": 0.5
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: dä tei.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: dä tei.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.500); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/dä tei.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "large-score",
+    "tool": "ok",
+    "stdout": "{\"result\":{\"output\":{\"ct_label\":\"png\",\"score\":1e-7}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "a.pdf",
+    "content": "JVBERi0xLjQKJWZha2UK",
+    "ext_mime": "application/pdf"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "png",
+    "MIMEType": "",
+    "Score": 1e-7
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess"
+   ],
+   "kind": "application/pdf",
+   "detect_error": "",
+   "detect_stderr": "Warning: a.pdf extension suggests \"application/pdf\" but magika detected \"image/png\" (label=\"png\", score=0.000); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/a.pdf"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "ext-only-text-no-magika-conflict",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"txt\",\"score\":0.8},\"output\":{\"ct_label\":\"txt\",\"group\":\"g\",\"mime_type\":\"text/plain\",\"score\":0.8}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "t.txt",
+    "content": "aGVsbG8K",
+    "ext_mime": "text/plain"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "txt",
+    "MIMEType": "text/plain",
+    "Score": 0.8
+   },
+   "prediction_log": [],
+   "verify_log": [],
+   "kind": "text/plain",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/t.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "text-detected-as-markdown",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"markdown\",\"score\":0.8},\"output\":{\"ct_label\":\"markdown\",\"group\":\"g\",\"mime_type\":\"text/markdown\",\"score\":0.8}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "t.txt",
+    "content": "IyBoZWxsbwo=",
+    "ext_mime": "text/plain"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "markdown",
+    "MIMEType": "text/markdown",
+    "Score": 0.8
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: t.txt extension suggests \"text/plain\" but magika detected \"text/markdown\" (label=\"markdown\", score=0.800); proceeding with extension-based guess"
+   ],
+   "kind": "text/plain",
+   "detect_error": "",
+   "detect_stderr": "Warning: t.txt extension suggests \"text/plain\" but magika detected \"text/markdown\" (label=\"markdown\", score=0.800); proceeding with extension-based guess\n",
+   "transcript": [
+    "M\u001f--json\u001f$DIR/files/t.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "unsupported-extension-error",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"pdf\",\"score\":0.8},\"output\":{\"ct_label\":\"pdf\",\"group\":\"g\",\"mime_type\":\"application/pdf\",\"score\":0.8}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "t.zzz",
+    "content": "aGVsbG8K",
+    "ext_mime": "text/plain"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "pdf",
+    "MIMEType": "application/pdf",
+    "Score": 0.8
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: t.zzz extension suggests \"text/plain\" but magika detected \"application/pdf\" (label=\"pdf\", score=0.800); proceeding with extension-based guess"
+   ],
+   "kind": "",
+   "detect_error": "unsupported file type: $DIR/files/t.zzz",
+   "detect_stderr": "",
+   "transcript": []
+  },
+  {
+   "scenario": {
+    "id": "container-zip-unknown",
+    "tool": "ok",
+    "stdout": "{\"path\":\"x\",\"result\":{\"dl\":{\"ct_label\":\"pdf\",\"score\":0.8},\"output\":{\"ct_label\":\"pdf\",\"group\":\"g\",\"mime_type\":\"application/pdf\",\"score\":0.8}}}",
+    "stderr": "",
+    "exit": 0,
+    "file": "t.zip",
+    "content": "UEsDBGp1bms=",
+    "ext_mime": "application/zip"
+   },
+   "available": true,
+   "prediction": {
+    "CTLabel": "pdf",
+    "MIMEType": "application/pdf",
+    "Score": 0.8
+   },
+   "prediction_log": [],
+   "verify_log": [
+    "Warning: t.zip extension suggests \"application/zip\" but magika detected \"application/pdf\" (label=\"pdf\", score=0.800); proceeding with extension-based guess"
+   ],
+   "kind": "",
+   "detect_error": "",
+   "detect_stderr": "",
+   "transcript": []
+  }
+ ],
+ "label_order": [
+  "pdf",
+  "PDF",
+  "Pdf",
+  "png",
+  "jpeg",
+  "jpg",
+  "tiff",
+  "webp",
+  "txt",
+  "text",
+  "TEXT",
+  "csv",
+  "markdown",
+  "html",
+  "rtf",
+  "docx",
+  "xlsx",
+  "odt",
+  "eml",
+  "pptx",
+  "ods",
+  "epub",
+  "unknown",
+  "",
+  " pdf",
+  "pdf "
+ ],
+ "label_to_mime": {
+  "": "",
+  " pdf": "",
+  "PDF": "application/pdf",
+  "Pdf": "application/pdf",
+  "TEXT": "text/plain",
+  "csv": "text/csv",
+  "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "eml": "message/rfc822",
+  "epub": "",
+  "html": "text/html",
+  "jpeg": "image/jpeg",
+  "jpg": "",
+  "markdown": "text/markdown",
+  "ods": "",
+  "odt": "application/vnd.oasis.opendocument.text",
+  "pdf": "application/pdf",
+  "pdf ": "",
+  "png": "image/png",
+  "pptx": "",
+  "rtf": "application/rtf",
+  "text": "text/plain",
+  "tiff": "image/tiff",
+  "txt": "text/plain",
+  "unknown": "",
+  "webp": "image/webp",
+  "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+ },
+ "normalizations": [
+  "scenario temp root replaced by $DIR"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "script": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); l=M; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l\" \u003e\u003e \"$d/log\"\n[ -f \"$d/stderr\" ] \u0026\u0026 cat \"$d/stderr\" \u003e\u00262\n[ -f \"$d/stdout\" ] \u0026\u0026 cat \"$d/stdout\"\n[ -f \"$d/exit\" ] \u0026\u0026 exit \"$(cat \"$d/exit\")\"\nexit 0\n",
+ "source_hashes": {
+  "extract.go": "29b3e258b0583de21057702ed6c0b2d3b67bbdd44028bfbf8c52885179291b73",
+  "magika.go": "6f772aa0b63c480fefcc9fdbba48ce61e2e1722b41fff8b4a48b287453b05ffb",
+  "magika_port_test.go": "373131c5cbe8e4d281e5fb1ff279ea6988ee55f26f9873f2ee70d450e7335b6c"
+ }
+}

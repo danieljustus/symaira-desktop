@@ -522,16 +522,16 @@ impl Runner {
     }
 }
 
-struct ProcessOutput {
-    success: bool,
-    status_text: String,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
+pub(crate) struct ProcessOutput {
+    pub(crate) success: bool,
+    pub(crate) status_text: String,
+    pub(crate) stdout: Vec<u8>,
+    pub(crate) stderr: Vec<u8>,
 }
 
 /// Starts `exec` and waits for it; the child is killed when `ctx` is done.
 /// `Err` carries the Go-formatted start error (or the context error).
-fn run_process(
+pub(crate) fn run_process(
     ctx: &Context,
     exec: &str,
     args: &[&str],

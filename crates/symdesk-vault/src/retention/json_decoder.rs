@@ -23,7 +23,7 @@ pub(super) fn decode_history(data: &[u8]) -> Result<Option<Vec<HistoryEntry>>, S
     cursor.history()
 }
 
-pub(crate) fn validate_syntax(data: &[u8]) -> Result<(), String> {
+pub fn validate_syntax(data: &[u8]) -> Result<(), String> {
     let mut parser = SyntaxParser::new(data);
     parser.skip_space();
     parser.value(0)?;

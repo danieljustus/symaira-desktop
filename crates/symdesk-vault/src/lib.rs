@@ -71,6 +71,8 @@ pub use notebook_write::{
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
 pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};
+/// Go `encoding/json` syntax check (the first error Go's scanner reports).
+pub use retention::json_decoder::validate_syntax as go_json_validate_syntax;
 pub use tags::{TagSpan, extract_inline_tags, find_inline_tag_spans};
 pub use typed::{
     Base, ComputedColumn, Coverage, DatasetHandle, Filter, FilterGroup, Notebook, PropertyConfig,

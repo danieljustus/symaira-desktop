@@ -6,12 +6,21 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+#[cfg(unix)]
+pub mod annotate;
 pub mod classification;
 mod document;
 pub mod extract;
+#[cfg(unix)]
+pub mod filetype;
 pub mod gform;
 pub mod ghtml;
 pub mod gmime;
+#[allow(dead_code)]
+mod go_sort;
+pub mod gojson;
+#[cfg(unix)]
+pub mod goos;
 pub mod gxml;
 pub mod gzip;
 #[rustfmt::skip]
@@ -24,7 +33,11 @@ pub mod paperless;
 pub mod paperless_export;
 pub mod paperless_import;
 mod paperless_state;
+#[cfg(unix)]
+pub mod pipeline;
 pub mod structured;
+#[cfg(unix)]
+pub mod writer;
 pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};
 mod sql;
 mod store_state;

@@ -99,6 +99,41 @@ pub fn detect_bytes(path: &str, data: &[u8]) -> Result<String, String> {
         Ok(found.into())
     }
 }
+/// Go `extract.Detect` for a file on disk: reads the 512-byte head (the whole
+/// file only for ZIP/OLE containers), classifies it with [`detect_bytes`] and
+/// finally runs the advisory Magika check, whose diagnostics go to `logf`.
+pub fn detect_file_with(path: &str, logf: &mut dyn FnMut(String)) -> Result<String, String> {
+    use std::io::Read;
+    let p = std::path::Path::new(path);
+    let mut file = std::fs::File::open(p)
+        .map_err(|e| format!("open file: {}", symdesk_vault::go_path_error("open", p, &e)))?;
+    let mut head = vec![0_u8; 512];
+    let n = file
+        .read(&mut head)
+        .map_err(|e| format!("read file: {}", symdesk_vault::go_path_error("read", p, &e)))?;
+    head.truncate(n);
+    let container =
+        head.starts_with(b"PK\x03\x04") || head.starts_with(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1");
+    let data = if container {
+        std::fs::read(p).unwrap_or(head)
+    } else {
+        head
+    };
+    let kind = detect_bytes(path, &data)?;
+    #[cfg(unix)]
+    if !kind.is_empty() {
+        crate::filetype::verify_against_guess(path, &kind, logf);
+    }
+    #[cfg(not(unix))]
+    let _ = logf;
+    Ok(kind)
+}
+
+/// [`detect_file_with`] writing the advisory diagnostics to stderr like Go.
+pub fn detect_file(path: &str) -> Result<String, String> {
+    detect_file_with(path, &mut |line| eprintln!("{line}"))
+}
+
 fn detect_ole(data: &[u8]) -> &'static str {
     if data.len() < 52 {
         return "";

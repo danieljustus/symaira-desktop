@@ -81,6 +81,14 @@ ingest-structured-differential:
 ingest-structured-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestStructuredContract$$'
 
+.PHONY: ingest-magika-differential ingest-magika-fixtures-generate
+ingest-magika-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestMagikaContract$$'
+	$(CARGO) test -p symdesk-ingest --test magika_contracts --locked
+
+ingest-magika-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestMagikaContract$$'
+
 .PHONY: ingest-ocr-differential ingest-ocr-fixtures-generate
 ingest-ocr-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ocr -run '^TestPortIngestOCRContract$$'

@@ -207,7 +207,7 @@ func observeSourcesProcess(t *testing.T) sourcesProcessFixture {
 	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(config), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	fixture.Sources = []string{"ext/a", "ext/b", "ext/c", "ext/build", "ext/rel", "ext/gone", "ext/w", "ext/alias", "cwd"}
+	fixture.Sources = []string{"ext/a", "ext/b", "ext/c", "ext/build", "ext/rel", "ext/gone", "ext/w", "ext/alias", "cwd", "ext/ab"}
 	ids := map[string]string{}
 	for _, rel := range fixture.Sources {
 		ids["folder-"+sourcesProcessSHA(filepath.Join(canonical, filepath.FromSlash(rel)))] = "$ID:" + rel
@@ -439,6 +439,8 @@ func observeSourcesProcess(t *testing.T) sourcesProcessFixture {
 		file("ext/c/legacy.doc", "legacy word document\n"),
 		file("ext/c/book.mobi", "mobi book\n"),
 	))
+	step0(step("watch-initial-sync-failure", "sources", "watch", "$ID:ext/c"))
+	step0(with(step("add-name-prefix-sibling", "sources", "add", "$ROOT/ext/ab"), file("ext/ab/sibling.md", "# Sibling\n\nfolder whose name starts with another source's name.\n")))
 	step0(with(step("add-build-named-root", "sources", "add", "$ROOT/ext/build"), file("ext/build/inside.md", "# Build\n\nthe root folder is named build and is skipped by the walk.\n")))
 	step0(with(step("add-relative", "sources", "add", "../ext/rel"), file("ext/rel/rel.md", "# Relative\n\nregistered through a relative path.\n")))
 	step0(sourcesProcessStep{ID: "add-through-symlink", Args: []string{"sources", "add", "$ROOT/ext/alias"}, Links: []sourcesProcessLink{{Path: "ext/alias", Target: "a"}}})

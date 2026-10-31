@@ -743,3 +743,56 @@ pub(crate) fn watch_directory(directory: &Path) -> Result<(), String> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn skip_directories_follow_go() {
+        for skipped in [
+            ".git",
+            ".hidden",
+            "node_modules",
+            "dist",
+            "vendor",
+            "build",
+            "target",
+        ] {
+            assert!(should_skip_dir(skipped), "{skipped}");
+        }
+        for walked in ["src", "docs", ".", "..", "builds"] {
+            assert!(!should_skip_dir(walked), "{walked}");
+        }
+    }
+
+    #[test]
+    fn within_dir_uses_a_separator_guard() {
+        assert!(is_within_dir("/docs", "/docs"));
+        assert!(is_within_dir("/docs/a.md", "/docs"));
+        assert!(!is_within_dir("/docs2/a.md", "/docs"));
+    }
+
+    #[test]
+    fn extensions_route_like_go() {
+        assert_eq!(lower_extension("/x/UPPER.TXT"), ".txt");
+        assert_eq!(lower_extension("/x/.csv"), ".csv");
+        assert_eq!(lower_extension("/x/noext"), "");
+        assert!(is_supported_extension(".go"));
+        assert!(is_supported_extension(".text"));
+        assert!(!is_supported_extension(".doc"));
+        assert_eq!(
+            unsupported_skip_message("/x/a.doc", ".doc").as_deref(),
+            Some("Skipping /x/a.doc: .doc (legacy binary Office parser is not available)")
+        );
+        assert_eq!(unsupported_skip_message("/x/a.bin", ".bin"), None);
+    }
+
+    #[test]
+    fn removal_identity_keeps_a_missing_suffix() {
+        let root = std::env::temp_dir();
+        let root = fs::canonicalize(root).expect("canonical temp dir");
+        let missing = root.join("symdesk-removal-identity-missing/a/b");
+        assert_eq!(removal_identity(&missing).expect("identity"), missing);
+    }
+}

@@ -47,7 +47,7 @@
     "testdata/port/cli/relations-inverse-process.json": "1ab098fd58f113ddb26227b9ccda66709725c8b1f8510030e8ea3ab383982dad",
     "testdata/port/cli/restore-process.json": "59da9f7e8ee02f76c24ad669e5ad6bb3e77c384815f7f6718d83aa9a064ad99c",
     "testdata/port/cli/search-hybrid.json": "06a26de996ab59096db1169ef8b0edf2ca9170e605f071022b6a5d6a1d807178",
-    "testdata/port/cli/sources-process.json": "044a6a53f15042a436b5316424837696a584d0e17cc70eb3d2141b5834eabeed",
+    "testdata/port/cli/sources-process.json": "c11affcd943800aedbe9bec41bbdc4b5a2127e3caf81124a5a88603967a5b2e1",
     "testdata/port/cli/symdesk-command-tree.json": "c010abe0290ae6159850e1b33c57fa0d831836373d7a94dc4210f22f43cc0747",
     "testdata/port/cli/symroom-grammar-process.json": "0e07e451d7ee7fb0a5dbc4280a58e02a1b3282f2ffd0e50ea1e7e8c3bd0852c7",
     "testdata/port/cli/symroom-parser-grammar.json": "58a6095eb41c05e4eddec26fc3b4dec1505adadcc3964d8240f4f9c749ac19fb",

@@ -64,6 +64,7 @@ var fixturePaths = []string{
 	"testdata/port/core/simhash.json",
 	"testdata/port/core/template-path.json",
 	"testdata/port/ingest/queue.json",
+	"testdata/port/ingest/store.json",
 	"testdata/port/ingest/extraction.json",
 	"testdata/port/ingest/structured.json",
 	"testdata/port/ingest/ocr.json",

@@ -36,6 +36,8 @@
     "testdata/port/cli/ask-offline.json": "808c3c602cefdfc7fd02f682484b6b571657aa6dcb14c6ac694f1bd32ecb65bf",
     "testdata/port/cli/backlinks-process.json": "86562684c73b3916822f806fed9fb68cea1131a54e9cd52e144eb511e69c3792",
     "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
+    "testdata/port/cli/cobra-parse-process.json": "d2adbf65af89a37fb33d2ba53b7b81f97149a41712ecf7dfcdc437afb9bcdafb",
+    "testdata/port/cli/cobra-root-order.txt": "d68d36b9bf271628da690c144ce97f4fc7b4288c7e2ced8823df7c03adbdb3dd",
     "testdata/port/cli/config-process.json": "30b35dc62287f398f9443ce9f09763bf1da8641dcc9ea45dc016861c4f7c3c44",
     "testdata/port/cli/config-vault-selection.json": "2331165b31cd682826dfa4d1087012f8ff08ba8a36ade7a19b93aa0c07ad1109",
     "testdata/port/cli/conflict-process.json": "1daac356654b7127f5b50cc7e9ac4d2f5248ece82cd20bdefed02a86b0091242",

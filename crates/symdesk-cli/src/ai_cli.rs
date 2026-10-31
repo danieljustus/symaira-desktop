@@ -413,7 +413,10 @@ fn run_ollama_transform(base_url: &str, model: &str, prompt: &str, output_json: 
     }
     match result {
         Ok(()) => super::process_exit(CoreExitCode::Ok),
-        Err(error) => emit_chunk(&ollama_failure_message(&error), output_json),
+        Err(error) => emit_chunk(
+            &symdesk_service::gofmt::go_transport_error(&ollama_failure_message(&error), base_url),
+            output_json,
+        ),
     }
 }
 

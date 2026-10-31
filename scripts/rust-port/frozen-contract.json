@@ -101,6 +101,28 @@
         1,
         "exit_code"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test cli_errors --locked",
+      "fixture": "testdata/port/cli/cli-errors-process.json",
+      "increment": [
+        "cases",
+        0,
+        "steps",
+        1,
+        "exit_code"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test remote_command --locked",
+      "fixture": "testdata/port/cli/remote-command-process.json",
+      "increment": [
+        "cases",
+        0,
+        "steps",
+        0,
+        "status"
+      ]
     }
   ],
   "replays": {
@@ -200,6 +222,10 @@
       "ignored": 0,
       "passed": 1
     },
+    "cargo test -p symdesk-cli --test cli_errors --locked": {
+      "ignored": 0,
+      "passed": 3
+    },
     "cargo test -p symdesk-cli --test duplicates --locked": {
       "ignored": 0,
       "passed": 2
@@ -207,6 +233,10 @@
     "cargo test -p symdesk-cli --test graph --locked": {
       "ignored": 0,
       "passed": 1
+    },
+    "cargo test -p symdesk-cli --test remote_command --locked": {
+      "ignored": 0,
+      "passed": 3
     },
     "cargo test -p symdesk-cli --test help --locked": {
       "ignored": 0,

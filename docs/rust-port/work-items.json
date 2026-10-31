@@ -314,7 +314,7 @@
       "id": "RUST-013",
       "title": "Complete SymDesk service and all CLI paths",
       "status": "blocked",
-      "note": "Partial local progress while blocked: `symdesk duplicates`, `duplicates similar` and hidden `similar` replay 162 Go process steps over 13 vault cases (CLI-005, `make duplicates-cli-differential`); clap-generated flag errors (CLI-003) and native Linux/Windows replay stay open.",
+      "note": "Partial local progress while blocked: `symdesk duplicates`, `duplicates similar` and hidden `similar` replay 162 Go process steps over 13 vault cases (CLI-005, `make duplicates-cli-differential`); clap-generated flag errors (CLI-003) and native Linux/Windows replay stay open. Part B (r013-errors): `make cli-errors-differential` replays 1,231 Go process steps over 18 cases (CLI-005/CLI-006: output modes, error taxonomy, secret canaries) and `make remote-command-differential` replays 184 Go loopback server steps (CLI-008: allowlist, forced vault, request envelope; 23 decision-only steps for CLI commands not yet in Rust); RUST-013 status unchanged.",
       "depends_on": [
         "RUST-009",
         "RUST-010",

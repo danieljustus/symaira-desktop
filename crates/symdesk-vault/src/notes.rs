@@ -125,7 +125,13 @@ pub fn move_note(
 ) -> Result<PathBuf, NoteError> {
     let from = secure_path(vault_root.as_ref(), from_rel)?;
     let to = secure_path(vault_root.as_ref(), to_rel)?;
-    std::fs::rename(&from, &to).map_err(|source| NoteError::Move { source })?;
+    std::fs::rename(&from, &to).map_err(|source| NoteError::Move {
+        source: crate::go_io::go_path_io_error(
+            "rename",
+            &format!("{} {}", from.display(), to.display()),
+            &source,
+        ),
+    })?;
     Ok(to)
 }
 

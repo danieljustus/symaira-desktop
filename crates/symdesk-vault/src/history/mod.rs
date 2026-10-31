@@ -660,7 +660,9 @@ impl HistoryStore {
     pub fn trash(&self, rel_path: &str) -> Result<TrashEntry, HistoryError> {
         let rel = clean_rel(rel_path)?;
         let root = self.open_root()?;
-        let info = root.metadata(Path::new(&rel))?;
+        let info = root.metadata(Path::new(&rel)).map_err(|error| {
+            HistoryError::Io(crate::go_io::go_path_io_error("statat", &rel, &error))
+        })?;
         if info.is_dir() {
             return Err(HistoryError::TrashDirectory(rel_path.to_owned()));
         }
@@ -947,7 +949,7 @@ impl HistoryStore {
             root.read(Path::new(&meta))
                 .map_err(|source| HistoryError::TrashItemNotFound {
                     name: name.to_owned(),
-                    source,
+                    source: crate::go_io::go_path_io_error("openat", &meta, &source),
                 })?;
         let mut entry: TrashEntry = serde_json::from_slice(&data)
             .map_err(|err| HistoryError::CorruptTrashMetadata(name.to_owned(), err.to_string()))?;

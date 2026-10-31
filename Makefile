@@ -220,6 +220,8 @@ help-cli-differential:
 	$(CARGO) test -p symdesk-cli --test help --locked
 
 .PHONY: duplicates-cli-fixtures-generate duplicates-cli-differential
+.PHONY: cli-errors-fixtures-generate cli-errors-differential
+.PHONY: remote-command-fixtures-generate remote-command-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
 .PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential
 .PHONY: room-store-cli-fixtures-generate room-store-cli-differential
@@ -671,6 +673,25 @@ duplicates-cli-fixtures-generate:
 duplicates-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortDuplicatesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test duplicates --locked
+
+# CLI-005/CLI-006 output modes and error taxonomy: the Go binary's stdout,
+# stderr and exit code for every command family, recorded in disposable
+# HOME/XDG roots with loopback fakes for external providers.
+cli-errors-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIErrorsProcessContract$$'
+
+cli-errors-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIErrorsProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_errors --locked
+
+# CLI-008 remote compatibility command allowlist against the Go server over
+# loopback (server-forced vault, rejected commands, identical result envelope).
+remote-command-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRemoteCommandProcessContract$$'
+
+remote-command-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRemoteCommandProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test remote_command --locked
 
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the

@@ -18,6 +18,30 @@ pub fn os_error_text(error: &io::Error) -> String {
     })
 }
 
+/// Go's `net/http` transport text for a refused loopback connection. The
+/// Rust HTTP stacks report `io: Connection refused`; Go reports
+/// `Post "<url>": dial tcp <host:port>: connect: connection refused`.
+#[must_use]
+pub fn go_transport_error(message: &str, endpoint: &str) -> String {
+    const REFUSED: &str = "transport_error: io: Connection refused";
+    if !message.contains(REFUSED) {
+        return message.to_owned();
+    }
+    let rest = endpoint
+        .split_once("://")
+        .map_or(endpoint, |(_, rest)| rest);
+    let authority = rest.split('/').next().unwrap_or(rest);
+    let scheme = endpoint
+        .split_once("://")
+        .map_or("http", |(scheme, _)| scheme);
+    message.replace(
+        REFUSED,
+        &format!(
+            "transport_error: Post \"{scheme}://{authority}/api/generate\": dial tcp {authority}: connect: connection refused"
+        ),
+    )
+}
+
 /// Go `*PathError` text: `op path: reason`.
 #[must_use]
 pub fn path_error(op: &str, path: &Path, error: &io::Error) -> String {

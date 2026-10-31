@@ -65,7 +65,7 @@ use hyper_util::{
     service::TowerToHyperService,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{Value, json};
 use symdesk_index::{IndexedDocument, Sidecar, SourceRegistry};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -790,11 +790,17 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
         || (path == "/api/v1/command" && method == Method::POST)
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Debug)]
 struct RemoteCommandRequest {
     arguments: Option<Vec<String>>,
     stdin: Option<String>,
+}
+
+/// Why a `/api/v1/command` body was rejected; `Go` carries the exact
+/// `encoding/json` wording the Go server reports after `invalid JSON: `.
+enum CommandParseError {
+    Incomplete,
+    Go(String),
 }
 
 #[derive(Debug, Deserialize)]
@@ -2394,14 +2400,16 @@ async fn handle_command_validation(
     let request =
         match tokio::time::timeout(READ_TIMEOUT, read_command_request(request.into_body())).await {
             Ok(Ok(request)) => request,
+            // Go limits the body reader to `limit+1` bytes, so an oversized
+            // body surfaces as a truncated JSON document.
             Ok(Err(CommandBodyError::TooLarge)) => {
-                return json_error(
-                    StatusCode::BAD_REQUEST,
-                    "invalid JSON: request body too large",
-                );
+                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: unexpected EOF");
             }
-            Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
-                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
+            Ok(Err(CommandBodyError::Malformed(message))) => {
+                return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {message}"));
+            }
+            Ok(Err(CommandBodyError::Read)) => {
+                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: unexpected EOF");
             }
             Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
         };
@@ -2605,7 +2613,7 @@ async fn send_command_error(
 
 enum CommandBodyError {
     TooLarge,
-    Malformed,
+    Malformed(String),
     Read,
 }
 
@@ -2615,7 +2623,15 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
     loop {
         let next = poll_fn(|context| Pin::new(&mut chunks).poll_next(context)).await;
         let Some(next) = next else {
-            return parse_command_request(&bytes).map_err(|_| CommandBodyError::Malformed);
+            return parse_command_request(&bytes).map_err(|error| {
+                CommandBodyError::Malformed(match error {
+                    CommandParseError::Incomplete if bytes.iter().all(u8::is_ascii_whitespace) => {
+                        "EOF".to_owned()
+                    }
+                    CommandParseError::Incomplete => "unexpected EOF".to_owned(),
+                    CommandParseError::Go(message) => message,
+                })
+            });
         };
         let chunk = next.map_err(|_| CommandBodyError::Read)?;
         let available = MAX_COMMAND_BODY_BYTES.saturating_sub(bytes.len());
@@ -2644,12 +2660,12 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
                 });
                 return Ok(request);
             }
-            Err(error) if error.is_eof() && bytes.len() < MAX_COMMAND_BODY_BYTES => {}
-            Err(error) if error.is_eof() => {
+            Err(CommandParseError::Incomplete) if bytes.len() < MAX_COMMAND_BODY_BYTES => {}
+            Err(CommandParseError::Incomplete) => {
                 return Err(CommandBodyError::TooLarge);
             }
-            Err(_) => {
-                return Err(CommandBodyError::Malformed);
+            Err(CommandParseError::Go(message)) => {
+                return Err(CommandBodyError::Malformed(message));
             }
         }
         if chunk.len() > available {
@@ -2658,9 +2674,95 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
     }
 }
 
-fn parse_command_request(body: &[u8]) -> Result<RemoteCommandRequest, serde_json::Error> {
+/// Mirrors Go's `json.Decoder` with `DisallowUnknownFields` for
+/// `selfhost.commandRequest`: first JSON value only (trailing data is
+/// ignored), case-insensitive keys, last duplicate wins, `null` is a no-op
+/// and the first saved type/unknown-field error is reported.
+fn parse_command_request(body: &[u8]) -> Result<RemoteCommandRequest, CommandParseError> {
     let mut decoder = serde_json::Deserializer::from_slice(body);
-    RemoteCommandRequest::deserialize(&mut decoder)
+    let value = Value::deserialize(&mut decoder).map_err(|error| {
+        if error.is_eof() {
+            CommandParseError::Incomplete
+        } else {
+            CommandParseError::Go(error.to_string())
+        }
+    })?;
+    fn kind(value: &Value) -> &'static str {
+        match value {
+            Value::Null => "null",
+            Value::Bool(_) => "bool",
+            Value::Number(_) => "number",
+            Value::String(_) => "string",
+            Value::Array(_) => "array",
+            Value::Object(_) => "object",
+        }
+    }
+    let field_error = |field: &str, value: &Value, go_type: &str| {
+        CommandParseError::Go(format!(
+            "json: cannot unmarshal {} into Go struct field commandRequest.{field} of type {go_type}",
+            kind(value)
+        ))
+    };
+    let mut request = RemoteCommandRequest {
+        arguments: None,
+        stdin: None,
+    };
+    let map = match &value {
+        Value::Null => return Ok(request),
+        Value::Object(map) => map,
+        other => {
+            return Err(CommandParseError::Go(format!(
+                "json: cannot unmarshal {} into Go value of type selfhost.commandRequest",
+                kind(other)
+            )));
+        }
+    };
+    let mut first_error = None;
+    for (key, item) in map {
+        if key.eq_ignore_ascii_case("arguments") {
+            match item {
+                Value::Null => request.arguments = None,
+                Value::Array(items) => {
+                    let mut arguments = Vec::with_capacity(items.len());
+                    for element in items {
+                        match element {
+                            Value::String(text) => arguments.push(text.clone()),
+                            Value::Null => arguments.push(String::new()),
+                            other => {
+                                first_error.get_or_insert_with(|| {
+                                    field_error("arguments", other, "string")
+                                });
+                                arguments.push(String::new());
+                            }
+                        }
+                    }
+                    request.arguments = Some(arguments);
+                }
+                other => {
+                    first_error.get_or_insert_with(|| field_error("arguments", other, "[]string"));
+                }
+            }
+        } else if key.eq_ignore_ascii_case("stdin") {
+            match item {
+                Value::Null => {}
+                Value::String(text) => request.stdin = Some(text.clone()),
+                other => {
+                    first_error.get_or_insert_with(|| field_error("stdin", other, "string"));
+                }
+            }
+        } else {
+            first_error.get_or_insert_with(|| {
+                CommandParseError::Go(format!(
+                    "json: unknown field {}",
+                    serde_json::to_string(key).unwrap_or_default()
+                ))
+            });
+        }
+    }
+    match first_error {
+        Some(error) => Err(error),
+        None => Ok(request),
+    }
 }
 
 fn validate_remote_command(args: &[String]) -> Option<String> {
@@ -2676,6 +2778,9 @@ fn validate_remote_command(args: &[String]) -> Option<String> {
     }) {
         return Some("server-controlled path flags are not allowed".to_owned());
     }
+    // Go `allowedRemoteCommands`: an entry that lists the empty subcommand
+    // accepts every argument vector after its name (`history nope` and
+    // `search export x` pass validation and fail inside the command).
     let subcommand = args
         .get(1)
         .filter(|argument| !argument.starts_with('-'))
@@ -2683,8 +2788,7 @@ fn validate_remote_command(args: &[String]) -> Option<String> {
         .unwrap_or("");
     let available = match args[0].as_str() {
         "doctor" | "ls" | "search" | "backlinks" | "graph" | "similar" | "duplicates"
-        | "restore" => subcommand.is_empty(),
-        "transform" | "ask" => true,
+        | "transform" | "ask" | "history" | "restore" => return None,
         "note" => matches!(subcommand, "new" | "move" | "delete" | "daily"),
         "paperless" => subcommand == "import",
         "props" => matches!(subcommand, "get" | "edit"),
@@ -2700,7 +2804,6 @@ fn validate_remote_command(args: &[String]) -> Option<String> {
         ),
         "tags" => matches!(subcommand, "rename" | "merge" | "delete"),
         "conflict" => subcommand == "resolve",
-        "history" => matches!(subcommand, "" | "prune" | "show"),
         "trash" => matches!(subcommand, "list" | "restore" | "delete"),
         _ => return Some(format!("command {:?} is not available remotely", args[0])),
     };

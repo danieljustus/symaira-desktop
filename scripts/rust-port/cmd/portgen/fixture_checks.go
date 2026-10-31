@@ -142,6 +142,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"ask agent CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortAskAgentProcessContract$"}, []string{"testdata/port/ai/ask-agent-process.json"}, false},
 	{"ask provider MCP", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortAskProviderMCPContract$"}, []string{"testdata/port/ai/ask-provider-mcp.json"}, false},
 	{"ask cancellation", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortAskCancelProcessContract$"}, []string{"testdata/port/ai/ask-cancel-process.json"}, false},
+	{"CLI signals and process lifecycle", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortSignalsProcessContract$"}, []string{"testdata/port/cli/signals-process.json"}, false},
 	{"AI composition", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIComposeContract$"}, []string{"testdata/port/ai/ai-compose.json"}, false},
 	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
 	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},

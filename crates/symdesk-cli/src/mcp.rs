@@ -162,7 +162,10 @@ pub fn serve(vault: Option<String>, allow_write: bool) -> io::Result<()> {
         use std::os::fd::AsFd;
         // Stdout deliberately suppresses EBADF. Protocol transport must retain
         // that error so it can cancel in-flight tools, not report silent success.
-        std::fs::File::from(io::stdout().as_fd().try_clone_to_owned()?)
+        // Go ends the process with SIGPIPE when this descriptor's reader is gone.
+        crate::lifecycle::SigpipeWriter(std::fs::File::from(
+            io::stdout().as_fd().try_clone_to_owned()?,
+        ))
     };
     #[cfg(not(unix))]
     let writer = io::stdout();

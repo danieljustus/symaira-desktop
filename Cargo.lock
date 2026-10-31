@@ -2916,6 +2916,7 @@ dependencies = [
  "symaira-core-llm",
  "symdesk-core",
  "symdesk-index",
+ "symdesk-ingest",
  "symdesk-protocol",
  "symdesk-render",
  "symdesk-service",
@@ -2923,6 +2924,7 @@ dependencies = [
  "time",
  "tokio",
  "toml",
+ "ureq",
  "windows-sys 0.61.2",
 ]
 

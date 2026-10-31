@@ -9,6 +9,7 @@ mod conflict_cli;
 mod dataset;
 mod docs_cli;
 mod duplicates_cli;
+mod events_cli;
 mod external_index;
 mod graph_cli;
 mod help_cli;
@@ -16,6 +17,7 @@ mod history;
 mod history_cli;
 mod http;
 mod index_cli;
+mod lifecycle;
 mod links_cli;
 mod mcp;
 mod mutate_cli;
@@ -27,6 +29,7 @@ mod retention;
 mod search_cli;
 mod source_cli;
 mod views_cli;
+mod worker_cli;
 
 use std::{
     ffi::OsString,
@@ -195,6 +198,10 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
+        Some(("events", _)) => {
+            events_cli::run(matches.get_one::<String>("vault").map(String::as_str))
+        }
+        Some(("worker", command)) => worker_cli::run(command),
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
@@ -630,6 +637,8 @@ fn cli() -> Command {
         .subcommand(links_cli::backlinks_cli())
         .subcommand(relations_cli::cli())
         .subcommand(recipe::cli())
+        .subcommand(events_cli::cli())
+        .subcommand(worker_cli::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

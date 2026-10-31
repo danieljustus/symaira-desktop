@@ -3,6 +3,7 @@
 mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
+mod cobra;
 mod config_cli;
 mod config_paths;
 mod conflict_cli;
@@ -62,17 +63,14 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
-    if let Some(result) = help_cli::intercept(&args) {
-        return result;
+    // Cobra/pflag front half: command resolution, flag grammar, help,
+    // version, argument counts and the generated commands (CLI-001..004).
+    match cobra::front(&args) {
+        cobra::Front::Exit(code) => return code,
+        cobra::Front::Continue(valid) => args = valid,
     }
     if let Some(result) = config_cli::intercept(&args) {
         return result;
-    }
-    if args.get(1).is_some_and(|arg| arg == "--version") {
-        return write_stdout(format!("symdesk version {VERSION}\n"));
-    }
-    if args.iter().skip(2).any(|arg| arg == "--version") {
-        return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
     rewrite_index_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
@@ -587,29 +585,36 @@ fn cli() -> Command {
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
         .subcommand(config_paths::command())
-        .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
+        .subcommand(
+            Command::new("ls")
+                .arg(Arg::new("dir").long("dir").num_args(1))
+                // Go's `ls` takes no argument validator: extra words are ignored.
+                .arg(Arg::new("extra").num_args(0..)),
+        )
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(ai_cli::transform_cli())
         .subcommand(ai_cli::ask_cli())
         .subcommand(
-            Command::new("mcp").arg(
-                Arg::new("allow-write")
-                    .long("allow-write")
-                    .help("enable mutating MCP tools (note creation, ingest, status changes)")
-                    .action(ArgAction::Set)
-                    .num_args(0..=1)
-                    .require_equals(true)
-                    .default_missing_value("true")
-                    .default_value("false")
-                    .overrides_with("allow-write")
-                    .value_parser(|value: &str| match value {
-                        "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
-                        "0" | "f" | "F" | "false" | "FALSE" | "False" => Ok(false),
-                        _ => Err("invalid boolean value"),
-                    }),
-            ),
+            Command::new("mcp")
+                .arg(Arg::new("extra").num_args(0..).hide(true))
+                .arg(
+                    Arg::new("allow-write")
+                        .long("allow-write")
+                        .help("enable mutating MCP tools (note creation, ingest, status changes)")
+                        .action(ArgAction::Set)
+                        .num_args(0..=1)
+                        .require_equals(true)
+                        .default_missing_value("true")
+                        .default_value("false")
+                        .overrides_with("allow-write")
+                        .value_parser(|value: &str| match value {
+                            "1" | "t" | "T" | "true" | "TRUE" | "True" => Ok(true),
+                            "0" | "f" | "F" | "false" | "FALSE" | "False" => Ok(false),
+                            _ => Err("invalid boolean value"),
+                        }),
+                ),
         )
         .subcommand(history_cli::cli())
         .subcommand(history_cli::trash_cli())
@@ -634,7 +639,9 @@ fn cli() -> Command {
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))
                 .arg(Arg::new("token").long("token").num_args(1))
-                .arg(Arg::new("worker-token").long("worker-token").num_args(1)),
+                .arg(Arg::new("worker-token").long("worker-token").num_args(1))
+                // Go's `serve` and `mcp` have no `Args` validator: extra words are ignored.
+                .arg(Arg::new("extra").num_args(0..).hide(true)),
         )
 }
 

@@ -101,6 +101,15 @@
         1,
         "exit_code"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test cobra_parse --locked",
+      "fixture": "testdata/port/cli/cobra-parse-process.json",
+      "increment": [
+        "cases",
+        0,
+        "exit_code"
+      ]
     }
   ],
   "replays": {
@@ -654,6 +663,14 @@
     "cargo test -p symroom-core --test identity_events_contracts --locked": {
       "ignored": 0,
       "passed": 2
+    },
+    "cargo test -p symdesk-cli --test cobra_parse --locked": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --bin symdesk cobra:: --locked": {
+      "ignored": 0,
+      "passed": 10
     }
   }
 }

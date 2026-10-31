@@ -625,7 +625,12 @@ func snapshotProcessing(t *testing.T, root string, rel string, norm func(string)
 		}
 		r, _ := filepath.Rel(root, path)
 		e := fsEntry{Path: filepath.ToSlash(r), Mode: fmt.Sprintf("%04o", info.Mode().Perm())}
-		if d.IsDir() {
+		if info.Mode()&os.ModeSymlink != 0 {
+			e.Type = "symlink"
+			e.Mode = "0777" // lstat reports 0755 on macOS and 0777 on Linux; pin the platform-neutral value
+			target, _ := os.Readlink(path)
+			e.Text = target
+		} else if d.IsDir() {
 			e.Type = "dir"
 		} else {
 			e.Type = "file"

@@ -1,0 +1,3088 @@
+{
+ "cases": [
+  {
+   "scenario": {
+    "id": "stable-file-enqueued",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/a.txt",
+      "content": "hello"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/a.txt"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 999
+     },
+     {
+      "op": "advance",
+      "ms": 1
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/a.txt size=5",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/a.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aGVsbG8="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/a.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/a.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "growing-file-reschedules",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/g.txt",
+      "content": "one"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/g.txt",
+      "secs": 1700000000
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/g.txt"
+     },
+     {
+      "op": "write",
+      "path": "inbox/g.txt",
+      "content": "one two"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/g.txt",
+      "secs": 1700000100
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/g.txt size=7",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/g.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "b25lIHR3bw=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "8ab63e29a4ba14e4e1688f9c15e5af90895421358c945b0431f85d66977bd3d2",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/g.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/g.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "same-size-new-mtime-reschedules",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/m.txt",
+      "content": "abc"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/m.txt",
+      "secs": 1700000000
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/m.txt"
+     },
+     {
+      "op": "write",
+      "path": "inbox/m.txt",
+      "content": "xyz"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/m.txt",
+      "secs": 1700000200
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/m.txt size=3",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/m.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "eHl6"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "3608bca1e44ea6c4d268eb6db02260269892c0b42b86bbf1e77a6fa16c3c9282",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/m.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/m.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "debounce-resets-timer",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/r.txt",
+      "content": "r"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/r.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 600
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/r.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 600
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 400
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/r.txt size=1",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/r.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "cg=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "454349e422f05297191ead13e21d3db520e5abef52055e4964b82fb213f593a1",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/r.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/r.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "removed-before-stable",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/x.txt",
+      "content": "x"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/x.txt"
+     },
+     {
+      "op": "remove",
+      "path": "inbox/x.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "debounce-missing-file-clears-pending",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/y.txt",
+      "content": "y"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/y.txt"
+     },
+     {
+      "op": "remove",
+      "path": "inbox/y.txt"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/y.txt"
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "cancel-debounce",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/c.txt",
+      "content": "c"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/c.txt"
+     },
+     {
+      "op": "cancel",
+      "path": "inbox/c.txt"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 2000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/c.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "Yw=="
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "directory-is-dropped-at-check",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "mkdir",
+      "path": "inbox/sub"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/sub"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/sub dir",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/sub",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "symlink-to-directory-is-dropped",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "mkdir",
+      "path": "inbox/real"
+     },
+     {
+      "op": "symlink",
+      "path": "inbox/link",
+      "to": "real"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/link"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/link",
+     "type": "symlink",
+     "mode": "0777",
+     "text": "real"
+    },
+    {
+     "path": "inbox/real",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "forced-enqueue-after-max-pending-age",
+    "opts": {
+     "stable_for_ms": 100000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/f.txt",
+      "content": "1"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/f.txt",
+      "secs": 1700000000
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/f.txt"
+     },
+     {
+      "op": "write",
+      "path": "inbox/f.txt",
+      "content": "12"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/f.txt",
+      "secs": 1700000010
+     },
+     {
+      "op": "advance",
+      "ms": 100000
+     },
+     {
+      "op": "write",
+      "path": "inbox/f.txt",
+      "content": "123"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/f.txt",
+      "secs": 1700000020
+     },
+     {
+      "op": "advance",
+      "ms": 100000
+     },
+     {
+      "op": "write",
+      "path": "inbox/f.txt",
+      "content": "1234"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/f.txt",
+      "secs": 1700000030
+     },
+     {
+      "op": "advance",
+      "ms": 100000
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "write",
+      "path": "inbox/f.txt",
+      "content": "12345"
+     },
+     {
+      "op": "set-mtime",
+      "path": "inbox/f.txt",
+      "secs": 1700000040
+     },
+     {
+      "op": "advance",
+      "ms": 100000
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/f.txt size=4",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/f.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "MTIzNDU="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/f.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File pending longer than 5m0s, force-enqueuing: \u003cROOT\u003e/inbox/f.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "moves-to-processing-dir",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/p.txt",
+      "content": "payload"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/p.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/p.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "cGF5bG9hZA=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "239f59ed55e737c77147cf55ad0c1b030b6d7ee748a7426952f9b852d5a935e5",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/p.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/p.txt"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "processing-dir-name-collision",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "work/processing/dup.txt",
+      "content": "occupied"
+     },
+     {
+      "op": "write",
+      "path": "inbox/dup.txt",
+      "content": "fresh"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/dup.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "write",
+      "path": "inbox/dup.txt",
+      "content": "fresh again"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/dup.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "write",
+      "path": "inbox/a.b.c",
+      "content": "dots"
+     },
+     {
+      "op": "write",
+      "path": "work/processing/a.b.c",
+      "content": "x"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/a.b.c"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed/a.b-2.c",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZG90cw=="
+    },
+    {
+     "path": "work/failed/a.b-2.c.error.json",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ewogICJzb3VyY2VfcGF0aCI6ICI8Uk9PVD4vd29yay9mYWlsZWQvYS5iLTIuYyIsCiAgInN0YWdlIjogImRldGVjdCIsCiAgImVycm9yIjogInVuc3VwcG9ydGVkIGZpbGUgdHlwZTogPFJPT1Q+L3dvcmsvcHJvY2Vzc2luZy9hLmItMi5jIiwKICAiZmFpbGVkX2F0IjogIjxUUz4iCn0K"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/a.b.c",
+     "type": "file",
+     "mode": "0600",
+     "b64": "eA=="
+    },
+    {
+     "path": "work/processing/dup-2.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZnJlc2g="
+    },
+    {
+     "path": "work/processing/dup-3.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZnJlc2ggYWdhaW4="
+    },
+    {
+     "path": "work/processing/dup.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "b2NjdXBpZWQ="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "d098ab5e44b9aabb755f76d806598f43573c662b35e4a2eab1e312ec9ad195e2",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/dup-2.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     },
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 2,
+      "mime": "text/plain",
+      "sha256": "1dd68fe3057afcd65d9321e4fcbd728f9f3b773dbbc4429cf32640a4e583a99c",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/dup-3.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     },
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 2,
+      "id": 2,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/dup.txt",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/dup.txt",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/a.b.c",
+    "[Watcher] Error enqueuing file \u003cROOT\u003e/inbox/a.b.c: detect file kind: unsupported file type: \u003cROOT\u003e/work/processing/a.b-2.c"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "duplicate-content-records-skipped-job",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/one.txt",
+      "content": "same bytes"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/one.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "write",
+      "path": "inbox/two.txt",
+      "content": "same bytes"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/two.txt"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/one.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c2FtZSBieXRlcw=="
+    },
+    {
+     "path": "work/processing/two.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c2FtZSBieXRlcw=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "58100dc8fc06562ce3e578231dc948e083520ee49c4b4ee5a5a28bb4b4003feb",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/one.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     },
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 2,
+      "kind": "text/plain",
+      "last_error": "duplicate",
+      "status": "skipped",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/one.txt",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/two.txt",
+    "[Watcher] File \u003cROOT\u003e/work/processing/two.txt (hash 58100dc8fc06562ce3e578231dc948e083520ee49c4b4ee5a5a28bb4b4003feb) already ingested or enqueued. Recording skipped job."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "undetectable-file-goes-to-failed-with-sidecar",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/bad.bin",
+      "content": "\u0000\u0001\u0002 not a supported type"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/bad.bin"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed/bad.bin",
+     "type": "file",
+     "mode": "0600",
+     "b64": "AAECIG5vdCBhIHN1cHBvcnRlZCB0eXBl"
+    },
+    {
+     "path": "work/failed/bad.bin.error.json",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ewogICJzb3VyY2VfcGF0aCI6ICI8Uk9PVD4vd29yay9mYWlsZWQvYmFkLmJpbiIsCiAgInN0YWdlIjogImRldGVjdCIsCiAgImVycm9yIjogInVuc3VwcG9ydGVkIGZpbGUgdHlwZTogPFJPT1Q+L3dvcmsvcHJvY2Vzc2luZy9iYWQuYmluIiwKICAiZmFpbGVkX2F0IjogIjxUUz4iCn0K"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/bad.bin",
+    "[Watcher] Error enqueuing file \u003cROOT\u003e/inbox/bad.bin: detect file kind: unsupported file type: \u003cROOT\u003e/work/processing/bad.bin"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "undetectable-file-without-failed-dir",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/bad.bin",
+      "content": "\u0000\u0001\u0002 not a supported type"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/bad.bin"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/bad.bin",
+     "type": "file",
+     "mode": "0600",
+     "b64": "AAECIG5vdCBhIHN1cHBvcnRlZCB0eXBl"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/bad.bin",
+    "[Watcher] Error enqueuing file \u003cROOT\u003e/inbox/bad.bin: detect file kind: unsupported file type: \u003cROOT\u003e/work/processing/bad.bin"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "failed-name-collision-numbering",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "work/failed/bad.bin",
+      "content": "old"
+     },
+     {
+      "op": "write",
+      "path": "inbox/bad.bin",
+      "content": "\u0000\u0001\u0002 not a supported type"
+     },
+     {
+      "op": "debounce",
+      "path": "inbox/bad.bin"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed/bad-2.bin",
+     "type": "file",
+     "mode": "0600",
+     "b64": "AAECIG5vdCBhIHN1cHBvcnRlZCB0eXBl"
+    },
+    {
+     "path": "work/failed/bad-2.bin.error.json",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ewogICJzb3VyY2VfcGF0aCI6ICI8Uk9PVD4vd29yay9mYWlsZWQvYmFkLTIuYmluIiwKICAic3RhZ2UiOiAiZGV0ZWN0IiwKICAiZXJyb3IiOiAidW5zdXBwb3J0ZWQgZmlsZSB0eXBlOiA8Uk9PVD4vd29yay9wcm9jZXNzaW5nL2JhZC5iaW4iLAogICJmYWlsZWRfYXQiOiAiPFRTPiIKfQo="
+    },
+    {
+     "path": "work/failed/bad.bin",
+     "type": "file",
+     "mode": "0600",
+     "b64": "b2xk"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   },
+   "logs": [
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/bad.bin",
+    "[Watcher] Error enqueuing file \u003cROOT\u003e/inbox/bad.bin: detect file kind: unsupported file type: \u003cROOT\u003e/work/processing/bad.bin"
+   ]
+  },
+  {
+   "scenario": {
+    "id": "enqueue-direct-missing-file",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "enqueue",
+      "path": "inbox/ghost.txt"
+     }
+    ]
+   },
+   "results": [
+    "move \u003cROOT\u003e/inbox/ghost.txt to \u003cROOT\u003e/work/processing/ghost.txt: rename \u003cROOT\u003e/inbox/ghost.txt \u003cROOT\u003e/work/processing/ghost.txt: no such file or directory"
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "enqueue-direct-text",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/d.txt",
+      "content": "direct"
+     },
+     {
+      "op": "enqueue",
+      "path": "inbox/d.txt"
+     }
+    ]
+   },
+   "results": [
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/d.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZGlyZWN0"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "d15690f08a575024650b01ffac892cfd2b93e6c57c140f1b6d9e47753cabd579",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/d.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "enqueue-without-processing-dir-keeps-file-in-inbox",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/k.txt",
+      "content": "keep"
+     },
+     {
+      "op": "enqueue",
+      "path": "inbox/k.txt"
+     }
+    ]
+   },
+   "results": [
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/k.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "a2VlcA=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/k.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "enqueue-same-file-twice-after-restore",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/t.txt",
+      "content": "twice"
+     },
+     {
+      "op": "enqueue",
+      "path": "inbox/t.txt"
+     },
+     {
+      "op": "enqueue",
+      "path": "inbox/t.txt"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/t.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dHdpY2U="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "dc8ffdbf2736dbdf39508017ac594e0d069f3eee9b0f29ece256aa7d831f9ef6",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/t.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     },
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 2,
+      "kind": "text/plain",
+      "last_error": "duplicate",
+      "status": "skipped",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] File \u003cROOT\u003e/inbox/t.txt (hash dc8ffdbf2736dbdf39508017ac594e0d069f3eee9b0f29ece256aa7d831f9ef6) already ingested or enqueued. Recording skipped job."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "start-scans-existing-files-recursively",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/top.txt",
+      "content": "top level"
+     },
+     {
+      "op": "write",
+      "path": "inbox/nested/deeper/inner.txt",
+      "content": "inner file"
+     },
+     {
+      "op": "write",
+      "path": "inbox/.hidden.txt",
+      "content": "hidden"
+     },
+     {
+      "op": "write",
+      "path": "inbox/skip.swp",
+      "content": "swap"
+     },
+     {
+      "op": "write",
+      "path": "inbox/skip.tmp",
+      "content": "tmp"
+     },
+     {
+      "op": "write",
+      "path": "inbox/skip~",
+      "content": "backup"
+     },
+     {
+      "op": "write",
+      "path": "work/processing/old.txt",
+      "content": "already processing"
+     },
+     {
+      "op": "write",
+      "path": "work/failed/f.txt",
+      "content": "failed one"
+     },
+     {
+      "op": "start"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/nested/deeper/inner.txt size=10; \u003cROOT\u003e/inbox/top.txt size=9",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/.hidden.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aGlkZGVu"
+    },
+    {
+     "path": "inbox/nested",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/nested/deeper",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/skip.swp",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c3dhcA=="
+    },
+    {
+     "path": "inbox/skip.tmp",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dG1w"
+    },
+    {
+     "path": "inbox/skip~",
+     "type": "file",
+     "mode": "0600",
+     "b64": "YmFja3Vw"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed/f.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZmFpbGVkIG9uZQ=="
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/inner.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aW5uZXIgZmlsZQ=="
+    },
+    {
+     "path": "work/processing/old.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "YWxyZWFkeSBwcm9jZXNzaW5n"
+    },
+    {
+     "path": "work/processing/top.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dG9wIGxldmVs"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "95b031f95c73b0ab3acb9ccb80a93d3bba1d1305afa89f08382238743361adf5",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/inner.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     },
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 2,
+      "mime": "text/plain",
+      "sha256": "cfde079781fe5327deed2f9cc4d91c913954e2dec7d17171dfbb958817e3b54e",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/top.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     },
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 2,
+      "id": 2,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox",
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox/nested",
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox/nested/deeper",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/nested/deeper/inner.txt",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/top.txt",
+    "[Watcher] Shutting down event loop..."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "start-ignores-hidden-directory",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/.cache/inside.txt",
+      "content": "inside hidden"
+     },
+     {
+      "op": "write",
+      "path": "inbox/visible/ok.txt",
+      "content": "visible"
+     },
+     {
+      "op": "start"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/visible/ok.txt size=7",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/.cache",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/.cache/inside.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aW5zaWRlIGhpZGRlbg=="
+    },
+    {
+     "path": "inbox/visible",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/visible/ok.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dmlzaWJsZQ=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "d42ef1497900bc6e542c641a896c88694d15069b8a11247f66ba7342b6c21cd9",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/visible/ok.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox",
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox/visible",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/visible/ok.txt",
+    "[Watcher] Shutting down event loop..."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "start-missing-inbox",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "remove",
+      "path": "inbox"
+     },
+     {
+      "op": "start"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "initial watch setup walk: lstat \u003cROOT\u003e/inbox: no such file or directory"
+   ],
+   "files": [],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   }
+  },
+  {
+   "scenario": {
+    "id": "start-processing-dir-inside-inbox-is-ignored",
+    "opts": {
+     "stable_for_ms": 1000,
+     "processing": "inbox/_processing",
+     "processed": "inbox/_processed",
+     "failed": "inbox/_failed"
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/in.txt",
+      "content": "in"
+     },
+     {
+      "op": "write",
+      "path": "inbox/_processing/a.txt",
+      "content": "a"
+     },
+     {
+      "op": "write",
+      "path": "inbox/_failed/b.txt",
+      "content": "b"
+     },
+     {
+      "op": "write",
+      "path": "inbox/_processed/c.txt",
+      "content": "c"
+     },
+     {
+      "op": "start"
+     },
+     {
+      "op": "pending"
+     },
+     {
+      "op": "advance",
+      "ms": 1000
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/in.txt size=2",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_failed/b.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "Yg=="
+    },
+    {
+     "path": "inbox/_processed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_processed/c.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "Yw=="
+    },
+    {
+     "path": "inbox/_processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_processing/a.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "YQ=="
+    },
+    {
+     "path": "inbox/_processing/in.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aW4="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "582967534d0f909d196b97f9e6921342777aea87b46fa52df165389db1fb8ccf",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/_processing/in.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   },
+   "logs": [
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox",
+    "[Watcher] File is stable, submitting to queue: \u003cROOT\u003e/inbox/in.txt",
+    "[Watcher] Shutting down event loop..."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "relative-ignored-extensions",
+    "opts": {
+     "stable_for_ms": 1000
+    },
+    "steps": [
+     {
+      "op": "write",
+      "path": "inbox/a.SWP",
+      "content": "upper"
+     },
+     {
+      "op": "write",
+      "path": "inbox/a.swx",
+      "content": "swx"
+     },
+     {
+      "op": "write",
+      "path": "inbox/real.txt",
+      "content": "real"
+     },
+     {
+      "op": "start"
+     },
+     {
+      "op": "pending"
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "\u003cROOT\u003e/inbox/a.SWP size=5; \u003cROOT\u003e/inbox/real.txt size=4"
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/a.SWP",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dXBwZXI="
+    },
+    {
+     "path": "inbox/a.swx",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c3d4"
+    },
+    {
+     "path": "inbox/real.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "cmVhbA=="
+    }
+   ],
+   "tables": {
+    "documents": [],
+    "jobs": []
+   },
+   "logs": [
+    "[Watcher] Watching directory: \u003cROOT\u003e/inbox",
+    "[Watcher] Shutting down event loop..."
+   ]
+  },
+  {
+   "scenario": {
+    "id": "live-create-after-start",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/a.txt",
+      "content": "live file"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/a.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "bGl2ZSBmaWxl"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "67d42391db9d2b73e59bacf7c63e3a929c3155dc0e24aa5cf7111b74136a71da",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/a.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-growing-file-waits-until-stable",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/grow.txt",
+      "content": "part 1\n"
+     },
+     {
+      "op": "pause",
+      "ms": 80
+     },
+     {
+      "op": "append",
+      "path": "inbox/grow.txt",
+      "content": "part 2\n"
+     },
+     {
+      "op": "pause",
+      "ms": 80
+     },
+     {
+      "op": "append",
+      "path": "inbox/grow.txt",
+      "content": "part 3\n"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/grow.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "cGFydCAxCnBhcnQgMgpwYXJ0IDMK"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "b7705c86fc28729ea1f35b4453760a85b5b4e100e64b346d3dd13b9dd9da8f6f",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/grow.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-new-subdirectory-is-watched",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "mkdir",
+      "path": "inbox/newdir"
+     },
+     {
+      "op": "pause",
+      "ms": 400
+     },
+     {
+      "op": "write",
+      "path": "inbox/newdir/b.txt",
+      "content": "inside new dir"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/newdir",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/b.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aW5zaWRlIG5ldyBkaXI="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "20e5a128f4429ca9d6eae5530c0778b58cf274c783839c688a7e3b6e218946c8",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/b.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-removed-before-stable-and-ignored-names",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/gone.txt",
+      "content": "gone"
+     },
+     {
+      "op": "remove",
+      "path": "inbox/gone.txt"
+     },
+     {
+      "op": "write",
+      "path": "inbox/.dot",
+      "content": "dot"
+     },
+     {
+      "op": "write",
+      "path": "inbox/x.swp",
+      "content": "swp"
+     },
+     {
+      "op": "write",
+      "path": "inbox/x.tmp",
+      "content": "tmp"
+     },
+     {
+      "op": "write",
+      "path": "inbox/x~",
+      "content": "tilde"
+     },
+     {
+      "op": "pause",
+      "ms": 600
+     },
+     {
+      "op": "write",
+      "path": "inbox/zz-sentinel.txt",
+      "content": "sentinel"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     },
+     {
+      "op": "pause",
+      "ms": 600
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/.dot",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZG90"
+    },
+    {
+     "path": "inbox/x.swp",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c3dw"
+    },
+    {
+     "path": "inbox/x.tmp",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dG1w"
+    },
+    {
+     "path": "inbox/x~",
+     "type": "file",
+     "mode": "0600",
+     "b64": "dGlsZGU="
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/zz-sentinel.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "c2VudGluZWw="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/zz-sentinel.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-duplicate-content-skipped",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/one.txt",
+      "content": "dup bytes"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     },
+     {
+      "op": "write",
+      "path": "inbox/two.txt",
+      "content": "dup bytes"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 2
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/one.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZHVwIGJ5dGVz"
+    },
+    {
+     "path": "work/processing/two.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZHVwIGJ5dGVz"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "c02fe9cc6de3b547c386661c1b1bd79c213bc78da13ee8ef5b37452270dcb4d1",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/one.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     },
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 2,
+      "kind": "text/plain",
+      "last_error": "duplicate",
+      "status": "skipped",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-undetectable-file-fails-with-sidecar",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "work/processing",
+     "processed": "work/processed",
+     "failed": "work/failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/bad.bin",
+      "content": "\u0000\u0001\u0002 not supported"
+     },
+     {
+      "op": "pause",
+      "ms": 1000
+     },
+     {
+      "op": "write",
+      "path": "inbox/ok.txt",
+      "content": "fine"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/failed/bad.bin",
+     "type": "file",
+     "mode": "0600",
+     "b64": "AAECIG5vdCBzdXBwb3J0ZWQ="
+    },
+    {
+     "path": "work/failed/bad.bin.error.json",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ewogICJzb3VyY2VfcGF0aCI6ICI8Uk9PVD4vd29yay9mYWlsZWQvYmFkLmJpbiIsCiAgInN0YWdlIjogImRldGVjdCIsCiAgImVycm9yIjogInVuc3VwcG9ydGVkIGZpbGUgdHlwZTogPFJPT1Q+L3dvcmsvcHJvY2Vzc2luZy9iYWQuYmluIiwKICAiZmFpbGVkX2F0IjogIjxUUz4iCn0K"
+    },
+    {
+     "path": "work/processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "work/processing/ok.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "ZmluZQ=="
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "d14a58bae804a2b80b5b76a010239c88ffca1fc7951a90f8e9131beda1e23c1b",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/work/processing/ok.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  },
+  {
+   "scenario": {
+    "id": "live-processing-dir-inside-inbox",
+    "live": true,
+    "opts": {
+     "stable_for_ms": 250,
+     "processing": "inbox/_processing",
+     "processed": "inbox/_processed",
+     "failed": "inbox/_failed"
+    },
+    "steps": [
+     {
+      "op": "start"
+     },
+     {
+      "op": "write",
+      "path": "inbox/a.txt",
+      "content": "inside"
+     },
+     {
+      "op": "wait-jobs",
+      "n": 1
+     },
+     {
+      "op": "pause",
+      "ms": 800
+     }
+    ]
+   },
+   "results": [
+    "",
+    "",
+    "",
+    ""
+   ],
+   "files": [
+    {
+     "path": "inbox",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_processing",
+     "type": "dir",
+     "mode": "0700"
+    },
+    {
+     "path": "inbox/_processing/a.txt",
+     "type": "file",
+     "mode": "0600",
+     "b64": "aW5zaWRl"
+    }
+   ],
+   "tables": {
+    "documents": [
+     {
+      "archive_path": null,
+      "category": null,
+      "correspondent": null,
+      "created_at": "\u003cTS\u003e",
+      "document_type": null,
+      "id": 1,
+      "mime": "text/plain",
+      "sha256": "106b086224a4d945eae25f7be3805a931a873270326dd868b0e41f71ee9fff72",
+      "source_mail_id": null,
+      "source_path": "\u003cROOT\u003e/inbox/_processing/a.txt",
+      "status": "pending",
+      "tags": null,
+      "updated_at": "\u003cTS\u003e",
+      "vault_path": null,
+      "vault_root": ""
+     }
+    ],
+    "jobs": [
+     {
+      "attempts": 0,
+      "created_at": "\u003cTS\u003e",
+      "document_id": 1,
+      "id": 1,
+      "kind": "text/plain",
+      "last_error": null,
+      "status": "pending",
+      "updated_at": "\u003cTS\u003e"
+     }
+    ]
+   }
+  }
+ ],
+ "normalizations": [
+  "temp root \u003cROOT\u003e, RFC3339 timestamps \u003cTS\u003e, sidecar failed_at \u003cTS\u003e; live scenarios omit logs"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "source_hashes": {
+  "clock.go": "4f38cc22afcff9f384b7da83d3635fcc5ebab6cdcb87d30c0aac610107f915f8",
+  "watcher.go": "7d9cdfdd5042d61de88eb158d7c7b5acf3a303cdf6d2b651ff494cdaf8f72fe1",
+  "watcher_port_test.go": "53e72d9fbda30edb811fdcbbabc68a511d99a85975964628b22c488a6e29bcea"
+ }
+}

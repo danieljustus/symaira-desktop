@@ -54,6 +54,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"Paperless verify", []string{"test", "-count=1", "./internal/ingest/internal/paperlessimport", "-run", "^TestPortPaperlessVerifyContract$"}, []string{"testdata/port/ingest/paperless-verify.json"}, false},
 	{"Notion migration report", []string{"test", "-count=1", "./internal/ingest/internal/notionimport", "-run", "^TestPortNotionReportContract$"}, []string{"testdata/port/ingest/notion-report.json"}, false},
 	{"ingest mail poller", []string{"test", "-count=1", "./internal/ingest/internal/ingest", "-run", "^TestPortIngestMailContract$"}, []string{"testdata/port/ingest/mail.json"}, false},
+	{"ingest directory watcher", []string{"test", "-count=1", "./internal/ingest/internal/ingest", "-run", "^TestPortIngestWatcherContract$"}, []string{"testdata/port/ingest/watcher.json"}, false},
 	{"Paperless mapping audit", []string{"test", "-count=1", "./internal/ingest/internal/paperlessimport", "-run", "^TestPortPaperlessMappingContract$"}, []string{"testdata/port/ingest/paperless-mapping.json"}, false},
 	{"Paperless target state", []string{"test", "-count=1", "./internal/ingest/internal/store", "-run", "^TestPortPaperlessStateContract$", "-args", "-port-paperless-state"}, []string{"testdata/port/ingest/paperless-state.json"}, false},
 	{"Paperless export", []string{"test", "-count=1", "./internal/paperless", "-run", "^TestPortPaperlessExportContract$"}, []string{"testdata/port/ingest/paperless-export.json"}, false},

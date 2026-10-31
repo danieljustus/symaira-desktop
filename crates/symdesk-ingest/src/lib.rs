@@ -18,6 +18,13 @@ pub mod filetype;
 pub mod gform;
 pub mod ghtml;
 pub mod gmime;
+#[allow(dead_code)]
+mod go_sort;
+pub mod gojson;
+#[cfg(unix)]
+pub mod goos;
+pub mod gxml;
+pub mod gzip;
 #[cfg(unix)]
 pub mod imap;
 #[cfg(unix)]
@@ -28,13 +35,6 @@ pub mod mail;
 pub mod mail_reader;
 #[cfg(unix)]
 pub mod secretref;
-#[allow(dead_code)]
-mod go_sort;
-pub mod gojson;
-#[cfg(unix)]
-pub mod goos;
-pub mod gxml;
-pub mod gzip;
 #[rustfmt::skip]
 mod gxml_tables;
 mod migrations;
@@ -46,15 +46,17 @@ pub mod paperless_export;
 pub mod paperless_import;
 #[cfg(unix)]
 pub mod paperless_run;
+mod paperless_state;
 #[cfg(unix)]
 pub mod paperless_verify;
-mod paperless_state;
 #[cfg(unix)]
 pub mod pipeline;
 pub mod report_json;
 pub mod structured;
 #[cfg(unix)]
 pub mod vlm;
+#[cfg(unix)]
+pub mod watcher;
 #[cfg(unix)]
 pub mod writer;
 pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};

@@ -50,6 +50,13 @@ tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }
 hyper = { version = "=1.11.1", default-features = false, features = ["client", "http1", "server"] }
 
+# The draw layout regression (crates/symdesk-render/tests/draw_hostile_layout.rs)
+# asserts a 10 s wall-clock bound on two CPU-bound fuzz inputs; at opt-level 0
+# it needs 13-19 s of CPU on Apple silicon (opt-level 1: 14 s) and fails every
+# workspace test run; opt-level 3 brings it to under 2 s.
+[profile.dev.package.symdesk-render]
+opt-level = 3
+
 [profile.release]
 codegen-units = 1
 lto = "thin"

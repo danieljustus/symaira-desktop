@@ -67,6 +67,15 @@ func TestPortContactsMembershipRefContract(t *testing.T) {
 	t.Cleanup(func() { uuid.SetRand(nil) })
 	svc := New(db)
 	const stamp = "2026-01-02T03:04:05Z"
+	// formatTime uses time.RFC3339Nano, which trims trailing zeros, so two rows
+	// written microseconds apart can sort by created_at in the opposite order of
+	// their ids (a string comparison, not a time comparison). Pin the creation
+	// stamp of the child rows so ordering falls back to the deterministic id.
+	for _, tbl := range []string{"contact_points", "aliases"} {
+		if _, err := db.ExecContext(ctx, "CREATE TRIGGER port_pin_"+tbl+" AFTER INSERT ON "+tbl+" BEGIN UPDATE "+tbl+" SET created_at = '"+stamp+"' WHERE id = NEW.id; END"); err != nil {
+			t.Fatal(err)
+		}
+	}
 	actions := []portMembershipAction{}
 	results := []any{}
 	refs := map[string]string{}

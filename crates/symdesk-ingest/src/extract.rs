@@ -2,7 +2,6 @@
 //! Ingest and retrieval have different whitespace/XML/table/limit contracts;
 //! retrieval's parsers therefore cannot be substituted for these readers.
 use crate::structured;
-use std::io::{Cursor, Read};
 use symdesk_core::{document_format as formats, textnorm};
 
 pub const MAX_ZIP_ENTRY_BYTES: usize = 32 << 20;
@@ -142,27 +141,21 @@ fn detect_ole(data: &[u8]) -> &'static str {
     ""
 }
 struct Archive<'a> {
-    zip: zip::ZipArchive<Cursor<&'a [u8]>>,
-    names: Vec<String>,
+    zip: crate::gzip::Reader<'a>,
+    pub(crate) names: Vec<String>,
     total: usize,
 }
 impl<'a> Archive<'a> {
     fn open(data: &'a [u8]) -> Result<Self, String> {
-        let mut zip = zip::ZipArchive::new(Cursor::new(data))
-            .map_err(|_| "open archive: zip: not a valid zip file".to_string())?;
-        if zip.len() > MAX_ZIP_ENTRIES {
+        let zip = crate::gzip::Reader::new(data, MAX_ZIP_ENTRIES + 1)
+            .map_err(|e| format!("open archive: {e}"))?;
+        if zip.count > MAX_ZIP_ENTRIES {
             return Err(format!(
                 "extract: archive limit exceeded: {} entries exceed the cap of {MAX_ZIP_ENTRIES}",
-                zip.len()
+                zip.count
             ));
         }
-        let names = (0..zip.len())
-            .map(|i| {
-                zip.by_index(i)
-                    .and_then(|f| f.name().map(|name| name.into_owned()))
-                    .map_err(|e| e.to_string())
-            })
-            .collect::<Result<_, _>>()?;
+        let names = zip.files.iter().map(|f| f.name.clone()).collect();
         Ok(Self {
             zip,
             names,
@@ -173,18 +166,17 @@ impl<'a> Archive<'a> {
         let Some(i) = self.names.iter().position(|n| n == name) else {
             return Ok(None);
         };
-        let mut file = self
+        let quoted = crate::gmime::go_quote(name.as_bytes());
+        let data = self
             .zip
-            .by_index(i)
-            .map_err(|e| format!("open part {name:?}: {e}"))?;
-        let mut data = Vec::new();
-        file.by_ref()
-            .take((MAX_ZIP_ENTRY_BYTES + 1) as u64)
-            .read_to_end(&mut data)
-            .map_err(|e| format!("read part {name:?}: {e}"))?;
+            .read(&self.zip.files[i], MAX_ZIP_ENTRY_BYTES)
+            .map_err(|e| match e {
+                crate::gzip::ReadError::Open(m) => format!("open part {quoted}: {m}"),
+                crate::gzip::ReadError::Read(m) => format!("read part {quoted}: {m}"),
+            })?;
         if data.len() > MAX_ZIP_ENTRY_BYTES {
             return Err(format!(
-                "extract: archive limit exceeded: part {name:?} exceeds the per-entry cap of {MAX_ZIP_ENTRY_BYTES} bytes"
+                "extract: archive limit exceeded: part {quoted} exceeds the per-entry cap of {MAX_ZIP_ENTRY_BYTES} bytes"
             ));
         }
         self.total += data.len();

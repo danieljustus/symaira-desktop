@@ -9,6 +9,7 @@ use std::path::Path;
 mod document;
 pub mod extract;
 pub mod ghtml;
+pub mod gzip;
 pub mod gmime;
 pub mod gxml;
 #[rustfmt::skip]

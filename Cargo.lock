@@ -2658,6 +2658,8 @@ name = "symdesk-ingest"
 version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
+ "crc32fast",
+ "miniz_oxide",
  "noyalib",
  "quick-xml",
  "regex",
@@ -2672,7 +2674,6 @@ dependencies = [
  "time",
  "ureq",
  "url",
- "zip",
 ]
 
 [[package]]

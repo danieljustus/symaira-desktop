@@ -69,6 +69,18 @@ fn expected_error(c: &Case) -> String {
     }
 }
 
+/// Declared difference: Go's flate reports the input byte offset of corrupt
+/// deflate data (`flate: corrupt input before offset N`); the Rust inflate
+/// (miniz_oxide) rejects the same data without an offset. The error class,
+/// the rejection and the absence of output are identical.
+fn flate_offset_equivalent(go: &str, rust: &str) -> bool {
+    go.split_once("flate: corrupt input before offset ")
+        .zip(rust.split_once("flate: corrupt input"))
+        .is_some_and(|((go_prefix, offset), (rust_prefix, rest))| {
+            go_prefix == rust_prefix && rest.is_empty() && offset.chars().all(|c| c.is_ascii_digit())
+        })
+}
+
 fn run(c: &Case) -> Result<(), String> {
     let data = STANDARD.decode(&c.input).unwrap();
     match c.group.as_str() {
@@ -128,10 +140,14 @@ fn run(c: &Case) -> Result<(), String> {
                 (None, _) => panic!("case {} has neither result nor error", c.id),
             };
             if got == want {
-                Ok(())
-            } else {
-                Err(format!("{got:?} != {want:?}"))
+                return Ok(());
             }
+            if let (Err(g), Err(w)) = (&got, &want)
+                && flate_offset_equivalent(w, g)
+            {
+                return Ok(());
+            }
+            Err(format!("{got:?} != {want:?}"))
         }
     }
 }
@@ -157,7 +173,7 @@ fn structured_go_fixture() {
         failures.len(),
         failures.iter().take(40).cloned().collect::<Vec<_>>().join("\n")
     );
-    assert_eq!(f.cases.len(), 2451);
+    assert_eq!(f.cases.len(), 2520);
 }
 
 #[test]

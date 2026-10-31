@@ -17,6 +17,7 @@ import (
 	"hash/crc32"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -545,6 +546,155 @@ func TestPortIngestStructuredContract(t *testing.T) {
 	}
 	// Nested archive inside an archive is just bytes: never recursed.
 	writeKind("zip-nested-bomb-ignored", "zip", "file.docx", portZip(t, map[string]string{"word/document.xml": body, "inner.zip": string(truncZip)}), KindDOCX)
+
+	// Structural ZIP damage: EOCD field and directory corruption.
+	valid := portZip(t, map[string]string{"word/document.xml": body})
+	eocd := len(valid) - 22
+	patch := func(id string, f func(b []byte) []byte) {
+		b := f(append([]byte(nil), valid...))
+		writeKind("zip-"+id, "zip", "file.docx", b, KindDOCX)
+	}
+	patch("eocd-records-0", func(b []byte) []byte { b[eocd+10], b[eocd+11] = 0, 0; return b })
+	patch("eocd-records-2", func(b []byte) []byte { b[eocd+10] = 2; return b })
+	patch("eocd-records-this-disk-2", func(b []byte) []byte { b[eocd+8] = 2; return b })
+	patch("eocd-dirsize-big", func(b []byte) []byte { b[eocd+12] = 0xff; b[eocd+13] = 0xff; return b })
+	patch("eocd-dirsize-0xffff", func(b []byte) []byte { b[eocd+12], b[eocd+13], b[eocd+14], b[eocd+15] = 0xff, 0xff, 0, 0; return b })
+	patch("eocd-diroffset-beyond", func(b []byte) []byte { b[eocd+16], b[eocd+17] = 0xff, 0x7f; return b })
+	patch("eocd-diroffset-0xffffffff", func(b []byte) []byte {
+		b[eocd+16], b[eocd+17], b[eocd+18], b[eocd+19] = 0xff, 0xff, 0xff, 0xff
+		return b
+	})
+	patch("eocd-records-0xffff", func(b []byte) []byte { b[eocd+10], b[eocd+11] = 0xff, 0xff; return b })
+	patch("eocd-comment-len-big", func(b []byte) []byte { b[eocd+20] = 9; return b })
+	patch("eocd-comment-with-fake-sig", func(b []byte) []byte {
+		b[eocd+20] = 8
+		return append(b, []byte("PK\x05\x06abcd")...)
+	})
+	patch("cd-signature-bad", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+2] = 9
+				break
+			}
+		}
+		return b
+	})
+	patch("local-signature-bad", func(b []byte) []byte { b[2] = 9; return b })
+	patch("cd-namelen-huge", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+28], b[i+29] = 0xff, 0xff
+				break
+			}
+		}
+		return b
+	})
+	patch("cd-headeroffset-beyond", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+42], b[i+43], b[i+44], b[i+45] = 0xfe, 0xff, 0xff, 0x00
+				break
+			}
+		}
+		return b
+	})
+	patch("cd-headeroffset-0xffffffff-no-zip64", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+42], b[i+43], b[i+44], b[i+45] = 0xff, 0xff, 0xff, 0xff
+				break
+			}
+		}
+		return b
+	})
+	patch("cd-csize-0xffffffff-no-zip64", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+20], b[i+21], b[i+22], b[i+23] = 0xff, 0xff, 0xff, 0xff
+				break
+			}
+		}
+		return b
+	})
+	patch("cd-usize-0xffffffff-no-zip64", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+24], b[i+25], b[i+26], b[i+27] = 0xff, 0xff, 0xff, 0xff
+				break
+			}
+		}
+		return b
+	})
+	patch("cd-extra-zip64-short", func(b []byte) []byte {
+		for i := 0; i+4 <= len(b); i++ {
+			if b[i] == 'P' && b[i+1] == 'K' && b[i+2] == 1 && b[i+3] == 2 {
+				b[i+24], b[i+25], b[i+26], b[i+27] = 0xff, 0xff, 0xff, 0xff
+				b[i+30], b[i+31] = 4, 0
+				nl := int(b[i+28]) | int(b[i+29])<<8
+				for k := range []int{0} {
+					_ = k
+				}
+				ins := append([]byte(nil), b[i+46+nl:]...)
+				b = append(b[:i+46+nl], append([]byte{1, 0, 0, 0}, ins...)...)
+				// the central directory grew by 4 bytes: keep the EOCD consistent
+				e := len(b) - 22
+				b[e+12] += 4
+				break
+			}
+		}
+		return b
+	})
+	patch("truncate-before-eocd", func(b []byte) []byte { return b[:eocd] })
+	patch("truncate-mid-cd", func(b []byte) []byte { return b[:eocd-20] })
+	patch("two-eocd", func(b []byte) []byte { return append(b, b[eocd:]...) })
+	writeKind("zip-tiny-22", "zip", "file.docx", make([]byte, 22), KindDOCX)
+	writeKind("zip-sig-only", "zip", "file.docx", []byte("PK\x03\x04"), KindDOCX)
+	// Compression bomb: a 256 MiB entry is read only up to the 32 MiB cap.
+	bombRaw := func(n int) []byte {
+		var out bytes.Buffer
+		fw, err := flate.NewWriter(&out, flate.BestSpeed)
+		if err != nil {
+			t.Fatal(err)
+		}
+		chunk := bytes.Repeat([]byte(" "), 1<<20)
+		h := crc32.NewIEEE()
+		for written := 0; written < n; written += len(chunk) {
+			_, _ = fw.Write(chunk)
+			_, _ = h.Write(chunk)
+		}
+		_ = fw.Close()
+		return rawZip(t, []rawEntry{{name: "content.xml", method: zip.Deflate, crc: h.Sum32(), data: out.Bytes(), usize: uint64(n)}, {name: "mimetype", method: zip.Store, crc: crc32.ChecksumIEEE([]byte(KindODT)), data: []byte(KindODT), usize: uint64(len(KindODT))}})
+	}
+	writeKind("zip-bomb-256MiB", "zip", "file.odt", bombRaw(256<<20), KindODT)
+	writeKind("zip-bomb-33MiB", "zip", "file.odt", bombRaw(33<<20), KindODT)
+
+	// html.UnescapeString entity table sweep from the toolchain's own table.
+	entSrc, entErr := os.ReadFile(filepath.Join(runtime.GOROOT(), "src", "html", "entity.go"))
+	if entErr != nil {
+		t.Fatal(entErr)
+	}
+	names := regexp.MustCompile(`(?m)^\s*"([A-Za-z0-9]+;?)":`).FindAllStringSubmatch(string(entSrc), -1)
+	var sweep []string
+	for _, m := range names {
+		n := m[1]
+		sweep = append(sweep, "&"+n, "&"+n+"x", "&"+strings.TrimSuffix(n, ";"), "&"+strings.TrimSuffix(n, ";")+"=1")
+		if len(n) > 2 {
+			sweep = append(sweep, "&"+n[:len(n)-1])
+		}
+	}
+	for i := 0; i < len(sweep); i += 400 {
+		j := i + 400
+		if j > len(sweep) {
+			j = len(sweep)
+		}
+		h := strings.Join(sweep[i:j], " ")
+		record(structuredCase{ID: fmt.Sprintf("html-sweep-%04d", i), Group: "html", Reader: "htmlToText", Input: []byte(h)}, func() (string, error) { return htmlToText(h), nil })
+	}
+	fmt.Fprintf(os.Stderr, "entity sweep: %d table names, %d probes\n", len(names), len(sweep))
+	for i, num := range []string{"&#65536;", "&#x10FFFF;", "&#x110000;", "&#xFFFFFFFF;", "&#4294967296;", "&#4294967361;", "&#x100000041;", "&#2147483648;", "&#-1;", "&#xg;", "&#x41g;", "&#00065;", "&#X;", "&#0x41;", "&#128512;", "&#x1F600"} {
+		num := num
+		record(structuredCase{ID: fmt.Sprintf("html-numeric-%02d", i), Group: "html", Reader: "htmlToText", Input: []byte(num)}, func() (string, error) { return htmlToText(num), nil })
+	}
 
 	// Malformed corpus shipped with the Go tests.
 	corpus := filepath.Join(filepath.Dir(sourceFile()), "testdata", "malformed")

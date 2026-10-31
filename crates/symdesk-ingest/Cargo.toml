@@ -16,7 +16,8 @@ symdesk-core.workspace = true
 regex.workspace = true
 scraper = "0.29.0"
 quick-xml = "=0.41.0"
-zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
+miniz_oxide = "=0.8.9"
+crc32fast = "=1.5.3"
 sha2.workspace = true
 symdesk-vault.workspace = true
 noyalib.workspace = true

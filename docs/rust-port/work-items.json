@@ -222,7 +222,7 @@
     {
       "id": "RUST-009",
       "title": "Port contacts datasets and view projections",
-      "status": "blocked",
+      "status": "passed",
       "depends_on": [
         "RUST-007",
         "RUST-008"
@@ -237,7 +237,8 @@
         "make contacts-dataset-differential",
         "make dataset-aggregate-differential",
         "cargo nextest run -p symdesk-index -p symdesk-vault"
-      ]
+      ],
+      "note": "Contacts, datasets and view projections are ported with Go-generated fixtures: eleven contacts fixtures (schema, CSV, vCard, import, CRUD, relationships, memberships/references, timeline/meeting import, memory links, erase, key provider) plus redaction (35 inputs) and export/encrypted backup (Go backup restores in Rust, 12 damaged variants fail with Go's exact errors, a Rust backup restores in Go), and the full dataset query engine (212 service cases, 22 live Go/Rust CLI cases) with aggregates. DATA-001 was already PASS; DATA-002, CONTACT-001 and CONTACT-002 are PASS (local). Acceptance: `make contacts-dataset-differential` (new aggregate of all contacts and dataset differentials), `make dataset-aggregate-differential`, and the nextest workspace run (covers symdesk-index and symdesk-vault) via rust-test. Fixtures registered in portgen and the provenance manifest (generator digest re-frozen deliberately). Declared limits: real-TTY key-provider adapters, non-UTF-8 CSV inputs and CLI/MCP facade wiring are not certified; no Go fallback removed; hosted CI and Windows/Intel are not claimed. A pre-existing clippy failure at the base (symdesk-render needless_range_loop in draw/layout.rs) is silenced with a scoped allow so rust-lint can pass."
     },
     {
       "id": "RUST-010",

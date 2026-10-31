@@ -149,10 +149,6 @@ impl AuthRole {
         self.has_role("admin")
     }
 
-    fn is_worker(&self) -> bool {
-        self.has_role("worker")
-    }
-
     fn is_named_user(&self) -> bool {
         matches!(self, Self::User { .. })
     }
@@ -717,7 +713,7 @@ async fn authenticate(
     }
     if role.is_named_user()
         && !role.is_admin()
-        && !named_user_route_allowed(&role, request.method(), request.uri().path())
+        && !named_user_route_allowed(request.method(), request.uri().path())
     {
         return json_error(StatusCode::FORBIDDEN, "admin role required");
     }
@@ -745,7 +741,7 @@ fn authenticate_named_user(state: &AppState, provided: &str) -> Option<AuthRole>
     matched
 }
 
-fn named_user_route_allowed(_role: &AuthRole, method: &Method, path: &str) -> bool {
+fn named_user_route_allowed(method: &Method, path: &str) -> bool {
     let read_method = method == Method::GET || method == Method::HEAD;
     if path == "/api/v1/status" && (method == Method::GET || method == Method::HEAD) {
         return true;
@@ -5939,41 +5935,23 @@ mod tests {
     }
 
     #[test]
-    fn named_worker_role_is_limited_to_worker_routes() {
-        let worker = AuthRole::User {
-            name: "worker-user".to_owned(),
-            roles: vec!["worker".to_owned()],
-        };
+    fn worker_routes_need_no_role_but_admin_routes_stay_closed_to_named_users() {
+        // Go's worker handlers check no role (live differential:
+        // worker-*-named-user-allowed), so a named user without `worker` may use them.
         for (method, path) in [
             (Method::POST, "/api/v1/worker/lease"),
             (Method::GET, "/api/v1/worker/input"),
             (Method::POST, "/api/v1/worker/complete"),
             (Method::POST, "/api/v1/worker/fail"),
         ] {
-            assert!(
-                named_user_route_allowed(&worker, &method, path),
-                "{method} {path}"
-            );
+            assert!(named_user_route_allowed(&method, path), "{method} {path}");
         }
-        assert!(!named_user_route_allowed(
-            &worker,
-            &Method::GET,
-            "/api/v1/jobs"
-        ));
+        assert!(!named_user_route_allowed(&Method::GET, "/api/v1/jobs"));
         assert!(route_requires_admin(&Method::GET, "/api/v1/jobs"));
+        assert!(!named_user_route_allowed(&Method::POST, "/api/v1/command"));
+        assert!(!named_user_route_allowed(&Method::POST, "/api/v1/ingest"));
         assert!(!named_user_route_allowed(
-            &worker,
-            &Method::POST,
-            "/api/v1/command"
-        ));
-
-        let user = AuthRole::User {
-            name: "alice".to_owned(),
-            roles: vec!["user".to_owned()],
-        };
-        assert!(!named_user_route_allowed(
-            &user,
-            &Method::POST,
+            &Method::GET,
             "/api/v1/worker/lease"
         ));
     }

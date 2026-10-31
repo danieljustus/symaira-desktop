@@ -105,10 +105,7 @@ pub fn read_upload(
     let mut max_memory_bytes = max_memory + VALUE_SLACK;
     let mut parts_left = MAX_PARTS;
     let mut found: Option<UploadFile> = None;
-    loop {
-        let Some(part) = reader.next_part()? else {
-            break;
-        };
+    while let Some(part) = reader.next_part()? {
         if parts_left == 0 {
             return Err("multipart: message too large".into());
         }
@@ -154,4 +151,87 @@ pub fn read_upload(
         return Err("invalid URL escape in query".into());
     }
     Ok(found)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn body(parts: &[&str]) -> Vec<u8> {
+        let mut out = String::new();
+        for part in parts {
+            out.push_str(&format!("--b\r\n{part}\r\n"));
+        }
+        out.push_str("--b--\r\n");
+        out.into_bytes()
+    }
+    const FILE: &str = "Content-Disposition: form-data; name=\"file\"; filename=\"dir/a.txt\"\r\nContent-Type: text/plain\r\n\r\nhello";
+
+    #[test]
+    fn first_named_file_wins_and_filename_is_based() {
+        let second = FILE.replace("a.txt", "second.txt");
+        let upload = read_upload(
+            "multipart/form-data; boundary=b",
+            "",
+            &body(&[FILE, &second]),
+            1 << 20,
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(upload.file_name, "a.txt");
+        assert_eq!(upload.content_type, "text/plain");
+        assert_eq!(upload.data, b"hello");
+    }
+
+    #[test]
+    fn missing_file_and_framing_errors_differ() {
+        let value = "Content-Disposition: form-data; name=\"file\"\r\n\r\nplain";
+        assert_eq!(
+            read_upload(
+                "multipart/form-data; boundary=b",
+                "",
+                &body(&[value]),
+                1 << 20
+            ),
+            Ok(None)
+        );
+        assert!(read_upload("application/json", "", b"{}", 1 << 20).is_err());
+        assert!(read_upload("multipart/form-data", "", b"", 1 << 20).is_err());
+        let unterminated = format!("--b\r\n{FILE}");
+        assert!(
+            read_upload(
+                "multipart/form-data; boundary=b",
+                "",
+                unterminated.as_bytes(),
+                1 << 20
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn query_errors_follow_go_parse_query() {
+        for bad in ["a=%zz", "a=1;b=2", "a=%2", "%"] {
+            assert!(query_is_invalid(bad), "{bad}");
+        }
+        for ok in ["", "a=1&b=%20x+y", "&&", "a", "a=%41"] {
+            assert!(!query_is_invalid(ok), "{ok}");
+        }
+        let upload_with_bad_query = read_upload(
+            "multipart/form-data; boundary=b",
+            "a=%zz",
+            &body(&[FILE]),
+            1 << 20,
+        );
+        assert!(upload_with_bad_query.is_err());
+    }
+
+    #[test]
+    fn oversized_value_parts_exhaust_the_memory_budget() {
+        let big = format!(
+            "Content-Disposition: form-data; name=\"x\"\r\n\r\n{}",
+            "a".repeat(11 << 20)
+        );
+        assert!(read_upload("multipart/form-data; boundary=b", "", &body(&[&big]), 0).is_err());
+    }
 }

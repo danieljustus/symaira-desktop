@@ -1,7 +1,7 @@
 //! Ingest detection and local extraction. No OCR, barcode, subprocess or network.
 //! Ingest and retrieval have different whitespace/XML/table/limit contracts;
 //! retrieval's parsers therefore cannot be substituted for these readers.
-use quick_xml::{Reader, events::Event};
+use crate::structured;
 use std::io::{Cursor, Read};
 use symdesk_core::{document_format as formats, textnorm};
 
@@ -202,70 +202,31 @@ fn detect_zip(data: &[u8]) -> &'static str {
     };
     if let Ok(Some(m)) = a.part("mimetype") {
         let m = String::from_utf8_lossy(&m);
+        let m = m.trim();
         for ext in ["odt", "ods", "odp", "epub"] {
-            if m.trim() == kind(ext) {
+            if m == kind(ext) {
                 return kind(ext);
             }
         }
     }
-    for (part, elem) in [
-        ("_rels/.rels", b"Relationship".as_slice()),
-        ("[Content_Types].xml", b"Override".as_slice()),
-    ] {
-        if let Ok(Some(data)) = a.part(part) {
-            let mut reader = Reader::from_reader(data.as_slice());
-            loop {
-                match reader.read_event() {
-                    Ok(Event::Start(e) | Event::Empty(e)) if e.local_name().as_ref() == elem => {
-                        let attrs = e
-                            .attributes()
-                            .flatten()
-                            .filter_map(|a| {
-                                Some((
-                                    String::from_utf8_lossy(a.key.local_name().as_ref())
-                                        .into_owned(),
-                                    quick_xml::escape::unescape(
-                                        std::str::from_utf8(&a.value).ok()?,
-                                    )
-                                    .ok()?
-                                    .into_owned(),
-                                ))
-                            })
-                            .collect::<std::collections::HashMap<_, _>>();
-                        if elem == b"Relationship" {
-                            if attrs
-                                .get("Type")
-                                .is_some_and(|t| t.ends_with("/officeDocument"))
-                                && let Some(target) = attrs.get("Target")
-                            {
-                                let target = target.strip_prefix('/').unwrap_or(target);
-                                for (p, ext) in [
-                                    ("word/document.xml", "docx"),
-                                    ("xl/workbook.xml", "xlsx"),
-                                    ("ppt/presentation.xml", "pptx"),
-                                ] {
-                                    if p == target {
-                                        return kind(ext);
-                                    }
-                                }
-                                break;
-                            }
-                        } else if let Some(ct) = attrs.get("ContentType") {
-                            for (needle, ext) in [
-                                ("wordprocessingml.document.main+xml", "docx"),
-                                ("spreadsheetml.sheet.main+xml", "xlsx"),
-                                ("presentationml.presentation.main+xml", "pptx"),
-                            ] {
-                                if ct.contains(needle) {
-                                    return kind(ext);
-                                }
-                            }
-                        }
-                    }
-                    Ok(Event::Eof) | Err(_) => break,
-                    _ => {}
+    if let Ok(Some(rels)) = a.part("_rels/.rels") {
+        let main = opc_office_document_part(&rels);
+        if !main.is_empty() {
+            for (p, ext) in [
+                ("word/document.xml", "docx"),
+                ("xl/workbook.xml", "xlsx"),
+                ("ppt/presentation.xml", "pptx"),
+            ] {
+                if main == p {
+                    return kind(ext);
                 }
             }
+        }
+    }
+    if let Ok(Some(ct)) = a.part("[Content_Types].xml") {
+        let k = opc_content_type_kind(&ct);
+        if !k.is_empty() {
+            return k;
         }
     }
     for (p, ext) in [
@@ -278,6 +239,61 @@ fn detect_zip(data: &[u8]) -> &'static str {
         }
     }
     ""
+}
+/// `opcOfficeDocumentPart`.
+fn opc_office_document_part(data: &[u8]) -> String {
+    let mut dec = crate::gxml::Decoder::new(data);
+    loop {
+        let Ok(tok) = dec.token() else {
+            return String::new();
+        };
+        let crate::gxml::Token::Start { name, attr } = tok else {
+            continue;
+        };
+        if name.local != "Relationship" {
+            continue;
+        }
+        let (mut rel_type, mut target) = (String::new(), String::new());
+        for a in attr {
+            match a.name.local.as_str() {
+                "Type" => rel_type = a.value,
+                "Target" => target = a.value,
+                _ => {}
+            }
+        }
+        if rel_type.ends_with("/officeDocument") && !target.is_empty() {
+            return target.strip_prefix('/').unwrap_or(&target).to_string();
+        }
+    }
+}
+/// `opcContentTypeKind`.
+fn opc_content_type_kind(data: &[u8]) -> &'static str {
+    let mut dec = crate::gxml::Decoder::new(data);
+    loop {
+        let Ok(tok) = dec.token() else {
+            return "";
+        };
+        let crate::gxml::Token::Start { name, attr } = tok else {
+            continue;
+        };
+        if name.local != "Override" {
+            continue;
+        }
+        let ct = attr
+            .iter()
+            .find(|a| a.name.local == "ContentType")
+            .map(|a| a.value.clone())
+            .unwrap_or_default();
+        for (needle, ext) in [
+            ("wordprocessingml.document.main+xml", "docx"),
+            ("spreadsheetml.sheet.main+xml", "xlsx"),
+            ("presentationml.presentation.main+xml", "pptx"),
+        ] {
+            if ct.contains(needle) {
+                return kind(ext);
+            }
+        }
+    }
 }
 
 pub fn normalize_text(text: &str) -> String {
@@ -298,7 +314,7 @@ pub fn normalize_text(text: &str) -> String {
         .trim()
         .to_owned()
 }
-fn html_text(text: &str) -> String {
+pub fn html_to_text(text: &str) -> String {
     let mut s = text.to_owned();
     for (pattern, replacement) in [
         (r"(?is)<script[^>]*>.*?</script>", " "),
@@ -313,9 +329,7 @@ fn html_text(text: &str) -> String {
             .replace_all(&s, replacement)
             .into_owned();
     }
-    // Decode HTML entities without interpreting remaining literal '<' as markup.
-    let fragment = scraper::Html::parse_fragment(&s.replace('<', "&lt;"));
-    fragment.root_element().text().collect()
+    crate::ghtml::unescape(&s)
 }
 fn rtf_text(data: &[u8]) -> Vec<u8> {
     let (mut ignored, mut depth, mut i) = (0, 0, 0);
@@ -397,7 +411,6 @@ fn rtf_text(data: &[u8]) -> Vec<u8> {
 }
 /// Byte input is bounded by the caller, and archive decompression has fixed caps.
 /// PDF/images are intentionally left to INGEST-003's engine; this API never OCRs.
-/// DOCX/XLSX/EML readers are not yet ported and return an explicit residual error.
 pub fn extract_bytes(data: &[u8], mime: &str, limit: usize) -> Result<Extraction, String> {
     if unsupported(mime) {
         return Err(formats::unsupported_format_error(mime));
@@ -410,27 +423,26 @@ pub fn extract_bytes(data: &[u8], mime: &str, limit: usize) -> Result<Extraction
     let text = String::from_utf8_lossy(data);
     let (text, engine) = match mime {
         "text/plain" | "text/csv" | "text/markdown" | "" => (text.into_owned(), "text"),
-        "text/html" => (normalize_text(&html_text(&text)), "html"),
+        "text/html" => (normalize_text(&html_to_text(&text)), "html"),
         "application/rtf" => (
             normalize_text(&String::from_utf8_lossy(&rtf_text(data))),
             "rtf",
         ),
-        k if [
-            kind("odt"),
-            kind("ods"),
-            kind("odp"),
-            kind("pptx"),
-            kind("epub"),
-        ]
-        .contains(&k) =>
-        {
-            let ext = ["odt", "ods", "odp", "pptx", "epub"]
+        "message/rfc822" => (normalize_text(&structured::read_eml(data)?), "eml-native"),
+        k => {
+            let Some(ext) = ["docx", "xlsx", "pptx", "odt", "ods", "odp", "epub"]
                 .into_iter()
                 .find(|e| kind(e) == k)
-                .unwrap();
+            else {
+                return Err(format!(
+                    "ingest Rust extraction not yet ported for kind {mime:?}"
+                ));
+            };
             (
                 normalize_text(&archive_text(data, ext)?),
                 match ext {
+                    "docx" => "docx-native",
+                    "xlsx" => "xlsx-native",
                     "odt" => "odt-native",
                     "ods" => "ods-native",
                     "odp" => "odp-native",
@@ -438,11 +450,6 @@ pub fn extract_bytes(data: &[u8], mime: &str, limit: usize) -> Result<Extraction
                     _ => "epub-native",
                 },
             )
-        }
-        _ => {
-            return Err(format!(
-                "ingest Rust extraction not yet ported for kind {mime:?}"
-            ));
         }
     };
     Ok(Extraction {
@@ -456,111 +463,101 @@ pub fn extract_bytes(data: &[u8], mime: &str, limit: usize) -> Result<Extraction
         language: String::new(),
     })
 }
+fn append_unit(out: &mut String, text: String) {
+    if !text.trim().is_empty() {
+        if !out.is_empty() {
+            out.push_str("\n\n");
+        }
+        out.push_str(&text);
+    }
+}
 fn archive_text(data: &[u8], ext: &str) -> Result<String, String> {
     let mut a = Archive::open(data).map_err(|e| format!("open {ext}: {e}"))?;
-    if ext == "epub"
-        && a.names
-            .iter()
-            .any(|n| n == "META-INF/rights.xml" || n == "META-INF/encryption.xml")
-    {
-        return Err(
-            "document is DRM-protected: EPUB rights or encryption metadata is present".into(),
-        );
-    }
-    if matches!(ext, "odt" | "ods" | "odp") {
-        let data = a
-            .part("content.xml")?
-            .ok_or_else(|| format!("{ext} missing content.xml"))?;
-        return xml_text(&data, false);
-    }
-    let mut names = a
-        .names
-        .iter()
-        .filter(|n| {
-            if ext == "pptx" {
-                n.starts_with("ppt/slides/slide") && n.ends_with(".xml")
+    match ext {
+        "docx" => {
+            let d = a
+                .part("word/document.xml")?
+                .ok_or_else(|| "docx missing word/document.xml".to_string())?;
+            structured::word_xml_to_text(&d)
+        }
+        "odt" | "ods" | "odp" => {
+            let d = a
+                .part("content.xml")?
+                .ok_or_else(|| format!("{ext} missing content.xml"))?;
+            structured::odf_xml_to_text(&d)
+        }
+        "xlsx" => {
+            let shared = match a.part("xl/sharedStrings.xml")? {
+                Some(d) => structured::read_shared_strings(&d)?,
+                None => Vec::new(),
+            };
+            let workbook = a.part("xl/workbook.xml")?;
+            let rels = if workbook.is_some() {
+                a.part("xl/_rels/workbook.xml.rels")?
             } else {
-                !n.starts_with("META-INF/")
-                    && !n.ends_with("toc.ncx")
-                    && [".html", ".htm", ".xhtml"].contains(&extension(n).as_str())
-            }
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-    names.sort();
-    let mut texts = Vec::new();
-    for name in names {
-        let data = a.part(&name)?.unwrap_or_default();
-        let text = if ext == "epub" {
-            html_text(&String::from_utf8_lossy(&data))
-        } else {
-            xml_text(&data, true)?
-        };
-        if !text.trim().is_empty() {
-            texts.push(text);
-        }
-    }
-    Ok(texts.join("\n\n"))
-}
-fn xml_text(data: &[u8], pptx: bool) -> Result<String, String> {
-    let mut reader = Reader::from_reader(data);
-    reader.config_mut().expand_empty_elements = true;
-    let (mut out, mut active, mut depth) = (String::new(), false, 0usize);
-    let eof_error = |position: usize| {
-        let family = if pptx { "pptx" } else { "odf" };
-        format!(
-            "parse {family} xml: XML syntax error on line {}: unexpected EOF",
-            data[..position.min(data.len())]
+                None
+            };
+            let sheet_names = structured::workbook_sheet_names(workbook.as_deref(), rels.as_deref())?;
+            let mut names = a
+                .names
                 .iter()
-                .filter(|b| **b == b'\n')
-                .count()
-                + 1
-        )
-    };
-    loop {
-        match reader.read_event() {
-            Ok(Event::Start(e)) => {
-                depth += 1;
-                match e.local_name().as_ref() {
-                    b"p" | b"h" => {
-                        if !out.is_empty() {
-                            out.push('\n');
-                        }
+                .filter(|n| n.starts_with("xl/worksheets/sheet") && n.ends_with(".xml"))
+                .cloned()
+                .collect::<Vec<_>>();
+            names.sort();
+            let mut out = String::new();
+            for name in names {
+                let d = a.part(&name)?.unwrap_or_default();
+                let text = structured::sheet_xml_to_text(&d, &shared)?;
+                if !text.trim().is_empty() {
+                    if !out.is_empty() {
+                        out.push_str("\n\n");
                     }
-                    b"t" if pptx => active = true,
-                    b"tab" if !pptx => out.push('\t'),
-                    b"line-break" if !pptx => out.push('\n'),
-                    _ => {}
+                    let base = structured::go_base(&name);
+                    out.push_str(sheet_names.get(&base).map_or(base.as_str(), String::as_str));
+                    out.push('\n');
+                    out.push_str(&text);
                 }
             }
-            Ok(Event::End(e)) => {
-                depth = depth.saturating_sub(1);
-                if pptx && e.local_name().as_ref() == b"t" {
-                    active = false;
-                }
+            Ok(out)
+        }
+        _ => {
+            if ext == "epub"
+                && a.names
+                    .iter()
+                    .any(|n| n == "META-INF/rights.xml" || n == "META-INF/encryption.xml")
+            {
+                return Err(
+                    "document is DRM-protected: EPUB rights or encryption metadata is present"
+                        .into(),
+                );
             }
-            Ok(Event::Text(e)) if !pptx || active => {
-                out.push_str(&e.xml11_content().map_err(|e| e.to_string())?)
+            let mut names = a
+                .names
+                .iter()
+                .filter(|n| {
+                    if ext == "pptx" {
+                        n.starts_with("ppt/slides/slide") && n.ends_with(".xml")
+                    } else {
+                        !n.starts_with("META-INF/")
+                            && !n.ends_with("toc.ncx")
+                            && [".html", ".htm", ".xhtml"].contains(&extension(n).as_str())
+                    }
+                })
+                .cloned()
+                .collect::<Vec<_>>();
+            names.sort();
+            let mut out = String::new();
+            for name in names {
+                let d = a.part(&name)?.unwrap_or_default();
+                let text = if ext == "epub" {
+                    html_to_text(&String::from_utf8_lossy(&d))
+                } else {
+                    structured::pptx_xml_to_text(&d)?
+                };
+                append_unit(&mut out, text);
             }
-            Ok(Event::CData(e)) if !pptx || active => {
-                out.push_str(&e.decode().map_err(|e| e.to_string())?)
-            }
-            Ok(Event::GeneralRef(e)) if !pptx || active => {
-                let entity = format!("&{};", e.decode().map_err(|e| e.to_string())?);
-                out.push_str(&quick_xml::escape::unescape(&entity).map_err(|e| e.to_string())?);
-            }
-            Ok(Event::Eof) => {
-                if depth > 0 {
-                    return Err(eof_error(data.len()));
-                }
-                break;
-            }
-            Err(e) => {
-                let family = if pptx { "pptx" } else { "odf" };
-                return Err(format!("parse {family} xml: {e}"));
-            }
-            _ => {}
+            Ok(out)
         }
     }
-    Ok(out)
 }

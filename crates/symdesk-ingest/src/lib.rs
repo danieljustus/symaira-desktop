@@ -8,6 +8,12 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 mod document;
 pub mod extract;
+pub mod ghtml;
+pub mod gmime;
+pub mod gxml;
+#[rustfmt::skip]
+mod gxml_tables;
+pub mod structured;
 mod migrations;
 pub mod notion;
 pub mod paperless;

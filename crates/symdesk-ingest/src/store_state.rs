@@ -21,37 +21,15 @@ pub fn validate_classification_rule(pattern: &str, kind: &str, value: &str) -> R
         return Err("pattern cannot be empty".into());
     }
     if !matches!(kind, "category" | "tag" | "correspondent" | "document_type") {
-        return Err(format!("invalid rule kind: {}", go_quote(kind)));
+        return Err(format!(
+            "invalid rule kind: {}",
+            symdesk_vault::go_quote(kind)
+        ));
     }
     if value.is_empty() {
         return Err("value cannot be empty".into());
     }
     Ok(())
-}
-
-/// Go `%q` for the strings this module quotes (valid UTF-8; Rust `str` cannot
-/// carry the invalid bytes Go would escape as `\x..`).
-fn go_quote(s: &str) -> String {
-    let mut out = String::from("\"");
-    for c in s.chars() {
-        match c {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\u{7}' => out.push_str("\\a"),
-            '\u{8}' => out.push_str("\\b"),
-            '\u{c}' => out.push_str("\\f"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            '\u{b}' => out.push_str("\\v"),
-            c if (c as u32) < 0x20 || c as u32 == 0x7f => {
-                out.push_str(&format!("\\x{:02x}", c as u32))
-            }
-            c => out.push(c),
-        }
-    }
-    out.push('"');
-    out
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

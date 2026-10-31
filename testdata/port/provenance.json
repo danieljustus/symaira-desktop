@@ -92,6 +92,8 @@
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
     "testdata/port/http/representative.json": "2f4b202d00ea8b646e2a9308ccbae4ba866effa66063144f3b1416b2a104c2ad",
     "testdata/port/http/routes.json": "dd88559823bf28c5ead65d7dfdbc23414fc6ef8072127fc0f561c30351c0f7b6",
+    "testdata/port/ingest/classification.json": "43aed0044784e97b532a28d33b5355542a19e9df5f29147d324844a46d9bc278",
+    "testdata/port/ingest/classify-pipeline.json": "f4686d26c7f10fd9f60a4e82d96b64a0088a2f60bb89fb397d877596d5cc66eb",
     "testdata/port/ingest/extraction.json": "8e470174b136d415676f0d84d57bc2f85ca9ce61c2d985f954b5d92f64ce2123",
     "testdata/port/ingest/notion.json": "bb23854dc10d32d508a6f30d187cc97e11a4ce66d11f4954c1d06ff209ad7b03",
     "testdata/port/ingest/ocr.json": "eff4d5d47ad7ce216eff8e1da2aa40ba90956749c20f286224369c36889b6453",

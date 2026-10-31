@@ -47,13 +47,23 @@ ingest-queue-differential:
 ingest-queue-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestQueueContract$$' -args -port-ingest-queue
 
-.PHONY: ingest-store-differential ingest-store-fixtures-generate
+.PHONY: ingest-store-differential ingest-classification-differential ingest-store-fixtures-generate
 ingest-store-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestStoreContract$$' -args -port-ingest-store
 	$(CARGO) test -p symdesk-ingest --test store_contracts --locked
 
 ingest-store-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/store -run '^TestPortIngestStoreContract$$' -args -port-ingest-store
+
+.PHONY: ingest-classification-differential ingest-classification-fixtures-generate
+ingest-classification-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest -run '^TestPortIngestClassificationContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ingest -run '^TestPortIngestClassifyPipelineContract$$'
+	$(CARGO) test -p symdesk-ingest --test classification_contracts --locked
+
+ingest-classification-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest -run '^TestPortIngestClassificationContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ingest -run '^TestPortIngestClassifyPipelineContract$$'
 
 .PHONY: ingest-extraction-differential ingest-extraction-fixtures-generate
 ingest-extraction-differential:

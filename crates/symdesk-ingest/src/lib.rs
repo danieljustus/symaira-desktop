@@ -6,6 +6,7 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+pub mod classification;
 mod document;
 pub mod extract;
 pub mod ghtml;

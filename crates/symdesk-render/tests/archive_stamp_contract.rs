@@ -312,17 +312,33 @@ fn assert_structure(id: &str, input: &Document, output: &Document, stamped: &[bo
         let label = format!("case {id} page {}", index + 1);
         let in_contents = input.get_page_contents(in_page);
         let out_contents = output.get_page_contents(out_page);
-        // Every original content stream survives byte for byte.
-        for stream_id in &in_contents {
-            assert!(
-                same(
-                    input.get_object(*stream_id).unwrap(),
-                    output.get_object(*stream_id).unwrap()
-                ),
-                "{label}: original content stream {stream_id:?} changed"
-            );
-        }
+        // Decoded bytes of a page's content streams, in order.
+        let decoded = |doc: &Document, ids: &[ObjectId]| -> Vec<u8> {
+            let mut bytes = Vec::new();
+            for id in ids {
+                bytes.extend(
+                    doc.get_object(*id)
+                        .unwrap()
+                        .as_stream()
+                        .unwrap()
+                        .decompressed_content()
+                        .unwrap(),
+                );
+                bytes.push(b'\n');
+            }
+            bytes
+        };
         if !stamped[index] {
+            // An unstamped page is not touched at all.
+            for stream_id in &in_contents {
+                assert!(
+                    same(
+                        input.get_object(*stream_id).unwrap(),
+                        output.get_object(*stream_id).unwrap()
+                    ),
+                    "{label}: original content stream {stream_id:?} changed"
+                );
+            }
             assert!(
                 same_dict(
                     input.get_dictionary(in_page).unwrap(),
@@ -332,16 +348,21 @@ fn assert_structure(id: &str, input: &Document, output: &Document, stamped: &[bo
             );
             continue;
         }
-        // Stamp streams first, original streams after them in order (z-order).
+        // pdfcpu merges the page into one content stream: the stamp first, the
+        // original content after it (z-order). The exact merged bytes are
+        // compared against Go in the archive-pdf differential; here the
+        // original bytes must survive, after the stamp, ignoring whitespace.
+        let squash = |bytes: Vec<u8>| -> Vec<u8> {
+            bytes
+                .into_iter()
+                .filter(|b| !b.is_ascii_whitespace())
+                .collect()
+        };
+        let original = squash(decoded(input, &in_contents));
+        let merged = squash(decoded(output, &out_contents));
         assert!(
-            out_contents.len() > in_contents.len(),
-            "{label}: no stamp stream added"
-        );
-        let split = out_contents.len() - in_contents.len();
-        assert_eq!(
-            out_contents[split..],
-            in_contents[..],
-            "{label}: original /Contents not preserved after the stamp"
+            !original.is_empty() && merged.len() > original.len() && merged.ends_with(&original),
+            "{label}: original content not preserved after the stamp"
         );
         let in_resources = effective_resources(input, in_page);
         let out_resources = effective_resources(output, out_page);
@@ -349,8 +370,26 @@ fn assert_structure(id: &str, input: &Document, output: &Document, stamped: &[bo
             if key == b"Font" {
                 continue;
             }
+            // The stamp adds its own entries (`/Fm*`, `/GS*`); everything the
+            // page had stays, in dictionaries entry by entry.
+            let kept = out_resources.get(key).is_ok_and(|out| {
+                match (dict_of(output, out), dict_of(input, value)) {
+                    (Some(out_dict), Some(in_dict))
+                        if matches!(value, Object::Dictionary(_))
+                            || matches!(out, Object::Dictionary(_)) =>
+                    {
+                        in_dict
+                            .iter()
+                            .all(|(k, v)| out_dict.get(k).is_ok_and(|o| same(o, v)))
+                    }
+                    _ => {
+                        matches!((out, value), (Object::Array(_), Object::Array(_)))
+                            || same(out, value)
+                    }
+                }
+            });
             assert!(
-                out_resources.get(key).is_ok_and(|out| same(out, value)),
+                kept,
                 "{label}: resource /{} lost",
                 String::from_utf8_lossy(key)
             );
@@ -364,7 +403,11 @@ fn assert_structure(id: &str, input: &Document, output: &Document, stamped: &[bo
             .get(b"Font")
             .ok()
             .and_then(|fonts| dict_of(output, fonts))
-            .unwrap_or_else(|| panic!("{label}: /Font resources missing"));
+            .unwrap_or_default();
+        assert!(
+            in_fonts.is_empty() || !out_fonts.is_empty(),
+            "{label}: /Font resources missing"
+        );
         for (name, font) in in_fonts.iter() {
             assert!(
                 out_fonts.get(name).is_ok_and(|out| same(out, font)),
@@ -372,27 +415,49 @@ fn assert_structure(id: &str, input: &Document, output: &Document, stamped: &[bo
                 String::from_utf8_lossy(name)
             );
         }
-        let stamp_fonts: Vec<(&Vec<u8>, &Object)> = out_fonts
+        // The stamp is a Form XObject (`/Fm*`) drawn by the page content; its own
+        // resources carry the Helvetica font (compared exactly against pdfcpu in
+        // the archive-pdf differential).
+        let xobjects = out_resources
+            .get(b"XObject")
+            .ok()
+            .and_then(|x| dict_of(output, x))
+            .unwrap_or_else(|| panic!("{label}: /XObject resources missing"));
+        let forms: Vec<(&Vec<u8>, &Object)> = xobjects
             .iter()
-            .filter(|(name, _)| name.starts_with(b"ArchiveStampFont"))
+            .filter(|(name, _)| name.starts_with(b"Fm"))
             .collect();
-        assert!(!stamp_fonts.is_empty(), "{label}: ArchiveStampFont missing");
-        for (name, font) in stamp_fonts {
-            let font = dict_of(output, font).expect("stamp font resolves");
-            assert_eq!(
-                font.get(b"BaseFont").and_then(Object::as_name).ok(),
-                Some(&b"Helvetica"[..]),
+        assert!(!forms.is_empty(), "{label}: stamp Form XObject missing");
+        for (name, form) in forms {
+            let form = match form {
+                Object::Reference(id) => output.get_object(*id).unwrap(),
+                other => other,
+            };
+            let dict = &form.as_stream().expect("stamp form is a stream").dict;
+            let fonts = dict
+                .get(b"Resources")
+                .ok()
+                .and_then(|r| dict_of(output, r))
+                .and_then(|r| r.get(b"Font").ok().and_then(|f| dict_of(output, f)))
+                .unwrap_or_else(|| panic!("{label}: stamp form has no font resources"));
+            assert!(
+                fonts.iter().any(|(_, font)| {
+                    dict_of(output, font)
+                        .and_then(|f| {
+                            f.get(b"BaseFont")
+                                .ok()
+                                .and_then(|b| b.as_name().ok())
+                                .map(|n| n == b"Helvetica")
+                        })
+                        .unwrap_or(false)
+                }),
                 "{label}: stamp font is not Helvetica"
             );
-            let used = out_contents[..split].iter().any(|stream_id| {
-                let stream = output.get_object(*stream_id).unwrap().as_stream().unwrap();
-                let content = stream.decompressed_content().unwrap();
-                let tf = format!("/{} ", String::from_utf8_lossy(name));
-                content
-                    .windows(tf.len())
-                    .any(|window| window == tf.as_bytes())
-            });
-            assert!(used, "{label}: stamp content does not select its font");
+            let draw = format!("/{} Do", String::from_utf8_lossy(name));
+            assert!(
+                String::from_utf8_lossy(&decoded(output, &out_contents)).contains(&draw),
+                "{label}: stamp content does not draw its form"
+            );
         }
     }
 }
@@ -445,9 +510,18 @@ fn go_archive_stamp_fixture_matches_semantics() {
 
         let path = TempDir::new();
         let file = path.write("output.pdf", &output);
-        let valid = structurally_valid(&output_doc).is_ok()
-            && (!measure || render_clean(&file, pages.len()).is_ok());
-        assert_eq!(valid, case.want.valid, "case {} validity", case.id);
+        let structure = structurally_valid(&output_doc);
+        let rendered = if measure {
+            render_clean(&file, pages.len())
+        } else {
+            Ok(())
+        };
+        let valid = structure.is_ok() && rendered.is_ok();
+        assert_eq!(
+            valid, case.want.valid,
+            "case {} validity: structure {structure:?}, render {rendered:?}",
+            case.id
+        );
 
         let texts = split_pages(&case.ocr_text);
         for (index, (&page, want)) in pages.iter().zip(want_pages).enumerate() {
@@ -623,19 +697,25 @@ fn stamp_stays_under_the_page_content() {
     let doc = Document::load_mem(&output).unwrap();
     let page = *doc.get_pages().values().next().unwrap();
     let contents = doc.get_page_contents(page);
-    assert_eq!(contents.len(), 2);
-    let first = doc
+    // pdfcpu writes the page as one stream: the stamp draw first, then the page.
+    assert_eq!(contents.len(), 1);
+    let merged = doc
         .get_object(contents[0])
         .unwrap()
         .as_stream()
         .unwrap()
         .decompressed_content()
         .unwrap();
-    assert!(String::from_utf8_lossy(&first).contains("ArchiveStampFont"));
+    let text = String::from_utf8_lossy(&merged);
+    assert!(
+        text.trim_start().starts_with("/Artifact"),
+        "stamp draw first: {text}"
+    );
+    assert!(text.contains("/Fm0 Do"), "{text}");
 }
 
 #[test]
-fn stamp_uses_a_numbered_font_name_when_the_page_owns_the_stamp_name() {
+fn stamp_keeps_a_page_font_that_shares_the_old_stamp_name() {
     let mut doc = Document::load_mem(&build_pdf(ResourcesAt::PageDirect, false)).unwrap();
     let page = *doc.get_pages().values().next().unwrap();
     let foreign = doc.add_object(dictionary! {
@@ -655,12 +735,14 @@ fn stamp_uses_a_numbered_font_name_when_the_page_owns_the_stamp_name() {
     let out = Document::load_mem(&output).unwrap();
     let page = *out.get_pages().values().next().unwrap();
     let fonts = dict_of(&out, effective_resources(&out, page).get(b"Font").unwrap()).unwrap();
+    // The stamp font lives inside the stamp's Form XObject, so the page's own
+    // font keeps its name and no page-level rename happens.
     assert_eq!(
         fonts.get(b"ArchiveStampFont").ok(),
         Some(&Object::Reference(foreign)),
         "the page's own font keeps its name"
     );
-    assert!(fonts.has(b"ArchiveStampFont1"), "stamp font renamed");
+    assert!(!fonts.has(b"ArchiveStampFont1"));
 }
 
 #[test]

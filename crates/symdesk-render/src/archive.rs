@@ -1,6 +1,7 @@
-//! Pure contract of the archival PDF step (Go `internal/archive`): OCR page
-//! splitting, archive naming, the text-layer probe, sidecar trimming and the
-//! format dispatch. The pdfcpu watermark and image import stay out of scope.
+//! The archival PDF step (Go `internal/archive`): OCR page splitting, archive
+//! naming, the text-layer probe, sidecar trimming, the format dispatch and
+//! `generate`, which imports a scan as a PDF page (`crate::import`) and stamps
+//! the OCR text layer (`crate::stamp`).
 
 use crate::export_html::trim_go_space;
 use crate::export_markdown::go_to_lower;
@@ -61,6 +62,52 @@ pub fn archive_format(input_path: &str) -> Result<ArchiveFormat, String> {
             "unsupported format for archive generation: {extension}"
         )),
     }
+}
+
+/// Go `archive.Generate`: write a searchable archival PDF for `input_path` to
+/// `output_path`. Error texts keep Go's prefixes (`copy source PDF`, `import
+/// image to PDF`, `add watermark to page N`, `unsupported format for archive
+/// generation`).
+pub fn generate(
+    input_path: &std::path::Path,
+    output_path: &std::path::Path,
+    ocr_text: &str,
+) -> Result<(), String> {
+    match archive_format(&input_path.to_string_lossy())? {
+        ArchiveFormat::Pdf => add_text_layer(input_path, output_path, ocr_text),
+        ArchiveFormat::Image => {
+            let data = std::fs::read(input_path)
+                .map_err(|e| format!("import image to PDF: import images: image 1: open: {e}"))?;
+            let pdf = crate::import::import_image_pdf(&data).map_err(|e| format!("import image to PDF: import images: image 1: create pages: create image resources: {e}"))?;
+            write_output(output_path, &pdf).map_err(|e| format!("import image to PDF: {e}"))?;
+            add_text_layer(output_path, output_path, ocr_text)
+        }
+    }
+}
+
+fn write_output(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(path, bytes)
+}
+
+/// Go `addTextLayerToPDF`: copy the source when it differs from the destination,
+/// then stamp one OCR page per PDF page.
+fn add_text_layer(
+    src: &std::path::Path,
+    dst: &std::path::Path,
+    ocr_text: &str,
+) -> Result<(), String> {
+    let data = std::fs::read(src).map_err(|e| format!("copy source PDF: {e}"))?;
+    if src != dst {
+        write_output(dst, &data).map_err(|e| format!("copy source PDF: {e}"))?;
+    }
+    let stamped = crate::stamp::stamp_pdf(&data, ocr_text)?;
+    if stamped != data {
+        write_output(dst, &stamped).map_err(|e| format!("save stamped PDF: {e}"))?;
+    }
+    Ok(())
 }
 
 // Go filepath.Ext on Unix: the suffix from the last dot in the final path

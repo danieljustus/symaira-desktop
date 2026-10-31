@@ -47,8 +47,8 @@ use std::{
 use axum::{
     Router,
     body::{Body, Bytes, to_bytes},
-    extract::{DefaultBodyLimit, Extension, Multipart, Path as AxumPath, Query, State},
-    http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
+    extract::{DefaultBodyLimit, Extension, Path as AxumPath, Query, State},
+    http::{HeaderMap, HeaderValue, Method, Request, StatusCode, Uri, header},
     middleware::{self, Next},
     response::Response,
     routing::{get, post},
@@ -745,7 +745,7 @@ fn authenticate_named_user(state: &AppState, provided: &str) -> Option<AuthRole>
     matched
 }
 
-fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> bool {
+fn named_user_route_allowed(_role: &AuthRole, method: &Method, path: &str) -> bool {
     let read_method = method == Method::GET || method == Method::HEAD;
     if path == "/api/v1/status" && (method == Method::GET || method == Method::HEAD) {
         return true;
@@ -779,11 +779,12 @@ fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> boo
     {
         return true;
     }
-    role.is_worker()
-        && ((path == "/api/v1/worker/lease" && method == Method::POST)
-            || (path == "/api/v1/worker/input" && method == Method::GET)
-            || (path == "/api/v1/worker/complete" && method == Method::POST)
-            || (path == "/api/v1/worker/fail" && method == Method::POST))
+    // Go's worker handlers check no role: any authenticated principal, including
+    // a named user without the `worker` role, may lease, read, complete and fail.
+    (path == "/api/v1/worker/lease" && method == Method::POST)
+        || (path == "/api/v1/worker/input" && method == Method::GET)
+        || (path == "/api/v1/worker/complete" && method == Method::POST)
+        || (path == "/api/v1/worker/fail" && method == Method::POST)
 }
 
 fn route_requires_admin(method: &Method, path: &str) -> bool {
@@ -4255,126 +4256,102 @@ async fn read_capped_body(body: Body, limit: usize) -> Result<Vec<u8>, String> {
 
 async fn handle_ingest(
     State(state): State<Arc<AppState>>,
-    multipart: Result<Multipart, axum::extract::multipart::MultipartRejection>,
+    uri: Uri,
+    headers: HeaderMap,
+    body: Result<Bytes, axum::extract::rejection::BytesRejection>,
 ) -> Response {
-    let mut multipart = match multipart {
-        Ok(multipart) => multipart,
-        Err(_) => {
+    // Go: MaxBytesReader(100 MiB + 1 MiB) then ParseMultipartForm; every parse or
+    // size failure is the same 413.
+    let invalid = || {
+        json_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "upload exceeds 100 MiB or is invalid",
+        )
+    };
+    let Ok(body) = body else {
+        return invalid();
+    };
+    let content_type = headers
+        .get(header::CONTENT_TYPE)
+        .map(|value| String::from_utf8_lossy(value.as_bytes()).into_owned())
+        .unwrap_or_default();
+    let upload = match symdesk_ingest::gform::read_upload(
+        &content_type,
+        uri.query().unwrap_or(""),
+        &body,
+        MAX_UPLOAD_BYTES as i64,
+    ) {
+        Err(_) => return invalid(),
+        Ok(None) => {
             return json_error(
-                StatusCode::PAYLOAD_TOO_LARGE,
-                "upload exceeds 100 MiB or is invalid",
+                StatusCode::BAD_REQUEST,
+                "multipart field 'file' is required",
             );
         }
+        Ok(Some(upload)) => upload,
     };
     let root = match open_current_root(&state) {
         Ok(root) => root,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
-    let mut upload: Option<(PathBuf, PathBuf, String, String)> = None;
-    loop {
-        let mut field = match multipart.next_field().await {
-            Ok(Some(field)) => field,
-            Ok(None) => break,
-            Err(_error) => {
-                if let Some((temporary, _, _, _)) = &upload {
-                    let _ = root.remove_file(temporary);
-                }
-                return json_error(
-                    StatusCode::PAYLOAD_TOO_LARGE,
-                    "upload exceeds 100 MiB or is invalid",
-                );
-            }
-        };
-        if upload.is_some() || field.name() != Some("file") {
-            continue;
-        }
-        let Some(original_name) = field.file_name().map(str::to_owned) else {
-            return json_error(
-                StatusCode::BAD_REQUEST,
-                "multipart field 'file' is required",
-            );
-        };
-        let name = safe_upload_filename(&original_name);
-        let content_type = field
-            .headers()
-            .get(header::CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok())
-            .map(str::to_owned)
-            .unwrap_or_default();
-        let archive_id = match new_job_id() {
-            Ok(id) => id,
-            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
-        };
-        let now = OffsetDateTime::now_utc();
-        let relative = PathBuf::from(format!(
-            "archive/{:04}/{:02}/{archive_id}-{name}",
-            now.year(),
-            u8::from(now.month())
-        ));
-        if confined_path(&state, relative.to_str().unwrap_or_default()).is_err() {
-            return json_error(StatusCode::BAD_REQUEST, "invalid upload path");
-        }
-        let parent = relative.parent().expect("archive path has a parent");
-        if let Err(error) = create_parent_directories(&root, parent) {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-        }
-        let temporary = parent.join(format!(".upload-{archive_id}.tmp"));
-        let mut options = cap_std::fs::OpenOptions::new();
-        options.write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use cap_std::fs::OpenOptionsExt;
-            options.mode(0o640);
-        }
-        let mut file = match root.open_with(&temporary, &options) {
-            Ok(file) => file,
-            Err(error) => {
-                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-            }
-        };
-        let mut size = 0_u64;
-        loop {
-            let chunk = match field.chunk().await {
-                Ok(Some(chunk)) => chunk,
-                Ok(None) => break,
-                Err(_error) => {
-                    drop(file);
-                    let _ = root.remove_file(&temporary);
-                    return json_error(
-                        StatusCode::PAYLOAD_TOO_LARGE,
-                        "upload exceeds 100 MiB or is invalid",
-                    );
-                }
-            };
-            size = size.saturating_add(chunk.len() as u64);
-            if size > MAX_UPLOAD_BYTES {
-                drop(file);
-                let _ = root.remove_file(&temporary);
-                return json_error(StatusCode::INTERNAL_SERVER_ERROR, "upload exceeds 100 MiB");
-            }
-            if let Err(error) = file.write_all(&chunk) {
-                drop(file);
-                let _ = root.remove_file(&temporary);
-                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-            }
-        }
-        if let Err(error) = file.sync_all() {
-            drop(file);
-            let _ = root.remove_file(&temporary);
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-        }
-        drop(file);
-        upload = Some((temporary, relative, name, content_type));
-    }
-    let Some((temporary, relative, name, content_type)) = upload else {
-        return json_error(
-            StatusCode::BAD_REQUEST,
-            "multipart field 'file' is required",
-        );
+    let name = safe_upload_filename(&upload.file_name);
+    let content_type = upload.content_type;
+    let archive_id = match new_job_id() {
+        Ok(id) => id,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
-    if let Err(error) = root.rename(&temporary, &root, &relative) {
+    let now = OffsetDateTime::now_utc();
+    let relative = PathBuf::from(format!(
+        "archive/{:04}/{:02}/{archive_id}-{name}",
+        now.year(),
+        u8::from(now.month())
+    ));
+    if confined_path(&state, relative.to_str().unwrap_or_default()).is_err() {
+        return json_error(StatusCode::BAD_REQUEST, "invalid upload path");
+    }
+    let parent = relative.parent().expect("archive path has a parent");
+    if let Err(error) = create_parent_directories(&root, parent) {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    // Go names the temporary file after 12 random bytes (24 hex digits).
+    let temporary = parent.join(format!(".upload-{}.tmp", &archive_id[..24]));
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.mode(0o640);
+    }
+    let mut file = match root.open_with(&temporary, &options) {
+        Ok(file) => file,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
+    // Go copies at most MAX_UPLOAD_BYTES + 1 bytes and then rejects an oversized file.
+    if upload.data.len() as u64 > MAX_UPLOAD_BYTES {
+        drop(file);
+        let _ = root.remove_file(&temporary);
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, "upload exceeds 100 MiB");
+    }
+    if let Err(error) = file.write_all(&upload.data).and_then(|()| file.sync_all()) {
+        drop(file);
         let _ = root.remove_file(&temporary);
         return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    drop(file);
+    if let Err(error) = root.rename(&temporary, &root, &relative) {
+        let _ = root.remove_file(&temporary);
+        // Go's os.Root.Rename error: "renameat <old> <new>: <errno text>".
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!(
+                "renameat {} {}: {}",
+                temporary.display(),
+                relative.display(),
+                go_errno_text(&error)
+            ),
+        );
     }
     let id = match new_job_id() {
         Ok(id) => id,
@@ -4428,6 +4405,18 @@ async fn handle_ingest(
     json_response(StatusCode::ACCEPTED, job)
 }
 
+/// Go's `syscall.Errno` text: the C library message without Rust's " (os error N)"
+/// suffix and with a lowercase first letter.
+fn go_errno_text(error: &std::io::Error) -> String {
+    let text = error.to_string();
+    let text = text.split(" (os error").next().unwrap_or(&text);
+    let mut chars = text.chars();
+    match chars.next() {
+        Some(first) => first.to_lowercase().chain(chars).collect(),
+        None => String::new(),
+    }
+}
+
 fn new_job_id() -> Result<String, String> {
     let mut bytes = [0_u8; 16];
     getrandom::fill(&mut bytes).map_err(|error| format!("create job id: {error}"))?;
@@ -4438,8 +4427,22 @@ fn new_job_id() -> Result<String, String> {
     Ok(id)
 }
 
+/// `filepath.Base` on a slash-separated path: "" is ".", trailing slashes are
+/// dropped and an all-slash path is "/".
+fn go_path_base(path: &str) -> &str {
+    if path.is_empty() {
+        return ".";
+    }
+    let path = path.trim_end_matches('/');
+    if path.is_empty() {
+        return "/";
+    }
+    path.rsplit('/').next().unwrap_or(path)
+}
+
 fn safe_upload_filename(name: &str) -> String {
-    let name = name.rsplit(['/', '\\']).next().unwrap_or_default().trim();
+    let name = name.replace('\\', "/");
+    let name = go_path_base(&name).trim();
     if name.is_empty() || name == "." {
         "document.bin".to_owned()
     } else {

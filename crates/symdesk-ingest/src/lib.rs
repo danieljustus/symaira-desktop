@@ -9,6 +9,7 @@ use std::path::Path;
 pub mod classification;
 mod document;
 pub mod extract;
+pub mod gform;
 pub mod ghtml;
 pub mod gmime;
 pub mod gxml;

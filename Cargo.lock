@@ -2813,6 +2813,7 @@ dependencies = [
  "serde_json",
  "symdesk-core",
  "symdesk-index",
+ "symdesk-ingest",
  "symdesk-vault",
  "time",
  "tokio",

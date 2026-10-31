@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -583,7 +584,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-fail-valid" || tc.ID == "worker-fail-retry" || tc.ID == "worker-fail-named-worker" {
+		if tc.ID == "worker-fail-valid" || tc.ID == "worker-fail-retry" || tc.ID == "worker-fail-named-worker" || tc.ID == "worker-fail-named-user-allowed" {
 			retry := tc.ID == "worker-fail-retry"
 			leftJob, err := failedWorkerJob(leftVault, leftResult.Body, retry)
 			if err != nil {
@@ -605,7 +606,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-lease-valid" || tc.ID == "worker-lease-expired-reclaim" || tc.ID == "worker-lease-named-worker" {
+		if tc.ID == "worker-lease-valid" || tc.ID == "worker-lease-expired-reclaim" || tc.ID == "worker-lease-named-worker" || tc.ID == "worker-lease-named-user-allowed" {
 			jobID := "00000000000000000000000000000001"
 			if tc.ID == "worker-lease-expired-reclaim" {
 				jobID = "00000000000000000000000000000005"
@@ -630,7 +631,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-complete-valid" || tc.ID == "worker-complete-named-worker" {
+		if tc.ID == "worker-complete-valid" || tc.ID == "worker-complete-named-worker" || tc.ID == "worker-complete-named-user-allowed" {
 			leftJob, err := completedWorkerJob(leftVault, leftResult.Body)
 			if err != nil {
 				fatal("%s Go persistence: %v", tc.ID, err)
@@ -652,6 +653,11 @@ func run() (runErr error) {
 			}
 			if !bytes.Equal(leftNote, rightNote) {
 				fatal("%s note semantics differ: Go=%q Rust=%q", tc.ID, leftNote, rightNote)
+			}
+		}
+		if strings.HasPrefix(tc.ID, "ingest-") && tc.ID != "ingest-valid" && leftResult.Status == http.StatusAccepted && rightResult.Status == http.StatusAccepted {
+			if err := assertIngestUploadParity(leftVault, rightVault, leftResult.Body, rightResult.Body); err != nil {
+				fatal("%s upload persistence differs: %v", tc.ID, err)
 			}
 		}
 		if tc.ID == "ingest-valid" {
@@ -1499,6 +1505,126 @@ func normalizeIngestJob(body []byte) ([]byte, error) {
 	return json.Marshal(job)
 }
 
+// normalizeIngestUpload checks the dynamic parts of an accepted upload response
+// (job id, archive month and upload id, timestamps) and replaces them, keeping
+// every contractual field (original name, content type, archive file name,
+// state) for the byte comparison.
+func normalizeIngestUpload(body []byte) ([]byte, error) {
+	var job map[string]any
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+	id, _ := job["id"].(string)
+	if _, err := hex.DecodeString(id); err != nil || len(id) != 32 {
+		return nil, fmt.Errorf("invalid job id %q", id)
+	}
+	source, _ := job["source_path"].(string)
+	parts := strings.SplitN(filepath.ToSlash(source), "/", 4)
+	if len(parts) != 4 || parts[0] != "archive" || len(parts[1]) != 4 || len(parts[2]) != 2 {
+		return nil, fmt.Errorf("invalid archive path %q", source)
+	}
+	if period, now := parts[1]+"/"+parts[2], time.Now().UTC(); period != now.Format("2006/01") && period != now.Add(-time.Minute).Format("2006/01") {
+		return nil, fmt.Errorf("archive month is not current: %q", source)
+	}
+	uploadID, rest, ok := strings.Cut(parts[3], "-")
+	if _, err := hex.DecodeString(uploadID); !ok || err != nil || len(uploadID) != 32 {
+		return nil, fmt.Errorf("invalid archive filename %q", source)
+	}
+	for _, field := range []string{"created_at", "updated_at"} {
+		value, _ := job[field].(string)
+		parsed, err := time.Parse(time.RFC3339Nano, value)
+		if err != nil || time.Since(parsed) > time.Minute || time.Until(parsed) > time.Minute {
+			return nil, fmt.Errorf("invalid %s %q", field, value)
+		}
+	}
+	if job["created_at"] != job["updated_at"] {
+		return nil, fmt.Errorf("ingest timestamps differ")
+	}
+	job["id"] = "<job-id>"
+	job["source_path"] = "archive/<month>/<upload-id>-" + rest
+	job["created_at"] = "<dynamic>"
+	job["updated_at"] = "<dynamic>"
+	return json.Marshal(job)
+}
+
+// assertIngestUploadParity compares what two servers persisted for the same
+// accepted upload: archived bytes and mode, and the job file against its response.
+func assertIngestUploadParity(leftVault, rightVault string, leftResponse, rightResponse []byte) error {
+	type persisted struct {
+		bytes []byte
+		mode  os.FileMode
+		job   map[string]any
+		jobMd os.FileMode
+	}
+	load := func(vault string, response []byte) (persisted, error) {
+		var job struct {
+			ID         string `json:"id"`
+			SourcePath string `json:"source_path"`
+		}
+		if err := json.Unmarshal(response, &job); err != nil {
+			return persisted{}, err
+		}
+		if !filepath.IsLocal(job.SourcePath) || !strings.HasPrefix(filepath.ToSlash(job.SourcePath), "archive/") {
+			return persisted{}, fmt.Errorf("unsafe archive path %q", job.SourcePath)
+		}
+		upload := filepath.Join(vault, filepath.FromSlash(job.SourcePath))
+		info, err := os.Stat(upload)
+		if err != nil {
+			return persisted{}, err
+		}
+		content, err := os.ReadFile(upload) //nolint:gosec // path is built from the verified archive-relative source path
+		if err != nil {
+			return persisted{}, err
+		}
+		jobPath := filepath.Join(vault, ".symdesk", "server", "jobs", job.ID+".json")
+		jobInfo, err := os.Stat(jobPath)
+		if err != nil {
+			return persisted{}, err
+		}
+		raw, err := os.ReadFile(jobPath) //nolint:gosec // job file inside the disposable vault
+		if err != nil {
+			return persisted{}, err
+		}
+		var stored, responded map[string]any
+		if err := json.Unmarshal(raw, &stored); err != nil {
+			return persisted{}, err
+		}
+		if err := json.Unmarshal(response, &responded); err != nil {
+			return persisted{}, err
+		}
+		if !reflect.DeepEqual(stored, responded) {
+			return persisted{}, fmt.Errorf("response and persisted job differ")
+		}
+		normalized, err := normalizeIngestUpload(raw)
+		if err != nil {
+			return persisted{}, err
+		}
+		var job2 map[string]any
+		if err := json.Unmarshal(normalized, &job2); err != nil {
+			return persisted{}, err
+		}
+		return persisted{bytes: content, mode: info.Mode().Perm(), job: job2, jobMd: jobInfo.Mode().Perm()}, nil
+	}
+	left, err := load(leftVault, leftResponse)
+	if err != nil {
+		return fmt.Errorf("Go: %w", err)
+	}
+	right, err := load(rightVault, rightResponse)
+	if err != nil {
+		return fmt.Errorf("Rust: %w", err)
+	}
+	if !bytes.Equal(left.bytes, right.bytes) {
+		return fmt.Errorf("archived bytes differ (Go %d, Rust %d bytes)", len(left.bytes), len(right.bytes))
+	}
+	if runtime.GOOS != "windows" && (left.mode != right.mode || left.jobMd != right.jobMd) {
+		return fmt.Errorf("modes differ: upload Go %o Rust %o, job Go %o Rust %o", left.mode, right.mode, left.jobMd, right.jobMd)
+	}
+	if !reflect.DeepEqual(left.job, right.job) {
+		return fmt.Errorf("persisted job differs: Go %v Rust %v", left.job, right.job)
+	}
+	return nil
+}
+
 func assertIngestWrite(vault string, response []byte, body string) error {
 	var job struct {
 		ID         string `json:"id"`
@@ -1974,8 +2100,13 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 		response, err := s.requestWithDelayedHeader(tc)
 		return response, previousETag, err
 	}
-	if tc.BodyRepeat < 0 || tc.BodyRepeat > (24<<20)+1 {
-		return transcript{}, previousETag, fmt.Errorf("fixture body_repeat exceeds 8 MiB + 1 bound")
+	// Upload-limit cases need a body just past the 100 MiB upload cap.
+	bodyRepeatBound := (24 << 20) + 1
+	if tc.Path == "/api/v1/ingest" {
+		bodyRepeatBound = 102 << 20
+	}
+	if tc.BodyRepeat < 0 || tc.BodyRepeat > bodyRepeatBound {
+		return transcript{}, previousETag, fmt.Errorf("fixture body_repeat exceeds its %d byte bound", bodyRepeatBound)
 	}
 	requestBody := tc.Body
 	if tc.BodyRepeat > 0 {
@@ -2041,7 +2172,12 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 	case "raw":
 		request.Header.Set("Authorization", s.token)
 	}
-	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableCompression: true}}
+	requestTimeout := 5 * time.Second
+	if tc.Path == "/api/v1/ingest" && tc.BodyRepeat > 24<<20 {
+		// A debug build needs more than five seconds to take a 100 MiB upload.
+		requestTimeout = 120 * time.Second
+	}
+	client := &http.Client{Timeout: requestTimeout, Transport: &http.Transport{DisableCompression: true}}
 	response, err := client.Do(request)
 	if err != nil {
 		return transcript{}, previousETag, err
@@ -2292,7 +2428,7 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if id == "worker-fail-valid" || id == "worker-fail-retry" || id == "worker-fail-named-worker" {
+	if id == "worker-fail-valid" || id == "worker-fail-retry" || id == "worker-fail-named-worker" || id == "worker-fail-named-user-allowed" {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
@@ -2305,7 +2441,7 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if id == "worker-lease-valid" || id == "worker-lease-expired-reclaim" || id == "worker-lease-named-worker" {
+	if id == "worker-lease-valid" || id == "worker-lease-expired-reclaim" || id == "worker-lease-named-worker" || id == "worker-lease-named-user-allowed" {
 		var err error
 		left.Body, err = normalizeJobLeaseTimes(left.Body)
 		if err != nil {
@@ -2329,7 +2465,7 @@ func compare(id string, left, right transcript) error {
 		right.Headers = cloneWithout(right.Headers, "content-length")
 		return compareHeaders(left.Headers, right.Headers)
 	}
-	if id == "worker-complete-valid" || id == "worker-complete-named-worker" {
+	if id == "worker-complete-valid" || id == "worker-complete-named-worker" || id == "worker-complete-named-user-allowed" {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
@@ -2357,6 +2493,27 @@ func compare(id string, left, right transcript) error {
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if strings.HasPrefix(id, "ingest-") && id != "ingest-valid" && left.Status == http.StatusAccepted && right.Status == http.StatusAccepted {
+		var err error
+		left.Body, err = normalizeIngestUpload(left.Body)
+		if err != nil {
+			return fmt.Errorf("normalize Go ingest response: %w", err)
+		}
+		right.Body, err = normalizeIngestUpload(right.Body)
+		if err != nil {
+			return fmt.Errorf("normalize Rust ingest response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "ingest-filename-long" && left.Status == http.StatusInternalServerError && right.Status == http.StatusInternalServerError {
+		// The failing rename names the random temporary file and upload id.
+		randomName := regexp.MustCompile(`\.upload-[0-9a-f]{24}\.tmp|/[0-9a-f]{32}-`)
+		for _, response := range []*transcript{&left, &right} {
+			response.Body = randomName.ReplaceAll(response.Body, []byte("<random>"))
+			response.Headers = cloneWithout(response.Headers, "content-length")
+		}
 	}
 	if id == "share-create-valid" || id == "share-create-named-user-valid" {
 		path := "Hello.md"

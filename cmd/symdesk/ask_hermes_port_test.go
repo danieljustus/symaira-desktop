@@ -55,10 +55,11 @@ case "$FAKE_HERMES_MODE" in
 esac
 `
 
+// One document: with several, the order of score ties in the hybrid lists
+// follows the walk order of the host filesystem, so Darwin and Linux would
+// record different (equally valid) rankings.
 var askHermesFiles = map[string]string{
-	"alpha.md":      "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
-	"notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nBudget planning for the offsite; hiring freeze discussion.\n",
-	"gamma.md":      "---\ntitle: Gamma\n---\n# Gamma\n\nGardening tips: tomatoes need sun.\n",
+	"alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
 }
 
 // askClosedOllama is a closed loopback port. Embeddings must never reach a

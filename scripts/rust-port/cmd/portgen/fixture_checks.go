@@ -114,6 +114,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"index retrieval CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetrievalProcessPortFixture$"}, []string{"testdata/port/cli/index-retrieval-process.json"}, false},
 	{"index retry CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexRetryProcessPortFixture$"}, []string{"testdata/port/cli/index-retry-process.json"}, false},
 	{"index symlink CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexSymlinkProcessPortFixture$"}, []string{"testdata/port/cli/index-symlink-process.json"}, false},
+	{"sources CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestSourcesProcessPortFixture$"}, []string{"testdata/port/cli/sources-process.json"}, false},
 	{"AI providers", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIProviderContract$"}, []string{"testdata/port/ai/providers.json"}, false},
 	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
 	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},

@@ -410,7 +410,6 @@ where
 /// Per-vault list of canonical, read-only external search roots.
 pub struct SourceRegistry {
     vault_root: PathBuf,
-    vault_input: PathBuf,
     path: PathBuf,
     lock: Mutex<()>,
 }
@@ -426,37 +425,59 @@ impl SourceRegistry {
         Ok(Self {
             path: root.join(".symdesk/search-sources.json"),
             vault_root: root,
-            vault_input: absolute_source_input(vault_root)?,
             lock: Mutex::new(()),
         })
     }
 
-    pub fn add(&self, source_path: &Path) -> Result<SearchSource, SidecarError> {
+    /// Go's `ValidateExternalFolder`: the folder must resolve outside the
+    /// canonical vault, exist, be a readable directory and keep its resolved
+    /// identity. Error wording is Go's.
+    fn validate_external_folder(&self, source_path: &Path) -> Result<PathBuf, SidecarError> {
+        let inside =
+            || SidecarError::Contract("external source must be outside the vault".to_owned());
         let input = absolute_source_input(source_path)?;
-        if input == self.vault_input || input.starts_with(&self.vault_input) {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+        if input.starts_with(&self.vault_root) {
+            return Err(inside());
         }
         if let Some(parent) = input.parent()
             && let Ok(parent) = fs::canonicalize(parent)
             && parent.starts_with(&self.vault_root)
         {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+            return Err(inside());
         }
-        let source = fs::canonicalize(source_path)?;
-        if !source.is_dir() {
-            return Err(SidecarError::Contract(
-                "source path is not a directory".to_owned(),
-            ));
+        let wrapped =
+            |detail: String| SidecarError::Contract(format!("validate source folder: {detail}"));
+        let source = match fs::canonicalize(&input) {
+            Ok(source) => source,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Err(SidecarError::Contract(format!(
+                    "external source directory does not exist: {}",
+                    input.display()
+                )));
+            }
+            Err(error) => return Err(wrapped(error.to_string())),
+        };
+        let metadata = fs::metadata(&source).map_err(|error| wrapped(error.to_string()))?;
+        if !metadata.is_dir() {
+            return Err(wrapped(format!(
+                "source path is not a directory: {}",
+                source.display()
+            )));
+        }
+        if let Err(error) = fs::read_dir(&source).and_then(|mut entries| entries.next().transpose())
+        {
+            return Err(wrapped(format!(
+                "source directory is not readable: {error}"
+            )));
         }
         if source.starts_with(&self.vault_root) {
-            return Err(SidecarError::Contract(
-                "external source must be outside the vault".to_owned(),
-            ));
+            return Err(inside());
         }
+        Ok(source)
+    }
+
+    pub fn add(&self, source_path: &Path) -> Result<SearchSource, SidecarError> {
+        let source = self.validate_external_folder(source_path)?;
         let path = absolute_non_verbatim(&source)?;
         let path = path
             .to_str()
@@ -761,6 +782,42 @@ impl RetrievalDb {
             self.reset_vector_state();
         }
         result
+    }
+
+    /// `save_chunks` where `raw_contents[i]`, when `Some`, are the exact stored
+    /// bytes of `chunks[i]` (see `replace_document_chunks_raw`).
+    pub fn save_chunks_raw(
+        &self,
+        chunks: &[StoredRetrievalChunk],
+        raw_contents: &[Option<Vec<u8>>],
+    ) -> Result<(), SidecarError> {
+        let result = (|| {
+            let transaction = self.connection.unchecked_transaction()?;
+            let ids = insert_chunks(&transaction, chunks, raw_contents)?;
+            transaction.commit()?;
+            self.vector_after_save(chunks, &ids);
+            self.bump_generation();
+            Ok(())
+        })();
+        if result.is_err() {
+            self.reset_vector_state();
+        }
+        result
+    }
+
+    /// Go's `ListDocuments`: every document, newest `updated_at` first.
+    pub fn list_documents(&self) -> Result<Vec<RetrievalDocument>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT path, hash, CAST(updated_at AS TEXT) FROM documents ORDER BY updated_at DESC",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(RetrievalDocument {
+                path: row.get(0)?,
+                hash: row.get(1)?,
+                updated_at: row.get(2)?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     /// Go's current commitIndex performs delete, document save, and chunk save

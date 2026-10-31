@@ -29,6 +29,7 @@ time.workspace = true
 tokio.workspace = true
 rusqlite.workspace = true
 noyalib.workspace = true
+notify.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

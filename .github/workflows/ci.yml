@@ -775,6 +775,11 @@ jobs:
         shell: bash
         run: make index-symlink-cli-differential
 
+      - name: Run native sources CLI differential
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make sources-cli-differential
+
       - name: Run native index status CLI differential
         shell: bash
         env:

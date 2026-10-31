@@ -2581,6 +2581,7 @@ dependencies = [
  "cap-std",
  "clap",
  "libc",
+ "notify",
  "noyalib",
  "rusqlite",
  "serde",

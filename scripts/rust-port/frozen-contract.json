@@ -148,6 +148,10 @@
       "ignored": 0,
       "passed": 3
     },
+    "cargo test -p symdesk-cli --locked --test sources": {
+      "ignored": 0,
+      "passed": 1
+    },
     "cargo test -p symdesk-cli --test ask_offline --locked": {
       "ignored": 0,
       "passed": 3

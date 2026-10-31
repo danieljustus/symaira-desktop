@@ -533,13 +533,13 @@ fn index_retrieval_documents(
     }
 }
 
-type RetrievalContext = (
+pub(crate) type RetrievalContext = (
     RetrievalEmbeddingConfig,
     RetrievalDb,
     tokio::runtime::Runtime,
 );
 
-fn open_retrieval_context() -> Result<RetrievalContext, String> {
+pub(crate) fn open_retrieval_context() -> Result<RetrievalContext, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
     let config =
@@ -667,7 +667,7 @@ pub(crate) fn canonical_local_source(path: &str) -> String {
     )
 }
 
-fn stored_chunks(
+pub(crate) fn stored_chunks(
     document_path: &str,
     chunks: Vec<symdesk_index::RetrievalChunk>,
     embeddings: Vec<Option<Vec<f32>>>,
@@ -891,7 +891,7 @@ fn reembed_pending_documents() -> Result<ReembedReport, String> {
 /// element, including a leading dot (`.csv` has the extension `.csv`), or an
 /// empty string. Rust's `Path::extension` returns `None` for such dotfile
 /// names, which would route them differently from Go.
-fn go_path_extension(path: &str) -> &str {
+pub(crate) fn go_path_extension(path: &str) -> &str {
     let element_start = path
         .rfind(std::path::is_separator)
         .map_or(0, |index| index + 1);
@@ -919,7 +919,7 @@ fn read_limited_plain_text(path: &str) -> Result<Vec<u8>, String> {
 /// are not valid UTF-8.
 type EmbedCacheKey<'a> = (&'a String, Option<&'a Vec<u8>>);
 
-async fn embed_chunks(
+pub(crate) async fn embed_chunks(
     config: &RetrievalEmbeddingConfig,
     texts: &[String],
     raw_contents: &[Option<Vec<u8>>],

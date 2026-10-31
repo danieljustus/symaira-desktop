@@ -8,6 +8,7 @@ mod conflict_cli;
 mod dataset;
 mod docs_cli;
 mod duplicates_cli;
+mod external_index;
 mod graph_cli;
 mod help_cli;
 mod history;

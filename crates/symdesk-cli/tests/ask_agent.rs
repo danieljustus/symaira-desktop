@@ -97,6 +97,16 @@ fn run_replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     for dir in [&home, &bin, &vault] {
         fs::create_dir_all(dir).unwrap();
     }
+    // Retrieval embeddings point at a closed port; keep the retry loop of the
+    // failing embedder instant so setup does not depend on how long the host
+    // takes to refuse a connection.
+    let seek_config = home.join(".config/symseek");
+    fs::create_dir_all(&seek_config).unwrap();
+    fs::write(
+        seek_config.join("config.toml"),
+        "retry_count = 1\nretry_backoff_ms = 1\n",
+    )
+    .unwrap();
     let stamp = parse_time(&fixture.file_time);
     for (name, content) in &fixture.files {
         let dest = vault.join(name);

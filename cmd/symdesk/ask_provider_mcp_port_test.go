@@ -129,6 +129,16 @@ func newAskScratch(t *testing.T, fixtureFiles map[string]string, fileTime, herme
 			t.Fatal(err)
 		}
 	}
+	// Retrieval embeddings point at a closed port; keep the retry loop of the
+	// failing embedder instant so setup does not depend on how long the host
+	// takes to refuse a connection.
+	seekConfig := filepath.Join(s.home, ".config", "symseek")
+	if err := os.MkdirAll(seekConfig, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(seekConfig, "config.toml"), []byte("retry_count = 1\nretry_backoff_ms = 1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	stamp, err := time.Parse(time.RFC3339, fileTime)
 	if err != nil {
 		t.Fatal(err)

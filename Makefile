@@ -1011,6 +1011,23 @@ dataset-aggregate-differential:
 	GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
 	$(CARGO) test -p symdesk-index --locked --test dataset_aggregate_contract
 
+# DATA-002 full dataset query: every operator, ordering, grouping, aggregate,
+# paging and dataset-sourced view projection from the real Go sidecar/service,
+# plus live Go-vs-Rust CLI processes for the new --group-by/--aggregates flags.
+.PHONY: dataset-query-full-fixtures-generate dataset-query-full-differential
+dataset-query-full-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryFullContract$$'
+
+dataset-query-full-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/service -run '^TestPortDatasetQueryFullContract$$'
+	$(CARGO) test -p symdesk-index --locked --test dataset_query_full
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.10 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/diffharness \
+		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
+		--cases "testdata/port/dataset/cli-query-full.json" --stage dataset-cli
+
 index-backup-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
 

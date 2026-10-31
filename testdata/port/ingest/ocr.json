@@ -1341,7 +1341,8 @@
      "fail/page-2.png.err": "page two broke\n",
      "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
      "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
-     "pages": "1.png\n2.png\n3.png\n"
+     "pages": "1.png\n2.png\n3.png\n",
+     "waitfor/page-2.png": "page-1.png\npage-3.png\n"
     },
     "ctx": "background",
     "probe": "probe-pdf-page-fails"
@@ -1697,10 +1698,10 @@
  "scripts": {
   "pdftoppm": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=P; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/pdftoppm.exit\" ]; then\n  [ -f \"$d/pdftoppm.err\" ] \u0026\u0026 cat \"$d/pdftoppm.err\" \u003e\u00262\n  exit \"$(cat \"$d/pdftoppm.exit\")\"\nfi\nprefix=$5\nwhile IFS= read -r name; do\n  [ -n \"$name\" ] \u0026\u0026 printf 'PNG-%s' \"$name\" \u003e \"$prefix-$name\"\ndone \u003c \"$d/pages\"\nexit 0\n",
   "sips": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=S; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ -f \"$d/sips.exit\" ]; then\n  [ -f \"$d/sips.err\" ] \u0026\u0026 cat \"$d/sips.err\" \u003e\u00262\n  exit \"$(cat \"$d/sips.exit\")\"\nfi\nout=$6\nprintf 'SIPS-PNG' \u003e \"$out\"\nexit 0\n",
-  "tesseract": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=T; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ \"$1\" = \"--list-langs\" ]; then\n  [ -f \"$d/langs.out\" ] \u0026\u0026 cat \"$d/langs.out\"\n  [ -f \"$d/langs.err\" ] \u0026\u0026 cat \"$d/langs.err\" \u003e\u00262\n  [ -f \"$d/langs.exit\" ] \u0026\u0026 exit \"$(cat \"$d/langs.exit\")\"\n  exit 0\nfi\nlang=$2\nimg=$3\nbase=$(basename \"$img\")\nif [ -f \"$d/sleep/$base\" ]; then exec sleep \"$(cat \"$d/sleep/$base\")\"; fi\nif [ -f \"$d/fail/$base\" ]; then\n  [ -s \"$d/fail/$base.err\" ] \u0026\u0026 cat \"$d/fail/$base.err\" \u003e\u00262\n  exit \"$(cat \"$d/fail/$base\")\"\nfi\nif [ -f \"$d/out/$lang/$base\" ]; then cat \"$d/out/$lang/$base\"; exit 0; fi\nif [ -f \"$d/out/$base\" ]; then cat \"$d/out/$base\"; exit 0; fi\nif [ -f \"$d/out/default\" ]; then cat \"$d/out/default\"; exit 0; fi\nexit 0\n"
+  "tesseract": "#!/bin/sh\nPATH=/usr/bin:/bin\nd=${0%/*}\nUS=$(printf '\\037'); RS=$(printf '\\036'); l=T; for a in \"$@\"; do l=\"$l$US$a\"; done\nprintf '%s\\n' \"$l$RS$(pwd)$RS$FAKE_PROBE\" \u003e\u003e \"$d/log\"\nif [ \"$1\" = \"--list-langs\" ]; then\n  [ -f \"$d/langs.out\" ] \u0026\u0026 cat \"$d/langs.out\"\n  [ -f \"$d/langs.err\" ] \u0026\u0026 cat \"$d/langs.err\" \u003e\u00262\n  [ -f \"$d/langs.exit\" ] \u0026\u0026 exit \"$(cat \"$d/langs.exit\")\"\n  exit 0\nfi\nlang=$2\nimg=$3\nbase=$(basename \"$img\")\nif [ -f \"$d/sleep/$base\" ]; then exec sleep \"$(cat \"$d/sleep/$base\")\"; fi\nif [ -f \"$d/waitfor/$base\" ]; then\n  n=0\n  while [ $n -lt 200 ]; do\n    ok=1\n    while IFS= read -r want; do grep -q -F -- \"$want\" \"$d/log\" || ok=0; done \u003c \"$d/waitfor/$base\"\n    [ $ok = 1 ] \u0026\u0026 break\n    n=$((n+1)); sleep 0.05\n  done\nfi\nif [ -f \"$d/fail/$base\" ]; then\n  [ -s \"$d/fail/$base.err\" ] \u0026\u0026 cat \"$d/fail/$base.err\" \u003e\u00262\n  exit \"$(cat \"$d/fail/$base\")\"\nfi\nif [ -f \"$d/out/$lang/$base\" ]; then cat \"$d/out/$lang/$base\"; exit 0; fi\nif [ -f \"$d/out/$base\" ]; then cat \"$d/out/$base\"; exit 0; fi\nif [ -f \"$d/out/default\" ]; then cat \"$d/out/default\"; exit 0; fi\nexit 0\n"
  },
  "source_hashes": {
   "ocr.go": "be98588e06bda109fa59406b9e1296339028363cfbb31737bcb46e53eea553d2",
-  "ocr_port_test.go": "af1a2c5327126d81211f13dfce4876a08cd0f336a295c6843ef9568baff299be"
+  "ocr_port_test.go": "7919fae56dcb50de93ff59da5356c10e372358e0edf845cb4afc73e8bc910acd"
  }
 }

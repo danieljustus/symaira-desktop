@@ -200,7 +200,11 @@ impl<I: FnMut() -> String, T: FnMut() -> String> Service<'_, I, T> {
                         &format!("valid_to must not be before valid_from: {cause}"),
                     )
                 } else {
-                    error("internal", op, &format!("failed to end membership: {cause}"))
+                    error(
+                        "internal",
+                        op,
+                        &format!("failed to end membership: {cause}"),
+                    )
                 })
             }
             Ok(0) => Err(error("not_found", op, "membership not found")),
@@ -237,7 +241,12 @@ impl<I: FnMut() -> String, T: FnMut() -> String> Service<'_, I, T> {
         }
     }
 
-    fn quick_add_inside(&mut self, input: &Input, email: &str, phone: &str) -> Result<String, Error> {
+    fn quick_add_inside(
+        &mut self,
+        input: &Input,
+        email: &str,
+        phone: &str,
+    ) -> Result<String, Error> {
         let id = (self.id)();
         let ts = (self.timestamp)();
         self.db
@@ -270,7 +279,10 @@ impl<I: FnMut() -> String, T: FnMut() -> String> Service<'_, I, T> {
         let op = "contact.GetRef";
         for (sql, kind) in [
             ("SELECT display_name FROM persons WHERE id = ?", "person"),
-            ("SELECT name FROM organizations WHERE id = ?", "organization"),
+            (
+                "SELECT name FROM organizations WHERE id = ?",
+                "organization",
+            ),
         ] {
             match self.db.query_row(sql, [id], |r| r.get::<_, String>(0)) {
                 Ok(name) => return Ok(make_ref(id.to_owned(), kind, name)),
@@ -308,7 +320,9 @@ impl<I: FnMut() -> String, T: FnMut() -> String> Service<'_, I, T> {
                 .db
                 .prepare(sql)
                 .map_err(|e| wrapped(op, "failed to resolve contact references", e))?
-                .query_map([trimmed], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+                .query_map([trimmed], |r| {
+                    Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+                })
                 .map_err(|e| wrapped(op, "failed to resolve contact references", e))?
                 .collect::<rusqlite::Result<Vec<_>>>()
                 .map_err(|e| wrapped(op, "failed to resolve contact references", e))?;

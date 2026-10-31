@@ -133,7 +133,9 @@ fn decode_values(text: &str) -> Result<BTreeMap<String, Value>, String> {
         match value {
             Value::Number(n) => go_number(n.as_f64().unwrap_or(0.0)),
             Value::Array(items) => Value::Array(items.into_iter().map(lower).collect()),
-            Value::Object(map) => Value::Object(map.into_iter().map(|(k, v)| (k, lower(v))).collect()),
+            Value::Object(map) => {
+                Value::Object(map.into_iter().map(|(k, v)| (k, lower(v))).collect())
+            }
             other => other,
         }
     }
@@ -163,12 +165,18 @@ fn validate_column(column: &str, schema: &BTreeMap<String, String>) -> Result<()
     if (column.trim().is_empty() || schema.get(column).is_none_or(String::is_empty))
         && !schema.contains_key(column)
     {
-        return Err(contract(format!("dataset column {} not found", go_quote(column))));
+        return Err(contract(format!(
+            "dataset column {} not found",
+            go_quote(column)
+        )));
     }
     Ok(())
 }
 
-fn validate_group(group: &DatasetQueryFilterGroup, schema: &BTreeMap<String, String>) -> Result<(), SidecarError> {
+fn validate_group(
+    group: &DatasetQueryFilterGroup,
+    schema: &BTreeMap<String, String>,
+) -> Result<(), SidecarError> {
     for filter in &group.filters {
         validate_column(&filter.key, schema)?;
     }
@@ -192,7 +200,10 @@ fn raw(column: &str) -> Frag {
     match column {
         "identity" | "_identity" => ("identity".to_owned(), Vec::new()),
         "_key" => ("row_key".to_owned(), Vec::new()),
-        _ => ("json_extract(values_json, ?)".to_owned(), vec![t(&path(column))]),
+        _ => (
+            "json_extract(values_json, ?)".to_owned(),
+            vec![t(&path(column))],
+        ),
     }
 }
 
@@ -200,16 +211,23 @@ fn present(column: &str) -> Frag {
     match column {
         "identity" | "_identity" => ("identity IS NOT NULL".to_owned(), Vec::new()),
         "_key" => ("row_key IS NOT NULL".to_owned(), Vec::new()),
-        _ => ("json_type(values_json, ?) IS NOT NULL".to_owned(), vec![t(&path(column))]),
+        _ => (
+            "json_type(values_json, ?) IS NOT NULL".to_owned(),
+            vec![t(&path(column))],
+        ),
     }
 }
 
 fn is_number(typ: &str) -> bool {
-    ["number", "integer", "float"].iter().any(|n| typ.eq_ignore_ascii_case(n))
+    ["number", "integer", "float"]
+        .iter()
+        .any(|n| typ.eq_ignore_ascii_case(n))
 }
 
 fn is_date(typ: &str) -> bool {
-    ["date", "datetime"].iter().any(|n| typ.eq_ignore_ascii_case(n))
+    ["date", "datetime"]
+        .iter()
+        .any(|n| typ.eq_ignore_ascii_case(n))
 }
 
 fn typed(column: &str, typ: &str) -> Frag {
@@ -231,7 +249,10 @@ fn cast_type(typ: &str) -> &'static str {
     if is_number(typ) { "REAL" } else { "TEXT" }
 }
 
-fn filter_expression(filter: &DatasetQueryFilter, schema: &BTreeMap<String, String>) -> Result<Frag, SidecarError> {
+fn filter_expression(
+    filter: &DatasetQueryFilter,
+    schema: &BTreeMap<String, String>,
+) -> Result<Frag, SidecarError> {
     validate_column(&filter.key, schema)?;
     let mut op = filter.operator.trim().to_ascii_lowercase();
     if op.is_empty() || matches!(op.as_str(), "is" | "=" | "==") {
@@ -247,12 +268,17 @@ fn filter_expression(filter: &DatasetQueryFilter, schema: &BTreeMap<String, Stri
     let compare = |operator: &str| -> Frag {
         if date {
             return (
-                format!("{present_sql} AND julianday(json_extract(values_json, ?)) {operator} julianday(?)"),
+                format!(
+                    "{present_sql} AND julianday(json_extract(values_json, ?)) {operator} julianday(?)"
+                ),
                 cat(cat(present_args.clone(), &[t(&path(key))]), &[t(value)]),
             );
         }
         (
-            format!("{present_sql} AND {typed_sql} {operator} CAST(? AS {})", cast_type(typ)),
+            format!(
+                "{present_sql} AND {typed_sql} {operator} CAST(? AS {})",
+                cast_type(typ)
+            ),
             cat(cat(present_args.clone(), &typed_args), &[t(value)]),
         )
     };
@@ -266,7 +292,9 @@ fn filter_expression(filter: &DatasetQueryFilter, schema: &BTreeMap<String, Stri
                 )
             } else if date {
                 (
-                    format!("{present_sql} AND julianday(json_extract(values_json, ?)) = julianday(?)"),
+                    format!(
+                        "{present_sql} AND julianday(json_extract(values_json, ?)) = julianday(?)"
+                    ),
                     cat(cat(present_args, &[t(&path(key))]), &[t(value)]),
                 )
             } else if number {
@@ -284,7 +312,9 @@ fn filter_expression(filter: &DatasetQueryFilter, schema: &BTreeMap<String, Stri
         "not_equals" | "is_not" | "!=" => {
             if date {
                 (
-                    format!("(NOT ({present_sql}) OR NOT (julianday(json_extract(values_json, ?)) = julianday(?)))"),
+                    format!(
+                        "(NOT ({present_sql}) OR NOT (julianday(json_extract(values_json, ?)) = julianday(?)))"
+                    ),
                     cat(cat(present_args, &[t(&path(key))]), &[t(value)]),
                 )
             } else if number {
@@ -340,14 +370,22 @@ fn filter_expression(filter: &DatasetQueryFilter, schema: &BTreeMap<String, Stri
                 _ => ">",
             };
             (
-                format!("{present_sql} AND julianday(json_extract(values_json, ?)) {operator} julianday(?)"),
+                format!(
+                    "{present_sql} AND julianday(json_extract(values_json, ?)) {operator} julianday(?)"
+                ),
                 cat(cat(present_args, &[t(&path(key))]), &[t(value)]),
             )
         }
-        "in" | "not_in" | "contains_all" | "contains_any" | "contains_none" => set_filter(key, typ, &op, value),
+        "in" | "not_in" | "contains_all" | "contains_any" | "contains_none" => {
+            set_filter(key, typ, &op, value)
+        }
         _ => {
             return filter_expression(
-                &DatasetQueryFilter { key: filter.key.clone(), operator: "equals".to_owned(), value: filter.value.clone() },
+                &DatasetQueryFilter {
+                    key: filter.key.clone(),
+                    operator: "equals".to_owned(),
+                    value: filter.value.clone(),
+                },
                 schema,
             );
         }
@@ -365,7 +403,12 @@ fn parse_set(value: &str) -> Vec<String> {
         return Vec::new();
     }
     if value.contains(',') {
-        return value.split(',').map(str::trim).filter(|p| !p.is_empty()).map(str::to_owned).collect();
+        return value
+            .split(',')
+            .map(str::trim)
+            .filter(|p| !p.is_empty())
+            .map(str::to_owned)
+            .collect();
     }
     go_fields(value)
 }
@@ -375,7 +418,8 @@ fn set_raw(column: &str) -> Frag {
         "identity" | "_identity" => ("identity".to_owned(), Vec::new()),
         "_key" => ("row_key".to_owned(), Vec::new()),
         _ => (
-            "CASE WHEN json_valid(values_json) = 1 THEN json_extract(values_json, ?) ELSE NULL END".to_owned(),
+            "CASE WHEN json_valid(values_json) = 1 THEN json_extract(values_json, ?) ELSE NULL END"
+                .to_owned(),
             vec![t(&path(column))],
         ),
     }
@@ -393,7 +437,11 @@ fn set_present(column: &str) -> Frag {
 }
 
 fn set_valid(column: &str) -> &'static str {
-    if is_pseudo(column) { "1" } else { "json_valid(values_json) = 1" }
+    if is_pseudo(column) {
+        "1"
+    } else {
+        "json_valid(values_json) = 1"
+    }
 }
 
 fn set_container(column: &str) -> Frag {
@@ -477,7 +525,10 @@ fn set_filter(column: &str, typ: &str, op: &str, value: &str) -> Frag {
             let mut array_args = present_args.clone();
             array_args.extend(container_args.iter().cloned());
             array_args.extend(values.iter().cloned());
-            (format!("{} AND NOT ({array_one})", set_valid(column)), array_args)
+            (
+                format!("{} AND NOT ({array_one})", set_valid(column)),
+                array_args,
+            )
         }
         _ => {
             let mut parts = Vec::with_capacity(items.len());
@@ -499,7 +550,10 @@ fn set_filter(column: &str, typ: &str, op: &str, value: &str) -> Frag {
     }
 }
 
-fn group_expression(group: &DatasetQueryFilterGroup, schema: &BTreeMap<String, String>) -> Result<Frag, SidecarError> {
+fn group_expression(
+    group: &DatasetQueryFilterGroup,
+    schema: &BTreeMap<String, String>,
+) -> Result<Frag, SidecarError> {
     let mut parts = Vec::new();
     let mut args = Vec::new();
     for filter in &group.filters {
@@ -515,12 +569,20 @@ fn group_expression(group: &DatasetQueryFilterGroup, schema: &BTreeMap<String, S
     if parts.is_empty() {
         return Ok(("1".to_owned(), Vec::new()));
     }
-    let joiner = if group.operator.trim().eq_ignore_ascii_case("any") { " OR " } else { " AND " };
+    let joiner = if group.operator.trim().eq_ignore_ascii_case("any") {
+        " OR "
+    } else {
+        " AND "
+    };
     Ok((format!("({})", parts.join(joiner)), args))
 }
 
 fn filter_of(filter: &symdesk_vault::Filter) -> DatasetQueryFilter {
-    DatasetQueryFilter { key: filter.key.clone(), operator: filter.operator.clone(), value: filter.value.clone() }
+    DatasetQueryFilter {
+        key: filter.key.clone(),
+        operator: filter.operator.clone(),
+        value: filter.value.clone(),
+    }
 }
 
 fn where_clause(opts: &DatasetQueryOptions) -> Result<Frag, SidecarError> {
@@ -542,7 +604,10 @@ fn where_clause(opts: &DatasetQueryOptions) -> Result<Frag, SidecarError> {
     Ok((format!(" AND ({})", parts.join(") AND (")), args))
 }
 
-fn order_clause(sorts: &[DatasetSort], schema: &BTreeMap<String, String>) -> Result<Frag, SidecarError> {
+fn order_clause(
+    sorts: &[DatasetSort],
+    schema: &BTreeMap<String, String>,
+) -> Result<Frag, SidecarError> {
     if sorts.is_empty() {
         return Ok((" ORDER BY row_key ASC".to_owned(), Vec::new()));
     }
@@ -568,7 +633,11 @@ impl Sidecar {
     /// # Errors
     /// Returns Go's validation errors, the closed-database diagnostic or
     /// `SQLite` errors.
-    pub fn query_dataset(&self, slug: &str, opts: &DatasetQueryOptions) -> Result<DatasetQueryOutcome, SidecarError> {
+    pub fn query_dataset(
+        &self,
+        slug: &str,
+        opts: &DatasetQueryOptions,
+    ) -> Result<DatasetQueryOutcome, SidecarError> {
         if self.closed {
             return Err(SidecarError::Closed);
         }
@@ -578,12 +647,19 @@ impl Sidecar {
         if opts.schema.is_empty() {
             return Err(contract("dataset schema is required".to_owned()));
         }
-        let columns = if opts.columns.is_empty() { opts.schema.keys().cloned().collect() } else { opts.columns.clone() };
+        let columns = if opts.columns.is_empty() {
+            opts.schema.keys().cloned().collect()
+        } else {
+            opts.columns.clone()
+        };
         for column in &columns {
             validate_column(column, &opts.schema)?;
         }
         if !opts.group_by.is_empty() && validate_column(&opts.group_by, &opts.schema).is_err() {
-            return Err(contract(format!("dataset group column {} not found", go_quote(&opts.group_by))));
+            return Err(contract(format!(
+                "dataset group column {} not found",
+                go_quote(&opts.group_by)
+            )));
         }
         for filter in &opts.filters {
             validate_column(&filter.key, &opts.schema)?;
@@ -593,16 +669,28 @@ impl Sidecar {
         }
         for sort in &opts.sorts {
             if validate_column(&sort.key, &opts.schema).is_err() {
-                return Err(contract(format!("dataset sort column {} not found", go_quote(&sort.key))));
+                return Err(contract(format!(
+                    "dataset sort column {} not found",
+                    go_quote(&sort.key)
+                )));
             }
         }
         for aggregate in &opts.aggregates {
             let function = aggregate.function.trim().to_ascii_lowercase();
-            if !matches!(function.as_str(), "count" | "sum" | "min" | "max" | "average") {
-                return Err(contract(format!("unsupported dataset aggregate {}", go_quote(&aggregate.function))));
+            if !matches!(
+                function.as_str(),
+                "count" | "sum" | "min" | "max" | "average"
+            ) {
+                return Err(contract(format!(
+                    "unsupported dataset aggregate {}",
+                    go_quote(&aggregate.function)
+                )));
             }
             if function != "count" && validate_column(&aggregate.column, &opts.schema).is_err() {
-                return Err(contract(format!("dataset aggregate column {} not found", go_quote(&aggregate.column))));
+                return Err(contract(format!(
+                    "dataset aggregate column {} not found",
+                    go_quote(&aggregate.column)
+                )));
             }
         }
         let (where_sql, where_args) = where_clause(opts)?;
@@ -641,9 +729,20 @@ impl Sidecar {
             let (row_key, identity, values_json, source_path, row_number) = item?;
             let values = decode_values(&values_json)
                 .map_err(|e| contract(format!("decode dataset row {}: {e}", go_quote(&row_key))))?;
-            rows.push(DatasetQueryRow { row_key, identity, values, source_path, row_number });
+            rows.push(DatasetQueryRow {
+                row_key,
+                identity,
+                values,
+                source_path,
+                row_number,
+            });
         }
-        Ok(DatasetQueryOutcome { rows, total_rows: total, limit, offset })
+        Ok(DatasetQueryOutcome {
+            rows,
+            total_rows: total,
+            limit,
+            offset,
+        })
     }
 
     fn query_aggregate(
@@ -655,7 +754,11 @@ impl Sidecar {
         limit: i64,
         offset: i64,
     ) -> Result<DatasetQueryOutcome, SidecarError> {
-        let (group_expr, group_args) = if opts.group_by.is_empty() { (String::new(), Vec::new()) } else { raw(&opts.group_by) };
+        let (group_expr, group_args) = if opts.group_by.is_empty() {
+            (String::new(), Vec::new())
+        } else {
+            raw(&opts.group_by)
+        };
         let mut agg_exprs = Vec::new();
         let mut agg_args = Vec::new();
         for aggregate in &opts.aggregates {
@@ -712,7 +815,9 @@ impl Sidecar {
         let mut statement = self.connection.prepare(&query)?;
         let width = select_parts.len();
         let mapped = statement.query_map(params_from_iter(args), |row| {
-            (0..width).map(|i| row.get::<_, Sql>(i)).collect::<Result<Vec<_>, _>>()
+            (0..width)
+                .map(|i| row.get::<_, Sql>(i))
+                .collect::<Result<Vec<_>, _>>()
         })?;
         let mut rows = Vec::new();
         for item in mapped {
@@ -724,7 +829,10 @@ impl Sidecar {
                 index = 1;
             }
             for (i, aggregate) in opts.aggregates.iter().enumerate() {
-                values.insert(aggregate_name(aggregate), sql_to_json(cells[index + i].clone()));
+                values.insert(
+                    aggregate_name(aggregate),
+                    sql_to_json(cells[index + i].clone()),
+                );
             }
             if opts.aggregates.is_empty() {
                 values.insert("count".to_owned(), sql_to_json(cells[index].clone()));
@@ -737,7 +845,12 @@ impl Sidecar {
                 row_number: 0,
             });
         }
-        Ok(DatasetQueryOutcome { rows, total_rows: total, limit, offset })
+        Ok(DatasetQueryOutcome {
+            rows,
+            total_rows: total,
+            limit,
+            offset,
+        })
     }
 
     /// Go `service.DatasetQuery` over an already described dataset: `schema`
@@ -756,7 +869,11 @@ impl Sidecar {
         let grouped = !options.group_by.is_empty() || !options.aggregates.is_empty();
         let mut result = DatasetServiceResult {
             dataset: slug.to_owned(),
-            columns: if grouped { aggregate_columns(&options.group_by, &options.aggregates) } else { query.columns.clone() },
+            columns: if grouped {
+                aggregate_columns(&options.group_by, &options.aggregates)
+            } else {
+                query.columns.clone()
+            },
             rows: Vec::with_capacity(queried.rows.len()),
             total_rows: queried.total_rows,
             returned_rows: 0,
@@ -778,7 +895,11 @@ impl Sidecar {
             for aggregate in &options.aggregates {
                 if aggregate.function.eq_ignore_ascii_case("count") {
                     let name = if aggregate.alias.is_empty() {
-                        if aggregate.column.is_empty() { "count".to_owned() } else { format!("count_{}", aggregate.column) }
+                        if aggregate.column.is_empty() {
+                            "count".to_owned()
+                        } else {
+                            format!("count_{}", aggregate.column)
+                        }
                     } else {
                         aggregate.alias.clone()
                     };
@@ -813,7 +934,9 @@ impl Sidecar {
         let source = view.source.trim();
         let slug = source.strip_prefix("dataset:").unwrap_or(source).trim();
         if slug.is_empty() {
-            return Err(contract("view source dataset slug cannot be empty".to_owned()));
+            return Err(contract(
+                "view source dataset slug cannot be empty".to_owned(),
+            ));
         }
         let mut options = DatasetServiceOptions {
             filters: view.filters.clone(),
@@ -824,7 +947,11 @@ impl Sidecar {
         };
         if !view.group_by.is_empty() {
             options.group_by.clone_from(&view.group_by);
-            options.aggregates = vec![DatasetAggregate { column: String::new(), function: "count".to_owned(), alias: "count".to_owned() }];
+            options.aggregates = vec![DatasetAggregate {
+                column: String::new(),
+                function: "count".to_owned(),
+                alias: "count".to_owned(),
+            }];
         }
         let query = sidecar_options(schema, &options);
         let queried = self.query_dataset(slug, &query)?;
@@ -880,10 +1007,22 @@ fn aggregate_columns(group_by: &str, aggregates: &[DatasetAggregate]) -> Vec<Str
     columns
 }
 
-fn sidecar_options(schema: &BTreeMap<String, String>, options: &DatasetServiceOptions) -> DatasetQueryOptions {
+fn sidecar_options(
+    schema: &BTreeMap<String, String>,
+    options: &DatasetServiceOptions,
+) -> DatasetQueryOptions {
     let schema: BTreeMap<String, String> = schema
         .iter()
-        .map(|(k, v)| (k.clone(), if v.is_empty() { "text".to_owned() } else { v.clone() }))
+        .map(|(k, v)| {
+            (
+                k.clone(),
+                if v.is_empty() {
+                    "text".to_owned()
+                } else {
+                    v.clone()
+                },
+            )
+        })
         .collect();
     let columns = if options.columns.is_empty() {
         schema.keys().cloned().collect()
@@ -917,12 +1056,19 @@ pub fn go_percent_v(value: &Value) -> String {
         Value::Bool(b) => b.to_string(),
         Value::String(s) => s.clone(),
         Value::Number(n) => go_float_v(n.as_f64().unwrap_or(0.0)),
-        Value::Array(items) => format!("[{}]", items.iter().map(go_percent_v).collect::<Vec<_>>().join(" ")),
+        Value::Array(items) => format!(
+            "[{}]",
+            items.iter().map(go_percent_v).collect::<Vec<_>>().join(" ")
+        ),
         Value::Object(map) => {
             let sorted: BTreeMap<&String, &Value> = map.iter().collect();
             format!(
                 "map[{}]",
-                sorted.iter().map(|(k, v)| format!("{k}:{}", go_percent_v(v))).collect::<Vec<_>>().join(" ")
+                sorted
+                    .iter()
+                    .map(|(k, v)| format!("{k}:{}", go_percent_v(v)))
+                    .collect::<Vec<_>>()
+                    .join(" ")
             )
         }
     }
@@ -930,7 +1076,11 @@ pub fn go_percent_v(value: &Value) -> String {
 
 fn go_float_v(f: f64) -> String {
     if f == 0.0 {
-        return if f.is_sign_negative() { "-0".to_owned() } else { "0".to_owned() };
+        return if f.is_sign_negative() {
+            "-0".to_owned()
+        } else {
+            "0".to_owned()
+        };
     }
     let sci = format!("{f:e}");
     let (mantissa, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
@@ -939,7 +1089,11 @@ fn go_float_v(f: f64) -> String {
     if (-4..6).contains(&exp) {
         return format!("{f}");
     }
-    format!("{mantissa}e{}{:02}", if exp < 0 { '-' } else { '+' }, exp.abs())
+    format!(
+        "{mantissa}e{}{:02}",
+        if exp < 0 { '-' } else { '+' },
+        exp.abs()
+    )
 }
 
 fn evaluate_formula(formula: &str, props: &BTreeMap<String, Value>) -> String {

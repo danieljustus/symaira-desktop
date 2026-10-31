@@ -61,13 +61,17 @@ fn seeded() -> (Sidecar, std::path::PathBuf, Fixture) {
         })
         .collect();
     assert_eq!(rows.len(), 8);
-    sidecar.replace_dataset_rows("orders", &rows).expect("seed rows");
+    sidecar
+        .replace_dataset_rows("orders", &rows)
+        .expect("seed rows");
     (sidecar, root, fx)
 }
 
 fn filters(value: &Value) -> Vec<DatasetQueryFilter> {
     value.as_array().map_or_else(Vec::new, |list| {
-        list.iter().map(|f| serde_json::from_value(f.clone()).unwrap()).collect()
+        list.iter()
+            .map(|f| serde_json::from_value(f.clone()).unwrap())
+            .collect()
     })
 }
 
@@ -88,13 +92,17 @@ fn sorts(value: &Value) -> Vec<DatasetSort> {
 
 fn aggregates(value: &Value) -> Vec<DatasetAggregate> {
     value.as_array().map_or_else(Vec::new, |list| {
-        list.iter().map(|a| serde_json::from_value(a.clone()).unwrap()).collect()
+        list.iter()
+            .map(|a| serde_json::from_value(a.clone()).unwrap())
+            .collect()
     })
 }
 
 fn strings(value: &Value) -> Vec<String> {
     value.as_array().map_or_else(Vec::new, |list| {
-        list.iter().map(|s| s.as_str().unwrap().to_owned()).collect()
+        list.iter()
+            .map(|s| s.as_str().unwrap().to_owned())
+            .collect()
     })
 }
 
@@ -137,9 +145,8 @@ fn sidecar_options(fx: &Fixture, options: &Value, offset: i64) -> DatasetQueryOp
 }
 
 fn view_spec(view: &Value) -> DatasetViewSpec {
-    let mut computed: Vec<(String, String, String)> = view["computed"]
-        .as_object()
-        .map_or_else(Vec::new, |map| {
+    let mut computed: Vec<(String, String, String)> =
+        view["computed"].as_object().map_or_else(Vec::new, |map| {
             map.iter()
                 .map(|(name, c)| {
                     (
@@ -184,7 +191,11 @@ fn run_case(sidecar: &Sidecar, fx: &Fixture, case: &Value) -> Result<Value, Stri
                 .map_err(|e| e.to_string())
         }
         "view" => sidecar
-            .dataset_view_rows(&fx.schema, &view_spec(&case["view"]), case["limit"].as_i64().unwrap_or(0))
+            .dataset_view_rows(
+                &fx.schema,
+                &view_spec(&case["view"]),
+                case["limit"].as_i64().unwrap_or(0),
+            )
             .map(|(rows, total)| json!({"rows": rows, "total_rows": total}))
             .map_err(|e| e.to_string()),
         other => panic!("unknown kind {other}"),
@@ -203,18 +214,31 @@ fn go_dataset_query_contract_replays_every_case() {
             Ok(got) => {
                 assert_eq!(case["error"], "", "{name}: Go failed but Rust succeeded");
                 if got != case["result"] {
-                    panic!("{name}: first difference at {}", first_difference("", &got, &case["result"]));
+                    panic!(
+                        "{name}: first difference at {}",
+                        first_difference("", &got, &case["result"])
+                    );
                 }
                 ok += 1;
             }
             Err(error) => {
-                assert_eq!(case["error"], Value::String(error.clone()), "{name}: error text");
-                assert!(case["result"].is_null(), "{name}: Go succeeded but Rust failed: {error}");
+                assert_eq!(
+                    case["error"],
+                    Value::String(error.clone()),
+                    "{name}: error text"
+                );
+                assert!(
+                    case["result"].is_null(),
+                    "{name}: Go succeeded but Rust failed: {error}"
+                );
                 failed += 1;
             }
         }
     }
-    println!("dataset query full: {ok} ok, {failed} error cases of {}", cases.len());
+    println!(
+        "dataset query full: {ok} ok, {failed} error cases of {}",
+        cases.len()
+    );
     assert!(ok >= 190 && failed >= 8);
     drop(sidecar);
     fs::remove_dir_all(root).expect("remove sandbox");
@@ -243,7 +267,10 @@ fn first_difference(path: &str, left: &Value, right: &Value) -> String {
     match (left, right) {
         (Value::Object(a), Value::Object(b)) => {
             for key in a.keys().chain(b.keys()) {
-                let (l, r) = (a.get(key).unwrap_or(&Value::Null), b.get(key).unwrap_or(&Value::Null));
+                let (l, r) = (
+                    a.get(key).unwrap_or(&Value::Null),
+                    b.get(key).unwrap_or(&Value::Null),
+                );
                 if l != r || a.contains_key(key) != b.contains_key(key) {
                     return first_difference(&format!("{path}/{key}"), l, r);
                 }

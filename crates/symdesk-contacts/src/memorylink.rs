@@ -74,12 +74,18 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
                 error(
                     "conflict",
                     op,
-                    &format!("already linked to a SymMemory entity; unlink first to replace it: {cause}"),
+                    &format!(
+                        "already linked to a SymMemory entity; unlink first to replace it: {cause}"
+                    ),
                 )
             } else if cause.message.contains("FOREIGN KEY constraint failed") {
                 error("invalid", op, &format!("entity does not exist: {cause}"))
             } else {
-                error("internal", op, &format!("failed to insert memory link: {cause}"))
+                error(
+                    "internal",
+                    op,
+                    &format!("failed to insert memory link: {cause}"),
+                )
             });
         }
         self.get(entity, id)?

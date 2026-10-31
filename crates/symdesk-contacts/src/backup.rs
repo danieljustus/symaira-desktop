@@ -32,22 +32,33 @@ fn random<const N: usize>() -> Result<[u8; N], String> {
     Ok(buf)
 }
 
-/// Encrypt `plaintext`; returns `(ciphertext+tag, salt, nonce)`.
-fn encrypt(
-    passphrase: &[u8],
-    plaintext: &[u8],
-) -> Result<(Vec<u8>, [u8; SALT_SIZE], [u8; NONCE_SIZE]), String> {
+/// `(ciphertext+tag, salt, nonce)`.
+type Sealed = (Vec<u8>, [u8; SALT_SIZE], [u8; NONCE_SIZE]);
+
+/// Encrypt `plaintext`.
+fn encrypt(passphrase: &[u8], plaintext: &[u8]) -> Result<Sealed, String> {
     let salt = random::<SALT_SIZE>()?;
     let nonce = random::<NONCE_SIZE>()?;
     let sealed = cipher(passphrase, &salt)?
-        .encrypt(&Nonce::try_from(&nonce[..]).map_err(|e| format!("{e:?}"))?, plaintext)
+        .encrypt(
+            &Nonce::try_from(&nonce[..]).map_err(|e| format!("{e:?}"))?,
+            plaintext,
+        )
         .map_err(|e| e.to_string())?;
     Ok((sealed, salt, nonce))
 }
 
-fn decrypt(passphrase: &[u8], salt: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, String> {
+fn decrypt(
+    passphrase: &[u8],
+    salt: &[u8],
+    nonce: &[u8],
+    ciphertext: &[u8],
+) -> Result<Vec<u8>, String> {
     cipher(passphrase, salt)?
-        .decrypt(&Nonce::try_from(nonce).map_err(|e| format!("{e:?}"))?, ciphertext)
+        .decrypt(
+            &Nonce::try_from(nonce).map_err(|e| format!("{e:?}"))?,
+            ciphertext,
+        )
         .map_err(|e| e.to_string())
 }
 
@@ -62,20 +73,28 @@ impl<I: FnMut() -> String, T: FnMut() -> String, A: FnMut() -> String> Service<'
     pub fn backup(&mut self, passphrase: &[u8], w: &mut impl Write) -> Result<(), Error> {
         const OP: &str = "security.Backup";
         if passphrase.is_empty() {
-            return Err(error("invalid", OP, "a passphrase is required to create a backup"));
+            return Err(error(
+                "invalid",
+                OP,
+                "a passphrase is required to create a backup",
+            ));
         }
-        let internal = |message: &str, cause: String| error("internal", OP, &format!("{message}: {cause}"));
-        let path = temp_snapshot_path().map_err(|c| internal("failed to create temp snapshot file", c))?;
+        let internal =
+            |message: &str, cause: String| error("internal", OP, &format!("{message}: {cause}"));
+        let path =
+            temp_snapshot_path().map_err(|c| internal("failed to create temp snapshot file", c))?;
         let _cleanup = Cleanup(path.clone());
         let target = path.to_string_lossy().into_owned();
         self.db
             .execute("VACUUM INTO ?", params![target])
             .map_err(|e| internal("failed to snapshot database", sql_error(e).message))?;
-        let plaintext = std::fs::read(&path).map_err(|e| internal("failed to read database snapshot", e.to_string()))?;
+        let plaintext = std::fs::read(&path)
+            .map_err(|e| internal("failed to read database snapshot", e.to_string()))?;
         let (ciphertext, salt, nonce) =
             encrypt(passphrase, &plaintext).map_err(|c| internal("failed to encrypt backup", c))?;
         for chunk in [&MAGIC[..], &salt, &nonce, &ciphertext] {
-            w.write_all(chunk).map_err(|e| internal("failed to write backup", e.to_string()))?;
+            w.write_all(chunk)
+                .map_err(|e| internal("failed to write backup", e.to_string()))?;
         }
         self.record_audit("backup_created", &format!("bytes={}", ciphertext.len()))
     }
@@ -100,29 +119,53 @@ pub fn restore(
 ) -> Result<(), Error> {
     const OP: &str = "security.Restore";
     if passphrase.is_empty() {
-        return Err(error("invalid", OP, "a passphrase is required to restore a backup"));
+        return Err(error(
+            "invalid",
+            OP,
+            "a passphrase is required to restore a backup",
+        ));
     }
     if data.len() < HEADER_SIZE {
-        return Err(error("invalid", OP, "backup is truncated or not a symrelate backup"));
+        return Err(error(
+            "invalid",
+            OP,
+            "backup is truncated or not a symrelate backup",
+        ));
     }
     if data[..MAGIC.len()] != MAGIC {
         return Err(error("invalid", OP, "not a symrelate backup file"));
     }
     let salt = &data[MAGIC.len()..MAGIC.len() + SALT_SIZE];
     let nonce = &data[MAGIC.len() + SALT_SIZE..HEADER_SIZE];
-    let plaintext = decrypt(passphrase, salt, nonce, &data[HEADER_SIZE..])
-        .map_err(|_| error("invalid", OP, &format!("wrong passphrase or corrupted backup: {WRONG_PASSPHRASE}")))?;
+    let plaintext = decrypt(passphrase, salt, nonce, &data[HEADER_SIZE..]).map_err(|_| {
+        error(
+            "invalid",
+            OP,
+            &format!("wrong passphrase or corrupted backup: {WRONG_PASSPHRASE}"),
+        )
+    })?;
 
-    let internal = |message: &str, cause: String| error("internal", OP, &format!("{message}: {cause}"));
+    let internal =
+        |message: &str, cause: String| error("internal", OP, &format!("{message}: {cause}"));
     let mut tmp = target.as_os_str().to_owned();
     tmp.push(".restoring");
     let tmp = PathBuf::from(tmp);
-    write_private(&tmp, &plaintext).map_err(|e| internal("failed to write restored database", e.to_string()))?;
+    write_private(&tmp, &plaintext)
+        .map_err(|e| internal("failed to write restored database", e.to_string()))?;
     if let Err(e) = std::fs::rename(&tmp, target) {
         let _ = std::fs::remove_file(&tmp);
-        return Err(internal("failed to finalize restored database", e.to_string()));
+        return Err(internal(
+            "failed to finalize restored database",
+            e.to_string(),
+        ));
     }
-    let db: Connection = crate::open(target).map_err(|e| error("internal", OP, &format!("restored database failed to open: {}", sql_error(e).message)))?;
+    let db: Connection = crate::open(target).map_err(|e| {
+        error(
+            "internal",
+            OP,
+            &format!("restored database failed to open: {}", sql_error(e).message),
+        )
+    })?;
     let mut service = Service::new(&db, id, timestamp, actor);
     service.record_audit("backup_restored", &format!("bytes={}", plaintext.len()))
 }

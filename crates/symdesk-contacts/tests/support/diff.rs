@@ -5,7 +5,10 @@ pub fn first_difference(path: &str, left: &Value, right: &Value) -> String {
     match (left, right) {
         (Value::Object(a), Value::Object(b)) => {
             for key in a.keys().chain(b.keys()) {
-                let (l, r) = (a.get(key).unwrap_or(&Value::Null), b.get(key).unwrap_or(&Value::Null));
+                let (l, r) = (
+                    a.get(key).unwrap_or(&Value::Null),
+                    b.get(key).unwrap_or(&Value::Null),
+                );
                 if l != r || a.contains_key(key) != b.contains_key(key) {
                     return first_difference(&format!("{path}/{key}"), l, r);
                 }
@@ -20,7 +23,9 @@ pub fn first_difference(path: &str, left: &Value, right: &Value) -> String {
             }
             format!("{path}: arrays equal?")
         }
-        (Value::Array(a), Value::Array(b)) => format!("{path}: rust has {} items, go has {}", a.len(), b.len()),
+        (Value::Array(a), Value::Array(b)) => {
+            format!("{path}: rust has {} items, go has {}", a.len(), b.len())
+        }
         _ => format!("{path}: rust={left} go={right}"),
     }
 }

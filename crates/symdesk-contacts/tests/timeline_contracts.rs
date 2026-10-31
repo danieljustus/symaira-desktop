@@ -8,15 +8,20 @@ use symdesk_contacts::contact::{Entity, Error};
 use symdesk_contacts::relationship::{MeetingImportInput, Service, Transition};
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!("../../../testdata/port/contacts/timeline-meeting.json")).unwrap()
+    serde_json::from_str(include_str!(
+        "../../../testdata/port/contacts/timeline-meeting.json"
+    ))
+    .unwrap()
 }
 
 fn normalize(value: &mut Value, stamp: &str) {
     match value {
         Value::Object(map) => {
             for (key, item) in map.iter_mut() {
-                if matches!(key.as_str(), "CreatedAt" | "UpdatedAt" | "CompletedAt" | "CancelledAt")
-                    && !item.is_null()
+                if matches!(
+                    key.as_str(),
+                    "CreatedAt" | "UpdatedAt" | "CompletedAt" | "CancelledAt"
+                ) && !item.is_null()
                 {
                     *item = json!(stamp);
                 } else {
@@ -41,7 +46,13 @@ fn run(fixture: &Value) -> usize {
     for (i, action) in actions.iter().enumerate() {
         let mut svc = Service::new(
             &db,
-            || ids.next().expect("Rust consumed more UUIDs than Go").as_str().unwrap().to_owned(),
+            || {
+                ids.next()
+                    .expect("Rust consumed more UUIDs than Go")
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            },
             || stamp.to_owned(),
         );
         let entity = match action["entity"].as_str().unwrap() {
@@ -52,7 +63,11 @@ fn run(fixture: &Value) -> usize {
         let op = action["op"].as_str().unwrap();
         let key = action["id"].as_str().unwrap();
         let id = refs.get(key).map_or(key, String::as_str).to_owned();
-        let input = if action["input"].is_null() { json!({}) } else { action["input"].clone() };
+        let input = if action["input"].is_null() {
+            json!({})
+        } else {
+            action["input"].clone()
+        };
         let result: Result<Value, Error> = match op {
             "interaction" => svc
                 .add_interaction(entity, &id, &serde_json::from_value(input.clone()).unwrap())
@@ -61,7 +76,9 @@ fn run(fixture: &Value) -> usize {
                 .add_follow_up(entity, &id, &serde_json::from_value(input.clone()).unwrap())
                 .map(|x| json!(x)),
             "timeline" => svc.timeline(entity, &id).map(|x| json!(x)),
-            "complete" => svc.transition_follow_up(&id, Transition::Complete).map(|x| json!(x)),
+            "complete" => svc
+                .transition_follow_up(&id, Transition::Complete)
+                .map(|x| json!(x)),
             "meeting" => {
                 let meeting: MeetingImportInput = serde_json::from_value(input.clone()).unwrap();
                 svc.import_meeting(entity, &id, &meeting)
@@ -91,7 +108,10 @@ fn run(fixture: &Value) -> usize {
             db.execute(sql, [stamp]).unwrap();
         }
         if actual != fixture["results"][i] {
-            panic!("action {i}: {action}: {}", diff::first_difference("", &actual, &fixture["results"][i]));
+            panic!(
+                "action {i}: {action}: {}",
+                diff::first_difference("", &actual, &fixture["results"][i])
+            );
         }
     }
     assert!(ids.next().is_none(), "UUID consumption differs");
@@ -104,7 +124,9 @@ fn run(fixture: &Value) -> usize {
                     .map(|c| {
                         Ok(match r.get_ref(c)? {
                             rusqlite::types::ValueRef::Null => Value::Null,
-                            rusqlite::types::ValueRef::Text(s) => json!(std::str::from_utf8(s).unwrap()),
+                            rusqlite::types::ValueRef::Text(s) => {
+                                json!(std::str::from_utf8(s).unwrap())
+                            }
                             rusqlite::types::ValueRef::Integer(n) => json!(n),
                             other => panic!("unsupported cell {other:?}"),
                         })
@@ -121,7 +143,10 @@ fn run(fixture: &Value) -> usize {
 
 #[test]
 fn go_contacts_timeline_meeting_contract() {
-    println!("contacts timeline/meeting: {} actions replayed", run(&fixture()));
+    println!(
+        "contacts timeline/meeting: {} actions replayed",
+        run(&fixture())
+    );
 }
 
 #[test]
@@ -134,6 +159,9 @@ fn negative_control_a_reordered_timeline_is_detected() {
         .iter()
         .rposition(|a| a["op"] == "timeline" && a["entity"] == "person" && a["id"] == "p")
         .unwrap();
-    tampered["results"][index]["value"].as_array_mut().unwrap().reverse();
+    tampered["results"][index]["value"]
+        .as_array_mut()
+        .unwrap()
+        .reverse();
     run(&tampered);
 }

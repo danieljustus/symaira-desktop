@@ -56,7 +56,7 @@ fn normalize(value: &mut Value, stamp: &str) {
     }
 }
 
-fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
+fn run_fixture(fixture: &Value) -> usize {
     let db = symdesk_contacts::open_memory().unwrap();
     let mut ids = fixture["ids"].as_array().unwrap().iter();
     let stamp = fixture["timestamp"].as_str().unwrap();
@@ -67,7 +67,13 @@ fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
     for (i, action) in actions.iter().enumerate() {
         let mut svc = Service::new(
             &db,
-            || ids.next().expect("Rust consumed more UUIDs than Go").as_str().unwrap().to_owned(),
+            || {
+                ids.next()
+                    .expect("Rust consumed more UUIDs than Go")
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            },
             || stamp.to_owned(),
         );
         let op = action["op"].as_str().unwrap();
@@ -75,13 +81,19 @@ fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
         let resolve = |key: &str| refs.get(key).map_or(key, String::as_str).to_owned();
         let id = resolve(key);
         let second = resolve(action["second"].as_str().unwrap_or(""));
-        let input = if action["input"].is_null() { json!({}) } else { action["input"].clone() };
+        let input = if action["input"].is_null() {
+            json!({})
+        } else {
+            action["input"].clone()
+        };
         fn from<T: serde::de::DeserializeOwned>(v: &Value) -> T {
             serde_json::from_value(v.clone()).unwrap()
         }
         let result: Result<Value, Error> = match op {
             "create_person" => svc.create(Entity::Person, &from(&input)).map(|x| json!(x)),
-            "create_org" => svc.create(Entity::Organization, &from(&input)).map(|x| json!(x)),
+            "create_org" => svc
+                .create(Entity::Organization, &from(&input))
+                .map(|x| json!(x)),
             "quickadd" => svc
                 .create_person_with_contact_points(
                     &from(&input),
@@ -90,8 +102,12 @@ fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
                 )
                 .map(|x| json!(x)),
             "get_person" => svc.get(Entity::Person, &id).map(|x| json!(x)),
-            "persons" => svc.list(Entity::Person, &ListOptions::default()).map(|x| json!(x)),
-            "membership" => svc.add_membership(&id, &second, &from::<MembershipInput>(&input)).map(|x| json!(x)),
+            "persons" => svc
+                .list(Entity::Person, &ListOptions::default())
+                .map(|x| json!(x)),
+            "membership" => svc
+                .add_membership(&id, &second, &from::<MembershipInput>(&input))
+                .map(|x| json!(x)),
             "end_membership" => svc
                 .end_membership(&id, input["ValidTo"].as_str().unwrap())
                 .map(|x| json!(x)),
@@ -113,14 +129,12 @@ fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
             Err(e) => json!({"value": null, "error": e.to_string(), "kind": e.kind}),
         };
         normalize_timestamps(&db, stamp);
-        let mut expected = fixture["results"][i].clone();
-        if let Some((name, replacement)) = skip_check {
-            if op == name {
-                expected["error"] = json!(replacement);
-            }
-        }
+        let expected = fixture["results"][i].clone();
         if actual != expected {
-            panic!("action {i}: {action}: {}", diff::first_difference("", &actual, &expected));
+            panic!(
+                "action {i}: {action}: {}",
+                diff::first_difference("", &actual, &expected)
+            );
         }
     }
     assert!(ids.next().is_none(), "UUID consumption differs");
@@ -135,12 +149,15 @@ fn run_fixture(fixture: &Value, skip_check: Option<(&str, &str)>) -> usize {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(include_str!("../../../testdata/port/contacts/membership-ref.json")).unwrap()
+    serde_json::from_str(include_str!(
+        "../../../testdata/port/contacts/membership-ref.json"
+    ))
+    .unwrap()
 }
 
 #[test]
 fn go_contacts_membership_ref_contract() {
-    let executed = run_fixture(&fixture(), None);
+    let executed = run_fixture(&fixture());
     println!("contacts membership/ref: {executed} actions replayed");
 }
 
@@ -155,5 +172,5 @@ fn negative_control_a_tampered_expectation_is_detected() {
         .position(|a| a["op"] == "get_ref")
         .unwrap();
     tampered["results"][first_ref]["value"]["display_name"] = json!("Mallory");
-    run_fixture(&tampered, None);
+    run_fixture(&tampered);
 }

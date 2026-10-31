@@ -201,7 +201,10 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
             match serde_json::from_str::<Vec<DatasetQueryFilter>>(input) {
                 Ok(filters) => filters,
                 Err(error) => {
-                    return emit_error(format!("parse --filters: {}", go_json_error(&error)), json_output);
+                    return emit_error(
+                        format!("parse --filters: {}", go_json_error(&error)),
+                        json_output,
+                    );
                 }
             }
         }
@@ -212,7 +215,10 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
             match serde_json::from_str::<Option<DatasetQueryFilterGroup>>(input) {
                 Ok(group) => group,
                 Err(error) => {
-                    return emit_error(format!("parse --filter-group: {}", go_json_error(&error)), json_output);
+                    return emit_error(
+                        format!("parse --filter-group: {}", go_json_error(&error)),
+                        json_output,
+                    );
                 }
             }
         }
@@ -223,7 +229,10 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
             match serde_json::from_str::<Option<Vec<DatasetAggregate>>>(input) {
                 Ok(aggregates) => aggregates.unwrap_or_default(),
                 Err(error) => {
-                    return emit_error(format!("parse --aggregates: {}", go_json_error(&error)), json_output);
+                    return emit_error(
+                        format!("parse --aggregates: {}", go_json_error(&error)),
+                        json_output,
+                    );
                 }
             }
         }

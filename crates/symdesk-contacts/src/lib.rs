@@ -157,12 +157,27 @@ mod tests {
 
     #[test]
     fn normalizes_offsets_and_trims_fractions_like_go() {
-        assert_eq!(utc_rfc3339nano("2025-06-01T14:00:00+02:00"), "2025-06-01T12:00:00Z");
-        assert_eq!(utc_rfc3339nano("2025-06-01T12:00:00.500000000Z"), "2025-06-01T12:00:00.5Z");
-        assert_eq!(utc_rfc3339nano("2026-12-31T23:59:59.999999999-05:30"), "2027-01-01T05:29:59.999999999Z");
+        assert_eq!(
+            utc_rfc3339nano("2025-06-01T14:00:00+02:00"),
+            "2025-06-01T12:00:00Z"
+        );
+        assert_eq!(
+            utc_rfc3339nano("2025-06-01T12:00:00.500000000Z"),
+            "2025-06-01T12:00:00.5Z"
+        );
+        assert_eq!(
+            utc_rfc3339nano("2026-12-31T23:59:59.999999999-05:30"),
+            "2027-01-01T05:29:59.999999999Z"
+        );
         assert_eq!(utc_rfc3339nano("not a time"), "not a time");
         assert_eq!(utc_rfc3339nano(""), "");
-        assert_eq!(super::marshal_rfc3339nano("2025-06-01T14:00:00.250+02:00"), "2025-06-01T14:00:00.25+02:00");
-        assert_eq!(super::marshal_rfc3339nano("2025-06-01T14:00:00-00:00"), "2025-06-01T14:00:00Z");
+        assert_eq!(
+            super::marshal_rfc3339nano("2025-06-01T14:00:00.250+02:00"),
+            "2025-06-01T14:00:00.25+02:00"
+        );
+        assert_eq!(
+            super::marshal_rfc3339nano("2025-06-01T14:00:00-00:00"),
+            "2025-06-01T14:00:00Z"
+        );
     }
 }

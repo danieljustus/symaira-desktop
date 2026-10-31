@@ -89,6 +89,30 @@ ingest-magika-differential:
 ingest-magika-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/extract -run '^TestPortIngestMagikaContract$$'
 
+.PHONY: ingest-pipeline-differential ingest-pipeline-fixtures-generate
+ingest-pipeline-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ingest -run '^TestPortIngestPipelineContract$$'
+	$(CARGO) test -p symdesk-ingest --test pipeline_contracts --locked
+
+ingest-pipeline-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ingest -run '^TestPortIngestPipelineContract$$'
+
+.PHONY: ingest-barcode-differential ingest-barcode-fixtures-generate
+ingest-barcode-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest -run '^TestPortIngestBarcodeContract$$'
+	$(CARGO) test -p symdesk-ingest --test barcode_contracts --locked
+
+ingest-barcode-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest -run '^TestPortIngestBarcodeContract$$'
+
+.PHONY: ingest-vlm-differential ingest-vlm-fixtures-generate
+ingest-vlm-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ocr -run '^TestPortIngestVLMContract$$'
+	$(CARGO) test -p symdesk-ingest --test vlm_contracts --locked
+
+ingest-vlm-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ocr -run '^TestPortIngestVLMContract$$'
+
 .PHONY: ingest-ocr-differential ingest-ocr-fixtures-generate
 ingest-ocr-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(INGEST_GO) test -count=1 ./internal/ingest/internal/ocr -run '^TestPortIngestOCRContract$$'
@@ -99,7 +123,7 @@ ingest-ocr-fixtures-generate:
 
 # RUST-010 acceptance: every ingest contract replays its Go-generated fixture.
 .PHONY: ingest-differential
-ingest-differential: ingest-queue-differential ingest-store-differential ingest-extraction-differential ingest-structured-differential ingest-ocr-differential notion-import-differential paperless-mapping-differential paperless-state-differential paperless-export-differential paperless-http-differential
+ingest-differential: ingest-queue-differential ingest-store-differential ingest-extraction-differential ingest-structured-differential ingest-magika-differential ingest-pipeline-differential ingest-barcode-differential ingest-vlm-differential ingest-ocr-differential notion-import-differential paperless-mapping-differential paperless-state-differential paperless-export-differential paperless-http-differential
 
 .PHONY: benchmark-large boundary-guard build build-identity-check clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-apply port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 

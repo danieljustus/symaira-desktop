@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 #[cfg(unix)]
 pub mod annotate;
+#[cfg(unix)]
+pub mod barcode;
 pub mod classification;
 mod document;
 pub mod extract;

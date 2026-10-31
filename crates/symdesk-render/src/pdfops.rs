@@ -154,6 +154,71 @@ impl Tools {
         }
         Ok(outputs)
     }
+    /// Barcode splitting's qpdf-only `SplitLegacy`: `part-N.pdf` names, page
+    /// count from `qpdf --show-npages`, `--empty --pages` staging.
+    pub fn split_legacy(
+        &self,
+        ctx: &Context,
+        input: &str,
+        boundaries: &[i64],
+        output_dir: &str,
+    ) -> Result<Vec<String>, String> {
+        let ctx = &ctx.bounded();
+        require_file(input)?;
+        if boundaries.len() >= 10_000 {
+            return Err("PDF split exceeds 10000 parts".into());
+        }
+        let path = tool_path(&self.qpdf, "qpdf")?;
+        let stdout = execute(ctx, &path, &["--show-npages".into(), input.into()])?;
+        let pages = stdout
+            .trim()
+            .parse::<i64>()
+            .ok()
+            .filter(|n| *n > 0)
+            .ok_or_else(|| format!("qpdf did not report a positive page count for {input}"))?;
+        if pages > 10_000 {
+            return Err("PDF page count exceeds 10000 pages".into());
+        }
+        let mut previous = 0;
+        for boundary in boundaries {
+            if *boundary <= previous || *boundary >= pages {
+                return Err(format!(
+                    "split boundaries must increase within the document; got {boundary} after {previous} for {pages} pages"
+                ));
+            }
+            previous = *boundary;
+        }
+        let ends: Vec<_> = boundaries.iter().copied().chain([pages]).collect();
+        let outputs: Vec<_> = (1..=ends.len())
+            .map(|index| text(&clean(Path::new(output_dir).join(format!("part-{index}.pdf")))))
+            .collect();
+        new_outputs(&[input.into()], &outputs)?;
+        let temp = Workspace::new(Path::new(output_dir))
+            .map_err(|e| format!("create PDF split workspace: {e}"))?;
+        let mut start = 1;
+        for (index, end) in ends.into_iter().enumerate() {
+            let staged = text(&temp.0.join(base(&outputs[index])));
+            self.run(
+                ctx,
+                &self.qpdf,
+                &[
+                    "--empty".into(),
+                    "--pages".into(),
+                    input.into(),
+                    format!("{start}-{end}"),
+                    "--".into(),
+                    staged.clone(),
+                ],
+            )
+            .map_err(|e| format!("split part {}: {e}", index + 1))?;
+            self.validate(ctx, &staged)?;
+            start = end + 1;
+        }
+        for output in &outputs {
+            publish(ctx, &text(&temp.0.join(base(output))), output)?;
+        }
+        Ok(outputs)
+    }
     pub fn merge(&self, ctx: &Context, inputs: &[String], output: &str) -> Result<(), String> {
         let ctx = &ctx.bounded();
         if inputs.len() < 2 {
@@ -301,6 +366,26 @@ fn publish(ctx: &Context, staged: &str, output: &str) -> Result<(), String> {
             path_error("link", &format!("{staged} {output}"), e)
         )
     })
+}
+
+/// `pdfops.Copy`: no-split copy that never overwrites a destination.
+pub fn copy(input: &str, output: &str) -> Result<(), String> {
+    use std::io::Read;
+    require_file(input)?;
+    new_outputs(&[input.into()], &[output.into()])?;
+    let source = fs::File::open(input).map_err(|e| path_error("open", input, e))?;
+    let temp = Workspace::new(&parent(output))?;
+    let staged = text(&temp.0.join("copy.pdf"));
+    let mut data = Vec::new();
+    source
+        .take(512 * 1024 * 1024 + 1)
+        .read_to_end(&mut data)
+        .map_err(|e| e.to_string())?;
+    if data.len() > 512 * 1024 * 1024 {
+        return Err("PDF copy exceeds 512 MiB".into());
+    }
+    fs::write(&staged, &data).map_err(|e| path_error("open", &staged, e))?;
+    publish(&Context::default(), &staged, output)
 }
 
 /// Public facade mirrors ingest's lexical absolute-path conversion, without

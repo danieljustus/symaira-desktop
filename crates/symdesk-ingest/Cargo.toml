@@ -25,6 +25,9 @@ noyalib.workspace = true
 time.workspace = true
 ureq = { version = "=3.4.1", default-features = false, features = ["rustls", "gzip"] }
 url = "=2.5.8"
+symdesk-render.workspace = true
+image = { version = "=0.25.8", default-features = false, features = ["png", "jpeg"] }
+rxing = { version = "=0.9.3", default-features = false, features = ["image", "qrcode", "datamatrix", "oned", "decoders", "encoding_rs"] }
 
 [dev-dependencies]
 rusqlite = { workspace = true, features = ["functions"] }

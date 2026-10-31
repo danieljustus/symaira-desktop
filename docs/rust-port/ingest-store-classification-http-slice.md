@@ -89,6 +89,12 @@ uses a 120 s client timeout for those two cases (debug builds need more than the
 default 5 s); the long-filename error body is compared after replacing the random
 temporary/upload ids.
 
+## Evidence
+
+Gate evidence at source commit `3b95db4d` (`LOCAL_GATE_SLUG=r010-rest scripts/rust-port/local-gate.sh all rust-check rust-lint rust-test port-contract ingest-differential`): macOS receipt `macos-3b95db4d-152842.log` exit 0 (852 nextest tests passed, 3 skipped), Linux arm64 receipt `linux-3b95db4d-155512.log` exit 0 (853 passed, 3 skipped). `make http-differential` (live Go binary against the Rust `symdesk`) passed all 291 transcripts, including the 58 new ones. Later commits only change this ledger.
+
+The OCR `pdf-page-fails` scenario raced on goroutine scheduling and failed `port-fixtures-check` once under load; its fake `tesseract` now fails page 2 only after pages 1 and 3 have started (`waitfor/`), and `ocr.json` was regenerated (only that scenario's input and the script text changed).
+
 ## Still open (rows stay TODO)
 
 - **INGEST-002**: Magika advisory detection, the PDF text engine and the routing of

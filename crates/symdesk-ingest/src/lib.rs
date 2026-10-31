@@ -34,6 +34,8 @@ pub mod ocr;
 pub mod paperless;
 pub mod paperless_export;
 pub mod paperless_import;
+#[cfg(unix)]
+pub mod paperless_run;
 mod paperless_state;
 #[cfg(unix)]
 pub mod pipeline;

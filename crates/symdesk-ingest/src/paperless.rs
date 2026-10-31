@@ -11,6 +11,15 @@ use std::{
     time::Duration,
 };
 
+
+/// Go decodes JSON `null` into a scalar's zero value.
+fn null_default<'de, D, T>(d: D) -> std::result::Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de> + Default,
+{
+    Ok(Option::<T>::deserialize(d)?.unwrap_or_default())
+}
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Ref {
     #[serde(rename = "ID")]
@@ -75,8 +84,11 @@ impl<'de> Deserialize<'de> for FlexDate {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Document {
+    #[serde(deserialize_with = "null_default")]
     pub id: i64,
+    #[serde(deserialize_with = "null_default")]
     pub title: String,
+    #[serde(deserialize_with = "null_default")]
     pub content: String,
     pub created_date: FlexDate,
     pub created: FlexDate,
@@ -86,17 +98,25 @@ pub struct Document {
     pub tags: Option<Vec<Ref>>,
     pub document_type: Option<Ref>,
     pub storage_path: Option<Ref>,
+    #[serde(deserialize_with = "null_default")]
     pub file_type: String,
+    #[serde(deserialize_with = "null_default")]
     pub mime_type: String,
+    #[serde(deserialize_with = "null_default")]
     pub original_file_name: String,
+    #[serde(deserialize_with = "null_default")]
     pub archived_file_name: String,
+    #[serde(deserialize_with = "null_default")]
     pub page_count: i64,
 }
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Entity {
+    #[serde(deserialize_with = "null_default")]
     pub id: i64,
+    #[serde(deserialize_with = "null_default")]
     pub name: String,
+    #[serde(deserialize_with = "null_default")]
     pub slug: String,
 }
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

@@ -1,0 +1,2014 @@
+{
+  "actions": [
+    {
+      "op": "create_person",
+      "id": "",
+      "input": {
+        "DisplayName": "Ada Lovelace",
+        "ref": "ada"
+      }
+    },
+    {
+      "op": "create_person",
+      "id": "",
+      "input": {
+        "DisplayName": "Bob Builder",
+        "ref": "bob"
+      }
+    },
+    {
+      "op": "create_person",
+      "id": "",
+      "input": {
+        "DisplayName": "ada lovelace",
+        "ref": "ada2"
+      }
+    },
+    {
+      "op": "create_person",
+      "id": "",
+      "input": {
+        "DisplayName": "Zoë Ünal",
+        "ref": "zoe"
+      }
+    },
+    {
+      "op": "create_org",
+      "id": "",
+      "input": {
+        "Name": "Example Corp",
+        "ref": "corp"
+      }
+    },
+    {
+      "op": "create_org",
+      "id": "",
+      "input": {
+        "Name": "ADA LOVELACE",
+        "ref": "ada-org"
+      }
+    },
+    {
+      "op": "create_org",
+      "id": "",
+      "input": {
+        "Name": "Other Inc",
+        "ref": "other"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {}
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "engineer"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "engineer",
+        "Title": "Staff",
+        "ValidFrom": "2020-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "advisor",
+        "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+        "ValidTo": "2022-06-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "bad",
+        "ValidFrom": "2023-01-01T00:00:00Z",
+        "ValidTo": "2022-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "rejoin",
+        "ValidFrom": "2020-01-01T00:00:00Z",
+        "ref": "m-rejoin"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "open",
+        "ValidFrom": "2019-01-01T00:00:00Z",
+        "ref": "m-open"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "corp",
+      "input": {
+        "Role": "past",
+        "ValidTo": "2018-01-01T00:00:00Z",
+        "ref": "m-past"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "missing",
+      "second": "corp",
+      "input": {
+        "Role": "x"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "missing",
+      "input": {
+        "Role": "x"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "bob",
+      "second": "corp",
+      "input": {
+        "Role": "intern",
+        "ref": "m-bob"
+      }
+    },
+    {
+      "op": "membership",
+      "id": "ada",
+      "second": "other",
+      "input": {
+        "Role": "board",
+        "ref": "m-other"
+      }
+    },
+    {
+      "op": "memberships_person",
+      "id": "ada",
+      "input": null
+    },
+    {
+      "op": "memberships_person",
+      "id": "bob",
+      "input": null
+    },
+    {
+      "op": "memberships_person",
+      "id": "zoe",
+      "input": null
+    },
+    {
+      "op": "memberships_person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "memberships_org",
+      "id": "corp",
+      "input": null
+    },
+    {
+      "op": "memberships_org",
+      "id": "other",
+      "input": null
+    },
+    {
+      "op": "memberships_org",
+      "id": "ada-org",
+      "input": null
+    },
+    {
+      "op": "end_membership",
+      "id": "m-open",
+      "input": {
+        "ValidTo": "2020-06-30T00:00:00Z"
+      }
+    },
+    {
+      "op": "end_membership",
+      "id": "m-open",
+      "input": {
+        "ValidTo": "2018-12-31T23:59:59Z"
+      }
+    },
+    {
+      "op": "end_membership",
+      "id": "m-past",
+      "input": {
+        "ValidTo": "2019-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "end_membership",
+      "id": "m-bob",
+      "input": {
+        "ValidTo": "2030-01-01T00:00:00.5Z"
+      }
+    },
+    {
+      "op": "end_membership",
+      "id": "missing",
+      "input": {
+        "ValidTo": "2030-01-01T00:00:00Z"
+      }
+    },
+    {
+      "op": "memberships_person",
+      "id": "ada",
+      "input": null
+    },
+    {
+      "op": "memberships_org",
+      "id": "corp",
+      "input": null
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": "Quick Person",
+        "ref": "quick"
+      }
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": "Quick Email",
+        "email": "Quick@Example.COM",
+        "ref": "quick-email"
+      }
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": "Quick Phone",
+        "phone": "+49 (170) 123-4567",
+        "ref": "quick-phone"
+      }
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": "Quick Both",
+        "FamilyName": "Both",
+        "GivenName": "Quick",
+        "Notes": "n",
+        "Source": "import:test",
+        "SourceRef": "uid-1",
+        "email": "both@example.com",
+        "phone": "555 0100",
+        "ref": "quick-both"
+      }
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": " \t ",
+        "email": "x@example.com"
+      }
+    },
+    {
+      "op": "quickadd",
+      "id": "",
+      "input": {
+        "DisplayName": "Quick Same",
+        "email": "same@example.com",
+        "phone": "same@example.com",
+        "ref": "quick-same"
+      }
+    },
+    {
+      "op": "persons",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "get_person",
+      "id": "quick-both",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "ada",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "corp",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "ada-org",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "Ada Lovelace",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "  ada lovelace  ",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "ADA LOVELACE",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "Zoë Ünal",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "ZOË ÜNAL",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "Ada",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "   ",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "Other Inc",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "nobody",
+      "input": null
+    },
+    {
+      "op": "delete_person",
+      "id": "ada",
+      "input": null
+    },
+    {
+      "op": "get_ref",
+      "id": "ada",
+      "input": null
+    },
+    {
+      "op": "memberships_org",
+      "id": "corp",
+      "input": null
+    },
+    {
+      "op": "find_refs",
+      "id": "Ada Lovelace",
+      "input": null
+    }
+  ],
+  "ids": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005",
+    "00000000-0000-4000-8000-000000000006",
+    "00000000-0000-4000-8000-000000000007",
+    "00000000-0000-4000-8000-000000000008",
+    "00000000-0000-4000-8000-000000000009",
+    "00000000-0000-4000-8000-00000000000a",
+    "00000000-0000-4000-8000-00000000000b",
+    "00000000-0000-4000-8000-00000000000c",
+    "00000000-0000-4000-8000-00000000000d",
+    "00000000-0000-4000-8000-00000000000e",
+    "00000000-0000-4000-8000-00000000000f",
+    "00000000-0000-4000-8000-000000000010",
+    "00000000-0000-4000-8000-000000000011",
+    "00000000-0000-4000-8000-000000000012",
+    "00000000-0000-4000-8000-000000000013",
+    "00000000-0000-4000-8000-000000000014",
+    "00000000-0000-4000-8000-000000000015",
+    "00000000-0000-4000-8000-000000000016",
+    "00000000-0000-4000-8000-000000000017",
+    "00000000-0000-4000-8000-000000000018",
+    "00000000-0000-4000-8000-000000000019",
+    "00000000-0000-4000-8000-00000000001a",
+    "00000000-0000-4000-8000-00000000001b",
+    "00000000-0000-4000-8000-00000000001c",
+    "00000000-0000-4000-8000-00000000001d",
+    "00000000-0000-4000-8000-00000000001e"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "queries": [
+    "SELECT * FROM persons ORDER BY id",
+    "SELECT * FROM organizations ORDER BY id",
+    "SELECT * FROM organization_memberships ORDER BY id",
+    "SELECT * FROM contact_points ORDER BY id"
+  ],
+  "results": [
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Ada Lovelace",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Bob Builder",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000002",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "ada lovelace",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000003",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Zoë Ünal",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000004",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000005",
+        "Name": "Example Corp",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000006",
+        "Name": "ADA LOVELACE",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000007",
+        "Name": "Other Inc",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000008",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000009",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "engineer",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000a",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "engineer",
+        "Title": "Staff",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2020-01-01T00:00:00Z",
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000b",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "advisor",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+        "ValidTo": "2022-06-01T00:00:00Z"
+      }
+    },
+    {
+      "error": "contact.AddMembership: valid_to must not be before valid_from: constraint failed: CHECK constraint failed: valid_to IS NULL OR valid_from IS NULL OR valid_to \u003e= valid_from (275)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000d",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "rejoin",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2020-01-01T00:00:00Z",
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000e",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "open",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2019-01-01T00:00:00Z",
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000f",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "past",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": "2018-01-01T00:00:00Z"
+      }
+    },
+    {
+      "error": "contact.AddMembership: person or organization does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "contact.AddMembership: person or organization does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000012",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000002",
+        "Role": "intern",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000013",
+        "OrganizationID": "00000000-0000-4000-8000-000000000007",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "board",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": null
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000008",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000f",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "past",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2018-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000013",
+          "OrganizationID": "00000000-0000-4000-8000-000000000007",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "board",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000b",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "advisor",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+          "ValidTo": "2022-06-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000a",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "Staff",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "rejoin",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "open",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2019-01-01T00:00:00Z",
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000012",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000002",
+          "Role": "intern",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000008",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000f",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "past",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2018-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000012",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000002",
+          "Role": "intern",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000b",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "advisor",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+          "ValidTo": "2022-06-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000a",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "Staff",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "rejoin",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "open",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2019-01-01T00:00:00Z",
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000013",
+          "OrganizationID": "00000000-0000-4000-8000-000000000007",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "board",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000e",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "open",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": "2019-01-01T00:00:00Z",
+        "ValidTo": "2020-06-30T00:00:00Z"
+      }
+    },
+    {
+      "error": "contact.EndMembership: valid_to must not be before valid_from: constraint failed: CHECK constraint failed: valid_to IS NULL OR valid_from IS NULL OR valid_to \u003e= valid_from (275)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-00000000000f",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000001",
+        "Role": "past",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": "2019-01-01T00:00:00Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000012",
+        "OrganizationID": "00000000-0000-4000-8000-000000000005",
+        "PersonID": "00000000-0000-4000-8000-000000000002",
+        "Role": "intern",
+        "Title": "",
+        "UpdatedAt": "2026-01-02T03:04:05Z",
+        "ValidFrom": null,
+        "ValidTo": "2030-01-01T00:00:00.5Z"
+      }
+    },
+    {
+      "error": "contact.EndMembership: membership not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000008",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000f",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "past",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2019-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000013",
+          "OrganizationID": "00000000-0000-4000-8000-000000000007",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "board",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000b",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "advisor",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+          "ValidTo": "2022-06-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000a",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "Staff",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "rejoin",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "open",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2019-01-01T00:00:00Z",
+          "ValidTo": "2020-06-30T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000008",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000009",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000f",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "past",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2019-01-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000012",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000002",
+          "Role": "intern",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2030-01-01T00:00:00.5Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000b",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "advisor",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2021-06-01T12:30:00.123456789Z",
+          "ValidTo": "2022-06-01T00:00:00Z"
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000a",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "engineer",
+          "Title": "Staff",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000d",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "rejoin",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2020-01-01T00:00:00Z",
+          "ValidTo": null
+        },
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-00000000000e",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000001",
+          "Role": "open",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": "2019-01-01T00:00:00Z",
+          "ValidTo": "2020-06-30T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": null,
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Person",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000014",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000016",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "email",
+            "Label": "",
+            "NormalizedValue": "quick@example.com",
+            "RawValue": "Quick@Example.COM",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Email",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000015",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-000000000018",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "phone",
+            "Label": "",
+            "NormalizedValue": "+491701234567",
+            "RawValue": "+49 (170) 123-4567",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Phone",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-000000000017",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001a",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "email",
+            "Label": "",
+            "NormalizedValue": "both@example.com",
+            "RawValue": "both@example.com",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001b",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "phone",
+            "Label": "",
+            "NormalizedValue": "5550100",
+            "RawValue": "555 0100",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Both",
+        "FamilyName": "Both",
+        "GivenName": "Quick",
+        "ID": "00000000-0000-4000-8000-000000000019",
+        "Notes": "n",
+        "Source": "import:test",
+        "SourceRef": "uid-1",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "contact.CreatePersonWithContactPoints: display name must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001d",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "email",
+            "Label": "",
+            "NormalizedValue": "same@example.com",
+            "RawValue": "same@example.com",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001e",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "phone",
+            "Label": "",
+            "NormalizedValue": "",
+            "RawValue": "same@example.com",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Same",
+        "FamilyName": "",
+        "GivenName": "",
+        "ID": "00000000-0000-4000-8000-00000000001c",
+        "Notes": "",
+        "Source": "",
+        "SourceRef": "",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "HasMore": false,
+        "Items": [
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Ada Lovelace",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000001",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "ada lovelace",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000003",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Bob Builder",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000002",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Quick Both",
+            "FamilyName": "Both",
+            "GivenName": "Quick",
+            "ID": "00000000-0000-4000-8000-000000000019",
+            "Notes": "n",
+            "Source": "import:test",
+            "SourceRef": "uid-1",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Quick Email",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000015",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Quick Person",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000014",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Quick Phone",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000017",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Quick Same",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-00000000001c",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "Aliases": null,
+            "Classifications": null,
+            "ContactPoints": null,
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "DisplayName": "Zoë Ünal",
+            "FamilyName": "",
+            "GivenName": "",
+            "ID": "00000000-0000-4000-8000-000000000004",
+            "Notes": "",
+            "Source": "",
+            "SourceRef": "",
+            "Tags": null,
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ]
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "Aliases": null,
+        "Classifications": null,
+        "ContactPoints": [
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001a",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "email",
+            "Label": "",
+            "NormalizedValue": "both@example.com",
+            "RawValue": "both@example.com",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          },
+          {
+            "CreatedAt": "2026-01-02T03:04:05Z",
+            "ID": "00000000-0000-4000-8000-00000000001b",
+            "IsPreferred": false,
+            "IsVerified": false,
+            "Kind": "phone",
+            "Label": "",
+            "NormalizedValue": "5550100",
+            "RawValue": "555 0100",
+            "UpdatedAt": "2026-01-02T03:04:05Z"
+          }
+        ],
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "DisplayName": "Quick Both",
+        "FamilyName": "Both",
+        "GivenName": "Quick",
+        "ID": "00000000-0000-4000-8000-000000000019",
+        "Notes": "n",
+        "Source": "import:test",
+        "SourceRef": "uid-1",
+        "Tags": null,
+        "UpdatedAt": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "display_name": "Ada Lovelace",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "kind": "person",
+        "provider": "symrelate",
+        "schema_version": 1
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "display_name": "Example Corp",
+        "id": "00000000-0000-4000-8000-000000000005",
+        "kind": "organization",
+        "provider": "symrelate",
+        "schema_version": 1
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "display_name": "ADA LOVELACE",
+        "id": "00000000-0000-4000-8000-000000000006",
+        "kind": "organization",
+        "provider": "symrelate",
+        "schema_version": 1
+      }
+    },
+    {
+      "error": "contact.GetRef: contact not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "contact.GetRef: contact not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "Ada Lovelace",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ada lovelace",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ADA LOVELACE",
+          "id": "00000000-0000-4000-8000-000000000006",
+          "kind": "organization",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "Ada Lovelace",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ada lovelace",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ADA LOVELACE",
+          "id": "00000000-0000-4000-8000-000000000006",
+          "kind": "organization",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "Ada Lovelace",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ada lovelace",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ADA LOVELACE",
+          "id": "00000000-0000-4000-8000-000000000006",
+          "kind": "organization",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "Zoë Ünal",
+          "id": "00000000-0000-4000-8000-000000000004",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "Other Inc",
+          "id": "00000000-0000-4000-8000-000000000007",
+          "kind": "organization",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": []
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "contact.GetRef: contact not found",
+      "kind": "not_found",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "CreatedAt": "2026-01-02T03:04:05Z",
+          "ID": "00000000-0000-4000-8000-000000000012",
+          "OrganizationID": "00000000-0000-4000-8000-000000000005",
+          "PersonID": "00000000-0000-4000-8000-000000000002",
+          "Role": "intern",
+          "Title": "",
+          "UpdatedAt": "2026-01-02T03:04:05Z",
+          "ValidFrom": null,
+          "ValidTo": "2030-01-01T00:00:00.5Z"
+        }
+      ]
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": [
+        {
+          "display_name": "ada lovelace",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "kind": "person",
+          "provider": "symrelate",
+          "schema_version": 1
+        },
+        {
+          "display_name": "ADA LOVELACE",
+          "id": "00000000-0000-4000-8000-000000000006",
+          "kind": "organization",
+          "provider": "symrelate",
+          "schema_version": 1
+        }
+      ]
+    }
+  ],
+  "snapshots": [
+    [
+      [
+        "00000000-0000-4000-8000-000000000002",
+        "Bob Builder",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000003",
+        "ada lovelace",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000004",
+        "Zoë Ünal",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000014",
+        "Quick Person",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000015",
+        "Quick Email",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000017",
+        "Quick Phone",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000019",
+        "Quick Both",
+        "Quick",
+        "Both",
+        "n",
+        "import:test",
+        "uid-1",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001c",
+        "Quick Same",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-000000000005",
+        "Example Corp",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000006",
+        "ADA LOVELACE",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000007",
+        "Other Inc",
+        "",
+        "",
+        "",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-000000000012",
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000005",
+        "intern",
+        "",
+        null,
+        "2030-01-01T00:00:00.5Z",
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ],
+    [
+      [
+        "00000000-0000-4000-8000-000000000016",
+        "00000000-0000-4000-8000-000000000015",
+        null,
+        "email",
+        "Quick@Example.COM",
+        "quick@example.com",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000018",
+        "00000000-0000-4000-8000-000000000017",
+        null,
+        "phone",
+        "+49 (170) 123-4567",
+        "+491701234567",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001a",
+        "00000000-0000-4000-8000-000000000019",
+        null,
+        "email",
+        "both@example.com",
+        "both@example.com",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001b",
+        "00000000-0000-4000-8000-000000000019",
+        null,
+        "phone",
+        "555 0100",
+        "5550100",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001d",
+        "00000000-0000-4000-8000-00000000001c",
+        null,
+        "email",
+        "same@example.com",
+        "same@example.com",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-00000000001e",
+        "00000000-0000-4000-8000-00000000001c",
+        null,
+        "phone",
+        "same@example.com",
+        "",
+        "",
+        0,
+        0,
+        "2026-01-02T03:04:05Z",
+        "2026-01-02T03:04:05Z"
+      ]
+    ]
+  ],
+  "source_hashes": {
+    "internal/contacts/internal/domain/contact/reference.go": "de157594644b43b577a4626c50e2b14c2dcc64725351746b5f8497ece0530107",
+    "internal/contacts/internal/service/contact/childtables.go": "24fff5eb19a093dcb04f478ade30e5a719bc21e49d97243a3b74d181915cee38",
+    "internal/contacts/internal/service/contact/memberships.go": "307966070e19a464161f241ad6ee30d4f9175d64a8c3a6021467438125ea9729",
+    "internal/contacts/internal/service/contact/persons.go": "d16f0486af5628c6cda350ef4dbde63745dbeff3b3ea6b4b75ef2e18abb1b54d",
+    "internal/contacts/internal/service/contact/quickadd.go": "14ec44ca695f039a1046fe13dc8f85f078499980e4536f761bc2aa8573ff3188",
+    "internal/contacts/internal/service/contact/reference.go": "3531607b29200ad2b9ee88ff956ca13b5fbd0c7917198825c7b419415f325d37"
+  },
+  "timestamp": "2026-01-02T03:04:05Z"
+}

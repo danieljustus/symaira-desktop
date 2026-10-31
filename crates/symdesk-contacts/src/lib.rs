@@ -4,6 +4,7 @@
 pub mod contact;
 pub mod import;
 pub mod keyprovider;
+pub mod membership;
 pub mod pipeline;
 pub mod relationship;
 pub mod security;
@@ -96,4 +97,68 @@ pub fn migrate(db: &mut Connection) -> rusqlite::Result<()> {
         tx.commit()?;
     }
     Ok(())
+}
+
+/// Go's `formatTime`: an RFC3339 instant rendered as UTC `RFC3339Nano`
+/// (fraction without trailing zeros, `Z` suffix). Text that is not a valid
+/// RFC3339 instant is returned unchanged, leaving rejection to the caller.
+#[must_use]
+pub fn utc_rfc3339nano(text: &str) -> String {
+    match parse_rfc3339(text) {
+        Some(parsed) => render_rfc3339nano(parsed.to_offset(time::UtcOffset::UTC)),
+        None => text.to_owned(),
+    }
+}
+
+/// The text Go's `json.Marshal` produces for a decoded `time.Time`: the
+/// instant keeps its own offset (only the fraction is trimmed).
+#[must_use]
+pub fn marshal_rfc3339nano(text: &str) -> String {
+    parse_rfc3339(text).map_or_else(|| text.to_owned(), render_rfc3339nano)
+}
+
+fn parse_rfc3339(text: &str) -> Option<time::OffsetDateTime> {
+    time::OffsetDateTime::parse(text, &time::format_description::well_known::Rfc3339).ok()
+}
+
+fn render_rfc3339nano(value: time::OffsetDateTime) -> String {
+    let mut out = format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+        value.year(),
+        u8::from(value.month()),
+        value.day(),
+        value.hour(),
+        value.minute(),
+        value.second()
+    );
+    let nanos = value.nanosecond();
+    if nanos != 0 {
+        out.push('.');
+        out.push_str(format!("{nanos:09}").trim_end_matches('0'));
+    }
+    let offset = value.offset();
+    if offset.is_utc() {
+        out.push('Z');
+    } else {
+        let (hours, minutes, _) = offset.as_hms();
+        let sign = if offset.whole_seconds() < 0 { '-' } else { '+' };
+        out.push_str(&format!("{sign}{:02}:{:02}", hours.abs(), minutes.abs()));
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::utc_rfc3339nano;
+
+    #[test]
+    fn normalizes_offsets_and_trims_fractions_like_go() {
+        assert_eq!(utc_rfc3339nano("2025-06-01T14:00:00+02:00"), "2025-06-01T12:00:00Z");
+        assert_eq!(utc_rfc3339nano("2025-06-01T12:00:00.500000000Z"), "2025-06-01T12:00:00.5Z");
+        assert_eq!(utc_rfc3339nano("2026-12-31T23:59:59.999999999-05:30"), "2027-01-01T05:29:59.999999999Z");
+        assert_eq!(utc_rfc3339nano("not a time"), "not a time");
+        assert_eq!(utc_rfc3339nano(""), "");
+        assert_eq!(super::marshal_rfc3339nano("2025-06-01T14:00:00.250+02:00"), "2025-06-01T14:00:00.25+02:00");
+        assert_eq!(super::marshal_rfc3339nano("2025-06-01T14:00:00-00:00"), "2025-06-01T14:00:00Z");
+    }
 }

@@ -181,7 +181,9 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
         }
         let id = (self.id)();
         let ts = (self.timestamp)();
-        let result=self.db.execute("INSERT INTO relationships(id,from_person_id,to_person_id,to_organization_id,relationship_type,valid_from,valid_to,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",params![id,input.from_person_id,if input.to_person_id.is_empty(){None}else{Some(&input.to_person_id)},if input.to_organization_id.is_empty(){None}else{Some(&input.to_organization_id)},input.relationship_type,input.valid_from,input.valid_to,input.notes,ts,ts]);
+        let valid_from = input.valid_from.as_deref().map(crate::utc_rfc3339nano);
+        let valid_to = input.valid_to.as_deref().map(crate::utc_rfc3339nano);
+        let result=self.db.execute("INSERT INTO relationships(id,from_person_id,to_person_id,to_organization_id,relationship_type,valid_from,valid_to,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",params![id,input.from_person_id,if input.to_person_id.is_empty(){None}else{Some(&input.to_person_id)},if input.to_organization_id.is_empty(){None}else{Some(&input.to_organization_id)},input.relationship_type,valid_from,valid_to,input.notes,ts,ts]);
         if let Err(e) = result {
             let cause = sql_error(e);
             if cause.message.contains("UNIQUE constraint failed") {
@@ -190,7 +192,7 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
                 } else {
                     ("to_person_id", &input.to_person_id)
                 };
-                return self.db.query_row(&format!("{REL_SELECT} WHERE from_person_id=? AND relationship_type=? AND COALESCE(valid_from,'')=COALESCE(?,'') AND {target}=?"),params![input.from_person_id,input.relationship_type,input.valid_from,id],relationship_row).map_err(|e|wrapped("internal","relationship.findExistingRelationship","failed to load existing relationship",e));
+                return self.db.query_row(&format!("{REL_SELECT} WHERE from_person_id=? AND relationship_type=? AND COALESCE(valid_from,'')=COALESCE(?,'') AND {target}=?"),params![input.from_person_id,input.relationship_type,valid_from,id],relationship_row).map_err(|e|wrapped("internal","relationship.findExistingRelationship","failed to load existing relationship",e));
             }
             let (kind, message) = if cause.message.contains("FOREIGN KEY constraint failed") {
                 ("invalid", "from/to entity does not exist")
@@ -249,7 +251,8 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
         }
         let id = (self.id)();
         let ts = (self.timestamp)();
-        self.db.execute(&format!("INSERT INTO follow_ups(id,{},due_at,notes,status,created_at,updated_at) VALUES(?,?,?,?,'open',?,?)",column(entity)),params![id,parent,input.due_at,input.notes,ts,ts]).map_err(|e|{
+        let due_at = crate::utc_rfc3339nano(&input.due_at);
+        self.db.execute(&format!("INSERT INTO follow_ups(id,{},due_at,notes,status,created_at,updated_at) VALUES(?,?,?,?,'open',?,?)",column(entity)),params![id,parent,due_at,input.notes,ts,ts]).map_err(|e|{
             let cause=sql_error(e);let (kind,message)=if cause.message.contains("FOREIGN KEY constraint failed"){("invalid","entity does not exist")}else{("internal","failed to insert follow-up")};error(kind,op,&format!("{message}: {cause}"))
         })?;
         self.get_follow_up(&id)
@@ -362,13 +365,19 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
         let occurred_at = if zero(&input.occurred_at) {
             (self.timestamp)()
         } else {
-            input.occurred_at.clone()
+            crate::utc_rfc3339nano(&input.occurred_at)
         };
         let id = (self.id)();
         let created_at = (self.timestamp)();
         self.db.execute(&format!("INSERT INTO interactions(id,{},kind,occurred_at,summary,external_ref,created_at) VALUES(?,?,?,?,?,?,?)",column(entity)),params![id,parent,input.kind,occurred_at,input.summary,input.external_ref,created_at]).map_err(|e|{
             let cause=sql_error(e);let (kind,message)=if cause.message.contains("CHECK constraint failed"){("invalid","external_reference interactions require an external_ref")}else if cause.message.contains("FOREIGN KEY constraint failed"){("invalid","entity does not exist")}else{("internal","failed to insert interaction")};error(kind,op,&format!("{message}: {cause}"))
         })?;
+        // Go returns the caller's instant (with its own offset) but stores UTC.
+        let occurred_at = if zero(&input.occurred_at) {
+            occurred_at
+        } else {
+            crate::marshal_rfc3339nano(&input.occurred_at)
+        };
         Ok(Interaction {
             id,
             kind: input.kind.clone(),
@@ -420,4 +429,147 @@ impl<'a, I: FnMut() -> String, T: FnMut() -> String> Service<'a, I, T> {
                 )
             })
     }
+
+    /// Interactions and follow-ups of one entity merged into a single feed,
+    /// newest instant first; equal instants keep list order (stable sort).
+    ///
+    /// # Errors
+    /// Returns the underlying list errors.
+    pub fn timeline(&mut self, entity: Entity, parent: &str) -> Result<Vec<TimelineEntry>, Error> {
+        let interactions = self.list_interactions(entity, parent)?.unwrap_or_default();
+        let follow_ups = self
+            .list_follow_ups(entity, parent, "all")
+            .map_err(|e| {
+                if entity == Entity::Organization {
+                    error(
+                        "internal",
+                        "relationship.OrganizationTimeline",
+                        &format!("failed to list follow-ups: {e}"),
+                    )
+                } else {
+                    e
+                }
+            })?
+            .unwrap_or_default();
+        let mut entries = Vec::with_capacity(interactions.len() + follow_ups.len());
+        for interaction in interactions {
+            entries.push(TimelineEntry {
+                kind: "interaction",
+                at: interaction.occurred_at.clone(),
+                interaction: Some(interaction),
+                follow_up: None,
+            });
+        }
+        for follow_up in follow_ups {
+            entries.push(TimelineEntry {
+                kind: "follow_up",
+                at: follow_up.due_at.clone(),
+                interaction: None,
+                follow_up: Some(follow_up),
+            });
+        }
+        entries.sort_by_key(|entry| std::cmp::Reverse(instant(&entry.at)));
+        Ok(entries)
+    }
+
+    /// Records (or, when this meeting was already imported for the entity,
+    /// returns) a `meeting` interaction; the flag is true only for a new one.
+    ///
+    /// # Errors
+    /// Returns Go's validation, lookup and insert errors.
+    pub fn import_meeting(
+        &mut self,
+        entity: Entity,
+        parent: &str,
+        input: &MeetingImportInput,
+    ) -> Result<(Interaction, bool), Error> {
+        let op = "relationship.importMeeting";
+        if input.meeting_id.trim().is_empty() {
+            return Err(error("invalid", op, "meeting id must not be empty"));
+        }
+        if let Some(existing) = self.find_by_external_ref(entity, parent, &input.meeting_id)? {
+            return Ok((existing, false));
+        }
+        let summary = [&input.summary, &input.title]
+            .into_iter()
+            .find(|candidate| !candidate.is_empty())
+            .map_or("Meeting", String::as_str)
+            .to_owned();
+        match self.add_interaction(
+            entity,
+            parent,
+            &InteractionInput {
+                kind: "meeting".to_owned(),
+                occurred_at: input.occurred_at.clone(),
+                summary,
+                external_ref: input.meeting_id.clone(),
+            },
+        ) {
+            Ok(created) => Ok((created, true)),
+            Err(e) => {
+                // A concurrent import of the same meeting wins through the
+                // unique index; fall back to its row like the Go service.
+                if e.message.contains("UNIQUE constraint failed")
+                    && let Some(existing) =
+                        self.find_by_external_ref(entity, parent, &input.meeting_id)?
+                {
+                    return Ok((existing, false));
+                }
+                Err(e)
+            }
+        }
+    }
+
+    fn find_by_external_ref(
+        &self,
+        entity: Entity,
+        parent: &str,
+        external_ref: &str,
+    ) -> Result<Option<Interaction>, Error> {
+        self.db
+            .query_row(
+                &format!(
+                    "{INTERACTION_SELECT} WHERE {} = ? AND kind = ? AND external_ref = ? LIMIT 1",
+                    column(entity)
+                ),
+                params![parent, "meeting", external_ref],
+                interaction_row,
+            )
+            .optional()
+            .map_err(|e| {
+                wrapped(
+                    "internal",
+                    "relationship.findInteractionByExternalRef",
+                    "failed to query interaction by external ref",
+                    e,
+                )
+            })
+    }
+}
+
+/// A reviewed SymMeet meeting. `meeting_id` is the only required field and
+/// becomes the interaction's opaque external reference.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default, rename_all = "PascalCase")]
+pub struct MeetingImportInput {
+    #[serde(rename = "MeetingID")]
+    pub meeting_id: String,
+    pub title: String,
+    pub summary: String,
+    pub occurred_at: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TimelineEntry {
+    pub kind: &'static str,
+    pub at: String,
+    pub interaction: Option<Interaction>,
+    pub follow_up: Option<FollowUp>,
+}
+
+/// Parses a stored RFC3339Nano instant; unparseable text sorts as Go's zero time.
+fn instant(text: &str) -> time::OffsetDateTime {
+    time::OffsetDateTime::parse(text, &time::format_description::well_known::Rfc3339)
+        .unwrap_or(time::PrimitiveDateTime::MIN.assume_utc())
 }

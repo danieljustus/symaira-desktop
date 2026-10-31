@@ -279,7 +279,7 @@ mod tests {
     fn retrieval_extract_go_fixture() {
         let f = fixture();
         assert_eq!(f.schema_version, 1);
-        assert_eq!(f.cases.len(), 60, "all Go extraction cases must execute");
+        assert_eq!(f.cases.len(), 126, "all Go extraction cases must execute");
         for c in &f.cases {
             assert!(compare(c), "{} sections drift", c.id);
         }

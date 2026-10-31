@@ -2632,6 +2632,7 @@ dependencies = [
  "base64 0.22.1",
  "cap-fs-ext",
  "cap-std",
+ "flate2",
  "lopdf",
  "notify",
  "noyalib",

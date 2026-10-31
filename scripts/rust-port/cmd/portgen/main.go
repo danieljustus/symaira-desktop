@@ -131,6 +131,7 @@ var fixturePaths = []string{
 	"testdata/port/retrieval/retrieval-bm25.json",
 	"testdata/port/retrieval/embedding-state.json",
 	"testdata/port/retrieval/retrieval-vector.json",
+	"testdata/port/retrieval/retrieval-ivf.json",
 	"testdata/port/retrieval/hybrid.json",
 	"testdata/port/retrieval/pending-rebuild.json",
 	"testdata/port/retrieval/retrieval-sections.json",

@@ -27,6 +27,7 @@ scraper = "0.29.0"
 quick-xml = "=0.41.0"
 zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
 lopdf = { version = "=0.46.0", default-features = false }
+flate2.workspace = true
 
 [dev-dependencies]
 base64.workspace = true

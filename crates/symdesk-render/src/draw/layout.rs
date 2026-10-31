@@ -454,6 +454,9 @@ fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
     // With a node id in more than one slot (never produced by the layout)
     // fall back to the full recount.
     let mut local = LocalCrossings::new(&interned);
+    // `layer` indexes both `layers` and `interned.layers`, which are mutated
+    // in lockstep; an iterator over one would borrow the other mutably.
+    #[allow(clippy::needless_range_loop)]
     for layer in 0..layers.len() {
         let mut changed = true;
         while changed {

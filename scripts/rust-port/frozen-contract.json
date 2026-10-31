@@ -140,6 +140,10 @@
       "ignored": 0,
       "passed": 4
     },
+    "cargo test -p symdesk-cli --locked --test recipe_run": {
+      "ignored": 0,
+      "passed": 3
+    },
     "cargo test -p symdesk-cli --locked --test recipe_validate": {
       "ignored": 0,
       "passed": 1

@@ -89,7 +89,7 @@ ingest-extraction-fixtures-generate:
 .PHONY: room-init-core-fixtures-generate room-init-core-differential
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
-.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
+.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential recipe-run-fixtures-generate recipe-run-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential index-symlink-cli-fixtures-generate index-symlink-cli-differential sources-cli-fixtures-generate sources-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
@@ -1467,6 +1467,18 @@ recipe-validate-fixtures-generate:
 recipe-validate-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test recipe_validate
+
+.PHONY: ai-compose-differential
+# RUST-012: provider selection/streaming, sibling-tool discovery and the
+# reviewed recipe runner, each replayed against Go-recorded fixtures.
+ai-compose-differential: ai-provider-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+
+recipe-run-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeRunProcessContract$$'
+
+recipe-run-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeRunProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test recipe_run
 
 .PHONY: mcp-write-differential mcp-write-fixtures-generate
 mcp-write-differential:

@@ -119,6 +119,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
 	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},
 	{"recipe validate CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeValidateCLIContract$"}, []string{"testdata/port/ai/recipe-validate.json"}, false},
+	{"recipe run CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRecipeRunProcessContract$"}, []string{"testdata/port/ai/recipe-run-process.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json", "testdata/port/render/v2/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},
 	{"vault resolution", []string{"test", "-count=1", "./internal/service", "-run", "TestVaultResolutionInventory"}, []string{"testdata/port/vault/resolution.json"}, false},

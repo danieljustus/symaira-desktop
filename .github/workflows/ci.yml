@@ -593,6 +593,11 @@ jobs:
         shell: bash
         run: make recipe-validate-differential
 
+      - name: Run native recipe run CLI differential
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make recipe-run-differential
+
       - name: Run native room watch stream differential
         shell: bash
         run: make room-watch-stream-differential

@@ -2592,6 +2592,7 @@ dependencies = [
  "symdesk-index",
  "symdesk-protocol",
  "symdesk-render",
+ "symdesk-service",
  "symdesk-vault",
  "time",
  "tokio",
@@ -2720,6 +2721,18 @@ dependencies = [
  "sha2 0.10.9",
  "symdesk-vault",
  "tiff",
+ "time",
+]
+
+[[package]]
+name = "symdesk-service"
+version = "0.0.0"
+dependencies = [
+ "noyalib",
+ "serde",
+ "serde_json",
+ "symdesk-core",
+ "symdesk-vault",
  "time",
 ]
 

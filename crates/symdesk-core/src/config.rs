@@ -780,6 +780,12 @@ fn clean_store_path(path: &Path) -> std::path::PathBuf {
     clean
 }
 
+/// Go `strconv.Quote` (`%q`) for diagnostics shared with sibling crates.
+#[must_use]
+pub fn go_quote(value: &str) -> String {
+    quote_artifact(value)
+}
+
 // strconv.Quote, not Rust Debug or JSON: control escapes differ in diagnostics.
 pub(crate) fn quote_artifact(value: &str) -> String {
     use std::{fmt::Write as _, sync::LazyLock};

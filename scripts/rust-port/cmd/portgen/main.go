@@ -158,6 +158,7 @@ var fixturePaths = []string{
 	"testdata/port/ai/compose-probe.json",
 	"testdata/port/ai/compose-resolve.json",
 	"testdata/port/ai/recipe-validate.json",
+	"testdata/port/ai/recipe-run-process.json",
 	"testdata/port/render/html-note.json",
 	"testdata/port/render/export-markdown.json",
 	"testdata/port/render/export-vault.json",

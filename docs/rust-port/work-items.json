@@ -291,7 +291,7 @@
     {
       "id": "RUST-012",
       "title": "Port AI composition recipes and external adapters",
-      "status": "blocked",
+      "status": "in_progress",
       "depends_on": [
         "RUST-008"
       ],

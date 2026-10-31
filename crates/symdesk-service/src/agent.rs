@@ -637,12 +637,12 @@ fn collect_document_paths(value: &Value, paths: &mut std::collections::BTreeSet<
     match value {
         Value::Object(map) => {
             for (key, child) in map {
-                if matches!(key.as_str(), "path" | "file" | "note") {
-                    if let Some(path) = child.as_str() {
-                        let cleaned = clean_read_path(path);
-                        if !cleaned.is_empty() {
-                            paths.insert(cleaned);
-                        }
+                if matches!(key.as_str(), "path" | "file" | "note")
+                    && let Some(path) = child.as_str()
+                {
+                    let cleaned = clean_read_path(path);
+                    if !cleaned.is_empty() {
+                        paths.insert(cleaned);
                     }
                 }
                 collect_document_paths(child, paths);
@@ -793,7 +793,7 @@ pub fn prune_results(
                 files.push((entry.path(), metadata.modified()?));
             }
         }
-        files.sort_by(|a, b| b.1.cmp(&a.1));
+        files.sort_by_key(|file| std::cmp::Reverse(file.1));
         for (index, (path, modified)) in files.iter().enumerate() {
             let too_old = cutoff.is_some_and(|cutoff| *modified < cutoff);
             let too_many = max_per_task > 0 && index >= max_per_task;
@@ -1091,24 +1091,20 @@ pub fn run_agent(
             }
             // Externalize over-threshold results (issue #406): the model gets a
             // summary plus the handle; on a write failure the output stays inline.
-            if !failed {
-                if let Some(externalizer) = &externalizer {
-                    if externalizer.should_externalize(&call.name, output.len()) {
-                        if let Ok(handle) =
-                            externalizer.externalize(&call.name, iterations, &output)
-                        {
-                            let mut summary = summarize(&output, EXTERNALIZE_PREVIEW);
-                            summary.extend_from_slice(
-                                format!(
-                                    "\n\n[Full result externalized to {handle} — call desk_read_result with handle=\"{handle}\" to read it.]"
-                                )
-                                .as_bytes(),
-                            );
-                            output = summary;
-                            truncated = false;
-                        }
-                    }
-                }
+            if !failed
+                && let Some(externalizer) = &externalizer
+                && externalizer.should_externalize(&call.name, output.len())
+                && let Ok(handle) = externalizer.externalize(&call.name, iterations, &output)
+            {
+                let mut summary = summarize(&output, EXTERNALIZE_PREVIEW);
+                summary.extend_from_slice(
+                    format!(
+                        "\n\n[Full result externalized to {handle} — call desk_read_result with handle=\"{handle}\" to read it.]"
+                    )
+                    .as_bytes(),
+                );
+                output = summary;
+                truncated = false;
             }
             emit(AiEvent::tool_result(
                 iterations,

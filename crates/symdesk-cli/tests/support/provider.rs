@@ -215,10 +215,10 @@ impl Inner {
             thread::sleep(Duration::from_millis(turn.delay_ms));
         }
         let mut reply = turn.body.clone();
-        if reply.contains(HANDLE_TOKEN) {
-            if let Some(handle) = externalized_handle(&previous) {
-                reply = reply.replace(HANDLE_TOKEN, &handle);
-            }
+        if reply.contains(HANDLE_TOKEN)
+            && let Some(handle) = externalized_handle(&previous)
+        {
+            reply = reply.replace(HANDLE_TOKEN, &handle);
         }
         let status = if turn.status == 0 { 200 } else { turn.status };
         let content_type = if path.starts_with("/v1/") && status == 200 {

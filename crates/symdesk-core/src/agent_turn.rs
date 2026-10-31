@@ -664,14 +664,14 @@ fn read_anthropic<R: BufRead>(
             Some("content_block_stop") => {
                 let Some(index) = index else { continue };
                 let key = index as i64;
-                if partials.get(&key).is_some_and(|p| !p.input.is_empty()) {
-                    if let Some(partial) = partials.remove(&key) {
-                        result.tool_calls.push(ToolCall {
-                            id: partial.id,
-                            name: partial.name,
-                            input: partial.input,
-                        });
-                    }
+                if partials.get(&key).is_some_and(|p| !p.input.is_empty())
+                    && let Some(partial) = partials.remove(&key)
+                {
+                    result.tool_calls.push(ToolCall {
+                        id: partial.id,
+                        name: partial.name,
+                        input: partial.input,
+                    });
                 }
             }
             Some("message_delta") => {

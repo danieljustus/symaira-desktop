@@ -132,12 +132,14 @@ fn run_replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     } else {
         if !provider.wait_started(Duration::from_secs(20)) {
             let _ = child.kill();
+            let _ = child.wait();
             return Err(format!("{label}: the provider never received a request"));
         }
         if !case.wait_for.is_empty()
             && !wait_for_text(&stdout_buffer, &case.wait_for, Duration::from_secs(20))
         {
             let _ = child.kill();
+            let _ = child.wait();
             return Err(format!(
                 "{label}: CLI never printed {:?}; stdout={:?}",
                 case.wait_for,

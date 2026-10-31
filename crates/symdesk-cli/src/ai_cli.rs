@@ -7,13 +7,14 @@ use std::{
     time::Duration,
 };
 
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command};
 use serde::Serialize;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symaira_core_llm::{
     CancellationToken, ChatOptions, ClientBuilder, GenerateOption, Message, lookup,
 };
 use symdesk_index::{SearchSource, SourceRegistry, open_for_vault};
+use symdesk_service::agent::{AiEvent, check_citation_warnings};
 
 const DEFAULT_ANTHROPIC_MODEL: &str = "claude-sonnet-5";
 
@@ -28,127 +29,56 @@ pub fn transform_cli() -> Command {
         .arg(Arg::new("text").long("text").num_args(1))
 }
 
-#[derive(Serialize)]
-struct AskEvent {
-    #[serde(rename = "type")]
-    kind: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    text: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    snippet: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    score: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tool_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    status: Option<String>,
-}
-
-impl AskEvent {
-    /// `%v` of Go's `ai.AIEvent`: Type, Text, Path, Title, Snippet, Score,
-    /// ToolName, Status, Iteration, ToolInputs, ToolOutput,
-    /// ToolOutputTruncated, CitationWarnings, ReadPaths, TokenUsage,
-    /// ContextWindow. Only the ask path's populated fields exist here; the
-    /// agentic-loop fields print as their zero values (`0`, `[]`, `false`).
-    fn go_value_format(&self) -> String {
-        let text = |value: &Option<String>| value.clone().unwrap_or_default();
-        format!(
-            "{{{} {} {} {} {} {} {} {} 0 []  false [] [] 0 0}}",
-            self.kind,
-            text(&self.text),
-            text(&self.path),
-            text(&self.title),
-            text(&self.snippet),
-            go_float_v(self.score.unwrap_or(0.0)),
-            text(&self.tool_name),
-            text(&self.status),
-        )
-    }
-
-    fn tool(status: &str) -> Self {
-        Self {
-            kind: "tool".to_owned(),
-            text: None,
-            path: None,
-            title: None,
-            snippet: None,
-            score: None,
-            tool_name: Some("search".to_owned()),
-            status: Some(status.to_owned()),
-        }
-    }
-
-    fn citation(path: &str, title: &str, snippet: &str, score: f64) -> Self {
-        Self {
-            kind: "citation".to_owned(),
-            text: None,
-            path: Some(path.to_owned()),
-            title: Some(title.to_owned()),
-            snippet: (!snippet.is_empty()).then(|| snippet.to_owned()),
-            score: (score != 0.0).then_some(score),
-            tool_name: None,
-            status: None,
-        }
-    }
-
-    fn answer(text: &str) -> Self {
-        Self {
-            kind: "answer".to_owned(),
-            text: Some(text.to_owned()),
-            path: None,
-            title: None,
-            snippet: None,
-            score: None,
-            tool_name: None,
-            status: None,
-        }
-    }
-
-    fn done() -> Self {
-        Self {
-            kind: "done".to_owned(),
-            text: None,
-            path: None,
-            title: None,
-            snippet: None,
-            score: None,
-            tool_name: None,
-            status: None,
-        }
-    }
-}
-
-/// Go `%v` for a float64: shortest round-trip digits in `%g` form with the
-/// exponent threshold at 21 (`strconv.FormatFloat(v, 'g', -1, 64)` as fmt
-/// applies it).
-fn go_float_v(value: f64) -> String {
-    if value == 0.0 {
-        return "0".to_owned();
-    }
-    let scientific = format!("{value:e}");
-    let (mantissa, exponent) = scientific.split_once('e').unwrap_or((&scientific, "0"));
-    let exponent: i32 = exponent.parse().unwrap_or(0);
-    if (-4..21).contains(&exponent) {
-        return format!("{value}");
-    }
-    format!(
-        "{mantissa}e{}{:02}",
-        if exponent < 0 { '-' } else { '+' },
-        exponent.abs()
-    )
-}
-
 pub fn ask_cli() -> Command {
-    Command::new("ask").arg(Arg::new("query").required(true))
+    Command::new("ask")
+        .arg(Arg::new("query").required(true))
+        .arg(
+            Arg::new("agent")
+                .long("agent")
+                .action(ArgAction::SetTrue)
+                .help("run the bounded agentic tool loop (read-only tools only)"),
+        )
+        .arg(
+            Arg::new("notebook")
+                .long("notebook")
+                .num_args(1)
+                .help("restrict retrieval and citations to this notebook's sources (issue #425)"),
+        )
+}
+
+/// Writes events to stdout as they happen, one flushed line each: Go's
+/// `outputStream` prints `%v` of the whole `ai.AIEvent` in text mode and
+/// encodes it as NDJSON with `--json`.
+pub(crate) struct EventSink {
+    json: bool,
+}
+
+impl EventSink {
+    pub(crate) fn new(json: bool) -> Self {
+        Self { json }
+    }
+
+    pub(crate) fn emit(&self, event: &AiEvent) -> Result<(), String> {
+        let mut line = if self.json {
+            event.json_line()?.into_bytes()
+        } else {
+            event.go_value_format()
+        };
+        line.push(b'\n');
+        let mut out = io::stdout().lock();
+        out.write_all(&line)
+            .and_then(|()| out.flush())
+            .map_err(|error| error.to_string())
+    }
 }
 
 pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
     let query = command
         .get_one::<String>("query")
+        .map(String::as_str)
+        .unwrap_or_default();
+    let notebook = command
+        .get_one::<String>("notebook")
         .map(String::as_str)
         .unwrap_or_default();
     let root = match super::resolve_vault(vault) {
@@ -163,73 +93,160 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         Ok(sidecar) => sidecar,
         Err(error) => return super::emit_error(error.to_string(), output_json),
     };
-    let sources = match SourceRegistry::open(&root).and_then(|registry| registry.list()) {
-        Ok(sources) => sources,
-        Err(error) => return super::emit_error(error.to_string(), output_json),
+    let sink = EventSink::new(output_json);
+    let outcome = if command.get_flag("agent") {
+        // The loop's tools open fresh sidecars per call; release this handle.
+        drop(sidecar);
+        crate::agent_cli::run(&root, query, notebook, &config, &sink)
+    } else if notebook.is_empty() {
+        run_vault_ask(&root, query, &config, &sidecar, &sink)
+    } else {
+        run_notebook_ask(&root, query, notebook, &config, &sidecar, &sink)
     };
+    match outcome {
+        Ok(()) => super::process_exit(CoreExitCode::Ok),
+        Err(error) => super::emit_error(error, output_json),
+    }
+}
 
-    let hits = match search_for_ask(&root, query, None, &sources, &sidecar) {
+fn run_vault_ask(
+    root: &Path,
+    query: &str,
+    config: &symdesk_core::config::Config,
+    sidecar: &symdesk_index::Sidecar,
+    sink: &EventSink,
+) -> Result<(), String> {
+    let sources = SourceRegistry::open(root)
+        .and_then(|registry| registry.list())
+        .map_err(|error| error.to_string())?;
+    sink.emit(&AiEvent::tool("search", "running"))?;
+    let hits = match search_for_ask(root, query, None, &sources, sidecar) {
         Ok(hits) => hits,
-        Err(error) => return super::emit_error(error, output_json),
+        Err(error) => {
+            sink.emit(&AiEvent::tool("search", "error"))?;
+            sink.emit(&AiEvent::answer(&format!("Search failed: {error}")))?;
+            return sink.emit(&AiEvent::done());
+        }
     };
-
-    let mut events = vec![AskEvent::tool("running"), AskEvent::tool("done")];
-    let paths = hits
-        .iter()
-        .map(|hit| ask_display_path(&root, &hit.path, &sources))
-        .collect::<Vec<_>>();
-    for (hit, path) in hits.iter().zip(&paths) {
-        events.push(AskEvent::citation(
-            path,
-            &hit.title,
-            &hit.snippet,
-            hit.score,
-        ));
-    }
-    events.push(AskEvent::tool("running"));
-    if let Some(event) = events.last_mut() {
-        event.tool_name = Some("llm".to_owned());
-    }
+    sink.emit(&AiEvent::tool("search", "done"))?;
     let docs: Vec<symdesk_service::ai::Doc> = hits
         .iter()
-        .zip(&paths)
-        .map(|(hit, path)| symdesk_service::ai::Doc {
-            path: path.clone(),
+        .map(|hit| symdesk_service::ai::Doc {
+            path: ask_display_path(root, &hit.path, &sources),
             title: hit.title.clone(),
             snippet: hit.snippet.clone(),
         })
         .collect();
-    for chunk in ask_chunks(&config, query, &docs) {
-        events.push(AskEvent::answer(&chunk));
+    for (hit, doc) in hits.iter().zip(&docs) {
+        sink.emit(&AiEvent::citation(
+            &doc.path,
+            &hit.title,
+            &hit.snippet,
+            hit.score,
+        ))?;
     }
-    events.push(AskEvent::tool("done"));
-    if let Some(event) = events.last_mut() {
-        event.tool_name = Some("llm".to_owned());
-    }
-    events.push(AskEvent::done());
-    emit_ask_events(&events, output_json)
+    sink.emit(&AiEvent::tool("llm", "running"))?;
+    ask_stream(config, query, &docs, None, &mut |chunk| {
+        sink.emit(&AiEvent::answer(chunk))
+    })?;
+    sink.emit(&AiEvent::tool("llm", "done"))?;
+    sink.emit(&AiEvent::done())
 }
 
-/// Go `ai.Ask` through the shared service composition: the configured
-/// provider (Ollama, Anthropic or the Hermes CLI backend), or the honest
-/// not-configured answer with the top three results.
-pub(crate) fn ask_chunks(
+/// Go `Service.AskScoped`: retrieval and citations come from the notebook's
+/// sources only; a citation-shaped link outside them is flagged, never blocked.
+fn run_notebook_ask(
+    root: &Path,
+    query: &str,
+    notebook: &str,
+    config: &symdesk_core::config::Config,
+    sidecar: &symdesk_index::Sidecar,
+    sink: &EventSink,
+) -> Result<(), String> {
+    sink.emit(&AiEvent::tool("search", "running"))?;
+    let (hits, in_scope) =
+        match symdesk_protocol::search_notebook_ask_sources(root, notebook, query, sidecar) {
+            Ok(found) => found,
+            Err(error) => {
+                sink.emit(&AiEvent::tool("search", "error"))?;
+                sink.emit(&AiEvent::answer(&format!("Notebook not found: {error}")))?;
+                return sink.emit(&AiEvent::done());
+            }
+        };
+    sink.emit(&AiEvent::tool("search", "done"))?;
+    for hit in &hits {
+        sink.emit(&AiEvent::citation(
+            &hit.path,
+            &hit.title,
+            &hit.snippet,
+            hit.score,
+        ))?;
+    }
+    sink.emit(&AiEvent::tool("llm", "running"))?;
+    let docs: Vec<symdesk_service::ai::Doc> = hits
+        .iter()
+        .map(|hit| symdesk_service::ai::Doc {
+            path: hit.path.clone(),
+            title: hit.title.clone(),
+            snippet: hit.snippet.clone(),
+        })
+        .collect();
+    let mut answer = String::new();
+    ask_stream(config, query, &docs, None, &mut |chunk| {
+        answer.push_str(chunk);
+        sink.emit(&AiEvent::answer(chunk))
+    })?;
+    sink.emit(&AiEvent::tool("llm", "done"))?;
+    let mut done = AiEvent::done();
+    done.citation_warnings = check_citation_warnings(&answer, &in_scope);
+    done.read_paths = in_scope;
+    sink.emit(&done)
+}
+
+/// Go `ai.Ask` through the shared service composition: the configured provider
+/// (Ollama, Anthropic or the Hermes CLI backend), or the honest not-configured
+/// answer with the top three results. Chunks reach `on_chunk` as they arrive; a
+/// failing consumer stops delivery and its first error is returned.
+pub(crate) fn ask_stream(
     config: &symdesk_core::config::Config,
     query: &str,
     docs: &[symdesk_service::ai::Doc],
-) -> Vec<String> {
+    cancel: Option<&symdesk_core::cancel::CancelToken>,
+    on_chunk: &mut dyn FnMut(&str) -> Result<(), String>,
+) -> Result<(), String> {
+    let mut failure: Option<String> = None;
+    let mut deliver = |chunk: &str| {
+        if failure.is_none() {
+            failure = on_chunk(chunk).err();
+        }
+    };
     let mut environment = match symdesk_core::config::environment_snapshot() {
         Ok(environment) => environment,
-        Err(error) => return vec![format!("⚠️ Request failed: {error}\n")],
+        Err(error) => {
+            deliver(&format!("⚠️ Request failed: {error}\n"));
+            return failure.map_or(Ok(()), Err);
+        }
     };
     if let Ok(path) = std::env::var("PATH") {
         environment.insert("PATH".to_owned(), path);
     }
     let mut resolve_key = |reference: &str| crate::ai_secrets::resolve_key(reference);
     let mut context = symdesk_service::ai::Context::new(config, &environment, &mut resolve_key);
+    context.cancel = cancel;
+    symdesk_service::ai::ask(&mut context, query, docs, &mut deliver);
+    failure.map_or(Ok(()), Err)
+}
+
+/// Aggregated variant for non-streaming consumers (MCP `desk_ask`).
+pub(crate) fn ask_chunks(
+    config: &symdesk_core::config::Config,
+    query: &str,
+    docs: &[symdesk_service::ai::Doc],
+) -> Vec<String> {
     let mut chunks = Vec::new();
-    symdesk_service::ai::ask(&mut context, query, docs, &mut |chunk| {
+    let _ = ask_stream(config, query, docs, None, &mut |chunk| {
         chunks.push(chunk.to_owned());
+        Ok(())
     });
     chunks
 }
@@ -243,26 +260,6 @@ pub(crate) fn ask_display_path(root: &Path, path: &str, sources: &[SearchSource]
     } else {
         super::relative_path(root, path)
     }
-}
-
-fn emit_ask_events(events: &[AskEvent], output_json: bool) -> ExitCode {
-    let mut output = String::new();
-    for event in events {
-        if output_json {
-            match serde_json::to_string(event) {
-                Ok(event) => output.push_str(&format!("{}\n", super::go_escape_json(event))),
-                Err(error) => {
-                    return super::write_stderr(&format!("{error}\n"), CoreExitCode::Generic);
-                }
-            }
-        } else {
-            // Go's `outputStream` prints `fmt.Printf("%v\n", event)` of the
-            // whole `ai.AIEvent` struct in text mode.
-            output.push_str(&event.go_value_format());
-            output.push('\n');
-        }
-    }
-    super::write_stdout(output)
 }
 
 pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode {
@@ -455,19 +452,6 @@ fn ollama_failure_message(error: &OllamaTransformError) -> String {
     }
 }
 
-pub(crate) fn ensure_offline_ask_provider() -> Result<(), String> {
-    let config = load_config()?;
-    let provider = if config.llm_provider.is_empty() {
-        "ollama"
-    } else {
-        config.llm_provider.as_str()
-    };
-    if provider != "ollama" || !config.ollama_url.is_empty() {
-        return Err(format!("Rust ask provider {provider:?} is not implemented"));
-    }
-    Ok(())
-}
-
 pub(crate) fn search_for_ask(
     vault: &std::path::Path,
     query: &str,
@@ -502,14 +486,6 @@ pub(crate) fn search_for_ask(
             .map(|response| crate::search_cli::lexical_hits(response.results, sources))
             .map_err(|error| error.to_string()),
     }
-}
-
-pub(crate) fn offline_ask_chunks(paths: &[String]) -> Vec<String> {
-    let mut chunks = vec![
-        "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n".to_owned(),
-    ];
-    chunks.extend(paths.iter().take(3).map(|path| format!("- [[{path}]]\n")));
-    chunks
 }
 
 fn run_anthropic_transform(

@@ -21,7 +21,10 @@
   },
   "fixture_checksums": {
     "testdata/port/ai/ai-compose.json": "1ab3668f99a0bcd49089192549acf31d13b60537e0e1319728969d4a98d677bb",
+    "testdata/port/ai/ask-agent-process.json": "27b1d5a1faa03f3c58f93c6a3d9d97778763d66e4445b3af3d4f2c068157e664",
+    "testdata/port/ai/ask-cancel-process.json": "3a82129ac6542e1440d7f769ab61d457fafafe691b6194e484aeba81284c483d",
     "testdata/port/ai/ask-hermes-process.json": "f917bbfcdca878c1e9ece67d2b6876183e68641f826f7d8b9feb12b10f614511",
+    "testdata/port/ai/ask-provider-mcp.json": "b9a198ec517f31d28dec897f76ccd344de0d77392b06acd063b57fd8b62dff08",
     "testdata/port/ai/compose-memory.json": "4caeb36d0637e3005af948fe86ed5e839463fd49d6662ca78c4fa3dfdcb1cba4",
     "testdata/port/ai/compose-probe.json": "16a6466206a814e13941d31020c0727aca372e7baf03b7ece514a4537ec75ecd",
     "testdata/port/ai/compose-resolve.json": "22ca77d991e3a58dbd22d151c98ffc4b806692091a8e20388076087bfc8ebde4",

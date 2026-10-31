@@ -1,7 +1,7 @@
 //! Shared Go `internal/ai` provider/config and one-shot streaming boundary.
 //! Secret resolution is injected; this module never reads a keychain or ambient
 //! API key. Sibling Hermes execution remains a separate, unported adapter.
-use crate::config::Config;
+use crate::{cancel::CancelToken, config::Config};
 use std::{
     cell::RefCell,
     collections::BTreeMap,
@@ -12,6 +12,8 @@ use symaira_core_llm::{ChatOptions, ClientBuilder, GenerateOption, Message, look
 use ureq::AsSendBody;
 
 pub const NOT_CONFIGURED: &str = "AI feature not configured";
+/// Go's `context.Canceled` text.
+pub const CANCELED: &str = "context canceled";
 const DEFAULT_MODEL: &str = "llama3.2";
 const DEFAULT_ANTHROPIC_MODEL: &str = "claude-sonnet-5";
 
@@ -89,12 +91,33 @@ impl Provider {
     pub fn stream(
         &self,
         prompt: &str,
-        mut on_chunk: impl FnMut(&str) -> symaira_core_llm::Result<()>,
+        on_chunk: impl FnMut(&str) -> symaira_core_llm::Result<()>,
     ) -> Result<(), String> {
-        let descriptor = lookup(self.kind)
-            .ok_or_else(|| format!("{} descriptor missing from embedded registry", self.kind))?;
+        let config = self.agent_config().build();
+        self.stream_with(prompt, config.into(), on_chunk)
+    }
+    /// Like [`Self::stream`], but an in-flight request can be cancelled: the
+    /// token closes the provider connection, so a blocked read returns and the
+    /// provider observes the disconnect (Go's `context` cancellation).
+    pub fn stream_cancellable(
+        &self,
+        prompt: &str,
+        cancel: &CancelToken,
+        on_chunk: impl FnMut(&str) -> symaira_core_llm::Result<()>,
+    ) -> Result<(), String> {
+        if cancel.is_cancelled() {
+            return Err(CANCELED.to_owned());
+        }
+        let config = self.agent_config().proxy(None).build();
+        let result = self.stream_with(prompt, cancel.agent(config), on_chunk);
+        if cancel.is_cancelled() {
+            return Err(CANCELED.to_owned());
+        }
+        result
+    }
+    fn agent_config(&self) -> ureq::config::ConfigBuilder<ureq::typestate::AgentScope> {
         let max_tokens = self.max_tokens;
-        let agent = ureq::Agent::config_builder()
+        ureq::Agent::config_builder()
             .http_status_as_error(false)
             .max_redirects(0)
             .timeout_global(Some(Duration::from_secs(5 * 60)))
@@ -104,8 +127,15 @@ impl Provider {
                     go_request_json(request, next, max_tokens)
                 },
             )
-            .build()
-            .into();
+    }
+    fn stream_with(
+        &self,
+        prompt: &str,
+        agent: ureq::Agent,
+        mut on_chunk: impl FnMut(&str) -> symaira_core_llm::Result<()>,
+    ) -> Result<(), String> {
+        let descriptor = lookup(self.kind)
+            .ok_or_else(|| format!("{} descriptor missing from embedded registry", self.kind))?;
         let mut builder = ClientBuilder::new(descriptor.clone(), "")
             .api_key(&self.api_key)
             .agent(agent)

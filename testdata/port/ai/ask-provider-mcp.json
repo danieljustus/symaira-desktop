@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "hermes_script": "#!/bin/sh\nlog=\"$FAKE_HERMES_LOG\"\n{\n  printf 'argc=%s\\n' \"$#\"\n  for a in \"$@\"; do printf 'arg\u003c\u003c%s\u003e\u003e\\n' \"$a\"; done\n} \u003e\u003e \"$log\"\ncase \"$FAKE_HERMES_MODE\" in\n  ok) printf 'Answer from \u003chermes\u003e [[alpha.md]]\\n' ;;\n  warn) printf 'Findings.\\n\\n## Sources\\n- [[notes/outside.md]]\\n- [[alpha.md]]\\n' ;;\n  fail) printf 'hermes exploded\\n' \u003e\u00262; exit 4 ;;\n  *) exit 9 ;;\nesac\n",
+  "files": {
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
+    "bulk/note-001.md": "---\ntitle: Bulk archive note number 001 with padding words\n---\n# Bulk 001\n\nFiller text.\n",
+    "bulk/note-002.md": "---\ntitle: Bulk archive note number 002 with padding words\n---\n# Bulk 002\n\nFiller text.\n",
+    "bulk/note-003.md": "---\ntitle: Bulk archive note number 003 with padding words\n---\n# Bulk 003\n\nFiller text.\n",
+    "bulk/note-004.md": "---\ntitle: Bulk archive note number 004 with padding words\n---\n# Bulk 004\n\nFiller text.\n",
+    "bulk/note-005.md": "---\ntitle: Bulk archive note number 005 with padding words\n---\n# Bulk 005\n\nFiller text.\n",
+    "bulk/note-006.md": "---\ntitle: Bulk archive note number 006 with padding words\n---\n# Bulk 006\n\nFiller text.\n",
+    "bulk/note-007.md": "---\ntitle: Bulk archive note number 007 with padding words\n---\n# Bulk 007\n\nFiller text.\n",
+    "bulk/note-008.md": "---\ntitle: Bulk archive note number 008 with padding words\n---\n# Bulk 008\n\nFiller text.\n",
+    "bulk/note-009.md": "---\ntitle: Bulk archive note number 009 with padding words\n---\n# Bulk 009\n\nFiller text.\n",
+    "bulk/note-010.md": "---\ntitle: Bulk archive note number 010 with padding words\n---\n# Bulk 010\n\nFiller text.\n",
+    "bulk/note-011.md": "---\ntitle: Bulk archive note number 011 with padding words\n---\n# Bulk 011\n\nFiller text.\n",
+    "bulk/note-012.md": "---\ntitle: Bulk archive note number 012 with padding words\n---\n# Bulk 012\n\nFiller text.\n",
+    "bulk/note-013.md": "---\ntitle: Bulk archive note number 013 with padding words\n---\n# Bulk 013\n\nFiller text.\n",
+    "bulk/note-014.md": "---\ntitle: Bulk archive note number 014 with padding words\n---\n# Bulk 014\n\nFiller text.\n",
+    "bulk/note-015.md": "---\ntitle: Bulk archive note number 015 with padding words\n---\n# Bulk 015\n\nFiller text.\n",
+    "bulk/note-016.md": "---\ntitle: Bulk archive note number 016 with padding words\n---\n# Bulk 016\n\nFiller text.\n",
+    "bulk/note-017.md": "---\ntitle: Bulk archive note number 017 with padding words\n---\n# Bulk 017\n\nFiller text.\n",
+    "bulk/note-018.md": "---\ntitle: Bulk archive note number 018 with padding words\n---\n# Bulk 018\n\nFiller text.\n",
+    "bulk/note-019.md": "---\ntitle: Bulk archive note number 019 with padding words\n---\n# Bulk 019\n\nFiller text.\n",
+    "bulk/note-020.md": "---\ntitle: Bulk archive note number 020 with padding words\n---\n# Bulk 020\n\nFiller text.\n",
+    "bulk/note-021.md": "---\ntitle: Bulk archive note number 021 with padding words\n---\n# Bulk 021\n\nFiller text.\n",
+    "bulk/note-022.md": "---\ntitle: Bulk archive note number 022 with padding words\n---\n# Bulk 022\n\nFiller text.\n",
+    "bulk/note-023.md": "---\ntitle: Bulk archive note number 023 with padding words\n---\n# Bulk 023\n\nFiller text.\n",
+    "bulk/note-024.md": "---\ntitle: Bulk archive note number 024 with padding words\n---\n# Bulk 024\n\nFiller text.\n",
+    "bulk/note-025.md": "---\ntitle: Bulk archive note number 025 with padding words\n---\n# Bulk 025\n\nFiller text.\n",
+    "bulk/note-026.md": "---\ntitle: Bulk archive note number 026 with padding words\n---\n# Bulk 026\n\nFiller text.\n",
+    "bulk/note-027.md": "---\ntitle: Bulk archive note number 027 with padding words\n---\n# Bulk 027\n\nFiller text.\n",
+    "bulk/note-028.md": "---\ntitle: Bulk archive note number 028 with padding words\n---\n# Bulk 028\n\nFiller text.\n",
+    "bulk/note-029.md": "---\ntitle: Bulk archive note number 029 with padding words\n---\n# Bulk 029\n\nFiller text.\n",
+    "bulk/note-030.md": "---\ntitle: Bulk archive note number 030 with padding words\n---\n# Bulk 030\n\nFiller text.\n",
+    "bulk/note-031.md": "---\ntitle: Bulk archive note number 031 with padding words\n---\n# Bulk 031\n\nFiller text.\n",
+    "bulk/note-032.md": "---\ntitle: Bulk archive note number 032 with padding words\n---\n# Bulk 032\n\nFiller text.\n",
+    "bulk/note-033.md": "---\ntitle: Bulk archive note number 033 with padding words\n---\n# Bulk 033\n\nFiller text.\n",
+    "bulk/note-034.md": "---\ntitle: Bulk archive note number 034 with padding words\n---\n# Bulk 034\n\nFiller text.\n",
+    "bulk/note-035.md": "---\ntitle: Bulk archive note number 035 with padding words\n---\n# Bulk 035\n\nFiller text.\n",
+    "bulk/note-036.md": "---\ntitle: Bulk archive note number 036 with padding words\n---\n# Bulk 036\n\nFiller text.\n",
+    "bulk/note-037.md": "---\ntitle: Bulk archive note number 037 with padding words\n---\n# Bulk 037\n\nFiller text.\n",
+    "bulk/note-038.md": "---\ntitle: Bulk archive note number 038 with padding words\n---\n# Bulk 038\n\nFiller text.\n",
+    "bulk/note-039.md": "---\ntitle: Bulk archive note number 039 with padding words\n---\n# Bulk 039\n\nFiller text.\n",
+    "bulk/note-040.md": "---\ntitle: Bulk archive note number 040 with padding words\n---\n# Bulk 040\n\nFiller text.\n",
+    "bulk/note-041.md": "---\ntitle: Bulk archive note number 041 with padding words\n---\n# Bulk 041\n\nFiller text.\n",
+    "bulk/note-042.md": "---\ntitle: Bulk archive note number 042 with padding words\n---\n# Bulk 042\n\nFiller text.\n",
+    "bulk/note-043.md": "---\ntitle: Bulk archive note number 043 with padding words\n---\n# Bulk 043\n\nFiller text.\n",
+    "bulk/note-044.md": "---\ntitle: Bulk archive note number 044 with padding words\n---\n# Bulk 044\n\nFiller text.\n",
+    "bulk/note-045.md": "---\ntitle: Bulk archive note number 045 with padding words\n---\n# Bulk 045\n\nFiller text.\n",
+    "bulk/note-046.md": "---\ntitle: Bulk archive note number 046 with padding words\n---\n# Bulk 046\n\nFiller text.\n",
+    "bulk/note-047.md": "---\ntitle: Bulk archive note number 047 with padding words\n---\n# Bulk 047\n\nFiller text.\n",
+    "bulk/note-048.md": "---\ntitle: Bulk archive note number 048 with padding words\n---\n# Bulk 048\n\nFiller text.\n",
+    "bulk/note-049.md": "---\ntitle: Bulk archive note number 049 with padding words\n---\n# Bulk 049\n\nFiller text.\n",
+    "bulk/note-050.md": "---\ntitle: Bulk archive note number 050 with padding words\n---\n# Bulk 050\n\nFiller text.\n",
+    "bulk/note-051.md": "---\ntitle: Bulk archive note number 051 with padding words\n---\n# Bulk 051\n\nFiller text.\n",
+    "bulk/note-052.md": "---\ntitle: Bulk archive note number 052 with padding words\n---\n# Bulk 052\n\nFiller text.\n",
+    "bulk/note-053.md": "---\ntitle: Bulk archive note number 053 with padding words\n---\n# Bulk 053\n\nFiller text.\n",
+    "bulk/note-054.md": "---\ntitle: Bulk archive note number 054 with padding words\n---\n# Bulk 054\n\nFiller text.\n",
+    "bulk/note-055.md": "---\ntitle: Bulk archive note number 055 with padding words\n---\n# Bulk 055\n\nFiller text.\n",
+    "bulk/note-056.md": "---\ntitle: Bulk archive note number 056 with padding words\n---\n# Bulk 056\n\nFiller text.\n",
+    "bulk/note-057.md": "---\ntitle: Bulk archive note number 057 with padding words\n---\n# Bulk 057\n\nFiller text.\n",
+    "bulk/note-058.md": "---\ntitle: Bulk archive note number 058 with padding words\n---\n# Bulk 058\n\nFiller text.\n",
+    "bulk/note-059.md": "---\ntitle: Bulk archive note number 059 with padding words\n---\n# Bulk 059\n\nFiller text.\n",
+    "bulk/note-060.md": "---\ntitle: Bulk archive note number 060 with padding words\n---\n# Bulk 060\n\nFiller text.\n",
+    "bulk/note-061.md": "---\ntitle: Bulk archive note number 061 with padding words\n---\n# Bulk 061\n\nFiller text.\n",
+    "bulk/note-062.md": "---\ntitle: Bulk archive note number 062 with padding words\n---\n# Bulk 062\n\nFiller text.\n",
+    "bulk/note-063.md": "---\ntitle: Bulk archive note number 063 with padding words\n---\n# Bulk 063\n\nFiller text.\n",
+    "bulk/note-064.md": "---\ntitle: Bulk archive note number 064 with padding words\n---\n# Bulk 064\n\nFiller text.\n",
+    "bulk/note-065.md": "---\ntitle: Bulk archive note number 065 with padding words\n---\n# Bulk 065\n\nFiller text.\n",
+    "bulk/note-066.md": "---\ntitle: Bulk archive note number 066 with padding words\n---\n# Bulk 066\n\nFiller text.\n",
+    "bulk/note-067.md": "---\ntitle: Bulk archive note number 067 with padding words\n---\n# Bulk 067\n\nFiller text.\n",
+    "bulk/note-068.md": "---\ntitle: Bulk archive note number 068 with padding words\n---\n# Bulk 068\n\nFiller text.\n",
+    "bulk/note-069.md": "---\ntitle: Bulk archive note number 069 with padding words\n---\n# Bulk 069\n\nFiller text.\n",
+    "bulk/note-070.md": "---\ntitle: Bulk archive note number 070 with padding words\n---\n# Bulk 070\n\nFiller text.\n",
+    "notebooks/nb.md": "---\ntype: notebook\ntitle: Budget notebook\nnotebook_id: nb\ncreated: 2026-01-02T03:04:05Z\nsources:\n  - alpha.md\n  - missing.md\n---\n\n# Budget notebook\n",
+    "notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
+    "notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
+    "notes/gamma.md": "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
+    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook.\n"
+  },
+  "file_time": "2026-01-02T03:04:05Z",
+  "cases": [
+    {
+      "name": "hermes_ok",
+      "provider": "hermes",
+      "mode": "ok",
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Answer from \\\\u003chermes\\\\u003e [[alpha.md]]\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n\u003e\u003e\n"
+    },
+    {
+      "name": "hermes_ok_notebook",
+      "provider": "hermes",
+      "mode": "ok",
+      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nb\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Answer from \\\\u003chermes\\\\u003e [[alpha.md]]\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+    },
+    {
+      "name": "hermes_fails",
+      "provider": "hermes",
+      "mode": "fail",
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: hermes backend failed: hermes exploded\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n\u003e\u003e\n"
+    },
+    {
+      "name": "hermes_notebook_missing",
+      "provider": "hermes",
+      "mode": "ok",
+      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nope\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"notebook not found\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": ""
+    },
+    {
+      "name": "ollama_generate",
+      "provider": "ollama",
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"Budget \"}\n{\"done\":false,\"model\":\"llama3.2\",\"response\":\"answer \"}\n{\"done\":false,\"model\":\"llama3.2\",\"response\":\"[[alpha.md]].\"}\n{\"done\":true,\"model\":\"llama3.2\",\"response\":\"\"}\n"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Budget answer [[alpha.md]].\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "llama3.2",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "ollama_generate_notebook_german",
+      "provider": "ollama",
+      "env": {
+        "SYMDESK_LANG": "German",
+        "SYMDESK_OLLAMA_MODEL": "fake-model"
+      },
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"Antwort.\"}\n{\"done\":true,\"model\":\"llama3.2\",\"response\":\"\"}\n"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nb\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Antwort.\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "fake-model",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in German.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n",
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "ollama_http_500",
+      "provider": "ollama",
+      "turns": [
+        {
+          "status": 500,
+          "body": "{\"error\":\"boom\"}"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: ollama: llmkit: provider_error (status 500): {\\\\\\\"error\\\\\\\":\\\\\\\"boom\\\\\\\"}\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "llama3.2",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "anthropic_stream",
+      "provider": "anthropic",
+      "env": {
+        "SYMDESK_LLM_MODEL": "claude-haiku-fake",
+        "SYMDESK_MAX_TOKENS": "321"
+      },
+      "turns": [
+        {
+          "status": 0,
+          "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"Anthropic \",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"delta\":{\"text\":\"says hi.\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Anthropic says hi.\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/messages",
+          "headers": {
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+            "x-api-key": "\u003cKEY\u003e"
+          },
+          "body": {
+            "model": "claude-haiku-fake",
+            "max_tokens": 321,
+            "messages": [
+              {
+                "role": "user",
+                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n"
+              }
+            ],
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "anthropic_url_is_a_base_not_an_endpoint",
+      "provider": "anthropic",
+      "env": {
+        "SYMDESK_ANTHROPIC_URL": "{{URL}}/v1/messages"
+      },
+      "turns": [
+        {
+          "status": 0,
+          "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"unreachable\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: anthropic: llmkit: model_not_found (status 404): 404 page not found\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/messages/messages"
+        }
+      ]
+    },
+    {
+      "name": "anthropic_max_tokens_marker",
+      "provider": "anthropic",
+      "turns": [
+        {
+          "status": 0,
+          "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"Cut off\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"max_tokens\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
+        }
+      ],
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Cut off\\\\n\\\\n⚠️ **[Output truncated due to token limit]**\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/messages",
+          "headers": {
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+            "x-api-key": "\u003cKEY\u003e"
+          },
+          "body": {
+            "model": "claude-sonnet-5",
+            "max_tokens": 8192,
+            "messages": [
+              {
+                "role": "user",
+                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n"
+              }
+            ],
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "ollama_unconfigured_default",
+      "provider": "none",
+      "arguments_json": "{\"query\":\"budget\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ **AI feature not configured.**\\\\n\\\\nSet your Ollama endpoint in Settings → AI.\\\\n\\\\nHere are the most relevant search results from your vault:\\\\n\\\\n- [[notebooks/nb.md]]\\\\n- [[notebooks/nb.md]]\\\\n- [[alpha.md]]\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": ""
+    },
+    {
+      "name": "empty_query_still_rejected",
+      "provider": "hermes",
+      "mode": "ok",
+      "arguments_json": "{\"query\":\"\"}",
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"query is required\",\"type\":\"text\"}],\"isError\":true}}\n",
+      "stderr": ""
+    }
+  ]
+}

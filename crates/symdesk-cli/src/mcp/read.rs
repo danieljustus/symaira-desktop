@@ -12,6 +12,11 @@ use symdesk_vault::{
 
 use super::{ServerConfig, go_string_fields, open_sidecar};
 
+/// Per-vault externalized-results root (shared with the agentic loop).
+pub(super) fn results_root(vault: &std::path::Path) -> Result<std::path::PathBuf, String> {
+    results::root(vault)
+}
+
 pub(super) fn supports(name: &str) -> bool {
     extra::supports(name)
         || matches!(

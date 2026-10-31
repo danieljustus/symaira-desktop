@@ -1,0 +1,12 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: text/plain
+
+one
+--BOUND
+Content-Type: text/plain
+
+two
+--BOUND--

@@ -1,0 +1,13 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: text/plain
+
+body
+--BOUND
+Content-Type: text/plain
+Content-Disposition: attachment; filename=a.txt
+
+attached
+--BOUND--

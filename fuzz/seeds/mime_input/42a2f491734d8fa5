@@ -1,0 +1,8 @@
+Subject: M
+Content-Type: multipart/mixed; boundary="a b'c"
+
+--a b'c
+Content-Type: text/plain
+
+q
+--a b'c--

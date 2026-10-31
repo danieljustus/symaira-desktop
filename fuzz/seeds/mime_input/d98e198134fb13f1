@@ -1,0 +1,12 @@
+Subject: M
+Content-Type: multipart/alternative; boundary=BOUND
+
+--BOUND
+Content-Type: text/html
+
+<p>h</p>
+--BOUND
+Content-Type: text/plain
+
+p
+--BOUND--

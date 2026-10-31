@@ -37,6 +37,8 @@ All compiler invocations used the launcher, Go 1.26.10 and pinned Rust 1.98.0.
 
 ## Boundaries and remaining work
 
+> Superseded in part by [ingest-structured-ocr-slice.md](ingest-structured-ocr-slice.md): the DOCX/XLSX/PPTX/ODF/EPUB/EML readers, malformed XML/ZIP/CRC diagnostics and the ZIP aggregate cap are now ported and replay Go-generated cases; the bullets below describe the state of the first slice.
+
 - DOCX table extraction, XLSX workbook/shared-string/table extraction and EML
   multipart/transfer decoding remain **unimplemented**, with explicit residual
   errors pinned by a Rust test. Detection of DOCX/XLSX is implemented, not their

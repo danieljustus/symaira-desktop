@@ -19,6 +19,18 @@ arm64 run in the `symdesk-linux-gate` container. A row whose only residual was
 native CI or Windows becomes PASS on that evidence; Linux amd64 is covered by
 the single CI run of the final push.
 
+## Local completion checkpoint — 2026-10-31
+
+Local `main` 8c7cee5f (not pushed). Passed (local): RUST-001…009, RUST-011,
+RUST-016. In progress: RUST-010 (SEC-001 complete; INGEST-001…006, HTTP-004
+open) and RUST-012 (AI-001/003 PASS (local); AI-002 open). 46 matrix rows are
+PASS or PASS (local). Two-host gate at 8c7cee5f exit 0 on macOS arm64 and
+Linux arm64: rust-check rust-lint rust-test port-contract
+render-ir-differential render-differential retrieval-differential
+sources-cli-differential contacts-dataset-differential
+dataset-aggregate-differential ingest-differential ai-compose-differential
+retrieval-ask-offline-differential. Next: RUST-013 after RUST-010/012.
+
 ## Local completion checkpoint — 2026-10-30
 
 Local `main` a586b0f0 (not pushed). RUST-016 passed; RENDER-001 and the

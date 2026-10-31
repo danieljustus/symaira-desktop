@@ -6,8 +6,10 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+pub mod classification;
 mod document;
 pub mod extract;
+pub mod gform;
 pub mod ghtml;
 pub mod gmime;
 pub mod gxml;
@@ -25,9 +27,14 @@ mod paperless_state;
 pub mod structured;
 pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};
 mod sql;
+mod store_state;
 pub use document::{Document, DocumentPaths};
 pub use migrations::MIGRATIONS;
 use sql::*;
+pub use store_state::{
+    ClassificationRule, Extraction, MailPollCursor, MailPollStatus, Span, go_time_text,
+    validate_classification_rule,
+};
 
 pub type Result<T> = std::result::Result<T, String>;
 

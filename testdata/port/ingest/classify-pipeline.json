@@ -1,0 +1,425 @@
+{
+  "cases": [
+    {
+      "name": "no match",
+      "file_name": "n1.txt",
+      "body": "lorem ipsum"
+    },
+    {
+      "name": "category and tags",
+      "file_name": "n2.txt",
+      "body": "INVOICE 2024 total"
+    },
+    {
+      "name": "rechnung overrides nothing",
+      "file_name": "n3.md",
+      "body": "# Rechnung\n\nAcme invoice for the contract"
+    },
+    {
+      "name": "duplicate tag values",
+      "file_name": "n4.txt",
+      "body": "invoice INVOICE Invoice"
+    },
+    {
+      "name": "csv",
+      "file_name": "n5.csv",
+      "body": "a,b\nacme,invoice\n"
+    },
+    {
+      "name": "unicode folding",
+      "file_name": "n6.txt",
+      "body": "Hauptstraße ΣΊΣΥΦΟΣ İstanbul 日本語"
+    },
+    {
+      "name": "ascii fold of dotted I",
+      "file_name": "n7.txt",
+      "body": "istanbul"
+    },
+    {
+      "name": "preset category",
+      "file_name": "n8.txt",
+      "body": "invoice acme contract",
+      "preset_category": "Preset"
+    },
+    {
+      "name": "preset tags replace",
+      "file_name": "n9.txt",
+      "body": "invoice acme contract",
+      "preset_tags": [
+        "p1",
+        "p2"
+      ]
+    },
+    {
+      "name": "preset correspondent and type",
+      "file_name": "n10.txt",
+      "body": "invoice acme contract",
+      "preset_correspondent": "Me",
+      "preset_document_type": "Letter"
+    },
+    {
+      "name": "all presets",
+      "file_name": "n11.txt",
+      "body": "invoice acme contract",
+      "preset_category": "C",
+      "preset_tags": [
+        "t"
+      ],
+      "preset_correspondent": "K",
+      "preset_document_type": "D"
+    },
+    {
+      "name": "preset on empty match",
+      "file_name": "n12.txt",
+      "body": "nothing",
+      "preset_category": "C"
+    },
+    {
+      "name": "crlf",
+      "file_name": "n13.txt",
+      "body": "invoice\r\nacme\r\n"
+    },
+    {
+      "name": "empty file",
+      "file_name": "n14.txt",
+      "body": ""
+    },
+    {
+      "name": "single letter pattern",
+      "file_name": "n15.txt",
+      "body": "X marks the spot"
+    }
+  ],
+  "normalizations": [
+    "temporary root replaced by \u003cROOT\u003e in error text"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "outcomes": [
+    {
+      "name": "no match",
+      "error": "",
+      "category": "",
+      "tags": null,
+      "correspondent": "",
+      "document_type": "",
+      "text": "lorem ipsum",
+      "doc_category": "",
+      "doc_tags": null,
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "category and tags",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "",
+      "document_type": "",
+      "text": "INVOICE 2024 total",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "rechnung overrides nothing",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing",
+        "de"
+      ],
+      "correspondent": "ACME GmbH",
+      "document_type": "Contract",
+      "text": "# Rechnung\n\nAcme invoice for the contract",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing",
+        "de"
+      ],
+      "doc_correspondent": "ACME GmbH",
+      "doc_document_type": "Contract"
+    },
+    {
+      "name": "duplicate tag values",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "",
+      "document_type": "",
+      "text": "invoice INVOICE Invoice",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "csv",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "ACME GmbH",
+      "document_type": "",
+      "text": "a,b\nacme,invoice\n",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "ACME GmbH",
+      "doc_document_type": ""
+    },
+    {
+      "name": "unicode folding",
+      "error": "",
+      "category": "",
+      "tags": [
+        "sharp-s",
+        "dotted-I",
+        "ja"
+      ],
+      "correspondent": "",
+      "document_type": "",
+      "text": "Hauptstraße ΣΊΣΥΦΟΣ İstanbul 日本語",
+      "doc_category": "",
+      "doc_tags": [
+        "sharp-s",
+        "dotted-I",
+        "ja"
+      ],
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "ascii fold of dotted I",
+      "error": "",
+      "category": "",
+      "tags": [
+        "dotted-I"
+      ],
+      "correspondent": "",
+      "document_type": "",
+      "text": "istanbul",
+      "doc_category": "",
+      "doc_tags": [
+        "dotted-I"
+      ],
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "preset category",
+      "error": "",
+      "category": "Preset",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "ACME GmbH",
+      "document_type": "Contract",
+      "text": "invoice acme contract",
+      "doc_category": "Preset",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "ACME GmbH",
+      "doc_document_type": "Contract"
+    },
+    {
+      "name": "preset tags replace",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "p1",
+        "p2"
+      ],
+      "correspondent": "ACME GmbH",
+      "document_type": "Contract",
+      "text": "invoice acme contract",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "p1",
+        "p2"
+      ],
+      "doc_correspondent": "ACME GmbH",
+      "doc_document_type": "Contract"
+    },
+    {
+      "name": "preset correspondent and type",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "Me",
+      "document_type": "Letter",
+      "text": "invoice acme contract",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "Me",
+      "doc_document_type": "Letter"
+    },
+    {
+      "name": "all presets",
+      "error": "",
+      "category": "C",
+      "tags": [
+        "t"
+      ],
+      "correspondent": "K",
+      "document_type": "D",
+      "text": "invoice acme contract",
+      "doc_category": "C",
+      "doc_tags": [
+        "t"
+      ],
+      "doc_correspondent": "K",
+      "doc_document_type": "D"
+    },
+    {
+      "name": "preset on empty match",
+      "error": "",
+      "category": "C",
+      "tags": null,
+      "correspondent": "",
+      "document_type": "",
+      "text": "nothing",
+      "doc_category": "C",
+      "doc_tags": null,
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "crlf",
+      "error": "",
+      "category": "Finance",
+      "tags": [
+        "billing"
+      ],
+      "correspondent": "ACME GmbH",
+      "document_type": "",
+      "text": "invoice\r\nacme\r\n",
+      "doc_category": "Finance",
+      "doc_tags": [
+        "billing"
+      ],
+      "doc_correspondent": "ACME GmbH",
+      "doc_document_type": ""
+    },
+    {
+      "name": "empty file",
+      "error": "",
+      "category": "",
+      "tags": null,
+      "correspondent": "",
+      "document_type": "",
+      "text": "",
+      "doc_category": "",
+      "doc_tags": null,
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    },
+    {
+      "name": "single letter pattern",
+      "error": "",
+      "category": "",
+      "tags": [
+        "single-x"
+      ],
+      "correspondent": "",
+      "document_type": "",
+      "text": "X marks the spot",
+      "doc_category": "",
+      "doc_tags": [
+        "single-x"
+      ],
+      "doc_correspondent": "",
+      "doc_document_type": ""
+    }
+  ],
+  "rules": [
+    [
+      "invoice",
+      "category",
+      "Finance"
+    ],
+    [
+      "rechnung",
+      "category",
+      "Later category loses"
+    ],
+    [
+      "invoice",
+      "tag",
+      "billing"
+    ],
+    [
+      "INVOICE",
+      "tag",
+      "billing"
+    ],
+    [
+      "rechnung",
+      "tag",
+      "de"
+    ],
+    [
+      "acme",
+      "correspondent",
+      "ACME GmbH"
+    ],
+    [
+      "Acme",
+      "correspondent",
+      "Loses"
+    ],
+    [
+      "contract",
+      "document_type",
+      "Contract"
+    ],
+    [
+      "straße",
+      "tag",
+      "sharp-s"
+    ],
+    [
+      "İSTANBUL",
+      "tag",
+      "dotted-I"
+    ],
+    [
+      "σίσυφος",
+      "tag",
+      "sigma"
+    ],
+    [
+      "日本語",
+      "tag",
+      "ja"
+    ],
+    [
+      "x",
+      "tag",
+      "single-x"
+    ]
+  ],
+  "schema_version": 1,
+  "source_hashes": {
+    "classify_port_test.go": "98012b933cbf2f198f58fa9e11b91539d3d8d7c8fa64db8d0df331e7126a6354",
+    "pipeline.go": "b4663645f3eb1648da606b96b46d7673299870a7d8385c704fede42efd08def6"
+  }
+}

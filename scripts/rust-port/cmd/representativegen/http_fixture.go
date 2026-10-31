@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/fixtureoracle"
 )
@@ -13,7 +14,7 @@ import (
 const httpFixturePath = "testdata/port/http/representative.json"
 
 func generatedHTTP() httpSuite {
-	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}, Cases: []httpCase{
+	cases := []httpCase{
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "healthz-slow-header", Method: "GET", Path: "/healthz", HeaderDelayMS: 6000},
 		{ID: "healthz-large-header", Method: "GET", Path: "/healthz", HeaderPaddingBytes: 512 << 10},
@@ -246,8 +247,100 @@ func generatedHTTP() httpSuite {
 		{ID: "share-create-named-user-denied", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"Hello.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
 		{ID: "share-create-named-worker-denied", Method: "POST", Path: "/api/v1/share", Auth: "named-worker", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
 		{ID: "share-create-named-user-valid", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
-		{ID: "command-admin-exec-ls", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ls","--dir","nested"]}`, RemoveSymlinkEscapes: true},
-	}}
+	}
+	cases = append(cases, ingestMultipartCases()...)
+	cases = append(cases, httpCase{ID: "command-admin-exec-ls", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ls","--dir","nested"]}`, RemoveSymlinkEscapes: true})
+	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: fixtureoracle.Current().Commit, Release: fixtureoracle.Current().Release}, Cases: cases}
+}
+
+// multipartBody joins raw parts (headers, blank line, content) with the given
+// boundary and CRLF framing, so a case controls every byte of the request.
+func multipartBody(boundary string, parts ...string) string {
+	var b strings.Builder
+	for _, part := range parts {
+		b.WriteString("--" + boundary + "\r\n" + part + "\r\n")
+	}
+	b.WriteString("--" + boundary + "--\r\n")
+	return b.String()
+}
+
+func formFile(name, filename, contentType, content string) string {
+	header := fmt.Sprintf("Content-Disposition: form-data; name=%q; filename=%q\r\n", name, filename)
+	if contentType != "" {
+		header += "Content-Type: " + contentType + "\r\n"
+	}
+	return header + "\r\n" + content
+}
+
+func ingestMultipartCases() []httpCase {
+	const b = "port-boundary"
+	mp := map[string]string{"Content-Type": "multipart/form-data; boundary=" + b}
+	post := func(id, auth, body string, headers map[string]string) httpCase {
+		return httpCase{ID: id, Method: "POST", Path: "/api/v1/ingest", Auth: auth, Headers: headers, Body: body}
+	}
+	file := func(id, filename, contentType, content string) httpCase {
+		return post(id, "valid", multipartBody(b, formFile("file", filename, contentType, content)), mp)
+	}
+	return []httpCase{
+		file("ingest-filename-traversal", "../../etc/passwd.pdf", "application/pdf", "%PDF-1.7\n"),
+		file("ingest-filename-backslash-traversal", `..\..\evil.pdf`, "application/pdf", "%PDF-1.7\n"),
+		file("ingest-filename-windows-path", `C:\Users\x\scan.pdf`, "application/pdf", "%PDF-1.7\n"),
+		file("ingest-filename-dot", ".", "text/plain", "dot"),
+		file("ingest-filename-dotdot", "..", "text/plain", "dotdot"),
+		file("ingest-filename-spaces", "   ", "text/plain", "spaces"),
+		file("ingest-filename-trimmed", "  padded name.txt  ", "text/plain", "padded"),
+		file("ingest-filename-unicode", "Rechnung ÄÖÜ 日本語.pdf", "application/pdf", "%PDF-1.7\n"),
+		file("ingest-filename-quote", `a"b.txt`, "text/plain", "quote"),
+		file("ingest-filename-control", "tab\tname.txt", "text/plain", "control"),
+		file("ingest-filename-long", strings.Repeat("a", 300)+".pdf", "application/pdf", "%PDF-1.7\n"),
+		file("ingest-filename-trailing-slash", "dir/", "text/plain", "slash"),
+		file("ingest-filename-nested", "a/b/c.txt", "text/plain", "nested"),
+		post("ingest-filename-star-encoded", "valid", multipartBody(b, "Content-Disposition: form-data; name=\"file\"; filename*=UTF-8''r%C3%A4.pdf\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.7\n"), mp),
+		post("ingest-filename-empty-is-not-a-file", "valid", multipartBody(b, formFile("file", "", "text/plain", "no filename")), mp),
+		post("ingest-field-without-filename", "valid", multipartBody(b, "Content-Disposition: form-data; name=\"file\"\r\n\r\nplain value"), mp),
+		post("ingest-wrong-field-name", "valid", multipartBody(b, formFile("upload", "report.pdf", "application/pdf", "%PDF-1.7\n")), mp),
+		post("ingest-two-files-first-wins", "valid", multipartBody(b, formFile("file", "first.txt", "text/plain", "first"), formFile("file", "second.txt", "text/plain", "second")), mp),
+		post("ingest-fields-before-file", "valid", multipartBody(b, "Content-Disposition: form-data; name=\"note\"\r\n\r\nhello", formFile("file", "after.txt", "text/plain", "after")), mp),
+		post("ingest-other-file-then-file", "valid", multipartBody(b, formFile("other", "other.txt", "text/plain", "other"), formFile("file", "wanted.txt", "text/plain", "wanted")), mp),
+		file("ingest-part-content-type-charset", "charset.txt", "text/plain; charset=iso-8859-1", "caf\xe9"),
+		file("ingest-part-content-type-odd-case", "odd.txt", "TEXT/Plain", "odd"),
+		file("ingest-part-no-content-type", "untyped.bin", "", "untyped"),
+		file("ingest-empty-file", "empty.txt", "text/plain", ""),
+		file("ingest-binary-content", "binary.bin", "application/octet-stream", "\x00\r\n--port-bound\r\n\xff\xfe--"),
+		file("ingest-content-looks-like-boundary", "boundary.txt", "text/plain", "--port-boundary-not-really"),
+		post("ingest-lf-only-framing", "valid", "--port-boundary\nContent-Disposition: form-data; name=\"file\"; filename=\"lf.txt\"\nContent-Type: text/plain\n\nlf body\n--port-boundary--\n", mp),
+		post("ingest-quoted-boundary", "valid", multipartBody("quoted", formFile("file", "q.txt", "text/plain", "quoted")), map[string]string{"Content-Type": `multipart/form-data; boundary="quoted"`}),
+		post("ingest-boundary-with-spaces", "valid", multipartBody("a b", formFile("file", "s.txt", "text/plain", "spaced")), map[string]string{"Content-Type": `multipart/form-data; boundary="a b"`}),
+		post("ingest-preamble-and-epilogue", "valid", "preamble line\r\n"+multipartBody(b, formFile("file", "pre.txt", "text/plain", "pre"))+"epilogue", mp),
+		post("ingest-missing-closing-boundary", "valid", "--"+b+"\r\n"+formFile("file", "open.txt", "text/plain", "never closed"), mp),
+		post("ingest-missing-boundary-parameter", "valid", multipartBody(b, formFile("file", "nb.txt", "text/plain", "x")), map[string]string{"Content-Type": "multipart/form-data"}),
+		post("ingest-multipart-mixed", "valid", multipartBody(b, formFile("file", "mixed.txt", "text/plain", "mixed")), map[string]string{"Content-Type": "multipart/mixed; boundary=" + b}),
+		post("ingest-content-type-json", "valid", `{"file":"x"}`, map[string]string{"Content-Type": "application/json"}),
+		post("ingest-content-type-missing", "valid", multipartBody(b, formFile("file", "nt.txt", "text/plain", "x")), nil),
+		post("ingest-content-type-urlencoded", "valid", "file=x", map[string]string{"Content-Type": "application/x-www-form-urlencoded"}),
+		post("ingest-part-header-folded", "valid", multipartBody(b, "Content-Disposition: form-data;\r\n name=\"file\"; filename=\"folded.txt\"\r\nContent-Type: text/plain\r\n\r\nfolded"), mp),
+		post("ingest-part-header-lowercase", "valid", multipartBody(b, "content-disposition: form-data; name=file; filename=lower.txt\r\ncontent-type: text/plain\r\n\r\nlower"), mp),
+		post("ingest-part-transfer-encoding-ignored", "valid", multipartBody(b, "Content-Disposition: form-data; name=\"file\"; filename=\"b64.txt\"\r\nContent-Transfer-Encoding: base64\r\n\r\naGVsbG8="), mp),
+		{ID: "ingest-query-string-ignored", Method: "POST", Path: "/api/v1/ingest?x=1&y=%20z+w", Auth: "valid", Headers: mp, Body: multipartBody(b, formFile("file", "query.txt", "text/plain", "query"))},
+		{ID: "ingest-query-bad-escape", Method: "POST", Path: "/api/v1/ingest?a=%zz", Auth: "valid", Headers: mp, Body: multipartBody(b, formFile("file", "query.txt", "text/plain", "query"))},
+		{ID: "ingest-query-semicolon", Method: "POST", Path: "/api/v1/ingest?a=1;b=2", Auth: "valid", Headers: mp, Body: multipartBody(b, formFile("file", "query.txt", "text/plain", "query"))},
+		{ID: "ingest-query-truncated-escape", Method: "POST", Path: "/api/v1/ingest?a=%2", Auth: "valid", Headers: mp, Body: multipartBody(b, formFile("file", "query.txt", "text/plain", "query"))},
+		{ID: "ingest-over-body-limit", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", Headers: mp, Body: "--" + b + "\r\n" + formFile("file", "huge.bin", "application/octet-stream", ""), BodyRepeat: 101 << 20},
+		{ID: "ingest-file-over-upload-limit", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", MultipartFile: "limit.bin", BodyRepeat: 100<<20 + 1},
+		{ID: "ingest-file-at-upload-limit", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", MultipartFile: "limit.bin", BodyRepeat: 100 << 20},
+		{ID: "ingest-named-user-forbidden", Method: "POST", Path: "/api/v1/ingest", Auth: "named", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n", PopulateNamedUser: true},
+		{ID: "ingest-named-worker-forbidden", Method: "POST", Path: "/api/v1/ingest", Auth: "named-worker", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n", PopulateNamedUser: true},
+		{ID: "ingest-wrong-auth", Method: "POST", Path: "/api/v1/ingest", Auth: "wrong", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n"},
+		{ID: "ingest-head-method", Method: "HEAD", Path: "/api/v1/ingest", Auth: "valid"},
+		{ID: "ingest-put-method", Method: "PUT", Path: "/api/v1/ingest", Auth: "valid", MultipartFile: "report.pdf", Body: "x"},
+		{ID: "ingest-trailing-slash-path", Method: "POST", Path: "/api/v1/ingest/", Auth: "valid", MultipartFile: "report.pdf", Body: "x"},
+		{ID: "jobs-retry-named-user-forbidden", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003", Auth: "named", PopulateNamedUser: true, PopulateJobs: true},
+		{ID: "jobs-retry-named-worker-forbidden", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003", Auth: "named-worker", PopulateNamedUser: true, PopulateJobs: true},
+		{ID: "worker-lease-named-user-allowed", Method: "POST", Path: "/api/v1/worker/lease", Auth: "named", Body: `{"worker_id":"worker-lease","capabilities":["ocr"]}`, PopulateNamedUser: true, PopulateJobs: true},
+		{ID: "worker-input-named-user-allowed", Method: "GET", Path: "/api/v1/worker/input?id=00000000000000000000000000000003", Auth: "named", PopulateNamedUser: true, PopulateJobs: true},
+		{ID: "worker-complete-named-user-allowed", Method: "POST", Path: "/api/v1/worker/complete", Auth: "named", Body: `{"job_id":"00000000000000000000000000000004","worker_id":"worker-1","text":"  Invoice total: 42 EUR  ","engine":"yes","model":"123"}`, PopulateNamedUser: true, PopulateWorkerJob: true},
+		{ID: "worker-fail-named-user-allowed", Method: "POST", Path: "/api/v1/worker/fail", Auth: "named", Body: `{"job_id":"00000000000000000000000000000004","worker_id":"worker-1","error":"  scan failed \n","retry":false}`, PopulateNamedUser: true, PopulateWorkerJob: true},
+	}
 }
 
 func writeHTTPFixture(root string) {

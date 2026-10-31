@@ -1218,7 +1218,18 @@ fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
     if needle.is_empty() {
         return Some(0);
     }
-    hay.windows(needle.len()).position(|w| w == needle)
+    // First-byte scan then compare: far cheaper than comparing every window on
+    // the large (up to 100 MiB) bodies the upload handler parses.
+    let first = needle[0];
+    let mut from = 0;
+    while let Some(offset) = hay[from..].iter().position(|b| *b == first) {
+        let at = from + offset;
+        if hay[at..].starts_with(needle) {
+            return Some(at);
+        }
+        from = at + 1;
+    }
+    None
 }
 
 /// `matchAfterPrefix` with the stream fully available (`readErr != nil`).

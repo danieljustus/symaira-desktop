@@ -29,6 +29,7 @@ rusqlite = { version = "=0.40.2", default-features = false, features = ["bundled
 unicode-general-category = "=1.1.0"
 symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
 symdesk-vault = { path = "crates/symdesk-vault", version = "=0.0.0" }
+symdesk-ingest = { path = "crates/symdesk-ingest", version = "=0.0.0" }
 symdesk-index = { path = "crates/symdesk-index", version = "=0.0.0" }
 symdesk-protocol = { path = "crates/symdesk-protocol", version = "=0.0.0" }
 symdesk-render = { path = "crates/symdesk-render", version = "=0.0.0" }

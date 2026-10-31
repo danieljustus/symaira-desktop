@@ -42,6 +42,15 @@ lang=$2
 img=$3
 base=$(basename "$img")
 if [ -f "$d/sleep/$base" ]; then exec sleep "$(cat "$d/sleep/$base")"; fi
+if [ -f "$d/waitfor/$base" ]; then
+  n=0
+  while [ $n -lt 200 ]; do
+    ok=1
+    while IFS= read -r want; do grep -q -F -- "$want" "$d/log" || ok=0; done < "$d/waitfor/$base"
+    [ $ok = 1 ] && break
+    n=$((n+1)); sleep 0.05
+  done
+fi
 if [ -f "$d/fail/$base" ]; then
   [ -s "$d/fail/$base.err" ] && cat "$d/fail/$base.err" >&2
   exit "$(cat "$d/fail/$base")"
@@ -413,6 +422,9 @@ func ocrScenarios() []ocrScenario {
 		s.Files["pages"] = "1.png\n2.png\n3.png\n"
 		s.Files["fail/page-2.png"] = "4"
 		s.Files["fail/page-2.png.err"] = "page two broke\n"
+		// Page 2 fails only once pages 1 and 3 have started, so the transcript
+		// does not depend on goroutine scheduling or machine load.
+		s.Files["waitfor/page-2.png"] = "page-1.png\npage-3.png\n"
 	})
 	add(base("pdf-german-retry", "application/pdf", "doc.pdf"), func(s *ocrScenario) {
 		s.Files["pages"] = "1.png\n2.png\n"

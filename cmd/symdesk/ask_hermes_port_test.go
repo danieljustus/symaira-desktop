@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -188,7 +189,7 @@ func observeAskHermes(t *testing.T, binary string, c askHermesCase) askHermesCas
 		}
 		c.ExitCode = exit.ExitCode()
 	}
-	c.Stdout = strings.ReplaceAll(stdout.String(), root, "<ROOT>")
+	c.Stdout = maskAskScores(strings.ReplaceAll(stdout.String(), root, "<ROOT>"))
 	// Go's slog lines carry wall-clock timestamps; the contract compared is
 	// everything else on stderr.
 	var kept []string
@@ -203,4 +204,39 @@ func observeAskHermes(t *testing.T, binary string, c askHermesCase) askHermesCas
 		c.Log = strings.ReplaceAll(string(b), root, "<ROOT>")
 	}
 	return c
+}
+
+// maskAskScores replaces retrieval scores with a placeholder. The hybrid
+// ranking arithmetic depends on the host (Darwin and Linux record different
+// scores for the same document), and this fixture pins the provider flow, not
+// the ranking: ranking is covered by the retrieval differentials. JSON events
+// carry `"score":<number>`; Go's `%v` text events print the float as a bare
+// space-separated token.
+func maskAskScores(text string) string {
+	const key = `"score":`
+	var out strings.Builder
+	for {
+		i := strings.Index(text, key)
+		if i < 0 {
+			break
+		}
+		out.WriteString(text[:i+len(key)])
+		rest := text[i+len(key):]
+		end := strings.IndexAny(rest, ",}")
+		if end < 0 {
+			end = len(rest)
+		}
+		out.WriteString(`"<SCORE>"`)
+		text = rest[end:]
+	}
+	out.WriteString(text)
+	tokens := strings.Split(out.String(), " ")
+	for i, token := range tokens {
+		if strings.HasPrefix(token, "0.0") {
+			if _, err := strconv.ParseFloat(token, 64); err == nil {
+				tokens[i] = "<SCORE>"
+			}
+		}
+	}
+	return strings.Join(tokens, " ")
 }

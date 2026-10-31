@@ -59,6 +59,33 @@ fn without_log_lines(text: &str) -> String {
         .collect()
 }
 
+/// Mirrors the Go generator's `maskAskScores`: ranking arithmetic is host
+/// dependent and is pinned by the retrieval differentials, not here.
+fn mask_scores(text: &str) -> String {
+    const KEY: &str = "\"score\":";
+    let mut masked = String::new();
+    let mut rest = text;
+    while let Some(at) = rest.find(KEY) {
+        masked.push_str(&rest[..at + KEY.len()]);
+        let tail = &rest[at + KEY.len()..];
+        let end = tail.find([',', '}']).unwrap_or(tail.len());
+        masked.push_str("\"<SCORE>\"");
+        rest = &tail[end..];
+    }
+    masked.push_str(rest);
+    masked
+        .split(' ')
+        .map(|token| {
+            if token.starts_with("0.0") && token.parse::<f64>().is_ok() {
+                "<SCORE>"
+            } else {
+                token
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     let root = fs::canonicalize(std::env::temp_dir())
         .unwrap()
@@ -129,7 +156,8 @@ fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
         .output()
         .unwrap();
     let root_text = root.to_string_lossy().into_owned();
-    let stdout = String::from_utf8_lossy(&output.stdout).replace(&root_text, "<ROOT>");
+    let stdout =
+        mask_scores(&String::from_utf8_lossy(&output.stdout).replace(&root_text, "<ROOT>"));
     let stderr =
         without_log_lines(&String::from_utf8_lossy(&output.stderr)).replace(&root_text, "<ROOT>");
     let transcript = fs::read_to_string(&log)

@@ -89,7 +89,7 @@ ingest-extraction-fixtures-generate:
 .PHONY: room-init-core-fixtures-generate room-init-core-differential
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
-.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
+.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential recipe-run-fixtures-generate recipe-run-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential index-retrieval-cli-fixtures-generate index-retrieval-cli-differential index-retry-cli-fixtures-generate index-retry-cli-differential index-symlink-cli-fixtures-generate index-symlink-cli-differential sources-cli-fixtures-generate sources-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: room-io-error-cli-fixtures-generate room-io-error-cli-differential
@@ -1531,6 +1531,58 @@ recipe-validate-fixtures-generate:
 recipe-validate-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test recipe_validate
+
+.PHONY: ai-compose-differential
+# RUST-012: provider selection/streaming, sibling-tool discovery and the
+# reviewed recipe runner, each replayed against Go-recorded fixtures.
+ai-compose-differential: ask-hermes-differential secret-canary-differential secrets-resolve-differential ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+
+.PHONY: ask-hermes-fixtures-generate ask-hermes-differential secret-canary-differential secrets-resolve-fixtures-generate secrets-resolve-differential compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
+ai-compose-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+
+ask-hermes-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskHermesProcessContract$$'
+
+ask-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskHermesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test ask_hermes
+
+# SEC-002: Rust-side canary scan of a failing provider that echoes the key.
+secret-canary-differential:
+	$(CARGO) test -p symdesk-cli --locked --test secret_canary
+
+secrets-resolve-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/secrets -run '^TestPortSecretsResolveContract$$'
+
+secrets-resolve-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/secrets -run '^TestPortSecretsResolveContract$$'
+	$(CARGO) test -p symdesk-service --locked --test secrets_resolve
+
+compose-memory-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/compose -run '^TestPortComposeMemoryContract$$'
+
+compose-memory-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/compose -run '^TestPortComposeMemoryContract$$'
+	$(CARGO) test -p symdesk-service --locked --test compose_memory
+
+transform-hermes-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortTransformHermesProcessContract$$'
+
+transform-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortTransformHermesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test transform_hermes
+
+ai-compose-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+	$(CARGO) test -p symdesk-service --locked --test ai_compose
+
+recipe-run-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeRunProcessContract$$'
+
+recipe-run-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeRunProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test recipe_run
 
 .PHONY: mcp-write-differential mcp-write-fixtures-generate
 mcp-write-differential:

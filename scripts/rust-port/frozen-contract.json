@@ -140,6 +140,30 @@
       "ignored": 0,
       "passed": 4
     },
+    "cargo test -p symdesk-cli --locked --test secret_canary": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-service --locked --test secrets_resolve": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-service --locked --test compose_memory": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-cli --locked --test transform_hermes": {
+      "ignored": 0,
+      "passed": 2
+    },
+    "cargo test -p symdesk-service --locked --test ai_compose": {
+      "ignored": 0,
+      "passed": 3
+    },
+    "cargo test -p symdesk-cli --locked --test recipe_run": {
+      "ignored": 0,
+      "passed": 3
+    },
     "cargo test -p symdesk-cli --locked --test recipe_validate": {
       "ignored": 0,
       "passed": 1

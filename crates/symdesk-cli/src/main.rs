@@ -301,7 +301,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
-        Some(("recipe", command)) => recipe::run(command, output_json),
+        Some(("recipe", command)) => recipe::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
@@ -712,6 +716,20 @@ fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
 }
 
 fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
+    resolve_vault_inner(flag, report, false)
+}
+
+/// Go `vault.ResolveVaultRoot`, whose wording differs from the service-deps
+/// resolver used by most commands (it names the stat call and path).
+fn resolve_vault_root(flag: Option<&str>) -> Result<PathBuf, String> {
+    resolve_vault_inner(flag, || {}, true)
+}
+
+fn resolve_vault_inner(
+    flag: Option<&str>,
+    report: impl FnOnce(),
+    go_root_wording: bool,
+) -> Result<PathBuf, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
@@ -742,8 +760,17 @@ fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Resul
             .join(path)
     };
     let absolute = lexical_clean(&absolute);
-    let metadata = std::fs::metadata(&absolute)
-        .map_err(|error| format!("vault path does not exist: {error}"))?;
+    let metadata = std::fs::metadata(&absolute).map_err(|error| {
+        if go_root_wording {
+            format!(
+                "vault path does not exist: stat {}: {}",
+                absolute.display(),
+                symdesk_service::gofmt::os_error_text(&error)
+            )
+        } else {
+            format!("vault path does not exist: {error}")
+        }
+    })?;
     if !metadata.is_dir() {
         return Err("vault path is not a directory".to_owned());
     }

@@ -593,6 +593,16 @@ jobs:
         shell: bash
         run: make recipe-validate-differential
 
+      - name: Run native AI composition and Hermes backend differentials
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make ai-compose-hermes-differential transform-hermes-differential compose-memory-differential secrets-resolve-differential secret-canary-differential
+
+      - name: Run native recipe run CLI differential
+        if: runner.os != 'Windows'
+        shell: bash
+        run: make recipe-run-differential
+
       - name: Run native room watch stream differential
         shell: bash
         run: make room-watch-stream-differential

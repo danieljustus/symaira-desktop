@@ -156,6 +156,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/sources-process.json",
 	"testdata/port/ai/providers.json",
 	"testdata/port/ai/ai-compose.json",
+	"testdata/port/ai/ask-hermes-process.json",
 	"testdata/port/ai/secrets-resolve.json",
 	"testdata/port/ai/compose-memory.json",
 	"testdata/port/ai/transform-hermes-process.json",

@@ -49,6 +49,26 @@ struct AskEvent {
 }
 
 impl AskEvent {
+    /// `%v` of Go's `ai.AIEvent`: Type, Text, Path, Title, Snippet, Score,
+    /// ToolName, Status, Iteration, ToolInputs, ToolOutput,
+    /// ToolOutputTruncated, CitationWarnings, ReadPaths, TokenUsage,
+    /// ContextWindow. Only the ask path's populated fields exist here; the
+    /// agentic-loop fields print as their zero values (`0`, `[]`, `false`).
+    fn go_value_format(&self) -> String {
+        let text = |value: &Option<String>| value.clone().unwrap_or_default();
+        format!(
+            "{{{} {} {} {} {} {} {} {} 0 []  false [] [] 0 0}}",
+            self.kind,
+            text(&self.text),
+            text(&self.path),
+            text(&self.title),
+            text(&self.snippet),
+            go_float_v(self.score.unwrap_or(0.0)),
+            text(&self.tool_name),
+            text(&self.status),
+        )
+    }
+
     fn tool(status: &str) -> Self {
         Self {
             kind: "tool".to_owned(),
@@ -102,6 +122,22 @@ impl AskEvent {
     }
 }
 
+/// Go `%v` for a float64: shortest round-trip digits in `%g` form with the
+/// exponent threshold at 21 (`strconv.FormatFloat(v, 'g', -1, 64)` as fmt
+/// applies it).
+fn go_float_v(value: f64) -> String {
+    if value == 0.0 {
+        return "0".to_owned();
+    }
+    let scientific = format!("{value:e}");
+    let (mantissa, exponent) = scientific.split_once('e').unwrap_or((&scientific, "0"));
+    let exponent: i32 = exponent.parse().unwrap_or(0);
+    if (-4..21).contains(&exponent) {
+        return format!("{value}");
+    }
+    format!("{mantissa}e{}{:02}", if exponent < 0 { '-' } else { '+' }, exponent.abs())
+}
+
 pub fn ask_cli() -> Command {
     Command::new("ask").arg(Arg::new("query").required(true))
 }
@@ -115,9 +151,10 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         Ok(root) => root,
         Err(error) => return super::emit_error(error, output_json),
     };
-    if let Err(error) = ensure_offline_ask_provider() {
-        return super::emit_error(error, output_json);
-    }
+    let config = match load_config() {
+        Ok(config) => config,
+        Err(error) => return super::emit_error(error, output_json),
+    };
     let sidecar = match open_for_vault(&root) {
         Ok(sidecar) => sidecar,
         Err(error) => return super::emit_error(error.to_string(), output_json),
@@ -149,7 +186,16 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
     if let Some(event) = events.last_mut() {
         event.tool_name = Some("llm".to_owned());
     }
-    for chunk in offline_ask_chunks(&paths) {
+    let docs: Vec<symdesk_service::ai::Doc> = hits
+        .iter()
+        .zip(&paths)
+        .map(|(hit, path)| symdesk_service::ai::Doc {
+            path: path.clone(),
+            title: hit.title.clone(),
+            snippet: hit.snippet.clone(),
+        })
+        .collect();
+    for chunk in ask_chunks(&config, query, &docs) {
         events.push(AskEvent::answer(&chunk));
     }
     events.push(AskEvent::tool("done"));
@@ -158,6 +204,30 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
     }
     events.push(AskEvent::done());
     emit_ask_events(&events, output_json)
+}
+
+/// Go `ai.Ask` through the shared service composition: the configured
+/// provider (Ollama, Anthropic or the Hermes CLI backend), or the honest
+/// not-configured answer with the top three results.
+pub(crate) fn ask_chunks(
+    config: &symdesk_core::config::Config,
+    query: &str,
+    docs: &[symdesk_service::ai::Doc],
+) -> Vec<String> {
+    let mut environment = match symdesk_core::config::environment_snapshot() {
+        Ok(environment) => environment,
+        Err(error) => return vec![format!("⚠️ Request failed: {error}\n")],
+    };
+    if let Ok(path) = std::env::var("PATH") {
+        environment.insert("PATH".to_owned(), path);
+    }
+    let mut resolve_key = |reference: &str| crate::ai_secrets::resolve_key(reference);
+    let mut context = symdesk_service::ai::Context::new(config, &environment, &mut resolve_key);
+    let mut chunks = Vec::new();
+    symdesk_service::ai::ask(&mut context, query, docs, &mut |chunk| {
+        chunks.push(chunk.to_owned());
+    });
+    chunks
 }
 
 pub(crate) fn ask_display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
@@ -181,8 +251,11 @@ fn emit_ask_events(events: &[AskEvent], output_json: bool) -> ExitCode {
                     return super::write_stderr(&format!("{error}\n"), CoreExitCode::Generic);
                 }
             }
-        } else if let Some(text) = &event.text {
-            output.push_str(text);
+        } else {
+            // Go's `outputStream` prints `fmt.Printf("%v\n", event)` of the
+            // whole `ai.AIEvent` struct in text mode.
+            output.push_str(&event.go_value_format());
+            output.push('\n');
         }
     }
     super::write_stdout(output)

@@ -1471,11 +1471,18 @@ recipe-validate-differential:
 .PHONY: ai-compose-differential
 # RUST-012: provider selection/streaming, sibling-tool discovery and the
 # reviewed recipe runner, each replayed against Go-recorded fixtures.
-ai-compose-differential: secret-canary-differential secrets-resolve-differential ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+ai-compose-differential: ask-hermes-differential secret-canary-differential secrets-resolve-differential ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
 
-.PHONY: secret-canary-differential secrets-resolve-fixtures-generate secrets-resolve-differential compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
+.PHONY: ask-hermes-fixtures-generate ask-hermes-differential secret-canary-differential secrets-resolve-fixtures-generate secrets-resolve-differential compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
 ai-compose-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+
+ask-hermes-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskHermesProcessContract$$'
+
+ask-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskHermesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test ask_hermes
 
 # SEC-002: Rust-side canary scan of a failing provider that echoes the key.
 secret-canary-differential:

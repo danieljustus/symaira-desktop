@@ -90,7 +90,7 @@
     "testdata/port/dataset/query-full.json": "2779ce83658f3e52947c344ab281dda54fbf3136745a7d33f27886c304f4d7c0",
     "testdata/port/dataset/service-sync.json": "229610b6515a009febbac2975c2349ad6f1bdf1cd297854a8fd65265b4dac3fc",
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
-    "testdata/port/http/representative.json": "2f4b202d00ea8b646e2a9308ccbae4ba866effa66063144f3b1416b2a104c2ad",
+    "testdata/port/http/representative.json": "032504a3518819643a76540aa92414b62bbfacadf5ddaa7c6094ad302ce4578c",
     "testdata/port/http/routes.json": "dd88559823bf28c5ead65d7dfdbc23414fc6ef8072127fc0f561c30351c0f7b6",
     "testdata/port/ingest/classification.json": "43aed0044784e97b532a28d33b5355542a19e9df5f29147d324844a46d9bc278",
     "testdata/port/ingest/classify-pipeline.json": "f4686d26c7f10fd9f60a4e82d96b64a0088a2f60bb89fb397d877596d5cc66eb",

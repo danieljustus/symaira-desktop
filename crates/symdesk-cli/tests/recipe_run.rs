@@ -257,7 +257,7 @@ fn replay(case: &Case, script: &str) -> Result<usize, String> {
             args.extend(["--vault".to_owned(), vault.to_string_lossy().into_owned()]);
         }
         args.extend(step.args.iter().map(|a| expand(a)));
-        let path = std::env::var("PATH").unwrap_or_default();
+        let path = "/usr/bin:/bin".to_owned();
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
         command
             .current_dir(&root)

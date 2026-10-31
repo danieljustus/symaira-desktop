@@ -21,6 +21,10 @@ import (
 // Rust replay (crates/symdesk-cli/tests/recipe_run.rs) executes the very same
 // runner script from the fixture.
 
+// recipeRunPath is fixed: check mode runs with a sanitized environment, and
+// the double only needs the POSIX basics.
+const recipeRunPath = "/usr/bin:/bin"
+
 const recipeRunFixturePath = "../../testdata/port/ai/recipe-run-process.json"
 
 type recipeRunFixture struct {
@@ -396,7 +400,7 @@ func observeRecipeRunCase(t *testing.T, binary string, c recipeRunCase) recipeRu
 		cmd := exec.Command(binary, args...) //nolint:gosec // test-built CLI with controlled arguments
 		cmd.Dir = root
 		env := []string{
-			"PATH=" + os.Getenv("PATH"), "HOME=" + home, "TZ=UTC",
+			"PATH=" + recipeRunPath, "HOME=" + home, "TZ=UTC",
 			"XDG_CONFIG_HOME=" + filepath.Join(home, "config"),
 			"XDG_CACHE_HOME=" + filepath.Join(home, "cache"),
 			"XDG_DATA_HOME=" + filepath.Join(home, "data"),
@@ -404,7 +408,7 @@ func observeRecipeRunCase(t *testing.T, binary string, c recipeRunCase) recipeRu
 			"FAKE_RUNNER_LOG=" + filepath.Join(logDir, "runner.log"),
 		}
 		for k, v := range st.Env {
-			v = strings.ReplaceAll(expand(v, runID), "$PATH", os.Getenv("PATH"))
+			v = strings.ReplaceAll(expand(v, runID), "$PATH", recipeRunPath)
 			env = append(env, k+"="+v)
 		}
 		cmd.Env = env

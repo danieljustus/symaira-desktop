@@ -130,6 +130,7 @@ func runPortMemoryCall(t *testing.T, call portMemoryCall) portMemoryCall {
 		}
 	}
 	logPath := filepath.Join(root, "symmemory.log")
+	t.Setenv("PATH", "/usr/bin:/bin")
 	t.Setenv("FAKE_SYMMEMORY_STATE", state)
 	t.Setenv("FAKE_SYMMEMORY_LOG", logPath)
 	t.Setenv("FAKE_SYMMEMORY_MODE", call.Mode)

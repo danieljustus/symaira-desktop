@@ -738,6 +738,10 @@ jobs:
         shell: bash
         run: make dataset-aggregate-differential
 
+      - name: Run native contacts and dataset differentials
+        shell: bash
+        run: make contacts-dataset-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

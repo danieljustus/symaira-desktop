@@ -326,6 +326,37 @@ contacts-import-differential:
 	GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/importer ./internal/contacts/internal/service/importer -run '^TestPortContacts(CSV|Import)Contract$$'
 	$(CARGO) test -p symdesk-contacts --locked --test csv_contracts --test import_contracts
 
+# RUST-009 acceptance: every contacts differential (store, CRUD, relationships,
+# timeline/meeting import, memberships, memory links, vCard/CSV/import,
+# security/export/backup, erase, key provider, schema) plus the dataset sync,
+# purge, query, aggregate and view-projection differentials.
+.PHONY: contacts-dataset-differential
+contacts-dataset-differential: contacts-keyprovider-differential contacts-erase-differential contacts-relationship-differential contacts-crud-differential contacts-vcard-differential contacts-import-differential contacts-security-differential contacts-memorylink-differential contacts-timeline-differential contacts-membership-differential contacts-schema-differential dataset-sync-differential dataset-purge-differential dataset-aggregate-differential dataset-query-full-differential dataset-cli-differential
+
+.PHONY: contacts-security-fixtures-generate contacts-security-differential
+contacts-security-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsRedactContract$$'
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsExportBackupContract$$'
+
+# Redact masks, export bytes and the AES-256-GCM/Argon2id backup format. The
+# Rust test writes its own backup into a fresh directory and the Go oracle must
+# restore it, so both directions of the format are proven in one run.
+contacts-security-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/domain/security -run '^TestPortContactsRedactContract$$' -v
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsExportBackupContract$$' -v
+	rm -rf "$(RUST_TARGET_DIR)/contacts-backup-exchange" && mkdir -p "$(RUST_TARGET_DIR)/contacts-backup-exchange"
+	PORT_RUST_BACKUP_DIR="$(abspath $(RUST_TARGET_DIR))/contacts-backup-exchange" $(CARGO) test -p symdesk-contacts --locked --test security_contracts
+	test -s "$(RUST_TARGET_DIR)/contacts-backup-exchange/rust.bak"
+	PORT_RUST_BACKUP="$(abspath $(RUST_TARGET_DIR))/contacts-backup-exchange/rust.bak" $(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/security -run '^TestPortContactsRustBackupRestores$$' -v
+
+.PHONY: contacts-memorylink-fixtures-generate contacts-memorylink-differential
+contacts-memorylink-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/memorylink -run '^TestPortContactsMemoryLinkContract$$'
+
+contacts-memorylink-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/memorylink -run '^TestPortContactsMemoryLinkContract$$' -v
+	$(CARGO) test -p symdesk-contacts --locked --test memorylink_contracts
+
 .PHONY: contacts-timeline-fixtures-generate contacts-timeline-differential
 contacts-timeline-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 $(CONTACTS_GO) test -count=1 ./internal/contacts/internal/service/relationship -run '^TestPortContactsTimelineMeetingContract$$'

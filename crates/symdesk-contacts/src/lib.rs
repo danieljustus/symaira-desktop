@@ -1,11 +1,15 @@
 //! The absorbed SymRelate contact store. Go remains the production oracle.
 #![deny(unsafe_code)]
 
+pub mod backup;
 pub mod contact;
+pub mod export;
 pub mod import;
 pub mod keyprovider;
 pub mod membership;
+pub mod memorylink;
 pub mod pipeline;
+pub mod redact;
 pub mod relationship;
 pub mod security;
 pub mod vcard;

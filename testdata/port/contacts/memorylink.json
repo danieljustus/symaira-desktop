@@ -1,0 +1,471 @@
+{
+  "actions": [
+    {
+      "op": "get_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "get_org",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {}
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {
+        "LinkedBy": "x",
+        "MemoryEntityID": "  "
+      }
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {
+        "LinkedBy": " \t",
+        "MemoryEntityID": "ent-1"
+      }
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person"
+      }
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-2"
+      }
+    },
+    {
+      "op": "link_person",
+      "id": "q",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1"
+      }
+    },
+    {
+      "op": "link_person",
+      "id": "missing",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person"
+      }
+    },
+    {
+      "op": "link_org",
+      "id": "o",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-9",
+        "MemoryEntityType": "organization"
+      }
+    },
+    {
+      "op": "link_org",
+      "id": "o",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person"
+      }
+    },
+    {
+      "op": "link_org",
+      "id": "missing",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person"
+      }
+    },
+    {
+      "op": "link_org",
+      "id": "o2",
+      "input": {
+        "LinkedBy": " by ",
+        "MemoryEntityID": " padded "
+      }
+    },
+    {
+      "op": "get_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "get_person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "get_person",
+      "id": "r",
+      "input": null
+    },
+    {
+      "op": "get_org",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "get_org",
+      "id": "o2",
+      "input": null
+    },
+    {
+      "op": "get_org",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "unlink_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "unlink_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "unlink_person",
+      "id": "missing",
+      "input": null
+    },
+    {
+      "op": "get_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "link_person",
+      "id": "p",
+      "input": {
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-2",
+        "MemoryEntityType": "project"
+      }
+    },
+    {
+      "op": "get_person",
+      "id": "p",
+      "input": null
+    },
+    {
+      "op": "delete_person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "get_person",
+      "id": "q",
+      "input": null
+    },
+    {
+      "op": "unlink_org",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "get_org",
+      "id": "o",
+      "input": null
+    },
+    {
+      "op": "unlink_org",
+      "id": "o",
+      "input": null
+    }
+  ],
+  "ids": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005",
+    "00000000-0000-4000-8000-000000000006",
+    "00000000-0000-4000-8000-000000000007",
+    "00000000-0000-4000-8000-000000000008",
+    "00000000-0000-4000-8000-000000000009"
+  ],
+  "oracle": {
+    "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+    "release": "renderer-pdf-safety-v2-local"
+  },
+  "queries": [
+    "SELECT * FROM memory_links ORDER BY id"
+  ],
+  "results": [
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "memorylink.link: memory entity id must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "memorylink.link: memory entity id must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "memorylink.link: linked_by must not be empty",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person",
+        "OrganizationID": "",
+        "PersonID": "p"
+      }
+    },
+    {
+      "error": "memorylink.link: already linked to a SymMemory entity; unlink first to replace it: constraint failed: UNIQUE constraint failed: memory_links.person_id (2067)",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000003",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "",
+        "OrganizationID": "",
+        "PersonID": "q"
+      }
+    },
+    {
+      "error": "memorylink.link: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000005",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-9",
+        "MemoryEntityType": "organization",
+        "OrganizationID": "o",
+        "PersonID": ""
+      }
+    },
+    {
+      "error": "memorylink.link: already linked to a SymMemory entity; unlink first to replace it: constraint failed: UNIQUE constraint failed: memory_links.organization_id (2067)",
+      "kind": "conflict",
+      "value": null
+    },
+    {
+      "error": "memorylink.link: entity does not exist: constraint failed: FOREIGN KEY constraint failed (787)",
+      "kind": "invalid",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000008",
+        "LinkedBy": " by ",
+        "MemoryEntityID": " padded ",
+        "MemoryEntityType": "",
+        "OrganizationID": "o2",
+        "PersonID": ""
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000001",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "person",
+        "OrganizationID": "",
+        "PersonID": "p"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000003",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-1",
+        "MemoryEntityType": "",
+        "OrganizationID": "",
+        "PersonID": "q"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000005",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-9",
+        "MemoryEntityType": "organization",
+        "OrganizationID": "o",
+        "PersonID": ""
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000008",
+        "LinkedBy": " by ",
+        "MemoryEntityID": " padded ",
+        "MemoryEntityType": "",
+        "OrganizationID": "o2",
+        "PersonID": ""
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000009",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-2",
+        "MemoryEntityType": "project",
+        "OrganizationID": "",
+        "PersonID": "p"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": {
+        "CreatedAt": "2026-01-02T03:04:05Z",
+        "ID": "00000000-0000-4000-8000-000000000009",
+        "LinkedBy": "reviewer",
+        "MemoryEntityID": "ent-2",
+        "MemoryEntityType": "project",
+        "OrganizationID": "",
+        "PersonID": "p"
+      }
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    },
+    {
+      "error": "",
+      "kind": "",
+      "value": null
+    }
+  ],
+  "seed": "INSERT INTO persons(id,display_name,created_at,updated_at) VALUES('p','Ada','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'),('q','Bob','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'),('r','Cy','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'); INSERT INTO organizations(id,name,created_at,updated_at) VALUES('o','Example','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z'),('o2','Other','2026-01-02T03:04:05Z','2026-01-02T03:04:05Z');",
+  "snapshots": [
+    [
+      [
+        "00000000-0000-4000-8000-000000000008",
+        null,
+        "o2",
+        " padded ",
+        "",
+        " by ",
+        "2026-01-02T03:04:05Z"
+      ],
+      [
+        "00000000-0000-4000-8000-000000000009",
+        "p",
+        null,
+        "ent-2",
+        "project",
+        "reviewer",
+        "2026-01-02T03:04:05Z"
+      ]
+    ]
+  ],
+  "source_hashes": {
+    "internal/contacts/internal/domain/memorylink/types.go": "ea231453012c87149b2a535cc09d718ebac34293120aa19d23250652f65bdfb5",
+    "internal/contacts/internal/service/memorylink/service.go": "364e33c9c993f1b5a5d3048cf457e0b948b527d091762e9eebc106f1e4c284df"
+  },
+  "timestamp": "2026-01-02T03:04:05Z"
+}

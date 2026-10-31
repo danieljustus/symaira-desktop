@@ -1,0 +1,13 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+
+iVBO
+--BOUND
+Content-Type: text/plain
+
+text
+--BOUND--

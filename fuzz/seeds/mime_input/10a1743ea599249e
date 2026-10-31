@@ -1,0 +1,7 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=A; boundary=B
+
+--A
+
+x
+--A--

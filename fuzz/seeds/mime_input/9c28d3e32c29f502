@@ -1,0 +1,13 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: text/plain
+
+x
+--BOUND
+Content-Type: text/plain
+
+y
+stray
+--BOUND--

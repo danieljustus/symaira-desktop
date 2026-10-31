@@ -1,0 +1,9 @@
+Subject: M
+Content-Type: multipart/mixed; boundary=BOUND
+
+--BOUND
+Content-Type: text/plain
+Content-Disposition: ;;;
+
+body
+--BOUND--

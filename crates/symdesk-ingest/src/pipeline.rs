@@ -45,6 +45,18 @@ impl Engine for Runner {
     }
 }
 
+#[cfg(unix)]
+impl Engine for crate::vlm::VlmRunner {
+    fn extract(&self, ctx: &Context, path: &str, kind: &str) -> Result<Extraction, String> {
+        crate::vlm::VlmRunner::extract(self, ctx, path, kind).map(|r| Extraction {
+            text: r.text,
+            mime: r.mime,
+            engine: r.engine,
+            language: r.language,
+        })
+    }
+}
+
 /// Preset metadata and import traceability (`IngestOptions`).
 #[derive(Clone, Debug, Default)]
 pub struct IngestOptions {

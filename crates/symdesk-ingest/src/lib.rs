@@ -39,6 +39,8 @@ mod paperless_state;
 pub mod pipeline;
 pub mod structured;
 #[cfg(unix)]
+pub mod vlm;
+#[cfg(unix)]
 pub mod writer;
 pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};
 mod sql;

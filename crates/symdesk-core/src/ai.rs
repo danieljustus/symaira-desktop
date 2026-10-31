@@ -116,17 +116,7 @@ impl Provider {
         result
     }
     fn agent_config(&self) -> ureq::config::ConfigBuilder<ureq::typestate::AgentScope> {
-        let max_tokens = self.max_tokens;
-        ureq::Agent::config_builder()
-            .http_status_as_error(false)
-            .max_redirects(0)
-            .timeout_global(Some(Duration::from_secs(5 * 60)))
-            .middleware(
-                move |request: ureq::http::Request<ureq::SendBody<'_>>,
-                      next: ureq::middleware::MiddlewareNext<'_>| {
-                    go_request_json(request, next, max_tokens)
-                },
-            )
+        go_agent_config(self.max_tokens)
     }
     fn stream_with(
         &self,
@@ -225,6 +215,24 @@ fn ollama_root(raw: &str) -> &str {
     raw.match_indices('/')
         .find_map(|(index, _)| (index > "http://".len()).then_some(&raw[..index]))
         .unwrap_or(raw)
+}
+
+/// The HTTP agent every Go-parity LLM call uses: no status-as-error, no
+/// redirects, five-minute deadline and the Go request/response adapters
+/// (HTML-escaped request JSON, zero-valued `/api/generate` chunk fields).
+pub fn go_agent_config(
+    max_tokens: i64,
+) -> ureq::config::ConfigBuilder<ureq::typestate::AgentScope> {
+    ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .max_redirects(0)
+        .timeout_global(Some(Duration::from_secs(5 * 60)))
+        .middleware(
+            move |request: ureq::http::Request<ureq::SendBody<'_>>,
+                  next: ureq::middleware::MiddlewareNext<'_>| {
+                go_request_json(request, next, max_tokens)
+            },
+        )
 }
 
 // CoreKit uses serde_json for request bytes. Go encoding/json additionally

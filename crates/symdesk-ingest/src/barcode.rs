@@ -63,14 +63,34 @@ fn format_name(format: &BarcodeFormat) -> &'static str {
     }
 }
 
+/// gozxing's `NewLuminanceSourceFromImage`: alpha-premultiplied 16-bit
+/// channels, `(r + 2g + b) * 255 / (4 * 0xffff)`, blended onto white.
+fn luminance_source(img: &DynamicImage) -> Option<rxing::RGBLuminanceSource> {
+    let rgba = img.to_rgba16();
+    let (width, height) = (rgba.width() as usize, rgba.height() as usize);
+    let pixels: Vec<u32> = rgba
+        .pixels()
+        .map(|p| {
+            let a = u32::from(p.0[3]);
+            let channel = |v: u16| -> u32 { u32::from(v) * a / 0xffff };
+            let (r, g, b) = (channel(p.0[0]), channel(p.0[1]), channel(p.0[2]));
+            let lum = (r + 2 * g + b) * 255 / (4 * 0xffff);
+            let value = (lum * a + (0xffff - a) * 255) / 0xffff;
+            (value << 16) | (value << 8) | value
+        })
+        .collect();
+    rxing::RGBLuminanceSource::new_with_width_height_pixels(width, height, &pixels).ok()
+}
+
 /// `DetectBarcode`: first reader (Code39, Code128, EAN13, EAN8, UPCA, UPCE,
 /// ITF, QR, DataMatrix) that decodes wins; `("", "")` when none does.
 pub fn detect_barcode(img: &DynamicImage) -> (String, String) {
     macro_rules! attempt {
         ($reader:expr) => {{
-            let mut bitmap = BinaryBitmap::new(HybridBinarizer::new(
-                rxing::BufferedImageLuminanceSource::new(img.clone()),
-            ));
+            let Some(source) = luminance_source(img) else {
+                return (String::new(), String::new());
+            };
+            let mut bitmap = BinaryBitmap::new(HybridBinarizer::new(source));
             if let Ok(result) = $reader.decode(&mut bitmap) {
                 return (
                     result.getText().to_string(),

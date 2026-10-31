@@ -153,6 +153,7 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
     let input = root.join("in").join(&sc.file_name);
     std::fs::write(&input, "IMG").unwrap();
 
+    let mut watcher: Option<(Arc<std::sync::atomic::AtomicBool>, std::thread::JoinHandle<()>)> = None;
     let warnings = Arc::new(Mutex::new(String::new()));
     let sink = Arc::clone(&warnings);
     let runner = Runner::new(&paths["tesseract"], &paths["pdftoppm"], &paths["sips"], &sc.lang)
@@ -163,8 +164,28 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
         let (c, flag) = Context::background().with_cancel();
         flag.store(true, std::sync::atomic::Ordering::SeqCst);
         c
-    } else if let Some(ms) = sc.ctx.strip_prefix("timeout-") {
-        Context::background().with_timeout(Duration::from_millis(ms.parse().unwrap()))
+    } else if let Some(markers) = sc.ctx.strip_prefix("cancel-when:") {
+        // Cancel once every marker is in the tool log (load-independent).
+        let (c, flag) = Context::background().with_cancel();
+        let markers: Vec<String> = markers.split('|').map(str::to_owned).collect();
+        let log = dir.join("log");
+        let done = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let stop = Arc::clone(&done);
+        watcher = Some((
+            done,
+            std::thread::spawn(move || {
+                while !stop.load(std::sync::atomic::Ordering::SeqCst) {
+                    if let Ok(b) = std::fs::read_to_string(&log) {
+                        if markers.iter().all(|m| b.contains(m.as_str())) {
+                            flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                            return;
+                        }
+                    }
+                    std::thread::sleep(Duration::from_millis(2));
+                }
+            }),
+        ));
+        c
     } else {
         Context::background()
     };
@@ -174,6 +195,10 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
         result = runner.extract(&ctx, &input_s, &sc.kind);
     }
 
+    if let Some((stop, handle)) = watcher {
+        stop.store(true, std::sync::atomic::Ordering::SeqCst);
+        handle.join().unwrap();
+    }
     let cwd = std::env::current_dir().unwrap().to_string_lossy().into_owned();
     let (dirs, tmps) = (root.to_string_lossy().into_owned(), tmp.to_string_lossy().into_owned());
     let stderr = normalize(&warnings.lock().unwrap(), &dirs, &tmps, &cwd);

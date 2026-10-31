@@ -725,7 +725,7 @@
   },
   {
    "scenario": {
-    "id": "image-ctx-timeout-kills-tool",
+    "id": "image-ctx-cancel-kills-tool",
     "kind": "image/png",
     "file_name": "scan.png",
     "lang": "eng",
@@ -738,15 +738,15 @@
      "pages": "1.png\n10.png\n2.png\n",
      "sleep/scan.png": "20"
     },
-    "ctx": "timeout-1500",
-    "probe": "probe-image-ctx-timeout-kills-tool"
+    "ctx": "cancel-when:-l\u001feng\u001fscan.png",
+    "probe": "probe-image-ctx-cancel-kills-tool"
    },
    "result": null,
    "error": "tesseract failed: tesseract: signal: killed",
    "stderr": "",
    "transcript": [
-    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-ctx-timeout-kills-tool",
-    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-ctx-timeout-kills-tool"
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-image-ctx-cancel-kills-tool",
+    "T\u001f-l\u001feng\u001fscan.png\u001fstdout\u001e$DIR/in\u001eprobe-image-ctx-cancel-kills-tool"
    ]
   },
   {
@@ -1441,7 +1441,7 @@
   },
   {
    "scenario": {
-    "id": "pdf-ctx-timeout-kills-pages",
+    "id": "pdf-ctx-cancel-kills-page",
     "kind": "application/pdf",
     "file_name": "doc.pdf",
     "lang": "eng",
@@ -1451,20 +1451,19 @@
     "files": {
      "langs.out": "List of available languages in \"/usr/share/tessdata/\" (3):\neng\ndeu\nosd\n",
      "out/default": "Hello  World\r\n\r\n\r\n\r\nSecond   line\n",
-     "pages": "1.png\n2.png\n",
+     "pages": "1.png\n",
      "sleep/page-1.png": "20"
     },
-    "ctx": "timeout-1500",
-    "probe": "probe-pdf-ctx-timeout-kills-pages"
+    "ctx": "cancel-when:page-1.png",
+    "probe": "probe-pdf-ctx-cancel-kills-page"
    },
    "result": null,
    "error": "tesseract failed for page page-1.png: tesseract: signal: killed",
    "stderr": "",
    "transcript": [
-    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-ctx-timeout-kills-pages",
-    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-ctx-timeout-kills-pages",
-    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-ctx-timeout-kills-pages",
-    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-2.png\u001fstdout\u001e$CWD\u001eprobe-pdf-ctx-timeout-kills-pages"
+    "T\u001f--list-langs\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page",
+    "P\u001f-png\u001f-r\u001f150\u001f$DIR/in/doc.pdf\u001f$DIR/tmp/symingest-pdf-N/page\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page",
+    "T\u001f-l\u001feng\u001f$DIR/tmp/symingest-pdf-N/page-1.png\u001fstdout\u001e$CWD\u001eprobe-pdf-ctx-cancel-kills-page"
    ]
   },
   {
@@ -1702,6 +1701,6 @@
  },
  "source_hashes": {
   "ocr.go": "be98588e06bda109fa59406b9e1296339028363cfbb31737bcb46e53eea553d2",
-  "ocr_port_test.go": "5b355c94be73930bd0020b3078c736853443bfe8dd822de2dc22ef903efbdfd1"
+  "ocr_port_test.go": "89b658ab626b61d0a75d58ad8cb50839584bf6b12b4a70f7453e13d6f011303b"
  }
 }

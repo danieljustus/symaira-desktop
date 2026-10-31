@@ -1440,6 +1440,7 @@ rust-version-contract:
 rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run room_event -- -runs=$(FUZZ_RUNS) -max_len=65536
+	$(CARGO) +$(RUST_NIGHTLY) fuzz run mime_input -- -runs=$(FUZZ_RUNS) -max_len=65536
 
 # Current-build native evidence, independent of the historical version corpus.
 .PHONY: native-record

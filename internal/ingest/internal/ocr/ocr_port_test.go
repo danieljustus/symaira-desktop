@@ -228,11 +228,36 @@ func runOCRScenario(t *testing.T, sc ocrScenario) ocrCase {
 	case sc.Ctx == "cancelled":
 		ctx, cancel = context.WithCancel(ctx)
 		cancel()
-	case strings.HasPrefix(sc.Ctx, "timeout-"):
-		var ms int
-		_, _ = fmt.Sscanf(sc.Ctx, "timeout-%d", &ms)
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(ms)*time.Millisecond)
+	case strings.HasPrefix(sc.Ctx, "cancel-when:"):
+		// Cancel once every '|'-separated marker appears in the tool log, so
+		// the outcome does not depend on wall-clock timing or machine load.
+		ctx, cancel = context.WithCancel(ctx)
 		defer cancel()
+		markers := strings.Split(strings.TrimPrefix(sc.Ctx, "cancel-when:"), "|")
+		stop := make(chan struct{})
+		defer close(stop)
+		go func() {
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				if b, e := os.ReadFile(filepath.Join(dir, "log")); e == nil {
+					all := true
+					for _, m := range markers {
+						if !strings.Contains(string(b), m) {
+							all = false
+						}
+					}
+					if all {
+						cancel()
+						return
+					}
+				}
+				time.Sleep(2 * time.Millisecond)
+			}
+		}()
 	}
 	r := &Runner{Tesseract: paths["tesseract"], PDFToPPM: paths["pdftoppm"], SIPS: paths["sips"], OCRLang: sc.Lang}
 	res, runErr := r.Extract(ctx, input, extract.Kind(sc.Kind))
@@ -329,8 +354,8 @@ func ocrScenarios() []ocrScenario {
 		s.Files["out/default"] = "Dokumen-\nt mit Ab-\r\nsatz  und\u00a0Tab\t\tende\n"
 	})
 	add(base("image-ctx-cancelled", "image/png", "scan.png"), func(s *ocrScenario) { s.Ctx = "cancelled" })
-	add(base("image-ctx-timeout-kills-tool", "image/png", "scan.png"), func(s *ocrScenario) {
-		s.Ctx = "timeout-1500"
+	add(base("image-ctx-cancel-kills-tool", "image/png", "scan.png"), func(s *ocrScenario) {
+		s.Ctx = "cancel-when:-l\x1feng\x1fscan.png"
 		s.Files["sleep/scan.png"] = "20"
 	})
 	add(base("image-tesseract-missing", "image/png", "scan.png"), func(s *ocrScenario) { s.Tesseract = "missing" })
@@ -394,9 +419,9 @@ func ocrScenarios() []ocrScenario {
 	})
 	add(base("pdf-lang-missing-all", "application/pdf", "doc.pdf"), func(s *ocrScenario) { s.Lang = "fra" })
 	add(base("pdf-ctx-cancelled", "application/pdf", "doc.pdf"), func(s *ocrScenario) { s.Ctx = "cancelled" })
-	add(base("pdf-ctx-timeout-kills-pages", "application/pdf", "doc.pdf"), func(s *ocrScenario) {
-		s.Ctx = "timeout-1500"
-		s.Files["pages"] = "1.png\n2.png\n"
+	add(base("pdf-ctx-cancel-kills-page", "application/pdf", "doc.pdf"), func(s *ocrScenario) {
+		s.Ctx = "cancel-when:page-1.png"
+		s.Files["pages"] = "1.png\n"
 		s.Files["sleep/page-1.png"] = "20"
 	})
 	add(base("pdf-empty-text-pages", "application/pdf", "doc.pdf"), func(s *ocrScenario) {
@@ -464,6 +489,18 @@ func TestPortIngestOCRContract(t *testing.T) {
 			t.Fatal(e)
 		}
 		if !bytes.Equal(old, content) {
+			var prev struct {
+				Cases []json.RawMessage `json:"cases"`
+			}
+			if json.Unmarshal(old, &prev) == nil {
+				for i, c := range cases {
+					cur, _ := json.Marshal(c)
+					var a, b bytes.Buffer
+					if i < len(prev.Cases) && json.Compact(&a, prev.Cases[i]) == nil && json.Compact(&b, cur) == nil && !bytes.Equal(a.Bytes(), b.Bytes()) {
+						t.Errorf("case %q differs:\nrecorded %s\ncurrent  %s", c.Scenario.ID, a.String(), b.String())
+					}
+				}
+			}
 			t.Fatal("ingest OCR fixture drift; regenerate deliberately")
 		}
 	}

@@ -147,11 +147,7 @@ fn trim_sp_tab(s: &[u8]) -> &[u8] {
 }
 
 /// `textproto.Reader.readContinuedLineSlice`. `lim < 0` is unlimited.
-fn read_continued_line(
-    r: &mut Rd<'_>,
-    mut lim: i64,
-    must_colon: bool,
-) -> Result<Vec<u8>, String> {
+fn read_continued_line(r: &mut Rd<'_>, mut lim: i64, must_colon: bool) -> Result<Vec<u8>, String> {
     let line = r.read_line()?;
     if lim >= 0 && line.len() as i64 > lim {
         return Err("message too large".into());
@@ -279,7 +275,7 @@ pub fn read_message(data: &[u8]) -> Result<(Header, usize), String> {
     let end = End::Eof;
     let mut r = Rd::new(data, &end);
     let mut h = Header::default();
-    let mut err: Option<String> = None;
+    let err: Option<String>;
     if matches!(r.peek(), Some(b' ' | b'\t')) {
         let line = r.read_line()?;
         return Err(format!(
@@ -341,10 +337,7 @@ fn read_mime_header(r: &mut Rd<'_>) -> Result<Header, String> {
         ));
     }
     loop {
-        let kv = match read_continued_line(r, max_memory, true) {
-            Ok(kv) => kv,
-            Err(e) => return Err(e),
-        };
+        let kv = read_continued_line(r, max_memory, true)?;
         if kv.is_empty() {
             return Ok(m);
         }
@@ -697,17 +690,16 @@ pub fn quoted_printable(input: &Stream<'_>) -> Stream<'static> {
     };
     loop {
         // refill: ReadSlice('\n') over the 4096-byte buffer
-        if rerr.is_some() {
-            return finish(out, rerr.unwrap());
+        if let Some(e) = rerr.take() {
+            return finish(out, e);
         }
         let rest = &data[pos..];
         let (mut line, e): (&[u8], Option<String>) = match rest.iter().position(|b| *b == b'\n') {
             Some(i) if i < PEEK_BUFFER => (&rest[..=i], None),
-            _ if rest.len() >= PEEK_BUFFER => (&rest[..PEEK_BUFFER], Some("bufio: buffer full".into())),
-            _ => (
-                rest,
-                Some(input.end.error().unwrap_or("EOF").to_string()),
-            ),
+            _ if rest.len() >= PEEK_BUFFER => {
+                (&rest[..PEEK_BUFFER], Some("bufio: buffer full".into()))
+            }
+            _ => (rest, Some(input.end.error().unwrap_or("EOF").to_string())),
         };
         pos += line.len();
         let whole = line;
@@ -766,8 +758,11 @@ pub fn quoted_printable(input: &Stream<'_>) -> Stream<'static> {
                 },
                 b'\t' | b'\r' | b'\n' => {}
                 0x80..=0xff => {}
-                _ if b < b' ' || b > b'~' => {
-                    return finish(out, format!("quotedprintable: invalid unescaped byte 0x{b:02x} in body"));
+                _ if !(b' '..=b'~').contains(&b) => {
+                    return finish(
+                        out,
+                        format!("quotedprintable: invalid unescaped byte 0x{b:02x} in body"),
+                    );
                 }
                 _ => {}
             }
@@ -880,11 +875,11 @@ fn b64_decode_chunk(src: &[u8], out: &mut Vec<u8>) -> Result<(), String> {
 }
 
 const SIZE_CLASSES: &[usize] = &[
-    8, 16, 24, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320,
-    352, 384, 416, 448, 480, 512, 576, 640, 704, 768, 896, 1024, 1152, 1280, 1408, 1536, 1792,
-    2048, 2304, 2688, 3072, 3200, 3456, 4096, 4864, 5376, 6144, 6528, 6784, 6912, 8192, 9472,
-    9728, 10240, 10880, 12288, 13568, 14336, 16384, 18432, 19072, 20480, 21760, 24576, 27264,
-    28672, 32768,
+    8, 16, 24, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352,
+    384, 416, 448, 480, 512, 576, 640, 704, 768, 896, 1024, 1152, 1280, 1408, 1536, 1792, 2048,
+    2304, 2688, 3072, 3200, 3456, 4096, 4864, 5376, 6144, 6528, 6784, 6912, 8192, 9472, 9728,
+    10240, 10880, 12288, 13568, 14336, 16384, 18432, 19072, 20480, 21760, 24576, 27264, 28672,
+    32768,
 ];
 
 /// Go runtime `roundupsize` for a pointer-free allocation.
@@ -1096,10 +1091,7 @@ impl<'a> Multipart<'a> {
                 _ if rest.len() >= PEEK_BUFFER => {
                     (&rest[..PEEK_BUFFER], Some("bufio: buffer full".into()))
                 }
-                _ => (
-                    rest,
-                    Some(self.end.error().unwrap_or("EOF").to_string()),
-                ),
+                _ => (rest, Some(self.end.error().unwrap_or("EOF").to_string())),
             };
             let line = line.to_vec();
             self.pos += line.len();
@@ -1111,9 +1103,10 @@ impl<'a> Multipart<'a> {
             }
             if self.is_boundary_delimiter_line(&line) {
                 self.parts_read += 1;
-                return self.new_part().map(Some).or_else(|e| {
-                    if e == "EOF" { Ok(None) } else { Err(e) }
-                });
+                return self
+                    .new_part()
+                    .map(Some)
+                    .or_else(|e| if e == "EOF" { Ok(None) } else { Err(e) });
             }
             if self.is_final_boundary(&line) {
                 return Ok(None);

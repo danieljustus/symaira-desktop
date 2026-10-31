@@ -9,12 +9,11 @@ use std::path::Path;
 mod document;
 pub mod extract;
 pub mod ghtml;
-pub mod gzip;
 pub mod gmime;
 pub mod gxml;
+pub mod gzip;
 #[rustfmt::skip]
 mod gxml_tables;
-pub mod structured;
 mod migrations;
 pub mod notion;
 #[cfg(unix)]
@@ -23,6 +22,7 @@ pub mod paperless;
 pub mod paperless_export;
 pub mod paperless_import;
 mod paperless_state;
+pub mod structured;
 pub use paperless_state::{PaperlessImportState, PaperlessStateWrite};
 mod sql;
 pub use document::{Document, DocumentPaths};

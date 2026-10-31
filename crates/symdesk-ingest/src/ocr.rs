@@ -196,7 +196,11 @@ impl Runner {
     }
 
     fn validate_languages(&self, ctx: &Context) -> Result<String, String> {
-        let lang = if self.ocr_lang.is_empty() { "eng" } else { &self.ocr_lang };
+        let lang = if self.ocr_lang.is_empty() {
+            "eng"
+        } else {
+            &self.ocr_lang
+        };
         self.validate_languages_for(ctx, lang)
     }
 
@@ -276,7 +280,14 @@ impl Runner {
         let path = clean_tool_path("tesseract", &self.tesseract)?;
         let exec_path =
             look_path(&path).map_err(|e| format!("tesseract not found on PATH: {e}"))?;
-        let outcome = run_process(ctx, &exec_path, &["--list-langs"], None, &self.tesseract, &self.env);
+        let outcome = run_process(
+            ctx,
+            &exec_path,
+            &["--list-langs"],
+            None,
+            &self.tesseract,
+            &self.env,
+        );
         let out = match outcome {
             Ok(o) => o,
             Err(_) => {
@@ -314,16 +325,24 @@ impl Runner {
         let dir = go_dir(path);
         let base = go_base_name(path);
         let out = self
-            .run_tool(ctx, Some(&dir), &self.tesseract, &["-l", &lang, &base, "stdout"])
+            .run_tool(
+                ctx,
+                Some(&dir),
+                &self.tesseract,
+                &["-l", &lang, &base, "stdout"],
+            )
             .map_err(|e| format!("tesseract failed: {e}"))?;
         let mut text = normalize_text(&String::from_utf8_lossy(&out));
-        if let Some(retry) = self.language_retry(ctx, &lang, &text) {
-            if let Ok(out2) =
-                self.run_tool(ctx, Some(&dir), &self.tesseract, &["-l", &retry, &base, "stdout"])
-            {
-                text = normalize_text(&String::from_utf8_lossy(&out2));
-                lang = retry;
-            }
+        if let Some(retry) = self.language_retry(ctx, &lang, &text)
+            && let Ok(out2) = self.run_tool(
+                ctx,
+                Some(&dir),
+                &self.tesseract,
+                &["-l", &retry, &base, "stdout"],
+            )
+        {
+            text = normalize_text(&String::from_utf8_lossy(&out2));
+            lang = retry;
         }
         Ok(OcrResult {
             text,
@@ -365,8 +384,13 @@ impl Runner {
         let dir = TempDir::new(self.temp_root.as_deref(), "symingest-heic-")?;
         let converted = dir.path().join("converted.png");
         let converted_s = converted.to_string_lossy().into_owned();
-        self.run_tool(ctx, None, &self.sips, &["-s", "format", "png", path, "--out", &converted_s])
-            .map_err(|e| format!("sips HEIC conversion failed: {e}"))?;
+        self.run_tool(
+            ctx,
+            None,
+            &self.sips,
+            &["-s", "format", "png", path, "--out", &converted_s],
+        )
+        .map_err(|e| format!("sips HEIC conversion failed: {e}"))?;
         let mut res = self.extract_image(ctx, &converted_s)?;
         "image/heic".clone_into(&mut res.mime);
         "sips+tesseract".clone_into(&mut res.engine);
@@ -378,23 +402,38 @@ impl Runner {
         let mut lang = self.validate_languages(ctx)?;
         let dir = TempDir::new(self.temp_root.as_deref(), "symingest-pdf-")?;
         let prefix = dir.path().join("page").to_string_lossy().into_owned();
-        self.run_tool(ctx, None, &self.pdftoppm, &["-png", "-r", "150", path, &prefix])
-            .map_err(|e| format!("pdftoppm failed: {e}"))?;
+        self.run_tool(
+            ctx,
+            None,
+            &self.pdftoppm,
+            &["-png", "-r", "150", path, &prefix],
+        )
+        .map_err(|e| format!("pdftoppm failed: {e}"))?;
         let entries = std::fs::read_dir(dir.path())
             .map_err(|e| format!("read rendered pages: {}", io_message(&e)))?;
         let mut pages: Vec<String> = entries
             .filter_map(Result::ok)
-            .filter(|e| e.file_name().to_string_lossy().to_lowercase().ends_with(".png"))
-            .map(|e| dir.path().join(e.file_name()).to_string_lossy().into_owned())
+            .filter(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .to_lowercase()
+                    .ends_with(".png")
+            })
+            .map(|e| {
+                dir.path()
+                    .join(e.file_name())
+                    .to_string_lossy()
+                    .into_owned()
+            })
             .collect();
         pages.sort();
         let raw = self.ocr_pdf_pages(ctx, &pages, &lang)?;
         let mut text = normalize_text(&raw);
-        if let Some(retry) = self.language_retry(ctx, &lang, &text) {
-            if let Ok(raw2) = self.ocr_pdf_pages(ctx, &pages, &retry) {
-                text = normalize_text(&raw2);
-                lang = retry;
-            }
+        if let Some(retry) = self.language_retry(ctx, &lang, &text)
+            && let Ok(raw2) = self.ocr_pdf_pages(ctx, &pages, &retry)
+        {
+            text = normalize_text(&raw2);
+            lang = retry;
         }
         Ok(OcrResult {
             text,
@@ -415,10 +454,19 @@ impl Runner {
             for _ in 0..PAGE_CONCURRENCY.min(pages.len()) {
                 scope.spawn(|| {
                     loop {
-                        let i = usize::try_from(next.fetch_add(1, Ordering::SeqCst)).unwrap_or(usize::MAX);
+                        let i = usize::try_from(next.fetch_add(1, Ordering::SeqCst))
+                            .unwrap_or(usize::MAX);
                         let Some(page) = pages.get(i) else { return };
-                        match self.run_tool(&group_ctx, None, &self.tesseract, &["-l", lang, page, "stdout"]) {
-                            Ok(out) => results.lock().unwrap()[i] = String::from_utf8_lossy(&out).into_owned(),
+                        match self.run_tool(
+                            &group_ctx,
+                            None,
+                            &self.tesseract,
+                            &["-l", lang, page, "stdout"],
+                        ) {
+                            Ok(out) => {
+                                results.lock().unwrap()[i] =
+                                    String::from_utf8_lossy(&out).into_owned()
+                            }
                             Err(e) => {
                                 let mut slot = first_err.lock().unwrap();
                                 if slot.is_none() {
@@ -446,7 +494,13 @@ impl Runner {
     }
 
     /// Go `runToolInDir`: captured stdout; error text prefixed with the tool's base name.
-    fn run_tool(&self, ctx: &Context, dir: Option<&str>, name: &str, args: &[&str]) -> Result<Vec<u8>, String> {
+    fn run_tool(
+        &self,
+        ctx: &Context,
+        dir: Option<&str>,
+        name: &str,
+        args: &[&str],
+    ) -> Result<Vec<u8>, String> {
         let base = go_base_name(name);
         let exec = if name.contains('/') {
             name.to_owned()
@@ -494,7 +548,10 @@ fn run_process(
         return Err(format!("fork/exec {orig_name}: exec format error"));
     }
     let mut cmd = Command::new(exec);
-    cmd.args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    cmd.args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     for (k, v) in env {
         cmd.env(k, v);
     }
@@ -543,8 +600,12 @@ fn run_process(
 /// (ELF/Mach-O) image, i.e. `execve` would fail with ENOEXEC.
 fn lacks_exec_format(path: &str) -> bool {
     let mut magic = [0_u8; 4];
-    let Ok(mut f) = std::fs::File::open(path) else { return false };
-    let Ok(n) = f.read(&mut magic) else { return false };
+    let Ok(mut f) = std::fs::File::open(path) else {
+        return false;
+    };
+    let Ok(n) = f.read(&mut magic) else {
+        return false;
+    };
     let m = &magic[..n];
     if m.starts_with(b"#!") || m.starts_with(&[0x7f, b'E', b'L', b'F']) {
         return false;
@@ -700,7 +761,9 @@ fn go_quote(s: &str) -> String {
 pub fn look_path(file: &str) -> Result<String, String> {
     let wrap = |e: &str| format!("exec: {}: {e}", go_quote(file));
     if file.contains('/') {
-        return find_executable(file).map(|()| file.to_owned()).map_err(|e| wrap(&e));
+        return find_executable(file)
+            .map(|()| file.to_owned())
+            .map_err(|e| wrap(&e));
     }
     let path = std::env::var("PATH").unwrap_or_default();
     for dir in path.split(':') {
@@ -708,7 +771,9 @@ pub fn look_path(file: &str) -> Result<String, String> {
         let candidate = format!("{dir}/{file}");
         if find_executable(&candidate).is_ok() {
             if !candidate.starts_with('/') {
-                return Err(wrap("cannot run executable found relative to current directory"));
+                return Err(wrap(
+                    "cannot run executable found relative to current directory",
+                ));
             }
             return Ok(candidate);
         }
@@ -751,7 +816,13 @@ impl TempDir {
             match b.create(&path) {
                 Ok(()) => return Ok(Self { path }),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-                Err(e) => return Err(format!("create temp dir: mkdir {}: {}", path.display(), io_message(&e))),
+                Err(e) => {
+                    return Err(format!(
+                        "create temp dir: mkdir {}: {}",
+                        path.display(),
+                        io_message(&e)
+                    ));
+                }
             }
         }
         Err("create temp dir: too many attempts".to_owned())

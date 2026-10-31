@@ -136,7 +136,9 @@ fn read_directory_end(data: &[u8]) -> Result<(DirEnd, i64), ZipError> {
     if comment_len > buf.len() - DIR_END_LEN {
         return err("zip: invalid comment length");
     }
-    if d.directory_records == 0xffff || d.directory_size == 0xffff || d.directory_offset == 0xffff_ffff
+    if d.directory_records == 0xffff
+        || d.directory_size == 0xffff
+        || d.directory_offset == 0xffff_ffff
     {
         // findDirectory64End
         let loc_offset = dir_end_offset - DIR64_LOC_LEN as i64;
@@ -289,7 +291,7 @@ impl<'a> Reader<'a> {
         };
         let mut files = Vec::new();
         let mut count = 0usize;
-        let mut last_err: Option<String> = None;
+        let last_err: Option<String>;
         loop {
             match read_directory_header_raw(rest) {
                 Ok((mut e, n)) => {

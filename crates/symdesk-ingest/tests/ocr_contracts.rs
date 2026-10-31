@@ -62,7 +62,10 @@ struct Fixture {
 
 fn fixture() -> Fixture {
     serde_json::from_slice(
-        &std::fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/ingest/ocr.json")).unwrap(),
+        &std::fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/ingest/ocr.json"),
+        )
+        .unwrap(),
     )
     .unwrap()
 }
@@ -81,12 +84,16 @@ fn norm_tmp_names(s: &str) -> String {
 }
 
 fn normalize(s: &str, dir: &str, tmp: &str, cwd: &str) -> String {
-    let s = s.replace(cwd, "$CWD").replace(dir, "$DIR").replace(tmp, "$TMP");
+    let s = s
+        .replace(cwd, "$CWD")
+        .replace(dir, "$DIR")
+        .replace(tmp, "$TMP");
     norm_tmp_names(&s)
 }
 
 fn normalize_transcript(lines: Vec<String>) -> Vec<String> {
-    let is_page = |l: &str| l.starts_with('T') && !l.contains("--list-langs") && l.contains("page-");
+    let is_page =
+        |l: &str| l.starts_with('T') && !l.contains("--list-langs") && l.contains("page-");
     let mut out = Vec::new();
     let mut i = 0;
     while i < lines.len() {
@@ -115,20 +122,30 @@ struct Observed {
 
 fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
     std::fs::create_dir_all(root_base).unwrap();
-    let root = std::fs::canonicalize(root_base).unwrap().join(&sc.id.replace(['/', ' '], "_"));
+    let root = std::fs::canonicalize(root_base)
+        .unwrap()
+        .join(sc.id.replace(['/', ' '], "_"));
     let dir = root.join("tools");
     let tmp = root.join("tmp");
     for d in [&dir, &tmp, &root.join("in")] {
         std::fs::create_dir_all(d).unwrap();
     }
     let mut paths: BTreeMap<&str, String> = BTreeMap::new();
-    for (name, mode) in [("tesseract", &sc.tesseract), ("pdftoppm", &sc.pdftoppm), ("sips", &sc.sips)] {
+    for (name, mode) in [
+        ("tesseract", &sc.tesseract),
+        ("pdftoppm", &sc.pdftoppm),
+        ("sips", &sc.sips),
+    ] {
         let p = match mode.as_str() {
             "ok" | "" => {
                 write(&dir, name, &fx.scripts[name], 0o700);
                 dir.join(name).to_string_lossy().into_owned()
             }
-            "missing" => dir.join("no-such").join(name).to_string_lossy().into_owned(),
+            "missing" => dir
+                .join("no-such")
+                .join(name)
+                .to_string_lossy()
+                .into_owned(),
             "empty" => String::new(),
             "dot" => ".".to_owned(),
             "dir" => {
@@ -153,13 +170,21 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
     let input = root.join("in").join(&sc.file_name);
     std::fs::write(&input, "IMG").unwrap();
 
-    let mut watcher: Option<(Arc<std::sync::atomic::AtomicBool>, std::thread::JoinHandle<()>)> = None;
+    let mut watcher: Option<(
+        Arc<std::sync::atomic::AtomicBool>,
+        std::thread::JoinHandle<()>,
+    )> = None;
     let warnings = Arc::new(Mutex::new(String::new()));
     let sink = Arc::clone(&warnings);
-    let runner = Runner::new(&paths["tesseract"], &paths["pdftoppm"], &paths["sips"], &sc.lang)
-        .with_temp_root(&tmp)
-        .with_env("FAKE_PROBE", &sc.probe)
-        .with_warn_sink(move |l| sink.lock().unwrap().push_str(l));
+    let runner = Runner::new(
+        &paths["tesseract"],
+        &paths["pdftoppm"],
+        &paths["sips"],
+        &sc.lang,
+    )
+    .with_temp_root(&tmp)
+    .with_env("FAKE_PROBE", &sc.probe)
+    .with_warn_sink(move |l| sink.lock().unwrap().push_str(l));
     let ctx = if sc.ctx == "cancelled" {
         let (c, flag) = Context::background().with_cancel();
         flag.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -175,11 +200,11 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
             done,
             std::thread::spawn(move || {
                 while !stop.load(std::sync::atomic::Ordering::SeqCst) {
-                    if let Ok(b) = std::fs::read_to_string(&log) {
-                        if markers.iter().all(|m| b.contains(m.as_str())) {
-                            flag.store(true, std::sync::atomic::Ordering::SeqCst);
-                            return;
-                        }
+                    if let Ok(b) = std::fs::read_to_string(&log)
+                        && markers.iter().all(|m| b.contains(m.as_str()))
+                    {
+                        flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                        return;
                     }
                     std::thread::sleep(Duration::from_millis(2));
                 }
@@ -199,8 +224,14 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
         stop.store(true, std::sync::atomic::Ordering::SeqCst);
         handle.join().unwrap();
     }
-    let cwd = std::env::current_dir().unwrap().to_string_lossy().into_owned();
-    let (dirs, tmps) = (root.to_string_lossy().into_owned(), tmp.to_string_lossy().into_owned());
+    let cwd = std::env::current_dir()
+        .unwrap()
+        .to_string_lossy()
+        .into_owned();
+    let (dirs, tmps) = (
+        root.to_string_lossy().into_owned(),
+        tmp.to_string_lossy().into_owned(),
+    );
     let stderr = normalize(&warnings.lock().unwrap(), &dirs, &tmps, &cwd);
     let result = result.map_err(|e| normalize(&e, &dirs, &tmps, &cwd));
     let mut transcript = std::fs::read_to_string(dir.join("log")).ok().map(|b| {
@@ -216,13 +247,22 @@ fn run(fx: &Fixture, sc: &Scenario, root_base: &Path) -> Observed {
         .filter_map(Result::ok)
         .map(|e| {
             let n = e.file_name().to_string_lossy().into_owned();
-            regex::Regex::new(r"symingest-(pdf|heic)-[0-9]+").unwrap().replace_all(&n, "symingest-N").into_owned()
+            regex::Regex::new(r"symingest-(pdf|heic)-[0-9]+")
+                .unwrap()
+                .replace_all(&n, "symingest-N")
+                .into_owned()
         })
         .collect();
     if !left.is_empty() {
-        transcript.get_or_insert_with(Vec::new).push(format!("LEFTOVER {}", left.join(",")));
+        transcript
+            .get_or_insert_with(Vec::new)
+            .push(format!("LEFTOVER {}", left.join(",")));
     }
-    Observed { result, stderr, transcript }
+    Observed {
+        result,
+        stderr,
+        transcript,
+    }
 }
 
 #[test]
@@ -230,15 +270,21 @@ fn ocr_go_fixture() {
     let fx = fixture();
     assert_eq!(fx.schema_version, 1);
     assert!(fx.cases.len() >= 60, "fixture has {} cases", fx.cases.len());
-    let base: PathBuf = std::env::temp_dir().join(format!("symdesk-ocr-contract-{}", std::process::id()));
+    let base: PathBuf =
+        std::env::temp_dir().join(format!("symdesk-ocr-contract-{}", std::process::id()));
     let mut failures = Vec::new();
     for case in &fx.cases {
         let got = run(&fx, &case.scenario, &base);
         let mut problems = Vec::new();
         match (&got.result, &case.result) {
             (Ok(r), Some(w)) => {
-                if (&r.text, &r.mime, &r.engine, &r.language) != (&w.text, &w.mime, &w.engine, &w.language) {
-                    problems.push(format!("result {r:?} != text={:?} mime={} engine={} lang={}", w.text, w.mime, w.engine, w.language));
+                if (&r.text, &r.mime, &r.engine, &r.language)
+                    != (&w.text, &w.mime, &w.engine, &w.language)
+                {
+                    problems.push(format!(
+                        "result {r:?} != text={:?} mime={} engine={} lang={}",
+                        w.text, w.mime, w.engine, w.language
+                    ));
                 }
                 if !case.error.is_empty() {
                     problems.push("expected error, got result".to_owned());
@@ -249,29 +295,46 @@ fn ocr_go_fixture() {
                     problems.push(format!("error {e:?} != {:?}", case.error));
                 }
             }
-            (Ok(r), None) => problems.push(format!("unexpected result {r:?}, want error {:?}", case.error)),
+            (Ok(r), None) => problems.push(format!(
+                "unexpected result {r:?}, want error {:?}",
+                case.error
+            )),
             (Err(e), Some(_)) => problems.push(format!("unexpected error {e:?}")),
         }
         if got.stderr != case.stderr {
             problems.push(format!("stderr {:?} != {:?}", got.stderr, case.stderr));
         }
         if got.transcript != case.transcript {
-            problems.push(format!("transcript {:?} != {:?}", got.transcript, case.transcript));
+            problems.push(format!(
+                "transcript {:?} != {:?}",
+                got.transcript, case.transcript
+            ));
         }
         if !problems.is_empty() {
             failures.push(format!("{}: {}", case.scenario.id, problems.join("; ")));
         }
     }
     let _ = std::fs::remove_dir_all(&base);
-    assert!(failures.is_empty(), "{} of {} OCR cases differ:\n{}", failures.len(), fx.cases.len(), failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "{} of {} OCR cases differ:\n{}",
+        failures.len(),
+        fx.cases.len(),
+        failures.join("\n")
+    );
 }
 
 /// Negative control: a runner whose argv differs from Go's must be detected.
 #[test]
 fn ocr_negative_control() {
     let fx = fixture();
-    let case = fx.cases.iter().find(|c| c.scenario.id == "image-scan.png").unwrap();
-    let base: PathBuf = std::env::temp_dir().join(format!("symdesk-ocr-neg-{}", std::process::id()));
+    let case = fx
+        .cases
+        .iter()
+        .find(|c| c.scenario.id == "image-scan.png")
+        .unwrap();
+    let base: PathBuf =
+        std::env::temp_dir().join(format!("symdesk-ocr-neg-{}", std::process::id()));
     let got = run(&fx, &case.scenario, &base);
     let mut want = case.transcript.clone().unwrap();
     want[1] = want[1].replace("-l\u{1f}eng", "-l\u{1f}deu");

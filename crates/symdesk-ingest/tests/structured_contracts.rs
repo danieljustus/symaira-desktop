@@ -77,7 +77,9 @@ fn flate_offset_equivalent(go: &str, rust: &str) -> bool {
     go.split_once("flate: corrupt input before offset ")
         .zip(rust.split_once("flate: corrupt input"))
         .is_some_and(|((go_prefix, offset), (rust_prefix, rest))| {
-            go_prefix == rust_prefix && rest.is_empty() && offset.chars().all(|c| c.is_ascii_digit())
+            go_prefix == rust_prefix
+                && rest.is_empty()
+                && offset.chars().all(|c| c.is_ascii_digit())
         })
 }
 
@@ -126,7 +128,10 @@ fn run(c: &Case) -> Result<(), String> {
                     return Err(format!("detect {detection:?} != {:?}", c.detect));
                 }
             } else if detection.is_ok() {
-                return Err(format!("detect {detection:?} != error {:?}", c.detect_error));
+                return Err(format!(
+                    "detect {detection:?} != error {:?}",
+                    c.detect_error
+                ));
             }
             let got = extract::extract_bytes(&data, &c.kind, usize::MAX);
             let want = match (&c.result, expected_error(c)) {
@@ -159,19 +164,33 @@ fn structured_go_fixture() {
     let mut failures = Vec::new();
     for c in &f.cases {
         if let Err(e) = run(c) {
-            failures.push(format!("{} ({}): {}", c.id, c.group, e.chars().take(300).collect::<String>()));
+            failures.push(format!(
+                "{} ({}): {}",
+                c.id,
+                c.group,
+                e.chars().take(300).collect::<String>()
+            ));
         }
     }
     let mut by_group = std::collections::BTreeMap::new();
     for c in &f.cases {
         *by_group.entry(c.group.clone()).or_insert(0usize) += 1;
     }
-    eprintln!("replayed {} cases {by_group:?}, {} failures", f.cases.len(), failures.len());
+    eprintln!(
+        "replayed {} cases {by_group:?}, {} failures",
+        f.cases.len(),
+        failures.len()
+    );
     assert!(
         failures.is_empty(),
         "{} failures:\n{}",
         failures.len(),
-        failures.iter().take(40).cloned().collect::<Vec<_>>().join("\n")
+        failures
+            .iter()
+            .take(40)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n")
     );
     assert_eq!(f.cases.len(), 2520);
 }
@@ -179,7 +198,12 @@ fn structured_go_fixture() {
 #[test]
 fn structured_negative_control() {
     let f = fixture();
-    let mut c = f.cases.iter().find(|c| c.id == "docx-basic").unwrap().clone();
+    let mut c = f
+        .cases
+        .iter()
+        .find(|c| c.id == "docx-basic")
+        .unwrap()
+        .clone();
     assert!(run(&c).is_ok());
     c.result.as_mut().unwrap().text.push_str("tampered");
     assert!(run(&c).is_err());

@@ -35,7 +35,10 @@ pub enum Token {
 pub enum XmlError {
     /// `io.EOF` at a clean end of input.
     Eof,
-    Syntax { line: usize, msg: String },
+    Syntax {
+        line: usize,
+        msg: String,
+    },
     Other(String),
 }
 
@@ -88,7 +91,7 @@ fn in_table(table: &[(u32, u32, u32)], r: u32) -> bool {
             return false;
         }
         if r <= hi {
-            return stride <= 1 || (r - lo) % stride == 0;
+            return stride <= 1 || (r - lo).is_multiple_of(stride);
         }
     }
     false
@@ -559,9 +562,9 @@ impl<'a> Decoder<'a> {
                             let b = must!();
                             if b0 == b'-' && b1 == b'-' {
                                 if b != b'>' {
-                                    return self.fail(
-                                        self.syntax("invalid sequence \"--\" not allowed in comments"),
-                                    );
+                                    return self.fail(self.syntax(
+                                        "invalid sequence \"--\" not allowed in comments",
+                                    ));
                                 }
                                 break;
                             }

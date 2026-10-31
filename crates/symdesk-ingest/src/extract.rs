@@ -489,7 +489,8 @@ fn archive_text(data: &[u8], ext: &str) -> Result<String, String> {
             } else {
                 None
             };
-            let sheet_names = structured::workbook_sheet_names(workbook.as_deref(), rels.as_deref())?;
+            let sheet_names =
+                structured::workbook_sheet_names(workbook.as_deref(), rels.as_deref())?;
             let mut names = a
                 .names
                 .iter()

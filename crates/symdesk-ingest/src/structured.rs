@@ -122,14 +122,12 @@ pub fn word_xml_to_text(data: &[u8]) -> Res {
                         table.push(std::mem::take(&mut row));
                     }
                 }
-                "tbl" => {
-                    if in_table {
-                        if !table.is_empty() {
-                            out.push_str(&gfm_table(&table)?);
-                            table = Vec::new();
-                        }
-                        in_table = false;
+                "tbl" if in_table => {
+                    if !table.is_empty() {
+                        out.push_str(&gfm_table(&table)?);
+                        table = Vec::new();
                     }
+                    in_table = false;
                 }
                 _ => {}
             },
@@ -318,17 +316,15 @@ fn read_cell(dec: &mut Decoder<'_>, cell_type: &str, shared: &[String]) -> Res {
                     val = dec.decode_element_string().map_err(|e| e.to_string())?;
                 }
             }
-            Token::End(name) => {
-                if name.local == "c" {
-                    if cell_type == "s"
-                        && let Some(idx) = scan_int(&val)
-                        && idx >= 0
-                        && (idx as usize) < shared.len()
-                    {
-                        return Ok(shared[idx as usize].clone());
-                    }
-                    return Ok(val);
+            Token::End(name) if name.local == "c" => {
+                if cell_type == "s"
+                    && let Some(idx) = scan_int(&val)
+                    && idx >= 0
+                    && (idx as usize) < shared.len()
+                {
+                    return Ok(shared[idx as usize].clone());
                 }
+                return Ok(val);
             }
             _ => {}
         }
@@ -366,11 +362,9 @@ pub fn sheet_xml_to_text(data: &[u8], shared: &[String]) -> Res {
                 }
                 _ => {}
             },
-            Token::End(name) => {
-                if name.local == "row" && in_row {
-                    rows.push(std::mem::take(&mut current));
-                    in_row = false;
-                }
+            Token::End(name) if name.local == "row" && in_row => {
+                rows.push(std::mem::take(&mut current));
+                in_row = false;
             }
             _ => {}
         }
@@ -415,10 +409,7 @@ fn read_mail_body(header: &Header, body: &Stream<'_>, depth: usize) -> Res {
         let boundary = ct.params.get("boundary").cloned().unwrap_or_default();
         let mut mr = Multipart::new(body, &boundary);
         let (mut plain, mut html_parts): (Vec<String>, Vec<String>) = (vec![], vec![]);
-        loop {
-            let Some(part) = mr.next_part()? else {
-                break;
-            };
+        while let Some(part) = mr.next_part()? {
             let disp = parse_media_type(&part.header.get("Content-Disposition")).media_type;
             if eq_fold(disp.as_bytes(), "attachment") {
                 continue;

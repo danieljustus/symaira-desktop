@@ -24,10 +24,13 @@ fn layout_time(source: &str) -> Duration {
 #[test]
 fn wide_flowcharts_lay_out_quickly() {
     // Pre-fix release builds needed >1 s per input and the instrumented
-    // fuzzer 13-32 s; allow a slow shared debug host.
+    // fuzzer 13-32 s. The median input takes ~0.6 s in release and ~1.3 s in
+    // the dev profile (opt-level 2), but 13 s was observed in the Linux gate
+    // container on a saturated host, so the bound only catches order-of-
+    // magnitude regressions; the test runs alone (see .config/nextest.toml).
     for (name, source) in [("transpose", TRANSPOSE), ("median", MEDIAN)] {
         let elapsed = layout_time(source);
         eprintln!("layout of the {name} fuzz input took {elapsed:?}");
-        assert!(elapsed < Duration::from_secs(10), "{name}: {elapsed:?}");
+        assert!(elapsed < Duration::from_secs(60), "{name}: {elapsed:?}");
     }
 }

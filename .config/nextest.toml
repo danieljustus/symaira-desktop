@@ -5,3 +5,8 @@
 [[profile.default.overrides]]
 filter = 'binary(mcp_process) & test(=mcp_process_matches_go_for_cancellation_shutdown_and_concurrency)'
 threads-required = "num-test-threads"
+
+# Wall-clock bound on hostile Mermaid layouts; run alone for the same reason.
+[[profile.default.overrides]]
+filter = 'binary(draw_hostile_layout) & test(=wide_flowcharts_lay_out_quickly)'
+threads-required = "num-test-threads"

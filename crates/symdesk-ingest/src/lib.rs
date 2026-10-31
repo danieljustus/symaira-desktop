@@ -18,6 +18,16 @@ pub mod filetype;
 pub mod gform;
 pub mod ghtml;
 pub mod gmime;
+#[cfg(unix)]
+pub mod imap;
+#[cfg(unix)]
+pub mod ingest_fs;
+#[cfg(unix)]
+pub mod mail;
+#[cfg(unix)]
+pub mod mail_reader;
+#[cfg(unix)]
+pub mod secretref;
 #[allow(dead_code)]
 mod go_sort;
 pub mod gojson;

@@ -30,5 +30,9 @@ symaira-core-llm.workspace = true
 image = { version = "=0.25.8", default-features = false, features = ["png", "jpeg"] }
 rxing = { version = "=0.9.3", default-features = false, features = ["qrcode", "datamatrix", "oned", "decoders", "encoding_rs"] }
 
+rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-native-certs = "=0.8.4"
+notify.workspace = true
+
 [dev-dependencies]
 rusqlite = { workspace = true, features = ["functions"] }

@@ -373,29 +373,31 @@ fn median_order(layers: &mut [Vec<String>], segments: &[Segment], layer: usize, 
         neighbor_positions.insert(id.clone(), i);
     }
     // `bary` depends only on the node id, never on the order being sorted.
-    let mut bary: HashMap<String, Option<f64>> = HashMap::new();
+    // One pass over the segments gathers each layer node's neighbour slots.
+    let mut neighbours: HashMap<&str, Vec<usize>> = HashMap::with_capacity(positions.len());
+    for s in segments {
+        let (own, other) = if look_down {
+            (&s.from, &s.to)
+        } else {
+            (&s.to, &s.from)
+        };
+        if positions.contains_key(own.as_str())
+            && let Some(&p) = neighbor_positions.get(other.as_str())
+        {
+            neighbours.entry(own.as_str()).or_default().push(p);
+        }
+    }
+    let mut bary: HashMap<String, Option<f64>> = HashMap::with_capacity(positions.len());
     for id in &layers[layer] {
         if bary.contains_key(id) {
             continue;
         }
-        let mut values: Vec<usize> = Vec::new();
-        for s in segments {
-            let neighbor = if look_down && s.from == *id {
-                neighbor_positions.get(&s.to)
-            } else if !look_down && s.to == *id {
-                neighbor_positions.get(&s.from)
-            } else {
-                None
-            };
-            if let Some(&p) = neighbor {
-                values.push(p);
+        let median = match neighbours.get_mut(id.as_str()) {
+            Some(values) if !values.is_empty() => {
+                values.sort_unstable();
+                Some(values[values.len() / 2] as f64)
             }
-        }
-        let median = if values.is_empty() {
-            None
-        } else {
-            values.sort_unstable();
-            Some(values[values.len() / 2] as f64)
+            _ => None,
         };
         bary.insert(id.clone(), median);
     }
@@ -412,20 +414,73 @@ fn median_order(layers: &mut [Vec<String>], segments: &[Segment], layer: usize, 
     });
 }
 
+/// Node ids interned to dense indices: the transposition pass counts
+/// crossings twice per candidate swap, so the counter must not hash strings.
+struct Interned {
+    layers: Vec<Vec<usize>>,
+    segments: Vec<(usize, usize)>,
+    nodes: usize,
+}
+
+fn intern<'a>(ids: &mut HashMap<&'a str, usize>, id: &'a str) -> usize {
+    let next = ids.len();
+    *ids.entry(id).or_insert(next)
+}
+
+impl Interned {
+    fn new(layers: &[Vec<String>], segments: &[Segment]) -> Interned {
+        let mut ids: HashMap<&str, usize> = HashMap::new();
+        let layers: Vec<Vec<usize>> = layers
+            .iter()
+            .map(|layer| layer.iter().map(|id| intern(&mut ids, id)).collect())
+            .collect();
+        let segments = segments
+            .iter()
+            .map(|s| (intern(&mut ids, &s.from), intern(&mut ids, &s.to)))
+            .collect();
+        Interned {
+            layers,
+            segments,
+            nodes: ids.len(),
+        }
+    }
+}
+
 fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
+    let mut interned = Interned::new(layers, segments);
+    let mut full = Crossings::new(interned.nodes, interned.layers.len());
+    // Swapping two adjacent nodes only changes crossings between segments
+    // incident to those two nodes, so `after < before` is decided locally.
+    // With a node id in more than one slot (never produced by the layout)
+    // fall back to the full recount.
+    let mut local = LocalCrossings::new(&interned);
     for layer in 0..layers.len() {
         let mut changed = true;
         while changed {
             changed = false;
             let mut i = 0;
             while i + 1 < layers[layer].len() {
-                let before = count_crossings(layers, segments);
-                layers[layer].swap(i, i + 1);
-                let after = count_crossings(layers, segments);
-                if after < before {
-                    changed = true;
+                let improves = if let Some(local) = local.as_mut() {
+                    let (u, v) = (interned.layers[layer][i], interned.layers[layer][i + 1]);
+                    let improves = local.swap_improves(u, v, i);
+                    if improves {
+                        interned.layers[layer].swap(i, i + 1);
+                        local.index_of[u] = i + 1;
+                        local.index_of[v] = i;
+                    }
+                    improves
                 } else {
+                    let before = full.count(&interned);
+                    interned.layers[layer].swap(i, i + 1);
+                    let after = full.count(&interned);
+                    if after >= before {
+                        interned.layers[layer].swap(i, i + 1);
+                    }
+                    after < before
+                };
+                if improves {
                     layers[layer].swap(i, i + 1);
+                    changed = true;
                 }
                 i += 1;
             }
@@ -433,43 +488,126 @@ fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
     }
 }
 
+/// Strict inversion of two inter-layer segments given as (upper, lower) slots.
+fn crosses(a: (usize, usize), b: (usize, usize)) -> bool {
+    (a.0 < b.0 && a.1 > b.1) || (a.0 > b.0 && a.1 < b.1)
+}
+
+/// Slot positions kept current across swaps, plus the neighbours of every
+/// node across adjacent-layer segments. Only valid when every node id sits
+/// in exactly one slot.
+struct LocalCrossings {
+    index_of: Vec<usize>,
+    /// For a node, the `from` nodes of segments ending at it (previous layer).
+    up: Vec<Vec<usize>>,
+    /// For a node, the `to` nodes of segments leaving it (next layer).
+    down: Vec<Vec<usize>>,
+}
+
+impl LocalCrossings {
+    fn new(g: &Interned) -> Option<LocalCrossings> {
+        let mut layer_of = vec![UNPLACED; g.nodes];
+        let mut index_of = vec![0; g.nodes];
+        for (l, layer) in g.layers.iter().enumerate() {
+            for (j, &id) in layer.iter().enumerate() {
+                if layer_of[id] != UNPLACED {
+                    return None;
+                }
+                layer_of[id] = l;
+                index_of[id] = j;
+            }
+        }
+        let mut up = vec![Vec::new(); g.nodes];
+        let mut down = vec![Vec::new(); g.nodes];
+        for &(from, to) in &g.segments {
+            let (fl, tl) = (layer_of[from], layer_of[to]);
+            if fl != UNPLACED && tl != UNPLACED && tl == fl + 1 {
+                down[from].push(to);
+                up[to].push(from);
+            }
+        }
+        Some(LocalCrossings { index_of, up, down })
+    }
+
+    /// Whether exchanging `u` (slot `i`) and `v` (slot `i + 1`) lowers the
+    /// number of crossings.
+    fn swap_improves(&self, u: usize, v: usize, i: usize) -> bool {
+        let ix = &self.index_of;
+        let (mut before, mut after) = (0usize, 0usize);
+        for &p in &self.up[u] {
+            for &q in &self.up[v] {
+                before += usize::from(crosses((ix[p], i), (ix[q], i + 1)));
+                after += usize::from(crosses((ix[p], i + 1), (ix[q], i)));
+            }
+        }
+        for &p in &self.down[u] {
+            for &q in &self.down[v] {
+                before += usize::from(crosses((i, ix[p]), (i + 1, ix[q])));
+                after += usize::from(crosses((i + 1, ix[p]), (i, ix[q])));
+            }
+        }
+        after < before
+    }
+}
+
 /// Go `countCrossings`: a node id resolves to the first layer holding it and
 /// its last index inside that layer.
 fn count_crossings(layers: &[Vec<String>], segments: &[Segment]) -> usize {
-    let mut positions: Vec<HashMap<&str, usize>> = Vec::with_capacity(layers.len());
-    for layer in layers {
-        let mut map = HashMap::with_capacity(layer.len());
-        for (j, id) in layer.iter().enumerate() {
-            map.insert(id.as_str(), j);
+    let interned = Interned::new(layers, segments);
+    Crossings::new(interned.nodes, interned.layers.len()).count(&interned)
+}
+
+/// Reusable buffers of the crossing counter.
+struct Crossings {
+    layer_of: Vec<usize>,
+    index_of: Vec<usize>,
+    pairs: Vec<Vec<(usize, usize)>>,
+}
+
+const UNPLACED: usize = usize::MAX;
+
+impl Crossings {
+    fn new(nodes: usize, layers: usize) -> Crossings {
+        Crossings {
+            layer_of: vec![UNPLACED; nodes],
+            index_of: vec![0; nodes],
+            pairs: vec![Vec::new(); layers],
         }
-        positions.push(map);
     }
-    let find_layer = |id: &str| positions.iter().position(|p| p.contains_key(id));
-    let mut pairs: Vec<Vec<(usize, usize)>> = vec![Vec::new(); layers.len()];
-    for s in segments {
-        let (Some(from_layer), Some(to_layer)) = (find_layer(&s.from), find_layer(&s.to)) else {
-            continue;
-        };
-        if to_layer != from_layer + 1 {
-            continue;
-        }
-        pairs[from_layer].push((
-            positions[from_layer][s.from.as_str()],
-            positions[to_layer][s.to.as_str()],
-        ));
-    }
-    let mut count = 0;
-    for layer_pairs in &pairs {
-        for i in 0..layer_pairs.len() {
-            for j in i + 1..layer_pairs.len() {
-                let (a, b) = (layer_pairs[i], layer_pairs[j]);
-                if (a.0 < b.0 && a.1 > b.1) || (a.0 > b.0 && a.1 < b.1) {
-                    count += 1;
+
+    fn count(&mut self, g: &Interned) -> usize {
+        self.layer_of.fill(UNPLACED);
+        for (l, layer) in g.layers.iter().enumerate() {
+            for (j, &id) in layer.iter().enumerate() {
+                if self.layer_of[id] == UNPLACED || self.layer_of[id] == l {
+                    self.layer_of[id] = l;
+                    self.index_of[id] = j;
                 }
             }
         }
+        for p in &mut self.pairs {
+            p.clear();
+        }
+        for &(from, to) in &g.segments {
+            let (fl, tl) = (self.layer_of[from], self.layer_of[to]);
+            if fl == UNPLACED || tl == UNPLACED || tl != fl + 1 {
+                continue;
+            }
+            self.pairs[fl].push((self.index_of[from], self.index_of[to]));
+        }
+        let mut count = 0;
+        for layer_pairs in &self.pairs {
+            for i in 0..layer_pairs.len() {
+                for j in i + 1..layer_pairs.len() {
+                    let (a, b) = (layer_pairs[i], layer_pairs[j]);
+                    if (a.0 < b.0 && a.1 > b.1) || (a.0 > b.0 && a.1 < b.1) {
+                        count += 1;
+                    }
+                }
+            }
+        }
+        count
     }
-    count
 }
 
 /// Go's builtin-style `max(a, b float64)` helper (`a > b ? a : b`).
@@ -1121,5 +1259,101 @@ mod tests {
         let mut one = vec![1u8];
         go_slice_stable(&mut one, &|x, y| x < y);
         assert_eq!(one, [1]);
+    }
+
+    /// Go's `transpose` verbatim: every candidate swap recounts all crossings
+    /// with Go's `countCrossings` (string maps, first layer, last index).
+    fn transpose_reference(layers: &mut [Vec<String>], segments: &[Segment]) {
+        fn count(layers: &[Vec<String>], segments: &[Segment]) -> usize {
+            let pos: Vec<HashMap<&str, usize>> = layers
+                .iter()
+                .map(|l| {
+                    l.iter()
+                        .enumerate()
+                        .map(|(j, id)| (id.as_str(), j))
+                        .collect()
+                })
+                .collect();
+            let find = |id: &str| pos.iter().position(|p| p.contains_key(id));
+            let mut n = 0;
+            for layer in 0..layers.len().saturating_sub(1) {
+                let mut pairs = Vec::new();
+                for s in segments {
+                    let (Some(f), Some(t)) = (find(&s.from), find(&s.to)) else {
+                        continue;
+                    };
+                    if f == layer && t == layer + 1 {
+                        pairs.push((pos[layer][s.from.as_str()], pos[layer + 1][s.to.as_str()]));
+                    }
+                }
+                for i in 0..pairs.len() {
+                    for j in i + 1..pairs.len() {
+                        n += usize::from(crosses(pairs[i], pairs[j]));
+                    }
+                }
+            }
+            n
+        }
+        for layer in 0..layers.len() {
+            let mut changed = true;
+            while changed {
+                changed = false;
+                for i in 0..layers[layer].len().saturating_sub(1) {
+                    let before = count(layers, segments);
+                    layers[layer].swap(i, i + 1);
+                    if count(layers, segments) < before {
+                        changed = true;
+                    } else {
+                        layers[layer].swap(i, i + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn transpose_matches_the_full_recount_on_random_layers() {
+        let mut seed = 0x2545_f491_4f6c_dd1du64;
+        let mut next = move |n: usize| {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            (seed % n as u64) as usize
+        };
+        for case in 0..400 {
+            let depth = 2 + next(4);
+            let mut layers: Vec<Vec<String>> = (0..depth)
+                .map(|l| (0..1 + next(9)).map(|j| format!("n{l}_{j}")).collect())
+                .collect();
+            if case % 7 == 0 {
+                // One id in two layers: exercises the full-recount fallback.
+                let dup = layers[0][0].clone();
+                layers[1].push(dup);
+            }
+            let mut segments = Vec::new();
+            for l in 0..depth - 1 {
+                for _ in 0..next(25) {
+                    // Repeated pairs (multi-edges) and unplaced ids included.
+                    let from = if next(20) == 0 {
+                        "ghost".to_owned()
+                    } else {
+                        layers[l][next(layers[l].len())].clone()
+                    };
+                    segments.push(Segment {
+                        from,
+                        to: layers[l + 1][next(layers[l + 1].len())].clone(),
+                    });
+                }
+            }
+            let mut fast = layers.clone();
+            let mut slow = layers.clone();
+            transpose(&mut fast, &segments);
+            transpose_reference(&mut slow, &segments);
+            assert_eq!(fast, slow, "case {case}");
+            assert_eq!(
+                count_crossings(&fast, &segments),
+                count_crossings(&slow, &segments)
+            );
+        }
     }
 }

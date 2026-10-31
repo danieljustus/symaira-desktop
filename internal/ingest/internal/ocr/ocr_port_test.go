@@ -28,7 +28,8 @@ import (
 )
 
 const tesseractScript = `#!/bin/sh
-d=$(dirname "$0")
+PATH=/usr/bin:/bin
+d=${0%/*}
 US=$(printf '\037'); RS=$(printf '\036'); l=T; for a in "$@"; do l="$l$US$a"; done
 printf '%s\n' "$l$RS$(pwd)$RS$FAKE_PROBE" >> "$d/log"
 if [ "$1" = "--list-langs" ]; then
@@ -52,7 +53,8 @@ exit 0
 `
 
 const pdftoppmScript = `#!/bin/sh
-d=$(dirname "$0")
+PATH=/usr/bin:/bin
+d=${0%/*}
 US=$(printf '\037'); RS=$(printf '\036'); l=P; for a in "$@"; do l="$l$US$a"; done
 printf '%s\n' "$l$RS$(pwd)$RS$FAKE_PROBE" >> "$d/log"
 if [ -f "$d/pdftoppm.exit" ]; then
@@ -67,7 +69,8 @@ exit 0
 `
 
 const sipsScript = `#!/bin/sh
-d=$(dirname "$0")
+PATH=/usr/bin:/bin
+d=${0%/*}
 US=$(printf '\037'); RS=$(printf '\036'); l=S; for a in "$@"; do l="$l$US$a"; done
 printf '%s\n' "$l$RS$(pwd)$RS$FAKE_PROBE" >> "$d/log"
 if [ -f "$d/sips.exit" ]; then

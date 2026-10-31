@@ -192,7 +192,7 @@ fn structured_go_fixture() {
             .collect::<Vec<_>>()
             .join("\n")
     );
-    assert_eq!(f.cases.len(), 2520);
+    assert_eq!(f.cases.len(), 2560);
 }
 
 #[test]

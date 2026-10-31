@@ -11609,7 +11609,7 @@
    "id": "snippet-061-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD9waHAgZWNobyA/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11622,7 +11622,7 @@
    "id": "snippet-061-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD9waHAgZWNobyA/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11635,7 +11635,7 @@
    "id": "snippet-061-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD9waHAgZWNobyA/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11648,7 +11648,7 @@
    "id": "snippet-061-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD9waHAgZWNobyA/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11661,319 +11661,319 @@
    "id": "snippet-062-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD94bWw/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i/yI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: xml: encoding \"\\xff\" declared but Decoder.CharsetReader is nil"
   },
   {
    "id": "snippet-062-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD94bWw/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i/yI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: xml: encoding \"\\xff\" declared but Decoder.CharsetReader is nil"
   },
   {
    "id": "snippet-062-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD94bWw/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i/yI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: xml: encoding \"\\xff\" declared but Decoder.CharsetReader is nil"
   },
   {
    "id": "snippet-062-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD94bWw/PjxhLz4=",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0i/yI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: xml: encoding \"\\xff\" declared but Decoder.CharsetReader is nil"
   },
   {
    "id": "snippet-063-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD8gPz48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0i5LgiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected target name after \u003c?"
+   "error": "parse odf xml: xml: unsupported version \"\\xe4\\xb8\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-063-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD8gPz48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0i5LgiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected target name after \u003c?"
+   "error": "parse pptx xml: xml: unsupported version \"\\xe4\\xb8\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-063-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD8gPz48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0i5LgiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected target name after \u003c?"
+   "error": "parse sheet xml: xml: unsupported version \"\\xe4\\xb8\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-063-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD8gPz48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0i5LgiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected target name after \u003c?"
+   "error": "parse word xml: xml: unsupported version \"\\xe4\\xb8\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-064-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD8=",
+   "input": "PD94bWwgdmVyc2lvbj0i5LitIj8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: xml: unsupported version \"中\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-064-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD8=",
+   "input": "PD94bWwgdmVyc2lvbj0i5LitIj8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: xml: unsupported version \"中\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-064-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD8=",
+   "input": "PD94bWwgdmVyc2lvbj0i5LitIj8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: xml: unsupported version \"中\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-064-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD8=",
+   "input": "PD94bWwgdmVyc2lvbj0i5LitIj8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: xml: unsupported version \"中\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-065-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD94",
+   "input": "PD94bWwgdmVyc2lvbj0iwoUiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: xml: unsupported version \"\\u0085\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-065-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD94",
+   "input": "PD94bWwgdmVyc2lvbj0iwoUiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: xml: unsupported version \"\\u0085\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-065-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD94",
+   "input": "PD94bWwgdmVyc2lvbj0iwoUiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: xml: unsupported version \"\\u0085\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-065-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD94",
+   "input": "PD94bWwgdmVyc2lvbj0iwoUiPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: xml: unsupported version \"\\u0085\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-066-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD94ID8=",
+   "input": "PD94bWwgdmVyc2lvbj0iASI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: xml: unsupported version \"\\x01\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-066-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD94ID8=",
+   "input": "PD94bWwgdmVyc2lvbj0iASI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: xml: unsupported version \"\\x01\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-066-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD94ID8=",
+   "input": "PD94bWwgdmVyc2lvbj0iASI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: xml: unsupported version \"\\x01\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-066-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD94ID8=",
+   "input": "PD94bWwgdmVyc2lvbj0iASI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: xml: unsupported version \"\\x01\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-067-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
+   "input": "PD94bWwgZW5jb2Rpbmc9IsMiIHZlcnNpb249IjL/Ij8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: xml: unsupported version \"2\\xff\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-067-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
+   "input": "PD94bWwgZW5jb2Rpbmc9IsMiIHZlcnNpb249IjL/Ij8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: xml: unsupported version \"2\\xff\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-067-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
+   "input": "PD94bWwgZW5jb2Rpbmc9IsMiIHZlcnNpb249IjL/Ij8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: xml: unsupported version \"2\\xff\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-067-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
+   "input": "PD94bWwgZW5jb2Rpbmc9IsMiIHZlcnNpb249IjL/Ij8+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: xml: unsupported version \"2\\xff\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-068-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGE+PGEvPg==",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiIGVuY29kaW5nPdA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11986,7 +11986,7 @@
    "id": "snippet-068-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGE+PGEvPg==",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiIGVuY29kaW5nPdA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -11999,7 +11999,7 @@
    "id": "snippet-068-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGE+PGEvPg==",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiIGVuY29kaW5nPdA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12012,7 +12012,7 @@
    "id": "snippet-068-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGE+PGEvPg==",
+   "input": "PD94bWwgdmVyc2lvbj2wIjEiIGVuY29kaW5nPdA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12025,111 +12025,111 @@
    "id": "snippet-069-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
+   "input": "PD94bWz/IHZlcnNpb249IjEuMCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026e;"
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: xml\ufffd"
   },
   {
    "id": "snippet-069-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
+   "input": "PD94bWz/IHZlcnNpb249IjEuMCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid character entity \u0026e;"
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: xml\ufffd"
   },
   {
    "id": "snippet-069-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
+   "input": "PD94bWz/IHZlcnNpb249IjEuMCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026e;"
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: xml\ufffd"
   },
   {
    "id": "snippet-069-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
+   "input": "PD94bWz/IHZlcnNpb249IjEuMCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid character entity \u0026e;"
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: xml\ufffd"
   },
   {
    "id": "snippet-070-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4woCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: xml: unsupported version \"1.0\\xa0\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-070-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4woCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: xml: unsupported version \"1.0\\xa0\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-070-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4woCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: xml: unsupported version \"1.0\\xa0\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-070-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4woCI/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: xml: unsupported version \"1.0\\xa0\"; only version 1.0 is supported"
   },
   {
    "id": "snippet-071-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
+   "input": "PD9waHAgZWNobyA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12142,7 +12142,7 @@
    "id": "snippet-071-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
+   "input": "PD9waHAgZWNobyA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12155,7 +12155,7 @@
    "id": "snippet-071-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
+   "input": "PD9waHAgZWNobyA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12168,7 +12168,7 @@
    "id": "snippet-071-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
+   "input": "PD9waHAgZWNobyA/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12181,7 +12181,7 @@
    "id": "snippet-072-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
+   "input": "PD94bWw/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12194,7 +12194,7 @@
    "id": "snippet-072-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
+   "input": "PD94bWw/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12207,7 +12207,7 @@
    "id": "snippet-072-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
+   "input": "PD94bWw/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12220,7 +12220,7 @@
    "id": "snippet-072-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
+   "input": "PD94bWw/PjxhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12233,59 +12233,59 @@
    "id": "snippet-073-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBF",
+   "input": "PD8gPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: XML syntax error on line 1: expected target name after \u003c?"
   },
   {
    "id": "snippet-073-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBF",
+   "input": "PD8gPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: XML syntax error on line 1: expected target name after \u003c?"
   },
   {
    "id": "snippet-073-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBF",
+   "input": "PD8gPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: XML syntax error on line 1: expected target name after \u003c?"
   },
   {
    "id": "snippet-073-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBF",
+   "input": "PD8gPz48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: XML syntax error on line 1: expected target name after \u003c?"
   },
   {
    "id": "snippet-074-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgWw==",
+   "input": "PD8=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12298,7 +12298,7 @@
    "id": "snippet-074-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgWw==",
+   "input": "PD8=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12311,7 +12311,7 @@
    "id": "snippet-074-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgWw==",
+   "input": "PD8=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12324,7 +12324,7 @@
    "id": "snippet-074-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgWw==",
+   "input": "PD8=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12337,7 +12337,7 @@
    "id": "snippet-075-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
+   "input": "PD94",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12350,7 +12350,7 @@
    "id": "snippet-075-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
+   "input": "PD94",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12363,7 +12363,7 @@
    "id": "snippet-075-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
+   "input": "PD94",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12376,7 +12376,7 @@
    "id": "snippet-075-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
+   "input": "PD94",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12389,59 +12389,59 @@
    "id": "snippet-076-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
+   "input": "PD94ID8=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-076-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
+   "input": "PD94ID8=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-076-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
+   "input": "PD94ID8=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-076-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
+   "input": "PD94ID8=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-077-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCE+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12454,7 +12454,7 @@
    "id": "snippet-077-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCE+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12467,7 +12467,7 @@
    "id": "snippet-077-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCE+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12480,7 +12480,7 @@
    "id": "snippet-077-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCE+",
+   "input": "PD94bWwgdmVyc2lvbj0iMS4wIg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12493,7 +12493,7 @@
    "id": "snippet-078-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PCF4Pg==",
+   "input": "PCFET0NUWVBFIGE+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12506,7 +12506,7 @@
    "id": "snippet-078-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PCF4Pg==",
+   "input": "PCFET0NUWVBFIGE+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12519,7 +12519,7 @@
    "id": "snippet-078-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PCF4Pg==",
+   "input": "PCFET0NUWVBFIGE+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12532,7 +12532,7 @@
    "id": "snippet-078-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PCF4Pg==",
+   "input": "PCFET0NUWVBFIGE+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12545,46 +12545,59 @@
    "id": "snippet-079-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iMSIgYz0nMicvPg==",
+   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026e;"
   },
   {
    "id": "snippet-079-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iMSIgYz0nMicvPg==",
+   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: invalid character entity \u0026e;"
   },
   {
    "id": "snippet-079-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iMSIgYz0nMicvPg==",
+   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026e;"
   },
   {
    "id": "snippet-079-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iMSIgYz0nMicvPg==",
+   "input": "PCFET0NUWVBFIGEgWzwhRU5USVRZIGUgInYiPl0+PGE+JmU7PC9hPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse word xml: XML syntax error on line 1: invalid character entity \u0026e;"
+  },
+  {
+   "id": "snippet-080-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12594,166 +12607,153 @@
    "error": ""
   },
   {
-   "id": "snippet-080-odf",
-   "group": "xml-direct",
-   "reader": "odf",
-   "input": "PGEgYj0xLz4=",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "",
-   "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unquoted or missing attribute value in element"
-  },
-  {
    "id": "snippet-080-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0xLz4=",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-080-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0xLz4=",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-080-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0xLz4=",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gYyAtLT48IUVMRU1FTlQgYSBBTlk+XT48YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-081-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYi8+",
+   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: attribute name without = in element"
+   "error": ""
   },
   {
    "id": "snippet-081-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYi8+",
+   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: attribute name without = in element"
+   "error": ""
   },
   {
    "id": "snippet-081-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYi8+",
+   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: attribute name without = in element"
+   "error": ""
   },
   {
    "id": "snippet-081-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYi8+",
+   "input": "PCFET0NUWVBFIGEgIng+eSI+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: attribute name without = in element"
+   "error": ""
   },
   {
    "id": "snippet-082-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0vPg==",
+   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-082-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0vPg==",
+   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-082-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0vPg==",
+   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-082-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0vPg==",
+   "input": "PCFET0NUWVBFIGEgJ3g+eSc+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unquoted or missing attribute value in element"
+   "error": ""
   },
   {
    "id": "snippet-083-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iMS8+",
+   "input": "PCFET0NUWVBF",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12766,7 +12766,7 @@
    "id": "snippet-083-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iMS8+",
+   "input": "PCFET0NUWVBF",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12779,7 +12779,7 @@
    "id": "snippet-083-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iMS8+",
+   "input": "PCFET0NUWVBF",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12792,7 +12792,7 @@
    "id": "snippet-083-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iMS8+",
+   "input": "PCFET0NUWVBF",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -12805,215 +12805,215 @@
    "id": "snippet-084-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iPCIvPg==",
+   "input": "PCFET0NUWVBFIGEgWw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-084-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iPCIvPg==",
+   "input": "PCFET0NUWVBFIGEgWw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-084-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iPCIvPg==",
+   "input": "PCFET0NUWVBFIGEgWw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-084-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iPCIvPg==",
+   "input": "PCFET0NUWVBFIGEgWw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-085-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-085-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-085-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-085-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
+   "input": "PCFET0NUWVBFIGEgWzwhLS0gdW50ZXJtaW5hdGVk",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-086-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iJmJhZDsiLz4=",
+   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-086-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iJmJhZDsiLz4=",
+   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-086-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iJmJhZDsiLz4=",
+   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-086-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iJmJhZDsiLz4=",
+   "input": "PCFET0NUWVBFIGEgWzxiPl0+PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-087-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iMSJjPSIyIi8+",
+   "input": "PCE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-087-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iMSJjPSIyIi8+",
+   "input": "PCE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-087-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iMSJjPSIyIi8+",
+   "input": "PCE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-087-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iMSJjPSIyIi8+",
+   "input": "PCE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-088-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYiA9ICIxIiAvPg==",
+   "input": "PCF4Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13026,7 +13026,7 @@
    "id": "snippet-088-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYiA9ICIxIiAvPg==",
+   "input": "PCF4Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13039,7 +13039,7 @@
    "id": "snippet-088-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYiA9ICIxIiAvPg==",
+   "input": "PCF4Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13052,7 +13052,7 @@
    "id": "snippet-088-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYiA9ICIxIiAvPg==",
+   "input": "PCF4Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13065,7 +13065,7 @@
    "id": "snippet-089-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
+   "input": "PGEgYj0iMSIgYz0nMicvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13078,7 +13078,7 @@
    "id": "snippet-089-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
+   "input": "PGEgYj0iMSIgYz0nMicvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13091,7 +13091,7 @@
    "id": "snippet-089-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
+   "input": "PGEgYj0iMSIgYz0nMicvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13104,7 +13104,7 @@
    "id": "snippet-089-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
+   "input": "PGEgYj0iMSIgYz0nMicvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13117,163 +13117,163 @@
    "id": "snippet-090-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgPTEvPg==",
+   "input": "PGEgYj0xLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse odf xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-090-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgPTEvPg==",
+   "input": "PGEgYj0xLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse pptx xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-090-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgPTEvPg==",
+   "input": "PGEgYj0xLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse sheet xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-090-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgPTEvPg==",
+   "input": "PGEgYj0xLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse word xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-091-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0i",
+   "input": "PGEgYi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: XML syntax error on line 1: attribute name without = in element"
   },
   {
    "id": "snippet-091-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0i",
+   "input": "PGEgYi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: XML syntax error on line 1: attribute name without = in element"
   },
   {
    "id": "snippet-091-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0i",
+   "input": "PGEgYi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: XML syntax error on line 1: attribute name without = in element"
   },
   {
    "id": "snippet-091-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0i",
+   "input": "PGEgYi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: XML syntax error on line 1: attribute name without = in element"
   },
   {
    "id": "snippet-092-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYg==",
+   "input": "PGEgYj0vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-092-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYg==",
+   "input": "PGEgYj0vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-092-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYg==",
+   "input": "PGEgYj0vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-092-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYg==",
+   "input": "PGEgYj0vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: XML syntax error on line 1: unquoted or missing attribute value in element"
   },
   {
    "id": "snippet-093-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEg",
+   "input": "PGEgYj0iMS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13286,7 +13286,7 @@
    "id": "snippet-093-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEg",
+   "input": "PGEgYj0iMS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13299,7 +13299,7 @@
    "id": "snippet-093-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEg",
+   "input": "PGEgYj0iMS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13312,7 +13312,7 @@
    "id": "snippet-093-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEg",
+   "input": "PGEgYj0iMS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13325,215 +13325,215 @@
    "id": "snippet-094-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgLw==",
+   "input": "PGEgYj0iPCIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse odf xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
   },
   {
    "id": "snippet-094-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgLw==",
+   "input": "PGEgYj0iPCIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse pptx xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
   },
   {
    "id": "snippet-094-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgLw==",
+   "input": "PGEgYj0iPCIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse sheet xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
   },
   {
    "id": "snippet-094-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgLw==",
+   "input": "PGEgYj0iPCIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": "parse word xml: XML syntax error on line 1: unescaped \u003c inside quoted string"
   },
   {
    "id": "snippet-095-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgL3g+",
+   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": ""
   },
   {
    "id": "snippet-095-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgL3g+",
+   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": ""
   },
   {
    "id": "snippet-095-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgL3g+",
+   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": ""
   },
   {
    "id": "snippet-095-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgL3g+",
+   "input": "PGEgYj0iJmFtcDsmbHQ7Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": ""
   },
   {
    "id": "snippet-096-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEvID4=",
+   "input": "PGEgYj0iJmJhZDsiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-096-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEvID4=",
+   "input": "PGEgYj0iJmJhZDsiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": "parse pptx xml: XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-096-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEvID4=",
+   "input": "PGEgYj0iJmJhZDsiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-096-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEvID4=",
+   "input": "PGEgYj0iJmJhZDsiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected /\u003e in element"
+   "error": "parse word xml: XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-097-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYj0iMSI+",
+   "input": "PGEgYj0iMSJjPSIyIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-097-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYj0iMSI+",
+   "input": "PGEgYj0iMSJjPSIyIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-097-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYj0iMSI+",
+   "input": "PGEgYj0iMSJjPSIyIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-097-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYj0iMSI+",
+   "input": "PGEgYj0iMSJjPSIyIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-098-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6Yi8+",
+   "input": "PGEgYiA9ICIxIiAvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13546,7 +13546,7 @@
    "id": "snippet-098-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6Yi8+",
+   "input": "PGEgYiA9ICIxIiAvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13559,7 +13559,7 @@
    "id": "snippet-098-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6Yi8+",
+   "input": "PGEgYiA9ICIxIiAvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13572,7 +13572,7 @@
    "id": "snippet-098-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6Yi8+",
+   "input": "PGEgYiA9ICIxIiAvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13585,7 +13585,7 @@
    "id": "snippet-099-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6Yj48L2E6Yj4=",
+   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13598,7 +13598,7 @@
    "id": "snippet-099-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6Yj48L2E6Yj4=",
+   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13611,7 +13611,7 @@
    "id": "snippet-099-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6Yj48L2E6Yj4=",
+   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13624,7 +13624,7 @@
    "id": "snippet-099-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6Yj48L2E6Yj4=",
+   "input": "PGEgYj0iMSIgYj0iMiIvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -13637,423 +13637,423 @@
    "id": "snippet-100-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6Yj48L2M6Yj4=",
+   "input": "PGEgPTEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
+   "error": "parse odf xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-100-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6Yj48L2M6Yj4=",
+   "input": "PGEgPTEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
+   "error": "parse pptx xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-100-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6Yj48L2M6Yj4=",
+   "input": "PGEgPTEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
+   "error": "parse sheet xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-100-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6Yj48L2M6Yj4=",
+   "input": "PGEgPTEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
+   "error": "parse word xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-101-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6Yj48L2I+",
+   "input": "PGEgYj0i",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-101-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6Yj48L2I+",
+   "input": "PGEgYj0i",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-101-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6Yj48L2I+",
+   "input": "PGEgYj0i",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-101-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6Yj48L2I+",
+   "input": "PGEgYj0i",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-102-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGI+PC9hOmI+",
+   "input": "PGEgYg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-102-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGI+PC9hOmI+",
+   "input": "PGEgYg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-102-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGI+PC9hOmI+",
+   "input": "PGEgYg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-102-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGI+PC9hOmI+",
+   "input": "PGEgYg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-103-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6YjpjLz4=",
+   "input": "PGEg",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-103-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6YjpjLz4=",
+   "input": "PGEg",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-103-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6YjpjLz4=",
+   "input": "PGEg",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-103-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6YjpjLz4=",
+   "input": "PGEg",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-104-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PDphLz4=",
+   "input": "PGEgLw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-104-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PDphLz4=",
+   "input": "PGEgLw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-104-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PDphLz4=",
+   "input": "PGEgLw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-104-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PDphLz4=",
+   "input": "PGEgLw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-105-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6Lz4=",
+   "input": "PGEgL3g+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-105-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6Lz4=",
+   "input": "PGEgL3g+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-105-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6Lz4=",
+   "input": "PGEgL3g+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-105-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6Lz4=",
+   "input": "PGEgL3g+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-106-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE6PjwvYTo+",
+   "input": "PGEvID4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-106-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE6PjwvYTo+",
+   "input": "PGEvID4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-106-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE6PjwvYTo+",
+   "input": "PGEvID4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-106-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE6PjwvYTo+",
+   "input": "PGEvID4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: expected /\u003e in element"
   },
   {
    "id": "snippet-107-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
+   "input": "PGEgYj0iMSI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-107-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
+   "input": "PGEgYj0iMSI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-107-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
+   "input": "PGEgYj0iMSI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-107-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
+   "input": "PGEgYj0iMSI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-108-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
+   "input": "PGE6Yi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14066,7 +14066,7 @@
    "id": "snippet-108-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
+   "input": "PGE6Yi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14079,7 +14079,7 @@
    "id": "snippet-108-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
+   "input": "PGE6Yi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14092,7 +14092,7 @@
    "id": "snippet-108-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
+   "input": "PGE6Yi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14105,7 +14105,7 @@
    "id": "snippet-109-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
+   "input": "PGE6Yj48L2E6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14118,7 +14118,7 @@
    "id": "snippet-109-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
+   "input": "PGE6Yj48L2E6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14131,7 +14131,7 @@
    "id": "snippet-109-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
+   "input": "PGE6Yj48L2E6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14144,7 +14144,7 @@
    "id": "snippet-109-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
+   "input": "PGE6Yj48L2E6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14157,215 +14157,215 @@
    "id": "snippet-110-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
+   "input": "PGE6Yj48L2M6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
+   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
   },
   {
    "id": "snippet-110-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
+   "input": "PGE6Yj48L2M6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
+   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
   },
   {
    "id": "snippet-110-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
+   "input": "PGE6Yj48L2M6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
   },
   {
    "id": "snippet-110-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
+   "input": "PGE6Yj48L2M6Yj4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
+   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space c"
   },
   {
    "id": "snippet-111-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
+   "input": "PGE6Yj48L2I+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
   },
   {
    "id": "snippet-111-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
+   "input": "PGE6Yj48L2I+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
   },
   {
    "id": "snippet-111-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
+   "input": "PGE6Yj48L2I+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
   },
   {
    "id": "snippet-111-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
+   "input": "PGE6Yj48L2I+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space a closed by \u003c/b\u003e in space \"\""
   },
   {
    "id": "snippet-112-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
+   "input": "PGI+PC9hOmI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
+   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
   },
   {
    "id": "snippet-112-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
+   "input": "PGI+PC9hOmI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
+   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
   },
   {
    "id": "snippet-112-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
+   "input": "PGI+PC9hOmI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
   },
   {
    "id": "snippet-112-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
+   "input": "PGI+PC9hOmI+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
+   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space  closed by \u003c/b\u003e in space a"
   },
   {
    "id": "snippet-113-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHhtbDphLz4=",
+   "input": "PGE6YjpjLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-113-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHhtbDphLz4=",
+   "input": "PGE6YjpjLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-113-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHhtbDphLz4=",
+   "input": "PGE6YjpjLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-113-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHhtbDphLz4=",
+   "input": "PGE6YjpjLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-114-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
+   "input": "PDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14378,7 +14378,7 @@
    "id": "snippet-114-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
+   "input": "PDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14391,7 +14391,7 @@
    "id": "snippet-114-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
+   "input": "PDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14404,7 +14404,7 @@
    "id": "snippet-114-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
+   "input": "PDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14417,7 +14417,7 @@
    "id": "snippet-115-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
+   "input": "PGE6Lz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14430,7 +14430,7 @@
    "id": "snippet-115-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
+   "input": "PGE6Lz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14443,7 +14443,7 @@
    "id": "snippet-115-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
+   "input": "PGE6Lz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14456,7 +14456,7 @@
    "id": "snippet-115-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
+   "input": "PGE6Lz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14469,163 +14469,163 @@
    "id": "snippet-116-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PDFhLz4=",
+   "input": "PGE6PjwvYTo+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: 1a"
+   "error": ""
   },
   {
    "id": "snippet-116-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PDFhLz4=",
+   "input": "PGE6PjwvYTo+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: 1a"
+   "error": ""
   },
   {
    "id": "snippet-116-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PDFhLz4=",
+   "input": "PGE6PjwvYTo+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: 1a"
+   "error": ""
   },
   {
    "id": "snippet-116-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PDFhLz4=",
+   "input": "PGE6PjwvYTo+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid XML name: 1a"
+   "error": ""
   },
   {
    "id": "snippet-117-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PC1hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: -a"
+   "error": ""
   },
   {
    "id": "snippet-117-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PC1hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: -a"
+   "error": ""
   },
   {
    "id": "snippet-117-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PC1hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: -a"
+   "error": ""
   },
   {
    "id": "snippet-117-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PC1hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yi8+PC9hPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid XML name: -a"
+   "error": ""
   },
   {
    "id": "snippet-118-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PC5hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: .a"
+   "error": ""
   },
   {
    "id": "snippet-118-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PC5hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: .a"
+   "error": ""
   },
   {
    "id": "snippet-118-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PC5hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: .a"
+   "error": ""
   },
   {
    "id": "snippet-118-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PC5hLz4=",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3g6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid XML name: .a"
+   "error": ""
   },
   {
    "id": "snippet-119-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEtYi5jX2QvPg==",
+   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14638,7 +14638,7 @@
    "id": "snippet-119-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEtYi5jX2QvPg==",
+   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14651,7 +14651,7 @@
    "id": "snippet-119-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEtYi5jX2QvPg==",
+   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14664,7 +14664,7 @@
    "id": "snippet-119-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEtYi5jX2QvPg==",
+   "input": "PGEgeG1sbnM9ImQiPjxiLz48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14677,59 +14677,59 @@
    "id": "snippet-120-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PFx1MDBlOS8+",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse odf xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
   },
   {
    "id": "snippet-120-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PFx1MDBlOS8+",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse pptx xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
   },
   {
    "id": "snippet-120-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PFx1MDBlOS8+",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
   },
   {
    "id": "snippet-120-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PFx1MDBlOS8+",
+   "input": "PGEgeG1sbnM6eD0idSI+PHg6Yj48L3k6Yj48L2E+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected element name after \u003c"
+   "error": "parse word xml: XML syntax error on line 1: element \u003cb\u003e in space x closed by \u003c/b\u003e in space y"
   },
   {
    "id": "snippet-121-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PMOpdMOpLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14742,7 +14742,7 @@
    "id": "snippet-121-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PMOpdMOpLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14755,7 +14755,7 @@
    "id": "snippet-121-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PMOpdMOpLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14768,7 +14768,7 @@
    "id": "snippet-121-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PMOpdMOpLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14781,59 +14781,59 @@
    "id": "snippet-122-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGHDLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: a\ufffd"
+   "error": "parse odf xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
   },
   {
    "id": "snippet-122-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGHDLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: a\ufffd"
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
   },
   {
    "id": "snippet-122-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGHDLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: a\ufffd"
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
   },
   {
    "id": "snippet-122-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGHDLz4=",
+   "input": "PHg6YSB4bWxuczp4PSJ1MSI+PHg6YiB4bWxuczp4PSJ1MiI+PC94OmI+PC94OmE+PC94OmE+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid XML name: a\ufffd"
+   "error": "parse word xml: XML syntax error on line 1: unexpected end element \u003c/a\u003e"
   },
   {
    "id": "snippet-123-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "POS4rS8+",
+   "input": "PHhtbDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14846,7 +14846,7 @@
    "id": "snippet-123-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "POS4rS8+",
+   "input": "PHhtbDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14859,7 +14859,7 @@
    "id": "snippet-123-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "POS4rS8+",
+   "input": "PHhtbDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14872,7 +14872,7 @@
    "id": "snippet-123-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "POS4rS8+",
+   "input": "PHhtbDphLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14885,7 +14885,7 @@
    "id": "snippet-124-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGHCty8+",
+   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14898,7 +14898,7 @@
    "id": "snippet-124-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGHCty8+",
+   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14911,7 +14911,7 @@
    "id": "snippet-124-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGHCty8+",
+   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14924,7 +14924,7 @@
    "id": "snippet-124-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGHCty8+",
+   "input": "PGEgeG1sOmxhbmc9ImVuIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -14937,215 +14937,215 @@
    "id": "snippet-125-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PMK3YS8+",
+   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: ·a"
+   "error": ""
   },
   {
    "id": "snippet-125-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PMK3YS8+",
+   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: ·a"
+   "error": ""
   },
   {
    "id": "snippet-125-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PMK3YS8+",
+   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: ·a"
+   "error": ""
   },
   {
    "id": "snippet-125-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PMK3YS8+",
+   "input": "PGEgeG1sbnM6eG1sPSJ1Ii8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: invalid XML name: ·a"
+   "error": ""
   },
   {
    "id": "snippet-126-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGHMgC8+",
+   "input": "PDFhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: 1a"
   },
   {
    "id": "snippet-126-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGHMgC8+",
+   "input": "PDFhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: 1a"
   },
   {
    "id": "snippet-126-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGHMgC8+",
+   "input": "PDFhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: 1a"
   },
   {
    "id": "snippet-126-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGHMgC8+",
+   "input": "PDFhLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: 1a"
   },
   {
    "id": "snippet-127-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGHjgIcvPg==",
+   "input": "PC1hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: -a"
   },
   {
    "id": "snippet-127-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGHjgIcvPg==",
+   "input": "PC1hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: -a"
   },
   {
    "id": "snippet-127-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGHjgIcvPg==",
+   "input": "PC1hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: -a"
   },
   {
    "id": "snippet-127-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGHjgIcvPg==",
+   "input": "PC1hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: -a"
   },
   {
    "id": "snippet-128-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYjpjPSIxIi8+",
+   "input": "PC5hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: .a"
   },
   {
    "id": "snippet-128-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYjpjPSIxIi8+",
+   "input": "PC5hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: .a"
   },
   {
    "id": "snippet-128-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYjpjPSIxIi8+",
+   "input": "PC5hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: .a"
   },
   {
    "id": "snippet-128-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYjpjPSIxIi8+",
+   "input": "PC5hLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: .a"
   },
   {
    "id": "snippet-129-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
+   "input": "PGEtYi5jX2QvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15158,7 +15158,7 @@
    "id": "snippet-129-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
+   "input": "PGEtYi5jX2QvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15171,7 +15171,7 @@
    "id": "snippet-129-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
+   "input": "PGEtYi5jX2QvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15184,7 +15184,7 @@
    "id": "snippet-129-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
+   "input": "PGEtYi5jX2QvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15197,220 +15197,220 @@
    "id": "snippet-130-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGEgYjpjOmQ9IjEiLz4=",
+   "input": "PFx1MDBlOS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse odf xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-130-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGEgYjpjOmQ9IjEiLz4=",
+   "input": "PFx1MDBlOS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse pptx xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-130-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGEgYjpjOmQ9IjEiLz4=",
+   "input": "PFx1MDBlOS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse sheet xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-130-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGEgYjpjOmQ9IjEiLz4=",
+   "input": "PFx1MDBlOS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: expected attribute name in element"
+   "error": "parse word xml: XML syntax error on line 1: expected element name after \u003c"
   },
   {
    "id": "snippet-131-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
+   "input": "PMOpdMOpLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
+   "error": ""
   },
   {
    "id": "snippet-131-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
+   "input": "PMOpdMOpLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
+   "error": ""
   },
   {
    "id": "snippet-131-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
+   "input": "PMOpdMOpLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
+   "error": ""
   },
   {
    "id": "snippet-131-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
+   "input": "PMOpdMOpLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
+   "error": ""
   },
   {
    "id": "snippet-132-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE+CgoKPGI=",
+   "input": "PGHDLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 4: unexpected EOF"
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: a\ufffd"
   },
   {
    "id": "snippet-132-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE+CgoKPGI=",
+   "input": "PGHDLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 4: unexpected EOF"
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: a\ufffd"
   },
   {
    "id": "snippet-132-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE+CgoKPGI=",
+   "input": "PGHDLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 4: unexpected EOF"
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: a\ufffd"
   },
   {
    "id": "snippet-132-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE+CgoKPGI=",
+   "input": "PGHDLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 4: unexpected EOF"
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: a\ufffd"
   },
   {
    "id": "snippet-133-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "Cgo8YT54",
+   "input": "POS4rS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 3: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-133-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "Cgo8YT54",
+   "input": "POS4rS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 3: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-133-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "Cgo8YT54",
+   "input": "POS4rS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 3: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-133-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "Cgo8YT54",
+   "input": "POS4rS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 3: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-134-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE+eDwvYT50cmFpbGluZw==",
+   "input": "PGHCty8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xtrailing",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -15418,7 +15418,7 @@
    "id": "snippet-134-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE+eDwvYT50cmFpbGluZw==",
+   "input": "PGHCty8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15431,7 +15431,7 @@
    "id": "snippet-134-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE+eDwvYT50cmFpbGluZw==",
+   "input": "PGHCty8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15444,7 +15444,7 @@
    "id": "snippet-134-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE+eDwvYT50cmFpbGluZw==",
+   "input": "PGHCty8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15457,64 +15457,64 @@
    "id": "snippet-135-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE+eDwvYT48Yj55PC9iPg==",
+   "input": "PMK3YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid XML name: ·a"
   },
   {
    "id": "snippet-135-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE+eDwvYT48Yj55PC9iPg==",
+   "input": "PMK3YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: invalid XML name: ·a"
   },
   {
    "id": "snippet-135-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE+eDwvYT48Yj55PC9iPg==",
+   "input": "PMK3YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: invalid XML name: ·a"
   },
   {
    "id": "snippet-135-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE+eDwvYT48Yj55PC9iPg==",
+   "input": "PMK3YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: invalid XML name: ·a"
   },
   {
    "id": "snippet-136-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
+   "input": "PGHMgC8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x\n\n",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -15522,7 +15522,7 @@
    "id": "snippet-136-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
+   "input": "PGHMgC8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15535,7 +15535,7 @@
    "id": "snippet-136-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
+   "input": "PGHMgC8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15548,7 +15548,7 @@
    "id": "snippet-136-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
+   "input": "PGHMgC8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15561,12 +15561,12 @@
    "id": "snippet-137-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "dGV4dCBiZWZvcmU8YS8+",
+   "input": "PGHjgIcvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "text before",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -15574,7 +15574,7 @@
    "id": "snippet-137-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "dGV4dCBiZWZvcmU8YS8+",
+   "input": "PGHjgIcvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15587,7 +15587,7 @@
    "id": "snippet-137-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "dGV4dCBiZWZvcmU8YS8+",
+   "input": "PGHjgIcvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15600,7 +15600,7 @@
    "id": "snippet-137-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "dGV4dCBiZWZvcmU8YS8+",
+   "input": "PGHjgIcvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15613,12 +15613,12 @@
    "id": "snippet-138-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "ICAgPGEvPg==",
+   "input": "PGEgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "   ",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -15626,7 +15626,7 @@
    "id": "snippet-138-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "ICAgPGEvPg==",
+   "input": "PGEgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15639,7 +15639,7 @@
    "id": "snippet-138-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "ICAgPGEvPg==",
+   "input": "PGEgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15652,7 +15652,7 @@
    "id": "snippet-138-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "ICAgPGEvPg==",
+   "input": "PGEgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15665,12 +15665,12 @@
    "id": "snippet-139-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "﻿",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -15678,7 +15678,7 @@
    "id": "snippet-139-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15691,7 +15691,7 @@
    "id": "snippet-139-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15704,7 +15704,7 @@
    "id": "snippet-139-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgeG1sbnM6Yj0idSIgYjpjPSIxIi8+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15717,220 +15717,220 @@
    "id": "snippet-140-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgYjpjOmQ9IjEiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "﻿",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-140-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgYjpjOmQ9IjEiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-140-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgYjpjOmQ9IjEiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-140-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "77u/PGEvPg==",
+   "input": "PGEgYjpjOmQ9IjEiLz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: expected attribute name in element"
   },
   {
    "id": "snippet-141-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
+   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "Hello",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
   },
   {
    "id": "snippet-141-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
+   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "Hello",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
   },
   {
    "id": "snippet-141-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
+   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
   },
   {
    "id": "snippet-141-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
+   "input": "PGE+CjxiPgo8L2M+CjwvYT4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\nHello",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 3: element \u003cb\u003e closed by \u003c/c\u003e"
   },
   {
    "id": "snippet-142-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
+   "input": "PGE+CgoKPGI=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": " a \tb",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 4: unexpected EOF"
   },
   {
    "id": "snippet-142-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
+   "input": "PGE+CgoKPGI=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": " a b",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 4: unexpected EOF"
   },
   {
    "id": "snippet-142-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
+   "input": "PGE+CgoKPGI=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 4: unexpected EOF"
   },
   {
    "id": "snippet-142-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "\n a \tb\n\n",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-143-odf",
-   "group": "xml-direct",
-   "reader": "odf",
-   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "xnestedy",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-143-pptx",
-   "group": "xml-direct",
-   "reader": "pptx",
-   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "xy",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-143-sheet",
-   "group": "xml-direct",
-   "reader": "sheet",
-   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
+   "input": "PGE+CgoKPGI=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 4: unexpected EOF"
+  },
+  {
+   "id": "snippet-143-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "Cgo8YT54",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse odf xml: XML syntax error on line 3: unexpected EOF"
+  },
+  {
+   "id": "snippet-143-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "Cgo8YT54",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse pptx xml: XML syntax error on line 3: unexpected EOF"
+  },
+  {
+   "id": "snippet-143-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "Cgo8YT54",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse sheet xml: XML syntax error on line 3: unexpected EOF"
   },
   {
    "id": "snippet-143-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
+   "input": "Cgo8YT54",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 3: unexpected EOF"
   },
   {
    "id": "snippet-144-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
+   "input": "PGE+eDwvYT50cmFpbGluZw==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inner",
+   "text": "xtrailing",
    "result": null,
    "error": ""
   },
@@ -15938,7 +15938,7 @@
    "id": "snippet-144-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
+   "input": "PGE+eDwvYT50cmFpbGluZw==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15951,7 +15951,7 @@
    "id": "snippet-144-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
+   "input": "PGE+eDwvYT50cmFpbGluZw==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15964,7 +15964,7 @@
    "id": "snippet-144-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
+   "input": "PGE+eDwvYT50cmFpbGluZw==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -15977,12 +15977,12 @@
    "id": "snippet-145-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQvPjwvZD4=",
+   "input": "PGE+eDwvYT48Yj55PC9iPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
    "error": ""
   },
@@ -15990,7 +15990,7 @@
    "id": "snippet-145-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQvPjwvZD4=",
+   "input": "PGE+eDwvYT48Yj55PC9iPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16003,7 +16003,7 @@
    "id": "snippet-145-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQvPjwvZD4=",
+   "input": "PGE+eDwvYT48Yj55PC9iPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16016,7 +16016,7 @@
    "id": "snippet-145-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQvPjwvZD4=",
+   "input": "PGE+eDwvYT48Yj55PC9iPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16029,116 +16029,116 @@
    "id": "snippet-146-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+PC9kPg==",
+   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "x\n\n",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
+   "error": ""
   },
   {
    "id": "snippet-146-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+PC9kPg==",
+   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
+   "error": ""
   },
   {
    "id": "snippet-146-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+PC9kPg==",
+   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
+   "error": ""
   },
   {
    "id": "snippet-146-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+PC9kPg==",
+   "input": "PGE+eDwvYT4KPCEtLSBjIC0tPgo=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
+   "error": ""
   },
   {
    "id": "snippet-147-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "input": "dGV4dCBiZWZvcmU8YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "text before",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-147-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "input": "dGV4dCBiZWZvcmU8YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-147-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "input": "dGV4dCBiZWZvcmU8YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-147-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "input": "dGV4dCBiZWZvcmU8YS8+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "XML syntax error on line 1: invalid character entity \u0026bad;"
+   "error": ""
   },
   {
    "id": "snippet-148-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
+   "input": "ICAgPGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "abc",
+   "text": "   ",
    "result": null,
    "error": ""
   },
@@ -16146,12 +16146,12 @@
    "id": "snippet-148-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
+   "input": "ICAgPGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "abc",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16159,7 +16159,7 @@
    "id": "snippet-148-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
+   "input": "ICAgPGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16172,12 +16172,12 @@
    "id": "snippet-148-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
+   "input": "ICAgPGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "abc",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16185,12 +16185,12 @@
    "id": "snippet-149-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "﻿",
    "result": null,
    "error": ""
   },
@@ -16198,12 +16198,12 @@
    "id": "snippet-149-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16211,7 +16211,7 @@
    "id": "snippet-149-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16224,12 +16224,12 @@
    "id": "snippet-149-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16237,12 +16237,12 @@
    "id": "snippet-150-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "﻿",
    "result": null,
    "error": ""
   },
@@ -16250,12 +16250,12 @@
    "id": "snippet-150-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16263,7 +16263,7 @@
    "id": "snippet-150-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16276,12 +16276,12 @@
    "id": "snippet-150-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
+   "input": "77u/PGEvPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16289,12 +16289,12 @@
    "id": "snippet-151-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ABC",
+   "text": "Hello",
    "result": null,
    "error": ""
   },
@@ -16302,12 +16302,12 @@
    "id": "snippet-151-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ABC",
+   "text": "Hello",
    "result": null,
    "error": ""
   },
@@ -16315,7 +16315,7 @@
    "id": "snippet-151-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16328,12 +16328,12 @@
    "id": "snippet-151-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dD5IZWxsbzwvdzp0PjwvdzpyPjwvdzpwPjwvdzpib2R5Pjwvdzpkb2N1bWVudD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "|  A | B |\n| --- | --- |\n| C |  |\n",
+   "text": "\nHello",
    "result": null,
    "error": ""
   },
@@ -16341,12 +16341,12 @@
    "id": "snippet-152-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "a|bl1l2",
+   "text": " a \tb",
    "result": null,
    "error": ""
   },
@@ -16354,12 +16354,12 @@
    "id": "snippet-152-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "a|bl1l2",
+   "text": " a b",
    "result": null,
    "error": ""
   },
@@ -16367,7 +16367,7 @@
    "id": "snippet-152-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16380,12 +16380,12 @@
    "id": "snippet-152-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PHc6ZG9jdW1lbnQgeG1sbnM6dz0idSI+PHc6Ym9keT48dzpwPjx3OnI+PHc6dCB4bWw6c3BhY2U9InByZXNlcnZlIj4gYSA8L3c6dD48dzp0YWIvPjx3OnQ+Yjwvdzp0Pjx3OmJyLz48dzpjci8+PC93OnI+PC93OnA+PC93OmJvZHk+PC93OmRvY3VtZW50Pg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| a\\|b | l1 l2 |\n| --- | --- |\n",
+   "text": "\n a \tb\n\n",
    "result": null,
    "error": ""
   },
@@ -16393,12 +16393,12 @@
    "id": "snippet-153-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xnestedy",
    "result": null,
    "error": ""
   },
@@ -16406,12 +16406,12 @@
    "id": "snippet-153-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
    "error": ""
   },
@@ -16419,7 +16419,7 @@
    "id": "snippet-153-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16432,12 +16432,12 @@
    "id": "snippet-153-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+eDxiPm5lc3RlZDwvYj55PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
    "error": ""
   },
@@ -16445,12 +16445,12 @@
    "id": "snippet-154-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "inner",
    "result": null,
    "error": ""
   },
@@ -16458,7 +16458,7 @@
    "id": "snippet-154-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16471,7 +16471,7 @@
    "id": "snippet-154-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16484,21 +16484,20 @@
    "id": "snippet-154-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHQ+PHQ+aW5uZXI8L3Q+PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "",
-   "panic": "strings: negative Repeat count"
+   "error": ""
   },
   {
    "id": "snippet-155-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQvPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16511,7 +16510,7 @@
    "id": "snippet-155-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQvPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16524,7 +16523,7 @@
    "id": "snippet-155-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQvPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16537,130 +16536,129 @@
    "id": "snippet-155-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQvPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "",
-   "panic": "strings: negative Repeat count"
+   "error": ""
   },
   {
    "id": "snippet-156-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
+   "input": "PGQ+PHQ+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
   },
   {
    "id": "snippet-156-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
+   "input": "PGQ+PHQ+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
   },
   {
    "id": "snippet-156-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
+   "input": "PGQ+PHQ+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
   },
   {
    "id": "snippet-156-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
+   "input": "PGQ+PHQ+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "XML syntax error on line 1: element \u003ct\u003e closed by \u003c/d\u003e"
   },
   {
    "id": "snippet-157-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "x",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-157-pptx",
-   "group": "xml-direct",
-   "reader": "pptx",
-   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "x",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-157-sheet",
-   "group": "xml-direct",
-   "reader": "sheet",
-   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
+   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: invalid character entity \u0026bad;"
+  },
+  {
+   "id": "snippet-157-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "XML syntax error on line 1: invalid character entity \u0026bad;"
+  },
+  {
+   "id": "snippet-157-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse sheet xml: XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-157-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
+   "input": "PGQ+PHQ+YSZiYWQ7PC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "XML syntax error on line 1: invalid character entity \u0026bad;"
   },
   {
    "id": "snippet-158-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
+   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xaftery",
+   "text": "abc",
    "result": null,
    "error": ""
   },
@@ -16668,12 +16666,12 @@
    "id": "snippet-158-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
+   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "abc",
    "result": null,
    "error": ""
   },
@@ -16681,7 +16679,7 @@
    "id": "snippet-158-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
+   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16694,12 +16692,12 @@
    "id": "snippet-158-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
+   "input": "PGQ+PHQ+YTwhW0NEQVRBW2JdXT5jPC90PjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| x |\n| --- |\ny",
+   "text": "abc",
    "result": null,
    "error": ""
   },
@@ -16707,12 +16705,12 @@
    "id": "snippet-159-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
+   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inoutend",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16720,12 +16718,12 @@
    "id": "snippet-159-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
+   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inoutend",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16733,7 +16731,7 @@
    "id": "snippet-159-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
+   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16746,12 +16744,12 @@
    "id": "snippet-159-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
+   "input": "PGQ+PHQ+YTwhLS1jLS0+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| in |\n| --- |\noutend",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16759,12 +16757,12 @@
    "id": "snippet-160-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x\t",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16772,12 +16770,12 @@
    "id": "snippet-160-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "x",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16785,7 +16783,7 @@
    "id": "snippet-160-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16798,12 +16796,12 @@
    "id": "snippet-160-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
+   "input": "PGQ+PHQ+YTw/cGkgeD8+YjwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| x   |\n| --- |\n",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -16811,12 +16809,12 @@
    "id": "snippet-161-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "ABC",
    "result": null,
    "error": ""
   },
@@ -16824,12 +16822,12 @@
    "id": "snippet-161-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "ABC",
    "result": null,
    "error": ""
   },
@@ -16837,7 +16835,7 @@
    "id": "snippet-161-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16850,12 +16848,12 @@
    "id": "snippet-161-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
+   "input": "PGQ+PHRibD48dHI+PHRjPjxwPjx0PkE8L3Q+PC9wPjwvdGM+PHRjPjx0PkI8L3Q+PC90Yz48L3RyPjx0cj48dGM+PHQ+QzwvdD48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "|  |\n| --- |\n",
+   "text": "|  A | B |\n| --- | --- |\n| C |  |\n",
    "result": null,
    "error": ""
   },
@@ -16863,64 +16861,64 @@
    "id": "snippet-162-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "a|bl1l2",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-162-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "a|bl1l2",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-162-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-162-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0PmF8YjwvdD48L3RjPjx0Yz48dD5sMTwvdD48YnIvPjx0PmwyPC90PjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "| a\\|b | l1 l2 |\n| --- | --- |\n",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-163-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
+   "input": "PGQ+PHRibD48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "a\nb\tcde",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16928,7 +16926,7 @@
    "id": "snippet-163-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
+   "input": "PGQ+PHRibD48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16941,7 +16939,7 @@
    "id": "snippet-163-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
+   "input": "PGQ+PHRibD48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -16954,12 +16952,12 @@
    "id": "snippet-163-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
+   "input": "PGQ+PHRibD48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\n\n\t\n\n",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16967,12 +16965,12 @@
    "id": "snippet-164-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
+   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "text outsidein",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16980,12 +16978,12 @@
    "id": "snippet-164-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
+   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "in",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -16993,7 +16991,7 @@
    "id": "snippet-164-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
+   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17006,25 +17004,26 @@
    "id": "snippet-164-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
+   "input": "PGQ+PHRibD48dHI+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "in",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "",
+   "panic": "strings: negative Repeat count"
   },
   {
    "id": "snippet-165-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "H\nP1\tt\nltail",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17032,7 +17031,7 @@
    "id": "snippet-165-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17045,7 +17044,7 @@
    "id": "snippet-165-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17058,25 +17057,26 @@
    "id": "snippet-165-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "input": "PGQ+PHRibD48dHIvPjx0ci8+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\n\n\t",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "",
+   "panic": "strings: negative Repeat count"
   },
   {
    "id": "snippet-166-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
+   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "  \na  \nb  ",
+   "text": "x",
    "result": null,
    "error": ""
   },
@@ -17084,12 +17084,12 @@
    "id": "snippet-166-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
+   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "x",
    "result": null,
    "error": ""
   },
@@ -17097,7 +17097,7 @@
    "id": "snippet-166-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
+   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17110,33 +17110,7 @@
    "id": "snippet-166-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "\n\n",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-167-odf",
-   "group": "xml-direct",
-   "reader": "odf",
-   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "x\n",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-167-pptx",
-   "group": "xml-direct",
-   "reader": "pptx",
-   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
+   "input": "PGQ+PHRibD48dGM+PHQ+eDwvdD48L3RjPjwvdGJsPjwvZD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17146,10 +17120,36 @@
    "error": ""
   },
   {
+   "id": "snippet-167-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "x",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-167-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "x",
+   "result": null,
+   "error": ""
+  },
+  {
    "id": "snippet-167-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
+   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17162,12 +17162,12 @@
    "id": "snippet-167-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
+   "input": "PGQ+PHRyPjx0Yz48dD54PC90PjwvdGM+PC90cj48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\n",
+   "text": "x",
    "result": null,
    "error": ""
   },
@@ -17175,12 +17175,12 @@
    "id": "snippet-168-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "A\nB",
+   "text": "xaftery",
    "result": null,
    "error": ""
   },
@@ -17188,12 +17188,12 @@
    "id": "snippet-168-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "A\nB",
+   "text": "xy",
    "result": null,
    "error": ""
   },
@@ -17201,7 +17201,7 @@
    "id": "snippet-168-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17214,12 +17214,12 @@
    "id": "snippet-168-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPjwvdGJsPmFmdGVyPHQ+eTwvdD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\nA\nB",
+   "text": "| x |\n| --- |\ny",
    "result": null,
    "error": ""
   },
@@ -17227,12 +17227,12 @@
    "id": "snippet-169-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "A",
+   "text": "inoutend",
    "result": null,
    "error": ""
   },
@@ -17240,12 +17240,12 @@
    "id": "snippet-169-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "A",
+   "text": "inoutend",
    "result": null,
    "error": ""
   },
@@ -17253,7 +17253,7 @@
    "id": "snippet-169-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17266,12 +17266,12 @@
    "id": "snippet-169-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Ymw+PHRyPjx0Yz48dD5pbjwvdD48L3RjPjwvdHI+PC90Ymw+PHQ+b3V0PC90PjwvdGM+PC90cj48L3RibD48dD5lbmQ8L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\nA",
+   "text": "| in |\n| --- |\noutend",
    "result": null,
    "error": ""
   },
@@ -17279,12 +17279,12 @@
    "id": "snippet-170-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "x\t",
    "result": null,
    "error": ""
   },
@@ -17292,12 +17292,12 @@
    "id": "snippet-170-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "x",
    "result": null,
    "error": ""
   },
@@ -17305,7 +17305,7 @@
    "id": "snippet-170-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17318,12 +17318,12 @@
    "id": "snippet-170-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PHRhYi8+PGJyLz48L3RjPjwvdHI+PC90Ymw+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "| x   |\n| --- |\n",
    "result": null,
    "error": ""
   },
@@ -17331,12 +17331,12 @@
    "id": "snippet-171-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "atextb",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17344,12 +17344,12 @@
    "id": "snippet-171-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17357,7 +17357,7 @@
    "id": "snippet-171-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17370,12 +17370,12 @@
    "id": "snippet-171-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjwvdGM+PC90cj48L3RibD48L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "\nab",
+   "text": "|  |\n| --- |\n",
    "result": null,
    "error": ""
   },
@@ -17383,64 +17383,64 @@
    "id": "snippet-172-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "10inline",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-172-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inline",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-172-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| 1 | shared-zero |\n| --- | --- |\n| inline |  |\n",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse sheet xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-172-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
+   "input": "PGQ+PHRibD48dHI+PHRjPjx0Png8L3Q+PC90Yz48L3RyPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inline",
+   "text": "",
    "result": null,
-   "error": ""
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
   },
   {
    "id": "snippet-173-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "5-1 1 +11x99999999999999999999",
+   "text": "a\nb\tcde",
    "result": null,
    "error": ""
   },
@@ -17448,7 +17448,7 @@
    "id": "snippet-173-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17461,12 +17461,12 @@
    "id": "snippet-173-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| 5 | -1 | pipe\\|one | pipe\\|one | pipe\\|one |  | 99999999999999999999 |\n| --- | --- | --- | --- | --- | --- | --- |\n",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17474,12 +17474,12 @@
    "id": "snippet-173-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+PHA+YTwvcD48cD5iPC9wPjx0YWIvPmM8YnIvPmQ8Y3IvPmU8L2Q+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\n\n\t\n\n",
    "result": null,
    "error": ""
   },
@@ -17487,12 +17487,12 @@
    "id": "snippet-174-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "ab",
+   "text": "text outsidein",
    "result": null,
    "error": ""
   },
@@ -17500,12 +17500,12 @@
    "id": "snippet-174-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "in",
    "result": null,
    "error": ""
   },
@@ -17513,12 +17513,12 @@
    "id": "snippet-174-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| b |\n| --- |\n",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17526,12 +17526,12 @@
    "id": "snippet-174-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PGQ+dGV4dCBvdXRzaWRlPHQ+aW48L3Q+PC9kPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "in",
    "result": null,
    "error": ""
   },
@@ -17539,12 +17539,12 @@
    "id": "snippet-175-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "xy",
+   "text": "H\nP1\tt\nltail",
    "result": null,
    "error": ""
   },
@@ -17552,46 +17552,7 @@
    "id": "snippet-175-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "x",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-175-sheet",
-   "group": "xml-direct",
-   "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "| y |\n| --- |\n",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-175-word",
-   "group": "xml-direct",
-   "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "x",
-   "result": null,
-   "error": ""
-  },
-  {
-   "id": "snippet-176-odf",
-   "group": "xml-direct",
-   "reader": "odf",
-   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
+   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17601,10 +17562,49 @@
    "error": ""
   },
   {
+   "id": "snippet-175-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-175-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PG86cCB4bWxuczpvPSJ1Ij48bzpoPkg8L286aD48bzpwPlAxPG86dGFiLz50PG86bGluZS1icmVhay8+bDwvbzpwPnRhaWw8L286cD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "\n\n\t",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-176-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "  \na  \nb  ",
+   "result": null,
+   "error": ""
+  },
+  {
    "id": "snippet-176-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
+   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17617,12 +17617,12 @@
    "id": "snippet-176-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
+   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "|  |\n| --- |\n",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -17630,12 +17630,12 @@
    "id": "snippet-176-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
+   "input": "PG8+ICA8cD5hPC9wPiAgPHA+YjwvcD4gIDwvbz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\n\n",
    "result": null,
    "error": ""
   },
@@ -17643,12 +17643,12 @@
    "id": "snippet-177-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "x\n",
    "result": null,
    "error": ""
   },
@@ -17656,7 +17656,7 @@
    "id": "snippet-177-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17669,26 +17669,25 @@
    "id": "snippet-177-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "",
-   "panic": "strings: negative Repeat count"
+   "error": ""
   },
   {
    "id": "snippet-177-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "input": "PG8+PGg+eDwvaD48cC8+PC9vPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\n",
    "result": null,
    "error": ""
   },
@@ -17696,12 +17695,12 @@
    "id": "snippet-178-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "A\nB",
    "result": null,
    "error": ""
   },
@@ -17709,12 +17708,12 @@
    "id": "snippet-178-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "A\nB",
    "result": null,
    "error": ""
   },
@@ -17722,26 +17721,25 @@
    "id": "snippet-178-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "",
-   "panic": "strings: negative Repeat count"
+   "error": ""
   },
   {
    "id": "snippet-178-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "input": "PHM+PHA+PHQ+QTwvdD48L3A+PHA+PHQ+QjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\nA\nB",
    "result": null,
    "error": ""
   },
@@ -17749,12 +17747,12 @@
    "id": "snippet-179-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "1",
+   "text": "A",
    "result": null,
    "error": ""
   },
@@ -17762,12 +17760,12 @@
    "id": "snippet-179-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "A",
    "result": null,
    "error": ""
   },
@@ -17775,7 +17773,7 @@
    "id": "snippet-179-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17788,12 +17786,12 @@
    "id": "snippet-179-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "input": "PHM+PHA+PHI+PHQ+QTwvdD48L3I+PC9wPjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\nA",
    "result": null,
    "error": ""
   },
@@ -17801,168 +17799,168 @@
    "id": "snippet-180-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+   "error": ""
   },
   {
    "id": "snippet-180-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+   "error": ""
   },
   {
    "id": "snippet-180-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "parse sheet xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+   "error": ""
   },
   {
    "id": "snippet-180-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "input": "PHM+PHQ+eDwvdD48dD55PC90Pjwvcz4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "xy",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+   "error": ""
   },
   {
    "id": "snippet-181-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+",
+   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "atextb",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-181-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+",
+   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "ab",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-181-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+",
+   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
    "text": "",
    "result": null,
-   "error": "XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-181-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+",
+   "input": "PHM+PHA+PHQ+YTwvdD50ZXh0PHQ+YjwvdD48L3A+PC9zPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "\nab",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-182-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "10inline",
    "result": null,
-   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-182-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "inline",
    "result": null,
-   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-182-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "| 1 | shared-zero |\n| --- | --- |\n| inline |  |\n",
    "result": null,
-   "error": "XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-182-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "input": "PHNoPjxzaGVldERhdGE+PHJvdz48Yz48dj4xPC92PjwvYz48YyB0PSJzIj48dj4wPC92PjwvYz48L3Jvdz48cm93PjxjIHQ9ImlubGluZVN0ciI+PGlzPjx0PmlubGluZTwvdD48L2lzPjwvYz48L3Jvdz48L3NoZWV0RGF0YT48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "inline",
    "result": null,
-   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+   "error": ""
   },
   {
    "id": "snippet-183-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "inner",
+   "text": "5-1 1 +11x99999999999999999999",
    "result": null,
    "error": ""
   },
@@ -17970,7 +17968,7 @@
    "id": "snippet-183-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -17983,12 +17981,12 @@
    "id": "snippet-183-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| inner |\n| --- |\n",
+   "text": "| 5 | -1 | pipe\\|one | pipe\\|one | pipe\\|one |  | 99999999999999999999 |\n| --- | --- | --- | --- | --- | --- | --- |\n",
    "result": null,
    "error": ""
   },
@@ -17996,7 +17994,7 @@
    "id": "snippet-183-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+NTwvdj48L2M+PGMgdD0icyI+PHY+LTE8L3Y+PC9jPjxjIHQ9InMiPjx2PiAxIDwvdj48L2M+PGMgdD0icyI+PHY+KzE8L3Y+PC9jPjxjIHQ9InMiPjx2PjF4PC92PjwvYz48YyB0PSJzIj48dj48L3Y+PC9jPjxjIHQ9InMiPjx2Pjk5OTk5OTk5OTk5OTk5OTk5OTk5PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18009,12 +18007,12 @@
    "id": "snippet-184-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "q",
+   "text": "ab",
    "result": null,
    "error": ""
   },
@@ -18022,7 +18020,7 @@
    "id": "snippet-184-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18035,12 +18033,12 @@
    "id": "snippet-184-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| q |\n| --- |\n",
+   "text": "| b |\n| --- |\n",
    "result": null,
    "error": ""
   },
@@ -18048,7 +18046,7 @@
    "id": "snippet-184-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PHY+YTwvdj48dj5iPC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18061,12 +18059,12 @@
    "id": "snippet-185-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "013",
+   "text": "xy",
    "result": null,
    "error": ""
   },
@@ -18074,12 +18072,12 @@
    "id": "snippet-185-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "",
+   "text": "x",
    "result": null,
    "error": ""
   },
@@ -18087,12 +18085,12 @@
    "id": "snippet-185-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| shared-zero | pipe\\|one |\n| --- | --- |\n| 3 |  |\n",
+   "text": "| y |\n| --- |\n",
    "result": null,
    "error": ""
   },
@@ -18100,7 +18098,20 @@
    "id": "snippet-185-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PGM+PGlzPjx0Png8L3Q+PC9pcz48dj55PC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "x",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-186-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18110,23 +18121,10 @@
    "error": ""
   },
   {
-   "id": "snippet-186-odf",
-   "group": "xml-direct",
-   "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
-   "shared": [
-    "shared-zero",
-    "pipe|one"
-   ],
-   "text": "a|bl1\nl2",
-   "result": null,
-   "error": ""
-  },
-  {
    "id": "snippet-186-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18139,12 +18137,12 @@
    "id": "snippet-186-sheet",
    "group": "xml-direct",
    "reader": "sheet",
-   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "| a\\|b |\n| --- |\n| l1 l2 |\n",
+   "text": "|  |\n| --- |\n",
    "result": null,
    "error": ""
   },
@@ -18152,7 +18150,7 @@
    "id": "snippet-186-word",
    "group": "xml-direct",
    "reader": "word",
-   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "input": "PHNoPjxyb3c+PGMvPjwvcm93Pjwvc2g+",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18165,12 +18163,12 @@
    "id": "snippet-187-odf",
    "group": "xml-direct",
    "reader": "odf",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
    ],
-   "text": "123",
+   "text": "",
    "result": null,
    "error": ""
   },
@@ -18178,7 +18176,7 @@
    "id": "snippet-187-pptx",
    "group": "xml-direct",
    "reader": "pptx",
-   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
    "shared": [
     "shared-zero",
     "pipe|one"
@@ -18191,6 +18189,528 @@
    "id": "snippet-187-sheet",
    "group": "xml-direct",
    "reader": "sheet",
+   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "",
+   "panic": "strings: negative Repeat count"
+  },
+  {
+   "id": "snippet-187-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-188-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-188-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-188-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "",
+   "panic": "strings: negative Repeat count"
+  },
+  {
+   "id": "snippet-188-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3cvPjxyb3cvPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-189-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "1",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-189-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-189-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-189-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxjPjx2PjE8L3Y+PC9jPjwvc2g+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-190-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse odf xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+  },
+  {
+   "id": "snippet-190-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse pptx xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+  },
+  {
+   "id": "snippet-190-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse sheet xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+  },
+  {
+   "id": "snippet-190-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse word xml: XML syntax error on line 1: element \u003crow\u003e closed by \u003c/sh\u003e"
+  },
+  {
+   "id": "snippet-191-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-191-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-191-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-191-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-192-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse odf xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-192-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse pptx xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-192-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-192-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+PHY+eA==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": "parse word xml: XML syntax error on line 1: unexpected EOF"
+  },
+  {
+   "id": "snippet-193-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "inner",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-193-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-193-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "| inner |\n| --- |\n",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-193-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+PGM+PHY+aW5uZXI8L3Y+PC9jPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-194-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "q",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-194-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-194-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "| q |\n| --- |\n",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-194-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+PHg6YyB4bWxuczp4PSJ1Ij48dj5xPC92PjwveDpjPjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-195-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "013",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-195-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-195-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "| shared-zero | pipe\\|one |\n| --- | --- |\n| 3 |  |\n",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-195-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGMgdD0icyI+PHY+MDwvdj48L2M+PGMgdD0icyI+PHY+MTwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-196-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "a|bl1\nl2",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-196-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-196-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
+   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "| a\\|b |\n| --- |\n| l1 l2 |\n",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-196-word",
+   "group": "xml-direct",
+   "reader": "word",
+   "input": "PHNoPjxyb3c+PGM+PHY+YXxiPC92PjwvYz48L3Jvdz48cm93PjxjPjx2PmwxJiMxMDtsMjwvdj48L2M+PC9yb3c+PC9zaD4=",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-197-odf",
+   "group": "xml-direct",
+   "reader": "odf",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "123",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-197-pptx",
+   "group": "xml-direct",
+   "reader": "pptx",
+   "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
+   "shared": [
+    "shared-zero",
+    "pipe|one"
+   ],
+   "text": "",
+   "result": null,
+   "error": ""
+  },
+  {
+   "id": "snippet-197-sheet",
+   "group": "xml-direct",
+   "reader": "sheet",
    "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
    "shared": [
     "shared-zero",
@@ -18201,7 +18721,7 @@
    "error": ""
   },
   {
-   "id": "snippet-187-word",
+   "id": "snippet-197-word",
    "group": "xml-direct",
    "reader": "word",
    "input": "PHNoPjxyb3c+PGM+PHY+MTwvdj48L2M+PGM+PHY+Mjwvdj48L2M+PC9yb3c+PHJvdz48Yz48dj4zPC92PjwvYz48L3Jvdz48L3NoPg==",
@@ -32407,7 +32927,7 @@
   "odt": 1,
   "pptx": 3,
   "xlsx": 11,
-  "xml-direct": 2137,
+  "xml-direct": 2177,
   "zip": 60
  },
  "normalizations": [
@@ -32424,6 +32944,6 @@
   "extract.go": "29b3e258b0583de21057702ed6c0b2d3b67bbdd44028bfbf8c52885179291b73",
   "limits.go": "7b224c9f48692ea23da3b916d0a65f761a93c4b420e1826a47e2140bcd4dec60",
   "structured.go": "5979e7e4e784779077a00a83e3cb17004b8d3c2afc421f80df1c11b352c994ec",
-  "structured_port_test.go": "56e5e3f544d40d8948fbefab071fe957af780bf5d94448a919cf60278e872890"
+  "structured_port_test.go": "6e2701e423a3c946ad3ae20e64b1efe1198f08ad4e28d59863a2c39263885aa2"
  }
 }

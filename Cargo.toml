@@ -48,6 +48,11 @@ tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }
 hyper = { version = "=1.11.1", default-features = false, features = ["client", "http1", "server"] }
 
+# The hostile-layout regression test (draw_parser fuzz findings) has a wall-clock
+# budget; an unoptimized debug build of the layout takes 25-170 s on a busy host.
+[profile.dev.package.symdesk-render]
+opt-level = 2
+
 [profile.release]
 codegen-units = 1
 lto = "thin"

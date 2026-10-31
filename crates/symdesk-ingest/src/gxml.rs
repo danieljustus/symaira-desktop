@@ -177,33 +177,34 @@ fn parse_uint(s: &[u8], base: u32) -> Option<u64> {
     Some(n)
 }
 
-/// Go `procInst`: the `param="..."` value of an xml declaration.
-fn proc_inst(param: &str, s: &str) -> String {
-    let param = format!("{param}=");
+/// Go `procInst`: the `param="..."` value of an xml declaration. Works on raw
+/// bytes like Go's string slicing (the declaration may hold invalid UTF-8).
+fn proc_inst(param: &str, s: &[u8]) -> Vec<u8> {
+    let param = format!("{param}=").into_bytes();
     let lenp = param.len();
     let mut i = 0;
     let mut sep = 0u8;
     while i < s.len() {
         let sub = &s[i..];
-        let Some(k) = sub.find(&param) else {
-            return String::new();
+        let Some(k) = sub.windows(lenp).position(|w| w == param.as_slice()) else {
+            return Vec::new();
         };
         if lenp + k >= sub.len() {
-            return String::new();
+            return Vec::new();
         }
         i += lenp + k + 1;
-        let c = sub.as_bytes()[lenp + k];
+        let c = sub[lenp + k];
         if c == b'\'' || c == b'"' {
             sep = c;
             break;
         }
     }
     if sep == 0 {
-        return String::new();
+        return Vec::new();
     }
-    match s.as_bytes()[i..].iter().position(|b| *b == sep) {
-        Some(j) => String::from_utf8_lossy(&s.as_bytes()[i..i + j]).into_owned(),
-        None => String::new(),
+    match s[i..].iter().position(|b| *b == sep) {
+        Some(j) => s[i..i + j].to_vec(),
+        None => Vec::new(),
     }
 }
 
@@ -531,16 +532,15 @@ impl<'a> Decoder<'a> {
                 }
                 let data = self.buf[..self.buf.len() - 2].to_vec();
                 if target == "xml" {
-                    let content = String::from_utf8_lossy(&data).into_owned();
-                    let ver = proc_inst("version", &content);
-                    if !ver.is_empty() && ver != "1.0" {
+                    let ver = proc_inst("version", &data);
+                    if !ver.is_empty() && ver != b"1.0" {
                         return self.fail(XmlError::Other(format!(
                             "xml: unsupported version {}; only version 1.0 is supported",
                             go_quote(&ver)
                         )));
                     }
-                    let enc = proc_inst("encoding", &content);
-                    if !enc.is_empty() && !enc.eq_ignore_ascii_case("utf-8") {
+                    let enc = proc_inst("encoding", &data);
+                    if !enc.is_empty() && !enc.eq_ignore_ascii_case(b"utf-8") {
                         return self.fail(XmlError::Other(format!(
                             "xml: encoding {} declared but Decoder.CharsetReader is nil",
                             go_quote(&enc)
@@ -852,18 +852,27 @@ impl<'a> Decoder<'a> {
     }
 }
 
-/// Go `%q` for the short ASCII-ish strings printed in declaration errors.
-fn go_quote(s: &str) -> String {
+/// Go `%q` for the strings printed in declaration errors; invalid UTF-8 bytes
+/// become `\xNN` like `strconv.Quote`.
+fn go_quote(s: &[u8]) -> String {
     let mut out = String::from("\"");
-    for c in s.chars() {
-        match c {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c if c.is_control() => out.push_str(&format!("\\x{:02x}", c as u32)),
-            c => out.push(c),
+    for chunk in s.utf8_chunks() {
+        for c in chunk.valid().chars() {
+            match c {
+                '"' => out.push_str("\\\""),
+                '\\' => out.push_str("\\\\"),
+                '\n' => out.push_str("\\n"),
+                '\r' => out.push_str("\\r"),
+                '\t' => out.push_str("\\t"),
+                c if (c as u32) < 0x20 || c as u32 == 0x7f => {
+                    out.push_str(&format!("\\x{:02x}", c as u32));
+                }
+                c if c.is_control() => out.push_str(&format!("\\u{:04x}", c as u32)),
+                c => out.push(c),
+            }
+        }
+        for b in chunk.invalid() {
+            out.push_str(&format!("\\x{b:02x}"));
         }
     }
     out.push('"');

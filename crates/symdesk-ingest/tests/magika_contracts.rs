@@ -106,6 +106,7 @@ fn run(case: &Case, script: &str, root: &Path) -> Result<(), String> {
     let saved = std::env::var_os("PATH");
     // SAFETY: serialized by PATH_LOCK; no other thread reads the environment.
     unsafe { std::env::set_var("PATH", &tools) };
+    #[allow(clippy::redundant_closure_call)]
     let result = (|| {
         let mut errors = Vec::new();
         if filetype::available() != case.available {

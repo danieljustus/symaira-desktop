@@ -76,9 +76,7 @@ fn fixture() -> Fixture {
 }
 
 fn b64(s: &str) -> Vec<u8> {
-    base64::engine::general_purpose::STANDARD
-        .decode(s)
-        .unwrap()
+    base64::engine::general_purpose::STANDARD.decode(s).unwrap()
 }
 
 /// Images gozxing cannot decode but rxing can (declared limit: the Rust
@@ -111,7 +109,11 @@ fn detection_matches_go_over_the_whole_corpus() {
             ));
         }
     }
-    assert_eq!(superset, RXING_SUPERSET.len(), "declared superset cases must still differ");
+    assert_eq!(
+        superset,
+        RXING_SUPERSET.len(),
+        "declared superset cases must still differ"
+    );
     assert!(decoded >= 40, "too few Go decodes: {decoded}");
     assert!(
         mismatches.is_empty(),
@@ -287,7 +289,10 @@ fn split_and_scan_scenarios_match_go() {
         }
         run(&f, case);
     }
-    assert!(seen_error >= 8 && seen_parts >= 15, "{seen_error} {seen_parts}");
+    assert!(
+        seen_error >= 8 && seen_parts >= 15,
+        "{seen_error} {seen_parts}"
+    );
 }
 
 #[test]
@@ -303,7 +308,8 @@ fn split_negative_control_a_changed_transcript_is_caught() {
     assert!(transcript[0].starts_with("P\u{1f}-png\u{1f}-r\u{1f}300\u{1f}$DIR/in.pdf"));
     assert!(transcript[1].starts_with("Q\u{1f}--show-npages"));
     assert!(
-        transcript[2].contains("--empty\u{1f}--pages") && transcript[2].contains("\u{1f}1-1\u{1f}--")
+        transcript[2].contains("--empty\u{1f}--pages")
+            && transcript[2].contains("\u{1f}1-1\u{1f}--")
     );
     // A tampered Go expectation must make the replay fail.
     let mut mutated = case.clone();

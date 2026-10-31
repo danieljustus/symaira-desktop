@@ -69,10 +69,7 @@ fn validate_vault_path(path: &str) -> Result<(), String> {
         return Err("invalid symvault credential path: contains a null byte".into());
     }
     // unicode.IsControl: the Cc category (C0, DEL and C1).
-    if path
-        .chars()
-        .any(|c| c.is_control())
-    {
+    if path.chars().any(|c| c.is_control()) {
         return Err("invalid symvault credential path: contains control characters".into());
     }
     Ok(())

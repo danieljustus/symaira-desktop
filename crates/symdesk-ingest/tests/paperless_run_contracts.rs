@@ -12,12 +12,12 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use symdesk_ingest::Store;
 use symdesk_ingest::extract::Extraction;
 use symdesk_ingest::ocr::Context;
 use symdesk_ingest::paperless_run::{Options, Sink, run, write_migration_report};
 use symdesk_ingest::pipeline::{Engine, Pipeline};
 use symdesk_ingest::writer::NoteWriter;
-use symdesk_ingest::Store;
 
 #[path = "support/paperless_server.rs"]
 mod paperless_server;
@@ -77,7 +77,9 @@ struct Norm {
 
 impl Norm {
     fn apply(&self, s: &str) -> String {
-        let s = s.replace(&self.root, "<ROOT>").replace(&self.host, "<HOST>");
+        let s = s
+            .replace(&self.root, "<ROOT>")
+            .replace(&self.host, "<HOST>");
         let s = self.run_id.replace_all(&s, "paperless-<RUN>").into_owned();
         self.tmp.replace_all(&s, "<TMP>").into_owned()
     }
@@ -109,7 +111,10 @@ fn snapshot(root: &Path, sub: &str, norm: &Norm) -> Vec<Value> {
                 let name = path.to_string_lossy();
                 if name.ends_with(".md") || name.ends_with(".json") {
                     let text = norm.apply(&String::from_utf8_lossy(&bytes));
-                    let text = norm.now.replace_all(&text, "ingested_at: <NOW>").into_owned();
+                    let text = norm
+                        .now
+                        .replace_all(&text, "ingested_at: <NOW>")
+                        .into_owned();
                     out.push(json!({"path": rel, "type": "file", "text": text}));
                 } else {
                     let hash: String = Sha256::digest(&bytes)
@@ -134,7 +139,11 @@ fn dump_tables(db: &Path, norm: &Norm, unordered: bool) -> Value {
         let mut stmt = conn
             .prepare(&format!("SELECT * FROM {table} ORDER BY 1"))
             .unwrap();
-        let cols: Vec<String> = stmt.column_names().iter().map(|c| (*c).to_owned()).collect();
+        let cols: Vec<String> = stmt
+            .column_names()
+            .iter()
+            .map(|c| (*c).to_owned())
+            .collect();
         let rows = stmt
             .query_map([], |row| {
                 let mut map = serde_json::Map::new();
@@ -286,7 +295,12 @@ fn observe(case: &Value, scratch: &Path) -> Value {
         let mut obs = serde_json::Map::new();
         obs.insert(
             "error".into(),
-            json!(outcome.error.as_deref().map_or(String::new(), |e| norm.apply(e))),
+            json!(
+                outcome
+                    .error
+                    .as_deref()
+                    .map_or(String::new(), |e| norm.apply(e))
+            ),
         );
         let mut stats_value = Value::Null;
         let mut report_value = Value::Null;
@@ -294,7 +308,13 @@ fn observe(case: &Value, scratch: &Path) -> Value {
             let mut results = Vec::new();
             for r in &stats.results {
                 let mut v = serde_json::to_value(r).unwrap();
-                for key in ["vault_path", "archive_path", "import_run_id", "error", "reason"] {
+                for key in [
+                    "vault_path",
+                    "archive_path",
+                    "import_run_id",
+                    "error",
+                    "reason",
+                ] {
                     if let Some(s) = v.get(key).and_then(Value::as_str) {
                         v[key] = json!(norm.apply(s));
                     }
@@ -326,13 +346,19 @@ fn observe(case: &Value, scratch: &Path) -> Value {
                 match write_migration_report(path.to_str().unwrap(), &report) {
                     Ok(()) => {
                         let text = std::fs::read_to_string(&path).unwrap();
-                        assert!(text.ends_with("}\n") && text.starts_with("{\n  \""), "indent");
+                        assert!(
+                            text.ends_with("}\n") && text.starts_with("{\n  \""),
+                            "indent"
+                        );
                         let text = norm.apply(&text);
                         report_value = scrub_report(serde_json::from_str(&text).unwrap());
                     }
                     Err(e) => {
                         let prior = obs["error"].as_str().unwrap().to_owned();
-                        obs.insert("error".into(), json!(format!("{prior} | report: {}", norm.apply(&e))));
+                        obs.insert(
+                            "error".into(),
+                            json!(format!("{prior} | report: {}", norm.apply(&e))),
+                        );
                     }
                 }
             }
@@ -380,7 +406,10 @@ fn observe(case: &Value, scratch: &Path) -> Value {
     let vault = Value::Array(snapshot(&root, "vault", &norm));
     let archive = Value::Array(snapshot(&root, "archive", &norm));
     let leaked: Vec<_> = std::fs::read_dir(&tmp).unwrap().collect();
-    assert!(leaked.is_empty(), "{id}: temporary files leaked: {leaked:?}");
+    assert!(
+        leaked.is_empty(),
+        "{id}: temporary files leaked: {leaked:?}"
+    );
     json!({"runs": runs, "requests": requests, "vault": vault, "archive": archive, "tables": tables})
 }
 
@@ -388,7 +417,11 @@ fn observe(case: &Value, scratch: &Path) -> Value {
 fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
     match (want, got) {
         (Value::Object(a), Value::Object(b)) => {
-            for key in a.keys().chain(b.keys()).collect::<std::collections::BTreeSet<_>>() {
+            for key in a
+                .keys()
+                .chain(b.keys())
+                .collect::<std::collections::BTreeSet<_>>()
+            {
                 diff(
                     &format!("{path}.{key}"),
                     a.get(key).unwrap_or(&Value::Null),
@@ -439,7 +472,8 @@ fn paperless_run_matches_go() {
     let fx = fixture();
     let cases = fx["cases"].as_array().unwrap();
     assert!(cases.len() >= 24, "scenarios shrank: {}", cases.len());
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("paperless-run-{}", std::process::id()));
+    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("paperless-run-{}", std::process::id()));
     std::fs::create_dir_all(&scratch).unwrap();
     let mut failures = Vec::new();
     let mut imported = 0;
@@ -454,14 +488,20 @@ fn paperless_run_matches_go() {
     }
     let _ = std::fs::remove_dir_all(&scratch);
     assert!(imported >= 15, "oracle imported only {imported}");
-    assert!(failures.is_empty(), "{} differences:\n{}", failures.len(), failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "{} differences:\n{}",
+        failures.len(),
+        failures.join("\n")
+    );
 }
 
 #[test]
 fn paperless_run_negative_controls_are_caught() {
     let fx = fixture();
     let cases = fx["cases"].as_array().unwrap();
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("paperless-neg-{}", std::process::id()));
+    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("paperless-neg-{}", std::process::id()));
     std::fs::create_dir_all(&scratch).unwrap();
     let case = cases
         .iter()
@@ -477,7 +517,10 @@ fn paperless_run_negative_controls_are_caught() {
     ] {
         let mut tampered = case.clone();
         mutate(&mut tampered);
-        assert!(!compare(&tampered, &scratch).is_empty(), "tampering went unnoticed");
+        assert!(
+            !compare(&tampered, &scratch).is_empty(),
+            "tampering went unnoticed"
+        );
     }
     let _ = std::fs::remove_dir_all(&scratch);
 }

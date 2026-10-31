@@ -285,7 +285,7 @@ fn std_base64(s: &[u8]) -> Option<Vec<u8>> {
         .copied()
         .filter(|c| *c != b'\r' && *c != b'\n')
         .collect();
-    if clean.len() % 4 != 0 {
+    if !clean.len().is_multiple_of(4) {
         return None;
     }
     let val = |c: u8| -> Option<u32> {
@@ -362,10 +362,7 @@ pub fn decode_header(input: &[u8]) -> Vec<u8> {
     let mut buf: Vec<u8> = input[..i].to_vec();
     let mut header = &input[i..];
     let mut between_words = false;
-    loop {
-        let Some(start) = find(header, b"=?") else {
-            break;
-        };
+    while let Some(start) = find(header, b"=?") {
         let mut cur = start + 2;
         let Some(i) = header[cur..].iter().position(|b| *b == b'?') else {
             break;
@@ -416,7 +413,11 @@ pub fn decode_header(input: &[u8]) -> Vec<u8> {
 fn parse_with_params(value: &[u8]) -> (String, HashMap<String, String>, bool) {
     let mt = parse_media_type(value);
     if mt.err {
-        return (String::from_utf8_lossy(value).into_owned(), HashMap::new(), true);
+        return (
+            String::from_utf8_lossy(value).into_owned(),
+            HashMap::new(),
+            true,
+        );
     }
     let params = mt
         .params
@@ -469,7 +470,10 @@ impl EntityError {
     pub fn message(&self) -> String {
         match self {
             EntityError::Encoding(enc) => {
-                format!("encoding error: unhandled encoding {}", go_quote(enc.as_bytes()))
+                format!(
+                    "encoding error: unhandled encoding {}",
+                    go_quote(enc.as_bytes())
+                )
             }
             EntityError::Charset(cs) => format!(
                 "unknown charset: unknown charset: message: unhandled charset {}",
@@ -615,17 +619,18 @@ impl Multipart {
         loop {
             let rest = &self.data[self.pos..];
             // ReadSlice('\n') with a 4096-byte buffer.
-            let (line, err): (Vec<u8>, Option<String>) =
-                match rest.iter().position(|b| *b == b'\n') {
-                    Some(i) if i < PEEK_BUFFER => (rest[..=i].to_vec(), None),
-                    _ if rest.len() >= PEEK_BUFFER => {
-                        (rest[..PEEK_BUFFER].to_vec(), Some("bufio: buffer full".into()))
-                    }
-                    _ => (
-                        rest.to_vec(),
-                        Some(self.end.error().unwrap_or("EOF").to_owned()),
-                    ),
-                };
+            let (line, err): (Vec<u8>, Option<String>) = match rest.iter().position(|b| *b == b'\n')
+            {
+                Some(i) if i < PEEK_BUFFER => (rest[..=i].to_vec(), None),
+                _ if rest.len() >= PEEK_BUFFER => (
+                    rest[..PEEK_BUFFER].to_vec(),
+                    Some("bufio: buffer full".into()),
+                ),
+                _ => (
+                    rest.to_vec(),
+                    Some(self.end.error().unwrap_or("EOF").to_owned()),
+                ),
+            };
             self.pos += line.len();
             if err.as_deref() == Some("EOF") && self.is_final_boundary(&line) {
                 return Ok(None);
@@ -790,7 +795,11 @@ impl Reader {
             return Err(e.message());
         }
         let source = if entity.is_multipart() {
-            let boundary = entity.media_params.get("boundary").cloned().unwrap_or_default();
+            let boundary = entity
+                .media_params
+                .get("boundary")
+                .cloned()
+                .unwrap_or_default();
             Source::Multipart(Box::new(Multipart::new(entity.body, &boundary)))
         } else {
             Source::Single(Some(entity))
@@ -828,9 +837,15 @@ impl Reader {
                 },
             };
             if entity.is_multipart() {
-                let boundary = entity.media_params.get("boundary").cloned().unwrap_or_default();
-                self.readers
-                    .push(Source::Multipart(Box::new(Multipart::new(entity.body, &boundary))));
+                let boundary = entity
+                    .media_params
+                    .get("boundary")
+                    .cloned()
+                    .unwrap_or_default();
+                self.readers.push(Source::Multipart(Box::new(Multipart::new(
+                    entity.body,
+                    &boundary,
+                ))));
                 continue;
             }
             let (t, _, _) = entity.header.content_type();
@@ -873,7 +888,11 @@ mod tests {
     fn header_values_fold_like_go_message() {
         let data = b"A:  one\r\n two\r\n\tthree\r\nB: x\r\n\r\nbody";
         let end = End::Eof;
-        let mut c = Cursor { data, pos: 0, end: &end };
+        let mut c = Cursor {
+            data,
+            pos: 0,
+            end: &end,
+        };
         let (h, err) = read_header(&mut c);
         assert!(err.is_none());
         assert_eq!(h.get("a"), b"one two three");

@@ -190,7 +190,11 @@ impl Tools {
         }
         let ends: Vec<_> = boundaries.iter().copied().chain([pages]).collect();
         let outputs: Vec<_> = (1..=ends.len())
-            .map(|index| text(&clean(Path::new(output_dir).join(format!("part-{index}.pdf")))))
+            .map(|index| {
+                text(&clean(
+                    Path::new(output_dir).join(format!("part-{index}.pdf")),
+                ))
+            })
             .collect();
         new_outputs(&[input.into()], &outputs)?;
         let temp = Workspace::new(Path::new(output_dir))

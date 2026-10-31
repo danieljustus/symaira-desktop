@@ -10,13 +10,13 @@ use serde_json::{Value, json};
 use std::io::Write as _;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use symdesk_ingest::Store;
 use symdesk_ingest::extract::Extraction;
 use symdesk_ingest::ocr::Context;
 use symdesk_ingest::paperless_run::{Options, Sink, run};
 use symdesk_ingest::paperless_verify::verify;
 use symdesk_ingest::pipeline::{Engine, Pipeline};
 use symdesk_ingest::writer::NoteWriter;
-use symdesk_ingest::Store;
 
 #[path = "support/paperless_server.rs"]
 mod paperless_server;
@@ -128,7 +128,11 @@ fn observe(case: &Value, scratch: &Path) -> Value {
     assert!(imported.error.is_none(), "{id}: import failed");
     let imported_count = imported.stats.unwrap().imported;
 
-    for m in sc["mutations"].as_array().map(Vec::as_slice).unwrap_or_default() {
+    for m in sc["mutations"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+    {
         let doc = m["doc"].as_i64().unwrap_or(0);
         match m["op"].as_str().unwrap() {
             "rm-note" => std::fs::remove_file(find_note(&vault, doc)).unwrap(),
@@ -147,13 +151,18 @@ fn observe(case: &Value, scratch: &Path) -> Value {
                 let text = std::fs::read_to_string(&path).unwrap();
                 let find = m["find"].as_str().unwrap();
                 assert!(text.contains(find), "{id}: {find:?} not in note:\n{text}");
-                std::fs::write(&path, text.replacen(find, m["replace"].as_str().unwrap(), 1))
-                    .unwrap();
+                std::fs::write(
+                    &path,
+                    text.replacen(find, m["replace"].as_str().unwrap(), 1),
+                )
+                .unwrap();
             }
             "copy-note" => {
                 let path = find_note(&vault, doc);
-                let copy = path
-                    .with_file_name(format!("copy-{}", path.file_name().unwrap().to_string_lossy()));
+                let copy = path.with_file_name(format!(
+                    "copy-{}",
+                    path.file_name().unwrap().to_string_lossy()
+                ));
                 std::fs::copy(&path, copy).unwrap();
             }
             "write-file" => {
@@ -228,7 +237,10 @@ fn observe(case: &Value, scratch: &Path) -> Value {
             _ => vault.to_string_lossy().into_owned(),
         };
         let guard = store.lock().unwrap();
-        let used = spec["use_store"].as_bool().unwrap_or(false).then_some(&*guard);
+        let used = spec["use_store"]
+            .as_bool()
+            .unwrap_or(false)
+            .then_some(&*guard);
         let outcome = verify(&opts, &target, used);
         drop(guard);
         let mut obs = serde_json::Map::new();
@@ -260,7 +272,11 @@ fn observe(case: &Value, scratch: &Path) -> Value {
 fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
     match (want, got) {
         (Value::Object(a), Value::Object(b)) => {
-            for key in a.keys().chain(b.keys()).collect::<std::collections::BTreeSet<_>>() {
+            for key in a
+                .keys()
+                .chain(b.keys())
+                .collect::<std::collections::BTreeSet<_>>()
+            {
                 diff(
                     &format!("{path}.{key}"),
                     a.get(key).unwrap_or(&Value::Null),
@@ -285,8 +301,18 @@ fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
 fn compare(case: &Value, scratch: &Path) -> Vec<String> {
     let observed = observe(case, scratch);
     let mut diffs = Vec::new();
-    diff("imported", &case["imported"], &observed["imported"], &mut diffs);
-    diff("verifies", &case["verifies"], &observed["verifies"], &mut diffs);
+    diff(
+        "imported",
+        &case["imported"],
+        &observed["imported"],
+        &mut diffs,
+    );
+    diff(
+        "verifies",
+        &case["verifies"],
+        &observed["verifies"],
+        &mut diffs,
+    );
     diffs
 }
 
@@ -295,7 +321,8 @@ fn paperless_verify_matches_go() {
     let fx = fixture();
     let cases = fx["cases"].as_array().unwrap();
     assert!(cases.len() >= 25, "scenarios shrank: {}", cases.len());
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("paperless-verify-{}", std::process::id()));
+    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("paperless-verify-{}", std::process::id()));
     std::fs::create_dir_all(&scratch).unwrap();
     let mut failures = Vec::new();
     for case in cases {
@@ -317,7 +344,8 @@ fn paperless_verify_matches_go() {
 fn paperless_verify_negative_controls_are_caught() {
     let fx = fixture();
     let cases = fx["cases"].as_array().unwrap();
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("paperless-verify-neg-{}", std::process::id()));
+    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("paperless-verify-neg-{}", std::process::id()));
     std::fs::create_dir_all(&scratch).unwrap();
     let case = cases
         .iter()
@@ -332,7 +360,10 @@ fn paperless_verify_negative_controls_are_caught() {
     ] {
         let mut tampered = case.clone();
         mutate(&mut tampered);
-        assert!(!compare(&tampered, &scratch).is_empty(), "tampering went unnoticed");
+        assert!(
+            !compare(&tampered, &scratch).is_empty(),
+            "tampering went unnoticed"
+        );
     }
     let _ = std::fs::remove_dir_all(&scratch);
 }

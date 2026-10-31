@@ -3,12 +3,12 @@
 //! go-message attachment staging, enqueue, mark-seen/move, idempotency record
 //! and the persisted poll status.
 
+use crate::gmime::go_quote;
 use crate::goos;
 use crate::imap::{ImapClient, TlsImapClient, default_tls_config};
 use crate::ingest_fs::{clean_optional_dir, go_base, go_join, is_path_within};
 use crate::mail_reader::{MAX_CONSECUTIVE_PART_ERRORS, Next, PartKind, Reader};
 use crate::{Store, extract, pipeline, secretref};
-use crate::gmime::go_quote;
 use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
@@ -34,7 +34,11 @@ pub struct ImapAccount {
 
 /// `config.AccountID`.
 pub fn account_id(a: &ImapAccount) -> String {
-    let folder = if a.folder.is_empty() { "INBOX" } else { &a.folder };
+    let folder = if a.folder.is_empty() {
+        "INBOX"
+    } else {
+        &a.folder
+    };
     format!("{}@{}:{}/{folder}", a.username, a.host, a.port)
 }
 
@@ -156,8 +160,8 @@ impl MailPoller {
         };
         let processing_dir = clean_optional_dir(&opts.processing_dir)
             .map_err(|e| format!("resolve processing dir: {e}"))?;
-        let failed_dir = clean_optional_dir(&opts.failed_dir)
-            .map_err(|e| format!("resolve failed dir: {e}"))?;
+        let failed_dir =
+            clean_optional_dir(&opts.failed_dir).map_err(|e| format!("resolve failed dir: {e}"))?;
         Ok(Self {
             store,
             accounts,
@@ -462,7 +466,9 @@ impl Worker {
                     (self.log)(format!("[MailPoller] Error reading part: {e}"));
                     consecutive_errors += 1;
                     if consecutive_errors >= MAX_CONSECUTIVE_PART_ERRORS {
-                        return Err(format!("read parts: giving up after {consecutive_errors} consecutive errors"));
+                        return Err(format!(
+                            "read parts: giving up after {consecutive_errors} consecutive errors"
+                        ));
                     }
                     continue;
                 }
@@ -477,7 +483,9 @@ impl Worker {
                         continue;
                     }
                     if self.processing_dir.is_empty() {
-                        return Err("processing_dir is required for mail attachment ingestion".into());
+                        return Err(
+                            "processing_dir is required for mail attachment ingestion".into()
+                        );
                     }
                     let mut filename = go_base(&part.header.filename());
                     if filename.is_empty() || filename == "." || filename == ".." {
@@ -529,7 +537,12 @@ impl Worker {
         Ok(())
     }
 
-    fn enqueue_file(&self, work_path: &str, msg_id: &str, correspondent: &str) -> Result<(), String> {
+    fn enqueue_file(
+        &self,
+        work_path: &str,
+        msg_id: &str,
+        correspondent: &str,
+    ) -> Result<(), String> {
         let log = Arc::clone(&self.log);
         let kind = extract::detect_file_with(work_path, &mut |line| log(line))
             .map_err(|e| format!("detect file kind: {e}"))?;

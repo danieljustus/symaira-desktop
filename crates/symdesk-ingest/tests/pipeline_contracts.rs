@@ -375,43 +375,37 @@ fn run_case(case: &Value, tesseract: &str, base: &Path) -> Result<(), String> {
         pipeline.log = Box::new(move |line| log.lock().unwrap().push(line.to_owned()));
     }
     let hook_norm = (rootstr.clone(), Arc::clone(&hooks));
-    match s(&sc["post_index"]) {
-        mode @ ("ok" | "error") => {
-            let (root, hooks) = hook_norm.clone();
-            let fail = mode == "error";
-            pipeline.post_index = Some(Box::new(move |path| {
-                hooks
-                    .lock()
-                    .unwrap()
-                    .push(format!("index|{}", path.replace(&root, "<ROOT>")));
-                if fail {
-                    Err("index boom".into())
-                } else {
-                    Ok(())
-                }
-            }));
-        }
-        _ => {}
+    if let mode @ ("ok" | "error") = s(&sc["post_index"]) {
+        let (root, hooks) = hook_norm.clone();
+        let fail = mode == "error";
+        pipeline.post_index = Some(Box::new(move |path| {
+            hooks
+                .lock()
+                .unwrap()
+                .push(format!("index|{}", path.replace(&root, "<ROOT>")));
+            if fail {
+                Err("index boom".into())
+            } else {
+                Ok(())
+            }
+        }));
     }
-    match s(&sc["post_extract"]) {
-        mode @ ("ok" | "error") => {
-            let hooks = Arc::clone(&hooks);
-            let fail = mode == "error";
-            pipeline.post_extract = Some(Box::new(move |r, ex| {
-                hooks.lock().unwrap().push(format!(
-                    "extract|{}|{}|{}",
-                    goos::base(&r.source_path),
-                    r.extraction_count,
-                    ex.len()
-                ));
-                if fail {
-                    Err("extract boom".into())
-                } else {
-                    Ok(())
-                }
-            }));
-        }
-        _ => {}
+    if let mode @ ("ok" | "error") = s(&sc["post_extract"]) {
+        let hooks = Arc::clone(&hooks);
+        let fail = mode == "error";
+        pipeline.post_extract = Some(Box::new(move |r, ex| {
+            hooks.lock().unwrap().push(format!(
+                "extract|{}|{}|{}",
+                goos::base(&r.source_path),
+                r.extraction_count,
+                ex.len()
+            ));
+            if fail {
+                Err("extract boom".into())
+            } else {
+                Ok(())
+            }
+        }));
     }
     let env = Env {
         root,
@@ -544,7 +538,9 @@ fn run_case(case: &Value, tesseract: &str, base: &Path) -> Result<(), String> {
                 } else {
                     format!("ocr_language: {}\n", String::from_utf8_lossy(&content))
                 };
-                let re = Regex::new(r"(?m)^ocr_language:.*\n").unwrap();
+                static RE: std::sync::LazyLock<Regex> =
+                    std::sync::LazyLock::new(|| Regex::new(r"(?m)^ocr_language:.*\n").unwrap());
+                let re = &*RE;
                 let updated = if re.is_match(&text) {
                     re.replace(&text, line.as_str()).into_owned()
                 } else {

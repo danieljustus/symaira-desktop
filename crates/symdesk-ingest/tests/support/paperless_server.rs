@@ -151,9 +151,8 @@ fn handle(mut stream: TcpStream, routes: &Mutex<Vec<Route>>, seen: &Mutex<Vec<Va
         .find(|r| r.path == path && r.page == page)
         .cloned();
     let Some(route) = route else {
-        let _ = stream.write_all(
-            b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        );
+        let _ = stream
+            .write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
         return;
     };
     let payload = if route.body_b64.is_empty() {
@@ -180,4 +179,3 @@ fn handle(mut stream: TcpStream, routes: &Mutex<Vec<Route>>, seen: &Mutex<Vec<Va
     let _ = stream.write_all(&payload);
     let _ = stream.flush();
 }
-

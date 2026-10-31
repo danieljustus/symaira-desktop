@@ -143,8 +143,7 @@ fn parse_time(value: &serde_json::Value) -> Option<Option<OffsetDateTime>> {
     match value {
         serde_json::Value::Null => Some(None),
         serde_json::Value::String(s) => {
-            if let Ok(t) =
-                OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
+            if let Ok(t) = OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
             {
                 return Some(Some(t));
             }
@@ -171,7 +170,8 @@ pub fn parse_note_frontmatter(data: &[u8]) -> Option<Note> {
         _ => return None,
     };
     let mut note = Note::default();
-    let string = |key: &str| -> Option<String> { map.get(key).map_or(Some(String::new()), scalar_string) };
+    let string =
+        |key: &str| -> Option<String> { map.get(key).map_or(Some(String::new()), scalar_string) };
     note.source_path = string("source_path")?;
     note.sha256 = string("sha256")?;
     note.archive_path = string("archive_path")?;
@@ -348,12 +348,15 @@ fn compare_metadata(doc: &Document, note: &Note, lookups: &Lookups) -> Vec<Verif
             note.document_type.clone(),
         ));
     }
-    let (got_storage, got_created) = note
-        .paperless
-        .as_ref()
-        .map_or((String::new(), None), |p| (p.storage_path.clone(), p.created));
+    let (got_storage, got_created) = note.paperless.as_ref().map_or((String::new(), None), |p| {
+        (p.storage_path.clone(), p.created)
+    });
     if meta.storage_path != got_storage {
-        out.push(mismatch("storage_path", meta.storage_path.clone(), got_storage));
+        out.push(mismatch(
+            "storage_path",
+            meta.storage_path.clone(),
+            got_storage,
+        ));
     }
     let want_created = created_time(doc);
     if want_created != got_created {
@@ -380,7 +383,12 @@ impl Write for HashWriter {
 fn download_sha256(client: &Client, id: i64) -> Result<String, String> {
     let mut hasher = HashWriter(Sha256::new());
     client.download_document(id, &mut hasher)?;
-    Ok(hasher.0.finalize().iter().map(|b| format!("{b:02x}")).collect())
+    Ok(hasher
+        .0
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect())
 }
 
 fn find_duplicate_content_ids(
@@ -391,11 +399,17 @@ fn find_duplicate_content_ids(
 ) -> Vec<i64> {
     let mut seen: BTreeMap<String, Vec<i64>> = BTreeMap::new();
     for doc in docs {
-        let mut sha = import_state(store, &opts.base_url, &opts.target_vault, &opts.target_archive, doc.id)
-            .ok()
-            .flatten()
-            .map(|s| s.sha256)
-            .unwrap_or_default();
+        let mut sha = import_state(
+            store,
+            &opts.base_url,
+            &opts.target_vault,
+            &opts.target_archive,
+            doc.id,
+        )
+        .ok()
+        .flatten()
+        .map(|s| s.sha256)
+        .unwrap_or_default();
         if sha.is_empty()
             && let Some(first) = notes.get(&doc.id).and_then(|n| n.first())
         {
@@ -446,7 +460,13 @@ pub fn verify(opts: &Options, vault: &str, store: Option<&Store>) -> Result<Veri
     for doc in &docs {
         let mut matches: Vec<Note> = notes.get(&doc.id).cloned().unwrap_or_default();
         let mut doc_ok = true;
-        match import_state(store, &opts.base_url, &opts.target_vault, &opts.target_archive, doc.id) {
+        match import_state(
+            store,
+            &opts.base_url,
+            &opts.target_vault,
+            &opts.target_archive,
+            doc.id,
+        ) {
             Err(e) => {
                 report.mismatches.push(VerifyMismatch {
                     document_id: doc.id,

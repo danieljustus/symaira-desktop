@@ -76,10 +76,7 @@ fn render(case: &Case, dir: &Path) -> (String, String) {
             assert_eq!(mode, 0o600, "{}: report mode", case.id);
             (std::fs::read_to_string(&path).unwrap(), String::new())
         }
-        Err(e) => (
-            String::new(),
-            e.replace(dir.to_str().unwrap(), "$DIR"),
-        ),
+        Err(e) => (String::new(), e.replace(dir.to_str().unwrap(), "$DIR")),
     }
 }
 

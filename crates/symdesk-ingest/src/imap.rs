@@ -451,13 +451,12 @@ impl TlsImapClient {
         Ok(self.caps.clone().unwrap_or_default())
     }
 
-    fn parse_fetch(
-        line: &str,
-        literals: Vec<Vec<u8>>,
-    ) -> Option<Result<ImapMessage, String>> {
+    fn parse_fetch(line: &str, literals: Vec<Vec<u8>>) -> Option<Result<ImapMessage, String>> {
         let rest = line.strip_prefix("* ")?;
         let (num, rest) = rest.split_once(' ')?;
-        let rest = rest.strip_prefix("FETCH ").or_else(|| rest.strip_prefix("fetch "))?;
+        let rest = rest
+            .strip_prefix("FETCH ")
+            .or_else(|| rest.strip_prefix("fetch "))?;
         let seq = num.parse().ok()?;
         let mut p = Parser {
             b: rest.as_bytes(),
@@ -502,11 +501,9 @@ impl TlsImapClient {
         let resp = self.command("UID", &[Arg::Raw(format!("FETCH {set} {items}"))])?;
         let mut out = Vec::new();
         for (line, literals) in &resp.untagged {
-            if let Some(parsed) = Self::parse_fetch(line, literals.clone()) {
-                // go-imap logs and skips messages it fails to collect.
-                if let Ok(msg) = parsed {
-                    out.push(msg);
-                }
+            // go-imap logs and skips messages it fails to collect.
+            if let Some(Ok(msg)) = Self::parse_fetch(line, literals.clone()) {
+                out.push(msg);
             }
         }
         Self::ok(&resp)?;
@@ -598,11 +595,10 @@ pub fn parse_msg_id(value: &str) -> Option<String> {
     }
     let right = if p.0.starts_with('[') {
         p.consume('[');
-        let end = p
-            .0
-            .char_indices()
-            .find(|(_, c)| matches!(c, '[' | ']' | '\\') || !is_vchar(*c))
-            .map_or(p.0.len(), |(i, _)| i);
+        let end =
+            p.0.char_indices()
+                .find(|(_, c)| matches!(c, '[' | ']' | '\\') || !is_vchar(*c))
+                .map_or(p.0.len(), |(i, _)| i);
         let lit = p.0[..end].to_owned();
         p.0 = &p.0[end..];
         if !p.consume(']') {
@@ -640,9 +636,7 @@ enum Arg {
 
 /// `imapwire.Encoder.String`/`Mailbox`: quoted unless it needs a literal.
 fn quoted_or_literal(s: &[u8]) -> Arg {
-    let safe = s
-        .iter()
-        .all(|c| (0x20..=0x7e).contains(c));
+    let safe = s.iter().all(|c| (0x20..=0x7e).contains(c));
     if !safe {
         return Arg::Literal(s.to_vec());
     }
@@ -779,7 +773,10 @@ impl ImapClient for TlsImapClient {
         let mut uids = Vec::new();
         for (line, _) in &resp.untagged {
             if let Some(rest) = line.strip_prefix("* SEARCH") {
-                uids.extend(rest.split_whitespace().filter_map(|n| n.parse::<u32>().ok()));
+                uids.extend(
+                    rest.split_whitespace()
+                        .filter_map(|n| n.parse::<u32>().ok()),
+                );
             }
         }
         Self::ok(&resp)?;
@@ -849,14 +846,23 @@ mod tests {
     fn utf7_matches_rfc3501() {
         assert_eq!(utf7_encode("Entwürfe"), "Entw&APw-rfe");
         assert_eq!(utf7_encode("A \"b\" & c"), "A \"b\" &- c");
-        assert_eq!(utf7_encode("~peter/mail/台北/日本語"), "~peter/mail/&U,BTFw-/&ZeVnLIqe-");
+        assert_eq!(
+            utf7_encode("~peter/mail/台北/日本語"),
+            "~peter/mail/&U,BTFw-/&ZeVnLIqe-"
+        );
     }
 
     #[test]
     fn message_ids_follow_go_message() {
         assert_eq!(parse_msg_id("<a1@x>").as_deref(), Some("a1@x"));
-        assert_eq!(parse_msg_id(" (c) <a.b@x.y> (t)").as_deref(), Some("a.b@x.y"));
-        assert_eq!(parse_msg_id("<a@[1.2.3.4]>").as_deref(), Some("a@[1.2.3.4]"));
+        assert_eq!(
+            parse_msg_id(" (c) <a.b@x.y> (t)").as_deref(),
+            Some("a.b@x.y")
+        );
+        assert_eq!(
+            parse_msg_id("<a@[1.2.3.4]>").as_deref(),
+            Some("a@[1.2.3.4]")
+        );
         assert_eq!(parse_msg_id("a@x"), None);
         assert_eq!(parse_msg_id("<a b@x>"), None);
         assert_eq!(parse_msg_id("<nohost>"), None);

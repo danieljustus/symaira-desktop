@@ -167,10 +167,9 @@ impl Server {
                             };
                             let (spec, conns, config) =
                                 (Arc::clone(&spec), Arc::clone(&conns), Arc::clone(&config));
-                            workers
-                                .lock()
-                                .unwrap()
-                                .push(std::thread::spawn(move || serve(sock, config, spec, conns, idx)));
+                            workers.lock().unwrap().push(std::thread::spawn(move || {
+                                serve(sock, config, spec, conns, idx)
+                            }));
                         }
                         Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                             std::thread::sleep(std::time::Duration::from_millis(2));
@@ -242,7 +241,9 @@ impl Conn {
             sb.push_str(&line);
             if let Some(i) = line.rfind('{')
                 && line.ends_with('}')
-                && let Ok(n) = line[i + 1..line.len() - 1].trim_end_matches('+').parse::<usize>()
+                && let Ok(n) = line[i + 1..line.len() - 1]
+                    .trim_end_matches('+')
+                    .parse::<usize>()
             {
                 if !line.ends_with("+}") {
                     self.line("+ ready");
@@ -385,11 +386,16 @@ fn serve(
                 let pw = args.split_once(' ').map_or("", |(_, p)| p);
                 let s = spec.lock().unwrap();
                 if pw.trim_matches('"') != s.password {
-                    c.line(&format!("{tag} NO [AUTHENTICATIONFAILED] invalid credentials"));
+                    c.line(&format!(
+                        "{tag} NO [AUTHENTICATIONFAILED] invalid credentials"
+                    ));
                 } else if s.no_cap_codes {
                     c.line(&format!("{tag} OK LOGIN completed"));
                 } else {
-                    c.line(&format!("{tag} OK [CAPABILITY {}] LOGIN completed", cap_line(&s)));
+                    c.line(&format!(
+                        "{tag} OK [CAPABILITY {}] LOGIN completed",
+                        cap_line(&s)
+                    ));
                 }
             }
             "SELECT" => {
@@ -456,7 +462,9 @@ fn serve(
                         let (set, items) = args.split_once(' ').unwrap_or((&args, ""));
                         let mut want = std::collections::BTreeSet::new();
                         for part in set.split(',') {
-                            let (a, b) = part.split_once(':').map_or((part, None), |(a, b)| (a, Some(b)));
+                            let (a, b) = part
+                                .split_once(':')
+                                .map_or((part, None), |(a, b)| (a, Some(b)));
                             let lo: u64 = a.parse().unwrap_or(0);
                             let hi: u64 = match b {
                                 None => lo,
@@ -532,7 +540,7 @@ fn serve(
                     c.line(&format!("{tag} BAD invalid message sequence number"));
                 } else {
                     let m = &mut f.messages[seq - 1];
-                    for fl in flags_part.trim().split_whitespace() {
+                    for fl in flags_part.split_whitespace() {
                         if !has_flag(&m.flags, fl) {
                             m.flags.push(fl.to_owned());
                         }
@@ -561,7 +569,11 @@ fn serve(
                         df.messages.push(Msg { uid: nu, ..m });
                         df.uid_next = nu + 1;
                         if upper == "MOVE" {
-                            s.folders.get_mut(&selected).unwrap().messages.remove(seq - 1);
+                            s.folders
+                                .get_mut(&selected)
+                                .unwrap()
+                                .messages
+                                .remove(seq - 1);
                             c.line(&format!("* {seq} EXPUNGE"));
                         }
                         c.line(&format!("{tag} OK {upper} completed"));

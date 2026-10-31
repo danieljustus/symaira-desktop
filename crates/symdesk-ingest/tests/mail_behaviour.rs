@@ -22,7 +22,8 @@ fn crlf(s: &str) -> Vec<u8> {
 }
 
 fn mail(boundary_line: &str, filename: &str) -> Vec<u8> {
-    let pdf = base64::engine::general_purpose::STANDARD.encode(format!("%PDF-1.4 {filename}\n%%EOF\n"));
+    let pdf =
+        base64::engine::general_purpose::STANDARD.encode(format!("%PDF-1.4 {filename}\n%%EOF\n"));
     crlf(&format!(
         "From: a@example.test\nContent-Type: multipart/mixed; boundary=\"B\"\n\n--B\n{boundary_line}Content-Type: application/pdf\nContent-Transfer-Encoding: base64\nContent-Disposition: attachment; filename=\"{filename}\"\n\n{pdf}\n--B--\n"
     ))
@@ -83,14 +84,18 @@ fn poller(dir: &std::path::Path, accounts: Vec<ImapAccount>) -> (MailPoller, Arc
     .unwrap();
     let config = client_config();
     p.set_dial(Arc::new(move |addr, host| {
-        Ok(Box::new(TlsImapClient::dial_tls(addr, host, Arc::clone(&config))?) as Box<dyn ImapClient>)
+        Ok(
+            Box::new(TlsImapClient::dial_tls(addr, host, Arc::clone(&config))?)
+                as Box<dyn ImapClient>,
+        )
     }));
     p.set_log(Arc::new(|_| {}));
     (p, store)
 }
 
 fn scratch(name: &str) -> std::path::PathBuf {
-    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("{name}-{}", std::process::id()));
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir
@@ -110,7 +115,10 @@ fn start_polls_every_account_concurrently_and_close_stops_the_loops() {
         "MOVE",
         false,
     ));
-    let accounts = vec![account(&server, "INBOX", "u1"), account(&server, "Archive", "u2")];
+    let accounts = vec![
+        account(&server, "INBOX", "u1"),
+        account(&server, "Archive", "u2"),
+    ];
     let (mut p, store) = poller(&dir, accounts.clone());
     p.start().unwrap();
     let deadline = Instant::now() + Duration::from_secs(30);
@@ -131,7 +139,12 @@ fn start_polls_every_account_concurrently_and_close_stops_the_loops() {
     }
     p.close();
     for a in &accounts {
-        let s = store.lock().unwrap().get_mail_poll_status(&account_id(a)).unwrap().unwrap();
+        let s = store
+            .lock()
+            .unwrap()
+            .get_mail_poll_status(&account_id(a))
+            .unwrap()
+            .unwrap();
         assert_eq!(s.status, "ok", "{}", a.username);
     }
     let guard = store.lock().unwrap();
@@ -167,9 +180,17 @@ fn move_asks_for_capabilities_once_when_the_server_sent_none() {
     let caps: Vec<_> = transcript.iter().filter(|c| *c == "CAPABILITY").collect();
     assert_eq!(caps.len(), 1, "{transcript:?}");
     let cap_at = transcript.iter().position(|c| c == "CAPABILITY").unwrap();
-    let move_at = transcript.iter().position(|c| c.starts_with("MOVE ")).unwrap();
+    let move_at = transcript
+        .iter()
+        .position(|c| c.starts_with("MOVE "))
+        .unwrap();
     assert!(cap_at < move_at, "{transcript:?}");
-    assert_eq!(server.spec.lock().unwrap().folders["Archive"].messages.len(), 1);
+    assert_eq!(
+        server.spec.lock().unwrap().folders["Archive"]
+            .messages
+            .len(),
+        1
+    );
     unsafe { std::env::remove_var("MAILBEHAVIOUR_PW") };
 }
 
@@ -182,7 +203,10 @@ impl ImapClient for BoundaryLessClient {
         Ok(())
     }
     fn select(&mut self, _: &str) -> Result<MailboxStatus, String> {
-        Ok(MailboxStatus { uid_validity: 1, uid_next: 2 })
+        Ok(MailboxStatus {
+            uid_validity: 1,
+            uid_next: 2,
+        })
     }
     fn search_uid(&mut self, _: u32, _: bool) -> Result<Vec<u32>, String> {
         Ok(vec![1])
@@ -194,8 +218,12 @@ impl ImapClient for BoundaryLessClient {
         Ok(vec![ImapMessage {
             seq_num: 1,
             uid: 1,
-            envelope: Some(ImapEnvelope { message_id: "nb@x".into() }),
-            body: crlf("From: p@example.test\nContent-Type: multipart/mixed\n\n--XX\nContent-Type: application/pdf\n\nxxx\n--XX--\n"),
+            envelope: Some(ImapEnvelope {
+                message_id: "nb@x".into(),
+            }),
+            body: crlf(
+                "From: p@example.test\nContent-Type: multipart/mixed\n\n--XX\nContent-Type: application/pdf\n\nxxx\n--XX--\n",
+            ),
         }])
     }
     fn store_seen(&mut self, _: u32) -> Result<(), String> {
@@ -223,7 +251,9 @@ fn multipart_without_boundary_cannot_spin_forever() {
         ..ImapAccount::default()
     };
     let (mut p, store) = poller(&dir, vec![acc.clone()]);
-    p.set_dial(Arc::new(|_, _| Ok(Box::new(BoundaryLessClient) as Box<dyn ImapClient>)));
+    p.set_dial(Arc::new(|_, _| {
+        Ok(Box::new(BoundaryLessClient) as Box<dyn ImapClient>)
+    }));
     let logs = Arc::new(Mutex::new(Vec::<String>::new()));
     {
         let logs = Arc::clone(&logs);
@@ -234,7 +264,8 @@ fn multipart_without_boundary_cannot_spin_forever() {
     assert!(started.elapsed() < Duration::from_secs(60));
     let logs = logs.lock().unwrap();
     assert!(
-        logs.iter().any(|l| l.contains("Failed to process message 1: read parts: giving up")),
+        logs.iter()
+            .any(|l| l.contains("Failed to process message 1: read parts: giving up")),
         "{logs:?}"
     );
     assert!(!store.lock().unwrap().has_mail_message("nb@x").unwrap());

@@ -19,9 +19,7 @@ pub fn go_clean(path: &str) -> String {
         dotdot = 1;
     }
     while r < n {
-        if b[r] == b'/' {
-            r += 1;
-        } else if b[r] == b'.' && (r + 1 == n || b[r + 1] == b'/') {
+        if b[r] == b'/' || (b[r] == b'.' && (r + 1 == n || b[r + 1] == b'/')) {
             r += 1;
         } else if b[r] == b'.' && r + 1 < n && b[r + 1] == b'.' && (r + 2 == n || b[r + 2] == b'/')
         {

@@ -10,8 +10,8 @@ use crate::paperless_import::{
     resolve_document_meta, source_uri, stage_from_error,
 };
 use crate::paperless_state::PaperlessStateWrite;
-use crate::report_json::{GoFloat, go_indent, go_seconds, go_time};
 use crate::pipeline::{IngestOptions, Pipeline, PipelineError, hash_file};
+use crate::report_json::{GoFloat, go_indent, go_seconds, go_time};
 use crate::writer::{NoteLayout, PaperlessMeta, sanitize_storage_path};
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -316,9 +316,10 @@ fn note_base_name(doc: &Document) -> String {
 }
 
 fn parse_flex(value: &crate::paperless::FlexDate) -> Option<OffsetDateTime> {
-    value.0.as_deref().and_then(|s| {
-        OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339).ok()
-    })
+    value
+        .0
+        .as_deref()
+        .and_then(|s| OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339).ok())
 }
 
 fn temp_path(extension: &str) -> Result<(String, std::fs::File), String> {
@@ -329,7 +330,9 @@ fn temp_path(extension: &str) -> Result<(String, std::fs::File), String> {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .subsec_nanos() as usize
-            ^ NONCE.fetch_add(1, Ordering::Relaxed).wrapping_mul(2_654_435_761);
+            ^ NONCE
+                .fetch_add(1, Ordering::Relaxed)
+                .wrapping_mul(2_654_435_761);
         let path = std::env::temp_dir().join(format!("symingest-import-{stamp}{extension}"));
         match std::fs::OpenOptions::new()
             .write(true)
@@ -546,10 +549,10 @@ fn import_targets(opts: &Options, pipeline: &Pipeline) -> (String, String) {
 }
 
 fn created_day(doc: &Document) -> String {
-    doc.created_date
-        .0
-        .as_deref()
-        .map_or_else(|| "0001-01-01".to_owned(), |s| s[..10.min(s.len())].to_owned())
+    doc.created_date.0.as_deref().map_or_else(
+        || "0001-01-01".to_owned(),
+        |s| s[..10.min(s.len())].to_owned(),
+    )
 }
 
 struct Shared {
@@ -666,7 +669,7 @@ pub fn run(opts: &Options, pipeline: &Pipeline) -> RunOutcome {
         guard.results[i] = result;
         guard.recorded[i] = true;
         let processed = guard.stats.imported + guard.stats.skipped + guard.stats.failed;
-        if opts.checkpoint_every > 0 && processed % opts.checkpoint_every == 0 {
+        if opts.checkpoint_every > 0 && processed.is_multiple_of(opts.checkpoint_every) {
             let _p = progress_lock.lock().unwrap_or_else(|e| e.into_inner());
             print_checkpoint(&progress, &guard.stats, started_instant);
         }

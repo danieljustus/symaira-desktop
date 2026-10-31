@@ -190,6 +190,7 @@ pub fn key_matches(key: &str, field: &str) -> bool {
 }
 
 /// A float64 target: `Ok(value)` or the Go number-overflow text.
+#[allow(clippy::result_unit_err)]
 pub fn float64(literal: &str) -> Result<f64, ()> {
     match literal.parse::<f64>() {
         Ok(v) if v.is_finite() => Ok(v),

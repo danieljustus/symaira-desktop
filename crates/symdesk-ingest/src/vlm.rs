@@ -89,8 +89,12 @@ impl VlmRunner {
     }
 
     fn extract_with_vlm(&self, ctx: &Context, path: &str, kind: &str) -> Result<OcrResult, String> {
-        let raw = std::fs::read(path)
-            .map_err(|e| format!("vlm ocr: read image: {}", goos::path_error("open", path, &e)))?;
+        let raw = std::fs::read(path).map_err(|e| {
+            format!(
+                "vlm ocr: read image: {}",
+                goos::path_error("open", path, &e)
+            )
+        })?;
         let b64 = base64::engine::general_purpose::STANDARD.encode(raw);
         match self.generate(b64) {
             Err(error) => {

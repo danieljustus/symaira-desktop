@@ -100,14 +100,14 @@ pub fn detect_barcode(img: &DynamicImage) -> (String, String) {
         }};
     }
     attempt!(Code39Reader::default());
-    attempt!(Code128Reader::default());
-    attempt!(EAN13Reader::default());
-    attempt!(EAN8Reader::default());
+    attempt!(Code128Reader);
+    attempt!(EAN13Reader);
+    attempt!(EAN8Reader);
     attempt!(UPCAReader::default());
-    attempt!(UPCEReader::default());
+    attempt!(UPCEReader);
     attempt!(ITFReader::default());
-    attempt!(QRCodeReader::default());
-    attempt!(DataMatrixReader::default());
+    attempt!(QRCodeReader);
+    attempt!(DataMatrixReader);
     (String::new(), String::new())
 }
 
@@ -308,7 +308,11 @@ pub fn split_pdf_by_barcode(
         ..Default::default()
     };
     let split_points: Vec<i64> = if cfg.discard_separators {
-        sep_pages.iter().filter(|p| **p > 1).map(|p| p - 1).collect()
+        sep_pages
+            .iter()
+            .filter(|p| **p > 1)
+            .map(|p| p - 1)
+            .collect()
     } else {
         sep_pages
     };

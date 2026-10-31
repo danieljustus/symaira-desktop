@@ -63,7 +63,11 @@ impl Drop for EnvGuard {
 
 fn mkdir_700(path: &Path) {
     use std::os::unix::fs::DirBuilderExt;
-    std::fs::DirBuilder::new().recursive(true).mode(0o700).create(path).unwrap();
+    std::fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(path)
+        .unwrap();
 }
 
 fn account_of(a: &Value, host: &str, port: i64) -> ImapAccount {
@@ -122,12 +126,22 @@ fn apply_mutation(server: &Server, m: &Value, root: &Path) {
     }
 }
 
-fn dump_table(db: &rusqlite::Connection, table: &str, root: &str, ts: &Regex, norm: &dyn Fn(&str) -> String) -> Vec<Value> {
+fn dump_table(
+    db: &rusqlite::Connection,
+    table: &str,
+    root: &str,
+    ts: &Regex,
+    norm: &dyn Fn(&str) -> String,
+) -> Vec<Value> {
     let _ = root;
     let mut stmt = db
         .prepare(&format!("SELECT * FROM {table} ORDER BY rowid"))
         .unwrap();
-    let cols: Vec<String> = stmt.column_names().iter().map(|c| (*c).to_owned()).collect();
+    let cols: Vec<String> = stmt
+        .column_names()
+        .iter()
+        .map(|c| (*c).to_owned())
+        .collect();
     let mut rows = stmt.query([]).unwrap();
     let mut out = Vec::new();
     while let Some(row) = rows.next().unwrap() {
@@ -156,17 +170,25 @@ fn snapshot_files(root: &Path, rel: &str) -> Vec<Value> {
     use std::os::unix::fs::PermissionsExt;
     fn walk(path: &Path, root: &Path, out: &mut Vec<Value>) {
         let meta = std::fs::symlink_metadata(path).unwrap();
-        let r = path.strip_prefix(root).unwrap().to_string_lossy().into_owned();
+        let r = path
+            .strip_prefix(root)
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
         let mode = format!("{:04o}", meta.permissions().mode() & 0o777);
         if meta.is_dir() {
             out.push(json!({"path": r, "type": "dir", "mode": mode}));
-            let mut kids: Vec<_> = std::fs::read_dir(path).unwrap().map(|e| e.unwrap().path()).collect();
+            let mut kids: Vec<_> = std::fs::read_dir(path)
+                .unwrap()
+                .map(|e| e.unwrap().path())
+                .collect();
             kids.sort();
             for k in kids {
                 walk(&k, root, out);
             }
         } else {
-            let b64 = base64::engine::general_purpose::STANDARD.encode(std::fs::read(path).unwrap());
+            let b64 =
+                base64::engine::general_purpose::STANDARD.encode(std::fs::read(path).unwrap());
             let mut e = json!({"path": r, "type": "file", "mode": mode});
             if !b64.is_empty() {
                 e["b64"] = json!(b64);
@@ -196,7 +218,9 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
             env.set(k, v.as_str().unwrap());
         }
     }
-    if sc["tools"].as_object().is_some_and(|t| !t.is_empty()) || sc["no_system_path"].as_bool() == Some(true) {
+    if sc["tools"].as_object().is_some_and(|t| !t.is_empty())
+        || sc["no_system_path"].as_bool() == Some(true)
+    {
         use std::os::unix::fs::PermissionsExt;
         let tools = root.join("tools");
         std::fs::create_dir_all(&tools).unwrap();
@@ -223,7 +247,8 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
     let norm_root = root.to_string_lossy().into_owned();
     let hostport = format!("{host}:{port}");
     let norm = move |s: &str| -> String {
-        s.replace(&norm_root, "<ROOT>").replace(&hostport, "127.0.0.1:<PORT>")
+        s.replace(&norm_root, "<ROOT>")
+            .replace(&hostport, "127.0.0.1:<PORT>")
     };
 
     let store = Arc::new(Mutex::new(Store::open(&root.join("db/docs.db")).unwrap()));
@@ -343,7 +368,13 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
     )
     .unwrap();
     let mut tables = serde_json::Map::new();
-    for t in ["documents", "jobs", "mail_messages", "mail_poll_cursor", "mail_poll_status"] {
+    for t in [
+        "documents",
+        "jobs",
+        "mail_messages",
+        "mail_poll_cursor",
+        "mail_poll_status",
+    ] {
         let exists: i64 = db
             .query_row(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
@@ -352,7 +383,10 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
             )
             .unwrap();
         if exists > 0 {
-            tables.insert(t.to_owned(), Value::Array(dump_table(&db, t, "", &ts, &norm)));
+            tables.insert(
+                t.to_owned(),
+                Value::Array(dump_table(&db, t, "", &ts, &norm)),
+            );
         }
     }
     let server_state = snapshot(&server.spec.lock().unwrap());
@@ -384,7 +418,11 @@ fn observe(sc: &Value, scratch: &Path) -> Value {
 fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
     match (want, got) {
         (Value::Object(a), Value::Object(b)) => {
-            for key in a.keys().chain(b.keys()).collect::<std::collections::BTreeSet<_>>() {
+            for key in a
+                .keys()
+                .chain(b.keys())
+                .collect::<std::collections::BTreeSet<_>>()
+            {
                 diff(
                     &format!("{path}.{key}"),
                     a.get(key).unwrap_or(&Value::Null),
@@ -402,7 +440,11 @@ fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
             if want != got {
                 let clip = |v: &Value| {
                     let s = v.to_string();
-                    if s.len() > 300 { format!("{}…", &s[..300]) } else { s }
+                    if s.len() > 300 {
+                        format!("{}…", &s[..300])
+                    } else {
+                        s
+                    }
                 };
                 out.push(format!("{path}: go {} rust {}", clip(want), clip(got)));
             }
@@ -413,7 +455,15 @@ fn diff(path: &str, want: &Value, got: &Value, out: &mut Vec<String>) {
 fn compare(case: &Value, scratch: &Path) -> Vec<String> {
     let got = observe(&case["scenario"], scratch);
     let mut want = serde_json::Map::new();
-    for key in ["polls", "transcript", "server", "tables", "files", "logs", "hooks"] {
+    for key in [
+        "polls",
+        "transcript",
+        "server",
+        "tables",
+        "files",
+        "logs",
+        "hooks",
+    ] {
         want.insert(key.to_owned(), case[key].clone());
     }
     let mut diffs = Vec::new();
@@ -426,7 +476,8 @@ fn mail_poller_matches_go() {
     let fx = fixture();
     let cases = fx["cases"].as_array().unwrap();
     assert!(cases.len() >= 60, "scenarios shrank: {}", cases.len());
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("mail-{}", std::process::id()));
+    let scratch =
+        Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("mail-{}", std::process::id()));
     std::fs::create_dir_all(&scratch).unwrap();
     let mut failures = Vec::new();
     for case in cases {
@@ -466,7 +517,10 @@ fn mail_negative_controls_are_caught() {
     ] {
         let mut tampered = case.clone();
         mutate(&mut tampered);
-        assert!(!compare(&tampered, &scratch).is_empty(), "tampering went unnoticed");
+        assert!(
+            !compare(&tampered, &scratch).is_empty(),
+            "tampering went unnoticed"
+        );
     }
     let _ = std::fs::remove_dir_all(&scratch);
 }
@@ -477,12 +531,22 @@ fn mail_scenarios_exercise_the_interesting_paths() {
     let cases = fx["cases"].as_array().unwrap();
     let files: usize = cases
         .iter()
-        .map(|c| c["files"].as_array().unwrap().iter().filter(|f| f["type"] == "file").count())
+        .map(|c| {
+            c["files"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|f| f["type"] == "file")
+                .count()
+        })
         .sum();
     let errors: usize = cases
         .iter()
         .flat_map(|c| c["polls"].as_array().unwrap())
         .filter(|p| p["error"] != "")
         .count();
-    assert!(files >= 40 && errors >= 14, "oracle too thin: {files} files, {errors} errors");
+    assert!(
+        files >= 40 && errors >= 14,
+        "oracle too thin: {files} files, {errors} errors"
+    );
 }

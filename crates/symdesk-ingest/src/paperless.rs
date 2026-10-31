@@ -11,7 +11,6 @@ use std::{
     time::Duration,
 };
 
-
 /// Go decodes JSON `null` into a scalar's zero value.
 fn null_default<'de, D, T>(d: D) -> std::result::Result<T, D::Error>
 where

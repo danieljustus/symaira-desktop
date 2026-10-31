@@ -126,7 +126,12 @@ fn serve(
 }
 
 /// Returns true once the scripted exchange has been served.
-fn handle(mut stream: TcpStream, sc: &Scenario, raw: &[u8], seen: &Arc<Mutex<Vec<Request>>>) -> bool {
+fn handle(
+    mut stream: TcpStream,
+    sc: &Scenario,
+    raw: &[u8],
+    seen: &Arc<Mutex<Vec<Request>>>,
+) -> bool {
     let mut reader = BufReader::new(stream.try_clone().unwrap());
     let mut first = String::new();
     if reader.read_line(&mut first).unwrap_or(0) == 0 {
@@ -200,7 +205,11 @@ fn handle(mut stream: TcpStream, sc: &Scenario, raw: &[u8], seen: &Arc<Mutex<Vec
     true
 }
 
-fn run(fx: &Fixture, case: &Case, scratch: &Path) -> (Result<Res, String>, Vec<Request>, Vec<String>) {
+fn run(
+    fx: &Fixture,
+    case: &Case,
+    scratch: &Path,
+) -> (Result<Res, String>, Vec<Request>, Vec<String>) {
     let sc = &case.scenario;
     std::fs::create_dir_all(scratch).unwrap();
     let root = std::fs::canonicalize(scratch)
@@ -223,7 +232,12 @@ fn run(fx: &Fixture, case: &Case, scratch: &Path) -> (Result<Res, String>, Vec<R
     if sc.fallback == "fail" {
         for n in ["scan.png", "scan.jpg", "scan.tif", "scan.webp"] {
             write(&dir, &format!("fail/{n}"), "1", 0o600);
-            write(&dir, &format!("fail/{n}.err"), "tesseract exploded\n", 0o600);
+            write(
+                &dir,
+                &format!("fail/{n}.err"),
+                "tesseract exploded\n",
+                0o600,
+            );
         }
         write(&dir, "pdftoppm.exit", "1", 0o600);
         write(&dir, "pdftoppm.err", "pdftoppm exploded\n", 0o600);
@@ -368,8 +382,16 @@ fn vlm_runner_matches_go() {
         }
     }
     let _ = std::fs::remove_dir_all(&scratch);
-    assert!(ok >= 8 && fell_back >= 5 && errors >= 8, "{ok} {fell_back} {errors}");
-    assert!(failures.is_empty(), "{} VLM scenarios differ:\n{}", failures.len(), failures.join("\n"));
+    assert!(
+        ok >= 8 && fell_back >= 5 && errors >= 8,
+        "{ok} {fell_back} {errors}"
+    );
+    assert!(
+        failures.is_empty(),
+        "{} VLM scenarios differ:\n{}",
+        failures.len(),
+        failures.join("\n")
+    );
 }
 
 #[test]

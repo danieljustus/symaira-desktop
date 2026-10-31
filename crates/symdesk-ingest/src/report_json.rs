@@ -68,7 +68,11 @@ pub fn go_time(t: Option<OffsetDateTime>) -> String {
 /// Go `Sub(...).Seconds()`: whole seconds plus the nanosecond remainder.
 #[must_use]
 pub fn go_seconds(start: Option<OffsetDateTime>, end: Option<OffsetDateTime>) -> f64 {
-    let at = |t: Option<OffsetDateTime>| t.map_or(-62_135_596_800_i128 * 1_000_000_000, |t| t.unix_timestamp_nanos());
+    let at = |t: Option<OffsetDateTime>| {
+        t.map_or(-62_135_596_800_i128 * 1_000_000_000, |t| {
+            t.unix_timestamp_nanos()
+        })
+    };
     let nanos = at(end) - at(start);
     let seconds = nanos / 1_000_000_000;
     let remainder = nanos % 1_000_000_000;

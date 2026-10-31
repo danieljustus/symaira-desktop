@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "files": {
-    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n",
     "bulk/note-001.md": "---\ntitle: Bulk archive note number 001 with padding words\n---\n# Bulk 001\n\nFiller text.\n",
     "bulk/note-002.md": "---\ntitle: Bulk archive note number 002 with padding words\n---\n# Bulk 002\n\nFiller text.\n",
     "bulk/note-003.md": "---\ntitle: Bulk archive note number 003 with padding words\n---\n# Bulk 003\n\nFiller text.\n",
@@ -76,7 +76,102 @@
     "notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
     "notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
     "notes/gamma.md": "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
-    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook.\n"
+    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook about the quarterly plan.\n"
+  },
+  "file_sets": {
+    "bulk": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md",
+      "bulk/note-001.md",
+      "bulk/note-002.md",
+      "bulk/note-003.md",
+      "bulk/note-004.md",
+      "bulk/note-005.md",
+      "bulk/note-006.md",
+      "bulk/note-007.md",
+      "bulk/note-008.md",
+      "bulk/note-009.md",
+      "bulk/note-010.md",
+      "bulk/note-011.md",
+      "bulk/note-012.md",
+      "bulk/note-013.md",
+      "bulk/note-014.md",
+      "bulk/note-015.md",
+      "bulk/note-016.md",
+      "bulk/note-017.md",
+      "bulk/note-018.md",
+      "bulk/note-019.md",
+      "bulk/note-020.md",
+      "bulk/note-021.md",
+      "bulk/note-022.md",
+      "bulk/note-023.md",
+      "bulk/note-024.md",
+      "bulk/note-025.md",
+      "bulk/note-026.md",
+      "bulk/note-027.md",
+      "bulk/note-028.md",
+      "bulk/note-029.md",
+      "bulk/note-030.md",
+      "bulk/note-031.md",
+      "bulk/note-032.md",
+      "bulk/note-033.md",
+      "bulk/note-034.md",
+      "bulk/note-035.md",
+      "bulk/note-036.md",
+      "bulk/note-037.md",
+      "bulk/note-038.md",
+      "bulk/note-039.md",
+      "bulk/note-040.md",
+      "bulk/note-041.md",
+      "bulk/note-042.md",
+      "bulk/note-043.md",
+      "bulk/note-044.md",
+      "bulk/note-045.md",
+      "bulk/note-046.md",
+      "bulk/note-047.md",
+      "bulk/note-048.md",
+      "bulk/note-049.md",
+      "bulk/note-050.md",
+      "bulk/note-051.md",
+      "bulk/note-052.md",
+      "bulk/note-053.md",
+      "bulk/note-054.md",
+      "bulk/note-055.md",
+      "bulk/note-056.md",
+      "bulk/note-057.md",
+      "bulk/note-058.md",
+      "bulk/note-059.md",
+      "bulk/note-060.md",
+      "bulk/note-061.md",
+      "bulk/note-062.md",
+      "bulk/note-063.md",
+      "bulk/note-064.md",
+      "bulk/note-065.md",
+      "bulk/note-066.md",
+      "bulk/note-067.md",
+      "bulk/note-068.md",
+      "bulk/note-069.md",
+      "bulk/note-070.md"
+    ],
+    "core": [
+      "alpha.md",
+      "notebooks/nb.md"
+    ],
+    "empty": [
+      "alpha.md",
+      "notebooks/none.md"
+    ],
+    "single": [
+      "alpha.md"
+    ],
+    "tools": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md"
+    ]
   },
   "file_time": "2026-01-02T03:04:05Z",
   "cases": [
@@ -87,7 +182,7 @@
       "args": [
         "--json",
         "ask",
-        "budget"
+        "quarterly"
       ],
       "turns": [
         {
@@ -99,7 +194,7 @@
       "wait_for": "first chunk",
       "signal": "terminated",
       "exit_code": -1,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notebooks/nb.md\",\"title\":\"Budget notebook\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"notebooks/nb.md\",\"title\":\"Budget notebook\",\"snippet\":\"# Budget notebook\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"notes/outside.md\",\"title\":\"Outside\",\"snippet\":\"# Outside\\n\\nA note outside the notebook.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"notes/outside.md\",\"title\":\"Outside\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"first chunk\"}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"first chunk\"}\n",
       "stderr": "",
       "provider_saw_client_gone": true,
       "requests": [
@@ -111,7 +206,7 @@
           },
           "body": {
             "model": "llama3.2",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }
@@ -125,7 +220,7 @@
         "--json",
         "ask",
         "--agent",
-        "budget"
+        "quarterly"
       ],
       "turns": [
         {
@@ -150,7 +245,7 @@
           "body": {
             "messages": [
               {
-                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                 "role": "user"
               }
             ],
@@ -757,7 +852,7 @@
         "--json",
         "ask",
         "--agent",
-        "budget"
+        "quarterly"
       ],
       "env": {
         "SYMDESK_ANTHROPIC_URL": "{{URL}}/v1/messages"
@@ -790,7 +885,7 @@
               {
                 "content": [
                   {
-                    "text": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                    "text": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                     "type": "text"
                   }
                 ],
@@ -1309,7 +1404,7 @@
       "name": "mcp_desk_ask_sigterm",
       "kind": "mcp_sigterm",
       "provider": "ollama",
-      "mcp_arguments_json": "{\"query\":\"budget\"}",
+      "mcp_arguments_json": "{\"query\":\"quarterly\"}",
       "turns": [
         {
           "status": 0,
@@ -1331,7 +1426,7 @@
           },
           "body": {
             "model": "llama3.2",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }
@@ -1341,7 +1436,7 @@
       "name": "mcp_stdin_eof_lets_in_flight_ask_finish",
       "kind": "mcp_eof",
       "provider": "ollama",
-      "mcp_arguments_json": "{\"query\":\"budget\"}",
+      "mcp_arguments_json": "{\"query\":\"quarterly\"}",
       "turns": [
         {
           "status": 0,
@@ -1362,7 +1457,7 @@
           },
           "body": {
             "model": "llama3.2",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }

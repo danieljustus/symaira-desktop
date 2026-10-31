@@ -326,3 +326,42 @@ func anthropicTurn(t *testing.T, blocks []anthropicBlock, stop string, inputToke
 	add(map[string]any{"type": "message_stop"})
 	return strings.Join(lines, "\n") + "\n"
 }
+
+// askFileSets names the vault trees a case runs against. Hybrid retrieval ranks
+// tied low-relevance rows by host-dependent order (and the filler rows that pad
+// a result list differ between Darwin and Linux), so every case that reads
+// retrieval output uses a tree whose whole row set fits the result cap:
+// "single" is one document, "core" adds the notebook. Cases that only list,
+// read or inspect files use the larger trees.
+func askFileSets() map[string][]string {
+	bulk := []string{}
+	for i := 1; i <= 70; i++ {
+		bulk = append(bulk, fmt.Sprintf("bulk/note-%03d.md", i))
+	}
+	tools := []string{"alpha.md", "notes/beta.md", "notes/gamma.md", "notes/outside.md"}
+	return map[string][]string{
+		"single": {"alpha.md"},
+		"core":   {"alpha.md", "notebooks/nb.md"},
+		"empty":  {"alpha.md", "notebooks/none.md"},
+		"tools":  tools,
+		"bulk":   append(append([]string{}, tools...), bulk...),
+	}
+}
+
+// askSelectFiles returns the files of one named set.
+func askSelectFiles(t *testing.T, all map[string]string, sets map[string][]string, set string) map[string]string {
+	t.Helper()
+	names, ok := sets[set]
+	if !ok {
+		t.Fatalf("unknown file set %q", set)
+	}
+	out := make(map[string]string, len(names))
+	for _, name := range names {
+		content, ok := all[name]
+		if !ok {
+			t.Fatalf("file set %q names missing file %q", set, name)
+		}
+		out[name] = content
+	}
+	return out
+}

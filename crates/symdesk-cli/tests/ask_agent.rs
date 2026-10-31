@@ -23,7 +23,9 @@ mod provider;
 use provider::{FakeProvider, KEY, Turn};
 #[path = "support/ask_replay.rs"]
 mod ask_replay;
-use ask_replay::{Request, compare_requests, normalize, parse_time, without_log_lines};
+use ask_replay::{
+    Request, compare_requests, normalize, parse_time, select_files, without_log_lines,
+};
 
 static ROOT_SEQUENCE: AtomicUsize = AtomicUsize::new(0);
 
@@ -32,6 +34,7 @@ struct Fixture {
     schema_version: u32,
     hermes_script: String,
     files: BTreeMap<String, String>,
+    file_sets: BTreeMap<String, Vec<String>>,
     file_time: String,
     cases: Vec<Case>,
 }
@@ -39,6 +42,7 @@ struct Fixture {
 #[derive(Deserialize, Clone)]
 struct Case {
     name: String,
+    file_set: String,
     args: Vec<String>,
     provider: String,
     #[serde(default)]
@@ -108,7 +112,7 @@ fn run_replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     )
     .unwrap();
     let stamp = parse_time(&fixture.file_time);
-    for (name, content) in &fixture.files {
+    for (name, content) in &select_files(&fixture.files, &fixture.file_sets, &case.file_set) {
         let dest = vault.join(name);
         fs::create_dir_all(dest.parent().unwrap()).unwrap();
         fs::write(&dest, content).unwrap();

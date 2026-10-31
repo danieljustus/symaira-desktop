@@ -25,7 +25,8 @@ use provider::{FakeProvider, Turn};
 #[path = "support/ask_replay.rs"]
 mod ask_replay;
 use ask_replay::{
-    Request, Scratch, compare_requests, mcp_call_line, normalize, provider_env, without_log_lines,
+    Request, Scratch, compare_requests, mcp_call_line, normalize, provider_env, select_files,
+    without_log_lines,
 };
 
 const SIGTERM: i32 = 15;
@@ -34,6 +35,7 @@ const SIGTERM: i32 = 15;
 struct Fixture {
     schema_version: u32,
     files: BTreeMap<String, String>,
+    file_sets: BTreeMap<String, Vec<String>>,
     file_time: String,
     cases: Vec<Case>,
 }
@@ -101,7 +103,12 @@ fn wait_for_text(buffer: &Arc<Mutex<Vec<u8>>>, needle: &str, limit: Duration) ->
 
 fn run_replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     let label = &case.name;
-    let scratch = Scratch::new(label, &fixture.files, &fixture.file_time, None);
+    let scratch = Scratch::new(
+        label,
+        &select_files(&fixture.files, &fixture.file_sets, "single"),
+        &fixture.file_time,
+        None,
+    );
     let provider = FakeProvider::start(case.turns.clone());
     let url = provider.url.clone();
     scratch.index("");

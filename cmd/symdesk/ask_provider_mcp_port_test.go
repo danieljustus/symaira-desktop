@@ -26,12 +26,14 @@ type askProviderMCPFixture struct {
 	SchemaVersion int                  `json:"schema_version"`
 	HermesScript  string               `json:"hermes_script"`
 	Files         map[string]string    `json:"files"`
+	FileSets      map[string][]string  `json:"file_sets"`
 	FileTime      string               `json:"file_time"`
 	Cases         []askProviderMCPCase `json:"cases"`
 }
 
 type askProviderMCPCase struct {
 	Name          string               `json:"name"`
+	FileSet       string               `json:"file_set"`
 	Provider      string               `json:"provider"`
 	Mode          string               `json:"mode,omitempty"`
 	Env           map[string]string    `json:"env,omitempty"`
@@ -63,18 +65,18 @@ func askProviderMCPCases(t *testing.T) []askProviderMCPCase {
 		return []askProviderTurn{{Body: anthropicTurn(t, blocks, stop, 4, 6)}}
 	}
 	return []askProviderMCPCase{
-		{Name: "hermes_ok", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"budget"}`},
-		{Name: "hermes_ok_notebook", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"budget","notebook":"nb"}`},
-		{Name: "hermes_fails", Provider: "hermes", Mode: "fail", ArgumentsJSON: `{"query":"budget"}`},
-		{Name: "hermes_notebook_missing", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"budget","notebook":"nope"}`},
-		{Name: "ollama_generate", Provider: "ollama", ArgumentsJSON: `{"query":"budget"}`, Turns: generate("Budget ", "answer ", "[[alpha.md]].")},
-		{Name: "ollama_generate_notebook_german", Provider: "ollama", ArgumentsJSON: `{"query":"budget","notebook":"nb"}`, Env: map[string]string{"SYMDESK_LANG": "German", "SYMDESK_OLLAMA_MODEL": "fake-model"}, Turns: generate("Antwort.")},
-		{Name: "ollama_http_500", Provider: "ollama", ArgumentsJSON: `{"query":"budget"}`, Turns: []askProviderTurn{{Status: 500, Body: `{"error":"boom"}`}}},
-		{Name: "anthropic_stream", Provider: "anthropic", ArgumentsJSON: `{"query":"budget"}`, Env: map[string]string{"SYMDESK_LLM_MODEL": "claude-haiku-fake", "SYMDESK_MAX_TOKENS": "321"}, Turns: anthropic([]anthropicBlock{{Text: []string{"Anthropic ", "says hi."}}}, "end_turn")},
-		{Name: "anthropic_url_is_a_base_not_an_endpoint", Provider: "anthropic", ArgumentsJSON: `{"query":"budget"}`, Env: map[string]string{"SYMDESK_ANTHROPIC_URL": askProviderURLToken + "/v1/messages"}, Turns: anthropic([]anthropicBlock{{Text: []string{"unreachable"}}}, "end_turn")},
-		{Name: "anthropic_max_tokens_marker", Provider: "anthropic", ArgumentsJSON: `{"query":"budget"}`, Turns: anthropic([]anthropicBlock{{Text: []string{"Cut off"}}}, "max_tokens")},
-		{Name: "ollama_unconfigured_default", Provider: "none", ArgumentsJSON: `{"query":"budget"}`},
-		{Name: "empty_query_still_rejected", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":""}`},
+		{Name: "hermes_ok", FileSet: "single", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"quarterly"}`},
+		{Name: "hermes_ok_notebook", FileSet: "core", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"quarterly","notebook":"nb"}`},
+		{Name: "hermes_fails", FileSet: "single", Provider: "hermes", Mode: "fail", ArgumentsJSON: `{"query":"quarterly"}`},
+		{Name: "hermes_notebook_missing", FileSet: "core", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":"quarterly","notebook":"nope"}`},
+		{Name: "ollama_generate", FileSet: "single", Provider: "ollama", ArgumentsJSON: `{"query":"quarterly"}`, Turns: generate("Budget ", "answer ", "[[alpha.md]].")},
+		{Name: "ollama_generate_notebook_german", FileSet: "core", Provider: "ollama", ArgumentsJSON: `{"query":"quarterly","notebook":"nb"}`, Env: map[string]string{"SYMDESK_LANG": "German", "SYMDESK_OLLAMA_MODEL": "fake-model"}, Turns: generate("Antwort.")},
+		{Name: "ollama_http_500", FileSet: "single", Provider: "ollama", ArgumentsJSON: `{"query":"quarterly"}`, Turns: []askProviderTurn{{Status: 500, Body: `{"error":"boom"}`}}},
+		{Name: "anthropic_stream", FileSet: "single", Provider: "anthropic", ArgumentsJSON: `{"query":"quarterly"}`, Env: map[string]string{"SYMDESK_LLM_MODEL": "claude-haiku-fake", "SYMDESK_MAX_TOKENS": "321"}, Turns: anthropic([]anthropicBlock{{Text: []string{"Anthropic ", "says hi."}}}, "end_turn")},
+		{Name: "anthropic_url_is_a_base_not_an_endpoint", FileSet: "single", Provider: "anthropic", ArgumentsJSON: `{"query":"quarterly"}`, Env: map[string]string{"SYMDESK_ANTHROPIC_URL": askProviderURLToken + "/v1/messages"}, Turns: anthropic([]anthropicBlock{{Text: []string{"unreachable"}}}, "end_turn")},
+		{Name: "anthropic_max_tokens_marker", FileSet: "single", Provider: "anthropic", ArgumentsJSON: `{"query":"quarterly"}`, Turns: anthropic([]anthropicBlock{{Text: []string{"Cut off"}}}, "max_tokens")},
+		{Name: "ollama_unconfigured_default", FileSet: "single", Provider: "none", ArgumentsJSON: `{"query":"quarterly"}`},
+		{Name: "empty_query_still_rejected", FileSet: "single", Provider: "hermes", Mode: "ok", ArgumentsJSON: `{"query":""}`},
 	}
 }
 
@@ -83,7 +85,7 @@ func TestPortAskProviderMCPContract(t *testing.T) {
 		t.Skip("shell double is Unix-only")
 	}
 	binary := processFixtureBinary(t)
-	fixture := askProviderMCPFixture{SchemaVersion: 1, HermesScript: askAgentHermesScript, Files: askAgentFiles(), FileTime: askAgentFileTime}
+	fixture := askProviderMCPFixture{SchemaVersion: 1, HermesScript: askAgentHermesScript, Files: askAgentFiles(), FileSets: askFileSets(), FileTime: askAgentFileTime}
 	for _, c := range askProviderMCPCases(t) {
 		fixture.Cases = append(fixture.Cases, observeAskProviderMCP(t, binary, fixture, c))
 	}
@@ -240,7 +242,7 @@ func mcpToolCallLine(arguments string) string {
 
 func observeAskProviderMCP(t *testing.T, binary string, fixture askProviderMCPFixture, c askProviderMCPCase) askProviderMCPCase {
 	t.Helper()
-	s := newAskScratch(t, fixture.Files, fixture.FileTime, fixture.HermesScript, c.Provider == "hermes")
+	s := newAskScratch(t, askSelectFiles(t, fixture.Files, fixture.FileSets, c.FileSet), fixture.FileTime, fixture.HermesScript, c.Provider == "hermes")
 	var server *askProviderServer
 	if c.Provider == "ollama" || c.Provider == "anthropic" {
 		server = newAskProviderServer(t, s.root, c.Turns)

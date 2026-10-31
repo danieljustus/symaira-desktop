@@ -26,13 +26,15 @@ const askAgentFixturePath = "../../testdata/port/ai/ask-agent-process.json"
 type askAgentFixture struct {
 	SchemaVersion int               `json:"schema_version"`
 	HermesScript  string            `json:"hermes_script"`
-	Files         map[string]string `json:"files"`
-	FileTime      string            `json:"file_time"`
-	Cases         []askAgentCase    `json:"cases"`
+	Files         map[string]string   `json:"files"`
+	FileSets      map[string][]string `json:"file_sets"`
+	FileTime      string              `json:"file_time"`
+	Cases         []askAgentCase      `json:"cases"`
 }
 
 type askAgentCase struct {
 	Name     string               `json:"name"`
+	FileSet  string               `json:"file_set"`
 	Args     []string             `json:"args"`
 	Provider string               `json:"provider"`
 	Mode     string               `json:"mode,omitempty"`
@@ -64,10 +66,10 @@ const askAgentFileTime = "2026-01-02T03:04:05Z"
 
 func askAgentFiles() map[string]string {
 	files := map[string]string{
-		"alpha.md":          "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
+		"alpha.md":          "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n",
 		"notes/beta.md":     "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
 		"notes/gamma.md":    "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
-		"notes/outside.md":  "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook.\n",
+		"notes/outside.md":  "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook about the quarterly plan.\n",
 		"notebooks/nb.md":   "---\ntype: notebook\ntitle: Budget notebook\nnotebook_id: nb\ncreated: 2026-01-02T03:04:05Z\nsources:\n  - alpha.md\n  - missing.md\n---\n\n# Budget notebook\n",
 		"notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
 	}
@@ -93,74 +95,74 @@ func askAgentCases(t *testing.T) []askAgentCase {
 	ask := func(extra ...string) []string { return append([]string{"--json", "ask", "--agent"}, extra...) }
 	askText := func(extra ...string) []string { return append([]string{"ask", "--agent"}, extra...) }
 	cases := []askAgentCase{
-		{Name: "ollama_ls_json", Provider: "ollama", Args: ask("what is in notes"), Turns: []askProviderTurn{
+		{Name: "ollama_ls_json", FileSet: "tools", Provider: "ollama", Args: ask("what is in notes"), Turns: []askProviderTurn{
 			ollama([]string{"Looking. "}, lsNotes, 10, 5),
 			ollama([]string{"The folder holds ", "[[notes/beta.md]] and [[notes/gamma.md]]."}, nil, 30, 12),
 		}},
-		{Name: "ollama_ls_text", Provider: "ollama", Args: askText("what is in notes"), Env: map[string]string{"SYMDESK_OLLAMA_MODEL": "fake-model"}, Turns: []askProviderTurn{
+		{Name: "ollama_ls_text", FileSet: "tools", Provider: "ollama", Args: askText("what is in notes"), Env: map[string]string{"SYMDESK_OLLAMA_MODEL": "fake-model"}, Turns: []askProviderTurn{
 			ollama([]string{"Looking. "}, lsNotes, 10, 5),
 			ollama([]string{"The folder holds [[notes/beta.md]]."}, nil, 30, 12),
 		}},
-		{Name: "ollama_tool_errors", Provider: "ollama", Args: ask("props please"), Turns: []askProviderTurn{
+		{Name: "ollama_tool_errors", FileSet: "tools", Provider: "ollama", Args: ask("props please"), Turns: []askProviderTurn{
 			ollama(nil, [][2]string{{"desk_props", `{"file":"alpha.md"}`}, {"desk_props", `{"file":"missing.md"}`}, {"desk_note_new", `{"title":"x"}`}, {"desk_ls", ""}}, 0, 0),
 			ollama([]string{"Only [[alpha.md]] had properties."}, nil, 0, 0),
 		}},
-		{Name: "ollama_externalize", Provider: "ollama", Args: ask("list the bulk archive"), Turns: []askProviderTurn{
+		{Name: "ollama_externalize", FileSet: "bulk", Provider: "ollama", Args: ask("list the bulk archive"), Turns: []askProviderTurn{
 			ollama([]string{"Listing. "}, [][2]string{{"desk_ls", `{"dir":"bulk"}`}}, 7, 3),
 			ollama(nil, [][2]string{{"desk_read_result", `{"handle":"` + askHandleToken + `"}`}}, 8, 4),
 			ollama([]string{"Read it back."}, nil, 9, 5),
 		}},
-		{Name: "ollama_search_citation_warning", Provider: "ollama", Args: ask("budget"), Turns: []askProviderTurn{
-			ollama(nil, [][2]string{{"desk_search", `{"query":"budget"}`}}, 0, 0),
+		{Name: "ollama_search_citation_warning", FileSet: "single", Provider: "ollama", Args: ask("quarterly"), Turns: []askProviderTurn{
+			ollama(nil, [][2]string{{"desk_search", `{"query":"quarterly"}`}}, 0, 0),
 			ollama([]string{"The budget is in [[alpha.md]].\n\n## Sources\n- [[notes/gamma.md]]\n- [[alpha.md]]\n"}, nil, 0, 0),
 		}},
-		{Name: "ollama_iteration_cap", Provider: "ollama", Args: ask("loop forever"), Env: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "2"}, Turns: []askProviderTurn{
+		{Name: "ollama_iteration_cap", FileSet: "tools", Provider: "ollama", Args: ask("loop forever"), Env: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "2"}, Turns: []askProviderTurn{
 			ollama(nil, lsNotes, 1, 1), ollama(nil, lsNotes, 2, 2),
 		}},
-		{Name: "ollama_http_500", Provider: "ollama", Args: ask("anything"), Turns: []askProviderTurn{
+		{Name: "ollama_http_500", FileSet: "single", Provider: "ollama", Args: ask("anything"), Turns: []askProviderTurn{
 			{Status: 500, Body: `{"error":"boom"}`},
 		}},
-		{Name: "ollama_unconfigured", Provider: "none", Args: ask("anything"), Env: map[string]string{"SYMDESK_LLM_PROVIDER": "ollama"}},
-		{Name: "ollama_arguments_not_object", Provider: "ollama", Args: ask("odd arguments"), Turns: []askProviderTurn{
+		{Name: "ollama_unconfigured", FileSet: "single", Provider: "none", Args: ask("anything"), Env: map[string]string{"SYMDESK_LLM_PROVIDER": "ollama"}},
+		{Name: "ollama_arguments_not_object", FileSet: "tools", Provider: "ollama", Args: ask("odd arguments"), Turns: []askProviderTurn{
 			ollama(nil, [][2]string{{"desk_ls", `"{\"dir\":\"notes\"}"`}}, 0, 0),
 			ollama([]string{"Odd."}, nil, 0, 0),
 		}},
-		{Name: "anthropic_tool_use_json", Provider: "anthropic", Args: ask("what is in notes"),
+		{Name: "anthropic_tool_use_json", FileSet: "tools", Provider: "anthropic", Args: ask("what is in notes"),
 			Env: map[string]string{"SYMDESK_LLM_MODEL": "claude-haiku-fake", "SYMDESK_MAX_TOKENS": "123", "SYMDESK_LANG": "German"},
 			Turns: []askProviderTurn{
 				anthropic([]anthropicBlock{text("Checking. "), tool("toolu_1", "desk_ls", `{"dir":`, `"notes"}`)}, "tool_use", 12, 7),
 				anthropic([]anthropicBlock{text("Es gibt ", "[[notes/beta.md]].")}, "end_turn", 40, 20),
 			}},
-		{Name: "anthropic_tool_use_text", Provider: "anthropic", Args: askText("what is in notes"), Turns: []askProviderTurn{
+		{Name: "anthropic_tool_use_text", FileSet: "tools", Provider: "anthropic", Args: askText("what is in notes"), Turns: []askProviderTurn{
 			anthropic([]anthropicBlock{tool("toolu_1", "desk_ls", `{"dir":"notes"}`)}, "tool_use", 5, 6),
 			anthropic([]anthropicBlock{text("Done [[notes/gamma.md]].")}, "end_turn", 9, 10),
 		}},
-		{Name: "anthropic_tool_without_input_is_dropped", Provider: "anthropic", Args: ask("empty tool"), Turns: []askProviderTurn{
+		{Name: "anthropic_tool_without_input_is_dropped", FileSet: "tools", Provider: "anthropic", Args: ask("empty tool"), Turns: []askProviderTurn{
 			anthropic([]anthropicBlock{text("Nothing to call."), {Tool: true, ToolID: "toolu_x", ToolName: "desk_ls"}}, "tool_use", 3, 4),
 		}},
-		{Name: "anthropic_http_429", Provider: "anthropic", Args: ask("limited"), Turns: []askProviderTurn{
+		{Name: "anthropic_http_429", FileSet: "single", Provider: "anthropic", Args: ask("limited"), Turns: []askProviderTurn{
 			{Status: 429, Body: `{"type":"error","error":{"type":"rate_limit_error","message":"slow down"}}`},
 		}},
-		{Name: "anthropic_truncated_tool_json_text", Provider: "anthropic", Args: askText("broken tool json"), Turns: []askProviderTurn{
+		{Name: "anthropic_truncated_tool_json_text", FileSet: "tools", Provider: "anthropic", Args: askText("broken tool json"), Turns: []askProviderTurn{
 			anthropic([]anthropicBlock{tool("toolu_9", "desk_ls", `{"dir":`)}, "tool_use", 1, 1),
 			anthropic([]anthropicBlock{text("Recovered.")}, "end_turn", 2, 2),
 		}},
-		{Name: "anthropic_truncated_tool_json_json", Provider: "anthropic", Args: ask("broken tool json"), Turns: []askProviderTurn{
+		{Name: "anthropic_truncated_tool_json_json", FileSet: "tools", Provider: "anthropic", Args: ask("broken tool json"), Turns: []askProviderTurn{
 			anthropic([]anthropicBlock{tool("toolu_9", "desk_ls", `{"dir":`)}, "tool_use", 1, 1),
 		}},
-		{Name: "agent_notebook_scoped_tools", Provider: "ollama", Args: ask("--notebook", "nb", "budget"), Turns: []askProviderTurn{
-			ollama(nil, [][2]string{{"desk_search", `{"query":"budget"}`}, {"desk_ls", `{"dir":""}`}, {"desk_backlinks", `{"file":"alpha.md"}`}, {"desk_backlinks", `{"file":"notes/gamma.md"}`}}, 0, 0),
+		{Name: "agent_notebook_scoped_tools", FileSet: "core", Provider: "ollama", Args: ask("--notebook", "nb", "quarterly"), Turns: []askProviderTurn{
+			ollama(nil, [][2]string{{"desk_search", `{"query":"quarterly"}`}, {"desk_ls", `{"dir":""}`}, {"desk_backlinks", `{"file":"alpha.md"}`}, {"desk_backlinks", `{"file":"notebooks/nb.md"}`}}, 0, 0),
 			ollama([]string{"Scoped answer [[alpha.md]]."}, nil, 0, 0),
 		}},
-		{Name: "agent_notebook_missing", Provider: "ollama", Args: ask("--notebook", "nope", "budget")},
-		{Name: "ask_notebook_hermes_json", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "nb", "budget"}},
-		{Name: "ask_notebook_hermes_text", Provider: "hermes", Mode: "ok", Args: []string{"ask", "--notebook", "nb", "budget"}},
-		{Name: "ask_notebook_citation_warning", Provider: "hermes", Mode: "warn", Args: []string{"--json", "ask", "--notebook", "nb", "budget"}},
-		{Name: "ask_notebook_backend_fails", Provider: "hermes", Mode: "fail", Args: []string{"--json", "ask", "--notebook", "nb", "budget"}},
-		{Name: "ask_notebook_empty_sources", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "none", "budget"}},
-		{Name: "ask_notebook_missing", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "nope", "budget"}},
-		{Name: "ask_notebook_unconfigured", Provider: "none", Args: []string{"--json", "ask", "--notebook", "nb", "budget"}},
-		{Name: "ask_notebook_unconfigured_text", Provider: "none", Args: []string{"ask", "--notebook", "nb", "budget"}},
+		{Name: "agent_notebook_missing", FileSet: "core", Provider: "ollama", Args: ask("--notebook", "nope", "quarterly")},
+		{Name: "ask_notebook_hermes_json", FileSet: "core", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "nb", "quarterly"}},
+		{Name: "ask_notebook_hermes_text", FileSet: "core", Provider: "hermes", Mode: "ok", Args: []string{"ask", "--notebook", "nb", "quarterly"}},
+		{Name: "ask_notebook_citation_warning", FileSet: "core", Provider: "hermes", Mode: "warn", Args: []string{"--json", "ask", "--notebook", "nb", "quarterly"}},
+		{Name: "ask_notebook_backend_fails", FileSet: "core", Provider: "hermes", Mode: "fail", Args: []string{"--json", "ask", "--notebook", "nb", "quarterly"}},
+		{Name: "ask_notebook_empty_sources", FileSet: "empty", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "none", "quarterly"}},
+		{Name: "ask_notebook_missing", FileSet: "core", Provider: "hermes", Mode: "ok", Args: []string{"--json", "ask", "--notebook", "nope", "quarterly"}},
+		{Name: "ask_notebook_unconfigured", FileSet: "core", Provider: "none", Args: []string{"--json", "ask", "--notebook", "nb", "quarterly"}},
+		{Name: "ask_notebook_unconfigured_text", FileSet: "core", Provider: "none", Args: []string{"ask", "--notebook", "nb", "quarterly"}},
 	}
 	return cases
 }
@@ -170,7 +172,7 @@ func TestPortAskAgentProcessContract(t *testing.T) {
 		t.Skip("shell double is Unix-only")
 	}
 	binary := processFixtureBinary(t)
-	fixture := askAgentFixture{SchemaVersion: 1, HermesScript: askAgentHermesScript, Files: askAgentFiles(), FileTime: askAgentFileTime}
+	fixture := askAgentFixture{SchemaVersion: 1, HermesScript: askAgentHermesScript, Files: askAgentFiles(), FileSets: askFileSets(), FileTime: askAgentFileTime}
 	for _, c := range askAgentCases(t) {
 		fixture.Cases = append(fixture.Cases, observeAskAgent(t, binary, fixture, c))
 	}
@@ -229,7 +231,7 @@ func observeAskAgent(t *testing.T, binary string, fixture askAgentFixture, c ask
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, content := range fixture.Files {
+	for name, content := range askSelectFiles(t, fixture.Files, fixture.FileSets, c.FileSet) {
 		dest := filepath.Join(vault, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(dest), 0o700); err != nil {
 			t.Fatal(err)

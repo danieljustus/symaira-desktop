@@ -2,7 +2,7 @@
   "schema_version": 1,
   "hermes_script": "#!/bin/sh\nlog=\"$FAKE_HERMES_LOG\"\n{\n  printf 'argc=%s\\n' \"$#\"\n  for a in \"$@\"; do printf 'arg\u003c\u003c%s\u003e\u003e\\n' \"$a\"; done\n} \u003e\u003e \"$log\"\ncase \"$FAKE_HERMES_MODE\" in\n  ok) printf 'Answer from \u003chermes\u003e [[alpha.md]]\\n' ;;\n  warn) printf 'Findings.\\n\\n## Sources\\n- [[notes/outside.md]]\\n- [[alpha.md]]\\n' ;;\n  fail) printf 'hermes exploded\\n' \u003e\u00262; exit 4 ;;\n  *) exit 9 ;;\nesac\n",
   "files": {
-    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n",
     "bulk/note-001.md": "---\ntitle: Bulk archive note number 001 with padding words\n---\n# Bulk 001\n\nFiller text.\n",
     "bulk/note-002.md": "---\ntitle: Bulk archive note number 002 with padding words\n---\n# Bulk 002\n\nFiller text.\n",
     "bulk/note-003.md": "---\ntitle: Bulk archive note number 003 with padding words\n---\n# Bulk 003\n\nFiller text.\n",
@@ -77,51 +77,151 @@
     "notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
     "notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
     "notes/gamma.md": "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
-    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook.\n"
+    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook about the quarterly plan.\n"
+  },
+  "file_sets": {
+    "bulk": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md",
+      "bulk/note-001.md",
+      "bulk/note-002.md",
+      "bulk/note-003.md",
+      "bulk/note-004.md",
+      "bulk/note-005.md",
+      "bulk/note-006.md",
+      "bulk/note-007.md",
+      "bulk/note-008.md",
+      "bulk/note-009.md",
+      "bulk/note-010.md",
+      "bulk/note-011.md",
+      "bulk/note-012.md",
+      "bulk/note-013.md",
+      "bulk/note-014.md",
+      "bulk/note-015.md",
+      "bulk/note-016.md",
+      "bulk/note-017.md",
+      "bulk/note-018.md",
+      "bulk/note-019.md",
+      "bulk/note-020.md",
+      "bulk/note-021.md",
+      "bulk/note-022.md",
+      "bulk/note-023.md",
+      "bulk/note-024.md",
+      "bulk/note-025.md",
+      "bulk/note-026.md",
+      "bulk/note-027.md",
+      "bulk/note-028.md",
+      "bulk/note-029.md",
+      "bulk/note-030.md",
+      "bulk/note-031.md",
+      "bulk/note-032.md",
+      "bulk/note-033.md",
+      "bulk/note-034.md",
+      "bulk/note-035.md",
+      "bulk/note-036.md",
+      "bulk/note-037.md",
+      "bulk/note-038.md",
+      "bulk/note-039.md",
+      "bulk/note-040.md",
+      "bulk/note-041.md",
+      "bulk/note-042.md",
+      "bulk/note-043.md",
+      "bulk/note-044.md",
+      "bulk/note-045.md",
+      "bulk/note-046.md",
+      "bulk/note-047.md",
+      "bulk/note-048.md",
+      "bulk/note-049.md",
+      "bulk/note-050.md",
+      "bulk/note-051.md",
+      "bulk/note-052.md",
+      "bulk/note-053.md",
+      "bulk/note-054.md",
+      "bulk/note-055.md",
+      "bulk/note-056.md",
+      "bulk/note-057.md",
+      "bulk/note-058.md",
+      "bulk/note-059.md",
+      "bulk/note-060.md",
+      "bulk/note-061.md",
+      "bulk/note-062.md",
+      "bulk/note-063.md",
+      "bulk/note-064.md",
+      "bulk/note-065.md",
+      "bulk/note-066.md",
+      "bulk/note-067.md",
+      "bulk/note-068.md",
+      "bulk/note-069.md",
+      "bulk/note-070.md"
+    ],
+    "core": [
+      "alpha.md",
+      "notebooks/nb.md"
+    ],
+    "empty": [
+      "alpha.md",
+      "notebooks/none.md"
+    ],
+    "single": [
+      "alpha.md"
+    ],
+    "tools": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md"
+    ]
   },
   "file_time": "2026-01-02T03:04:05Z",
   "cases": [
     {
       "name": "hermes_ok",
+      "file_set": "single",
       "provider": "hermes",
       "mode": "ok",
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Answer from \\\\u003chermes\\\\u003e [[alpha.md]]\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "hermes_ok_notebook",
+      "file_set": "core",
       "provider": "hermes",
       "mode": "ok",
-      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nb\"}",
+      "arguments_json": "{\"query\":\"quarterly\",\"notebook\":\"nb\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Answer from \\\\u003chermes\\\\u003e [[alpha.md]]\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "hermes_fails",
+      "file_set": "single",
       "provider": "hermes",
       "mode": "fail",
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: hermes backend failed: hermes exploded\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "hermes_notebook_missing",
+      "file_set": "core",
       "provider": "hermes",
       "mode": "ok",
-      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nope\"}",
+      "arguments_json": "{\"query\":\"quarterly\",\"notebook\":\"nope\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"notebook not found\",\"type\":\"text\"}],\"isError\":true}}\n",
       "stderr": ""
     },
     {
       "name": "ollama_generate",
+      "file_set": "single",
       "provider": "ollama",
       "turns": [
         {
@@ -129,7 +229,7 @@
           "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"Budget \"}\n{\"done\":false,\"model\":\"llama3.2\",\"response\":\"answer \"}\n{\"done\":false,\"model\":\"llama3.2\",\"response\":\"[[alpha.md]].\"}\n{\"done\":true,\"model\":\"llama3.2\",\"response\":\"\"}\n"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Budget answer [[alpha.md]].\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -142,7 +242,7 @@
           },
           "body": {
             "model": "llama3.2",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }
@@ -150,6 +250,7 @@
     },
     {
       "name": "ollama_generate_notebook_german",
+      "file_set": "core",
       "provider": "ollama",
       "env": {
         "SYMDESK_LANG": "German",
@@ -161,7 +262,7 @@
           "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"Antwort.\"}\n{\"done\":true,\"model\":\"llama3.2\",\"response\":\"\"}\n"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\",\"notebook\":\"nb\"}",
+      "arguments_json": "{\"query\":\"quarterly\",\"notebook\":\"nb\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Antwort.\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -174,7 +275,7 @@
           },
           "body": {
             "model": "fake-model",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in German.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in German.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }
@@ -182,6 +283,7 @@
     },
     {
       "name": "ollama_http_500",
+      "file_set": "single",
       "provider": "ollama",
       "turns": [
         {
@@ -189,7 +291,7 @@
           "body": "{\"error\":\"boom\"}"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: ollama: llmkit: provider_error (status 500): {\\\\\\\"error\\\\\\\":\\\\\\\"boom\\\\\\\"}\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -202,7 +304,7 @@
           },
           "body": {
             "model": "llama3.2",
-            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
             "stream": true
           }
         }
@@ -210,6 +312,7 @@
     },
     {
       "name": "anthropic_stream",
+      "file_set": "single",
       "provider": "anthropic",
       "env": {
         "SYMDESK_LLM_MODEL": "claude-haiku-fake",
@@ -221,7 +324,7 @@
           "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"Anthropic \",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"delta\":{\"text\":\"says hi.\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Anthropic says hi.\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -240,7 +343,7 @@
             "messages": [
               {
                 "role": "user",
-                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n"
+                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n"
               }
             ],
             "stream": true
@@ -250,6 +353,7 @@
     },
     {
       "name": "anthropic_url_is_a_base_not_an_endpoint",
+      "file_set": "single",
       "provider": "anthropic",
       "env": {
         "SYMDESK_ANTHROPIC_URL": "{{URL}}/v1/messages"
@@ -260,7 +364,7 @@
           "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"unreachable\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ Request failed: anthropic: llmkit: model_not_found (status 404): 404 page not found\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -273,6 +377,7 @@
     },
     {
       "name": "anthropic_max_tokens_marker",
+      "file_set": "single",
       "provider": "anthropic",
       "turns": [
         {
@@ -280,7 +385,7 @@
           "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\",\"usage\":{\"input_tokens\":4}}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"Cut off\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\ndata: {\"delta\":{\"stop_reason\":\"max_tokens\"},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":6}}\n\ndata: {\"type\":\"message_stop\"}\n\n"
         }
       ],
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
       "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"Cut off\\\\n\\\\n⚠️ **[Output truncated due to token limit]**\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": "",
@@ -299,7 +404,7 @@
             "messages": [
               {
                 "role": "user",
-                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n\n\n--- Note [[notebooks/nb.md]] (Budget notebook) ---\n# Budget notebook\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n--- Note [[notes/outside.md]] (Outside) ---\n# Outside\n\nA note outside the notebook.\n\n--- Note [[notes/outside.md]] (Outside) ---\n\n\nQuestion: budget\n"
+                "content": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n"
               }
             ],
             "stream": true
@@ -309,14 +414,16 @@
     },
     {
       "name": "ollama_unconfigured_default",
+      "file_set": "single",
       "provider": "none",
-      "arguments_json": "{\"query\":\"budget\"}",
+      "arguments_json": "{\"query\":\"quarterly\"}",
       "exit_code": 0,
-      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ **AI feature not configured.**\\\\n\\\\nSet your Ollama endpoint in Settings → AI.\\\\n\\\\nHere are the most relevant search results from your vault:\\\\n\\\\n- [[notebooks/nb.md]]\\\\n- [[notebooks/nb.md]]\\\\n- [[alpha.md]]\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"⚠️ **AI feature not configured.**\\\\n\\\\nSet your Ollama endpoint in Settings → AI.\\\\n\\\\nHere are the most relevant search results from your vault:\\\\n\\\\n- [[alpha.md]]\\\\n- [[alpha.md]]\\\\n\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
       "stderr": ""
     },
     {
       "name": "empty_query_still_rejected",
+      "file_set": "single",
       "provider": "hermes",
       "mode": "ok",
       "arguments_json": "{\"query\":\"\"}",

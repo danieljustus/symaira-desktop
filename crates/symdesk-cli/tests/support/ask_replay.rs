@@ -362,3 +362,21 @@ pub fn mcp_call_line(arguments: &str) -> String {
         r#"{{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{{"name":"desk_ask","arguments":{arguments}}}}}"#
     ) + "\n"
 }
+
+/// The files of one named tree (`file_sets` in the fixtures).
+pub fn select_files(
+    files: &BTreeMap<String, String>,
+    sets: &BTreeMap<String, Vec<String>>,
+    set: &str,
+) -> BTreeMap<String, String> {
+    sets.get(set)
+        .unwrap_or_else(|| panic!("unknown file set {set:?}"))
+        .iter()
+        .map(|name| {
+            let content = files
+                .get(name)
+                .unwrap_or_else(|| panic!("file set {set:?} names missing file {name:?}"));
+            (name.clone(), content.clone())
+        })
+        .collect()
+}

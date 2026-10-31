@@ -25,7 +25,8 @@ const askCancelFixturePath = "../../testdata/port/ai/ask-cancel-process.json"
 
 type askCancelFixture struct {
 	SchemaVersion int               `json:"schema_version"`
-	Files         map[string]string `json:"files"`
+	Files         map[string]string   `json:"files"`
+	FileSets      map[string][]string `json:"file_sets"`
 	FileTime      string            `json:"file_time"`
 	Cases         []askCancelCase   `json:"cases"`
 }
@@ -60,17 +61,17 @@ func ollamaGenerateStall(t *testing.T, first string) []askProviderTurn {
 func askCancelCases(t *testing.T) []askCancelCase {
 	t.Helper()
 	return []askCancelCase{
-		{Name: "ask_ollama_sigterm", Kind: "sigterm", Provider: "ollama", Args: []string{"--json", "ask", "budget"}, WaitFor: "first chunk", Turns: ollamaGenerateStall(t, "first chunk")},
-		{Name: "ask_agent_ollama_sigterm", Kind: "sigterm", Provider: "ollama", Args: []string{"--json", "ask", "--agent", "budget"}, WaitFor: "thinking", Turns: []askProviderTurn{{
+		{Name: "ask_ollama_sigterm", Kind: "sigterm", Provider: "ollama", Args: []string{"--json", "ask", "quarterly"}, WaitFor: "first chunk", Turns: ollamaGenerateStall(t, "first chunk")},
+		{Name: "ask_agent_ollama_sigterm", Kind: "sigterm", Provider: "ollama", Args: []string{"--json", "ask", "--agent", "quarterly"}, WaitFor: "thinking", Turns: []askProviderTurn{{
 			Body:  askJSONLine(t, map[string]any{"message": map[string]any{"role": "assistant", "content": "thinking"}, "done": false}) + "\n",
 			Stall: true,
 		}}},
-		{Name: "ask_agent_anthropic_sigterm", Kind: "sigterm", Provider: "anthropic", Args: []string{"--json", "ask", "--agent", "budget"}, Env: map[string]string{"SYMDESK_ANTHROPIC_URL": askProviderURLToken + "/v1/messages"}, WaitFor: "pondering", Turns: []askProviderTurn{{
+		{Name: "ask_agent_anthropic_sigterm", Kind: "sigterm", Provider: "anthropic", Args: []string{"--json", "ask", "--agent", "quarterly"}, Env: map[string]string{"SYMDESK_ANTHROPIC_URL": askProviderURLToken + "/v1/messages"}, WaitFor: "pondering", Turns: []askProviderTurn{{
 			Body:  anthropicPartial(t, "pondering"),
 			Stall: true,
 		}}},
-		{Name: "mcp_desk_ask_sigterm", Kind: "mcp_sigterm", Provider: "ollama", MCPArgs: `{"query":"budget"}`, Turns: ollamaGenerateStall(t, "first chunk")},
-		{Name: "mcp_stdin_eof_lets_in_flight_ask_finish", Kind: "mcp_eof", Provider: "ollama", MCPArgs: `{"query":"budget"}`, Turns: []askProviderTurn{{
+		{Name: "mcp_desk_ask_sigterm", Kind: "mcp_sigterm", Provider: "ollama", MCPArgs: `{"query":"quarterly"}`, Turns: ollamaGenerateStall(t, "first chunk")},
+		{Name: "mcp_stdin_eof_lets_in_flight_ask_finish", Kind: "mcp_eof", Provider: "ollama", MCPArgs: `{"query":"quarterly"}`, Turns: []askProviderTurn{{
 			Body:    ollamaGenerateTurn(t, "late ", "answer"),
 			DelayMS: 400,
 		}}},
@@ -124,7 +125,7 @@ func TestPortAskCancelProcessContract(t *testing.T) {
 		t.Skip("SIGTERM contract is Unix-only")
 	}
 	binary := processFixtureBinary(t)
-	fixture := askCancelFixture{SchemaVersion: 1, Files: askAgentFiles(), FileTime: askAgentFileTime}
+	fixture := askCancelFixture{SchemaVersion: 1, Files: askAgentFiles(), FileSets: askFileSets(), FileTime: askAgentFileTime}
 	for _, c := range askCancelCases(t) {
 		fixture.Cases = append(fixture.Cases, observeAskCancel(t, binary, fixture, c))
 	}
@@ -155,7 +156,7 @@ func TestPortAskCancelProcessContract(t *testing.T) {
 
 func observeAskCancel(t *testing.T, binary string, fixture askCancelFixture, c askCancelCase) askCancelCase {
 	t.Helper()
-	s := newAskScratch(t, fixture.Files, fixture.FileTime, "", false)
+	s := newAskScratch(t, askSelectFiles(t, fixture.Files, fixture.FileSets, "single"), fixture.FileTime, "", false)
 	server := newAskProviderServer(t, s.root, c.Turns)
 	defer server.Close()
 	s.index(t, binary, "")

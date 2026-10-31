@@ -2,7 +2,7 @@
   "schema_version": 1,
   "hermes_script": "#!/bin/sh\nlog=\"$FAKE_HERMES_LOG\"\n{\n  printf 'argc=%s\\n' \"$#\"\n  for a in \"$@\"; do printf 'arg\u003c\u003c%s\u003e\u003e\\n' \"$a\"; done\n} \u003e\u003e \"$log\"\ncase \"$FAKE_HERMES_MODE\" in\n  ok) printf 'Answer from \u003chermes\u003e [[alpha.md]]\\n' ;;\n  warn) printf 'Findings.\\n\\n## Sources\\n- [[notes/outside.md]]\\n- [[alpha.md]]\\n' ;;\n  fail) printf 'hermes exploded\\n' \u003e\u00262; exit 4 ;;\n  *) exit 9 ;;\nesac\n",
   "files": {
-    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n",
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n",
     "bulk/note-001.md": "---\ntitle: Bulk archive note number 001 with padding words\n---\n# Bulk 001\n\nFiller text.\n",
     "bulk/note-002.md": "---\ntitle: Bulk archive note number 002 with padding words\n---\n# Bulk 002\n\nFiller text.\n",
     "bulk/note-003.md": "---\ntitle: Bulk archive note number 003 with padding words\n---\n# Bulk 003\n\nFiller text.\n",
@@ -77,12 +77,108 @@
     "notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
     "notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
     "notes/gamma.md": "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
-    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook.\n"
+    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook about the quarterly plan.\n"
+  },
+  "file_sets": {
+    "bulk": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md",
+      "bulk/note-001.md",
+      "bulk/note-002.md",
+      "bulk/note-003.md",
+      "bulk/note-004.md",
+      "bulk/note-005.md",
+      "bulk/note-006.md",
+      "bulk/note-007.md",
+      "bulk/note-008.md",
+      "bulk/note-009.md",
+      "bulk/note-010.md",
+      "bulk/note-011.md",
+      "bulk/note-012.md",
+      "bulk/note-013.md",
+      "bulk/note-014.md",
+      "bulk/note-015.md",
+      "bulk/note-016.md",
+      "bulk/note-017.md",
+      "bulk/note-018.md",
+      "bulk/note-019.md",
+      "bulk/note-020.md",
+      "bulk/note-021.md",
+      "bulk/note-022.md",
+      "bulk/note-023.md",
+      "bulk/note-024.md",
+      "bulk/note-025.md",
+      "bulk/note-026.md",
+      "bulk/note-027.md",
+      "bulk/note-028.md",
+      "bulk/note-029.md",
+      "bulk/note-030.md",
+      "bulk/note-031.md",
+      "bulk/note-032.md",
+      "bulk/note-033.md",
+      "bulk/note-034.md",
+      "bulk/note-035.md",
+      "bulk/note-036.md",
+      "bulk/note-037.md",
+      "bulk/note-038.md",
+      "bulk/note-039.md",
+      "bulk/note-040.md",
+      "bulk/note-041.md",
+      "bulk/note-042.md",
+      "bulk/note-043.md",
+      "bulk/note-044.md",
+      "bulk/note-045.md",
+      "bulk/note-046.md",
+      "bulk/note-047.md",
+      "bulk/note-048.md",
+      "bulk/note-049.md",
+      "bulk/note-050.md",
+      "bulk/note-051.md",
+      "bulk/note-052.md",
+      "bulk/note-053.md",
+      "bulk/note-054.md",
+      "bulk/note-055.md",
+      "bulk/note-056.md",
+      "bulk/note-057.md",
+      "bulk/note-058.md",
+      "bulk/note-059.md",
+      "bulk/note-060.md",
+      "bulk/note-061.md",
+      "bulk/note-062.md",
+      "bulk/note-063.md",
+      "bulk/note-064.md",
+      "bulk/note-065.md",
+      "bulk/note-066.md",
+      "bulk/note-067.md",
+      "bulk/note-068.md",
+      "bulk/note-069.md",
+      "bulk/note-070.md"
+    ],
+    "core": [
+      "alpha.md",
+      "notebooks/nb.md"
+    ],
+    "empty": [
+      "alpha.md",
+      "notebooks/none.md"
+    ],
+    "single": [
+      "alpha.md"
+    ],
+    "tools": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md"
+    ]
   },
   "file_time": "2026-01-02T03:04:05Z",
   "cases": [
     {
       "name": "ollama_ls_json",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -1341,6 +1437,7 @@
     },
     {
       "name": "ollama_ls_text",
+      "file_set": "tools",
       "args": [
         "ask",
         "--agent",
@@ -2601,6 +2698,7 @@
     },
     {
       "name": "ollama_tool_errors",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -2619,7 +2717,7 @@
         }
       ],
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_inputs\":{\"file\":\"alpha.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_output\":\"{\\\"title\\\":\\\"Alpha Project\\\"}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_inputs\":{\"file\":\"missing.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_output\":\"{}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_note_new\",\"iteration\":1,\"tool_inputs\":{\"title\":\"x\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_note_new\",\"iteration\":1,\"tool_output\":\"tool error: unknown tool \\\"desk_note_new\\\"\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_inputs\":{}}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_output\":\"[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-001.md\\\",\\\"title\\\":\\\"Bulk archive note number 001 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-002.md\\\",\\\"title\\\":\\\"Bulk archive note number 002 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-003.md\\\",\\\"title\\\":\\\"Bulk archive note number 003 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-004.md\\\",\\\"title\\\":\\\"Bulk archive note number 004 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-005.md\\\",\\\"title\\\":\\\"Bulk archive note number 005 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-006.md\\\",\\\"title\\\":\\\"Bulk archive note number 006 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-007.md\\\",\\\"title\\\":\\\"Bulk archive note number 007 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-008.md\\\",\\\"title\\\":\\\"Bulk archive note number 008 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-009.md\\\",\\\"title\\\":\\\"Bulk archive note number 009 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-010.md\\\",\\\"title\\\":\\\"Bulk archive note number 010 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-011.md\\\",\\\"title\\\":\\\"Bulk archive note number 011 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-012.md\\\",\\\"title\\\":\\\"Bulk archive note number 012 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-013.md\\\",\\\"title\\\":\\\"Bulk archive note number 013 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-014.md\\\",\\\"title\\\":\\\"Bulk archive note number 014 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-015.md\\\",\\\"title\\\":\\\"Bulk archive note number 015 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-016.md\\\",\\\"title\\\":\\\"Bulk archive note number 016 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-017.md\\\",\\\"title\\\":\\\"Bulk archive note number 017 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-018.md\\\",\\\"title\\\":\\\"Bulk archive note number 018 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-019.md\\\",\\\"title\\\":\\\"Bulk archive note number 019 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-020.md\\\",\\\"title\\\":\\\"Bulk archive note number 020 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-021.md\\\",\\\"title\\\":\\\"Bulk archive note number 021 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-022.md\\\",\\\"title\\\":\\\"Bulk archive note number 022 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-023.md\\\",\\\"title\\\":\\\"Bulk archive note number 023 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-024.md\\\",\\\"title\\\":\\\"Bulk archive note number 024 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-025.md\\\",\\\"title\\\":\\\"Bulk archive note number 025 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-026.md\\\",\\\"title\\\":\\\"Bulk archive note number 026 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-027.md\\\",\\\"title\\\":\\\"Bulk archive note number 027 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-028.md\\\",\\\"title\\\":\\\"Bulk archive note number 028 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-029.md\\\",\\\"title\\\":\\\"Bulk archive note number 029 with padding words\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"bulk/note-03\\n…[externalized — full result via desk_read_result]\\n\\n[Full result externalized to task-\u003cID\u003e/desk_ls-001.txt — call desk_read_result with handle=\\\"task-\u003cID\u003e/desk_ls-001.txt\\\" to read it.]\"}\n{\"type\":\"answer\",\"text\":\"Only [[alpha.md]] had properties.\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\",\"missing.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_inputs\":{\"file\":\"alpha.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_output\":\"{\\\"title\\\":\\\"Alpha Project\\\"}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_inputs\":{\"file\":\"missing.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_props\",\"iteration\":1,\"tool_output\":\"{}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_note_new\",\"iteration\":1,\"tool_inputs\":{\"title\":\"x\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_note_new\",\"iteration\":1,\"tool_output\":\"tool error: unknown tool \\\"desk_note_new\\\"\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_inputs\":{}}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_output\":\"[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"notes/beta.md\\\",\\\"title\\\":\\\"Beta Notes\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"notes/gamma.md\\\",\\\"title\\\":\\\"Gamma Notes\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"},{\\\"path\\\":\\\"notes/outside.md\\\",\\\"title\\\":\\\"Outside\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"}]\"}\n{\"type\":\"answer\",\"text\":\"Only [[alpha.md]] had properties.\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\",\"missing.md\",\"notes/beta.md\",\"notes/gamma.md\",\"notes/outside.md\"]}\n",
       "stderr": "",
       "requests": [
         {
@@ -3300,7 +3398,7 @@
                 "tool_call_id": "call_2"
               },
               {
-                "content": "[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-001.md\",\"title\":\"Bulk archive note number 001 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-002.md\",\"title\":\"Bulk archive note number 002 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-003.md\",\"title\":\"Bulk archive note number 003 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-004.md\",\"title\":\"Bulk archive note number 004 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-005.md\",\"title\":\"Bulk archive note number 005 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-006.md\",\"title\":\"Bulk archive note number 006 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-007.md\",\"title\":\"Bulk archive note number 007 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-008.md\",\"title\":\"Bulk archive note number 008 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-009.md\",\"title\":\"Bulk archive note number 009 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-010.md\",\"title\":\"Bulk archive note number 010 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-011.md\",\"title\":\"Bulk archive note number 011 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-012.md\",\"title\":\"Bulk archive note number 012 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-013.md\",\"title\":\"Bulk archive note number 013 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-014.md\",\"title\":\"Bulk archive note number 014 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-015.md\",\"title\":\"Bulk archive note number 015 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-016.md\",\"title\":\"Bulk archive note number 016 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-017.md\",\"title\":\"Bulk archive note number 017 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-018.md\",\"title\":\"Bulk archive note number 018 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-019.md\",\"title\":\"Bulk archive note number 019 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-020.md\",\"title\":\"Bulk archive note number 020 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-021.md\",\"title\":\"Bulk archive note number 021 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-022.md\",\"title\":\"Bulk archive note number 022 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-023.md\",\"title\":\"Bulk archive note number 023 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-024.md\",\"title\":\"Bulk archive note number 024 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-025.md\",\"title\":\"Bulk archive note number 025 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-026.md\",\"title\":\"Bulk archive note number 026 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-027.md\",\"title\":\"Bulk archive note number 027 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-028.md\",\"title\":\"Bulk archive note number 028 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-029.md\",\"title\":\"Bulk archive note number 029 with padding words\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"bulk/note-03\n…[externalized — full result via desk_read_result]\n\n[Full result externalized to task-\u003cID\u003e/desk_ls-001.txt — call desk_read_result with handle=\"task-\u003cID\u003e/desk_ls-001.txt\" to read it.]",
+                "content": "[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"notes/gamma.md\",\"title\":\"Gamma Notes\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"},{\"path\":\"notes/outside.md\",\"title\":\"Outside\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"}]",
                 "role": "tool",
                 "tool_call_id": "call_3"
               }
@@ -3898,18 +3996,11 @@
             ]
           }
         }
-      ],
-      "results": [
-        {
-          "digest_matches_vault": true,
-          "name": "desk_ls-001.txt",
-          "size": 8015,
-          "sha256": "01a2c350289346d4d7e2409bc87bf8f509054a7997ecddc773852dc42e4ac818"
-        }
       ]
     },
     {
       "name": "ollama_externalize",
+      "file_set": "bulk",
       "args": [
         "--json",
         "ask",
@@ -5828,17 +5919,18 @@
     },
     {
       "name": "ollama_search_citation_warning",
+      "file_set": "single",
       "args": [
         "--json",
         "ask",
         "--agent",
-        "budget"
+        "quarterly"
       ],
       "provider": "ollama",
       "turns": [
         {
           "status": 0,
-          "body": "{\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"function\":{\"name\":\"desk_search\",\"arguments\":{\"query\":\"budget\"}}}]},\"done\":false}\n{\"done\":true,\"message\":{\"content\":\"\",\"role\":\"assistant\"}}\n"
+          "body": "{\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"function\":{\"name\":\"desk_search\",\"arguments\":{\"query\":\"quarterly\"}}}]},\"done\":false}\n{\"done\":true,\"message\":{\"content\":\"\",\"role\":\"assistant\"}}\n"
         },
         {
           "status": 0,
@@ -5846,7 +5938,7 @@
         }
       ],
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_inputs\":{\"query\":\"budget\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_output\":\"{\\\"results\\\":[{\\\"path\\\":\\\"notebooks/nb.md\\\",\\\"title\\\":\\\"Budget notebook\\\",\\\"snippet\\\":\\\"\\\",\\\"score\\\":\u003cSCORE\u003e,\\\"metadata_matches\\\":[\\\"title\\\"]},{\\\"path\\\":\\\"notebooks/nb.md\\\",\\\"title\\\":\\\"Budget notebook\\\",\\\"snippet\\\":\\\"# Budget notebook\\\",\\\"score\\\":\u003cSCORE\u003e},{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"# Alpha\\\\n\\\\nThe quarterly budget review covers marketing spend and hiring.\\\",\\\"score\\\":\u003cSCORE\u003e},{\\\"path\\\":\\\"notes/outside.md\\\",\\\"title\\\":\\\"Outside\\\",\\\"snippet\\\":\\\"# Outside\\\\n\\\\nA note outside the notebook.\\\",\\\"score\\\":\u003cSCORE\u003e},{\\\"path\\\":\\\"notes/outside.md\\\",\\\"title\\\":\\\"Outside\\\",\\\"snippet\\\":\\\"\\\",\\\"score\\\":\u003cSCORE\u003e}]}\"}\n{\"type\":\"answer\",\"text\":\"The budget is in [[alpha.md]].\\n\\n## Sources\\n- [[notes/gamma.md]]\\n- [[alpha.md]]\\n\"}\n{\"type\":\"done\",\"citation_warnings\":[{\"path\":\"notes/gamma.md\",\"line\":4}],\"read_paths\":[\"alpha.md\",\"notebooks/nb.md\",\"notes/outside.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_inputs\":{\"query\":\"quarterly\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_output\":\"{\\\"results\\\":[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"# Alpha\\\\n\\\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\\",\\\"score\\\":\u003cSCORE\u003e},{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"\\\",\\\"score\\\":\u003cSCORE\u003e}]}\"}\n{\"type\":\"answer\",\"text\":\"The budget is in [[alpha.md]].\\n\\n## Sources\\n- [[notes/gamma.md]]\\n- [[alpha.md]]\\n\"}\n{\"type\":\"done\",\"citation_warnings\":[{\"path\":\"notes/gamma.md\",\"line\":4}],\"read_paths\":[\"alpha.md\"]}\n",
       "stderr": "",
       "requests": [
         {
@@ -5858,7 +5950,7 @@
           "body": {
             "messages": [
               {
-                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                 "role": "user"
               }
             ],
@@ -6464,7 +6556,7 @@
           "body": {
             "messages": [
               {
-                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                 "role": "user"
               },
               {
@@ -6474,7 +6566,7 @@
                   {
                     "function": {
                       "arguments": {
-                        "query": "budget"
+                        "query": "quarterly"
                       },
                       "name": "desk_search"
                     },
@@ -6484,7 +6576,7 @@
                 ]
               },
               {
-                "content": "{\"results\":[{\"path\":\"notebooks/nb.md\",\"title\":\"Budget notebook\",\"snippet\":\"\",\"score\":\u003cSCORE\u003e,\"metadata_matches\":[\"title\"]},{\"path\":\"notebooks/nb.md\",\"title\":\"Budget notebook\",\"snippet\":\"# Budget notebook\",\"score\":\u003cSCORE\u003e},{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\u003cSCORE\u003e},{\"path\":\"notes/outside.md\",\"title\":\"Outside\",\"snippet\":\"# Outside\\n\\nA note outside the notebook.\",\"score\":\u003cSCORE\u003e},{\"path\":\"notes/outside.md\",\"title\":\"Outside\",\"snippet\":\"\",\"score\":\u003cSCORE\u003e}]}",
+                "content": "{\"results\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\",\"score\":\u003cSCORE\u003e},{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"\",\"score\":\u003cSCORE\u003e}]}",
                 "role": "tool",
                 "tool_call_id": "call_0"
               }
@@ -7086,6 +7178,7 @@
     },
     {
       "name": "ollama_iteration_cap",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -8347,6 +8440,7 @@
     },
     {
       "name": "ollama_http_500",
+      "file_set": "single",
       "args": [
         "--json",
         "ask",
@@ -8974,6 +9068,7 @@
     },
     {
       "name": "ollama_unconfigured",
+      "file_set": "single",
       "args": [
         "--json",
         "ask",
@@ -8990,6 +9085,7 @@
     },
     {
       "name": "ollama_arguments_not_object",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -10246,6 +10342,7 @@
     },
     {
       "name": "anthropic_tool_use_json",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -11357,6 +11454,7 @@
     },
     {
       "name": "anthropic_tool_use_text",
+      "file_set": "tools",
       "args": [
         "ask",
         "--agent",
@@ -12458,6 +12556,7 @@
     },
     {
       "name": "anthropic_tool_without_input_is_dropped",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -13006,6 +13105,7 @@
     },
     {
       "name": "anthropic_http_429",
+      "file_set": "single",
       "args": [
         "--json",
         "ask",
@@ -13554,6 +13654,7 @@
     },
     {
       "name": "anthropic_truncated_tool_json_text",
+      "file_set": "tools",
       "args": [
         "ask",
         "--agent",
@@ -14105,6 +14206,7 @@
     },
     {
       "name": "anthropic_truncated_tool_json_json",
+      "file_set": "tools",
       "args": [
         "--json",
         "ask",
@@ -14653,19 +14755,20 @@
     },
     {
       "name": "agent_notebook_scoped_tools",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--agent",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "ollama",
       "turns": [
         {
           "status": 0,
-          "body": "{\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"function\":{\"name\":\"desk_search\",\"arguments\":{\"query\":\"budget\"}}},{\"function\":{\"name\":\"desk_ls\",\"arguments\":{\"dir\":\"\"}}},{\"function\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"alpha.md\"}}},{\"function\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"notes/gamma.md\"}}}]},\"done\":false}\n{\"done\":true,\"message\":{\"content\":\"\",\"role\":\"assistant\"}}\n"
+          "body": "{\"message\":{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"function\":{\"name\":\"desk_search\",\"arguments\":{\"query\":\"quarterly\"}}},{\"function\":{\"name\":\"desk_ls\",\"arguments\":{\"dir\":\"\"}}},{\"function\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"alpha.md\"}}},{\"function\":{\"name\":\"desk_backlinks\",\"arguments\":{\"file\":\"notebooks/nb.md\"}}}]},\"done\":false}\n{\"done\":true,\"message\":{\"content\":\"\",\"role\":\"assistant\"}}\n"
         },
         {
           "status": 0,
@@ -14673,7 +14776,7 @@
         }
       ],
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_inputs\":{\"query\":\"budget\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_output\":\"{\\\"results\\\":[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"# Alpha\\\\n\\\\nThe quarterly budget review covers marketing spend and hiring.\\\",\\\"score\\\":\u003cSCORE\u003e}],\\\"scoped_out\\\":4}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_inputs\":{\"dir\":\"\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_output\":\"{\\\"files\\\":[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"}],\\\"scoped_out\\\":75}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_inputs\":{\"file\":\"alpha.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_output\":\"{\\\"paths\\\":null,\\\"scoped_out\\\":1}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_inputs\":{\"file\":\"notes/gamma.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_output\":\"{\\\"paths\\\":null}\"}\n{\"type\":\"answer\",\"text\":\"Scoped answer [[alpha.md]].\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\",\"notes/gamma.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_inputs\":{\"query\":\"quarterly\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_search\",\"iteration\":1,\"tool_output\":\"{\\\"results\\\":[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"# Alpha\\\\n\\\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\\",\\\"score\\\":\u003cSCORE\u003e},{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"snippet\\\":\\\"\\\",\\\"score\\\":\u003cSCORE\u003e}],\\\"scoped_out\\\":2}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_inputs\":{\"dir\":\"\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_ls\",\"iteration\":1,\"tool_output\":\"{\\\"files\\\":[{\\\"path\\\":\\\"alpha.md\\\",\\\"title\\\":\\\"Alpha Project\\\",\\\"type\\\":\\\"note\\\",\\\"modified\\\":\\\"2026-01-02T03:04:05Z\\\"}],\\\"scoped_out\\\":1}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_inputs\":{\"file\":\"alpha.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_output\":\"{\\\"paths\\\":null}\"}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_inputs\":{\"file\":\"notebooks/nb.md\"}}\n{\"type\":\"tool\",\"tool_name\":\"desk_backlinks\",\"iteration\":1,\"tool_output\":\"{\\\"paths\\\":null}\"}\n{\"type\":\"answer\",\"text\":\"Scoped answer [[alpha.md]].\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\",\"notebooks/nb.md\"]}\n",
       "stderr": "",
       "requests": [
         {
@@ -14685,7 +14788,7 @@
           "body": {
             "messages": [
               {
-                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                 "role": "user"
               }
             ],
@@ -15291,7 +15394,7 @@
           "body": {
             "messages": [
               {
-                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: budget",
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
                 "role": "user"
               },
               {
@@ -15301,7 +15404,7 @@
                   {
                     "function": {
                       "arguments": {
-                        "query": "budget"
+                        "query": "quarterly"
                       },
                       "name": "desk_search"
                     },
@@ -15331,7 +15434,7 @@
                   {
                     "function": {
                       "arguments": {
-                        "file": "notes/gamma.md"
+                        "file": "notebooks/nb.md"
                       },
                       "name": "desk_backlinks"
                     },
@@ -15341,17 +15444,17 @@
                 ]
               },
               {
-                "content": "{\"results\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":\u003cSCORE\u003e}],\"scoped_out\":4}",
+                "content": "{\"results\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\",\"score\":\u003cSCORE\u003e},{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"\",\"score\":\u003cSCORE\u003e}],\"scoped_out\":2}",
                 "role": "tool",
                 "tool_call_id": "call_0"
               },
               {
-                "content": "{\"files\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"}],\"scoped_out\":75}",
+                "content": "{\"files\":[{\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"type\":\"note\",\"modified\":\"2026-01-02T03:04:05Z\"}],\"scoped_out\":1}",
                 "role": "tool",
                 "tool_call_id": "call_1"
               },
               {
-                "content": "{\"paths\":null,\"scoped_out\":1}",
+                "content": "{\"paths\":null}",
                 "role": "tool",
                 "tool_call_id": "call_2"
               },
@@ -15958,13 +16061,14 @@
     },
     {
       "name": "agent_notebook_missing",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--agent",
         "--notebook",
         "nope",
-        "budget"
+        "quarterly"
       ],
       "provider": "ollama",
       "exit_code": 1,
@@ -15973,91 +16077,97 @@
     },
     {
       "name": "ask_notebook_hermes_json",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "ok",
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "ask_notebook_hermes_text",
+      "file_set": "core",
       "args": [
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "ok",
       "exit_code": 0,
-      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n 1   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer Answer from \u003chermes\u003e [[alpha.md]]    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [alpha.md] 0 0}\n",
+      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n 1   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer Answer from \u003chermes\u003e [[alpha.md]]    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [alpha.md] 0 0}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "ask_notebook_citation_warning",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "warn",
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Findings.\\n\\n## Sources\\n- [[notes/outside.md]]\\n- [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"citation_warnings\":[{\"path\":\"notes/outside.md\",\"line\":4}],\"read_paths\":[\"alpha.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Findings.\\n\\n## Sources\\n- [[notes/outside.md]]\\n- [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"citation_warnings\":[{\"path\":\"notes/outside.md\",\"line\":4}],\"read_paths\":[\"alpha.md\"]}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "ask_notebook_backend_fails",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "fail",
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend failed: hermes exploded\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend failed: hermes exploded\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "ask_notebook_empty_sources",
+      "file_set": "empty",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "none",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "ok",
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
       "stderr": "",
-      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\nQuestion: budget\n\u003e\u003e\n"
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cYou are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\nQuestion: quarterly\n\u003e\u003e\n"
     },
     {
       "name": "ask_notebook_missing",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "nope",
-        "budget"
+        "quarterly"
       ],
       "provider": "hermes",
       "mode": "ok",
@@ -16067,29 +16177,31 @@
     },
     {
       "name": "ask_notebook_unconfigured",
+      "file_set": "core",
       "args": [
         "--json",
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "none",
       "exit_code": 0,
-      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\\n\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\",\"read_paths\":[\"alpha.md\"]}\n",
       "stderr": ""
     },
     {
       "name": "ask_notebook_unconfigured_text",
+      "file_set": "core",
       "args": [
         "ask",
         "--notebook",
         "nb",
-        "budget"
+        "quarterly"
       ],
       "provider": "none",
       "exit_code": 0,
-      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring.\n 1   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer ⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n    0   0 []  false [] [] 0 0}\n{answer - [[alpha.md]]\n    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [alpha.md] 0 0}\n",
+      "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n 1   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer ⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n    0   0 []  false [] [] 0 0}\n{answer - [[alpha.md]]\n    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [alpha.md] 0 0}\n",
       "stderr": ""
     }
   ]

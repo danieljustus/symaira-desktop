@@ -16,7 +16,8 @@ use provider::{FakeProvider, Turn};
 #[path = "support/ask_replay.rs"]
 mod ask_replay;
 use ask_replay::{
-    Request, Scratch, compare_requests, mcp_call_line, normalize, provider_env, without_log_lines,
+    Request, Scratch, compare_requests, mcp_call_line, normalize, provider_env, select_files,
+    without_log_lines,
 };
 
 #[derive(Deserialize)]
@@ -24,6 +25,7 @@ struct Fixture {
     schema_version: u32,
     hermes_script: String,
     files: BTreeMap<String, String>,
+    file_sets: BTreeMap<String, Vec<String>>,
     file_time: String,
     cases: Vec<Case>,
 }
@@ -31,6 +33,7 @@ struct Fixture {
 #[derive(Deserialize, Clone)]
 struct Case {
     name: String,
+    file_set: String,
     provider: String,
     #[serde(default)]
     mode: String,
@@ -59,7 +62,7 @@ fn run_replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
     let label = &case.name;
     let scratch = Scratch::new(
         label,
-        &fixture.files,
+        &select_files(&fixture.files, &fixture.file_sets, &case.file_set),
         &fixture.file_time,
         (case.provider == "hermes").then_some(fixture.hermes_script.as_str()),
     );

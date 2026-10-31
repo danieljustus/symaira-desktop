@@ -477,6 +477,53 @@ This is a partial INDEX-002/INDEX-005/RUST-008 slice. Their statuses and parent
 #1136 remain open; this does not establish retry, the full retrieval lifecycle,
 Go retirement, or production cutover.
 
+### `symdesk sources` facade (INDEX-002/INDEX-005, RUST-008)
+
+`cmd/symdesk/sources_process_port_test.go` runs the real Go
+`symdesk sources add|list|remove|watch` processes (37 steps: 19 `add`, 6 `list`, 6 `remove`, 4 `watch`, 2 `index`)
+against a loopback embedding provider and disposable HOME/XDG roots. Registry
+identities (`folder-<sha256 of the canonical path>`) are masked as
+`$ID:<folder>` in recorded output and expanded in arguments. Each step records
+stdout, stderr, exit status, every provider request, the registry file
+(content and mode) and the shared retrieval database (documents, chunks,
+extractions and their FTS counts, generation, `index_storage`).
+`crates/symdesk-cli/tests/sources.rs` replays the frozen fixture against the
+Rust CLI (`make sources-cli-differential`).
+
+Covered: text (`map[source:{ID:… Path:…} status:indexed]`, `[{ID:… Path:…}]`,
+`map[removed:N …]`) and `--json` output; missing, file, in-vault, vault-root
+and empty-argument registrations; relative and symlinked source paths;
+idempotent re-add; incremental re-sync with orphan removal; supported text,
+code, CSV, HTML, RTF and OOXML files, `.text`/upper-case extensions, hidden,
+`node_modules`, `vendor` and `build`-named roots skipped, file and directory
+symlinks never followed, oversized files skipped, corrupt `.docx` warning,
+recognized-but-unsupported formats (`.doc`, `.mobi`) reported and failing the
+run after the supported files are indexed; extraction sidecars imported for
+external Markdown (rows and FTS); provider-failure pending chunks; removal by
+ID and by path, of a vanished folder, of an unregistered source, and the
+name-prefix sibling guard; vault-resident retrieval rows never touched;
+`watch` on a vanished folder, an unregistered source, a failing initial sync
+and one live cycle (create then delete, bounded by SIGINT).
+
+Rust now writes external-folder documents into the shared retrieval database
+through `crates/symdesk-cli/src/external_index.rs` (Go's `IndexDirectory`,
+`RemoveDirectory`, `WatchDirectory`) and no longer writes the per-vault
+sidecar from `sources`. `SourceRegistry::add` reports Go's error wording.
+
+Declared limits: stderr of non-watch steps is compared as a sorted list and
+provider requests as a multiset, because Go prepares a directory's files in
+parallel; `extractions.id` follows commit order and `created_at` is
+wall-clock; files whose bytes are not UTF-8 are rejected by the text/Markdown
+section parsers (Go stores them lossily); a directory unreadable for lack of
+privilege and the `failed walking directory` OS text are not compared; the
+30-second `Watching N files, last change at …` status line is wall-clock and
+not exercised; `watch` runs until the process is signalled in both stacks
+(Go's root command carries no signal-aware context), so the harness bounds it
+with SIGINT after one event cycle; Go shares one per-text embedding cache
+across a directory pass while Rust shares only the learned dimension (the
+fixture avoids identical chunk text across files); Windows is not claimed
+(symlink creation and signal delivery).
+
 ### IVF prefilter, Hamming shortlist and heap ranking (INDEX-005, #1136)
 
 Go's `SearchVectorWithPath` is not an exact scan once an index grows. Rows are

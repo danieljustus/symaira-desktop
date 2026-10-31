@@ -454,15 +454,12 @@ fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
     // With a node id in more than one slot (never produced by the layout)
     // fall back to the full recount.
     let mut local = LocalCrossings::new(&interned);
-    // `layer` indexes both `layers` and `interned.layers`, which are mutated
-    // in lockstep; an iterator over one would borrow the other mutably.
-    #[allow(clippy::needless_range_loop)]
-    for layer in 0..layers.len() {
+    for (layer, row) in layers.iter_mut().enumerate() {
         let mut changed = true;
         while changed {
             changed = false;
             let mut i = 0;
-            while i + 1 < layers[layer].len() {
+            while i + 1 < row.len() {
                 let improves = if let Some(local) = local.as_mut() {
                     let (u, v) = (interned.layers[layer][i], interned.layers[layer][i + 1]);
                     let improves = local.swap_improves(u, v, i);
@@ -482,7 +479,7 @@ fn transpose(layers: &mut [Vec<String>], segments: &[Segment]) {
                     after < before
                 };
                 if improves {
-                    layers[layer].swap(i, i + 1);
+                    row.swap(i, i + 1);
                     changed = true;
                 }
                 i += 1;

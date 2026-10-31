@@ -5,11 +5,3 @@
 [[profile.default.overrides]]
 filter = 'binary(mcp_process) & test(=mcp_process_matches_go_for_cancellation_shutdown_and_concurrency)'
 threads-required = "num-test-threads"
-
-# The draw hostile-layout regression asserts a 10 s wall-clock bound on two
-# CPU-bound fuzz inputs in a debug build. It passes alone (it needs only one
-# core) but misses the bound when the other workspace tests saturate the host,
-# so it takes every test thread and runs alone.
-[[profile.default.overrides]]
-filter = 'binary(draw_hostile_layout) & test(=wide_flowcharts_lay_out_quickly)'
-threads-required = "num-test-threads"

@@ -10,7 +10,7 @@ pub struct SvgOptions {
     pub generator: String,
 }
 
-fn number(v: f64) -> String {
+pub(super) fn number(v: f64) -> String {
     if v.is_nan() {
         "NaN".into()
     } else if v == f64::INFINITY {

@@ -10,6 +10,7 @@ use crate::paperless_import::{
     resolve_document_meta, source_uri, stage_from_error,
 };
 use crate::paperless_state::PaperlessStateWrite;
+use crate::report_json::{GoFloat, go_indent, go_seconds, go_time};
 use crate::pipeline::{IngestOptions, Pipeline, PipelineError, hash_file};
 use crate::writer::{NoteLayout, PaperlessMeta, sanitize_storage_path};
 use serde::Serialize;
@@ -873,7 +874,8 @@ pub struct MigrationReport {
     pub source_url: String,
     pub started_at: String,
     pub finished_at: String,
-    pub duration_seconds: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_seconds: Option<GoFloat>,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub mode: String,
     pub dry_run: bool,
@@ -900,47 +902,20 @@ pub struct MigrationReport {
     pub required_tools: Vec<String>,
 }
 
-fn rfc3339_nano(t: Option<OffsetDateTime>) -> String {
-    let Some(t) = t else {
-        return "0001-01-01T00:00:00Z".to_owned();
-    };
-    let base = format!(
-        "{:04}-{:02}-{:02}T{:02}{}{:02}{}{:02}",
-        t.year(),
-        u8::from(t.month()),
-        t.day(),
-        t.hour(),
-        ":",
-        t.minute(),
-        ":",
-        t.second()
-    );
-    let nanos = format!("{:09}", t.nanosecond());
-    let nanos = nanos.trim_end_matches('0');
-    if nanos.is_empty() {
-        format!("{base}Z")
-    } else {
-        format!("{base}.{nanos}Z")
-    }
-}
-
 impl Stats {
     /// `BuildMigrationReport`.
     #[must_use]
     pub fn build_migration_report(&self, dry_run: bool) -> MigrationReport {
-        let duration = match (self.started_at, self.finished_at) {
-            (Some(a), Some(b)) => (b - a).as_seconds_f64(),
-            _ => 0.0,
-        };
+        let duration = go_seconds(self.started_at, self.finished_at);
         let mut report = MigrationReport {
             schema_version: REPORT_SCHEMA_VERSION,
             run_id: self.run_id.clone(),
             tool_version: TOOL_VERSION.to_owned(),
             source: self.source.clone(),
             source_url: self.source_url.clone(),
-            started_at: rfc3339_nano(self.started_at),
-            finished_at: rfc3339_nano(self.finished_at),
-            duration_seconds: duration,
+            started_at: go_time(self.started_at),
+            finished_at: go_time(self.finished_at),
+            duration_seconds: (duration != 0.0).then_some(GoFloat(duration)),
             mode: self.mode.clone(),
             dry_run,
             total: self.total,
@@ -976,8 +951,9 @@ pub const TOOL_VERSION: &str = "0.12.0";
 /// `WriteMigrationReport`: indented JSON plus a trailing newline, mode 0600.
 pub fn write_migration_report(path: &str, report: &MigrationReport) -> Result<(), String> {
     use std::os::unix::fs::OpenOptionsExt;
-    let mut data = serde_json::to_vec_pretty(report)
-        .map_err(|e| format!("marshal migration report: {e}"))?;
+    let mut data = go_indent(report)
+        .map_err(|e| format!("marshal migration report: {e}"))?
+        .into_bytes();
     data.push(b'\n');
     let write = || -> std::io::Result<()> {
         use std::io::Write;

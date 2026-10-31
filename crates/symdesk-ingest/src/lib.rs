@@ -39,6 +39,7 @@ pub mod paperless_run;
 mod paperless_state;
 #[cfg(unix)]
 pub mod pipeline;
+pub mod report_json;
 pub mod structured;
 #[cfg(unix)]
 pub mod vlm;

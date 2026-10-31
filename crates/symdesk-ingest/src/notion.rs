@@ -2,6 +2,7 @@
 //! idempotency searches note frontmatter, including notes moved by the user.
 //! No SQLite or network access is involved.
 use crate::Result;
+use crate::report_json::{GoFloat, go_indent, go_seconds, go_time};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -61,7 +62,85 @@ pub struct Stats {
     pub total: usize,
     pub warnings: Vec<String>,
     pub run_id: String,
+    pub source: String,
+    pub mode: String,
+    pub started_at: Option<time::OffsetDateTime>,
+    pub finished_at: Option<time::OffsetDateTime>,
     pub results: Vec<PageResult>,
+}
+
+/// `MigrationReport` (Notion).
+#[derive(Clone, Debug, Serialize)]
+pub struct MigrationReport {
+    pub schema_version: i64,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub run_id: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub tool_version: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub source: String,
+    pub started_at: String,
+    pub finished_at: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_seconds: Option<GoFloat>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub mode: String,
+    pub dry_run: bool,
+    pub total: usize,
+    pub imported: usize,
+    pub skipped: usize,
+    pub failed: usize,
+    pub documents: Vec<PageResult>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}
+
+impl Stats {
+    /// `BuildMigrationReport`.
+    #[must_use]
+    pub fn build_migration_report(&self, dry_run: bool) -> MigrationReport {
+        let duration = go_seconds(self.started_at, self.finished_at);
+        MigrationReport {
+            schema_version: 1,
+            run_id: self.run_id.clone(),
+            tool_version: "0.12.0".to_owned(),
+            source: self.source.clone(),
+            started_at: go_time(self.started_at),
+            finished_at: go_time(self.finished_at),
+            duration_seconds: (duration != 0.0).then_some(GoFloat(duration)),
+            mode: self.mode.clone(),
+            dry_run,
+            total: self.total,
+            imported: self.imported,
+            skipped: self.skipped,
+            failed: self.failed,
+            documents: self.results.clone(),
+            warnings: self.warnings.clone(),
+        }
+    }
+}
+
+/// `WriteMigrationReport`: indented JSON plus a trailing newline, mode 0600.
+pub fn write_migration_report(path: &str, report: &MigrationReport) -> Result<()> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    let mut data = go_indent(report)
+        .map_err(|e| format!("marshal migration report: {e}"))?
+        .into_bytes();
+    data.push(b'\n');
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(path)
+        .and_then(|mut file| file.write_all(&data))
+        .map_err(|e| {
+            format!(
+                "write migration report: {}",
+                symdesk_vault::go_path_error("open", Path::new(path), &e)
+            )
+        })
 }
 fn text(path: impl AsRef<Path>) -> String {
     path.as_ref().to_string_lossy().into_owned()
@@ -396,6 +475,8 @@ pub fn run_at(opts: &Options, now: &str, generated_run_id: &str) -> Result<Stats
         .collect();
     let mut stats = Stats {
         run_id: run.into(),
+        source: "notion".into(),
+        mode: if opts.dry_run { "dry-run" } else { "import" }.into(),
         ..Stats::default()
     };
     for entry in entries {
@@ -438,7 +519,10 @@ pub fn run(opts: &Options) -> Result<Stats> {
         now.second(),
         now.nanosecond()
     );
-    run_at(opts, &stamp, &run_id)
+    let mut stats = run_at(opts, &stamp, &run_id)?;
+    stats.started_at = Some(now);
+    stats.finished_at = Some(time::OffsetDateTime::now_utc());
+    Ok(stats)
 }
 fn process_page(
     entry: &ExportEntry,

@@ -1,0 +1,180 @@
+{
+ "cases": [
+  {
+   "id": "empty-zero-times",
+   "stats": {
+    "imported": 0,
+    "skipped": 0,
+    "failed": 0,
+    "total": 0,
+    "warnings": null,
+    "run_id": "",
+    "source": "",
+    "mode": "",
+    "started_at": "",
+    "finished_at": "",
+    "results": null
+   },
+   "dry_run": false,
+   "written": "{\n  \"schema_version\": 1,\n  \"tool_version\": \"0.12.0\",\n  \"started_at\": \"0001-01-01T00:00:00Z\",\n  \"finished_at\": \"0001-01-01T00:00:00Z\",\n  \"dry_run\": false,\n  \"total\": 0,\n  \"imported\": 0,\n  \"skipped\": 0,\n  \"failed\": 0,\n  \"documents\": []\n}\n",
+   "error": ""
+  },
+  {
+   "id": "nil-results-dry-run",
+   "stats": {
+    "imported": 0,
+    "skipped": 0,
+    "failed": 0,
+    "total": 0,
+    "warnings": null,
+    "run_id": "notion-20260102T030405.000000000Z",
+    "source": "notion",
+    "mode": "dry-run",
+    "started_at": "2026-01-02T03:04:05Z",
+    "finished_at": "2026-01-02T03:04:05Z",
+    "results": null
+   },
+   "dry_run": true,
+   "written": "{\n  \"schema_version\": 1,\n  \"run_id\": \"notion-20260102T030405.000000000Z\",\n  \"tool_version\": \"0.12.0\",\n  \"source\": \"notion\",\n  \"started_at\": \"2026-01-02T03:04:05Z\",\n  \"finished_at\": \"2026-01-02T03:04:05Z\",\n  \"mode\": \"dry-run\",\n  \"dry_run\": true,\n  \"total\": 0,\n  \"imported\": 0,\n  \"skipped\": 0,\n  \"failed\": 0,\n  \"documents\": []\n}\n",
+   "error": ""
+  },
+  {
+   "id": "mixed-results",
+   "stats": {
+    "imported": 2,
+    "skipped": 1,
+    "failed": 1,
+    "total": 4,
+    "warnings": [
+     "plain warning",
+     "html \u003cb\u003e\u0026amp;\u003c/b\u003e \u2028 line",
+     "unicode ünï ✓ \"quoted\" \\ back\ttab"
+    ],
+    "run_id": "notion-20260102T030405.123456789Z",
+    "source": "notion",
+    "mode": "import",
+    "started_at": "2026-01-02T03:04:05.123456789Z",
+    "finished_at": "2026-01-02T03:04:07.623456789Z",
+    "results": [
+     {
+      "source_path": "a/Page One abc.md",
+      "vault_path": "/v/a.md",
+      "sha256": "aa",
+      "status": "imported"
+     },
+     {
+      "source_path": "b.md",
+      "status": "skipped",
+      "reason": "already imported"
+     },
+     {
+      "source_path": "c \u003cx\u003e.md",
+      "status": "failed",
+      "error": "read: boom \u0026 \u003cbang\u003e"
+     },
+     {
+      "source_path": "d.csv",
+      "vault_path": "/v/d.md",
+      "status": "would-import"
+     }
+    ]
+   },
+   "dry_run": false,
+   "written": "{\n  \"schema_version\": 1,\n  \"run_id\": \"notion-20260102T030405.123456789Z\",\n  \"tool_version\": \"0.12.0\",\n  \"source\": \"notion\",\n  \"started_at\": \"2026-01-02T03:04:05.123456789Z\",\n  \"finished_at\": \"2026-01-02T03:04:07.623456789Z\",\n  \"duration_seconds\": 2.5,\n  \"mode\": \"import\",\n  \"dry_run\": false,\n  \"total\": 4,\n  \"imported\": 2,\n  \"skipped\": 1,\n  \"failed\": 1,\n  \"documents\": [\n    {\n      \"source_path\": \"a/Page One abc.md\",\n      \"vault_path\": \"/v/a.md\",\n      \"sha256\": \"aa\",\n      \"status\": \"imported\"\n    },\n    {\n      \"source_path\": \"b.md\",\n      \"status\": \"skipped\",\n      \"reason\": \"already imported\"\n    },\n    {\n      \"source_path\": \"c \\u003cx\\u003e.md\",\n      \"status\": \"failed\",\n      \"error\": \"read: boom \\u0026 \\u003cbang\\u003e\"\n    },\n    {\n      \"source_path\": \"d.csv\",\n      \"vault_path\": \"/v/d.md\",\n      \"status\": \"would-import\"\n    }\n  ],\n  \"warnings\": [\n    \"plain warning\",\n    \"html \\u003cb\\u003e\\u0026amp;\\u003c/b\\u003e \\u2028 line\",\n    \"unicode ünï ✓ \\\"quoted\\\" \\\\ back\\ttab\"\n  ]\n}\n",
+   "error": ""
+  },
+  {
+   "id": "offset-timezone",
+   "stats": {
+    "imported": 1,
+    "skipped": 0,
+    "failed": 0,
+    "total": 1,
+    "warnings": null,
+    "run_id": "r",
+    "source": "notion",
+    "mode": "import",
+    "started_at": "2026-06-30T23:59:59+02:00",
+    "finished_at": "2026-07-01T00:00:00.5+02:00",
+    "results": [
+     {
+      "source_path": "e.md",
+      "status": "imported"
+     }
+    ]
+   },
+   "dry_run": false,
+   "written": "{\n  \"schema_version\": 1,\n  \"run_id\": \"r\",\n  \"tool_version\": \"0.12.0\",\n  \"source\": \"notion\",\n  \"started_at\": \"2026-06-30T23:59:59+02:00\",\n  \"finished_at\": \"2026-07-01T00:00:00.5+02:00\",\n  \"duration_seconds\": 1.5,\n  \"mode\": \"import\",\n  \"dry_run\": false,\n  \"total\": 1,\n  \"imported\": 1,\n  \"skipped\": 0,\n  \"failed\": 0,\n  \"documents\": [\n    {\n      \"source_path\": \"e.md\",\n      \"status\": \"imported\"\n    }\n  ]\n}\n",
+   "error": ""
+  },
+  {
+   "id": "long-duration-and-tiny-fraction",
+   "stats": {
+    "imported": 0,
+    "skipped": 0,
+    "failed": 0,
+    "total": 0,
+    "warnings": null,
+    "run_id": "r",
+    "source": "notion",
+    "mode": "import",
+    "started_at": "2026-01-01T00:00:00Z",
+    "finished_at": "2026-01-03T03:46:40.000000001Z",
+    "results": null
+   },
+   "dry_run": false,
+   "written": "{\n  \"schema_version\": 1,\n  \"run_id\": \"r\",\n  \"tool_version\": \"0.12.0\",\n  \"source\": \"notion\",\n  \"started_at\": \"2026-01-01T00:00:00Z\",\n  \"finished_at\": \"2026-01-03T03:46:40.000000001Z\",\n  \"duration_seconds\": 186400.000000001,\n  \"mode\": \"import\",\n  \"dry_run\": false,\n  \"total\": 0,\n  \"imported\": 0,\n  \"skipped\": 0,\n  \"failed\": 0,\n  \"documents\": []\n}\n",
+   "error": ""
+  },
+  {
+   "id": "finished-before-started",
+   "stats": {
+    "imported": 0,
+    "skipped": 0,
+    "failed": 0,
+    "total": 0,
+    "warnings": null,
+    "run_id": "r",
+    "source": "notion",
+    "mode": "import",
+    "started_at": "2026-01-01T00:00:10Z",
+    "finished_at": "2026-01-01T00:00:00Z",
+    "results": null
+   },
+   "dry_run": true,
+   "written": "{\n  \"schema_version\": 1,\n  \"run_id\": \"r\",\n  \"tool_version\": \"0.12.0\",\n  \"source\": \"notion\",\n  \"started_at\": \"2026-01-01T00:00:10Z\",\n  \"finished_at\": \"2026-01-01T00:00:00Z\",\n  \"duration_seconds\": -10,\n  \"mode\": \"import\",\n  \"dry_run\": true,\n  \"total\": 0,\n  \"imported\": 0,\n  \"skipped\": 0,\n  \"failed\": 0,\n  \"documents\": []\n}\n",
+   "error": ""
+  },
+  {
+   "id": "unwritable-directory",
+   "stats": {
+    "imported": 0,
+    "skipped": 0,
+    "failed": 0,
+    "total": 0,
+    "warnings": null,
+    "run_id": "r",
+    "source": "",
+    "mode": "",
+    "started_at": "",
+    "finished_at": "",
+    "results": null
+   },
+   "dry_run": false,
+   "written": "",
+   "error": "write migration report: open $DIR/missing-dir/x.json: no such file or directory"
+  }
+ ],
+ "normalizations": [
+  "the unwritable-directory error replaces the scratch directory by $DIR"
+ ],
+ "oracle": {
+  "commit": "5c666cbf6051eba7b8e659d7d3f16d051c3404b9",
+  "release": "renderer-pdf-safety-v2-local"
+ },
+ "schema_version": 1,
+ "source_hashes": {
+  "report.go": "a9ba804e4465163db7d126d3f344b0f05a9fede7671750d7d225e61da12170b2",
+  "report_port_test.go": "a44c5526df971d5d0e6a1245cf0d6844883ee8925fcf23bd32707abf4c67744e"
+ }
+}

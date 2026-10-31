@@ -1471,11 +1471,18 @@ recipe-validate-differential:
 .PHONY: ai-compose-differential
 # RUST-012: provider selection/streaming, sibling-tool discovery and the
 # reviewed recipe runner, each replayed against Go-recorded fixtures.
-ai-compose-differential: ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+ai-compose-differential: secrets-resolve-differential ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
 
-.PHONY: compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
+.PHONY: secrets-resolve-fixtures-generate secrets-resolve-differential compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
 ai-compose-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+
+secrets-resolve-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/secrets -run '^TestPortSecretsResolveContract$$'
+
+secrets-resolve-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/secrets -run '^TestPortSecretsResolveContract$$'
+	$(CARGO) test -p symdesk-service --locked --test secrets_resolve
 
 compose-memory-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/compose -run '^TestPortComposeMemoryContract$$'

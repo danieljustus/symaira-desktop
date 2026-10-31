@@ -11,3 +11,4 @@ pub(crate) mod gojson;
 pub mod memory;
 pub mod process;
 pub mod recipes;
+pub mod secrets;

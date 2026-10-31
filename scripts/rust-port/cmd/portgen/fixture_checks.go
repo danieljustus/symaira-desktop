@@ -118,6 +118,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"AI providers", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIProviderContract$"}, []string{"testdata/port/ai/providers.json"}, false},
 	{"transform hermes CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortTransformHermesProcessContract$"}, []string{"testdata/port/ai/transform-hermes-process.json"}, false},
 	{"compose symmemory adapters", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeMemoryContract$"}, []string{"testdata/port/ai/compose-memory.json"}, false},
+	{"secrets resolution", []string{"test", "-count=1", "./internal/secrets", "-run", "^TestPortSecretsResolveContract$"}, []string{"testdata/port/ai/secrets-resolve.json"}, false},
 	{"AI composition", []string{"test", "-count=1", "./internal/ai", "-run", "^TestPortAIComposeContract$"}, []string{"testdata/port/ai/ai-compose.json"}, false},
 	{"compose probes", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeProbeContract$"}, []string{"testdata/port/ai/compose-probe.json"}, false},
 	{"compose resolution", []string{"test", "-count=1", "./internal/compose", "-run", "^TestPortComposeResolveContract$"}, []string{"testdata/port/ai/compose-resolve.json"}, false},

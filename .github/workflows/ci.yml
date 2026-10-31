@@ -596,7 +596,7 @@ jobs:
       - name: Run native AI composition and Hermes backend differentials
         if: runner.os != 'Windows'
         shell: bash
-        run: make ai-compose-hermes-differential transform-hermes-differential compose-memory-differential
+        run: make ai-compose-hermes-differential transform-hermes-differential compose-memory-differential secrets-resolve-differential
 
       - name: Run native recipe run CLI differential
         if: runner.os != 'Windows'

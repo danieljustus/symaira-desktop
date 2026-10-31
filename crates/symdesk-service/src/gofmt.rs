@@ -2,7 +2,9 @@
 
 use std::{
     io,
+    os::unix::process::ExitStatusExt,
     path::{Component, Path, PathBuf},
+    process::ExitStatus,
 };
 
 /// Go's `os` error text: lowercase libc message without Rust's errno suffix.
@@ -53,6 +55,27 @@ pub fn join(parts: &[&str]) -> PathBuf {
     } else {
         clean
     }
+}
+
+/// Go `*exec.ExitError` text: `exit status N` or `signal: name`.
+#[must_use]
+pub fn status_text(status: ExitStatus) -> String {
+    if let Some(code) = status.code() {
+        return format!("exit status {code}");
+    }
+    let signal = status.signal().unwrap_or_default();
+    let name = match signal {
+        1 => "hangup",
+        2 => "interrupt",
+        3 => "quit",
+        6 => "aborted",
+        9 => "killed",
+        11 => "segmentation fault",
+        13 => "broken pipe",
+        15 => "terminated",
+        _ => return format!("signal: {signal}"),
+    };
+    format!("signal: {name}")
 }
 
 /// `encoding/json` string escaping on top of `serde_json` output: Go also

@@ -1471,7 +1471,29 @@ recipe-validate-differential:
 .PHONY: ai-compose-differential
 # RUST-012: provider selection/streaming, sibling-tool discovery and the
 # reviewed recipe runner, each replayed against Go-recorded fixtures.
-ai-compose-differential: ai-provider-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+ai-compose-differential: ai-provider-differential compose-memory-differential ai-compose-hermes-differential transform-hermes-differential compose-probe-differential compose-resolve-differential recipe-validate-differential recipe-run-differential
+
+.PHONY: compose-memory-fixtures-generate compose-memory-differential ai-compose-fixtures-generate ai-compose-hermes-differential transform-hermes-fixtures-generate transform-hermes-differential
+ai-compose-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+
+compose-memory-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/compose -run '^TestPortComposeMemoryContract$$'
+
+compose-memory-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/compose -run '^TestPortComposeMemoryContract$$'
+	$(CARGO) test -p symdesk-service --locked --test compose_memory
+
+transform-hermes-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortTransformHermesProcessContract$$'
+
+transform-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortTransformHermesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test transform_hermes
+
+ai-compose-hermes-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
+	$(CARGO) test -p symdesk-service --locked --test ai_compose
 
 recipe-run-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeRunProcessContract$$'

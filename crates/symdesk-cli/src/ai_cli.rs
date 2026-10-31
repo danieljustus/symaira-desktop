@@ -252,10 +252,45 @@ pub fn run_transform(command: &clap::ArgMatches, output_json: bool) -> ExitCode 
         );
     }
 
-    emit_chunk(
-        "⚠️ Request failed: Rust transform provider \"hermes\" is not implemented.\n",
+    run_hermes_transform(
+        &config,
+        &text,
+        command
+            .get_one::<String>("intent")
+            .map(String::as_str)
+            .unwrap_or_default(),
         output_json,
     )
+}
+
+/// Go `ai.Transform` with the optional Hermes CLI backend, via the shared
+/// service composition.
+fn run_hermes_transform(
+    config: &symdesk_core::config::Config,
+    text: &str,
+    intent: &str,
+    output_json: bool,
+) -> ExitCode {
+    let mut environment = match symdesk_core::config::environment_snapshot() {
+        Ok(environment) => environment,
+        Err(error) => return emit_chunk(&format!("⚠️ Request failed: {error}\n"), output_json),
+    };
+    if let Ok(path) = std::env::var("PATH") {
+        environment.insert("PATH".to_owned(), path);
+    }
+    let mut resolve_key = |reference: &str| crate::ai_secrets::resolve_key(reference);
+    let mut context = symdesk_service::ai::Context::new(config, &environment, &mut resolve_key);
+    let mut output_failed = false;
+    symdesk_service::ai::transform(&mut context, text, intent, &mut |chunk| {
+        if !output_failed && emit_transform_chunk(&mut io::stdout(), chunk, output_json).is_err() {
+            output_failed = true;
+        }
+    });
+    if output_failed {
+        super::process_exit(CoreExitCode::Generic)
+    } else {
+        super::process_exit(CoreExitCode::Ok)
+    }
 }
 
 fn ollama_endpoint(config: &symdesk_core::config::Config) -> Option<String> {

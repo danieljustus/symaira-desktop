@@ -120,7 +120,8 @@ impl Resolver {
             Err(error) => Err(syscall_text(&io::Error::from(error))),
         }
     }
-    fn look_path(&self, name: &str) -> Result<String, String> {
+    /// Go `exec.LookPath`: PATH only, no managed-runtime tiers.
+    pub fn look_path(&self, name: &str) -> Result<String, String> {
         let failure = |message: &str| format!("exec: {}: {message}", quote_artifact(name));
         if matches!(name, "" | "." | "..") {
             return Err(failure("executable file not found in $PATH"));

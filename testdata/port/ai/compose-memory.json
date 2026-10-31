@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "symmemory_script": "#!/bin/sh\nstate=\"$FAKE_SYMMEMORY_STATE\"\n{\n  printf 'argv='\n  for a in \"$@\"; do printf '[%s]' \"$a\"; done\n  printf '\\n'\n} \u003e\u003e \"$FAKE_SYMMEMORY_LOG\"\ncase \"$1 $2\" in\n  \"entity list\")\n    case \"$FAKE_SYMMEMORY_MODE\" in\n      garbage) printf 'not json' ;;\n      fail) printf 'list broke\\n' \u003e\u00262; exit 2 ;;\n      slow) exec sleep 30 ;;\n      empty) printf '[]' ;;\n      *) printf '[{\"id\":\"e1\",\"name\":\"Ada Lovelace\",\"type\":\"person\",\"aliases\":[\"Countess\",\"ada\"],\"description\":\"d1\"},{\"id\":\"e2\",\"name\":\"ADA\",\"type\":\"other\",\"aliases\":null,\"description\":\"\"},{\"id\":\"e3\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[\"Ada Lovelace\"],\"description\":\"d3\"}]' ;;\n    esac ;;\n  \"entity neighbors\")\n    case \"$FAKE_SYMMEMORY_MODE\" in\n      garbage) printf '{' ;;\n      fail) printf 'no such entity\\n' \u003e\u00262; exit 1 ;;\n      *) printf '{\"nodes\":[{\"id\":\"e2\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[],\"description\":\"\"}],\"edges\":[{\"from_entity_id\":\"e1\",\"to_entity_id\":\"e2\",\"relation_type\":\"worked_with\"}]}' ;;\n    esac ;;\n  \"entity show\")\n    if [ -e \"$state/$3\" ]; then\n      printf '{\"id\":\"s1\",\"name\":\"%s\",\"type\":\"person\",\"aliases\":[\"x\"],\"description\":\"shown\"}\\n' \"$3\"\n      printf 'Relations: 0\\nMemories: 0\\n'\n    else\n      printf 'entity not found\\n' \u003e\u00262; exit 1\n    fi ;;\n  \"entity add\")\n    case \"$FAKE_SYMMEMORY_MODE\" in\n      fail) printf 'add broke\\n' \u003e\u00262; exit 1 ;;\n      race) : \u003e \"$state/$3\"; printf 'unique constraint\\n' \u003e\u00262; exit 1 ;;\n      *) : \u003e \"$state/$3\" ;;\n    esac ;;\n  \"entity relate\")\n    case \"$FAKE_SYMMEMORY_MODE\" in\n      fail) printf 'relate broke\\n' \u003e\u00262; exit 4 ;;\n      *) : ;;\n    esac ;;\n  \"set --value\")\n    case \"$FAKE_SYMMEMORY_MODE\" in\n      garbage) printf 'saved!' ;;\n      fail) printf 'set broke\\n' \u003e\u00262; exit 5 ;;\n      *) printf '{\"id\":\"m1\",\"content\":\"%s\",\"scope\":\"%s\",\"entities\":[\"e1\"]}' \"$3\" \"$5\" ;;\n    esac ;;\n  *) printf 'unknown command\\n' \u003e\u00262; exit 64 ;;\nesac\n",
+  "calls": [
+    {
+      "fn": "ListEntities",
+      "mode": "ok",
+      "value": "[{\"id\":\"e1\",\"name\":\"Ada Lovelace\",\"type\":\"person\",\"aliases\":[\"Countess\",\"ada\"],\"description\":\"d1\"},{\"id\":\"e2\",\"name\":\"ADA\",\"type\":\"other\",\"aliases\":null,\"description\":\"\"},{\"id\":\"e3\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[\"Ada Lovelace\"],\"description\":\"d3\"}]",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ListEntities",
+      "mode": "empty",
+      "value": "[]",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ListEntities",
+      "mode": "garbage",
+      "error": "failed to unmarshal symmemory entities: invalid character 'o' in literal null (expecting 'u')",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ListEntities",
+      "mode": "fail",
+      "error": "symmemory entity list failed: exit status 2 (stderr: list broke\n)",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ListEntities",
+      "mode": "ok",
+      "missing": true,
+      "error": "symmemory not found: synthetic: symmemory not installed"
+    },
+    {
+      "fn": "ListEntities",
+      "mode": "slow",
+      "error": "symmemory entity list failed: signal: killed (stderr: )",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "GetNeighbors",
+      "args": [
+        "Ada Lovelace"
+      ],
+      "mode": "ok",
+      "value": "{\"nodes\":[{\"id\":\"e2\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[],\"description\":\"\"}],\"edges\":[{\"from_entity_id\":\"e1\",\"to_entity_id\":\"e2\",\"relation_type\":\"worked_with\"}]}",
+      "log": "argv=[entity][neighbors][Ada Lovelace][--output][json]\n"
+    },
+    {
+      "fn": "GetNeighbors",
+      "args": [
+        "--odd name"
+      ],
+      "mode": "ok",
+      "value": "{\"nodes\":[{\"id\":\"e2\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[],\"description\":\"\"}],\"edges\":[{\"from_entity_id\":\"e1\",\"to_entity_id\":\"e2\",\"relation_type\":\"worked_with\"}]}",
+      "log": "argv=[entity][neighbors][--odd name][--output][json]\n"
+    },
+    {
+      "fn": "GetNeighbors",
+      "args": [
+        "x"
+      ],
+      "mode": "garbage",
+      "error": "failed to unmarshal symmemory neighbors: unexpected end of JSON input",
+      "log": "argv=[entity][neighbors][x][--output][json]\n"
+    },
+    {
+      "fn": "GetNeighbors",
+      "args": [
+        "x"
+      ],
+      "mode": "fail",
+      "error": "symmemory neighbors failed: exit status 1 (stderr: no such entity\n)",
+      "log": "argv=[entity][neighbors][x][--output][json]\n"
+    },
+    {
+      "fn": "GetNeighbors",
+      "args": [
+        "x"
+      ],
+      "mode": "ok",
+      "missing": true,
+      "error": "symmemory not found: synthetic: symmemory not installed"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "  ada  "
+      ],
+      "mode": "ok",
+      "value": "[{\"entity\":{\"id\":\"e2\",\"name\":\"ADA\",\"type\":\"other\",\"aliases\":null,\"description\":\"\"},\"match_reason\":\"exact_name\"},{\"entity\":{\"id\":\"e1\",\"name\":\"Ada Lovelace\",\"type\":\"person\",\"aliases\":[\"Countess\",\"ada\"],\"description\":\"d1\"},\"match_reason\":\"alias\"}]",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "countess"
+      ],
+      "mode": "ok",
+      "value": "[{\"entity\":{\"id\":\"e1\",\"name\":\"Ada Lovelace\",\"type\":\"person\",\"aliases\":[\"Countess\",\"ada\"],\"description\":\"d1\"},\"match_reason\":\"alias\"}]",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "ADA LOVELACE"
+      ],
+      "mode": "ok",
+      "value": "[{\"entity\":{\"id\":\"e1\",\"name\":\"Ada Lovelace\",\"type\":\"person\",\"aliases\":[\"Countess\",\"ada\"],\"description\":\"d1\"},\"match_reason\":\"exact_name\"},{\"entity\":{\"id\":\"e3\",\"name\":\"Babbage\",\"type\":\"person\",\"aliases\":[\"Ada Lovelace\"],\"description\":\"d3\"},\"match_reason\":\"alias\"}]",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "nobody"
+      ],
+      "mode": "ok",
+      "value": "null",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "   "
+      ],
+      "mode": "ok",
+      "value": "null"
+    },
+    {
+      "fn": "ResolveCandidates",
+      "args": [
+        "ada"
+      ],
+      "mode": "fail",
+      "error": "symmemory entity list failed: exit status 2 (stderr: list broke\n)",
+      "log": "argv=[entity][list][--output][json]\n"
+    },
+    {
+      "fn": "ShowEntity",
+      "args": [
+        "Ann"
+      ],
+      "mode": "ok",
+      "pre_entities": [
+        "Ann"
+      ],
+      "value": "{\"id\":\"s1\",\"name\":\"Ann\",\"type\":\"person\",\"aliases\":[\"x\"],\"description\":\"shown\"}",
+      "log": "argv=[entity][show][Ann][--output][json]\n",
+      "state": [
+        "Ann"
+      ]
+    },
+    {
+      "fn": "ShowEntity",
+      "args": [
+        "Ann"
+      ],
+      "mode": "ok",
+      "error": "symmemory entity show Ann --output json failed: exit status 1 (stderr: entity not found)",
+      "log": "argv=[entity][show][Ann][--output][json]\n"
+    },
+    {
+      "fn": "EnsureEntity",
+      "args": [
+        "Ann",
+        "person"
+      ],
+      "mode": "ok",
+      "pre_entities": [
+        "Ann"
+      ],
+      "value": "{\"id\":\"s1\",\"name\":\"Ann\",\"type\":\"person\",\"aliases\":[\"x\"],\"description\":\"shown\"}",
+      "log": "argv=[entity][show][Ann][--output][json]\n",
+      "state": [
+        "Ann"
+      ]
+    },
+    {
+      "fn": "EnsureEntity",
+      "args": [
+        "Ann",
+        "person"
+      ],
+      "mode": "ok",
+      "value": "{\"id\":\"s1\",\"name\":\"Ann\",\"type\":\"person\",\"aliases\":[\"x\"],\"description\":\"shown\"}",
+      "log": "argv=[entity][show][Ann][--output][json]\nargv=[entity][add][Ann][--type][person]\nargv=[entity][show][Ann][--output][json]\n",
+      "state": [
+        "Ann"
+      ]
+    },
+    {
+      "fn": "EnsureEntity",
+      "args": [
+        "Ann",
+        "person"
+      ],
+      "mode": "race",
+      "value": "{\"id\":\"s1\",\"name\":\"Ann\",\"type\":\"person\",\"aliases\":[\"x\"],\"description\":\"shown\"}",
+      "log": "argv=[entity][show][Ann][--output][json]\nargv=[entity][add][Ann][--type][person]\nargv=[entity][show][Ann][--output][json]\n",
+      "state": [
+        "Ann"
+      ]
+    },
+    {
+      "fn": "EnsureEntity",
+      "args": [
+        "Ann",
+        "person"
+      ],
+      "mode": "fail",
+      "error": "symmemory entity add Ann --type person failed: exit status 1 (stderr: add broke)",
+      "log": "argv=[entity][show][Ann][--output][json]\nargv=[entity][add][Ann][--type][person]\nargv=[entity][show][Ann][--output][json]\n"
+    },
+    {
+      "fn": "RelateEntities",
+      "args": [
+        "Ann",
+        "attended",
+        "Standup"
+      ],
+      "mode": "ok",
+      "value": "null",
+      "log": "argv=[entity][relate][Ann][attended][Standup]\n"
+    },
+    {
+      "fn": "RelateEntities",
+      "args": [
+        "Ann",
+        "attended",
+        "Standup"
+      ],
+      "mode": "fail",
+      "error": "symmemory entity relate Ann attended Standup failed: exit status 4 (stderr: relate broke)",
+      "log": "argv=[entity][relate][Ann][attended][Standup]\n"
+    },
+    {
+      "fn": "RelateEntities",
+      "args": [
+        "Ann",
+        "attended",
+        "Standup"
+      ],
+      "mode": "ok",
+      "missing": true,
+      "error": "symmemory not found: synthetic: symmemory not installed"
+    },
+    {
+      "fn": "SetMemory",
+      "args": [
+        "fact one",
+        "project"
+      ],
+      "mode": "ok",
+      "value": "{\"id\":\"m1\",\"content\":\"fact one\",\"scope\":\"project\",\"entities\":[\"e1\"]}",
+      "log": "argv=[set][--value][fact one][--scope][project][--output][json]\n"
+    },
+    {
+      "fn": "SetMemory",
+      "args": [
+        "fact two",
+        "project",
+        "Ann",
+        "Bob"
+      ],
+      "mode": "ok",
+      "value": "{\"id\":\"m1\",\"content\":\"fact two\",\"scope\":\"project\",\"entities\":[\"e1\"]}",
+      "log": "argv=[set][--value][fact two][--scope][project][--output][json][--entities][Ann,Bob]\n"
+    },
+    {
+      "fn": "SetMemory",
+      "args": [
+        "fact",
+        "project"
+      ],
+      "mode": "garbage",
+      "error": "failed to unmarshal symmemory set output: invalid character 's' looking for beginning of value",
+      "log": "argv=[set][--value][fact][--scope][project][--output][json]\n"
+    },
+    {
+      "fn": "SetMemory",
+      "args": [
+        "fact",
+        "project"
+      ],
+      "mode": "fail",
+      "error": "symmemory set --value fact --scope project --output json failed: exit status 5 (stderr: set broke)",
+      "log": "argv=[set][--value][fact][--scope][project][--output][json]\n"
+    }
+  ]
+}

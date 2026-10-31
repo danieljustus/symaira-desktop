@@ -8,10 +8,7 @@ use std::{
     collections::BTreeSet,
     fs,
     io::{self, Read, Write},
-    os::unix::{
-        fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt},
-        process::ExitStatusExt,
-    },
+    os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt},
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Stdio},
     time::{SystemTime, UNIX_EPOCH},
@@ -22,7 +19,10 @@ use serde_json::Value;
 use symdesk_core::{compose::Resolver, config::go_quote};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
-use crate::gofmt::{escape_json, join, os_error_text, path_error};
+use crate::{
+    gofmt::{escape_json, join, os_error_text, path_error, status_text},
+    gojson::{as_int, as_string, as_strings, fields, syntax_error, type_error},
+};
 
 pub const CONTRACT_VERSION: i64 = 1;
 const VALID_TRIGGERS: [&str; 4] = ["manual", "save", "commit", "schedule"];
@@ -531,116 +531,10 @@ fn run_combined(program: &str, args: &[&str]) -> Result<(ExitStatus, String), St
     Ok((status, String::from_utf8_lossy(&output).into_owned()))
 }
 
-fn status_text(status: ExitStatus) -> String {
-    if let Some(code) = status.code() {
-        return format!("exit status {code}");
-    }
-    let signal = status.signal().unwrap_or_default();
-    let name = match signal {
-        1 => "hangup",
-        2 => "interrupt",
-        3 => "quit",
-        6 => "aborted",
-        9 => "killed",
-        11 => "segmentation fault",
-        13 => "broken pipe",
-        15 => "terminated",
-        _ => return format!("signal: {signal}"),
-    };
-    format!("signal: {name}")
-}
-
 // ---------------------------------------------------------------------------
 // encoding/json-compatible decoding (case-insensitive keys, null is a no-op,
 // unknown keys ignored, Go's type-error wording).
 // ---------------------------------------------------------------------------
-
-fn kind(value: &Value) -> String {
-    match value {
-        Value::Null => "null".to_owned(),
-        Value::Bool(_) => "bool".to_owned(),
-        Value::Number(number) => format!("number {number}"),
-        Value::String(_) => "string".to_owned(),
-        Value::Array(_) => "array".to_owned(),
-        Value::Object(_) => "object".to_owned(),
-    }
-}
-
-fn syntax_error(error: &serde_json::Error) -> String {
-    if error.is_eof() {
-        "unexpected end of JSON input".to_owned()
-    } else {
-        // Go prints `invalid character 'x' ...`; the exact byte-level
-        // diagnostics of encoding/json are a declared difference.
-        error.to_string()
-    }
-}
-
-struct Fields<'a> {
-    values: Vec<Option<&'a Value>>,
-}
-
-fn fields<'a>(value: &'a Value, names: &[&str], ty: &str) -> Result<Fields<'a>, String> {
-    let mut values = vec![None; names.len()];
-    match value {
-        Value::Null => {}
-        Value::Object(map) => {
-            for (key, item) in map {
-                let index = names
-                    .iter()
-                    .position(|name| *name == key)
-                    .or_else(|| names.iter().position(|name| name.eq_ignore_ascii_case(key)));
-                if let Some(index) = index {
-                    values[index] = Some(item);
-                }
-            }
-        }
-        other => {
-            return Err(format!(
-                "json: cannot unmarshal {} into Go value of type {ty}",
-                kind(other).split(' ').next().unwrap_or("value")
-            ));
-        }
-    }
-    Ok(Fields { values })
-}
-
-fn type_error(value: &Value, path: &str, go_type: &str) -> String {
-    format!(
-        "json: cannot unmarshal {} into Go struct field {path} of type {go_type}",
-        kind(value)
-    )
-}
-
-fn as_int(value: Option<&Value>, path: &str) -> Result<i64, String> {
-    match value {
-        None | Some(Value::Null) => Ok(0),
-        Some(Value::Number(number)) => number
-            .as_i64()
-            .ok_or_else(|| type_error(&Value::Number(number.clone()), path, "int")),
-        Some(other) => Err(type_error(other, path, "int")),
-    }
-}
-
-fn as_string(value: Option<&Value>, path: &str) -> Result<String, String> {
-    match value {
-        None | Some(Value::Null) => Ok(String::new()),
-        Some(Value::String(text)) => Ok(text.clone()),
-        Some(other) => Err(type_error(other, path, "string")),
-    }
-}
-
-fn as_strings(value: Option<&Value>, path: &str) -> Result<Option<Vec<String>>, String> {
-    match value {
-        None | Some(Value::Null) => Ok(None),
-        Some(Value::Array(items)) => items
-            .iter()
-            .map(|item| as_string(Some(item), path))
-            .collect::<Result<Vec<_>, _>>()
-            .map(Some),
-        Some(other) => Err(type_error(other, path, "[]string")),
-    }
-}
 
 fn decode_changes(value: Option<&Value>, path: &str) -> Result<Option<Vec<Change>>, String> {
     match value {

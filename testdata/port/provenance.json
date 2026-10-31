@@ -20,11 +20,14 @@
     "selfhost_http_routes": 21
   },
   "fixture_checksums": {
+    "testdata/port/ai/ai-compose.json": "1ab3668f99a0bcd49089192549acf31d13b60537e0e1319728969d4a98d677bb",
+    "testdata/port/ai/compose-memory.json": "4caeb36d0637e3005af948fe86ed5e839463fd49d6662ca78c4fa3dfdcb1cba4",
     "testdata/port/ai/compose-probe.json": "16a6466206a814e13941d31020c0727aca372e7baf03b7ece514a4537ec75ecd",
     "testdata/port/ai/compose-resolve.json": "22ca77d991e3a58dbd22d151c98ffc4b806692091a8e20388076087bfc8ebde4",
     "testdata/port/ai/providers.json": "3097b8b2efea554fb4402d54464db68486d6dae1b8b6ec4bfd5f74831cf89823",
     "testdata/port/ai/recipe-run-process.json": "e9aa7926be35b3515dd301f079b61262b347350afacffc5264167be6dcd10925",
     "testdata/port/ai/recipe-validate.json": "3353919da849ede0ef00042149a06040798356b76d1d1b99371a8a18c3eeb8af",
+    "testdata/port/ai/transform-hermes-process.json": "dcd26d03b540f248aba064cca3b5d85f4f2a3a948499f86b82a536cd954ceb5e",
     "testdata/port/cli/ask-offline.json": "808c3c602cefdfc7fd02f682484b6b571657aa6dcb14c6ac694f1bd32ecb65bf",
     "testdata/port/cli/backlinks-process.json": "86562684c73b3916822f806fed9fb68cea1131a54e9cd52e144eb511e69c3792",
     "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",

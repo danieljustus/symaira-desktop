@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "hermes_script": "#!/bin/sh\nlog=\"$FAKE_HERMES_LOG\"\n{\n  printf 'argc=%s\\n' \"$#\"\n  for a in \"$@\"; do printf 'arg\u003c\u003c%s\u003e\u003e\\n' \"$a\"; done\n  if IFS= read -r _line; then printf 'stdin=data\\n'; else printf 'stdin=eof\\n'; fi\n} \u003e\u003e \"$log\"\ncase \"$FAKE_HERMES_MODE\" in\n  ok) printf 'rewritten \u003ctext\u003e \u0026 more\\n\\n' ;;\n  fail) printf 'bad\\n' \u003e\u00262; exit 4 ;;\n  empty) : ;;\n  *) exit 9 ;;\nesac\n",
+  "cases": [
+    {
+      "name": "text_ok",
+      "args": [
+        "transform",
+        "rewrite",
+        "--text",
+        "Hello \u003cworld\u003e"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{rewritten \u003ctext\u003e \u0026 more}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nHello \u003cworld\u003e\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "json_ok",
+      "args": [
+        "--json",
+        "transform",
+        "summarize",
+        "--text",
+        "Hello \u003cworld\u003e"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"rewritten \\u003ctext\\u003e \\u0026 more\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cSummarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\n\n---\nHello \u003cworld\u003e\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "stdin_text",
+      "args": [
+        "transform",
+        "continue"
+      ],
+      "stdin": "  from stdin\nsecond line \n",
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{rewritten \u003ctext\u003e \u0026 more}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cContinue the following text in a meaningful way, keeping the same style and tone. Return only the continuation, not the original text. Answer in the language of the input text as pure Markdown text.\n\n---\nfrom stdin\nsecond line\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "session_and_language",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_HERMES_SESSION": "weekly review",
+        "SYMDESK_LANG": "German",
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"rewritten \\u003ctext\\u003e \\u0026 more\"}\n",
+      "stderr": "",
+      "log": "argc=4\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in German as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\narg\u003c\u003c--resume\u003e\u003e\narg\u003c\u003cweekly review\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "unknown_intent",
+      "args": [
+        "--json",
+        "transform",
+        "shout",
+        "--text",
+        "x"
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"rewritten \\u003ctext\\u003e \\u0026 more\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "failing_backend",
+      "args": [
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "mode": "fail",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{⚠️ Request failed: hermes backend failed: bad\n}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "failing_backend_json",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "mode": "fail",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"⚠️ Request failed: hermes backend failed: bad\\n\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "empty_answer",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "mode": "empty",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"⚠️ Request failed: hermes backend returned an empty answer\\n\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "silent_failure",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "mode": "unknown",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"⚠️ Request failed: hermes backend failed: exit status 9\\n\"}\n",
+      "stderr": "",
+      "log": "argc=2\narg\u003c\u003c-z\u003e\u003e\narg\u003c\u003cRewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text. Answer in the language of the input text as pure Markdown text.\n\n---\nx\n---\n\u003e\u003e\nstdin=eof\n"
+    },
+    {
+      "name": "backend_missing",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "no_binary": true,
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "backend_missing_text",
+      "args": [
+        "transform",
+        "rewrite",
+        "--text",
+        "x"
+      ],
+      "no_binary": true,
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "empty_text_json",
+      "args": [
+        "--json",
+        "transform",
+        "rewrite",
+        "--text",
+        "   "
+      ],
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{\"chunk\":\"⚠️ No text provided – please select text first.\\n\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "empty_stdin",
+      "args": [
+        "transform",
+        "rewrite"
+      ],
+      "stdin": "\n",
+      "mode": "ok",
+      "env": {
+        "SYMDESK_LLM_PROVIDER": "hermes"
+      },
+      "exit_code": 0,
+      "stdout": "{⚠️ No text provided – please select text first.\n}\n",
+      "stderr": ""
+    }
+  ]
+}

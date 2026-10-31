@@ -60,6 +60,8 @@ var fixturePaths = []string{
 	"testdata/port/core/template-path.json",
 	"testdata/port/ingest/queue.json",
 	"testdata/port/ingest/extraction.json",
+	"testdata/port/ingest/structured.json",
+	"testdata/port/ingest/ocr.json",
 	"testdata/port/ingest/notion.json",
 	"testdata/port/ingest/paperless-http.json",
 	"testdata/port/ingest/paperless-export.json",

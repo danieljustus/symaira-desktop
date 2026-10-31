@@ -17,6 +17,8 @@ mod gxml_tables;
 pub mod structured;
 mod migrations;
 pub mod notion;
+#[cfg(unix)]
+pub mod ocr;
 pub mod paperless;
 pub mod paperless_export;
 pub mod paperless_import;

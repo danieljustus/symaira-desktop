@@ -135,7 +135,11 @@ fn go_float_v(value: f64) -> String {
     if (-4..21).contains(&exponent) {
         return format!("{value}");
     }
-    format!("{mantissa}e{}{:02}", if exponent < 0 { '-' } else { '+' }, exponent.abs())
+    format!(
+        "{mantissa}e{}{:02}",
+        if exponent < 0 { '-' } else { '+' },
+        exponent.abs()
+    )
 }
 
 pub fn ask_cli() -> Command {

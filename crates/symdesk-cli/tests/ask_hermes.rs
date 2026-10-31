@@ -42,8 +42,10 @@ struct Case {
 }
 
 fn fixture() -> Fixture {
-    serde_json::from_str(include_str!("../../../testdata/port/ai/ask-hermes-process.json"))
-        .expect("decode Go-owned ask fixture")
+    serde_json::from_str(include_str!(
+        "../../../testdata/port/ai/ask-hermes-process.json"
+    ))
+    .expect("decode Go-owned ask fixture")
 }
 
 /// Go's timestamped slog lines are excluded from the compared stderr.
@@ -54,12 +56,17 @@ fn without_log_lines(text: &str) -> String {
 }
 
 fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
-    let root = fs::canonicalize(std::env::temp_dir()).unwrap().join(format!(
-        "symdesk-ask-hermes-{}-{}-{}",
-        case.name,
-        std::process::id(),
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = fs::canonicalize(std::env::temp_dir())
+        .unwrap()
+        .join(format!(
+            "symdesk-ask-hermes-{}-{}-{}",
+            case.name,
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
     let (home, bin, vault) = (root.join("home"), root.join("bin"), root.join("vault"));
     for dir in [&home, &bin, &vault] {
         fs::create_dir_all(dir).unwrap();
@@ -97,7 +104,12 @@ fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
             .arg("index")
             .output()
             .unwrap();
-        assert!(setup.status.success(), "{}: index: {}", case.name, String::from_utf8_lossy(&setup.stderr));
+        assert!(
+            setup.status.success(),
+            "{}: index: {}",
+            case.name,
+            String::from_utf8_lossy(&setup.stderr)
+        );
     }
     let _ = fs::remove_file(&log);
     let output = command(&case.env)
@@ -108,21 +120,30 @@ fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
         .unwrap();
     let root_text = root.to_string_lossy().into_owned();
     let stdout = String::from_utf8_lossy(&output.stdout).replace(&root_text, "<ROOT>");
-    let stderr = without_log_lines(&String::from_utf8_lossy(&output.stderr)).replace(&root_text, "<ROOT>");
-    let transcript = fs::read_to_string(&log).unwrap_or_default().replace(&root_text, "<ROOT>");
+    let stderr =
+        without_log_lines(&String::from_utf8_lossy(&output.stderr)).replace(&root_text, "<ROOT>");
+    let transcript = fs::read_to_string(&log)
+        .unwrap_or_default()
+        .replace(&root_text, "<ROOT>");
     fs::remove_dir_all(&root).unwrap();
     let label = &case.name;
     if output.status.code() != Some(case.exit_code) {
         return Err(format!("{label}: exit {:?}", output.status.code()));
     }
     if stdout != case.stdout {
-        return Err(format!("{label}: stdout\nrust: {stdout:?}\ngo:   {:?}", case.stdout));
+        return Err(format!(
+            "{label}: stdout\nrust: {stdout:?}\ngo:   {:?}",
+            case.stdout
+        ));
     }
     if stderr != case.stderr {
         return Err(format!("{label}: stderr {stderr:?} != {:?}", case.stderr));
     }
     if transcript != case.log {
-        return Err(format!("{label}: hermes transcript\nrust: {transcript:?}\ngo:   {:?}", case.log));
+        return Err(format!(
+            "{label}: hermes transcript\nrust: {transcript:?}\ngo:   {:?}",
+            case.log
+        ));
     }
     Ok(())
 }
@@ -143,7 +164,16 @@ fn ask_with_hermes_matches_go_process_contract() {
 #[test]
 fn replay_rejects_a_tampered_expectation() {
     let fixture = fixture();
-    let mut case = fixture.cases.iter().find(|case| case.name == "backend_fails").cloned().unwrap();
+    let mut case = fixture
+        .cases
+        .iter()
+        .find(|case| case.name == "backend_fails")
+        .cloned()
+        .unwrap();
     case.log.push_str("tamper\n");
-    assert!(replay(&case, &fixture).unwrap_err().contains("hermes transcript"));
+    assert!(
+        replay(&case, &fixture)
+            .unwrap_err()
+            .contains("hermes transcript")
+    );
 }

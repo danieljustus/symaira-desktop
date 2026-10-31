@@ -61,8 +61,13 @@ var askHermesFiles = map[string]string{
 	"gamma.md":      "---\ntitle: Gamma\n---\n# Gamma\n\nGardening tips: tomatoes need sun.\n",
 }
 
+// askClosedOllama is a closed loopback port. Embeddings must never reach a
+// real Ollama on the machine that records or replays the fixture: with one
+// running, hybrid ranking differs per host. Retrieval stays lexical.
+const askClosedOllama = "http://127.0.0.1:9"
+
 func askHermesCases() []askHermesCase {
-	hermes := map[string]string{"SYMDESK_LLM_PROVIDER": "hermes"}
+	hermes := map[string]string{"SYMDESK_LLM_PROVIDER": "hermes", "SYMDESK_OLLAMA_URL": askClosedOllama}
 	with := func(extra map[string]string) map[string]string {
 		out := map[string]string{}
 		for k, v := range hermes {
@@ -165,7 +170,7 @@ func observeAskHermes(t *testing.T, binary string, c askHermesCase) askHermesCas
 	}
 	if !c.NoIndex {
 		index := exec.Command(binary, "--vault", vault, "index") //nolint:gosec // test-built CLI with controlled arguments
-		index.Dir, index.Env = root, environment(nil)
+		index.Dir, index.Env = root, environment(map[string]string{"SYMDESK_OLLAMA_URL": askClosedOllama})
 		if out, err := index.CombinedOutput(); err != nil {
 			t.Fatalf("%s: index: %v\n%s", c.Name, err, out)
 		}

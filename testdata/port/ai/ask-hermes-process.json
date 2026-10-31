@@ -16,7 +16,8 @@
       ],
       "mode": "ok",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.032786883413791656}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.032258063554763794}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.01587301678955555}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -31,7 +32,8 @@
       ],
       "mode": "ok",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  notes/beta.md Beta Notes # Beta\n\nBudget planning for the offsite; hiring freeze discussion. 0.032786883413791656   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring. 0.032258063554763794   0 []  false [] [] 0 0}\n{citation  notes/beta.md Beta Notes  0.01587301678955555   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project  0.015625   0 []  false [] [] 0 0}\n{citation  gamma.md Gamma  0.015384615398943424   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer Answer from \u003chermes\u003e [[alpha.md]]    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [] 0 0}\n",
@@ -49,7 +51,8 @@
       "env": {
         "SYMDESK_HERMES_SESSION": "weekly",
         "SYMDESK_LANG": "German",
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.032786883413791656}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.0320020467042923}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.016129031777381897}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -65,7 +68,8 @@
       ],
       "mode": "ok",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.016393441706895828}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.016129031777381897}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.01587301678955555}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -81,7 +85,8 @@
       ],
       "mode": "ok",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"snippet\":\"# Gamma\\n\\nGardening tips: tomatoes need sun.\",\"score\":0.032522473484277725}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.016393441706895828}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.01587301678955555}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -97,7 +102,8 @@
       ],
       "mode": "fail",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.032786883413791656}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.0320020467042923}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.016129031777381897}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend failed: hermes exploded\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -112,7 +118,8 @@
       ],
       "mode": "fail",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{tool     0 search running 0 []  false [] [] 0 0}\n{tool     0 search done 0 []  false [] [] 0 0}\n{citation  notes/beta.md Beta Notes # Beta\n\nBudget planning for the offsite; hiring freeze discussion. 0.032786883413791656   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project # Alpha\n\nThe quarterly budget review covers marketing spend and hiring. 0.0320020467042923   0 []  false [] [] 0 0}\n{citation  notes/beta.md Beta Notes  0.016129031777381897   0 []  false [] [] 0 0}\n{citation  alpha.md Alpha Project  0.015625   0 []  false [] [] 0 0}\n{citation  gamma.md Gamma  0.015384615398943424   0 []  false [] [] 0 0}\n{tool     0 llm running 0 []  false [] [] 0 0}\n{answer ⚠️ Request failed: hermes backend failed: hermes exploded\n    0   0 []  false [] [] 0 0}\n{tool     0 llm done 0 []  false [] [] 0 0}\n{done     0   0 []  false [] [] 0 0}\n",
@@ -128,7 +135,8 @@
       ],
       "mode": "empty",
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.032786883413791656}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.0320020467042923}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.016129031777381897}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ Request failed: hermes backend returned an empty answer\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -144,7 +152,8 @@
       ],
       "no_binary": true,
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"snippet\":\"# Beta\\n\\nBudget planning for the offsite; hiring freeze discussion.\",\"score\":0.032786883413791656}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers marketing spend and hiring.\",\"score\":0.032258063554763794}\n{\"type\":\"citation\",\"path\":\"notes/beta.md\",\"title\":\"Beta Notes\",\"score\":0.01587301678955555}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":0.015625}\n{\"type\":\"citation\",\"path\":\"gamma.md\",\"title\":\"Gamma\",\"score\":0.015384615398943424}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"⚠️ **AI feature not configured.**\\n\\nSet your Ollama endpoint in Settings → AI.\\n\\nHere are the most relevant search results from your vault:\\n\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[notes/beta.md]]\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[alpha.md]]\\n\"}\n{\"type\":\"answer\",\"text\":\"- [[notes/beta.md]]\\n\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
@@ -181,7 +190,8 @@
       "mode": "ok",
       "no_index": true,
       "env": {
-        "SYMDESK_LLM_PROVIDER": "hermes"
+        "SYMDESK_LLM_PROVIDER": "hermes",
+        "SYMDESK_OLLAMA_URL": "http://127.0.0.1:9"
       },
       "exit_code": 0,
       "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer from \\u003chermes\\u003e [[alpha.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",

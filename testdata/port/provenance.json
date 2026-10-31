@@ -21,7 +21,7 @@
   },
   "fixture_checksums": {
     "testdata/port/ai/ai-compose.json": "1ab3668f99a0bcd49089192549acf31d13b60537e0e1319728969d4a98d677bb",
-    "testdata/port/ai/ask-hermes-process.json": "ef1277fcade452b8ae466ffe164377fadeba39424fa47d64a70948c9669d1491",
+    "testdata/port/ai/ask-hermes-process.json": "7102c84d4cf345d464888abab300b17414ea32e42250975e1cd7802e71fabc3a",
     "testdata/port/ai/compose-memory.json": "4caeb36d0637e3005af948fe86ed5e839463fd49d6662ca78c4fa3dfdcb1cba4",
     "testdata/port/ai/compose-probe.json": "16a6466206a814e13941d31020c0727aca372e7baf03b7ece514a4537ec75ecd",
     "testdata/port/ai/compose-resolve.json": "22ca77d991e3a58dbd22d151c98ffc4b806692091a8e20388076087bfc8ebde4",

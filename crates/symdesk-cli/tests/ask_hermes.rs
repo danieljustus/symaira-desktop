@@ -103,7 +103,12 @@ fn replay(case: &Case, fixture: &Fixture) -> Result<(), String> {
         command
     };
     if !case.no_index {
-        let setup = command(&BTreeMap::new())
+        // A closed loopback port: indexing never reaches a real Ollama.
+        let closed = BTreeMap::from([(
+            "SYMDESK_OLLAMA_URL".to_owned(),
+            "http://127.0.0.1:9".to_owned(),
+        )]);
+        let setup = command(&closed)
             .arg("--vault")
             .arg(&vault)
             .arg("index")

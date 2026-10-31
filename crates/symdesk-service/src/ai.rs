@@ -13,11 +13,12 @@ use std::{
 
 use symdesk_core::{
     ai::{NOT_CONFIGURED, Provider, prompt_one as core_prompt_one},
+    cancel::CancelToken,
     compose::Resolver,
     config::Config,
 };
 
-use crate::{gofmt::status_text, process::run_bounded};
+use crate::{gofmt::status_text, process::run_cancellable};
 
 const HERMES_BINARY: &str = "hermes";
 /// Go `hermesTimeout`; rendered as `5m0s` in diagnostics.
@@ -39,6 +40,9 @@ pub struct Context<'a> {
     pub child_env: Option<&'a BTreeMap<String, String>>,
     pub resolve_key: &'a mut dyn FnMut(&str) -> String,
     pub hermes_timeout: Duration,
+    /// Cancels the in-flight provider call (Go's `context` cancellation); once
+    /// cancelled nothing more is delivered.
+    pub cancel: Option<&'a CancelToken>,
 }
 
 impl<'a> Context<'a> {
@@ -54,7 +58,12 @@ impl<'a> Context<'a> {
             child_env: None,
             resolve_key,
             hermes_timeout: HERMES_TIMEOUT,
+            cancel: None,
         }
+    }
+
+    fn cancelled(&self) -> bool {
+        self.cancel.is_some_and(CancelToken::is_cancelled)
     }
 }
 
@@ -103,27 +112,7 @@ pub fn build_transform_prompt(language: &str, text: &str, intent: &str) -> Strin
     format!("{instruction} Answer in {language} as pure Markdown text.\n\n---\n{text}\n---\n")
 }
 
-/// `encoding/json` replaces every invalid UTF-8 byte with U+FFFD; Rust's
-/// lossy conversion would merge a truncated sequence into one.
-#[must_use]
-pub fn go_lossy(bytes: &[u8]) -> String {
-    let mut out = String::with_capacity(bytes.len());
-    let mut rest = bytes;
-    loop {
-        match std::str::from_utf8(rest) {
-            Ok(valid) => {
-                out.push_str(valid);
-                return out;
-            }
-            Err(error) => {
-                let (valid, tail) = rest.split_at(error.valid_up_to());
-                out.push_str(std::str::from_utf8(valid).unwrap_or_default());
-                out.push('\u{FFFD}');
-                rest = &tail[1..];
-            }
-        }
-    }
-}
+pub use symdesk_core::gofmt::lossy as go_lossy;
 
 fn provider_name(config: &Config) -> &str {
     if config.llm_provider.is_empty() {
@@ -141,7 +130,9 @@ fn stream(
 ) -> Result<(), String> {
     if context.config.llm_provider == "hermes" {
         let answer = hermes(context, prompt)?;
-        emit(&answer);
+        if !context.cancelled() {
+            emit(&answer);
+        }
         return Ok(());
     }
     let provider = Provider::resolve(
@@ -149,10 +140,18 @@ fn stream(
         context.environment,
         &mut *context.resolve_key,
     )?;
-    provider.stream(&go_lossy(prompt), |chunk| {
-        emit(chunk);
+    let text = go_lossy(prompt);
+    let cancel = context.cancel;
+    let deliver = |chunk: &str| {
+        if cancel.is_none_or(|token| !token.is_cancelled()) {
+            emit(chunk);
+        }
         Ok(())
-    })
+    };
+    match cancel {
+        Some(token) => provider.stream_cancellable(&text, token, deliver),
+        None => provider.stream(&text, deliver),
+    }
 }
 
 /// Go `streamHermes`: one final answer, no token streaming.
@@ -175,9 +174,12 @@ fn hermes(context: &Context<'_>, prompt: &[u8]) -> Result<String, String> {
     if let Some(environment) = context.child_env {
         command.env_clear().envs(environment);
     }
-    let finished = run_bounded(command, context.hermes_timeout)
-        .map_err(|error| format!("hermes backend failed: {error}"))?;
-    if finished.timed_out {
+    let cancel = context.cancel;
+    let finished = run_cancellable(command, context.hermes_timeout, &|| {
+        cancel.is_some_and(CancelToken::is_cancelled)
+    })
+    .map_err(|error| format!("hermes backend failed: {error}"))?;
+    if finished.timed_out || finished.cancelled {
         return Err("hermes backend timed out after 5m0s".to_owned());
     }
     let (status, stdout, stderr) = (finished.status, finished.stdout, finished.stderr);
@@ -209,7 +211,11 @@ fn not_configured_chunk(config: &Config) -> &'static str {
 /// no provider is configured. Chunks are delivered through `emit`.
 pub fn ask(context: &mut Context<'_>, query: &str, docs: &[Doc], emit: &mut dyn FnMut(&str)) {
     let prompt = build_ask_prompt(&context.config.language, query, docs);
-    match stream(context, &prompt, emit) {
+    let result = stream(context, &prompt, emit);
+    if context.cancelled() {
+        return;
+    }
+    match result {
         Ok(()) => {}
         Err(error) if error == NOT_CONFIGURED => {
             if provider_name(context.config) == "anthropic" {
@@ -236,7 +242,11 @@ pub fn transform(context: &mut Context<'_>, text: &str, intent: &str, emit: &mut
         return;
     }
     let prompt = build_transform_prompt(&context.config.language, text, intent);
-    match stream(context, prompt.as_bytes(), emit) {
+    let result = stream(context, prompt.as_bytes(), emit);
+    if context.cancelled() {
+        return;
+    }
+    match result {
         Ok(()) => {}
         Err(error) if error == NOT_CONFIGURED => emit(not_configured_chunk(context.config)),
         Err(error) => emit(&format!("⚠️ Request failed: {error}\n")),

@@ -4,7 +4,9 @@
 
 use symaira_core_version::new as version_info;
 
+pub mod agent_turn;
 pub mod ai;
+pub mod cancel;
 #[cfg(unix)]
 pub mod compose;
 #[cfg(unix)]
@@ -12,6 +14,7 @@ pub mod compose_probe;
 pub mod config;
 pub mod document_format;
 pub mod german;
+pub mod gofmt;
 pub mod query;
 pub mod simhash;
 pub mod template_path;

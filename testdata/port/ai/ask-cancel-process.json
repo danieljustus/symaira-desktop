@@ -1,0 +1,1467 @@
+{
+  "schema_version": 1,
+  "files": {
+    "alpha.md": "---\ntitle: Alpha Project\n---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n",
+    "bulk/note-001.md": "---\ntitle: Bulk archive note number 001 with padding words\n---\n# Bulk 001\n\nFiller text.\n",
+    "bulk/note-002.md": "---\ntitle: Bulk archive note number 002 with padding words\n---\n# Bulk 002\n\nFiller text.\n",
+    "bulk/note-003.md": "---\ntitle: Bulk archive note number 003 with padding words\n---\n# Bulk 003\n\nFiller text.\n",
+    "bulk/note-004.md": "---\ntitle: Bulk archive note number 004 with padding words\n---\n# Bulk 004\n\nFiller text.\n",
+    "bulk/note-005.md": "---\ntitle: Bulk archive note number 005 with padding words\n---\n# Bulk 005\n\nFiller text.\n",
+    "bulk/note-006.md": "---\ntitle: Bulk archive note number 006 with padding words\n---\n# Bulk 006\n\nFiller text.\n",
+    "bulk/note-007.md": "---\ntitle: Bulk archive note number 007 with padding words\n---\n# Bulk 007\n\nFiller text.\n",
+    "bulk/note-008.md": "---\ntitle: Bulk archive note number 008 with padding words\n---\n# Bulk 008\n\nFiller text.\n",
+    "bulk/note-009.md": "---\ntitle: Bulk archive note number 009 with padding words\n---\n# Bulk 009\n\nFiller text.\n",
+    "bulk/note-010.md": "---\ntitle: Bulk archive note number 010 with padding words\n---\n# Bulk 010\n\nFiller text.\n",
+    "bulk/note-011.md": "---\ntitle: Bulk archive note number 011 with padding words\n---\n# Bulk 011\n\nFiller text.\n",
+    "bulk/note-012.md": "---\ntitle: Bulk archive note number 012 with padding words\n---\n# Bulk 012\n\nFiller text.\n",
+    "bulk/note-013.md": "---\ntitle: Bulk archive note number 013 with padding words\n---\n# Bulk 013\n\nFiller text.\n",
+    "bulk/note-014.md": "---\ntitle: Bulk archive note number 014 with padding words\n---\n# Bulk 014\n\nFiller text.\n",
+    "bulk/note-015.md": "---\ntitle: Bulk archive note number 015 with padding words\n---\n# Bulk 015\n\nFiller text.\n",
+    "bulk/note-016.md": "---\ntitle: Bulk archive note number 016 with padding words\n---\n# Bulk 016\n\nFiller text.\n",
+    "bulk/note-017.md": "---\ntitle: Bulk archive note number 017 with padding words\n---\n# Bulk 017\n\nFiller text.\n",
+    "bulk/note-018.md": "---\ntitle: Bulk archive note number 018 with padding words\n---\n# Bulk 018\n\nFiller text.\n",
+    "bulk/note-019.md": "---\ntitle: Bulk archive note number 019 with padding words\n---\n# Bulk 019\n\nFiller text.\n",
+    "bulk/note-020.md": "---\ntitle: Bulk archive note number 020 with padding words\n---\n# Bulk 020\n\nFiller text.\n",
+    "bulk/note-021.md": "---\ntitle: Bulk archive note number 021 with padding words\n---\n# Bulk 021\n\nFiller text.\n",
+    "bulk/note-022.md": "---\ntitle: Bulk archive note number 022 with padding words\n---\n# Bulk 022\n\nFiller text.\n",
+    "bulk/note-023.md": "---\ntitle: Bulk archive note number 023 with padding words\n---\n# Bulk 023\n\nFiller text.\n",
+    "bulk/note-024.md": "---\ntitle: Bulk archive note number 024 with padding words\n---\n# Bulk 024\n\nFiller text.\n",
+    "bulk/note-025.md": "---\ntitle: Bulk archive note number 025 with padding words\n---\n# Bulk 025\n\nFiller text.\n",
+    "bulk/note-026.md": "---\ntitle: Bulk archive note number 026 with padding words\n---\n# Bulk 026\n\nFiller text.\n",
+    "bulk/note-027.md": "---\ntitle: Bulk archive note number 027 with padding words\n---\n# Bulk 027\n\nFiller text.\n",
+    "bulk/note-028.md": "---\ntitle: Bulk archive note number 028 with padding words\n---\n# Bulk 028\n\nFiller text.\n",
+    "bulk/note-029.md": "---\ntitle: Bulk archive note number 029 with padding words\n---\n# Bulk 029\n\nFiller text.\n",
+    "bulk/note-030.md": "---\ntitle: Bulk archive note number 030 with padding words\n---\n# Bulk 030\n\nFiller text.\n",
+    "bulk/note-031.md": "---\ntitle: Bulk archive note number 031 with padding words\n---\n# Bulk 031\n\nFiller text.\n",
+    "bulk/note-032.md": "---\ntitle: Bulk archive note number 032 with padding words\n---\n# Bulk 032\n\nFiller text.\n",
+    "bulk/note-033.md": "---\ntitle: Bulk archive note number 033 with padding words\n---\n# Bulk 033\n\nFiller text.\n",
+    "bulk/note-034.md": "---\ntitle: Bulk archive note number 034 with padding words\n---\n# Bulk 034\n\nFiller text.\n",
+    "bulk/note-035.md": "---\ntitle: Bulk archive note number 035 with padding words\n---\n# Bulk 035\n\nFiller text.\n",
+    "bulk/note-036.md": "---\ntitle: Bulk archive note number 036 with padding words\n---\n# Bulk 036\n\nFiller text.\n",
+    "bulk/note-037.md": "---\ntitle: Bulk archive note number 037 with padding words\n---\n# Bulk 037\n\nFiller text.\n",
+    "bulk/note-038.md": "---\ntitle: Bulk archive note number 038 with padding words\n---\n# Bulk 038\n\nFiller text.\n",
+    "bulk/note-039.md": "---\ntitle: Bulk archive note number 039 with padding words\n---\n# Bulk 039\n\nFiller text.\n",
+    "bulk/note-040.md": "---\ntitle: Bulk archive note number 040 with padding words\n---\n# Bulk 040\n\nFiller text.\n",
+    "bulk/note-041.md": "---\ntitle: Bulk archive note number 041 with padding words\n---\n# Bulk 041\n\nFiller text.\n",
+    "bulk/note-042.md": "---\ntitle: Bulk archive note number 042 with padding words\n---\n# Bulk 042\n\nFiller text.\n",
+    "bulk/note-043.md": "---\ntitle: Bulk archive note number 043 with padding words\n---\n# Bulk 043\n\nFiller text.\n",
+    "bulk/note-044.md": "---\ntitle: Bulk archive note number 044 with padding words\n---\n# Bulk 044\n\nFiller text.\n",
+    "bulk/note-045.md": "---\ntitle: Bulk archive note number 045 with padding words\n---\n# Bulk 045\n\nFiller text.\n",
+    "bulk/note-046.md": "---\ntitle: Bulk archive note number 046 with padding words\n---\n# Bulk 046\n\nFiller text.\n",
+    "bulk/note-047.md": "---\ntitle: Bulk archive note number 047 with padding words\n---\n# Bulk 047\n\nFiller text.\n",
+    "bulk/note-048.md": "---\ntitle: Bulk archive note number 048 with padding words\n---\n# Bulk 048\n\nFiller text.\n",
+    "bulk/note-049.md": "---\ntitle: Bulk archive note number 049 with padding words\n---\n# Bulk 049\n\nFiller text.\n",
+    "bulk/note-050.md": "---\ntitle: Bulk archive note number 050 with padding words\n---\n# Bulk 050\n\nFiller text.\n",
+    "bulk/note-051.md": "---\ntitle: Bulk archive note number 051 with padding words\n---\n# Bulk 051\n\nFiller text.\n",
+    "bulk/note-052.md": "---\ntitle: Bulk archive note number 052 with padding words\n---\n# Bulk 052\n\nFiller text.\n",
+    "bulk/note-053.md": "---\ntitle: Bulk archive note number 053 with padding words\n---\n# Bulk 053\n\nFiller text.\n",
+    "bulk/note-054.md": "---\ntitle: Bulk archive note number 054 with padding words\n---\n# Bulk 054\n\nFiller text.\n",
+    "bulk/note-055.md": "---\ntitle: Bulk archive note number 055 with padding words\n---\n# Bulk 055\n\nFiller text.\n",
+    "bulk/note-056.md": "---\ntitle: Bulk archive note number 056 with padding words\n---\n# Bulk 056\n\nFiller text.\n",
+    "bulk/note-057.md": "---\ntitle: Bulk archive note number 057 with padding words\n---\n# Bulk 057\n\nFiller text.\n",
+    "bulk/note-058.md": "---\ntitle: Bulk archive note number 058 with padding words\n---\n# Bulk 058\n\nFiller text.\n",
+    "bulk/note-059.md": "---\ntitle: Bulk archive note number 059 with padding words\n---\n# Bulk 059\n\nFiller text.\n",
+    "bulk/note-060.md": "---\ntitle: Bulk archive note number 060 with padding words\n---\n# Bulk 060\n\nFiller text.\n",
+    "bulk/note-061.md": "---\ntitle: Bulk archive note number 061 with padding words\n---\n# Bulk 061\n\nFiller text.\n",
+    "bulk/note-062.md": "---\ntitle: Bulk archive note number 062 with padding words\n---\n# Bulk 062\n\nFiller text.\n",
+    "bulk/note-063.md": "---\ntitle: Bulk archive note number 063 with padding words\n---\n# Bulk 063\n\nFiller text.\n",
+    "bulk/note-064.md": "---\ntitle: Bulk archive note number 064 with padding words\n---\n# Bulk 064\n\nFiller text.\n",
+    "bulk/note-065.md": "---\ntitle: Bulk archive note number 065 with padding words\n---\n# Bulk 065\n\nFiller text.\n",
+    "bulk/note-066.md": "---\ntitle: Bulk archive note number 066 with padding words\n---\n# Bulk 066\n\nFiller text.\n",
+    "bulk/note-067.md": "---\ntitle: Bulk archive note number 067 with padding words\n---\n# Bulk 067\n\nFiller text.\n",
+    "bulk/note-068.md": "---\ntitle: Bulk archive note number 068 with padding words\n---\n# Bulk 068\n\nFiller text.\n",
+    "bulk/note-069.md": "---\ntitle: Bulk archive note number 069 with padding words\n---\n# Bulk 069\n\nFiller text.\n",
+    "bulk/note-070.md": "---\ntitle: Bulk archive note number 070 with padding words\n---\n# Bulk 070\n\nFiller text.\n",
+    "notebooks/nb.md": "---\ntype: notebook\ntitle: Budget notebook\nnotebook_id: nb\ncreated: 2026-01-02T03:04:05Z\nsources:\n  - alpha.md\n  - missing.md\n---\n\n# Budget notebook\n",
+    "notebooks/none.md": "---\ntype: notebook\ntitle: Empty notebook\nnotebook_id: none\ncreated: 2026-01-02T03:04:05Z\nsources: []\n---\n\n# Empty notebook\n",
+    "notes/beta.md": "---\ntitle: Beta Notes\n---\n# Beta\n\nSee [[alpha]] for the plan.\n",
+    "notes/gamma.md": "---\ntitle: Gamma Notes\n---\n# Gamma\n\nUnrelated gardening remarks.\n",
+    "notes/outside.md": "---\ntitle: Outside\n---\n# Outside\n\nA note outside the notebook about the quarterly plan.\n"
+  },
+  "file_sets": {
+    "bulk": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md",
+      "bulk/note-001.md",
+      "bulk/note-002.md",
+      "bulk/note-003.md",
+      "bulk/note-004.md",
+      "bulk/note-005.md",
+      "bulk/note-006.md",
+      "bulk/note-007.md",
+      "bulk/note-008.md",
+      "bulk/note-009.md",
+      "bulk/note-010.md",
+      "bulk/note-011.md",
+      "bulk/note-012.md",
+      "bulk/note-013.md",
+      "bulk/note-014.md",
+      "bulk/note-015.md",
+      "bulk/note-016.md",
+      "bulk/note-017.md",
+      "bulk/note-018.md",
+      "bulk/note-019.md",
+      "bulk/note-020.md",
+      "bulk/note-021.md",
+      "bulk/note-022.md",
+      "bulk/note-023.md",
+      "bulk/note-024.md",
+      "bulk/note-025.md",
+      "bulk/note-026.md",
+      "bulk/note-027.md",
+      "bulk/note-028.md",
+      "bulk/note-029.md",
+      "bulk/note-030.md",
+      "bulk/note-031.md",
+      "bulk/note-032.md",
+      "bulk/note-033.md",
+      "bulk/note-034.md",
+      "bulk/note-035.md",
+      "bulk/note-036.md",
+      "bulk/note-037.md",
+      "bulk/note-038.md",
+      "bulk/note-039.md",
+      "bulk/note-040.md",
+      "bulk/note-041.md",
+      "bulk/note-042.md",
+      "bulk/note-043.md",
+      "bulk/note-044.md",
+      "bulk/note-045.md",
+      "bulk/note-046.md",
+      "bulk/note-047.md",
+      "bulk/note-048.md",
+      "bulk/note-049.md",
+      "bulk/note-050.md",
+      "bulk/note-051.md",
+      "bulk/note-052.md",
+      "bulk/note-053.md",
+      "bulk/note-054.md",
+      "bulk/note-055.md",
+      "bulk/note-056.md",
+      "bulk/note-057.md",
+      "bulk/note-058.md",
+      "bulk/note-059.md",
+      "bulk/note-060.md",
+      "bulk/note-061.md",
+      "bulk/note-062.md",
+      "bulk/note-063.md",
+      "bulk/note-064.md",
+      "bulk/note-065.md",
+      "bulk/note-066.md",
+      "bulk/note-067.md",
+      "bulk/note-068.md",
+      "bulk/note-069.md",
+      "bulk/note-070.md"
+    ],
+    "core": [
+      "alpha.md",
+      "notebooks/nb.md"
+    ],
+    "empty": [
+      "alpha.md",
+      "notebooks/none.md"
+    ],
+    "single": [
+      "alpha.md"
+    ],
+    "tools": [
+      "alpha.md",
+      "notes/beta.md",
+      "notes/gamma.md",
+      "notes/outside.md"
+    ]
+  },
+  "file_time": "2026-01-02T03:04:05Z",
+  "cases": [
+    {
+      "name": "ask_ollama_sigterm",
+      "kind": "sigterm",
+      "provider": "ollama",
+      "args": [
+        "--json",
+        "ask",
+        "quarterly"
+      ],
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"first chunk\"}\n",
+          "stall": true
+        }
+      ],
+      "wait_for": "first chunk",
+      "signal": "terminated",
+      "exit_code": -1,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"snippet\":\"# Alpha\\n\\nThe quarterly budget review covers quarterly marketing spend and hiring.\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"alpha.md\",\"title\":\"Alpha Project\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"first chunk\"}\n",
+      "stderr": "",
+      "provider_saw_client_gone": true,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "llama3.2",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "ask_agent_ollama_sigterm",
+      "kind": "sigterm",
+      "provider": "ollama",
+      "args": [
+        "--json",
+        "ask",
+        "--agent",
+        "quarterly"
+      ],
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"message\":{\"content\":\"thinking\",\"role\":\"assistant\"}}\n",
+          "stall": true
+        }
+      ],
+      "wait_for": "thinking",
+      "signal": "terminated",
+      "exit_code": -1,
+      "stdout": "{\"type\":\"answer\",\"text\":\"thinking\"}\n",
+      "stderr": "",
+      "provider_saw_client_gone": true,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/chat",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "messages": [
+              {
+                "content": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
+                "role": "user"
+              }
+            ],
+            "model": "llama3.2",
+            "stream": true,
+            "tools": [
+              {
+                "function": {
+                  "description": "Returns the current version and vault path configuration for symdesk.",
+                  "name": "desk_status",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists files in the vault.",
+                  "name": "desk_ls",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "dir": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
+                  "name": "desk_search",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Answers \"what happened on day X\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.",
+                  "name": "vault_timeline",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      },
+                      "limit": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Gets properties (frontmatter) for a note.",
+                  "name": "desk_props",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "file"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Gets backlinks for a note.",
+                  "name": "desk_backlinks",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "file"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+                  "name": "desk_ask",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      },
+                      "notebook": {
+                        "type": "string",
+                        "description": "optional: notebook id or path to restrict retrieval and citations to"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
+                  "name": "desk_transform",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "intent": {
+                        "type": "string",
+                        "enum": [
+                          "summarize",
+                          "rewrite",
+                          "continue"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "text",
+                      "intent"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
+                  "name": "desk_docs",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "person": {
+                        "type": "string"
+                      },
+                      "correspondent": {
+                        "type": "string"
+                      },
+                      "year": {
+                        "type": "string"
+                      },
+                      "due_before": {
+                        "type": "string"
+                      },
+                      "min_confidence": {
+                        "type": "integer"
+                      },
+                      "max_confidence": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Returns documents needing review: confidence below threshold or missing document_type/document_date.",
+                  "name": "docs_review",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "threshold": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \u003e= threshold.",
+                  "name": "docs_similar",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string"
+                      },
+                      "threshold": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "file"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.",
+                  "name": "vault_health",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "duplicate_threshold": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Gets related entities and notes for a given file path based on composition with symmemory.",
+                  "name": "desk_related",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "file"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.",
+                  "name": "desk_diagram",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "optional diagram title"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists ingestion jobs in the queue from symingest.",
+                  "name": "desk_ingest_jobs",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists the configured document classification rules. Legacy alias: list_rules.",
+                  "name": "desk_rules_list",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists meetings already imported into the vault as reviewed meeting notes.",
+                  "name": "meeting_list",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Gets one imported meeting note by its vault-relative path, including the reviewed transcript.",
+                  "name": "meeting_get",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "vault-relative meeting note path"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Reads the full output of an externalized tool result by its handle (returned as \"[Full result externalized to \u003chandle\u003e…]\"). Use this to re-read a result that was summarized because it was large.",
+                  "name": "desk_read_result",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "handle": {
+                        "type": "string",
+                        "description": "the externalized-result handle from the tool output"
+                      }
+                    },
+                    "required": [
+                      "handle"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.",
+                  "name": "notebook_list",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).",
+                  "name": "notebook_get",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "notebook": {
+                        "type": "string",
+                        "description": "notebook id or path"
+                      }
+                    },
+                    "required": [
+                      "notebook"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
+                  "name": "notebook_ask",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "notebook": {
+                        "type": "string",
+                        "description": "notebook id or path"
+                      },
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "notebook",
+                      "query"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists Markdown-backed datasets and their materialized row counts.",
+                  "name": "desk_dataset_list",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.",
+                  "name": "desk_dataset_describe",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "dataset": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "dataset"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.",
+                  "name": "desk_dataset_query",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "dataset": {
+                        "type": "string"
+                      },
+                      "columns": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "filters": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "operator": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "filter_group": {
+                        "type": "object"
+                      },
+                      "group_by": {
+                        "type": "string"
+                      },
+                      "aggregates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "column": {
+                              "type": "string"
+                            },
+                            "function": {
+                              "type": "string",
+                              "enum": [
+                                "sum",
+                                "count",
+                                "min",
+                                "max",
+                                "average"
+                              ]
+                            },
+                            "as": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "function"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "dataset"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.",
+                  "name": "list_jobs",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.",
+                  "name": "list_documents",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "person": {
+                        "type": "string"
+                      },
+                      "correspondent": {
+                        "type": "string"
+                      },
+                      "year": {
+                        "type": "string"
+                      },
+                      "due_before": {
+                        "type": "string"
+                      },
+                      "min_confidence": {
+                        "type": "integer"
+                      },
+                      "max_confidence": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.",
+                  "name": "search_documents",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Lists the configured document classification rules. Legacy alias for desk_rules_list.",
+                  "name": "list_rules",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "ask_agent_anthropic_sigterm",
+      "kind": "sigterm",
+      "provider": "anthropic",
+      "args": [
+        "--json",
+        "ask",
+        "--agent",
+        "quarterly"
+      ],
+      "env": {
+        "SYMDESK_ANTHROPIC_URL": "{{URL}}/v1/messages"
+      },
+      "turns": [
+        {
+          "status": 0,
+          "body": "data: {\"message\":{\"id\":\"msg_fake\",\"role\":\"assistant\"},\"type\":\"message_start\"}\n\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\ndata: {\"delta\":{\"text\":\"pondering\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\n",
+          "stall": true
+        }
+      ],
+      "wait_for": "pondering",
+      "signal": "terminated",
+      "exit_code": -1,
+      "stdout": "{\"type\":\"answer\",\"text\":\"pondering\"}\n",
+      "stderr": "",
+      "provider_saw_client_gone": true,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/v1/messages",
+          "headers": {
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+            "x-api-key": "\u003cKEY\u003e"
+          },
+          "body": {
+            "max_tokens": 8192,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "You are the assistant of a local Markdown vault. You can call the provided tools to search, list and read vault content. Call tools whenever you need information; after gathering it, answer the question directly, citing notes as [[path]]. If the vault does not contain the answer, say so honestly. Answer in the language of the question.\n\n\nQuestion: quarterly",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "claude-sonnet-5",
+            "stream": true,
+            "tools": [
+              {
+                "description": "Returns the current version and vault path configuration for symdesk.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "desk_status"
+              },
+              {
+                "description": "Lists files in the vault.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "dir": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "name": "desk_ls"
+              },
+              {
+                "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ]
+                },
+                "name": "desk_search"
+              },
+              {
+                "description": "Answers \"what happened on day X\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "name": "vault_timeline"
+              },
+              {
+                "description": "Gets properties (frontmatter) for a note.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "name": "desk_props"
+              },
+              {
+                "description": "Gets backlinks for a note.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "name": "desk_backlinks"
+              },
+              {
+                "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    },
+                    "notebook": {
+                      "type": "string",
+                      "description": "optional: notebook id or path to restrict retrieval and citations to"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ]
+                },
+                "name": "desk_ask"
+              },
+              {
+                "description": "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "intent": {
+                      "type": "string",
+                      "enum": [
+                        "summarize",
+                        "rewrite",
+                        "continue"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "text",
+                    "intent"
+                  ]
+                },
+                "name": "desk_transform"
+              },
+              {
+                "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "person": {
+                      "type": "string"
+                    },
+                    "correspondent": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "string"
+                    },
+                    "due_before": {
+                      "type": "string"
+                    },
+                    "min_confidence": {
+                      "type": "integer"
+                    },
+                    "max_confidence": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "name": "desk_docs"
+              },
+              {
+                "description": "Returns documents needing review: confidence below threshold or missing document_type/document_date.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "threshold": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "name": "docs_review"
+              },
+              {
+                "description": "Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \u003e= threshold.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "threshold": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "name": "docs_similar"
+              },
+              {
+                "description": "Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "duplicate_threshold": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "name": "vault_health"
+              },
+              {
+                "description": "Gets related entities and notes for a given file path based on composition with symmemory.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                },
+                "name": "desk_related"
+              },
+              {
+                "description": "Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "optional diagram title"
+                    }
+                  }
+                },
+                "name": "desk_diagram"
+              },
+              {
+                "description": "Lists ingestion jobs in the queue from symingest.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "desk_ingest_jobs"
+              },
+              {
+                "description": "Lists the configured document classification rules. Legacy alias: list_rules.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "desk_rules_list"
+              },
+              {
+                "description": "Lists meetings already imported into the vault as reviewed meeting notes.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "meeting_list"
+              },
+              {
+                "description": "Gets one imported meeting note by its vault-relative path, including the reviewed transcript.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "vault-relative meeting note path"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ]
+                },
+                "name": "meeting_get"
+              },
+              {
+                "description": "Reads the full output of an externalized tool result by its handle (returned as \"[Full result externalized to \u003chandle\u003e…]\"). Use this to re-read a result that was summarized because it was large.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "handle": {
+                      "type": "string",
+                      "description": "the externalized-result handle from the tool output"
+                    }
+                  },
+                  "required": [
+                    "handle"
+                  ]
+                },
+                "name": "desk_read_result"
+              },
+              {
+                "description": "Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "notebook_list"
+              },
+              {
+                "description": "Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "notebook": {
+                      "type": "string",
+                      "description": "notebook id or path"
+                    }
+                  },
+                  "required": [
+                    "notebook"
+                  ]
+                },
+                "name": "notebook_get"
+              },
+              {
+                "description": "Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "notebook": {
+                      "type": "string",
+                      "description": "notebook id or path"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "notebook",
+                    "query"
+                  ]
+                },
+                "name": "notebook_ask"
+              },
+              {
+                "description": "Lists Markdown-backed datasets and their materialized row counts.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                },
+                "name": "desk_dataset_list"
+              },
+              {
+                "description": "Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "dataset"
+                  ],
+                  "additionalProperties": false
+                },
+                "name": "desk_dataset_describe"
+              },
+              {
+                "description": "Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "dataset": {
+                      "type": "string"
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "filters": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "operator": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "filter_group": {
+                      "type": "object"
+                    },
+                    "group_by": {
+                      "type": "string"
+                    },
+                    "aggregates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "column": {
+                            "type": "string"
+                          },
+                          "function": {
+                            "type": "string",
+                            "enum": [
+                              "sum",
+                              "count",
+                              "min",
+                              "max",
+                              "average"
+                            ]
+                          },
+                          "as": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "function"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "dataset"
+                  ],
+                  "additionalProperties": false
+                },
+                "name": "desk_dataset_query"
+              },
+              {
+                "description": "Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "list_jobs"
+              },
+              {
+                "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "person": {
+                      "type": "string"
+                    },
+                    "correspondent": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "string"
+                    },
+                    "due_before": {
+                      "type": "string"
+                    },
+                    "min_confidence": {
+                      "type": "integer"
+                    },
+                    "max_confidence": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "name": "list_documents"
+              },
+              {
+                "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ]
+                },
+                "name": "search_documents"
+              },
+              {
+                "description": "Lists the configured document classification rules. Legacy alias for desk_rules_list.",
+                "input_schema": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "name": "list_rules"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mcp_desk_ask_sigterm",
+      "kind": "mcp_sigterm",
+      "provider": "ollama",
+      "mcp_arguments_json": "{\"query\":\"quarterly\"}",
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"first chunk\"}\n",
+          "stall": true
+        }
+      ],
+      "signal": "terminated",
+      "exit_code": -1,
+      "stdout": "",
+      "stderr": "",
+      "provider_saw_client_gone": true,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "llama3.2",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
+            "stream": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "mcp_stdin_eof_lets_in_flight_ask_finish",
+      "kind": "mcp_eof",
+      "provider": "ollama",
+      "mcp_arguments_json": "{\"query\":\"quarterly\"}",
+      "turns": [
+        {
+          "status": 0,
+          "body": "{\"done\":false,\"model\":\"llama3.2\",\"response\":\"late \"}\n{\"done\":false,\"model\":\"llama3.2\",\"response\":\"answer\"}\n{\"done\":true,\"model\":\"llama3.2\",\"response\":\"\"}\n",
+          "delay_ms": 400
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"content\":[{\"text\":\"{\\\"answer\\\":\\\"late answer\\\"}\",\"type\":\"text\"}],\"isError\":false}}\n",
+      "stderr": "",
+      "provider_saw_client_gone": false,
+      "requests": [
+        {
+          "method": "POST",
+          "path": "/api/generate",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "model": "llama3.2",
+            "prompt": "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n# Alpha\n\nThe quarterly budget review covers quarterly marketing spend and hiring.\n\n--- Note [[alpha.md]] (Alpha Project) ---\n\n\nQuestion: quarterly\n",
+            "stream": true
+          }
+        }
+      ]
+    }
+  ]
+}

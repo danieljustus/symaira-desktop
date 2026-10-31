@@ -538,7 +538,7 @@ fn call_tool(
             if query.is_empty() {
                 return Err("query is required".to_owned());
             }
-            crate::ai_cli::ensure_offline_ask_provider()?;
+            let ai_config = crate::ai_cli::load_config()?;
             let (vault, sidecar) = open_sidecar(config)?;
             let sources = if notebook.is_empty() {
                 SourceRegistry::open(&vault)
@@ -554,11 +554,15 @@ fn call_tool(
                 &sources,
                 &sidecar,
             )?;
-            let paths = hits
+            let docs = hits
                 .iter()
-                .map(|hit| crate::ai_cli::ask_display_path(&vault, &hit.path, &sources))
+                .map(|hit| symdesk_service::ai::Doc {
+                    path: crate::ai_cli::ask_display_path(&vault, &hit.path, &sources),
+                    title: hit.title.clone(),
+                    snippet: hit.snippet.clone(),
+                })
                 .collect::<Vec<_>>();
-            let answer = crate::ai_cli::offline_ask_chunks(&paths).concat();
+            let answer = crate::ai_cli::ask_chunks(&ai_config, &query, &docs).concat();
             Ok(json!({"answer": answer}))
         }
         _ if config.allow_write && write::supports(name) => {
@@ -569,6 +573,83 @@ fn call_tool(
             pdf::call(name, raw_arguments, &config.pdf_context)
         }
         _ => Err(format!("Unknown tool: {name}")),
+    }
+}
+
+pub(crate) fn results_root(vault: &std::path::Path) -> Result<PathBuf, String> {
+    read::results_root(vault)
+}
+
+/// The read-only catalog the agentic loop hands to the model (Go
+/// `registry.Enabled(false)`): the same entries `tools/list` serves.
+pub(crate) fn agent_catalog() -> Vec<symdesk_service::agent::AgentTool> {
+    #[derive(Deserialize)]
+    struct Catalog {
+        tools: Vec<Entry>,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Entry {
+        name: String,
+        description: String,
+        input_schema: Box<RawValue>,
+        annotations: Annotations,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Annotations {
+        #[serde(default)]
+        read_only_hint: bool,
+    }
+    let catalog: Catalog = serde_json::from_str(include_str!("mcp/assets/tools-read-only.json"))
+        .expect("embedded read-only catalog is valid");
+    catalog
+        .tools
+        .into_iter()
+        .map(|entry| symdesk_service::agent::AgentTool {
+            name: entry.name,
+            description: entry.description,
+            input_schema: entry.input_schema.get().to_owned(),
+            read_only: entry.annotations.read_only_hint,
+        })
+        .collect()
+}
+
+/// Read-only tool execution for the agentic loop. Each call is the same code
+/// path an MCP `tools/call` takes, without the transport.
+pub(crate) struct AgentToolRunner {
+    config: ServerConfig,
+}
+
+impl AgentToolRunner {
+    pub(crate) fn new(vault: &std::path::Path) -> Self {
+        Self {
+            config: ServerConfig {
+                version: super::VERSION.to_owned(),
+                vault: Some(vault.to_string_lossy().into_owned()),
+                allow_write: false,
+                pdf_context: symdesk_render::pdfops::Context::default(),
+                write_error: Mutex::new(None),
+                sidecar_anchor: Mutex::new(None),
+            },
+        }
+    }
+
+    /// The text `executeTool` hands the model: a string result verbatim,
+    /// anything else as Go-escaped JSON.
+    pub(crate) fn call(&self, name: &str, raw_arguments: &str) -> Result<String, String> {
+        // Over MCP the transport rejects malformed JSON before a handler runs;
+        // the loop hands the model's raw arguments straight to the handler, whose
+        // first step (`json.Unmarshal`) reports the syntax error.
+        let syntax_error = symdesk_core::gofmt::json_syntax_error(raw_arguments);
+        if !syntax_error.is_empty() {
+            return Err(syntax_error);
+        }
+        let value = call_tool(name, Some(raw_arguments), &self.config)?;
+        Ok(value.as_str().map_or_else(
+            || super::go_escape_json(serde_json::to_string(&value).unwrap_or_default()),
+            str::to_owned,
+        ))
     }
 }
 

@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
 mod config_cli;

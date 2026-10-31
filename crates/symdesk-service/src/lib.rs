@@ -5,6 +5,7 @@
 //! driven by explicit inputs so the CLI, MCP and HTTP facades share one
 //! implementation.
 
+pub mod agent;
 pub mod ai;
 pub mod gofmt;
 pub(crate) mod gojson;

@@ -1594,6 +1594,29 @@ transform-hermes-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortTransformHermesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test transform_hermes
 
+.PHONY: ask-provider-mcp-fixtures-generate ask-provider-mcp-differential ask-cancel-fixtures-generate ask-cancel-differential
+ask-provider-mcp-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskProviderMCPContract$$'
+
+ask-provider-mcp-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskProviderMCPContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test mcp_ask_provider
+
+ask-cancel-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskCancelProcessContract$$'
+
+ask-cancel-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskCancelProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test ask_cancel
+
+.PHONY: ask-agent-fixtures-generate ask-agent-differential
+ask-agent-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskAgentProcessContract$$'
+
+ask-agent-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskAgentProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test ask_agent
+
 ai-compose-hermes-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./internal/ai -run '^TestPortAIComposeContract$$'
 	$(CARGO) test -p symdesk-service --locked --test ai_compose

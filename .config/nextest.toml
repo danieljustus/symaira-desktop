@@ -10,3 +10,17 @@ threads-required = "num-test-threads"
 [[profile.default.overrides]]
 filter = 'binary(draw_hostile_layout) & test(=wide_flowcharts_lay_out_quickly)'
 threads-required = "num-test-threads"
+
+# The cancellation replay signals live child processes and waits on stalled
+# loopback providers within wall-clock bounds; run it alone so a saturated host
+# cannot starve the provider threads.
+[[profile.default.overrides]]
+filter = 'binary(ask_cancel)'
+threads-required = "num-test-threads"
+
+# The version probe replay runs fake sibling tools under a one-second probe
+# timeout and asserts a [1 s, 3 s) window for the timed-out case; a saturated
+# workspace run starves the probe and reports "unknown". Run it alone.
+[[profile.default.overrides]]
+filter = 'binary(compose_probe)'
+threads-required = "num-test-threads"

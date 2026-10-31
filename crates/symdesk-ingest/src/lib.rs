@@ -36,6 +36,8 @@ pub mod paperless_export;
 pub mod paperless_import;
 #[cfg(unix)]
 pub mod paperless_run;
+#[cfg(unix)]
+pub mod paperless_verify;
 mod paperless_state;
 #[cfg(unix)]
 pub mod pipeline;

@@ -186,6 +186,10 @@ fn staged(stage: &str, message: String) -> Staged {
 }
 
 /// `newRunID`: `paperless-20060102T150405.000000000Z` in UTC.
+pub fn run_id_at(t: OffsetDateTime) -> String {
+    new_run_id(t)
+}
+
 fn new_run_id(t: OffsetDateTime) -> String {
     format!(
         "paperless-{:04}{:02}{:02}T{:02}{:02}{:02}.{:09}Z",

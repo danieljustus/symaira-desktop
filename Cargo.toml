@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render", "crates/symdesk-contacts", "crates/symdesk-ingest", "crates/symdesk-service"]
+members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render", "crates/symdesk-contacts", "crates/symdesk-ingest", "crates/symdesk-service", "crates/symdesk-storage"]
 resolver = "3"
 
 [workspace.package]
@@ -35,6 +35,7 @@ symdesk-index = { path = "crates/symdesk-index", version = "=0.0.0" }
 symdesk-protocol = { path = "crates/symdesk-protocol", version = "=0.0.0" }
 symdesk-render = { path = "crates/symdesk-render", version = "=0.0.0" }
 symdesk-service = { path = "crates/symdesk-service", version = "=0.0.0" }
+symdesk-storage = { path = "crates/symdesk-storage", version = "=0.0.0" }
 symroom-core = { path = "crates/symroom-core", version = "=0.0.0" }
 ed25519-dalek = { version = "=2.2.0" }
 curve25519-dalek = { version = "=4.1.3" }
@@ -48,6 +49,7 @@ flate2 = "=1.1.2"
 httpdate = "=1.0.3"
 http-body-util = "=0.1.5"
 notify = "=8.2.0"
+tokio-postgres = { version = "=0.7.18" }
 tokio = { version = "=1.53.3", default-features = false, features = ["io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
 tower = { version = "=0.5.2", default-features = false, features = ["timeout"] }
 hyper-util = { version = "=0.1.20", default-features = false, features = ["client-legacy", "service", "tokio"] }

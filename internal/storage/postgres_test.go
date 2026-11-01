@@ -16,14 +16,22 @@ package storage
 import (
 	"context"
 	"errors"
+	"net/url"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func openTestPostgres(t *testing.T) *PostgresBackend {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		if admin := os.Getenv("SYMDESK_PG_ADMIN_DSN"); admin != "" {
+			dsn = createTestDatabase(t, admin)
+		}
+	}
 	if dsn == "" {
 		t.Skip("TEST_DATABASE_URL not set — skipping PostgreSQL integration test")
 	}
@@ -46,6 +54,34 @@ func openTestPostgres(t *testing.T) *PostgresBackend {
 	}
 	*backend = *reopened
 	return backend
+}
+
+// createTestDatabase derives the test database from a disposable server's
+// superuser DSN (SYMDESK_PG_ADMIN_DSN, set by `make postgres-integration`):
+// it creates symdesk_storage_test there and returns its URL.
+func createTestDatabase(t *testing.T, adminDSN string) string {
+	t.Helper()
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, adminDSN)
+	if err != nil {
+		t.Fatalf("connect admin: %v", err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	var exists bool
+	if err := conn.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'symdesk_storage_test')").Scan(&exists); err != nil {
+		t.Fatalf("probe test database: %v", err)
+	}
+	if !exists {
+		if _, err := conn.Exec(ctx, "CREATE DATABASE symdesk_storage_test"); err != nil {
+			t.Fatalf("create test database: %v", err)
+		}
+	}
+	u, err := url.Parse(adminDSN)
+	if err != nil {
+		t.Fatalf("parse admin DSN: %v", err)
+	}
+	u.Path = "/symdesk_storage_test"
+	return u.String()
 }
 
 func TestPostgresGetSetRemoveQuery(t *testing.T) {

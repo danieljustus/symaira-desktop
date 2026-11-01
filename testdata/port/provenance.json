@@ -216,6 +216,7 @@
     "testdata/port/sidecar/lifecycle.json": "275350668c199233e603afcdf1bb918d9ccc83283eb208e772bfc44055468335",
     "testdata/port/sidecar/metadata.json": "319b08ad672a9955eace69d1d07df7674889bde2599dea369edf15c3d26ea400",
     "testdata/port/sidecar/roundtrip.json": "d0ccb5dc8634a6b58bc6a99a5a8f446bf8835c004f0342bf011bf3a34ad20dc7",
+    "testdata/port/storage/postgres.json": "495e1f70969a16809145e9bb525288350a24bf2ecb271fedd5bb65a96a7f18fa",
     "testdata/port/vault/base-view-write.json": "15ab195e2e6693c7286abcede276e58290e0c08b79a226baea26a16f881bc967",
     "testdata/port/vault/filesystem-writes.json": "79b17405e800f23ba6008d41e9289949eac1043919c7ee3b9a8c24fc123bb81a",
     "testdata/port/vault/filesystem.json": "3853f90c19749abfc94a926d2bd6e5bf438935c062b549bddad4b04e8a42f09c",

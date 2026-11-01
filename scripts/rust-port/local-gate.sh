@@ -10,6 +10,14 @@
 #      the container cache volumes of parallel worktrees), ALLOW_DIRTY=1
 #      (receipt is marked dirty and is not evidence), MAKE_PREFIX (e.g. the
 #      dev-external build launcher for the macOS run).
+#
+# postgres-integration needs a PostgreSQL server. The macOS run starts its own
+# container through `make` (scripts/rust-port/postgres-sidecar.sh, random
+# 127.0.0.1 port). The Linux gate container has no docker, so this script starts
+# a sidecar for it on a private docker network (symdesk-gate-pg-$slug on
+# symdesk-gate-net-$slug, per-run password, no published port), hands its
+# superuser DSN to the container as SYMDESK_PG_ADMIN_DSN and always removes both
+# afterwards.
 set -euo pipefail
 
 mode="${1:-all}"
@@ -46,8 +54,19 @@ run_linux() {
   docker build -q -t "$image" scripts/rust-port/local-gate >/dev/null
   common="$(cd "$(git rev-parse --git-common-dir)" && pwd)"
   # Same absolute paths as the host so a worktree's .git file still resolves.
+  pg_args=()
+  pg_name="symdesk-gate-pg-$slug"
+  pg_net="symdesk-gate-net-$slug"
+  case " $targets " in
+    *" postgres-integration "*)
+      scripts/rust-port/postgres-sidecar.sh down "$pg_name" "$pg_net" || true
+      pg_dsn="$(scripts/rust-port/postgres-sidecar.sh up "$pg_name" "$pg_net")" \
+        || { scripts/rust-port/postgres-sidecar.sh down "$pg_name" "$pg_net" || true; return 1; }
+      pg_args=(--network "$pg_net" -e "SYMDESK_PG_ADMIN_DSN=$pg_dsn")
+      ;;
+  esac
   # shellcheck disable=SC2086 # $targets is a word list
-  docker run --rm -v "$root:$root" -v "$common:$common" -w "$root" \
+  docker run --rm ${pg_args[@]+"${pg_args[@]}"} -v "$root:$root" -v "$common:$common" -w "$root" \
     -v "symdesk-gate-registry:/home/dev/.cargo/registry" \
     -v "symdesk-gate-go-$slug:/home/dev/go" \
     -v "symdesk-gate-target-$slug:/home/dev/target" \
@@ -57,6 +76,11 @@ run_linux() {
     -e RENDER_EVIDENCE_ROOT="${RENDER_EVIDENCE_ROOT:+${RENDER_EVIDENCE_ROOT}-linux}" \
     -e RENDER_RUNTIME_ROOT="${RENDER_RUNTIME_ROOT:+${RENDER_RUNTIME_ROOT}-linux}" \
     "$image" make $targets
+  ec=$?
+  if [ ${#pg_args[@]} -gt 0 ]; then
+    scripts/rust-port/postgres-sidecar.sh down "$pg_name" "$pg_net" || true
+  fi
+  return "$ec"
 }
 
 status=0

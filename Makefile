@@ -619,6 +619,22 @@ permissions-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go run ./scripts/rust-port/cmd/permissionsgen --check
 	$(CARGO) test -p symdesk-vault --test permissions_contracts --locked
 
+# PG-001 PostgreSQL self-host store: the Go-owned fixture (pggen) records the
+# production internal/storage PostgresBackend against a real PostgreSQL server;
+# this target starts its own disposable server (scripts/rust-port/postgres-sidecar.sh:
+# a container on a random 127.0.0.1 port with a per-run password; if
+# SYMDESK_PG_ADMIN_DSN is already set that server is used instead, which is how
+# local-gate.sh hands the Linux gate container its sidecar), re-runs the Go
+# store through every scenario against it, runs the Go store's postgres-tagged
+# integration tests, and replays the fixture through the Rust store.
+# Regenerate deliberately with `make postgres-fixtures-generate`.
+.PHONY: postgres-integration postgres-fixtures-generate
+postgres-integration:
+	CARGO="$(CARGO)" PORTGEN_CHECK_ENV="$(PORTGEN_CHECK_ENV)" scripts/rust-port/postgres-sidecar.sh run -- scripts/rust-port/postgres-integration.sh check
+
+postgres-fixtures-generate:
+	CARGO="$(CARGO)" PORTGEN_GENERATE_GO_ENV="$(PORTGEN_GENERATE_GO_ENV)" scripts/rust-port/postgres-sidecar.sh run -- scripts/rust-port/postgres-integration.sh generate
+
 vault-history-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.10 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 

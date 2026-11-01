@@ -1421,6 +1421,310 @@
       ]
     },
     {
+      "name": "secret-canaries",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inbox_watch/readme.md": "inbox\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "ANTHROPIC_API_KEY": "r013-canary-key-5d2e9b",
+        "SYMDESK_ADMIN_TOKEN": "r013-canary-token-8f3a1c",
+        "SYMDESK_ANTHROPIC_KEY": "r013-canary-key-5d2e9b",
+        "SYMDESK_LLM_API_KEY": "r013-canary-key-5d2e9b",
+        "SYMDESK_SERVER_TOKEN": "r013-canary-token-8f3a1c",
+        "SYMDESK_WORKER_TOKEN": "r013-canary-token-8f3a1c"
+      },
+      "canaries": [
+        "r013-canary-token-8f3a1c",
+        "r013-canary-key-5d2e9b"
+      ],
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: \nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "export",
+            "hello",
+            "--format",
+            "bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unsupported search export format \"bogus\": use markdown or pdf\n"
+        },
+        {
+          "args": [
+            "--json",
+            "search",
+            "export",
+            "hello",
+            "--format",
+            "bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unsupported search export format \\\"bogus\\\": use markdown or pdf\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "export",
+            "hello"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:markdown Path:search-results/search-results-hello.md Query:hello Title:Search results: hello Count:5}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "search",
+            "export",
+            "hello"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"markdown\",\"path\":\"search-results/search-results-hello-2.md\",\"query\":\"hello\",\"title\":\"Search results: hello\",\"count\":5}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "notebook",
+            "hello"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{ID:search-hello Path:notebooks/search-hello.md Title:Search: hello Description:Promoted from search query: hello Created:$TIME Sources:[a.md b.md inbox_watch/readme.md tagged.md unicode-é.md] Query:hello}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "search",
+            "notebook",
+            "hello"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"id\":\"search-hello-2\",\"path\":\"notebooks/search-hello-2.md\",\"title\":\"Search: hello\",\"description\":\"Promoted from search query: hello\",\"created\":\"$TIME\",\"sources\":[\"a.md\",\"b.md\",\"inbox_watch/readme.md\",\"tagged.md\",\"unicode-é.md\"],\"query\":\"hello\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "notebook",
+            "delete",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "notebook not found\n"
+        },
+        {
+          "args": [
+            "--json",
+            "notebook",
+            "delete",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notebook not found\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "Sidecars: 1\nTotal size: 221184 bytes\nOrphaned: 0\nLegacy retrieval index: $ROOT/home/data/symdesk/retrieval.db (not managed)\nlive\t$ROOT/vault\t221184 bytes\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\",\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\",\"size\":221184,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":true}],\"count\":1,\"total_bytes\":221184,\"orphan_count\":0,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":false,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to remove sidecars without --confirm\n"
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to remove sidecars without --confirm\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "asset",
+            "store",
+            "$ROOT/vault/missing.bin"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read asset data: open $ROOT/vault/missing.bin: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "asset",
+            "store",
+            "$ROOT/vault/missing.bin"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read asset data: open $ROOT/vault/missing.bin: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "props",
+            "get",
+            "missing.md"
+          ],
+          "exit_code": 0,
+          "stdout": "map[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "props",
+            "get",
+            "missing.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "tags",
+            "rename",
+            "x",
+            "y"
+          ],
+          "exit_code": 0,
+          "stdout": "Tag update complete. 4 file(s) updated, 10 skipped.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "tags",
+            "rename",
+            "x",
+            "y"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"file\":\"a.md\",\"status\":\"skipped\"},{\"file\":\"b.md\",\"status\":\"skipped\"},{\"file\":\"crlf.md\",\"status\":\"skipped\"},{\"file\":\"inbox_watch/readme.md\",\"status\":\"skipped\"},{\"file\":\"inline-only.md\",\"status\":\"skipped\"},{\"file\":\"notebooks/search-hello-2.md\",\"status\":\"skipped\"},{\"file\":\"notebooks/search-hello.md\",\"status\":\"skipped\"},{\"file\":\"notes/c.md\",\"status\":\"skipped\"},{\"file\":\"notes/d.md\",\"status\":\"skipped\"},{\"file\":\"plain.md\",\"status\":\"skipped\"},{\"file\":\"search-results/search-results-hello-2.md\",\"status\":\"skipped\"},{\"file\":\"search-results/search-results-hello.md\",\"status\":\"skipped\"},{\"file\":\"tagged.md\",\"status\":\"skipped\"},{\"file\":\"unicode-é.md\",\"status\":\"skipped\"}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "history",
+            "undo-task",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "openat .symdesk/history/checkpoints/missing.json: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "history",
+            "undo-task",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"openat .symdesk/history/checkpoints/missing.json: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unexpected end of JSON input\n"
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unexpected end of JSON input\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "related-memory",
       "files": {
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

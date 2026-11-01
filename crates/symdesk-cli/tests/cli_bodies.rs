@@ -35,10 +35,10 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 28;
-const EXPECTED_STEPS: usize = 516;
+const EXPECTED_CASES: usize = 29;
+const EXPECTED_STEPS: usize = 542;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 184;
+const EXPECTED_FAILING_STEPS: usize = 198;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 413;
 

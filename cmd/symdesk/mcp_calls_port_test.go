@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -83,6 +84,7 @@ func mcpCallsCase1(id string, allowWrite bool, name, args string) mcpCallsCase {
 func mcpCallsAllCases() []mcpCallsCase {
 	var cases []mcpCallsCase
 	cases = append(cases, mcpCallsRulesCases()...)
+	cases = append(cases, mcpCallsIngestCases()...)
 	return cases
 }
 
@@ -309,6 +311,9 @@ func mcpCallsDumpDB(t *testing.T, path, root string) map[string][]map[string]any
 				}
 				entry[col] = v
 			}
+			if tb.name == "files" {
+				mcpCallsNormalizeIndexedFile(t, entry, vals, cols, root)
+			}
 			entries = append(entries, entry)
 		}
 		if err := result.Err(); err != nil {
@@ -347,7 +352,10 @@ func TestMCPCallsProcessPortFixture(t *testing.T) {
 			mcpCallsIndexVault(t, root, vaultRoot, c.Files)
 		}
 		for _, prepare := range c.Prepare {
-			args := append([]string{"--vault", vaultRoot}, prepare...)
+			args := []string{"--vault", vaultRoot}
+			for _, a := range prepare {
+				args = append(args, strings.ReplaceAll(a, "$ROOT", root))
+			}
 			mcpCallsRun(t, binary, root, c, args, "")
 		}
 		for _, seed := range c.SeedSQL {
@@ -372,9 +380,10 @@ func TestMCPCallsProcessPortFixture(t *testing.T) {
 			if c.AllowWrite {
 				args = append(args, "--allow-write")
 			}
-			input := step.Request + "\n"
+			request := strings.ReplaceAll(step.Request, "$ROOT", root)
+			input := request + "\n"
 			if step.Framed {
-				input = fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(step.Request), step.Request)
+				input = fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(request), request)
 			}
 			stdout, stderr, code := mcpCallsRun(t, binary, root, c, args, input)
 			c.Steps[i].Stdout = mcpCallsNormalize(stdout, root)
@@ -389,4 +398,40 @@ func TestMCPCallsProcessPortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	checkMCPSurfaceBytes(t, "../../testdata/port/mcp/calls-process.json", append(data, '\n'))
+}
+
+// mcpCallsNormalizeIndexedFile verifies a sidecar `files` row against the file
+// it indexes, then replaces the columns derived from the raw bytes (hash, size,
+// simhash) by values of the normalized content: generated notes embed clock
+// readings and the disposable root path, which differ between runs and hosts.
+func mcpCallsNormalizeIndexedFile(t *testing.T, entry map[string]any, vals []any, cols []string, root string) {
+	t.Helper()
+	var rawPath, rawSHA string
+	for i, col := range cols {
+		switch col {
+		case "path":
+			rawPath, _ = vals[i].(string)
+		case "sha256":
+			rawSHA, _ = vals[i].(string)
+		}
+	}
+	if rawPath == "" || rawSHA == "" {
+		return
+	}
+	//nolint:gosec // path is read from the sidecar of a test-owned database.
+	body, err := os.ReadFile(rawPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256(body)
+	if hex.EncodeToString(digest[:]) != rawSHA {
+		t.Fatalf("index SHA of %s does not match the file", rawPath)
+	}
+	normalized := mcpCallsNormalize(string(body), root)
+	sum := sha256.Sum256([]byte(normalized))
+	entry["sha256"] = hex.EncodeToString(sum[:])
+	entry["size"] = len(normalized)
+	if normalized != string(body) {
+		entry["simhash"] = "<SIMHASH>"
+	}
 }

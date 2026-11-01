@@ -127,7 +127,13 @@ fn dump_db(path: &Path, root: &str) -> Dump {
         let mut entries = Rows::new();
         while let Some(row) = rows.next().unwrap() {
             let mut entry = BTreeMap::new();
+            let mut raw_path = String::new();
             for (index, column) in columns.iter().enumerate() {
+                if column == "path" {
+                    if let ValueRef::Text(bytes) = row.get_ref(index).unwrap() {
+                        raw_path = String::from_utf8_lossy(bytes).into_owned();
+                    }
+                }
                 let mut value = match row.get_ref(index).unwrap() {
                     ValueRef::Null => Value::Null,
                     ValueRef::Integer(n) => json!(n),
@@ -150,11 +156,43 @@ fn dump_db(path: &Path, root: &str) -> Dump {
                 }
                 entry.insert(column.clone(), value);
             }
+            if name == "files" {
+                normalize_indexed_file(&mut entry, &raw_path, &root_text);
+            }
             entries.push(entry);
         }
         out.insert(name.clone(), entries);
     }
     out
+}
+
+// Verifies a sidecar `files` row against the file it indexes, then replaces
+// the columns derived from the raw bytes (hash, size, simhash) by values of the
+// normalized content: generated notes embed clock readings and the disposable
+// root path, which differ between runs and hosts.
+fn normalize_indexed_file(entry: &mut BTreeMap<String, Value>, raw_path: &str, root: &str) {
+    let Some(raw_sha) = entry.get("sha256").and_then(Value::as_str).map(str::to_owned) else {
+        return;
+    };
+    if raw_path.is_empty() {
+        return;
+    }
+    let body = fs::read(raw_path).unwrap_or_else(|error| panic!("{raw_path}: {error}"));
+    assert_eq!(
+        symdesk_vault::sha256_hex(&body),
+        raw_sha,
+        "index SHA of {raw_path} does not match the file"
+    );
+    let text = String::from_utf8_lossy(&body).into_owned();
+    let normalized = normalize(&text, root);
+    entry.insert(
+        "sha256".into(),
+        json!(symdesk_vault::sha256_hex(normalized.as_bytes())),
+    );
+    entry.insert("size".into(), json!(normalized.len()));
+    if normalized != text {
+        entry.insert("simhash".into(), json!("<SIMHASH>"));
+    }
 }
 
 fn snapshot(root: &Path) -> (BTreeMap<String, String>, BTreeMap<String, Dump>) {
@@ -257,7 +295,11 @@ fn replay(case: &Case, failures: &mut Vec<String>) {
     for prepare in &case.prepare {
         let mut args: Vec<std::ffi::OsString> =
             vec!["--vault".into(), vault.clone().into_os_string()];
-        args.extend(prepare.iter().map(Into::into));
+        args.extend(
+            prepare
+                .iter()
+                .map(|arg| arg.replace("$ROOT", &root_text).into()),
+        );
         mcp_run::run(&spec(&root, args, Vec::new(), case), &case.id);
     }
     for seed in &case.seed_sql {
@@ -280,14 +322,11 @@ fn replay(case: &Case, failures: &mut Vec<String>) {
         if case.allow_write {
             args.push("--allow-write".into());
         }
+        let request = step.request.replace("$ROOT", &root_text);
         let input = if step.framed {
-            format!(
-                "Content-Length: {}\r\n\r\n{}",
-                step.request.len(),
-                step.request
-            )
+            format!("Content-Length: {}\r\n\r\n{request}", request.len())
         } else {
-            format!("{}\n", step.request)
+            format!("{request}\n")
         };
         let outcome = mcp_run::run(
             &spec(&root, args, input.into_bytes(), case),

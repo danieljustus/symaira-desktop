@@ -180,7 +180,7 @@ pub fn init_service_deps(vault: Option<&str>) -> Result<(PathBuf, symdesk_index:
     Ok((root, sidecar))
 }
 
-fn close_sidecar(mut sidecar: symdesk_index::Sidecar) {
+pub(crate) fn close_sidecar(mut sidecar: symdesk_index::Sidecar) {
     if let Err(error) = sidecar.close() {
         eprintln!("warning: failed to close sidecar database: {error}");
     }
@@ -378,7 +378,7 @@ struct ReocrResponse<'a> {
     error: Option<ReocrError<'a>>,
 }
 
-enum ReocrFailure {
+pub(crate) enum ReocrFailure {
     Plain(String),
     NotFound(String),
     NoArchivedOriginal(String),
@@ -386,7 +386,7 @@ enum ReocrFailure {
 }
 
 impl ReocrFailure {
-    fn message(&self) -> &str {
+    pub(crate) fn message(&self) -> &str {
         match self {
             Self::Plain(m) | Self::NotFound(m) | Self::NoArchivedOriginal(m) | Self::Other(m) => m,
         }
@@ -495,7 +495,7 @@ fn archive_candidates(resolved: &Resolved, input: &str) -> Result<Vec<String>, S
     Ok(candidates)
 }
 
-fn reprocess(
+pub(crate) fn reprocess(
     configured_vault: &str,
     document_id: i64,
     archive_path: &str,

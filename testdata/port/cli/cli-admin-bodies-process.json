@@ -2032,6 +2032,1027 @@
           "stderr": ""
         }
       ]
+    },
+    {
+      "name": "vault-adopt-lifecycle",
+      "files": {
+        ".hidden.md": "skipped by the walk\n",
+        "2026-02-30.md": "not a date\n",
+        "2026-03-04.md": "daily words\n",
+        "crlf-plain.md": "plain\r\ntext\r\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\n---\r\nbody\r\n",
+        "empty.md": "",
+        "emptyh1.md": "#  \n# Second\n",
+        "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+        "full.md": "---\ntitle: Full\ncreated: 2026-01-02T03:04:05Z\ntags: [a]\n---\nbody\n",
+        "h1.md": "intro\n\n# Real Title\n\nbody\n",
+        "late-fm.md": "intro line\n---\ntitle: Late\n---\nbody\n",
+        "node_modules/a.md": "skipped directory\n",
+        "notags.md": "---\ntitle: T\ncreated: \"x\"\n---\nbody\n",
+        "notes.txt": "not markdown\n",
+        "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\n---\n# H\nbody\n",
+        "nullfields.md": "---\ntitle:\ncreated:\ntags:\n---\nbody\n",
+        "numtitle.md": "---\ntitle: 2026\ncreated: 5\n---\nbody\n",
+        "plain.md": "just words\n",
+        "quote\"title.md": "x\n",
+        "spaces h1.md": "  # Indented\n",
+        "sub/dir/nested.md": "# Nested H1 \n",
+        "tag-only.md": "---\ntags: [x]\n---\nbody #y\n",
+        "unicode-é.md": "ünï body\n",
+        "unterminated.md": "---\ntitle: Open\nno end\n"
+      },
+      "post_index_files": {
+        "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n"
+      },
+      "mtimes": {
+        ".hidden.md": 1700000000,
+        "2026-02-30.md": 1700259200,
+        "2026-03-04.md": 1700518400,
+        "a-late.md": 1700000000,
+        "crlf-plain.md": 1700777600,
+        "crlf.md": 1701036800,
+        "dupe.md": 1700259200,
+        "empty.md": 1701296000,
+        "emptyh1.md": 1701555200,
+        "full-quoted.md": 1701814400,
+        "full.md": 1702073600,
+        "h1.md": 1702332800,
+        "late-fm.md": 1702592000,
+        "node_modules/a.md": 1702851200,
+        "notags.md": 1703110400,
+        "notes.txt": 1703369600,
+        "notitle.md": 1703628800,
+        "nullfields.md": 1703888000,
+        "numtitle.md": 1704147200,
+        "plain.md": 1704406400,
+        "quote\"title.md": 1704665600,
+        "spaces h1.md": 1704924800,
+        "sub/dir/nested.md": 1705184000,
+        "tag-only.md": 1705443200,
+        "unicode-é.md": 1705702400,
+        "unterminated.md": 1705961600
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    22\n  Adopted:  20\n  Skipped:  1\n  Failed:   1\n\nChanges:\n  2026-02-30.md:\n    + title: \"2026-02-30\"\n    + created: \"$TIME\"\n    + tags: []\n  2026-03-04.md:\n    + title: \"2026-03-04\"\n    + created: \"$TIME\"\n    + tags: []\n  crlf-plain.md:\n    + title: \"crlf-plain\"\n    + created: \"$TIME\"\n    + tags: []\n  crlf.md:\n    + title: \"Crlf\"\n    + created: \"$TIME\"\n    + tags: []\n  dupe.md: error: invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n  empty.md:\n    + title: \"empty\"\n    + created: \"$TIME\"\n    + tags: []\n  emptyh1.md:\n    + title: \"Second\"\n    + created: \"$TIME\"\n    + tags: []\n  full.md:\n    + title: \"Full\"\n    + created: \"$TIME\"\n    + tags: [a]\n  h1.md:\n    + title: \"Real Title\"\n    + created: \"$TIME\"\n    + tags: []\n  late-fm.md:\n    + title: \"Late\"\n    + created: \"$TIME\"\n    + tags: []\n  notags.md:\n    + title: \"T\"\n    + created: \"x\"\n    + tags: []\n  notitle.md:\n    + title: \"H\"\n    + created: \"$TIME\"\n    + tags: [a]\n  nullfields.md:\n    + title: \"nullfields\"\n    + created: \"$TIME\"\n    + tags: []\n  numtitle.md:\n    + title: \"numtitle\"\n    + created: \"$TIME\"\n    + tags: []\n  plain.md:\n    + title: \"plain\"\n    + created: \"$TIME\"\n    + tags: []\n  quote\"title.md:\n    + title: \"quote\\\"title\"\n    + created: \"$TIME\"\n    + tags: []\n  spaces h1.md:\n    + title: \"Indented\"\n    + created: \"$TIME\"\n    + tags: []\n  sub/dir/nested.md:\n    + title: \"Nested H1\"\n    + created: \"$TIME\"\n    + tags: []\n  tag-only.md:\n    + title: \"tag-only\"\n    + created: \"$TIME\"\n    + tags: [x y]\n  unicode-é.md:\n    + title: \"unicode-é\"\n    + created: \"$TIME\"\n    + tags: []\n  unterminated.md:\n    + title: \"unterminated\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            "2026-02-30.md": "not a date\n",
+            "2026-03-04.md": "daily words\n",
+            "crlf-plain.md": "plain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "",
+            "emptyh1.md": "#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\n---\nbody\n",
+            "h1.md": "intro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "intro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\n---\nbody\n",
+            "plain.md": "just words\n",
+            "quote\"title.md": "x\n",
+            "spaces h1.md": "  # Indented\n",
+            "sub/dir/nested.md": "# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\n---\nbody #y\n",
+            "unicode-é.md": "ünï body\n",
+            "unterminated.md": "---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":22,\"adopted\":20,\"skipped\":1,\"failed\":1,\"documents\":[{\"path\":\"2026-02-30.md\",\"status\":\"adopted\",\"title\":\"2026-02-30\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"2026-03-04.md\",\"status\":\"adopted\",\"title\":\"2026-03-04\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"crlf-plain.md\",\"status\":\"adopted\",\"title\":\"crlf-plain\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"crlf.md\",\"status\":\"adopted\",\"title\":\"Crlf\",\"created\":\"$TIME\",\"added_fields\":[\"created\",\"tags\"]},{\"path\":\"dupe.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"empty.md\",\"status\":\"adopted\",\"title\":\"empty\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"emptyh1.md\",\"status\":\"adopted\",\"title\":\"Second\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"full-quoted.md\",\"status\":\"skipped\"},{\"path\":\"full.md\",\"status\":\"adopted\",\"title\":\"Full\",\"created\":\"$TIME\",\"tags\":[\"a\"],\"added_fields\":[\"created\"]},{\"path\":\"h1.md\",\"status\":\"adopted\",\"title\":\"Real Title\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"late-fm.md\",\"status\":\"adopted\",\"title\":\"Late\",\"created\":\"$TIME\",\"added_fields\":[\"created\",\"tags\"]},{\"path\":\"notags.md\",\"status\":\"adopted\",\"title\":\"T\",\"created\":\"x\",\"added_fields\":[\"tags\"]},{\"path\":\"notitle.md\",\"status\":\"adopted\",\"title\":\"H\",\"created\":\"$TIME\",\"tags\":[\"a\"],\"added_fields\":[\"title\",\"created\"]},{\"path\":\"nullfields.md\",\"status\":\"adopted\",\"title\":\"nullfields\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\"]},{\"path\":\"numtitle.md\",\"status\":\"adopted\",\"title\":\"numtitle\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"plain.md\",\"status\":\"adopted\",\"title\":\"plain\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"quote\\\"title.md\",\"status\":\"adopted\",\"title\":\"quote\\\"title\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"spaces h1.md\",\"status\":\"adopted\",\"title\":\"Indented\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"sub/dir/nested.md\",\"status\":\"adopted\",\"title\":\"Nested H1\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"tag-only.md\",\"status\":\"adopted\",\"title\":\"tag-only\",\"created\":\"$TIME\",\"tags\":[\"x\",\"y\"],\"added_fields\":[\"title\",\"created\"]},{\"path\":\"unicode-é.md\",\"status\":\"adopted\",\"title\":\"unicode-é\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]},{\"path\":\"unterminated.md\",\"status\":\"adopted\",\"title\":\"unterminated\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]}]}\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            "2026-02-30.md": "not a date\n",
+            "2026-03-04.md": "daily words\n",
+            "crlf-plain.md": "plain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "",
+            "emptyh1.md": "#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\n---\nbody\n",
+            "h1.md": "intro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "intro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\n---\nbody\n",
+            "plain.md": "just words\n",
+            "quote\"title.md": "x\n",
+            "spaces h1.md": "  # Indented\n",
+            "sub/dir/nested.md": "# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\n---\nbody #y\n",
+            "unicode-é.md": "ünï body\n",
+            "unterminated.md": "---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    22\n  Adopted:  20\n  Skipped:  1\n  Failed:   1\n\nChanges:\n  2026-02-30.md:\n    + title: \"2026-02-30\"\n    + created: \"$TIME\"\n    + tags: []\n  2026-03-04.md:\n    + title: \"2026-03-04\"\n    + created: \"$TIME\"\n    + tags: []\n  crlf-plain.md:\n    + title: \"crlf-plain\"\n    + created: \"$TIME\"\n    + tags: []\n  crlf.md:\n    + title: \"Crlf\"\n    + created: \"$TIME\"\n    + tags: []\n  dupe.md: error: invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n  empty.md:\n    + title: \"empty\"\n    + created: \"$TIME\"\n    + tags: []\n  emptyh1.md:\n    + title: \"Second\"\n    + created: \"$TIME\"\n    + tags: []\n  full.md:\n    + title: \"Full\"\n    + created: \"$TIME\"\n    + tags: [a]\n  h1.md:\n    + title: \"Real Title\"\n    + created: \"$TIME\"\n    + tags: []\n  late-fm.md:\n    + title: \"Late\"\n    + created: \"$TIME\"\n    + tags: []\n  notags.md:\n    + title: \"T\"\n    + created: \"x\"\n    + tags: []\n  notitle.md:\n    + title: \"H\"\n    + created: \"$TIME\"\n    + tags: [a]\n  nullfields.md:\n    + title: \"nullfields\"\n    + created: \"$TIME\"\n    + tags: []\n  numtitle.md:\n    + title: \"numtitle\"\n    + created: \"$TIME\"\n    + tags: []\n  plain.md:\n    + title: \"plain\"\n    + created: \"$TIME\"\n    + tags: []\n  quote\"title.md:\n    + title: \"quote\\\"title\"\n    + created: \"$TIME\"\n    + tags: []\n  spaces h1.md:\n    + title: \"Indented\"\n    + created: \"$TIME\"\n    + tags: []\n  sub/dir/nested.md:\n    + title: \"Nested H1\"\n    + created: \"$TIME\"\n    + tags: []\n  tag-only.md:\n    + title: \"tag-only\"\n    + created: \"$TIME\"\n    + tags: [x y]\n  unicode-é.md:\n    + title: \"unicode-é\"\n    + created: \"$TIME\"\n    + tags: []\n  unterminated.md:\n    + title: \"unterminated\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":22,\"adopted\":1,\"skipped\":16,\"failed\":5,\"documents\":[{\"path\":\"2026-02-30.md\",\"status\":\"skipped\"},{\"path\":\"2026-03-04.md\",\"status\":\"skipped\"},{\"path\":\"crlf-plain.md\",\"status\":\"skipped\"},{\"path\":\"crlf.md\",\"status\":\"skipped\"},{\"path\":\"dupe.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"empty.md\",\"status\":\"skipped\"},{\"path\":\"emptyh1.md\",\"status\":\"skipped\"},{\"path\":\"full-quoted.md\",\"status\":\"skipped\"},{\"path\":\"full.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/full.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"h1.md\",\"status\":\"skipped\"},{\"path\":\"late-fm.md\",\"status\":\"adopted\",\"title\":\"late-fm\",\"created\":\"$TIME\",\"added_fields\":[\"title\"]},{\"path\":\"notags.md\",\"status\":\"skipped\"},{\"path\":\"notitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/notitle.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 1\"},{\"path\":\"nullfields.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/nullfields.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"title\\\" already defined at line 1\\n  line 5: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"numtitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/numtitle.md: yaml: unmarshal errors:\\n  line 3: mapping key \\\"title\\\" already defined at line 1\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"plain.md\",\"status\":\"skipped\"},{\"path\":\"quote\\\"title.md\",\"status\":\"skipped\"},{\"path\":\"spaces h1.md\",\"status\":\"skipped\"},{\"path\":\"sub/dir/nested.md\",\"status\":\"skipped\"},{\"path\":\"tag-only.md\",\"status\":\"skipped\"},{\"path\":\"unicode-é.md\",\"status\":\"skipped\"},{\"path\":\"unterminated.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\ntitle: \"late-fm\"\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    22\n  Adopted:  0\n  Skipped:  17\n  Failed:   5\n  dupe.md: error: invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n  full.md: error: invalid frontmatter in $ROOT/vault/full.md: yaml: unmarshal errors:\n  line 4: mapping key \"created\" already defined at line 2\n  notitle.md: error: invalid frontmatter in $ROOT/vault/notitle.md: yaml: unmarshal errors:\n  line 4: mapping key \"created\" already defined at line 1\n  nullfields.md: error: invalid frontmatter in $ROOT/vault/nullfields.md: yaml: unmarshal errors:\n  line 4: mapping key \"title\" already defined at line 1\n  line 5: mapping key \"created\" already defined at line 2\n  numtitle.md: error: invalid frontmatter in $ROOT/vault/numtitle.md: yaml: unmarshal errors:\n  line 3: mapping key \"title\" already defined at line 1\n  line 4: mapping key \"created\" already defined at line 2\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\ntitle: \"late-fm\"\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":22,\"adopted\":0,\"skipped\":17,\"failed\":5,\"documents\":[{\"path\":\"2026-02-30.md\",\"status\":\"skipped\"},{\"path\":\"2026-03-04.md\",\"status\":\"skipped\"},{\"path\":\"crlf-plain.md\",\"status\":\"skipped\"},{\"path\":\"crlf.md\",\"status\":\"skipped\"},{\"path\":\"dupe.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"empty.md\",\"status\":\"skipped\"},{\"path\":\"emptyh1.md\",\"status\":\"skipped\"},{\"path\":\"full-quoted.md\",\"status\":\"skipped\"},{\"path\":\"full.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/full.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"h1.md\",\"status\":\"skipped\"},{\"path\":\"late-fm.md\",\"status\":\"skipped\"},{\"path\":\"notags.md\",\"status\":\"skipped\"},{\"path\":\"notitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/notitle.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 1\"},{\"path\":\"nullfields.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/nullfields.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"title\\\" already defined at line 1\\n  line 5: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"numtitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/numtitle.md: yaml: unmarshal errors:\\n  line 3: mapping key \\\"title\\\" already defined at line 1\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"plain.md\",\"status\":\"skipped\"},{\"path\":\"quote\\\"title.md\",\"status\":\"skipped\"},{\"path\":\"spaces h1.md\",\"status\":\"skipped\"},{\"path\":\"sub/dir/nested.md\",\"status\":\"skipped\"},{\"path\":\"tag-only.md\",\"status\":\"skipped\"},{\"path\":\"unicode-é.md\",\"status\":\"skipped\"},{\"path\":\"unterminated.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\ntitle: \"late-fm\"\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    22\n  Adopted:  0\n  Skipped:  17\n  Failed:   5\n  dupe.md: error: invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1\n  full.md: error: invalid frontmatter in $ROOT/vault/full.md: yaml: unmarshal errors:\n  line 4: mapping key \"created\" already defined at line 2\n  notitle.md: error: invalid frontmatter in $ROOT/vault/notitle.md: yaml: unmarshal errors:\n  line 4: mapping key \"created\" already defined at line 1\n  nullfields.md: error: invalid frontmatter in $ROOT/vault/nullfields.md: yaml: unmarshal errors:\n  line 4: mapping key \"title\" already defined at line 1\n  line 5: mapping key \"created\" already defined at line 2\n  numtitle.md: error: invalid frontmatter in $ROOT/vault/numtitle.md: yaml: unmarshal errors:\n  line 3: mapping key \"title\" already defined at line 1\n  line 4: mapping key \"created\" already defined at line 2\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\ntitle: \"late-fm\"\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":22,\"adopted\":0,\"skipped\":17,\"failed\":5,\"documents\":[{\"path\":\"2026-02-30.md\",\"status\":\"skipped\"},{\"path\":\"2026-03-04.md\",\"status\":\"skipped\"},{\"path\":\"crlf-plain.md\",\"status\":\"skipped\"},{\"path\":\"crlf.md\",\"status\":\"skipped\"},{\"path\":\"dupe.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/dupe.md: yaml: unmarshal errors:\\n  line 2: mapping key \\\"title\\\" already defined at line 1\"},{\"path\":\"empty.md\",\"status\":\"skipped\"},{\"path\":\"emptyh1.md\",\"status\":\"skipped\"},{\"path\":\"full-quoted.md\",\"status\":\"skipped\"},{\"path\":\"full.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/full.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"h1.md\",\"status\":\"skipped\"},{\"path\":\"late-fm.md\",\"status\":\"skipped\"},{\"path\":\"notags.md\",\"status\":\"skipped\"},{\"path\":\"notitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/notitle.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"created\\\" already defined at line 1\"},{\"path\":\"nullfields.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/nullfields.md: yaml: unmarshal errors:\\n  line 4: mapping key \\\"title\\\" already defined at line 1\\n  line 5: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"numtitle.md\",\"status\":\"failed\",\"error\":\"invalid frontmatter in $ROOT/vault/numtitle.md: yaml: unmarshal errors:\\n  line 3: mapping key \\\"title\\\" already defined at line 1\\n  line 4: mapping key \\\"created\\\" already defined at line 2\"},{\"path\":\"plain.md\",\"status\":\"skipped\"},{\"path\":\"quote\\\"title.md\",\"status\":\"skipped\"},{\"path\":\"spaces h1.md\",\"status\":\"skipped\"},{\"path\":\"sub/dir/nested.md\",\"status\":\"skipped\"},{\"path\":\"tag-only.md\",\"status\":\"skipped\"},{\"path\":\"unicode-é.md\",\"status\":\"skipped\"},{\"path\":\"unterminated.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".hidden.md": "skipped by the walk\n",
+            ".symdesk/history/manifest/2026-02-30.md.json": "(present)",
+            ".symdesk/history/manifest/2026-03-04.md.json": "(present)",
+            ".symdesk/history/manifest/crlf-plain.md.json": "(present)",
+            ".symdesk/history/manifest/crlf.md.json": "(present)",
+            ".symdesk/history/manifest/empty.md.json": "(present)",
+            ".symdesk/history/manifest/emptyh1.md.json": "(present)",
+            ".symdesk/history/manifest/full.md.json": "(present)",
+            ".symdesk/history/manifest/h1.md.json": "(present)",
+            ".symdesk/history/manifest/late-fm.md.json": "(present)",
+            ".symdesk/history/manifest/notags.md.json": "(present)",
+            ".symdesk/history/manifest/notitle.md.json": "(present)",
+            ".symdesk/history/manifest/nullfields.md.json": "(present)",
+            ".symdesk/history/manifest/numtitle.md.json": "(present)",
+            ".symdesk/history/manifest/plain.md.json": "(present)",
+            ".symdesk/history/manifest/quote\"title.md.json": "(present)",
+            ".symdesk/history/manifest/spaces h1.md.json": "(present)",
+            ".symdesk/history/manifest/sub/dir/nested.md.json": "(present)",
+            ".symdesk/history/manifest/tag-only.md.json": "(present)",
+            ".symdesk/history/manifest/unicode-é.md.json": "(present)",
+            ".symdesk/history/manifest/unterminated.md.json": "(present)",
+            "2026-02-30.md": "---\ntitle: \"2026-02-30\"\ncreated: \"$TIME\"\ntags: []\n---\nnot a date\n",
+            "2026-03-04.md": "---\ntitle: \"2026-03-04\"\ncreated: \"$TIME\"\ntags: []\n---\ndaily words\n",
+            "crlf-plain.md": "---\r\ntitle: \"crlf-plain\"\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nplain\r\ntext\r\n",
+            "crlf.md": "---\r\ntitle: Crlf\r\ncreated: \"$TIME\"\r\ntags: []\r\n---\r\nbody\r\n",
+            "dupe.md": "---\ntitle: A\ntitle: B\n---\nbody\n",
+            "empty.md": "---\ntitle: \"empty\"\ncreated: \"$TIME\"\ntags: []\n---\n",
+            "emptyh1.md": "---\ntitle: \"Second\"\ncreated: \"$TIME\"\ntags: []\n---\n#  \n# Second\n",
+            "full-quoted.md": "---\ntitle: \"Q\"\ncreated: \"2026-01-02\"\ntags: []\n---\nbody\n",
+            "full.md": "---\ntitle: Full\ncreated: $TIME\ntags: [a]\ncreated: \"$TIME\"\n---\nbody\n",
+            "h1.md": "---\ntitle: \"Real Title\"\ncreated: \"$TIME\"\ntags: []\n---\nintro\n\n# Real Title\n\nbody\n",
+            "late-fm.md": "---\ncreated: \"$TIME\"\ntags: []\ntitle: \"late-fm\"\n---\nintro line\n---\ntitle: Late\n---\nbody\n",
+            "node_modules/a.md": "skipped directory\n",
+            "notags.md": "---\ntitle: T\ncreated: \"x\"\ntags: []\n---\nbody\n",
+            "notes.txt": "not markdown\n",
+            "notitle.md": "---\ncreated: 2026-01-02\ntags: [a]\ntitle: \"H\"\ncreated: \"$TIME\"\n---\n# H\nbody\n",
+            "nullfields.md": "---\ntitle:\ncreated:\ntags:\ntitle: \"nullfields\"\ncreated: \"$TIME\"\n---\nbody\n",
+            "numtitle.md": "---\ntitle: 2026\ncreated: 5\ntitle: \"numtitle\"\ncreated: \"$TIME\"\ntags: []\n---\nbody\n",
+            "plain.md": "---\ntitle: \"plain\"\ncreated: \"$TIME\"\ntags: []\n---\njust words\n",
+            "quote\"title.md": "---\ntitle: \"quote\\\"title\"\ncreated: \"$TIME\"\ntags: []\n---\nx\n",
+            "spaces h1.md": "---\ntitle: \"Indented\"\ncreated: \"$TIME\"\ntags: []\n---\n  # Indented\n",
+            "sub/dir/nested.md": "---\ntitle: \"Nested H1\"\ncreated: \"$TIME\"\ntags: []\n---\n# Nested H1 \n",
+            "tag-only.md": "---\ntags: [x]\ntitle: \"tag-only\"\ncreated: \"$TIME\"\n---\nbody #y\n",
+            "unicode-é.md": "---\ntitle: \"unicode-é\"\ncreated: \"$TIME\"\ntags: []\n---\nünï body\n",
+            "unterminated.md": "---\ntitle: \"unterminated\"\ncreated: \"$TIME\"\ntags: []\n---\n---\ntitle: Open\nno end\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "vault-adopt-unindexed",
+      "files": {
+        "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+        "b.md": "# B heading\n\nbody #tag\n"
+      },
+      "mtimes": {
+        "a.md": 1700000000,
+        "b.md": 1700259200
+      },
+      "skip_index": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  1\n  Skipped:  1\n  Failed:   0\n\nChanges:\n  b.md:\n    + title: \"B heading\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":2,\"adopted\":0,\"skipped\":2,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run=false"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  0\n  Skipped:  2\n  Failed:   0\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run=false"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":2,\"adopted\":0,\"skipped\":2,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run=true"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  0\n  Skipped:  2\n  Failed:   0\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run=true"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":2,\"adopted\":0,\"skipped\":2,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "vault-adopt-directory-argument",
+      "files": {
+        "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+        "b.md": "# B heading\n\nbody #tag\n"
+      },
+      "mtimes": {
+        "a.md": 1700000000,
+        "b.md": 1700259200
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/vault",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  1\n  Skipped:  1\n  Failed:   0\n\nChanges:\n  b.md:\n    + title: \"B heading\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/vault",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":2,\"adopted\":1,\"skipped\":1,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"adopted\",\"title\":\"B heading\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]}]}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run",
+            "$ROOT/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  1\n  Skipped:  1\n  Failed:   0\n\nChanges:\n  b.md:\n    + title: \"B heading\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run",
+            "$ROOT/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":2,\"adopted\":1,\"skipped\":1,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"adopted\",\"title\":\"B heading\",\"created\":\"$TIME\",\"added_fields\":[\"title\",\"created\",\"tags\"]}]}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/missing: no such file or directory\n",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/missing: no such file or directory\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/vault/a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a directory\n",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/vault/a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a directory\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/vault",
+            "$ROOT/vault"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts at most 1 arg(s), received 2\n",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/vault",
+            "$ROOT/vault"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts at most 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    2\n  Adopted:  1\n  Skipped:  1\n  Failed:   0\n\nChanges:\n  b.md:\n    + title: \"B heading\"\n    + created: \"$TIME\"\n    + tags: []\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":2,\"adopted\":0,\"skipped\":2,\"failed\":0,\"documents\":[{\"path\":\"a.md\",\"status\":\"skipped\"},{\"path\":\"b.md\",\"status\":\"skipped\"}]}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/b.md.json": "(present)",
+            "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+            "b.md": "---\ntitle: \"B heading\"\ncreated: \"$TIME\"\ntags: []\n---\n# B heading\n\nbody #tag\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "vault-adopt-without-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "$ROOT/missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/missing: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "$ROOT/missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/missing: no such file or directory\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "vault-adopt-empty-vault",
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption\n  Vault:    $ROOT/vault\n  Total:    0\n  Adopted:  0\n  Skipped:  0\n  Failed:   0\n",
+          "stderr": "",
+          "vault": {}
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":false,\"total\":0,\"adopted\":0,\"skipped\":0,\"failed\":0,\"documents\":[]}\n",
+          "stderr": "",
+          "vault": {}
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "Vault adoption (dry-run)\n  Vault:    $ROOT/vault\n  Total:    0\n  Adopted:  0\n  Skipped:  0\n  Failed:   0\n",
+          "stderr": "",
+          "vault": {}
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"vault\":\"$ROOT/vault\",\"started_at\":\"$TIME\",\"finished_at\":\"$TIME\",\"duration_seconds\":$DURATION,\"dry_run\":true,\"total\":0,\"adopted\":0,\"skipped\":0,\"failed\":0,\"documents\":[]}\n",
+          "stderr": "",
+          "vault": {}
+        }
+      ]
+    },
+    {
+      "name": "vault-group",
+      "files": {
+        "a.md": "---\ntitle: A\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n",
+        "b.md": "# B heading\n\nbody #tag\n"
+      },
+      "mtimes": {
+        "a.md": 1700000000,
+        "b.md": 1700259200
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and manage the document vault (Markdown workspace, not symvault)\n\nUsage:\n  symdesk vault [command]\n\nAvailable Commands:\n  adopt       Bring an existing Markdown or Obsidian vault up to the contract in place\n  health      Scan the document vault and emit a reviewable repair plan\n\nFlags:\n  -h, --help   help for vault\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk vault [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and manage the document vault (Markdown workspace, not symvault)\n\nUsage:\n  symdesk vault [command]\n\nAvailable Commands:\n  adopt       Bring an existing Markdown or Obsidian vault up to the contract in place\n  health      Scan the document vault and emit a reviewable repair plan\n\nFlags:\n  -h, --help   help for vault\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk vault [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and manage the document vault (Markdown workspace, not symvault)\n\nUsage:\n  symdesk vault [command]\n\nAvailable Commands:\n  adopt       Bring an existing Markdown or Obsidian vault up to the contract in place\n  health      Scan the document vault and emit a reviewable repair plan\n\nFlags:\n  -h, --help   help for vault\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk vault [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and manage the document vault (Markdown workspace, not symvault)\n\nUsage:\n  symdesk vault [command]\n\nAvailable Commands:\n  adopt       Bring an existing Markdown or Obsidian vault up to the contract in place\n  health      Scan the document vault and emit a reviewable repair plan\n\nFlags:\n  -h, --help   help for vault\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk vault [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "adopt",
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout": "Scan an existing Markdown vault and backfill required frontmatter fields\n(title, created, tags) in place. Existing frontmatter keys and unknown fields\nare preserved byte-for-byte. Pre-adoption versions are captured in the version\nhistory safety net (.symdesk/history/) before any file is written.\n\nUsage:\n  symdesk vault adopt [\u003cdir\u003e] [flags]\n\nFlags:\n      --dry-run   list what would change without modifying files on disk\n  -h, --help      help for adopt\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "adopt",
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout": "Scan an existing Markdown vault and backfill required frontmatter fields\n(title, created, tags) in place. Existing frontmatter keys and unknown fields\nare preserved byte-for-byte. Pre-adoption versions are captured in the version\nhistory safety net (.symdesk/history/) before any file is written.\n\nUsage:\n  symdesk vault adopt [\u003cdir\u003e] [flags]\n\nFlags:\n      --dry-run   list what would change without modifying files on disk\n  -h, --help      help for adopt\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n",
+          "stderr": ""
+        }
+      ]
     }
   ]
 }

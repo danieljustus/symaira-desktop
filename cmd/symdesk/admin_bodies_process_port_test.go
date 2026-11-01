@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -38,9 +39,9 @@ type adminBodiesStep struct {
 	Stdout   string   `json:"stdout"`
 	Stderr   string   `json:"stderr"`
 	// Vault is the vault tree after the step (SnapshotVault cases only).
-	Vault map[string]string `json:"vault,omitempty"`
+	Vault *map[string]string `json:"vault,omitempty"`
 	// Cwd is the working-directory tree after the step (SnapshotCwd cases).
-	Cwd map[string]string `json:"cwd,omitempty"`
+	Cwd *map[string]string `json:"cwd,omitempty"`
 }
 
 type adminBodiesCase struct {
@@ -88,6 +89,15 @@ func adminConcat(groups ...[]adminBodiesStep) []adminBodiesStep {
 		out = append(out, group...)
 	}
 	return out
+}
+
+func sortedKeys(files map[string]string) []string {
+	keys := make([]string, 0, len(files))
+	for name := range files {
+		keys = append(keys, name)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func adminVault() map[string]string {
@@ -230,7 +240,7 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 		for name, seconds := range c.Mtimes {
 			target := filepath.Join(vault, filepath.FromSlash(name))
 			when := time.Unix(seconds, 0)
-			if err := os.Chtimes(target, when, when); err != nil {
+			if err := os.Chtimes(target, when, when); err != nil && !os.IsNotExist(err) {
 				t.Fatal(err)
 			}
 		}
@@ -305,10 +315,12 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 			Stderr:   normalizeAdminText(c.Volatile, normalizeCLIErrors(stderr, root)),
 		}
 		if c.SnapshotVault {
-			recorded.Vault = snapshotAdminTree(t, vault, root, c.Volatile, c.HashFiles)
+			tree := snapshotAdminTree(t, vault, root, c.Volatile, c.HashFiles)
+			recorded.Vault = &tree
 		}
 		if c.SnapshotCwd {
-			recorded.Cwd = snapshotAdminTree(t, cwd, root, c.Volatile, c.HashFiles)
+			tree := snapshotAdminTree(t, cwd, root, c.Volatile, c.HashFiles)
+			recorded.Cwd = &tree
 		}
 		observed.Steps = append(observed.Steps, recorded)
 	}

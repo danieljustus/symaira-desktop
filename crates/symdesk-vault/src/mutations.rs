@@ -215,7 +215,7 @@ pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, Mutati
     go_yaml::render_mapping(mapping).map_err(|detail| MutationError::Marshal { detail })
 }
 
-fn yaml_value_string(value: &Value) -> Result<String, MutationError> {
+pub(crate) fn yaml_value_string(value: &Value) -> Result<String, MutationError> {
     match value {
         Value::String(value) => Ok(quote_yaml(value)),
         Value::Number(value) => go_yaml::format_scalar_number(value, false)

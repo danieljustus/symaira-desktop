@@ -36,12 +36,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 5;
-const EXPECTED_STEPS: usize = 126;
+const EXPECTED_CASES: usize = 11;
+const EXPECTED_STEPS: usize = 170;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 46;
+const EXPECTED_FAILING_STEPS: usize = 60;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 118;
+const EXPECTED_SNAPSHOT_STEPS: usize = 150;
 /// Steps that also compare the working-directory tree after the step.
 const EXPECTED_CWD_STEPS: usize = 0;
 
@@ -178,11 +178,16 @@ fn apply_mtimes(vault: &Path, mtimes: &BTreeMap<String, i64>) {
     for (name, seconds) in mtimes {
         let when = UNIX_EPOCH
             + std::time::Duration::from_secs(u64::try_from(*seconds).expect("positive mtime"));
-        fs::File::options()
+        match fs::File::options()
             .write(true)
             .open(vault.join(name))
             .and_then(|file| file.set_modified(when))
-            .expect("set recorded modification time");
+        {
+            Ok(()) => {}
+            // A file written after the setup index run does not exist yet.
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => panic!("set recorded modification time: {error}"),
+        }
     }
 }
 

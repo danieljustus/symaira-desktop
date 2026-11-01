@@ -3,6 +3,7 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod activity_journal;
+mod adopt;
 mod base_write;
 pub mod conflict;
 pub mod dataset;
@@ -38,6 +39,7 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use adopt::{backfill_frontmatter, backfill_frontmatter_bytes};
 pub use base_write::{
     BASES_DIR, BaseWriteError, delete_base, delete_base_with_snapshot, delete_view,
     delete_view_with_snapshot, get_base, list_bases, migrate_legacy_views, save_base,
@@ -136,16 +138,24 @@ pub fn parse_bytes(path: &str, input: &[u8]) -> Result<Document, VaultError> {
     }
     let (frontmatter_bytes, body_bytes, frontmatter_found) = split_frontmatter(input);
     let frontmatter = if frontmatter_found && !frontmatter_bytes.is_empty() {
-        if let Some((key, first, second)) = duplicate_top_level_key(&frontmatter_bytes) {
-            // Go's YAML decoder reports duplicate top-level keys with its own
-            // unmarshal wording and both line numbers.
+        let duplicates = duplicate_top_level_keys(&frontmatter_bytes);
+        if !duplicates.is_empty() {
+            // Go's YAML decoder reports every duplicate top-level key, in
+            // document order, with its own unmarshal wording and both line
+            // numbers.
+            let lines = duplicates
+                .iter()
+                .map(|(key, first, second)| {
+                    format!("line {second}: mapping key {key:?} already defined at line {first}")
+                })
+                .collect::<Vec<_>>()
+                .join("\n  ");
             return Err(VaultError::Frontmatter {
                 path: path.to_owned(),
-                detail: format!(
-                    "yaml: unmarshal errors:\n  line {second}: mapping key {key:?} already defined at line {first}"
-                ),
+                detail: format!("yaml: unmarshal errors:\n  {lines}"),
             });
         }
+
         noyalib::from_slice::<BTreeMap<String, Value>>(&frontmatter_bytes).map_err(|error| {
             VaultError::Frontmatter {
                 path: path.to_owned(),
@@ -312,11 +322,12 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
     result
 }
 
-/// Returns the first repeated top-level key with its 1-based line numbers in
-/// the frontmatter block, first occurrence before the repeat.
-fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
+/// Returns every repeated top-level key, in document order, with its 1-based
+/// line numbers in the frontmatter block: first occurrence, then the repeat.
+fn duplicate_top_level_keys(input: &[u8]) -> Vec<(String, usize, usize)> {
     let text = String::from_utf8_lossy(input);
     let mut seen = std::collections::BTreeMap::new();
+    let mut duplicates = Vec::new();
     for (index, line) in text.lines().enumerate() {
         if line.starts_with([' ', '\t']) || line.trim_start().starts_with('#') {
             continue;
@@ -329,11 +340,12 @@ fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
             continue;
         }
         if let Some(first) = seen.get(key) {
-            return Some((key.to_owned(), *first, index + 1));
+            duplicates.push((key.to_owned(), *first, index + 1));
+            continue;
         }
         seen.insert(key.to_owned(), index + 1);
     }
-    None
+    duplicates
 }
 
 fn is_iso_date(value: &str) -> bool {

@@ -37,6 +37,7 @@ mod search_export_cli;
 mod service_cli;
 mod sidecar_cli;
 mod source_cli;
+mod vault_cli;
 mod views_cli;
 mod views_write_cli;
 mod worker_cli;
@@ -353,6 +354,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("relations", command)) => relations_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("vault", command)) => vault_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -711,6 +717,7 @@ fn cli() -> Command {
         .subcommand(events_cli::cli())
         .subcommand(worker_cli::cli())
         .subcommand(perm_cli::cli())
+        .subcommand(vault_cli::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

@@ -394,7 +394,9 @@ fn run_migrate(args: &ArgMatches, json: bool) -> ExitCode {
         let store = Arc::new(Mutex::new(store));
         let mut pipeline = Pipeline::new(Arc::clone(&store), NoteWriter::new(&resolved.vault));
         let engine: Arc<dyn Engine> = if resolved.ollama_model.is_empty() {
-            Arc::new(symdesk_ingest::ocr::Runner::default_runner(&resolved.ocr_lang))
+            Arc::new(symdesk_ingest::ocr::Runner::default_runner(
+                &resolved.ocr_lang,
+            ))
         } else {
             Arc::new(symdesk_ingest::vlm::VlmRunner::new(
                 &resolved.ollama_base_url,

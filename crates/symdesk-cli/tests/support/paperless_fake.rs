@@ -53,7 +53,9 @@ pub struct PaperlessFake {
 impl PaperlessFake {
     pub fn start(spec: FakeSpec) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind fake paperless");
-        listener.set_nonblocking(true).expect("nonblocking listener");
+        listener
+            .set_nonblocking(true)
+            .expect("nonblocking listener");
         let address = listener.local_addr().expect("local address");
         let url = format!("http://{address}");
         let requests = Arc::new(Mutex::new(Vec::new()));
@@ -138,7 +140,10 @@ fn query_unescape(value: &str) -> String {
 }
 
 fn respond(stream: &mut TcpStream, status: &str, headers: &[(&str, &str)], body: &[u8]) {
-    let mut head = format!("HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n", body.len());
+    let mut head = format!(
+        "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n",
+        body.len()
+    );
     for (name, value) in headers {
         head.push_str(&format!("{name}: {value}\r\n"));
     }
@@ -151,7 +156,12 @@ fn respond(stream: &mut TcpStream, status: &str, headers: &[(&str, &str)], body:
 fn respond_json(stream: &mut TcpStream, value: &Value) {
     let mut body = serde_json::to_vec(value).expect("encode json");
     body.push(b'\n');
-    respond(stream, "200 OK", &[("Content-Type", "application/json")], &body);
+    respond(
+        stream,
+        "200 OK",
+        &[("Content-Type", "application/json")],
+        &body,
+    );
 }
 
 fn serve(mut stream: TcpStream, spec: &FakeSpec, requests: &Mutex<Vec<String>>, host: String) {
@@ -213,7 +223,11 @@ fn serve(mut stream: TcpStream, spec: &FakeSpec, requests: &Mutex<Vec<String>>, 
                     || doc["created_date"].as_str().unwrap_or_default() >= since.as_str()
             })
             .collect();
-        let mut size = if spec.page_size == 0 { 100 } else { spec.page_size };
+        let mut size = if spec.page_size == 0 {
+            100
+        } else {
+            spec.page_size
+        };
         if let Some(value) = first("page_size").and_then(|v| v.parse::<usize>().ok())
             && value > 0
             && value < size
@@ -236,7 +250,10 @@ fn serve(mut stream: TcpStream, spec: &FakeSpec, requests: &Mutex<Vec<String>>, 
                         .map(move |value| format!("{}={}", query_escape(key), query_escape(value)))
                 })
                 .collect();
-            Value::String(format!("http://{host}/api/documents/?{}", encoded.join("&")))
+            Value::String(format!(
+                "http://{host}/api/documents/?{}",
+                encoded.join("&")
+            ))
         } else {
             Value::Null
         };
@@ -256,7 +273,10 @@ fn serve(mut stream: TcpStream, spec: &FakeSpec, requests: &Mutex<Vec<String>>, 
             respond(
                 &mut stream,
                 "500 Internal Server Error",
-                &[("Content-Type", "text/plain; charset=utf-8"), ("X-Content-Type-Options", "nosniff")],
+                &[
+                    ("Content-Type", "text/plain; charset=utf-8"),
+                    ("X-Content-Type-Options", "nosniff"),
+                ],
                 b"boom\n",
             );
             return;

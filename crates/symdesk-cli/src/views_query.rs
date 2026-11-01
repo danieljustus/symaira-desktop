@@ -44,10 +44,9 @@ pub fn parse_number_flexible(text: &str) -> Option<f64> {
     if lowered.starts_with("0x") {
         return None;
     }
-    if !lowered
-        .chars()
-        .all(|c| c.is_ascii_digit() || matches!(c, '.' | 'e' | '+' | '-') || c.is_ascii_alphabetic())
-    {
+    if !lowered.chars().all(|c| {
+        c.is_ascii_digit() || matches!(c, '.' | 'e' | '+' | '-') || c.is_ascii_alphabetic()
+    }) {
         return None;
     }
     // Rust accepts the same decimal grammar plus `inf`/`infinity`/`nan`.
@@ -289,11 +288,7 @@ fn values_equal(left: &str, right: &str) -> bool {
 
 fn compare_relational(left: &str, right: &str) -> i32 {
     if let (Some(a), Some(b)) = (parse_number_flexible(left), parse_number_flexible(right)) {
-        return if a < b {
-            -1
-        } else {
-            i32::from(a > b)
-        };
+        return if a < b { -1 } else { i32::from(a > b) };
     }
     if let (Some(a), Some(b)) = (parse_date_flexible(left), parse_date_flexible(right)) {
         return match a.cmp(&b) {

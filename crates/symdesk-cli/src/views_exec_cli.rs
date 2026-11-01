@@ -67,7 +67,9 @@ pub fn commands() -> Vec<Command> {
 
 /// Renames the command-local `--output` of `views export-csv`.
 pub fn rewrite_output_flag(args: &mut [std::ffi::OsString]) {
-    let Some(at) = args.windows(2).position(|pair| pair[0] == "views" && pair[1] == "export-csv")
+    let Some(at) = args
+        .windows(2)
+        .position(|pair| pair[0] == "views" && pair[1] == "export-csv")
     else {
         return;
     };
@@ -81,7 +83,10 @@ pub fn rewrite_output_flag(args: &mut [std::ffi::OsString]) {
 }
 
 pub fn is_exec_command(name: &str) -> bool {
-    matches!(name, "exec" | "new-entry" | "export-csv" | "import-csv" | "embed")
+    matches!(
+        name,
+        "exec" | "new-entry" | "export-csv" | "import-csv" | "embed"
+    )
 }
 
 pub fn run(name: &str, command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
@@ -266,21 +271,8 @@ fn dataset_rows(
     if slug.is_empty() {
         return Err("view source dataset slug cannot be empty".to_owned());
     }
-    let relative = format!("datasets/{slug}.md");
-    let not_found = |inner: String| format!("dataset {} not found: {inner}", go_quote(&slug));
-    let dir = cap_std::fs::Dir::open_ambient_dir(root, cap_std::ambient_authority())
-        .map_err(|error| not_found(error.to_string()))?;
-    let bytes = match crate::dataset::read_dataset_handle(&dir, Path::new(&relative)) {
-        Ok(Some(bytes)) => bytes,
-        Ok(None) => {
-            return Err(not_found(format!(
-                "open {relative}: no such file or directory"
-            )));
-        }
-        Err(error) => return Err(not_found(error)),
-    };
-    let handle = symdesk_vault::parse_dataset_handle(&relative, &bytes)
-        .map_err(|error| not_found(error.to_string()))?;
+    let handle = read_dataset_handle_text(root, &slug)
+        .map_err(|inner| format!("dataset {} not found: {inner}", go_quote(&slug)))?;
     let schema: BTreeMap<String, String> = handle
         .schema
         .iter()
@@ -364,7 +356,10 @@ fn exec_view(root: &Path, db: &Sidecar, view: &View) -> Result<Option<Vec<Row>>,
             rows[index].insert(column.clone(), Value::String(value));
         }
         let props = &rows[index];
-        let mut keep = view.filters.iter().all(|filter| matches_filter(props, filter));
+        let mut keep = view
+            .filters
+            .iter()
+            .all(|filter| matches_filter(props, filter));
         if keep && let Some(group) = &view.filter_group {
             keep = matches_group(props, group);
         }
@@ -375,7 +370,92 @@ fn exec_view(root: &Path, db: &Sidecar, view: &View) -> Result<Option<Vec<Row>>,
     if matched.is_empty() {
         return Ok(None);
     }
-    Ok(Some(matched.into_iter().map(|at| rows[at].clone()).collect()))
+    Ok(Some(
+        matched.into_iter().map(|at| rows[at].clone()).collect(),
+    ))
+}
+
+/// Go `readDatasetHandle(root, "datasets/<slug>.md")`; the error is the bare
+/// inner text so each caller adds its own wording.
+fn read_dataset_handle_text(
+    root: &Path,
+    slug: &str,
+) -> Result<symdesk_vault::DatasetHandle, String> {
+    let relative = format!("datasets/{slug}.md");
+    let dir = cap_std::fs::Dir::open_ambient_dir(root, cap_std::ambient_authority())
+        .map_err(|error| error.to_string())?;
+    let bytes = match crate::dataset::read_dataset_handle(&dir, Path::new(&relative)) {
+        Ok(Some(bytes)) => bytes,
+        Ok(None) => {
+            return Err(format!(
+                "open vault file {}: openat {relative}: no such file or directory",
+                root.join(&relative).display()
+            ));
+        }
+        Err(error) => return Err(error),
+    };
+    symdesk_vault::parse_dataset_handle(&relative, &bytes).map_err(|error| error.to_string())
+}
+
+fn dataset_sensitivity_rank(value: &str) -> i32 {
+    match value {
+        "public" => 0,
+        "internal" => 1,
+        "confidential" => 2,
+        "restricted" => 3,
+        _ => -1,
+    }
+}
+
+/// Go `checkDatasetExport`: a dataset-sourced view is exported only up to the
+/// configured maximum sensitivity of its authoritative handle.
+fn check_dataset_export(root: &Path, view: &View) -> Result<(), String> {
+    let source = view.source.trim();
+    let Some(slug) = source.strip_prefix("dataset:") else {
+        return Ok(());
+    };
+    let slug = slug.trim();
+    if slug.is_empty() {
+        return Err("dataset export requires a dataset slug".to_owned());
+    }
+    if slug != symdesk_vault::slugify(slug) {
+        return Err(format!(
+            "dataset export policy: dataset slug {} is not filesystem-safe",
+            go_quote(slug)
+        ));
+    }
+    let handle = read_dataset_handle_text(root, slug)
+        .map_err(|error| format!("dataset export policy: {error}"))?;
+    if handle.slug != slug {
+        return Err(format!(
+            "dataset export policy: dataset handle slug {} does not match path slug {}",
+            go_quote(&handle.slug),
+            go_quote(slug)
+        ));
+    }
+    let configured = crate::ai_cli::load_config()
+        .map(|config| config.dataset_export_max_sensitivity)
+        .unwrap_or_default();
+    let configured = configured.trim().to_lowercase();
+    let max = if configured.is_empty() {
+        "internal".to_owned()
+    } else {
+        configured
+    };
+    if dataset_sensitivity_rank(&max) < 0 {
+        return Err(format!(
+            "dataset export policy: invalid dataset sensitivity {} (valid: public, internal, confidential, restricted)",
+            go_quote(&max)
+        ));
+    }
+    if dataset_sensitivity_rank(&handle.sensitivity) > dataset_sensitivity_rank(&max) {
+        return Err(format!(
+            "dataset export denied: dataset {} is {}; maximum configured export sensitivity is {max} (set dataset_export_max_sensitivity explicitly to opt in)",
+            go_quote(slug),
+            handle.sensitivity
+        ));
+    }
+    Ok(())
 }
 
 fn exec_by_id(root: &Path, db: &Sidecar, id: &str) -> Result<Option<Vec<Row>>, String> {
@@ -430,7 +510,8 @@ fn new_entry(
         defaults.extend(template.defaults.clone());
     }
     for filter in &view.filters {
-        if filter.operator.is_empty() || symdesk_vault::dataset::go_equal_fold(&filter.operator, "equals")
+        if filter.operator.is_empty()
+            || symdesk_vault::dataset::go_equal_fold(&filter.operator, "equals")
         {
             defaults.insert(filter.key.clone(), filter.value.clone());
         }
@@ -456,12 +537,20 @@ fn visible_columns(preferred: &[String], rows: &[Row]) -> Vec<String> {
             .collect();
         let sorted: Vec<String> = keys.iter().map(|key| (*key).clone()).collect();
         let without = |target: &str| -> Vec<String> {
-            sorted.iter().filter(|key| key.as_str() != target).cloned().collect()
+            sorted
+                .iter()
+                .filter(|key| key.as_str() != target)
+                .cloned()
+                .collect()
         };
         columns = if keys.contains(&"_title".to_owned()) {
-            std::iter::once("_title".to_owned()).chain(without("_title")).collect()
+            std::iter::once("_title".to_owned())
+                .chain(without("_title"))
+                .collect()
         } else if keys.contains(&"title".to_owned()) {
-            std::iter::once("title".to_owned()).chain(without("title")).collect()
+            std::iter::once("title".to_owned())
+                .chain(without("title"))
+                .collect()
         } else {
             sorted
         };
@@ -531,13 +620,7 @@ fn export_csv(
     json: bool,
 ) -> Result<ExitCode, String> {
     let view = find_view(root, id).map_err(|error| format!("views export csv: {error}"))?;
-    if view.source.trim().starts_with("dataset:") {
-        return Err(
-            "views export-csv: dataset-sourced views are not supported by the Rust CLI yet \
-             (export-sensitivity policy not ported)"
-                .to_owned(),
-        );
-    }
+    check_dataset_export(root, &view)?;
     let rows = exec_view(root, db, &view)
         .map_err(|error| format!("views exec {}: {error}", go_quote(id)))?
         .unwrap_or_default();
@@ -553,7 +636,10 @@ fn export_csv(
         .collect();
     data.push_str(&csv_record(&headers));
     for row in &rows {
-        let record: Vec<String> = columns.iter().map(|column| cell_text(row, column)).collect();
+        let record: Vec<String> = columns
+            .iter()
+            .map(|column| cell_text(row, column))
+            .collect();
         data.push_str(&csv_record(&record));
     }
     let output = command
@@ -563,9 +649,16 @@ fn export_csv(
     if output.is_empty() {
         return Ok(write_stdout(data));
     }
-    write_private_file(Path::new(&output), data.as_bytes())
-        .map_err(|error| format!("write csv output: {}", go_path_error("open", Path::new(&output), &error)))?;
-    Ok(status_map(&[("output", &output), ("status", "exported")], json))
+    write_private_file(Path::new(&output), data.as_bytes()).map_err(|error| {
+        format!(
+            "write csv output: {}",
+            go_path_error("open", Path::new(&output), &error)
+        )
+    })?;
+    Ok(status_map(
+        &[("output", &output), ("status", "exported")],
+        json,
+    ))
 }
 
 /// Go `os.WriteFile(path, data, 0o600)`.
@@ -829,10 +922,7 @@ fn write_atomic_private(path: &Path, data: &[u8]) -> Result<(), String> {
     let directory = path.parent().unwrap_or_else(|| Path::new("."));
     let mut counter = 0u64;
     let (temp, mut file) = loop {
-        let candidate = directory.join(format!(
-            ".symdesk-csv-{}{counter}.tmp",
-            std::process::id()
-        ));
+        let candidate = directory.join(format!(".symdesk-csv-{}{counter}.tmp", std::process::id()));
         let mut options = fs::OpenOptions::new();
         options.write(true).create_new(true);
         #[cfg(unix)]
@@ -890,6 +980,10 @@ fn import_csv(
     command: &ArgMatches,
     json: bool,
 ) -> Result<ExitCode, String> {
+    if Path::new(file).is_dir() {
+        // Go opens the directory, then fails on the first read.
+        return Err(format!("parse csv: read {file}: is a directory"));
+    }
     let data = fs::read(file).map_err(|error| {
         format!(
             "open csv file: {}",
@@ -1107,11 +1201,9 @@ fn import_csv(
                 continue;
             }
             if let Err(error) = write_atomic_private(&absolute, content.as_bytes()) {
-                report.rows.push(result(
-                    "error",
-                    &format!("write file: {error}"),
-                    &target,
-                ));
+                report
+                    .rows
+                    .push(result("error", &format!("write file: {error}"), &target));
                 report.error_count += 1;
                 continue;
             }
@@ -1242,10 +1334,32 @@ fn parse_embed_spec(text: &str) -> Result<EmbedSpec, String> {
     let invalid = |detail: String| format!("invalid symdesk-base specification: {detail}");
     let value: noyalib::Value =
         noyalib::from_str(text).map_err(|error| invalid(format!("yaml: {error}")))?;
-    let mismatch = |tag: &str, into: &str| {
+    let mismatch_at = |line: usize, tag: &str, into: &str| {
         invalid(format!(
-            "yaml: unmarshal errors:\n  line 1: cannot unmarshal {tag} into {into}"
+            "yaml: unmarshal errors:\n  line {line}: cannot unmarshal {tag} into {into}"
         ))
+    };
+    let mismatch = |tag: &str, into: &str| mismatch_at(1, tag, into);
+    // yaml.v3 shows a long scalar as its first seven bytes and an ellipsis.
+    let short = |shown: &str| {
+        if shown.len() > 10 {
+            let mut end = 7;
+            while !shown.is_char_boundary(end) {
+                end -= 1;
+            }
+            format!("{}...", &shown[..end])
+        } else {
+            shown.to_owned()
+        }
+    };
+    // 1-based line of a top-level key, and the first top-level duplicate.
+    let key_line = |name: &str| {
+        text.lines()
+            .position(|line| {
+                line.strip_prefix(name)
+                    .is_some_and(|rest| rest.trim_start().starts_with(':'))
+            })
+            .map_or(1, |index| index + 1)
     };
     let mapping = match &value {
         noyalib::Value::Null => return Ok(EmbedSpec::default()),
@@ -1267,11 +1381,45 @@ fn parse_embed_spec(text: &str) -> Result<EmbedSpec, String> {
                 ),
             };
             return Err(mismatch(
-                &format!("{tag} `{shown}`"),
+                &format!("{tag} `{}`", short(&shown)),
                 "service.BaseEmbedSpec",
             ));
         }
     };
+    let mut first_seen: BTreeMap<String, usize> = BTreeMap::new();
+    let mut duplicates = Vec::new();
+    for (index, line) in text.lines().enumerate() {
+        let starts_key = line
+            .chars()
+            .next()
+            .is_some_and(|c| !c.is_whitespace() && !matches!(c, '#' | '-' | '[' | '{'));
+        if !starts_key {
+            continue;
+        }
+        let Some((key, _)) = line.split_once(':') else {
+            continue;
+        };
+        let key = key
+            .trim()
+            .trim_matches(|c| c == '"' || c == '\'')
+            .to_owned();
+        match first_seen.get(&key) {
+            Some(first) => duplicates.push(format!(
+                "  line {}: mapping key {} already defined at line {first}",
+                index + 1,
+                go_quote(&key)
+            )),
+            None => {
+                first_seen.insert(key, index + 1);
+            }
+        }
+    }
+    if !duplicates.is_empty() {
+        return Err(invalid(format!(
+            "yaml: unmarshal errors:\n{}",
+            duplicates.join("\n")
+        )));
+    }
     let mut spec = EmbedSpec::default();
     let string_field = |name: &str| -> Result<String, String> {
         match mapping.get(name) {
@@ -1286,8 +1434,12 @@ fn parse_embed_spec(text: &str) -> Result<EmbedSpec, String> {
             None | Some(noyalib::Value::Null) => {}
             Some(field) => {
                 *target = field.as_i64().ok_or_else(|| {
-                    mismatch(
-                        &format!("!!str `{}`", yaml_scalar_text(field).unwrap_or_default()),
+                    mismatch_at(
+                        key_line(name),
+                        &format!(
+                            "!!str `{}`",
+                            short(&yaml_scalar_text(field).unwrap_or_default())
+                        ),
                         "int",
                     )
                 })?;
@@ -1358,7 +1510,10 @@ fn render_markdown_table(
     for row in rows {
         out.push('|');
         for column in columns {
-            out.push_str(&format!(" {} |", sanitize_markdown_cell(&cell_text(row, column))));
+            out.push_str(&format!(
+                " {} |",
+                sanitize_markdown_cell(&cell_text(row, column))
+            ));
         }
         out.push('\n');
     }
@@ -1411,9 +1566,13 @@ fn embed(
     if base_ref.is_empty() {
         return Err("symdesk-base specification requires a non-empty 'base' field".to_owned());
     }
-    let base = get_base(root, &base_ref).map_err(|_| format!("base {} not found", go_quote(&base_ref)))?;
+    let base =
+        get_base(root, &base_ref).map_err(|_| format!("base {} not found", go_quote(&base_ref)))?;
     if base.views.is_empty() {
-        return Err(format!("base {} has no views defined", go_quote(&base.title)));
+        return Err(format!(
+            "base {} has no views defined",
+            go_quote(&base.title)
+        ));
     }
     let spec_view = spec.view.trim();
     let selected = if spec_view.is_empty() {
@@ -1422,8 +1581,7 @@ fn embed(
         base.views
             .iter()
             .find(|view| {
-                view.id == spec_view
-                    || symdesk_vault::dataset::go_equal_fold(&view.name, spec_view)
+                view.id == spec_view || symdesk_vault::dataset::go_equal_fold(&view.name, spec_view)
             })
             .ok_or_else(|| {
                 format!(

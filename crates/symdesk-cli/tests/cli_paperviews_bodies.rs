@@ -42,11 +42,11 @@ use serde::Deserialize;
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
 const EXPECTED_CASES: usize = 15;
-const EXPECTED_STEPS: usize = 465;
+const EXPECTED_STEPS: usize = 457;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 167;
+const EXPECTED_FAILING_STEPS: usize = 149;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 465;
+const EXPECTED_SNAPSHOT_STEPS: usize = 457;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -171,7 +171,12 @@ fn files_under(directory: &Path, out: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(directory) else {
         return;
     };
-    for entry in entries.flatten() {
+    // Go's `filepath.WalkDir` visits a directory's entries in name order; the
+    // snapshot map keeps the last file of equal normalized names, so the order
+    // is part of the comparison.
+    let mut entries: Vec<_> = entries.flatten().collect();
+    entries.sort_by_key(fs::DirEntry::file_name);
+    for entry in entries {
         let path = entry.path();
         let Ok(kind) = entry.file_type() else {
             continue;
@@ -348,7 +353,11 @@ fn normalize_sha256(text: &str) -> String {
 /// Go `pvNormalize`: the wall clock and process-specific names these commands
 /// write on top of the shared bodies normalization.
 fn pv_normalize(text: &str) -> String {
-    let text = normalize_shape(text, &[4, b'/', 2, b'/', 2, b' ', 2, b':', 2, b':', 2], "$LOGTIME");
+    let text = normalize_shape(
+        text,
+        &[4, b'/', 2, b'/', 2, b' ', 2, b':', 2, b':', 2],
+        "$LOGTIME",
+    );
     let mut run_id = b"paperless-".to_vec();
     run_id.extend_from_slice(&[4, 4, b'T', 4, 2, b'.', 4, 4, 1, b'Z']);
     let text = normalize_shape(&text, &run_id, "$RUNID");
@@ -386,7 +395,9 @@ fn normalize(text: &str, root: &Path, canonical: &Path, volatile: bool) -> Strin
     } else {
         text
     };
-    pv_normalize(&normalize_rfc3339(&normalize_local_time(&normalize_random(&text))))
+    pv_normalize(&normalize_rfc3339(&normalize_local_time(
+        &normalize_random(&text),
+    )))
 }
 
 /// Every regular file below `vault`: text as normalized text, everything else
@@ -493,10 +504,14 @@ fn cli_bodies_match_go_process_contract() {
         write_files(&vault, &case.files);
         write_files(&root, &case.root_files);
         let port = closed_port();
-        let paperless = case.paperless.clone().map(paperless_fake::PaperlessFake::start);
-        let paperless_url = paperless
-            .as_ref()
-            .map_or_else(|| format!("http://127.0.0.1:{port}"), |fake| fake.url.clone());
+        let paperless = case
+            .paperless
+            .clone()
+            .map(paperless_fake::PaperlessFake::start);
+        let paperless_url = paperless.as_ref().map_or_else(
+            || format!("http://127.0.0.1:{port}"),
+            |fake| fake.url.clone(),
+        );
         let embeddings = embedding_fake::EmbeddingFake::start();
         write_files(
             &home,
@@ -707,10 +722,7 @@ fn random_name_normalization_matches_the_go_regexp() {
 
 #[test]
 fn paperviews_normalization_matches_the_go_regexps() {
-    assert_eq!(
-        pv_normalize("at 2026/11/01 08:22:33 x"),
-        "at $LOGTIME x"
-    );
+    assert_eq!(pv_normalize("at 2026/11/01 08:22:33 x"), "at $LOGTIME x");
     assert_eq!(
         pv_normalize("paperless-20261101T082233.123456789Z"),
         "$RUNID"

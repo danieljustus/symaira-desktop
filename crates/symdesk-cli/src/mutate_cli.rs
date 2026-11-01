@@ -458,7 +458,12 @@ pub(crate) fn new_note(
         body.push_str(content);
     }
     snapshot(root, &path);
-    fs::write(&path, &body).map_err(|e| format!("failed to write file: {e}"))?;
+    fs::write(&path, &body).map_err(|e| {
+        format!(
+            "failed to write file: {}",
+            symdesk_vault::go_path_error("open", &path, &e)
+        )
+    })?;
     if front {
         let _ = set_frontmatter_key(&path, "title", title);
         let _ = set_frontmatter_key(&path, "created", &created);

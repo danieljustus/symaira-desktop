@@ -78,7 +78,23 @@ pub fn parse_manifest(path: &Path) -> Result<Option<Vec<ManifestEntry>>> {
         .map_err(|(op, e)| format!("read manifest file: {}", go_path_error(op, path, &e)))?;
     // Go reports its scanner's syntax error before any type error.
     symdesk_vault::go_json_validate_syntax(&data).map_err(|e| format!("parse manifest: {e}"))?;
-    serde_json::from_slice(&data).map_err(|e| format!("parse manifest: {e}"))
+    // `encoding/json` lets the last of duplicate keys win and names the Go type
+    // for a wrong top-level kind; a `Value` keeps the former, the match the latter.
+    let value: serde_json::Value =
+        serde_json::from_slice(&data).map_err(|e| format!("parse manifest: {e}"))?;
+    let kind = match &value {
+        serde_json::Value::Array(_) | serde_json::Value::Null => None,
+        serde_json::Value::Object(_) => Some("object"),
+        serde_json::Value::String(_) => Some("string"),
+        serde_json::Value::Number(_) => Some("number"),
+        serde_json::Value::Bool(_) => Some("bool"),
+    };
+    if let Some(kind) = kind {
+        return Err(format!(
+            "parse manifest: json: cannot unmarshal {kind} into Go value of type []paperless.ManifestEntry"
+        ));
+    }
+    serde_json::from_value(value).map_err(|e| format!("parse manifest: {e}"))
 }
 pub fn source_identifier(entry: &ManifestEntry) -> String {
     format!(
@@ -271,7 +287,9 @@ pub fn import_at(opts: &ImportOptions, now: &str) -> Result<ImportSummary> {
         let relative = Path::new("paperless").join(note_file_name_os(&entry));
         let mut note_path = opts.vault_root.join(&relative);
         let archive_name = archive_file_name(&entry);
-        let archive_relative = Path::new("archive").join("paperless").join(&archive_name);
+        // Go `filepath.Join` cleans, so `../` in a name leaves `archive/paperless`.
+        let archive_relative =
+            PathBuf::from(crate::goos::join(&["archive", "paperless", &archive_name]));
         let archive_path = opts.vault_root.join(&archive_relative);
         let mut r = ImportResult {
             paperless_id: entry.id,
@@ -306,18 +324,25 @@ pub fn import_at(opts: &ImportOptions, now: &str) -> Result<ImportSummary> {
             let src = opts.export_dir.join(&archive_name);
             match fs::File::open(&src) {
                 Ok(mut reader) => {
-                    let mut target = fs::File::create(&archive_path).map_err(|e| {
-                        format!(
-                            "copy archive file: {}",
-                            go_path_error("open", &archive_path, &e)
-                        )
-                    })?;
-                    std::io::copy(&mut reader, &mut target).map_err(|e| {
-                        format!("copy archive file: {}", go_path_error("read", &src, &e))
-                    })?;
-                    target
-                        .sync_all()
-                        .map_err(|e| format!("copy archive file: {e}"))?;
+                    // Go's `os.IsNotExist` also spares a missing destination
+                    // directory (a nested `original_file_name`): not fatal.
+                    match fs::File::create(&archive_path) {
+                        Ok(mut target) => {
+                            std::io::copy(&mut reader, &mut target).map_err(|e| {
+                                format!("copy archive file: {}", go_path_error("read", &src, &e))
+                            })?;
+                            target
+                                .sync_all()
+                                .map_err(|e| format!("copy archive file: {e}"))?;
+                        }
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(e) => {
+                            return Err(format!(
+                                "copy archive file: {}",
+                                go_path_error("open", &archive_path, &e)
+                            ));
+                        }
+                    }
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
                 Err(e) => {

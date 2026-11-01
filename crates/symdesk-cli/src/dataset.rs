@@ -352,14 +352,19 @@ pub(crate) fn go_debug_value(value: &Value) -> String {
                 .collect::<Vec<_>>()
                 .join(" ")
         ),
-        Value::Object(values) => format!(
-            "map[{}]",
-            values
-                .iter()
-                .map(|(key, value)| format!("{key}:{}", go_debug_value(value)))
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
+        // `fmt` prints a map with its keys sorted, whatever the decode order.
+        Value::Object(values) => {
+            let mut entries: Vec<_> = values.iter().collect();
+            entries.sort_by(|left, right| left.0.cmp(right.0));
+            format!(
+                "map[{}]",
+                entries
+                    .into_iter()
+                    .map(|(key, value)| format!("{key}:{}", go_debug_value(value)))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        }
         _ => symdesk_index::go_percent_v(value),
     }
 }

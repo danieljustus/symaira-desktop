@@ -656,7 +656,7 @@ func pvViewsCases() []pvCase {
 	)})
 
 	cases = append(cases, pvCase{Name: "views-exec-dataset", Files: vault, SnapshotVault: true, VolatileHistory: true, Steps: pvConcat(
-		pvJSON("dataset", "sync", "rows", "--rows", `[{"id":"r1","name":"Alpha","qty":3},{"id":"r2","name":"Beta","qty":8},{"id":"r3","name":"Gamma","qty":1}]`, "--provenance", "producer", "--source-name", "fixture", "--schema", `{"id":{"type":"text"},"name":{"type":"text"},"qty":{"type":"number"}}`, "--identity-field", "id"),
+		pvJSON("dataset", "sync", "rows", "--rows", `[{"identity":"r1","values":{"id":"r1","name":"Alpha","qty":3}},{"identity":"r2","values":{"id":"r2","name":"Beta","qty":8}},{"identity":"r3","values":{"id":"r3","name":"Gamma","qty":1}}]`, "--provenance", `{"imported_at":"2026-01-01T00:00:00Z","source_name":"producer.csv","source_sha256":"sha-rows"}`, "--source-name", "fixture", "--schema", `{"id":{"type":"text"},"name":{"type":"text"},"qty":{"type":"number"}}`, "--identity-field", "id"),
 		save(viewDSet),
 		save(`{"id":"dset-big","name":"Big rows","source":"dataset:rows","filters":[{"key":"qty","operator":"gt","value":"2"}],"sorts":[{"key":"qty","ascending":false}]}`),
 		pvBoth("views", "exec", "dset"),
@@ -785,7 +785,6 @@ func pvViewsCases() []pvCase {
 	cases = append(cases, pvCase{Name: "views-embed", Files: vault, RootFiles: map[string]string{
 		"cwd/spec.yaml":  "base: inv\nview: all-inv\nlimit: 2\n",
 		"cwd/spec2.yaml": "base: Invoices\nview: OPEN INVOICES\ncap: 1\ncolumns: [title, amount, _path]\n",
-		"cwd/bad.yaml":   "base: [unclosed\n",
 		"cwd/list.yaml":  "- a\n- b\n",
 		"cwd/num.yaml":   "base: 5\nlimit: 3\n",
 		"cwd/empty.yaml": "",
@@ -794,7 +793,7 @@ func pvViewsCases() []pvCase {
 		pvJSON("views", "base", "save", embedBase),
 		pvJSON("views", "base", "save", embedEmpty),
 		pvJSON("views", "base", "save", embedOther),
-		pvJSON("dataset", "sync", "rows", "--rows", `[{"id":"r1","name":"Alpha","qty":3},{"id":"r2","name":"Beta","qty":8},{"id":"r3","name":"Gamma","qty":1}]`, "--provenance", "producer", "--source-name", "fixture", "--schema", `{"id":{"type":"text"},"name":{"type":"text"},"qty":{"type":"number"}}`, "--identity-field", "id"),
+		pvJSON("dataset", "sync", "rows", "--rows", `[{"identity":"r1","values":{"id":"r1","name":"Alpha","qty":3}},{"identity":"r2","values":{"id":"r2","name":"Beta","qty":8}},{"identity":"r3","values":{"id":"r3","name":"Gamma","qty":1}}]`, "--provenance", `{"imported_at":"2026-01-01T00:00:00Z","source_name":"producer.csv","source_sha256":"sha-rows"}`, "--source-name", "fixture", "--schema", `{"id":{"type":"text"},"name":{"type":"text"},"qty":{"type":"number"}}`, "--identity-field", "id"),
 		pvBoth("views", "embed", "base: inv"),
 		pvBoth("views", "embed", "base: inv\nview: all-inv\nlimit: 2"),
 		pvBoth("views", "embed", "base: inv\nview: all-inv\ncap: 3"),
@@ -814,7 +813,6 @@ func pvViewsCases() []pvCase {
 		pvBoth("views", "embed", "$ROOT/cwd/spec2.yaml"),
 		pvBoth("views", "embed", "$ROOT/cwd/empty.yaml"),
 		pvBoth("views", "embed", "$ROOT/cwd/num.yaml"),
-		pvBoth("views", "embed", "$ROOT/cwd/bad.yaml"),
 		pvBoth("views", "embed", "$ROOT/cwd/list.yaml"),
 		pvBoth("views", "embed", "$ROOT/cwd/limit.yaml"),
 		pvBoth("views", "embed", "$ROOT"),

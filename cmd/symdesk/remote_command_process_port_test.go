@@ -391,6 +391,12 @@ func observeRemoteCommandCase(t *testing.T, binary string, c remoteCommandCase) 
 		step.Status = status
 		step.ContentType = contentType
 		step.Body = remoteDateRE.ReplaceAllString(normalizeCLIErrors(body, root), "$$DATE.md")
+		if step.Compare == "decision" && status != http.StatusForbidden {
+			// Decision-only steps record that the allowlist accepted the
+			// command; the body of a command Rust does not implement yet may
+			// depend on the recording host (tools on PATH, OS wording).
+			step.Status, step.ContentType, step.Body = http.StatusOK, "", ""
+		}
 		step.VaultFiles = remoteVaultFiles(t, vault)
 		step.OutsideFiles = remoteOutsideFiles(t, root)
 		for i := range step.VaultFiles {

@@ -19,6 +19,18 @@ esac
 cp "$1" "$out"
 `
 
+// fakeQPDFBuiltin is fakeQPDF using shell builtins only, for the case whose
+// PATH must not reach the host's own tools (a Linux host ships a real pdfinfo
+// below /usr/bin, which would defeat the "pdfinfo missing" scenario).
+const fakeQPDFBuiltin = `#!/bin/sh
+if [ "$1" = "--check" ]; then exit 0; fi
+case "$*" in
+*" -- "*) eval "out=\${$#}" ;;
+*) out="$2" ;;
+esac
+while IFS= read -r line || [ -n "$line" ]; do printf '%s\n' "$line"; done < "$1" > "$out"
+`
+
 const fakePDFInfo = `#!/bin/sh
 # Stand-in for pdfinfo: the page count is the "pages=N" line of the file.
 n=$(sed -n 's/^pages=//p' "$1" | head -n 1)
@@ -141,7 +153,7 @@ func cliIngestPDFCases() []cliIngestCase {
 				ingestBoth("ingest", "rotate", "a.pdf", "--degrees", "90", "--output", "r.pdf"),
 			)},
 		{Name: "ingest-pdf-ops-only-qpdf", NoVault: true, SkipIndex: true, CwdFiles: cwd,
-			HomeFiles: map[string]string{"bin/qpdf": fakeQPDF}, Env: map[string]string{"PATH": toolPath}, Steps: ingestConcat(
+			HomeFiles: map[string]string{"bin/qpdf": fakeQPDFBuiltin}, Env: map[string]string{"PATH": "$ROOT/home/bin"}, Steps: ingestConcat(
 				ingestBoth("ingest", "split", "a.pdf", "--at", "2", "--output-dir", "out"),
 				ingestBoth("ingest", "merge", "a.pdf", "b.pdf", "--output", "m.pdf"),
 			)},

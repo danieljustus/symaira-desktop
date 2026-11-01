@@ -2847,10 +2847,10 @@
         "exists.pdf": "%PDF-1.4\npages=1\n"
       },
       "home_files": {
-        "bin/qpdf": "#!/bin/sh\n# Stand-in for qpdf: validates anything, copies the first input to the output.\nif [ \"$1\" = \"--check\" ]; then exit 0; fi\ncase \"$*\" in\n*\" -- \"*) eval \"out=\\${$#}\" ;;\n*) out=\"$2\" ;;\nesac\ncp \"$1\" \"$out\"\n"
+        "bin/qpdf": "#!/bin/sh\nif [ \"$1\" = \"--check\" ]; then exit 0; fi\ncase \"$*\" in\n*\" -- \"*) eval \"out=\\${$#}\" ;;\n*) out=\"$2\" ;;\nesac\nwhile IFS= read -r line || [ -n \"$line\" ]; do printf '%s\\n' \"$line\"; done \u003c \"$1\" \u003e \"$out\"\n"
       },
       "env": {
-        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+        "PATH": "$ROOT/home/bin"
       },
       "skip_index": true,
       "no_vault": true,

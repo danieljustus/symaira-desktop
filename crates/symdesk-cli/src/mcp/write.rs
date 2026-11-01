@@ -399,7 +399,7 @@ fn decode_base64(data: &str) -> Result<Vec<u8>, String> {
     }
 }
 
-fn store_asset(
+pub(crate) fn store_asset(
     root: &std::path::Path,
     bytes: &[u8],
     preferred: &str,

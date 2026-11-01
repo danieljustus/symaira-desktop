@@ -4,7 +4,7 @@ mod pdf;
 #[cfg(test)]
 mod pdf_tests;
 mod read;
-mod write;
+pub(crate) mod write;
 
 use std::{
     collections::BTreeMap,

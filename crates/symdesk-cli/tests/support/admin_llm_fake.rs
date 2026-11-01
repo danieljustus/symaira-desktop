@@ -25,7 +25,9 @@ pub struct LlmFake {
 impl LlmFake {
     pub fn start() -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind fake llm server");
-        listener.set_nonblocking(true).expect("nonblocking listener");
+        listener
+            .set_nonblocking(true)
+            .expect("nonblocking listener");
         let url = format!("http://{}", listener.local_addr().expect("local address"));
         let stop = Arc::new(AtomicBool::new(false));
         let thread_stop = Arc::clone(&stop);
@@ -139,7 +141,10 @@ fn serve(mut stream: TcpStream) {
     let (status, payload) = match answer(prompt) {
         Some(text) => (
             "200 OK",
-            format!("{}\n", json!({"model": "fake", "response": text, "done": true})),
+            format!(
+                "{}\n",
+                json!({"model": "fake", "response": text, "done": true})
+            ),
         ),
         None => (
             "500 Internal Server Error",

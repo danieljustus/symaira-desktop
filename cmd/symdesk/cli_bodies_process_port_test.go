@@ -48,12 +48,21 @@ type cliBodiesCase struct {
 	Env            map[string]string `json:"env,omitempty"`
 	Canaries       []string          `json:"canaries,omitempty"`
 	SnapshotVault  bool              `json:"snapshot_vault,omitempty"`
-	Steps          []cliBodiesStep   `json:"steps"`
+	// VolatileHistory hides the 64-digit content ids of the history store: the
+	// case writes files that embed the wall clock (for example `created:`).
+	VolatileHistory bool            `json:"volatile_history,omitempty"`
+	Steps           []cliBodiesStep `json:"steps"`
 }
 
 type cliBodiesFixture struct {
 	SchemaVersion int             `json:"schema_version"`
 	Cases         []cliBodiesCase `json:"cases"`
+}
+
+// bodiesJSON runs the argv as JSON only (text output that prints Go heap
+// addresses cannot be compared).
+func bodiesJSON(args ...string) []cliBodiesStep {
+	return []cliBodiesStep{{Args: append([]string{"--json"}, args...)}}
 }
 
 func bodiesStepOf(args ...string) cliBodiesStep { return cliBodiesStep{Args: args} }
@@ -145,7 +154,7 @@ func observeCLIBodiesProcess(t *testing.T) cliBodiesFixture {
 
 // snapshotBodiesVault returns every regular file below the vault: text files
 // as normalized text, anything else as its SHA-256.
-func snapshotBodiesVault(t *testing.T, vault, root string) map[string]string {
+func snapshotBodiesVault(t *testing.T, vault, root string, volatile bool) map[string]string {
 	t.Helper()
 	snapshot := map[string]string{}
 	err := filepath.WalkDir(vault, func(path string, entry fs.DirEntry, err error) error {
@@ -163,9 +172,20 @@ func snapshotBodiesVault(t *testing.T, vault, root string) map[string]string {
 		if err != nil {
 			return err
 		}
-		key := normalizeBodiesRandom(filepath.ToSlash(rel))
+		key := normalizeBodiesText(volatile, filepath.ToSlash(rel))
+		if volatile && strings.HasPrefix(filepath.ToSlash(rel), ".symdesk/history/objects/") {
+			// Content ids embed the wall clock and identical contents of one
+			// second share an object, so neither names nor counts are stable;
+			// the manifests below prove that a snapshot was taken.
+			return nil
+		}
+		if volatile && strings.HasPrefix(filepath.ToSlash(rel), ".symdesk/history/manifest/") {
+			// Manifests list content ids and sizes of volatile files.
+			snapshot[key] = "(present)"
+			return nil
+		}
 		if utf8.Valid(data) {
-			snapshot[key] = normalizeBodiesRandom(normalizeCLIErrors(string(data), root))
+			snapshot[key] = normalizeBodiesText(volatile, normalizeCLIErrors(string(data), root))
 		} else {
 			sum := sha256.Sum256(data)
 			snapshot[key] = "sha256:" + hex.EncodeToString(sum[:])
@@ -267,11 +287,11 @@ func observeCLIBodiesCase(t *testing.T, binary string, c cliBodiesCase) cliBodie
 			Args:     step.Args,
 			Stdin:    step.Stdin,
 			ExitCode: code,
-			Stdout:   normalizeBodiesRandom(normalizeCLIErrors(stdout, root)),
-			Stderr:   normalizeBodiesRandom(normalizeCLIErrors(stderr, root)),
+			Stdout:   normalizeBodiesText(c.VolatileHistory, normalizeCLIErrors(stdout, root)),
+			Stderr:   normalizeBodiesText(c.VolatileHistory, normalizeCLIErrors(stderr, root)),
 		}
 		if c.SnapshotVault {
-			recorded.Vault = snapshotBodiesVault(t, vault, root)
+			recorded.Vault = snapshotBodiesVault(t, vault, root, c.VolatileHistory)
 		}
 		observed.Steps = append(observed.Steps, recorded)
 	}
@@ -280,12 +300,17 @@ func observeCLIBodiesCase(t *testing.T, binary string, c cliBodiesCase) cliBodie
 
 // normalizeBodiesRandom hides the random identifiers Go draws for trash names
 // (24 lowercase hex digits) and the wall-clock timestamps of text listings.
-func normalizeBodiesRandom(text string) string {
+func normalizeBodiesText(volatile bool, text string) string {
+	if volatile {
+		text = bodiesSHARE.ReplaceAllString(text, "$$SHA256")
+	}
 	text = bodiesRandomRE.ReplaceAllString(text, "$$RAND24")
 	return bodiesLocalTimeRE.ReplaceAllString(text, "$$LOCALTIME")
 }
 
 var bodiesRandomRE = regexp.MustCompile(`[0-9a-f]{24}`)
+
+var bodiesSHARE = regexp.MustCompile(`[0-9a-f]{64}`)
 
 // bodiesLocalTimeRE matches the local timestamps (`2006-01-02 15:04:05`) that
 // `history tasks` and `trash list` print.

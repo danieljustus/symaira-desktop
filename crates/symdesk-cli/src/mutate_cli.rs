@@ -333,6 +333,32 @@ fn mutate(
     }
     Ok(())
 }
+/// Go `Service.NoteDelete`: move the note to the vault trash, drop it from the
+/// sidecar and record the activity.
+pub(crate) fn delete_note(
+    root: &Path,
+    db: &mut Sidecar,
+    file: &str,
+) -> Result<symdesk_vault::TrashEntry, String> {
+    let path = secure_path(root, file).map_err(|e| e.to_string())?;
+    let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
+    let rel = path
+        .strip_prefix(&canonical_root)
+        .map_err(|e| e.to_string())?
+        .to_string_lossy();
+    let entry = HistoryStore::new(root).trash(&rel).map_err(|e| match e {
+        // Go returns the os.Root `statat <path>: <reason>` error as is.
+        symdesk_vault::HistoryError::Io(io) if io.to_string().starts_with("statat ") => {
+            io.to_string()
+        }
+        other => other.to_string(),
+    })?;
+    let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
+    db.delete_document(&key.to_string_lossy())
+        .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
+    let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
+    Ok(entry)
+}
 fn note_execute(
     root: &Path,
     db: &mut Sidecar,
@@ -351,23 +377,7 @@ fn note_execute(
             Ok(json!({"from":a[0],"status":"moved","to":a[1]}))
         }
         "delete" => {
-            let path = secure_path(root, &a[0]).map_err(|e| e.to_string())?;
-            let canonical_root = fs::canonicalize(root).map_err(|e| e.to_string())?;
-            let rel = path
-                .strip_prefix(&canonical_root)
-                .map_err(|e| e.to_string())?
-                .to_string_lossy();
-            let entry = HistoryStore::new(root).trash(&rel).map_err(|e| match e {
-                // Go returns the os.Root `statat <path>: <reason>` error as is.
-                symdesk_vault::HistoryError::Io(io) if io.to_string().starts_with("statat ") => {
-                    io.to_string()
-                }
-                other => other.to_string(),
-            })?;
-            let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
-            db.delete_document(&key.to_string_lossy())
-                .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;
-            let _ = append_activity(root, "file_removed", &rel, &entry.name, "moved to trash");
+            let entry = delete_note(root, db, &a[0])?;
             Ok(json!({"file":entry.original_path,"status":"trashed","trash_name":entry.name}))
         }
         "daily" => {

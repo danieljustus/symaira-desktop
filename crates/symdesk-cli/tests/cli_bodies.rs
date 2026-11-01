@@ -35,12 +35,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 7;
-const EXPECTED_STEPS: usize = 186;
+const EXPECTED_CASES: usize = 10;
+const EXPECTED_STEPS: usize = 295;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 57;
+const EXPECTED_FAILING_STEPS: usize = 104;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 186;
+const EXPECTED_SNAPSHOT_STEPS: usize = 295;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -69,6 +69,8 @@ struct Case {
     canaries: Vec<String>,
     #[serde(default)]
     snapshot_vault: bool,
+    #[serde(default)]
+    volatile_history: bool,
     steps: Vec<Step>,
 }
 
@@ -258,31 +260,87 @@ fn normalize_local_time(text: &str) -> String {
     out
 }
 
-fn normalize(text: &str, root: &Path, canonical: &Path) -> String {
-    normalize_local_time(&normalize_random(&cli_normalize::normalize(
-        text, root, canonical, false,
-    )))
+/// Go: `[0-9a-f]{64}` replaced by `$SHA256` (volatile-history cases only).
+fn normalize_sha256(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let hex = |byte: u8| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte);
+    let mut out = String::with_capacity(text.len());
+    let mut at = 0;
+    while at < bytes.len() {
+        if hex(bytes[at]) {
+            let mut end = at;
+            while end < bytes.len() && hex(bytes[end]) {
+                end += 1;
+            }
+            let length = end - at;
+            for _ in 0..length / 64 {
+                out.push_str("$SHA256");
+            }
+            out.push_str(&text[at + (length / 64) * 64..end]);
+            at = end;
+        } else {
+            let character = text[at..].chars().next().expect("non-empty remainder");
+            out.push(character);
+            at += character.len_utf8();
+        }
+    }
+    out
+}
+
+fn normalize(text: &str, root: &Path, canonical: &Path, volatile: bool) -> String {
+    let text = cli_normalize::normalize(text, root, canonical, false);
+    let text = if volatile {
+        normalize_sha256(&text)
+    } else {
+        text
+    };
+    normalize_local_time(&normalize_random(&text))
 }
 
 /// Every regular file below `vault`: text as normalized text, everything else
 /// as `sha256:<hex>` (mirrors `snapshotBodiesVault`).
-fn snapshot(vault: &Path, root: &Path, canonical: &Path) -> BTreeMap<String, String> {
+fn snapshot(
+    vault: &Path,
+    root: &Path,
+    canonical: &Path,
+    volatile: bool,
+) -> BTreeMap<String, String> {
     let mut files = Vec::new();
     files_under(vault, &mut files);
     files
         .into_iter()
-        .map(|path| {
+        .filter_map(|path| {
             let relative = path
                 .strip_prefix(vault)
                 .expect("below vault")
                 .to_string_lossy()
                 .replace('\\', "/");
+            if volatile && relative.starts_with(".symdesk/history/objects/") {
+                // Content ids embed the wall clock and identical contents of
+                // one second share an object, so neither names nor counts are
+                // stable; the manifests prove that a snapshot was taken.
+                return None;
+            }
             let data = fs::read(&path).expect("read vault file");
+            if volatile && relative.starts_with(".symdesk/history/manifest/") {
+                // Manifests list content ids and sizes of volatile files.
+                return Some((
+                    normalize_local_time(&normalize_random(&normalize_sha256(&relative))),
+                    "(present)".to_owned(),
+                ));
+            }
             let value = match String::from_utf8(data) {
-                Ok(text) => normalize(&text, root, canonical),
+                Ok(text) => normalize(&text, root, canonical, volatile),
                 Err(error) => format!("sha256:{}", sha256_hex(error.as_bytes())),
             };
-            (normalize_local_time(&normalize_random(&relative)), value)
+            Some((
+                normalize_local_time(&normalize_random(&if volatile {
+                    normalize_sha256(&relative)
+                } else {
+                    relative
+                })),
+                value,
+            ))
         })
         .collect()
 }
@@ -296,8 +354,8 @@ fn sha256_hex(data: &[u8]) -> String {
 
 fn matches_go(step: &Step, observed: &Run, root: &Path, canonical: &Path) -> bool {
     observed.exit == step.exit_code
-        && normalize(&observed.stdout, root, canonical) == step.stdout
-        && normalize(&observed.stderr, root, canonical) == step.stderr
+        && normalize(&observed.stdout, root, canonical, false) == step.stdout
+        && normalize(&observed.stderr, root, canonical, false) == step.stderr
 }
 
 #[test]
@@ -405,8 +463,8 @@ fn cli_bodies_match_go_process_contract() {
             args.extend(step.args.iter().map(|argument| materialize(argument)));
             let observed = run(binary, &home, &cwd, &env, &args, &materialize(&step.stdin));
             let label = format!("{} {:?}", case.name, step.args);
-            let stdout = normalize(&observed.stdout, &root, &canonical);
-            let stderr = normalize(&observed.stderr, &root, &canonical);
+            let stdout = normalize(&observed.stdout, &root, &canonical, case.volatile_history);
+            let stderr = normalize(&observed.stderr, &root, &canonical, case.volatile_history);
             if stdout != step.stdout {
                 failures.push(format!(
                     "{label} stdout\n  go:   {:?}\n  rust: {stdout:?}",
@@ -432,7 +490,7 @@ fn cli_bodies_match_go_process_contract() {
             );
             if let Some(expected) = &step.vault {
                 snapshots += 1;
-                let tree = snapshot(&vault, &root, &canonical);
+                let tree = snapshot(&vault, &root, &canonical, case.volatile_history);
                 if &tree != expected {
                     let mut differences = Vec::new();
                     for key in expected.keys().chain(tree.keys()) {
@@ -524,6 +582,13 @@ fn vault_snapshot_comparison_rejects_a_changed_file() {
     let mut missing = recorded.clone();
     missing.remove(&key);
     assert_ne!(&missing, recorded);
+}
+
+#[test]
+fn sha256_normalization_matches_the_go_regexp() {
+    assert_eq!(normalize_sha256(&"a".repeat(64)), "$SHA256");
+    assert_eq!(normalize_sha256(&"a".repeat(70)), "$SHA256aaaaaa");
+    assert_eq!(normalize_sha256(&"a".repeat(63)), "a".repeat(63));
 }
 
 #[test]

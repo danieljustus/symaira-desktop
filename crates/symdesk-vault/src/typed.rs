@@ -50,7 +50,9 @@ pub struct ComputedColumn {
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct View {
+    #[serde(default)]
     pub id: String,
+    #[serde(default)]
     pub name: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub r#type: String,
@@ -90,12 +92,16 @@ pub struct PropertyConfig {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Base {
+    #[serde(default)]
     pub id: String,
+    #[serde(default)]
     pub path: String,
+    #[serde(default)]
     pub title: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     pub description: String,
+    #[serde(default)]
     pub created: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -103,6 +109,7 @@ pub struct Base {
     #[serde(default)]
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub properties: BTreeMap<String, PropertyConfig>,
+    #[serde(default)]
     pub views: Vec<View>,
     #[serde(skip, default)]
     pub extras: BTreeMap<String, Value>,

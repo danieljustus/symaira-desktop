@@ -10,10 +10,15 @@ pub fn cli() -> Command {
         .subcommand(read_command("list"))
         .subcommand(read_command("get"))
         .subcommand(read_command("siblings"))
+        .subcommand(read_command("save"))
+        .subcommand(read_command("delete"))
         .subcommand(
             Command::new("base")
                 .subcommand(read_command("list"))
-                .subcommand(read_command("get")),
+                .subcommand(read_command("get"))
+                .subcommand(read_command("save"))
+                .subcommand(read_command("delete"))
+                .subcommand(read_command("new")),
         )
 }
 
@@ -37,6 +42,12 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
         .get_many::<String>("args")
         .map(|v| v.cloned().collect())
         .unwrap_or_default();
+    if matches!(
+        (base, name),
+        (false, "save" | "delete") | (true, "save" | "delete" | "new")
+    ) {
+        return crate::views_write_cli::run(base, name, &refs, vault, json);
+    }
     if name != "list" && refs.len() != 1 {
         return crate::emit_error(format!("accepts 1 arg(s), received {}", refs.len()), json);
     }
@@ -187,7 +198,7 @@ fn view_text(v: &View) -> String {
     )
 }
 
-fn base_text(b: &Base) -> String {
+pub(crate) fn base_text(b: &Base) -> String {
     let properties = format!(
         "map[{}]",
         b.properties

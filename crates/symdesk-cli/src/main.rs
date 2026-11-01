@@ -32,6 +32,7 @@ mod search_cli;
 mod service_cli;
 mod source_cli;
 mod views_cli;
+mod views_write_cli;
 mod worker_cli;
 
 use std::{

@@ -36,14 +36,14 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 46;
-const EXPECTED_STEPS: usize = 416;
+const EXPECTED_CASES: usize = 55;
+const EXPECTED_STEPS: usize = 492;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 169;
+const EXPECTED_FAILING_STEPS: usize = 221;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 276;
 /// Steps that also compare the working-directory tree after the step.
-const EXPECTED_CWD_STEPS: usize = 50;
+const EXPECTED_CWD_STEPS: usize = 122;
 
 #[derive(Deserialize)]
 struct Fixture {

@@ -24,7 +24,7 @@ silent `_ => Ok` arm.
 | `dataset list` | done (dataset commit) |
 | `ai autofill` | this slice |
 | `notebook generate` | this slice |
-| `export` (group node) | this slice (verify Go behavior) |
+| `export --note` | done (export commit); `export --view` / csv: see Remaining |
 | `ingest jobs|retry|reocr|split|merge|rotate`, `mail *`, `rules *`, `clip`, `meeting *` | sibling r013-ingestcmds |
 | `paperless import|migrate`, `views embed|exec|export-csv|import-csv|new-entry` | sibling r013-paperviews |
 
@@ -40,7 +40,10 @@ silent `_ => Ok` arm.
 
 ## Remaining
 
-- ai autofill, notebook generate, export (`--note/--view/--format/--output/--profile`; `export profiles` is native).
+- ai autofill, notebook generate.
+- `export --view` and `export --view --format csv` (Go `ViewsExec` / `ViewsExportCSV`): the saved-view engine lives in the
+  r013-paperviews slice, merged on main but not in this branch's base (290bc4d2). After integration, call that
+  engine from `export_cli.rs` (`export_view` in `symdesk-render` already renders the rows). Not stubbed here.
 
 - doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
   fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
@@ -58,7 +61,14 @@ silent `_ => Ok` arm.
   orphaned with set mtimes, near-duplicate groups at several thresholds, arguments, empty vault, no vault).
   `vault_health_cli.rs` ports `health.Scan` on `HealthLinkResolver` / `MarkdownLinkResolver`.
 
+- export --note (html, pdf, dataset export policy): 10 cases / 51 steps. HTML files are compared in the working
+  directory snapshot; the dataset policy is exercised with the default, a widened, a narrowed and an invalid
+  `SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY`. `--output` is Cobra's local flag (argv rewrite like `search export`).
+
 ## Declared limits
+- export --note: a *successful* PDF render needs the host's typst and writes a non-reproducible PDF, so only the
+  no-engine error (empty PATH) is recorded; the render call is the one `search export` already uses. Go has no
+  bound on `![[..]]` cycles (the Go recorder would never finish), so no cycle case is recorded.
 - vault health: a YAML *syntax* error in frontmatter carries the yaml.v3 wording in Go (noyalib text in Rust), so
   the fixture records an invalid-ASN parse error instead. Findings are sorted stably; Go's `sort.Slice` is
   unstable above twelve findings, so the cases stay below that.

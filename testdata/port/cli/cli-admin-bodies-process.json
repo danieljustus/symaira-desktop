@@ -1671,6 +1671,1312 @@
       ]
     },
     {
+      "name": "export-html",
+      "files": {
+        "UPPER.MD": "---\ntitle: Upper\n---\nupper\n",
+        "a.md": "---\ntitle: Alpha\n---\nIntro with [[b]] and ![[notes/embedded]] and a \u003cb\u003etag\u003c/b\u003e \u0026 ampersand.\n\n- one\n- two\n\n| h1 | h2 |\n|----|----|\n| x | y |\n",
+        "no-title.md": "no frontmatter at all\n",
+        "notes/b.md": "---\ntitle: Beta\n---\nBeta body with `code` and **bold**.\n",
+        "notes/embedded.md": "---\ntitle: Embedded\n---\nEmbedded text.\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "cwd_dirs": [
+        "sub"
+      ],
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/a.html Profile: Rendered:true Message:Exported note a.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/a.html\",\"rendered\":true,\"message\":\"Exported note a.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "notes/b.md",
+            "--format",
+            "HTML",
+            "--output",
+            "beta.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/beta.html Profile: Rendered:true Message:Exported note notes/b.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "notes/b.md",
+            "--format",
+            "HTML",
+            "--output",
+            "beta.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/beta.html\",\"rendered\":true,\"message\":\"Exported note notes/b.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "./notes/embedded.md",
+            "--format",
+            "html",
+            "--output",
+            "sub/../sub/out.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/sub/out.html Profile: Rendered:true Message:Exported note ./notes/embedded.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "./notes/embedded.md",
+            "--format",
+            "html",
+            "--output",
+            "sub/../sub/out.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/sub/out.html\",\"rendered\":true,\"message\":\"Exported note ./notes/embedded.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "no-title.md",
+            "--format",
+            "html",
+            "--output=plain.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/plain.html Profile: Rendered:true Message:Exported note no-title.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "no-title.md",
+            "--format",
+            "html",
+            "--output=plain.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/plain.html\",\"rendered\":true,\"message\":\"Exported note no-title.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "UPPER.MD",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/UPPER.html Profile: Rendered:true Message:Exported note UPPER.MD to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "UPPER.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eUpper\u003c/h1\u003e\n\n\u003cp\u003eupper\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "UPPER.MD",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/UPPER.html\",\"rendered\":true,\"message\":\"Exported note UPPER.MD to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "UPPER.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eUpper\u003c/h1\u003e\n\n\u003cp\u003eupper\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/a.html Profile: Rendered:true Message:Exported note a.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "UPPER.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eUpper\u003c/h1\u003e\n\n\u003cp\u003eupper\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/a.html\",\"rendered\":true,\"message\":\"Exported note a.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "UPPER.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eUpper\u003c/h1\u003e\n\n\u003cp\u003eupper\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "beta.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eBeta\u003c/h1\u003e\n\n\u003cp\u003eBeta body with `code` and **bold**.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "plain.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eno-title\u003c/h1\u003e\n\n\u003cp\u003eno frontmatter at all\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/out.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eEmbedded\u003c/h1\u003e\n\n\u003cp\u003eEmbedded text.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-errors",
+      "files": {
+        "UPPER.MD": "---\ntitle: Upper\n---\nupper\n",
+        "a.md": "---\ntitle: Alpha\n---\nIntro with [[b]] and ![[notes/embedded]] and a \u003cb\u003etag\u003c/b\u003e \u0026 ampersand.\n\n- one\n- two\n\n| h1 | h2 |\n|----|----|\n| x | y |\n",
+        "no-title.md": "no frontmatter at all\n",
+        "notes/b.md": "---\ntitle: Beta\n---\nBeta body with `code` and **bold**.\n",
+        "notes/embedded.md": "---\ntitle: Embedded\n---\nEmbedded text.\n"
+      },
+      "post_index_files": {
+        "bad-asn.md": "---\ntitle: Bad\nasn: 0\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "docx"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unsupported export format \"docx\": use pdf, html, or csv\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "docx"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unsupported export format \\\"docx\\\": use pdf, html, or csv\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "csv export is only supported for views (use --view)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"csv export is only supported for views (use --view)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "csv export is only supported for views (use --view)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"csv export is only supported for views (use --view)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "export requires --note or --view\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"export requires --note or --view\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "missing.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "missing.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "../escape.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "../escape.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "bad-asn.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid asn in $ROOT/vault/bad-asn.md: must be a positive integer\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "bad-asn.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid asn in $ROOT/vault/bad-asn.md: must be a positive integer\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html",
+            "--output",
+            "missing-dir/out.html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to write HTML: open $ROOT/cwd/missing-dir/out.html: no such file or directory\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html",
+            "--output",
+            "missing-dir/out.html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to write HTML: open $ROOT/cwd/missing-dir/out.html: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --note\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --note\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --format\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --format\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "extra",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/a.html Profile: Rendered:true Message:Exported note a.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "extra",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/a.html\",\"rendered\":true,\"message\":\"Exported note a.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "a.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAlpha\u003c/h1\u003e\n\n\u003cp\u003eIntro with [[b]] and Embedded text.\u003c/p\u003e\n\u003cp\u003eand a \u0026lt;b\u0026gt;tag\u0026lt;/b\u0026gt; \u0026amp; ampersand.\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003eone\u003c/li\u003e\n\u003cli\u003etwo\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cp\u003e| h1 | h2 |\u003c/p\u003e\n\u003cp\u003e|----|----|\u003c/p\u003e\n\u003cp\u003e| x | y |\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-dataset-policy",
+      "files": {
+        "datasets/Bad Slug.md": "---\ntype: dataset\ntitle: Bad Slug\ndataset_id: bad-slug\nsource: datasets/bad-slug/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of bad-slug\n",
+        "datasets/internal.md": "---\ntype: dataset\ntitle: Internal\ndataset_id: internal\nsource: datasets/internal/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of internal\n",
+        "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+        "datasets/pub.md": "---\ntype: dataset\ntitle: Public\ndataset_id: pub\nsource: datasets/pub/source.csv\nsensitivity: public\nretention_rule: default\n---\n\n# Body of pub\n",
+        "datasets/secret.md": "---\ntype: dataset\ntitle: Secret\ndataset_id: secret\nsource: datasets/secret/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of secret\n",
+        "datasets/secret/raw.csv": "a,b\n1,2\n",
+        "datasets/sub/inner.md": "---\ntitle: Inner\n---\nplain note below datasets\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/pub.html Profile: Rendered:true Message:Exported note datasets/pub.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/pub.html\",\"rendered\":true,\"message\":\"Exported note datasets/pub.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/internal.md",
+            "--format",
+            "html",
+            "--output",
+            "internal.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/internal.html Profile: Rendered:true Message:Exported note datasets/internal.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/internal.md",
+            "--format",
+            "html",
+            "--output",
+            "internal.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/internal.html\",\"rendered\":true,\"message\":\"Exported note datasets/internal.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/secret.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"secret\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/secret.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"secret\\\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/secret",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"secret\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/secret",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"secret\\\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/secret/raw.csv",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"secret\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/secret/raw.csv",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"secret\\\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/mismatch.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: dataset handle slug \"other\" does not match path slug \"mismatch\"\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/mismatch.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: dataset handle slug \\\"other\\\" does not match path slug \\\"mismatch\\\"\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/Bad Slug.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: dataset slug \"Bad Slug\" is not filesystem-safe\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/Bad Slug.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: dataset slug \\\"Bad Slug\\\" is not filesystem-safe\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: dataset path requires a dataset handle\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: dataset path requires a dataset handle\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/ghost.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: open vault file $ROOT/vault/datasets/ghost.md: openat datasets/ghost.md: no such file or directory\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/ghost.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: open vault file $ROOT/vault/datasets/ghost.md: openat datasets/ghost.md: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "./datasets/sub/inner.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: open vault file $ROOT/vault/datasets/sub.md: openat datasets/sub.md: no such file or directory\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "./datasets/sub/inner.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: open vault file $ROOT/vault/datasets/sub.md: openat datasets/sub.md: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            " datasets/pub.md ",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/ datasets/pub.md : openat  datasets/pub.md : no such file or directory\n",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            " datasets/pub.md ",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/ datasets/pub.md : openat  datasets/pub.md : no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {
+            "internal.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eInternal\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of internal\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-dataset-policy-config",
+      "files": {
+        "datasets/Bad Slug.md": "---\ntype: dataset\ntitle: Bad Slug\ndataset_id: bad-slug\nsource: datasets/bad-slug/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of bad-slug\n",
+        "datasets/internal.md": "---\ntype: dataset\ntitle: Internal\ndataset_id: internal\nsource: datasets/internal/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of internal\n",
+        "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+        "datasets/pub.md": "---\ntype: dataset\ntitle: Public\ndataset_id: pub\nsource: datasets/pub/source.csv\nsensitivity: public\nretention_rule: default\n---\n\n# Body of pub\n",
+        "datasets/secret.md": "---\ntype: dataset\ntitle: Secret\ndataset_id: secret\nsource: datasets/secret/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of secret\n",
+        "datasets/secret/raw.csv": "a,b\n1,2\n",
+        "datasets/sub/inner.md": "---\ntitle: Inner\n---\nplain note below datasets\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "RESTRICTED"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/secret.md",
+            "--format",
+            "html",
+            "--output",
+            "secret.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/secret.html Profile: Rendered:true Message:Exported note datasets/secret.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "secret.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eSecret\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of secret\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/secret.md",
+            "--format",
+            "html",
+            "--output",
+            "secret.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/secret.html\",\"rendered\":true,\"message\":\"Exported note datasets/secret.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "secret.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eSecret\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of secret\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-dataset-policy-invalid-config",
+      "files": {
+        "datasets/Bad Slug.md": "---\ntype: dataset\ntitle: Bad Slug\ndataset_id: bad-slug\nsource: datasets/bad-slug/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of bad-slug\n",
+        "datasets/internal.md": "---\ntype: dataset\ntitle: Internal\ndataset_id: internal\nsource: datasets/internal/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of internal\n",
+        "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+        "datasets/pub.md": "---\ntype: dataset\ntitle: Public\ndataset_id: pub\nsource: datasets/pub/source.csv\nsensitivity: public\nretention_rule: default\n---\n\n# Body of pub\n",
+        "datasets/secret.md": "---\ntype: dataset\ntitle: Secret\ndataset_id: secret\nsource: datasets/secret/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of secret\n",
+        "datasets/secret/raw.csv": "a,b\n1,2\n",
+        "datasets/sub/inner.md": "---\ntitle: Inner\n---\nplain note below datasets\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "top-secret"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export policy: invalid dataset sensitivity \"top-secret\" (valid: public, internal, confidential, restricted)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export policy: invalid dataset sensitivity \\\"top-secret\\\" (valid: public, internal, confidential, restricted)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        }
+      ]
+    },
+    {
+      "name": "export-dataset-policy-public-only",
+      "files": {
+        "datasets/Bad Slug.md": "---\ntype: dataset\ntitle: Bad Slug\ndataset_id: bad-slug\nsource: datasets/bad-slug/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of bad-slug\n",
+        "datasets/internal.md": "---\ntype: dataset\ntitle: Internal\ndataset_id: internal\nsource: datasets/internal/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of internal\n",
+        "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+        "datasets/pub.md": "---\ntype: dataset\ntitle: Public\ndataset_id: pub\nsource: datasets/pub/source.csv\nsensitivity: public\nretention_rule: default\n---\n\n# Body of pub\n",
+        "datasets/secret.md": "---\ntype: dataset\ntitle: Secret\ndataset_id: secret\nsource: datasets/secret/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of secret\n",
+        "datasets/secret/raw.csv": "a,b\n1,2\n",
+        "datasets/sub/inner.md": "---\ntitle: Inner\n---\nplain note below datasets\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "public"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/pub.html Profile: Rendered:true Message:Exported note datasets/pub.md to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/pub.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/pub.html\",\"rendered\":true,\"message\":\"Exported note datasets/pub.md to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "datasets/internal.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"internal\" is internal; maximum configured export sensitivity is public (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "datasets/internal.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"internal\\\" is internal; maximum configured export sensitivity is public (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {
+            "pub.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003ePublic\u003c/h1\u003e\n\n\n\u003ch1\u003eBody of pub\u003c/h1\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-pdf-no-engine",
+      "files": {
+        "UPPER.MD": "---\ntitle: Upper\n---\nupper\n",
+        "a.md": "---\ntitle: Alpha\n---\nIntro with [[b]] and ![[notes/embedded]] and a \u003cb\u003etag\u003c/b\u003e \u0026 ampersand.\n\n- one\n- two\n\n| h1 | h2 |\n|----|----|\n| x | y |\n",
+        "no-title.md": "no frontmatter at all\n",
+        "notes/b.md": "---\ntitle: Beta\n---\nBeta body with `code` and **bold**.\n",
+        "notes/embedded.md": "---\ntitle: Embedded\n---\nEmbedded text.\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\n  • macOS:   brew install typst\n  • Windows: winget install --id Typst.Typst\n  • Cargo:   cargo install typst-cli\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\\n  • macOS:   brew install typst\\n  • Windows: winget install --id Typst.Typst\\n  • Cargo:   cargo install typst-cli\\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "pdf",
+            "--profile",
+            "brief",
+            "--output",
+            "a.pdf"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\n  • macOS:   brew install typst\n  • Windows: winget install --id Typst.Typst\n  • Cargo:   cargo install typst-cli\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "pdf",
+            "--profile",
+            "brief",
+            "--output",
+            "a.pdf"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\\n  • macOS:   brew install typst\\n  • Windows: winget install --id Typst.Typst\\n  • Cargo:   cargo install typst-cli\\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {}
+        }
+      ]
+    },
+    {
+      "name": "export-without-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "export-profiles",
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "export",
+            "profiles"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:behoerde Title:Behörde (DIN 5008 + PDF/A + PDF/UA) Description:Authority letter: DIN 5008 Form A plus archival (PDF/A-2a) and accessible (PDF/UA-1) output for E-Government / BITV 2.0 compliance. Stability:scaffold} {Name:brief Title:Brief (DIN 5008) Description:General German business letter. Defaults to DIN 5008 Form B (45 mm Briefkopf). Tagged PDF, no archival requirement. Stability:scaffold} {Name:meeting Title:Meeting Minutes Description:Accessible and archivable meeting minutes profile. Automatically formats metadata, participants, duration, location, and structured sections (Summary, Decisions, Action Items, Notes, Transcript). Stability:beta} {Name:rechnung Title:Rechnung (DIN 5008) Description:German invoice with windowed-envelope recipient, line items and VAT. Driven by a `data:` block. (Scaffold — VAT/GiroCode in Phase 4.) Stability:scaffold} {Name:report Title:Report / Bericht Description:Multi-page report with cover page, automatic table of contents, running header/footer, page numbers, and themed headings. Stability:beta}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "profiles"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"behoerde\",\"title\":\"Behörde (DIN 5008 + PDF/A + PDF/UA)\",\"description\":\"Authority letter: DIN 5008 Form A plus archival (PDF/A-2a) and accessible (PDF/UA-1) output for E-Government / BITV 2.0 compliance.\",\"stability\":\"scaffold\"},{\"name\":\"brief\",\"title\":\"Brief (DIN 5008)\",\"description\":\"General German business letter. Defaults to DIN 5008 Form B (45 mm Briefkopf). Tagged PDF, no archival requirement.\",\"stability\":\"scaffold\"},{\"name\":\"meeting\",\"title\":\"Meeting Minutes\",\"description\":\"Accessible and archivable meeting minutes profile. Automatically formats metadata, participants, duration, location, and structured sections (Summary, Decisions, Action Items, Notes, Transcript).\",\"stability\":\"beta\"},{\"name\":\"rechnung\",\"title\":\"Rechnung (DIN 5008)\",\"description\":\"German invoice with windowed-envelope recipient, line items and VAT. Driven by a `data:` block. (Scaffold — VAT/GiroCode in Phase 4.)\",\"stability\":\"scaffold\"},{\"name\":\"report\",\"title\":\"Report / Bericht\",\"description\":\"Multi-page report with cover page, automatic table of contents, running header/footer, page numbers, and themed headings.\",\"stability\":\"beta\"}]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "perm-lifecycle",
       "files": {
         "a.md": "hello\n"

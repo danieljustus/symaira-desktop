@@ -16,6 +16,7 @@ mod docs_cli;
 mod doctor_cli;
 mod duplicates_cli;
 mod events_cli;
+mod export_cli;
 mod external_index;
 mod graph_cli;
 mod help_cli;
@@ -246,6 +247,11 @@ fn main() -> ExitCode {
         Some(("export", command)) if command.subcommand_name() == Some("profiles") => {
             asset_export_cli::run_export(command, output_json)
         }
+        Some(("export", command)) => export_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("related", command)) => relations_cli::run_related(
             command,
             matches.get_one::<String>("vault").map(String::as_str),

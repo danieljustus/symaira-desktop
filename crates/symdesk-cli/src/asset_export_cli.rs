@@ -22,6 +22,12 @@ pub fn asset_cli() -> Command {
 pub fn export_cli() -> Command {
     Command::new("export")
         .arg(Arg::new("extra").num_args(0..).hide(true))
+        .arg(Arg::new("note").long("note"))
+        // Cobra's local `--output` shadows the persistent switch; the argv
+        // rewrite in `main` renames it for Clap.
+        .arg(Arg::new("local-output").long("local-output"))
+        .arg(Arg::new("format").long("format").default_value("pdf"))
+        .arg(Arg::new("profile").long("profile"))
         .subcommand(Command::new("profiles").arg(Arg::new("extra").num_args(0..).hide(true)))
 }
 

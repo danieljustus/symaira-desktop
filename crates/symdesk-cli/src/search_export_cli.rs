@@ -25,6 +25,7 @@ use crate::{
 /// Cobra's command-local `--output` of `search export` shadows the persistent
 /// one; Clap names it apart from the global flag.
 pub fn rewrite_output_flag(args: &mut [std::ffi::OsString]) {
+    rewrite_export_output_flag(args);
     let Some(at) = args.iter().position(|arg| arg == "search") else {
         return;
     };
@@ -35,6 +36,23 @@ pub fn rewrite_output_flag(args: &mut [std::ffi::OsString]) {
         return;
     }
     for argument in args.iter_mut().skip(at + 2) {
+        if argument == "--output" {
+            *argument = std::ffi::OsString::from("--local-output");
+        } else if let Some(value) = argument.to_str().and_then(|v| v.strip_prefix("--output=")) {
+            *argument = std::ffi::OsString::from(format!("--local-output={value}"));
+        }
+    }
+}
+
+/// The top-level `export` command shadows `--output` the same way.
+fn rewrite_export_output_flag(args: &mut [std::ffi::OsString]) {
+    let Some(at) = args.iter().position(|arg| arg == "export") else {
+        return;
+    };
+    if at > 0 && args[at - 1] == "search" {
+        return;
+    }
+    for argument in args.iter_mut().skip(at + 1) {
         if argument == "--output" {
             *argument = std::ffi::OsString::from("--local-output");
         } else if let Some(value) = argument.to_str().and_then(|v| v.strip_prefix("--output=")) {

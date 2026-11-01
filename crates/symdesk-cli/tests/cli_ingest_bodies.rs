@@ -42,13 +42,13 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 39;
-const EXPECTED_STEPS: usize = 531;
+const EXPECTED_CASES: usize = 41;
+const EXPECTED_STEPS: usize = 565;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 276;
+const EXPECTED_FAILING_STEPS: usize = 296;
 /// Steps that also compare the vault tree / HOME text files after the step.
-const EXPECTED_VAULT_SNAPSHOTS: usize = 227;
-const EXPECTED_HOME_SNAPSHOTS: usize = 162;
+const EXPECTED_VAULT_SNAPSHOTS: usize = 261;
+const EXPECTED_HOME_SNAPSHOTS: usize = 192;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -70,6 +70,8 @@ struct Case {
     #[serde(default)]
     servers: Vec<String>,
     #[serde(default)]
+    contacts: Vec<Contact>,
+    #[serde(default)]
     skip_index: bool,
     #[serde(default)]
     no_vault: bool,
@@ -80,6 +82,58 @@ struct Case {
     #[serde(default)]
     canaries: Vec<String>,
     steps: Vec<Step>,
+}
+
+#[derive(Deserialize)]
+struct Contact {
+    id: String,
+    name: String,
+    /// `person` or `organization`.
+    kind: String,
+}
+
+/// Lets the binary create and migrate the contact store (a lookup of an
+/// unknown id), then inserts the seed rows below the case HOME.
+fn seed_contacts(binary: &str, home: &Path, cwd: &Path, vault: &Path, contacts: &[Contact]) {
+    let _ = run(
+        binary,
+        home,
+        cwd,
+        &[],
+        &[
+            "--vault".to_owned(),
+            vault.to_string_lossy().into_owned(),
+            "meeting".to_owned(),
+            "participant".to_owned(),
+            "contact".to_owned(),
+            "seed-probe".to_owned(),
+        ],
+        "",
+    );
+    fn find(directory: &Path) -> Option<PathBuf> {
+        for entry in fs::read_dir(directory).ok()?.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if let Some(found) = find(&path) {
+                    return Some(found);
+                }
+            } else if entry.file_name() == "symrelate.db" {
+                return Some(path);
+            }
+        }
+        None
+    }
+    let database = find(home).expect("the contact store was created below HOME");
+    let db = rusqlite::Connection::open(database).expect("open the contact store");
+    for contact in contacts {
+        let statement = if contact.kind == "organization" {
+            "INSERT INTO organizations (id, name) VALUES (?, ?)"
+        } else {
+            "INSERT INTO persons (id, display_name) VALUES (?, ?)"
+        };
+        db.execute(statement, (&contact.id, &contact.name))
+            .expect("seed a contact");
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -391,6 +445,9 @@ fn cli_ingest_bodies_match_go_process_contract() {
                 "",
             );
             assert_eq!(setup.exit, 0, "{} setup index: {}", case.name, setup.stderr);
+        }
+        if !case.contacts.is_empty() {
+            seed_contacts(binary, &home, &cwd, &vault, &case.contacts);
         }
         for step in &case.steps {
             let mut args = Vec::new();

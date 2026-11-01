@@ -29,18 +29,25 @@ Go process via `testdata/port/cli/cli-ingest-bodies-process.json`.
   Go's typed `meetingFrontmatter` shape (declaration order + inline extras) via
   `render_go_yaml_meeting_map` (thread-local struct hints in
   `crates/symdesk-vault/src/mutations/go_yaml.rs`).
+- `meeting participant contact|link-contact` against the in-process contact
+  store (`symdesk-contacts` `open`, store paths from
+  `symdesk_core::config::contacts_paths`). Cases may seed the store
+  (`contacts` in the fixture): both harnesses let their own binary create and
+  migrate the store, then insert the rows with SQL.
 
 ## Remaining
 
-- `meeting participant contact|link-contact` and `relations contact [link|unlink]`
-  need the in-process contact store (`internal/contacts`, SQLite under
-  `XDG_DATA_HOME`); the Rust CLI does not open it yet (`symdesk-contacts` has
-  `open`/CRUD). The Go recorder cannot import `internal/contacts/internal/*`,
-  so seed the store by SQL or through the real CLI.
-- Other non-native paths from `testdata/port/cli/symdesk-command-tree.json`:
-  `demo init`, `doctor`, `paperless import|migrate`, `perm user|group
-  add|remove|token`, `vault adopt`, `views embed|exec|export-csv|import-csv|
-  new-entry`. Verify each against `crates/symdesk-cli/src/main.rs` first.
+- `relations contact [--id] <name|id>`, `relations contact link|unlink`
+  (Go `cmd/symdesk/relations.go`, `Service.ResolveContactReferences*`,
+  `LinkNoteContact`, `UnlinkNoteContact`): not an ingest/mail/rules/meeting
+  path, still without a native body. The contact-store plumbing for it exists
+  in `meeting_cli.rs` (`open_contact_store`, `resolve_contact_ref`).
+- Other non-native paths from `testdata/port/cli/symdesk-command-tree.json`
+  that are outside this slice: `demo init`, `doctor`, `paperless
+  import|migrate`, `perm user|group add|remove|token`, `vault adopt`,
+  `views embed|exec|export-csv|import-csv|new-entry`.
+- Every ingest, mail, rules, meeting and clip command path of the tree is now
+  native and has recorded cases (`consume` is covered by `cli-bodies-process`).
 
 ## Declared limits (meeting)
 

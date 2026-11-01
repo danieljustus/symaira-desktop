@@ -96,6 +96,10 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
             Some(("unlink-contact", leaf)) => with_vault(vault, |root, db| {
                 unlink_contact(root, db, &args_of(leaf), json)
             }),
+            Some(("contact", leaf)) => with_vault(vault, |_, _| contact(&args_of(leaf), json)),
+            Some(("link-contact", leaf)) => with_vault(vault, |root, db| {
+                link_contact(root, db, &args_of(leaf), json)
+            }),
             Some(_) | None => Ok(crate::process_exit(symaira_core_exit::ExitCode::Ok)),
         },
         _ => Ok(crate::process_exit(symaira_core_exit::ExitCode::Ok)),
@@ -917,6 +921,141 @@ fn unlink_contact(
     write(root, db, note, &doc, &fm)?;
     Ok(status_map(
         &[("speaker_id", speaker), ("status", "unlinked")],
+        json,
+    ))
+}
+
+// ---------------------------------------------------------- contact store
+
+const CONTACT_STORE_UNAVAILABLE: &str = "symdesk contact store unavailable";
+const CONTACT_NOT_FOUND: &str = "symrelate contact not found";
+
+/// Go `app.Open`: resolve the store paths, create the profile directories
+/// (0700) and open (and migrate) the SQLite store.
+fn open_contact_store() -> Result<rusqlite::Connection, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let paths = symdesk_core::config::contacts_paths(&environment);
+    for directory in [&paths.config_dir, &paths.data_dir, &paths.cache_dir] {
+        if directory.is_empty() {
+            continue;
+        }
+        let mut builder = std::fs::DirBuilder::new();
+        builder.recursive(true);
+        std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
+        builder
+            .create(directory)
+            .map_err(|error| error.to_string())?;
+    }
+    symdesk_contacts::open(&paths.db_path).map_err(|error| error.to_string())
+}
+
+/// Go `contacts.Available`.
+fn contact_store_available() -> bool {
+    open_contact_store()
+        .and_then(|db| {
+            db.query_row("SELECT 1", [], |row| row.get::<_, i64>(0))
+                .map_err(|error| error.to_string())
+        })
+        .is_ok()
+}
+
+/// Go `contacts.ResolveRef`: persons first, then organizations.
+fn resolve_contact_ref(id: &str) -> Result<ContactRef, String> {
+    if id.is_empty() {
+        return Err("a symrelate contact id is required".to_owned());
+    }
+    let db = open_contact_store()?;
+    for (query, kind) in [
+        ("SELECT display_name FROM persons WHERE id = ?", "person"),
+        (
+            "SELECT name FROM organizations WHERE id = ?",
+            "organization",
+        ),
+    ] {
+        let mut statement = db.prepare(query).map_err(|error| error.to_string())?;
+        let names: Vec<String> = statement
+            .query_map([id], |row| row.get::<_, String>(0))
+            .map_err(|error| error.to_string())?
+            .collect::<Result<_, _>>()
+            .map_err(|error| error.to_string())?;
+        if let Some(name) = names.into_iter().next() {
+            return Ok(ContactRef {
+                provider: "symrelate".to_owned(),
+                schema_version: 1,
+                id: id.to_owned(),
+                kind: kind.to_owned(),
+                display_name: name,
+                extras: Vec::new(),
+            });
+        }
+    }
+    Err(CONTACT_NOT_FOUND.to_owned())
+}
+
+/// Go `ResolveMeetingContactRef`.
+fn resolve_meeting_contact_ref(id: &str) -> Result<ContactRef, String> {
+    if !contact_store_available() {
+        return Err(CONTACT_STORE_UNAVAILABLE.to_owned());
+    }
+    resolve_contact_ref(id)
+}
+
+fn contact(args: &[String], json: bool) -> Result<ExitCode, String> {
+    let reference = resolve_meeting_contact_ref(arg(args, 0))?;
+    #[derive(Serialize)]
+    struct Wire<'a> {
+        provider: &'a str,
+        schema_version: i64,
+        id: &'a str,
+        kind: &'a str,
+        #[serde(skip_serializing_if = "str::is_empty")]
+        display_name: &'a str,
+    }
+    let text = format!(
+        "&{{Provider:{} SchemaVersion:{} ID:{} Kind:{} DisplayName:{} Extras:map[]}}",
+        reference.provider,
+        reference.schema_version,
+        reference.id,
+        reference.kind,
+        reference.display_name
+    );
+    Ok(emit(
+        &Wire {
+            provider: &reference.provider,
+            schema_version: reference.schema_version,
+            id: &reference.id,
+            kind: &reference.kind,
+            display_name: &reference.display_name,
+        },
+        text,
+        json,
+    ))
+}
+
+fn link_contact(
+    root: &Path,
+    db: &mut symdesk_index::Sidecar,
+    args: &[String],
+    json: bool,
+) -> Result<ExitCode, String> {
+    let (note, speaker, contact_id) = (arg(args, 0), arg(args, 1), arg(args, 2));
+    let reference = resolve_meeting_contact_ref(contact_id)?;
+    let (doc, mut fm) = load(root, note)?;
+    let index = participant_index(&fm, speaker).ok_or_else(|| {
+        format!(
+            "no participant with speaker id {} in {note}",
+            go_quote(speaker)
+        )
+    })?;
+    let linked_id = reference.id.clone();
+    fm.participants[index].contact_ref = Some(reference);
+    write(root, db, note, &doc, &fm)?;
+    Ok(status_map(
+        &[
+            ("speaker_id", speaker),
+            ("contact_id", &linked_id),
+            ("status", "linked"),
+        ],
         json,
     ))
 }

@@ -4729,6 +4729,997 @@
       ]
     },
     {
+      "name": "meeting-contact",
+      "files": {
+        "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"2026-04-05T08:00:00Z\"\nmeeting_id: m-400\nstarted_at: \"2026-04-05T08:00:00Z\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+        "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"2026-04-02T08:00:00Z\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"2026-04-02T08:00:00Z\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+        "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"2026-05-01T08:00:00Z\"\r\nmeeting_id: m-500\r\nstarted_at: \"2026-05-01T08:00:00Z\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+        "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"2026-04-04T08:00:00Z\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"2026-04-04T08:00:00Z\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: 2026-03-01T10:00:00Z\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: 2026-03-01T10:00:00Z\nended_at: 2026-03-01T11:00:00Z\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+        "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+        "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"2026-04-03T08:00:00Z\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"2026-04-03T08:00:00Z\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+        "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+      },
+      "contacts": [
+        {
+          "id": "c-77",
+          "name": "Bob Contact",
+          "kind": "person"
+        },
+        {
+          "id": "c-org",
+          "name": "Acme GmbH",
+          "kind": "organization"
+        },
+        {
+          "id": "c-blank",
+          "name": "",
+          "kind": "person"
+        }
+      ],
+      "skip_index": true,
+      "snapshot_vault": true,
+      "snapshot_home": true,
+      "steps": [
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            "c-77"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Provider:symrelate SchemaVersion:1 ID:c-77 Kind:person DisplayName:Bob Contact Extras:map[]}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            "c-77"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"c-77\",\"kind\":\"person\",\"display_name\":\"Bob Contact\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            "c-org"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Provider:symrelate SchemaVersion:1 ID:c-org Kind:organization DisplayName:Acme GmbH Extras:map[]}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            "c-org"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"c-org\",\"kind\":\"organization\",\"display_name\":\"Acme GmbH\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            "c-blank"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Provider:symrelate SchemaVersion:1 ID:c-blank Kind:person DisplayName: Extras:map[]}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            "c-blank"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"provider\":\"symrelate\",\"schema_version\":1,\"id\":\"c-blank\",\"kind\":\"person\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            "c-none"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symrelate contact not found\n",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            "c-none"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "a symrelate contact id is required\n",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"a symrelate contact id is required\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 0,
+          "stdout": "map[contact_id:c-77 speaker_id:s1 status:linked]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob B\n        note: kept\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"contact_id\":\"c-77\",\"speaker_id\":\"s1\",\"status\":\"linked\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob B\n        note: kept\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s2",
+            "c-org"
+          ],
+          "exit_code": 0,
+          "stdout": "map[contact_id:c-org speaker_id:s2 status:linked]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s2",
+            "c-org"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"contact_id\":\"c-org\",\"speaker_id\":\"s2\",\"status\":\"linked\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s3",
+            "c-none"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symrelate contact not found\n",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s3",
+            "c-none"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s9",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "no participant with speaker id \"s9\" in meetings/m1.md\n",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s9",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no participant with speaker id \\\"s9\\\" in meetings/m1.md\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "notes/plain.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "notes/plain.md is not a meeting note (frontmatter type != \"meeting\")\n",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "notes/plain.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"notes/plain.md is not a meeting note (frontmatter type != \\\"meeting\\\")\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "missing.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "missing.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 3 arg(s), received 2\n",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 3 arg(s), received 2\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-77\n        kind: person\n        display_name: Bob Contact\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "unlink-contact",
+            "meetings/m1.md",
+            "s1"
+          ],
+          "exit_code": 0,
+          "stdout": "map[speaker_id:s1 status:unlinked]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "unlink-contact",
+            "meetings/m1.md",
+            "s1"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"speaker_id\":\"s1\",\"status\":\"unlinked\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "show",
+            "meetings/m1.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Path:$ROOT/vault/meetings/m1.md SHA256:$RAND24$RAND248cb8aa640e3c49f8 Title:Weekly Sync Created:$TIME Tags:[meeting weekly] Aliases:[] Frontmatter:map[created:$TIME custom_flag:true duration_ms:3600000 ended_at:$TIME language:de meeting_id:m-100 participants:[map[label:Alice speaker_ids:[s1]] map[contact_ref:map[display_name:Acme GmbH id:c-org kind:organization provider:symrelate schema_version:1] entity_id:ent-2 label:Bob role:lead speaker_ids:[s2 s3]]] started_at:$TIME symmeet_source:map[artifact_schema_version:2 review_state:needs_review] tags:[meeting weekly] title:Weekly Sync type:meeting z_extra:map[name:needs: quoting nested:[1 2]]] Body:# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n Links:[] Size:805 ModTime:$LOCALTIME +0000 UTC DocumentDate: Person: Status: DueDate: Confidence:0 OcrJSONPath: Simhash: ASN:\u003cnil\u003e Type:meeting DerivedFrom: Derived:false}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "show",
+            "meetings/m1.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"Path\":\"$ROOT/vault/meetings/m1.md\",\"SHA256\":\"$RAND24$RAND248cb8aa640e3c49f8\",\"Title\":\"Weekly Sync\",\"Created\":\"$TIME\",\"Tags\":[\"meeting\",\"weekly\"],\"Aliases\":null,\"Frontmatter\":{\"created\":\"$TIME\",\"custom_flag\":true,\"duration_ms\":3600000,\"ended_at\":\"$TIME\",\"language\":\"de\",\"meeting_id\":\"m-100\",\"participants\":[{\"label\":\"Alice\",\"speaker_ids\":[\"s1\"]},{\"contact_ref\":{\"display_name\":\"Acme GmbH\",\"id\":\"c-org\",\"kind\":\"organization\",\"provider\":\"symrelate\",\"schema_version\":1},\"entity_id\":\"ent-2\",\"label\":\"Bob\",\"role\":\"lead\",\"speaker_ids\":[\"s2\",\"s3\"]}],\"started_at\":\"$TIME\",\"symmeet_source\":{\"artifact_schema_version\":2,\"review_state\":\"needs_review\"},\"tags\":[\"meeting\",\"weekly\"],\"title\":\"Weekly Sync\",\"type\":\"meeting\",\"z_extra\":{\"name\":\"needs: quoting\",\"nested\":[1,2]}},\"Body\":\"# Weekly Sync\\n\\nBody text stays byte for byte.\\n  Indented line and trailing spaces   \\n\\n\\u003e quote\\n\",\"Links\":null,\"Size\":805,\"ModTime\":\"$TIME\",\"DocumentDate\":\"\",\"Person\":\"\",\"Status\":\"\",\"DueDate\":\"\",\"Confidence\":0,\"OcrJSONPath\":\"\",\"Simhash\":\"\",\"ASN\":null,\"Type\":\"meeting\",\"DerivedFrom\":\"\",\"Derived\":false}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/meetings/m1.md.json": "(present)",
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: \"$TIME\"\ntags:\n    - meeting\n    - weekly\nmeeting_id: m-100\nstarted_at: \"$TIME\"\nended_at: \"$TIME\"\nduration_ms: 3600000\nlanguage: de\nparticipants:\n    - label: Alice\n      speaker_ids:\n        - s1\n    - label: Bob\n      speaker_ids:\n        - s2\n        - s3\n      entity_id: ent-2\n      contact_ref:\n        provider: symrelate\n        schema_version: 1\n        id: c-org\n        kind: organization\n        display_name: Acme GmbH\n      role: lead\nsymmeet_source:\n    artifact_schema_version: 2\n    review_state: needs_review\ncustom_flag: true\nz_extra:\n    name: 'needs: quoting'\n    nested:\n        - 1\n        - 2\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          },
+          "home": {
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "meeting-contact-empty-store",
+      "files": {
+        "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"2026-04-05T08:00:00Z\"\nmeeting_id: m-400\nstarted_at: \"2026-04-05T08:00:00Z\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+        "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"2026-04-02T08:00:00Z\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"2026-04-02T08:00:00Z\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+        "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"2026-05-01T08:00:00Z\"\r\nmeeting_id: m-500\r\nstarted_at: \"2026-05-01T08:00:00Z\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+        "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"2026-04-04T08:00:00Z\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"2026-04-04T08:00:00Z\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: 2026-03-01T10:00:00Z\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: 2026-03-01T10:00:00Z\nended_at: 2026-03-01T11:00:00Z\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+        "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+        "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"2026-04-03T08:00:00Z\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"2026-04-03T08:00:00Z\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+        "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+        "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+      },
+      "skip_index": true,
+      "snapshot_vault": true,
+      "steps": [
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "contact",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symrelate contact not found\n",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "contact",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          }
+        },
+        {
+          "args": [
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symrelate contact not found\n",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "meeting",
+            "participant",
+            "link-contact",
+            "meetings/m1.md",
+            "s1",
+            "c-77"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symrelate contact not found\"}\n",
+          "stderr": "",
+          "vault": {
+            "meetings/bad.md": "---\ntype: meeting\ntitle: Bad\ncreated: \"$TIME\"\nmeeting_id: m-400\nstarted_at: \"$TIME\"\nduration_ms: lots\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/broken.md": "---\ntype: meeting\ntitle: A\ntitle: B\n---\nbody\n",
+            "meetings/confirmed.md": "---\ntype: meeting\ntitle: Planning\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-200\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Alice Example\n    speaker_ids: [a1]\n    entity_id: ent-1\n  - label: Bob Builder\n    speaker_ids: [b1]\n    entity_id: ent-2\n  - label: Unconfirmed\n    speaker_ids: [u1]\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nPlanning transcript\n",
+            "meetings/crlf.md": "---\r\ntype: meeting\r\ntitle: CRLF\r\ncreated: \"$TIME\"\r\nmeeting_id: m-500\r\nstarted_at: \"$TIME\"\r\nsymmeet_source:\r\n  artifact_schema_version: 2\r\n  review_state: needs_review\r\n---\r\nbody\r\n",
+            "meetings/ghost.md": "---\ntype: meeting\ntitle: Ghost\ncreated: \"$TIME\"\ntags: []\nmeeting_id: m-300\nstarted_at: \"$TIME\"\nparticipants:\n  - label: Ghost\n    speaker_ids: [g1]\n    entity_id: ent-404\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/m1.md": "---\ntype: meeting\ntitle: Weekly Sync\ncreated: $TIME\ntags:\n  - meeting\n  - weekly\nmeeting_id: m-100\nstarted_at: $TIME\nended_at: $TIME\nduration_ms: 3600000\nlanguage: de\nparticipants:\n  - label: Alice\n    speaker_ids:\n      - s1\n  - label: Bob\n    speaker_ids:\n      - s2\n      - s3\n    entity_id: ent-2\n    role: lead\n    contact_ref:\n      provider: symrelate\n      schema_version: 1\n      id: c-77\n      kind: person\n      display_name: Bob B\n      note: kept\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: needs_review\ncustom_flag: true\nz_extra:\n  nested: [1, 2]\n  name: \"needs: quoting\"\n---\n# Weekly Sync\n\nBody text stays byte for byte.\n  Indented line and trailing spaces   \n\n\u003e quote\n",
+            "meetings/m2.md": "---\ntype: meeting\ntitle: 2024\ncreated: 2026-07-01\nmeeting_id: 42\nstarted_at: \"2026-07-01 09:00\"\nsymmeet_source:\n  artifact_schema_version: 1\n---\nShort body\n",
+            "meetings/noid.md": "---\ntype: meeting\ntitle: No id\ncreated: \"$TIME\"\ntags: []\nmeeting_id: \"\"\nstarted_at: \"$TIME\"\nsymmeet_source:\n  artifact_schema_version: 2\n  review_state: reviewed\n---\nx\n",
+            "meetings/nonmeeting.md": "---\ntype: note\ntitle: Notes\n---\nbody\n",
+            "notes/plain.md": "---\ntitle: Plain\n---\nnot a meeting\n"
+          }
+        }
+      ]
+    },
+    {
       "name": "meeting-empty-vault",
       "files": {
         "a.md": "---\ntitle: A\n---\nx\n"

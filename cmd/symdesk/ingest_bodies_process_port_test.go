@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"io/fs"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	_ "modernc.org/sqlite"
 )
 
 // RUST-013 slice r013-ingestcmds: the native bodies of the ingest, mail,
@@ -41,19 +44,30 @@ type cliIngestStep struct {
 	Home map[string]string `json:"home,omitempty"`
 }
 
+type cliIngestContact struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Kind is "person" or "organization".
+	Kind string `json:"kind"`
+}
+
 type cliIngestCase struct {
-	Name          string            `json:"name"`
-	Files         map[string]string `json:"files,omitempty"`
-	CwdFiles      map[string]string `json:"cwd_files,omitempty"`
-	HomeFiles     map[string]string `json:"home_files,omitempty"`
-	Env           map[string]string `json:"env,omitempty"`
-	Servers       []string          `json:"servers,omitempty"`
-	SkipIndex     bool              `json:"skip_index,omitempty"`
-	NoVault       bool              `json:"no_vault,omitempty"`
-	SnapshotVault bool              `json:"snapshot_vault,omitempty"`
-	SnapshotHome  bool              `json:"snapshot_home,omitempty"`
-	Canaries      []string          `json:"canaries,omitempty"`
-	Steps         []cliIngestStep   `json:"steps"`
+	Name      string            `json:"name"`
+	Files     map[string]string `json:"files,omitempty"`
+	CwdFiles  map[string]string `json:"cwd_files,omitempty"`
+	HomeFiles map[string]string `json:"home_files,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	Servers   []string          `json:"servers,omitempty"`
+	// Contacts seeds the contact store (persons and organizations) before the
+	// first step; both sides create the store through their own binary and
+	// insert the rows natively.
+	Contacts      []cliIngestContact `json:"contacts,omitempty"`
+	SkipIndex     bool               `json:"skip_index,omitempty"`
+	NoVault       bool               `json:"no_vault,omitempty"`
+	SnapshotVault bool               `json:"snapshot_vault,omitempty"`
+	SnapshotHome  bool               `json:"snapshot_home,omitempty"`
+	Canaries      []string           `json:"canaries,omitempty"`
+	Steps         []cliIngestStep    `json:"steps"`
 }
 
 type cliIngestFixture struct {
@@ -276,6 +290,9 @@ func observeCLIIngestCase(t *testing.T, binary string, c cliIngestCase) cliInges
 			t.Fatalf("setup index for %s exited %d: %s", c.Name, code, stderr)
 		}
 	}
+	if len(c.Contacts) > 0 {
+		seedIngestContacts(t, binary, vault, home, run, baseEnv(), c.Contacts)
+	}
 	observed := c
 	observed.Steps = nil
 	for _, step := range c.Steps {
@@ -354,4 +371,35 @@ func normalizeIngestText(text, root string) string {
 	text = normalizeBodiesText(false, text)
 	text = ingestLocalFractionRE.ReplaceAllString(text, "$$LOCALTIME")
 	return ingestTomlRE.ReplaceAllString(text, "toml: line $$TOML")
+}
+
+// seedIngestContacts lets the binary create and migrate the contact store (a
+// lookup of an unknown id), then inserts the seed rows below the case HOME.
+func seedIngestContacts(t *testing.T, _ string, vault, home string, run func([]string, []string, string) (int, string, string), env []string, contacts []cliIngestContact) {
+	t.Helper()
+	run(env, []string{"--vault", vault, "meeting", "participant", "contact", "seed-probe"}, "")
+	var database string
+	err := filepath.WalkDir(home, func(path string, entry fs.DirEntry, err error) error {
+		if err == nil && !entry.IsDir() && entry.Name() == "symrelate.db" {
+			database = path
+		}
+		return err
+	})
+	if err != nil || database == "" {
+		t.Fatalf("contact store was not created below %s: %v", home, err)
+	}
+	db, err := sql.Open("sqlite", database)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	for _, contact := range contacts {
+		statement := "INSERT INTO persons (id, display_name) VALUES (?, ?)"
+		if contact.Kind == "organization" {
+			statement = "INSERT INTO organizations (id, name) VALUES (?, ?)"
+		}
+		if _, err := db.Exec(statement, contact.ID, contact.Name); err != nil {
+			t.Fatal(err)
+		}
+	}
 }

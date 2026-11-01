@@ -5297,6 +5297,123 @@
       ]
     },
     {
+      "name": "index-transport-retries-0",
+      "files": {
+        "one.md": "# One\nhello transport world\n",
+        "two.md": "# Two\nsecond note about transport\n"
+      },
+      "skip_index": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:$CLOSED_PORT/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nretry_backoff_ms = 1\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "Index complete. 2 new/updated files, 0 skipped.\n",
+          "stderr": "engine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 2 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/one.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\nengine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 2 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/2 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/2 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/two.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"indexed\":0,\"skipped\":2,\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "transport"
+          ],
+          "exit_code": 0,
+          "stdout": "{Results:[{Path:one.md Title:one Snippet:# One\nhello transport world Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet:# Two\nsecond note about transport Score:0.0317540317773819 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:one.md Title:one Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "index-transport-retries-1",
+      "files": {
+        "one.md": "# One\nhello transport world\n",
+        "two.md": "# Two\nsecond note about transport\n"
+      },
+      "skip_index": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:$CLOSED_PORT/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 1\nretry_backoff_ms = 1\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "Index complete. 2 new/updated files, 0 skipped.\n",
+          "stderr": "engine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 1 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/one.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\nengine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 1 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/1 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/two.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"indexed\":0,\"skipped\":2,\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "transport"
+          ],
+          "exit_code": 0,
+          "stdout": "{Results:[{Path:one.md Title:one Snippet:# One\nhello transport world Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet:# Two\nsecond note about transport Score:0.0317540317773819 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:one.md Title:one Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "index-transport-retries-3",
+      "files": {
+        "one.md": "# One\nhello transport world\n",
+        "two.md": "# Two\nsecond note about transport\n"
+      },
+      "skip_index": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:$CLOSED_PORT/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 3\nretry_backoff_ms = 1\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "Index complete. 2 new/updated files, 0 skipped.\n",
+          "stderr": "engine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 3 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/one.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\nengine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: batch embedding failed (ollama: exhausted 3 retries: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused), falling back to per-text requests\nengine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 1/3 after 1ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 2/3 after 2ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nengine: ollama retry 3/3 after 4ms (last error: llmkit: transport_error: Post \"http://127.0.0.1:$PORT/v1/embeddings\": dial tcp 127.0.0.1:$PORT: connect: connection refused)\nIndexed: $ROOT/vault/two.md (2 chunks, 2 pending — embedding backend unavailable, will re-embed when available)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "index"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"indexed\":0,\"skipped\":2,\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "search",
+            "transport"
+          ],
+          "exit_code": 0,
+          "stdout": "{Results:[{Path:one.md Title:one Snippet:# One\nhello transport world Score:0.032522473484277725 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet:# Two\nsecond note about transport Score:0.0317540317773819 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:one.md Title:one Snippet: Score:0.016393441706895828 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false} {Path:two.md Title:two Snippet: Score:0.01587301678955555 Anchor:\u003cnil\u003e MetadataMatches:[] SourceType: ReadOnly:false}] Hint:}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "props",
       "files": {
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

@@ -583,6 +583,164 @@
           "outside_files": []
         },
         {
+          "name": "props-get",
+          "args": [
+            "props",
+            "get",
+            "a.md"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"asn\":\"1\",\"correspondent\":\"ACME\",\"document_type\":\"invoice\",\"due_date\":\"2026-12-31\",\"status\":\"done\",\"tags\":\"[x y]\",\"title\":\"Alpha\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "props-edit",
+          "args": [
+            "props",
+            "edit",
+            "a.md",
+            "k",
+            "v"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"status\":\"updated\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "tags-rename",
+          "args": [
+            "tags",
+            "rename",
+            "x",
+            "y"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "[{\"file\":\"$DATE.md\",\"status\":\"skipped\"},{\"file\":\"a.md\",\"status\":\"updated\"},{\"file\":\"b.md\",\"status\":\"skipped\"},{\"file\":\"notes/c.md\",\"status\":\"skipped\"},{\"file\":\"remote-moved.md\",\"status\":\"skipped\"}]\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "tags-merge",
+          "args": [
+            "tags",
+            "merge",
+            "x",
+            "y"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "[{\"file\":\"$DATE.md\",\"status\":\"skipped\"},{\"file\":\"a.md\",\"status\":\"skipped\"},{\"file\":\"b.md\",\"status\":\"skipped\"},{\"file\":\"notes/c.md\",\"status\":\"skipped\"},{\"file\":\"remote-moved.md\",\"status\":\"skipped\"}]\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "tags-delete",
+          "args": [
+            "tags",
+            "delete",
+            "x"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "[{\"file\":\"$DATE.md\",\"status\":\"skipped\"},{\"file\":\"a.md\",\"status\":\"skipped\"},{\"file\":\"b.md\",\"status\":\"skipped\"},{\"file\":\"notes/c.md\",\"status\":\"skipped\"},{\"file\":\"remote-moved.md\",\"status\":\"skipped\"}]\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "trash-delete",
+          "args": [
+            "trash",
+            "delete",
+            "missing"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "Manage soft-deleted vault files\n\nUsage:\n  symdesk trash [command]\n\nAvailable Commands:\n  list        List soft-deleted files\n  purge       Permanently remove old items from the trash\n  restore     Restore a soft-deleted file to its original location\n\nFlags:\n  -h, --help   help for trash\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk trash [command] --help\" for more information about a command.\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "views-save",
+          "args": [
+            "views",
+            "save",
+            "{}"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"status\":\"saved\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "views-delete",
+          "args": [
+            "views",
+            "delete",
+            "missing"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
           "name": "transform-stream",
           "args": [
             "transform",
@@ -597,6 +755,7 @@
             "$DATE.md",
             "a.md",
             "b.md",
+            "bases/base.md",
             "notes/c.md",
             "remote-moved.md"
           ],
@@ -616,6 +775,7 @@
             "$DATE.md",
             "a.md",
             "b.md",
+            "bases/base.md",
             "notes/c.md",
             "remote-moved.md"
           ],
@@ -634,6 +794,7 @@
             "$DATE.md",
             "a.md",
             "b.md",
+            "bases/base.md",
             "notes/c.md",
             "remote-moved.md"
           ],
@@ -647,11 +808,88 @@
           ],
           "status": 200,
           "content_type": "application/json",
-          "body": "[{\"path\":\"$DATE.md\",\"title\":\"2026-01-02\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"a.md\",\"title\":\"Alpha\",\"type\":\"document\",\"modified\":\"$TIME\"},{\"path\":\"b.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"notes/c.md\",\"title\":\"Gamma\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"remote-moved.md\",\"title\":\"remote-note\",\"type\":\"note\",\"modified\":\"$TIME\"}]\n",
+          "body": "[{\"path\":\"$DATE.md\",\"title\":\"2026-01-02\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"a.md\",\"title\":\"Alpha\",\"type\":\"document\",\"modified\":\"$TIME\"},{\"path\":\"b.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"bases/base.md\",\"title\":\"Saved Views\",\"type\":\"base\",\"modified\":\"$TIME\"},{\"path\":\"notes/c.md\",\"title\":\"Gamma\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"remote-moved.md\",\"title\":\"remote-note\",\"type\":\"note\",\"modified\":\"$TIME\"}]\n",
           "vault_files": [
             "$DATE.md",
             "a.md",
             "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "json-flag-twice",
+          "args": [
+            "ls",
+            "--json",
+            "--json"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "[{\"path\":\"$DATE.md\",\"title\":\"2026-01-02\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"a.md\",\"title\":\"Alpha\",\"type\":\"document\",\"modified\":\"$TIME\"},{\"path\":\"b.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"bases/base.md\",\"title\":\"Saved Views\",\"type\":\"base\",\"modified\":\"$TIME\"},{\"path\":\"notes/c.md\",\"title\":\"Gamma\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"remote-moved.md\",\"title\":\"remote-note\",\"type\":\"note\",\"modified\":\"$TIME\"}]\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "unknown-flag-accepted-by-validation",
+          "args": [
+            "ls",
+            "--bogus"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "history-flag-position-accepted",
+          "args": [
+            "history",
+            "--bogus"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "missing-arguments-accepted-by-validation",
+          "args": [
+            "backlinks"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
             "notes/c.md",
             "remote-moved.md"
           ],
@@ -670,8 +908,154 @@
             "$DATE.md",
             "a.md",
             "b.md",
+            "bases/base.md",
             "notes/c.md",
             "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "doc-tag-group-help",
+          "args": [
+            "doc",
+            "tag"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "Add or remove tags on one or more files\n\nUsage:\n  symdesk doc tag [command]\n\nAvailable Commands:\n  add         Add a tag to one or more files\n  remove      Remove a tag from one or more files\n\nFlags:\n  -h, --help   help for tag\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk doc tag [command] --help\" for more information about a command.\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "history-checkpoint",
+          "args": [
+            "history",
+            "checkpoint",
+            "t"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"task_id\":\"t\",\"timestamp\":\"$TIME\",\"files\":[],\"new_files\":[],\"skipped\":[]}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "history-undo-task",
+          "args": [
+            "history",
+            "undo-task",
+            "t"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"task_id\":\"t\",\"timestamp\":\"$TIME\",\"files\":[],\"new_files\":[],\"skipped\":[]}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "search-export",
+          "args": [
+            "search",
+            "export",
+            "x"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"format\":\"markdown\",\"path\":\"search-results/search-results-x.md\",\"query\":\"x\",\"title\":\"Search results: x\",\"count\":0}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md",
+            "search-results/search-results-x.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "search-notebook",
+          "args": [
+            "search",
+            "notebook",
+            "x"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "{\"id\":\"search-x\",\"path\":\"notebooks/search-x.md\",\"title\":\"Search: x\",\"description\":\"Promoted from search query: x\",\"created\":\"$TIME\",\"sources\":[\"search-results/search-results-x.md\"],\"query\":\"x\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notebooks/search-x.md",
+            "notes/c.md",
+            "remote-moved.md",
+            "search-results/search-results-x.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "ls-with-subcommand-like-word",
+          "args": [
+            "ls",
+            "export"
+          ],
+          "status": 200,
+          "content_type": "application/json",
+          "body": "[{\"path\":\"$DATE.md\",\"title\":\"2026-01-02\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"a.md\",\"title\":\"Alpha\",\"type\":\"document\",\"modified\":\"$TIME\"},{\"path\":\"b.md\",\"title\":\"Beta\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"bases/base.md\",\"title\":\"Saved Views\",\"type\":\"base\",\"modified\":\"$TIME\"},{\"path\":\"notebooks/search-x.md\",\"title\":\"Search: x\",\"type\":\"notebook\",\"modified\":\"$TIME\"},{\"path\":\"notes/c.md\",\"title\":\"Gamma\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"remote-moved.md\",\"title\":\"remote-note\",\"type\":\"note\",\"modified\":\"$TIME\"},{\"path\":\"search-results/search-results-x.md\",\"title\":\"Search results: x\",\"type\":\"note\",\"modified\":\"$TIME\"}]\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notebooks/search-x.md",
+            "notes/c.md",
+            "remote-moved.md",
+            "search-results/search-results-x.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "similar-with-subcommand-like-word",
+          "args": [
+            "similar",
+            "a.md",
+            "extra"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notebooks/search-x.md",
+            "notes/c.md",
+            "remote-moved.md",
+            "search-results/search-results-x.md"
           ],
           "outside_files": []
         }
@@ -688,105 +1072,6 @@
         ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
       },
       "steps": [
-        {
-          "name": "props-get",
-          "args": [
-            "props",
-            "get",
-            "a.md"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "props-edit",
-          "args": [
-            "props",
-            "edit",
-            "a.md",
-            "k",
-            "v"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "tags-rename",
-          "args": [
-            "tags",
-            "rename",
-            "x",
-            "y"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "tags-merge",
-          "args": [
-            "tags",
-            "merge",
-            "x",
-            "y"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "tags-delete",
-          "args": [
-            "tags",
-            "delete",
-            "x"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
         {
           "name": "paperless-import",
           "args": [
@@ -807,65 +1092,6 @@
           "outside_files": []
         },
         {
-          "name": "trash-delete",
-          "args": [
-            "trash",
-            "delete",
-            "missing"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "views-save",
-          "args": [
-            "views",
-            "save",
-            "{}"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "views-delete",
-          "args": [
-            "views",
-            "delete",
-            "missing"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
           "name": "views-new-entry",
           "args": [
             "views",
@@ -881,7 +1107,6 @@
           "vault_files": [
             "a.md",
             "b.md",
-            "bases/base.md",
             "notes/c.md"
           ],
           "outside_files": []
@@ -901,7 +1126,6 @@
           "vault_files": [
             "a.md",
             "b.md",
-            "bases/base.md",
             "notes/c.md"
           ],
           "outside_files": []
@@ -919,229 +1143,7 @@
           "vault_files": [
             "a.md",
             "b.md",
-            "bases/base.md",
             "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "json-flag-twice",
-          "args": [
-            "ls",
-            "--json",
-            "--json"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "unknown-flag-accepted-by-validation",
-          "args": [
-            "ls",
-            "--bogus"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "history-flag-position-accepted",
-          "args": [
-            "history",
-            "--bogus"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "missing-arguments-accepted-by-validation",
-          "args": [
-            "backlinks"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "doc-tag-group-help",
-          "args": [
-            "doc",
-            "tag"
-          ],
-          "compare": "decision",
-          "reason": "group command help text (CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "history-checkpoint",
-          "args": [
-            "history",
-            "checkpoint",
-            "t"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "history-undo-task",
-          "args": [
-            "history",
-            "undo-task",
-            "t"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "search-export",
-          "args": [
-            "search",
-            "export",
-            "x"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notes/c.md",
-            "search-results/search-results-x.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "search-notebook",
-          "args": [
-            "search",
-            "notebook",
-            "x"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notebooks/search-x.md",
-            "notes/c.md",
-            "search-results/search-results-x.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "ls-with-subcommand-like-word",
-          "args": [
-            "ls",
-            "export"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notebooks/search-x.md",
-            "notes/c.md",
-            "search-results/search-results-x.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "similar-with-subcommand-like-word",
-          "args": [
-            "similar",
-            "a.md",
-            "extra"
-          ],
-          "compare": "decision",
-          "reason": "clap-generated flag/argument wording (CLI-003/CLI-004)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "bases/base.md",
-            "notebooks/search-x.md",
-            "notes/c.md",
-            "search-results/search-results-x.md"
           ],
           "outside_files": []
         }

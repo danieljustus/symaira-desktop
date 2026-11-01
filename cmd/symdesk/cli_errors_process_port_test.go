@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,6 +44,8 @@ type cliErrorsCase struct {
 	NoVault bool `json:"no_vault,omitempty"`
 	// UnixOnly marks error text that uses the operating system's wording.
 	UnixOnly bool `json:"unix_only,omitempty"`
+	// HomeFiles are written under the isolated HOME before anything runs.
+	HomeFiles map[string]string `json:"home_files,omitempty"`
 	// Env is added to the isolated process environment after the SYMDESK_*
 	// cleanup. Values in Canaries must never appear in any output.
 	Env      map[string]string `json:"env,omitempty"`
@@ -410,6 +414,54 @@ func normalizeCLIErrors(text, root string) string {
 	return cliErrorsPortRE.ReplaceAllString(text, "127.0.0.1:$$PORT")
 }
 
+// cliErrorsHomeFiles points the retrieval engine's embeddings at a loopback
+// fake so no ambient Ollama on the recording host can change search ranking
+// or index output. $EMBED_URL (the fake) and $CLOSED_PORT (nothing listens)
+// are replaced at run time.
+func cliErrorsHomeFiles() map[string]string {
+	return map[string]string{
+		".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+	}
+}
+
+// startCLIErrorsEmbeddingServer serves the deterministic fixture embedding
+// vectors of the other retrieval process fixtures.
+func startCLIErrorsEmbeddingServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Input []string `json:"input"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		data := make([]map[string]any, 0, len(body.Input))
+		for _, input := range body.Input {
+			data = append(data, map[string]any{"embedding": indexRetrievalVector(input)})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": data})
+	}))
+	t.Cleanup(server.Close)
+	return server
+}
+
+func writeCLIErrorsHomeFiles(t *testing.T, home string, files map[string]string, closedPort, embedURL string) {
+	t.Helper()
+	for name, content := range files {
+		target := filepath.Join(home, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		content = strings.ReplaceAll(content, "$CLOSED_PORT", closedPort)
+		content = strings.ReplaceAll(content, "$EMBED_URL", embedURL)
+		if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestPortCLIErrorsProcessContract(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("CLI error fixture is recorded and replayed on Unix hosts")
@@ -485,6 +537,10 @@ func observeCLIErrorsCase(t *testing.T, binary string, c cliErrorsCase) cliError
 	}
 	writeFiles(c.Files)
 	closedPort := closedLoopbackPort(t)
+	if c.HomeFiles == nil {
+		c.HomeFiles = cliErrorsHomeFiles()
+	}
+	writeCLIErrorsHomeFiles(t, home, c.HomeFiles, closedPort, startCLIErrorsEmbeddingServer(t).URL)
 	materialize := func(value string) string {
 		value = strings.ReplaceAll(value, "$CLOSED_PORT", closedPort)
 		return materializePortProcessArg(value, root, string(filepath.Separator))

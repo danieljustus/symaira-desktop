@@ -17,6 +17,9 @@ mod process_root;
 #[path = "support/cli_normalize.rs"]
 mod cli_normalize;
 
+#[path = "support/embedding_fake.rs"]
+mod embedding_fake;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -47,6 +50,8 @@ struct Case {
     name: String,
     #[serde(default)]
     files: BTreeMap<String, String>,
+    #[serde(default)]
+    home_files: BTreeMap<String, String>,
     steps: Vec<Step>,
 }
 
@@ -278,6 +283,13 @@ fn outside_files(root: &Path) -> Vec<String> {
     files
 }
 
+fn closed_port() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind loopback");
+    let port = listener.local_addr().expect("local address").port();
+    drop(listener);
+    port.to_string()
+}
+
 fn write_files(vault: &Path, files: &BTreeMap<String, String>) {
     for (name, content) in files {
         let target = vault.join(name);
@@ -353,6 +365,23 @@ fn remote_command_allowlist_matches_go_server_over_loopback() {
         }
         let canonical = fs::canonicalize(&root).expect("canonical case root");
         write_files(&vault, &case.files);
+        let port = closed_port();
+        let embeddings = embedding_fake::EmbeddingFake::start();
+        write_files(
+            &home,
+            &case
+                .home_files
+                .iter()
+                .map(|(name, content)| {
+                    (
+                        name.clone(),
+                        content
+                            .replace("$CLOSED_PORT", &port)
+                            .replace("$EMBED_URL", &embeddings.url),
+                    )
+                })
+                .collect(),
+        );
         let server = start_server(binary, &root, &vault, &home, &cwd);
         let root_text = root.to_string_lossy().into_owned();
         for step in &case.steps {

@@ -15,6 +15,9 @@ mod process_root;
 #[path = "support/cli_normalize.rs"]
 mod cli_normalize;
 
+#[path = "support/embedding_fake.rs"]
+mod embedding_fake;
+
 use std::{
     collections::BTreeMap,
     fs,
@@ -51,6 +54,8 @@ struct Case {
     no_vault: bool,
     #[serde(default)]
     unix_only: bool,
+    #[serde(default)]
+    home_files: BTreeMap<String, String>,
     #[serde(default)]
     env: BTreeMap<String, String>,
     #[serde(default)]
@@ -236,6 +241,22 @@ fn cli_output_modes_and_errors_match_go_process_contract() {
         let canonical = fs::canonicalize(&root).expect("canonical case root");
         write_files(&vault, &case.files);
         let port = closed_port();
+        let embeddings = embedding_fake::EmbeddingFake::start();
+        write_files(
+            &home,
+            &case
+                .home_files
+                .iter()
+                .map(|(name, content)| {
+                    (
+                        name.clone(),
+                        content
+                            .replace("$CLOSED_PORT", &port)
+                            .replace("$EMBED_URL", &embeddings.url),
+                    )
+                })
+                .collect(),
+        );
         let root_text = root.to_string_lossy().into_owned();
         let materialize = |argument: &str| {
             let argument = argument.replace("$CLOSED_PORT", &port);

@@ -8,6 +8,9 @@
         "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
         "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n"
       },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
       "steps": [
         {
           "name": "ls",
@@ -681,6 +684,9 @@
         "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
         "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n"
       },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
       "steps": [
         {
           "name": "props-get",
@@ -909,7 +915,7 @@
           "reason": "output depends on host tools and environment",
           "status": 200,
           "content_type": "application/json",
-          "body": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":4,\"assigned\":0,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":4,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":0,\"document_count\":0,\"embedding_model\":\"qwen3-embedding:0.6b\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"path\",\"symmemory\":\"path\",\"symvault\":\"path\"},\"tools\":{\"symbrowse\":\"ok\",\"symmemory\":\"ok\",\"symvault\":\"ok\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"0.8.0\",\"symmemory\":\"0.17.0\",\"symvault\":\"0.23.2\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":true,\"path\":\"/opt/homebrew/bin/symmemory\",\"version\":\"0.17.0\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.17.0\",\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":true,\"path\":\"/opt/homebrew/bin/symvault\",\"version\":\"0.23.2\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.23.2\",\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":true,\"path\":\"/opt/homebrew/bin/symbrowse\",\"version\":\"0.8.0\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.8.0\",\"managed_shadows_newer\":false}]}\n",
+          "body": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":4,\"assigned\":0,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":4,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":0,\"document_count\":0,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"path\",\"symmemory\":\"path\",\"symvault\":\"path\"},\"tools\":{\"symbrowse\":\"ok\",\"symmemory\":\"ok\",\"symvault\":\"ok\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"0.8.0\",\"symmemory\":\"0.17.0\",\"symvault\":\"0.23.2\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":true,\"path\":\"/opt/homebrew/bin/symmemory\",\"version\":\"0.17.0\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.17.0\",\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":true,\"path\":\"/opt/homebrew/bin/symvault\",\"version\":\"0.23.2\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.23.2\",\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":true,\"path\":\"/opt/homebrew/bin/symbrowse\",\"version\":\"0.8.0\",\"origin\":\"path\",\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":true,\"path_version\":\"0.8.0\",\"managed_shadows_newer\":false}]}\n",
           "vault_files": [
             "a.md",
             "b.md",
@@ -1147,6 +1153,9 @@
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
         "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
         "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
       },
       "steps": [
         {
@@ -2415,6 +2424,9 @@
         "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
         "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n"
       },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
       "steps": [
         {
           "name": "ls-forced-vault",
@@ -2782,6 +2794,9 @@
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
         "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
         "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
       },
       "steps": [
         {

@@ -60,9 +60,12 @@ type remoteCommandStep struct {
 }
 
 type remoteCommandCase struct {
-	Name  string              `json:"name"`
-	Files map[string]string   `json:"files,omitempty"`
-	Steps []remoteCommandStep `json:"steps"`
+	Name  string            `json:"name"`
+	Files map[string]string `json:"files,omitempty"`
+	// HomeFiles are written under the isolated HOME before the server starts
+	// ($CLOSED_PORT is a loopback port nothing listens on).
+	HomeFiles map[string]string   `json:"home_files,omitempty"`
+	Steps     []remoteCommandStep `json:"steps"`
 }
 
 type remoteCommandFixture struct {
@@ -331,6 +334,10 @@ func observeRemoteCommandCase(t *testing.T, binary string, c remoteCommandCase) 
 			t.Fatal(err)
 		}
 	}
+	if c.HomeFiles == nil {
+		c.HomeFiles = cliErrorsHomeFiles()
+	}
+	writeCLIErrorsHomeFiles(t, home, c.HomeFiles, closedLoopbackPort(t), startCLIErrorsEmbeddingServer(t).URL)
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)

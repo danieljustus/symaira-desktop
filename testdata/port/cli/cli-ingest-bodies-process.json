@@ -2,6 +2,374 @@
   "schema_version": 1,
   "cases": [
     {
+      "name": "clip-fresh",
+      "home_files": {
+        "bin/symbrowse": "#!/bin/sh\ncase \"$2\" in\n*titled*) printf -- '---\\ntitle: \"Fancy / Title\"\\nsource: x\\n---\\n\\n# Heading\\nbody \u0026 \u003ctags\u003e\\n' ;;\n*empty-title*) printf -- '---\\ntitle: \"\"\\n---\\n\\n# Fallback Heading\\nbody\\n' ;;\n*heading*) printf '# Only Heading\\n\\ntext\\n' ;;\n*fail*) echo boom \u003e\u00262; exit 3 ;;\n*) printf 'plain body without any title\\n' ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "snapshot_vault": true,
+      "steps": [
+        {
+          "args": [
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Fancy_-_Title.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Fancy_-_Title.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n"
+          }
+        },
+        {
+          "args": [
+            "clip",
+            "https://example.test/empty-title"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Fallback_Heading.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/empty-title"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Fallback_Heading.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n"
+          }
+        },
+        {
+          "args": [
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Only_Heading.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Only_Heading.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n"
+          }
+        },
+        {
+          "args": [
+            "clip",
+            "https://example.test/plain page"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_https:--example.test-plain_page.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/plain page"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_https:--example.test-plain_page.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_https:--example.test-plain_page.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        },
+        {
+          "args": [
+            "clip",
+            "https://example.test/fail"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symbrowse failed: exit status 3\n",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_https:--example.test-plain_page.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/fail"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symbrowse failed: exit status 3\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_https:--example.test-plain_page.md.json": "(present)",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        },
+        {
+          "args": [
+            "clip",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_https:--example.test-plain_page.md.json": "(present)",
+            "Clipped:_.md": "---\ntitle: \"Clipped: \"\ncreated: \"$TIME\"\nsource_uri: \"\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fallback_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Fancy_-_Title.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            ".symdesk/history/manifest/Clipped:_https:--example.test-plain_page.md.json": "(present)",
+            "Clipped:_.md": "---\ntitle: \"Clipped: \"\ncreated: \"$TIME\"\nsource_uri: \"\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n",
+            "Clipped:_Fallback_Heading.md": "---\ntitle: \"Clipped: Fallback Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/empty-title\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"\"\n---\n\n# Fallback Heading\nbody\n",
+            "Clipped:_Fancy_-_Title.md": "---\ntitle: \"Clipped: Fancy / Title\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/titled\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n---\ntitle: \"Fancy / Title\"\nsource: x\n---\n\n# Heading\nbody \u0026 \u003ctags\u003e\n",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n",
+            "Clipped:_https:--example.test-plain_page.md": "---\ntitle: \"Clipped: https://example.test/plain page\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/plain page\"\ningested_at: \"$TIME\"\ntags: []\n---\n\nplain body without any title\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "clip-overwrite",
+      "home_files": {
+        "bin/symbrowse": "#!/bin/sh\ncase \"$2\" in\n*titled*) printf -- '---\\ntitle: \"Fancy / Title\"\\nsource: x\\n---\\n\\n# Heading\\nbody \u0026 \u003ctags\u003e\\n' ;;\n*empty-title*) printf -- '---\\ntitle: \"\"\\n---\\n\\n# Fallback Heading\\nbody\\n' ;;\n*heading*) printf '# Only Heading\\n\\ntext\\n' ;;\n*fail*) echo boom \u003e\u00262; exit 3 ;;\n*) printf 'plain body without any title\\n' ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Only_Heading.md status:ok]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Only_Heading.md\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Only_Heading.md status:ok]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Only_Heading.md\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "clip-no-clipper",
+      "env": {
+        "PATH": "$ROOT/home/empty-bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "no web clipper found: install symbrowse with brew install danieljustus/tap/symbrowse\n"
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no web clipper found: install symbrowse with brew install danieljustus/tap/symbrowse\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "clip-no-vault",
+      "home_files": {
+        "bin/symbrowse": "#!/bin/sh\ncase \"$2\" in\n*titled*) printf -- '---\\ntitle: \"Fancy / Title\"\\nsource: x\\n---\\n\\n# Heading\\nbody \u0026 \u003ctags\u003e\\n' ;;\n*empty-title*) printf -- '---\\ntitle: \"\"\\n---\\n\\n# Fallback Heading\\nbody\\n' ;;\n*heading*) printf '# Only Heading\\n\\ntext\\n' ;;\n*fail*) echo boom \u003e\u00262; exit 3 ;;\n*) printf 'plain body without any title\\n' ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "skip_index": true,
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/titled"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "clip-symaira-bin",
+      "home_files": {
+        "managed/symbrowse": "#!/bin/sh\ncase \"$2\" in\n*titled*) printf -- '---\\ntitle: \"Fancy / Title\"\\nsource: x\\n---\\n\\n# Heading\\nbody \u0026 \u003ctags\u003e\\n' ;;\n*empty-title*) printf -- '---\\ntitle: \"\"\\n---\\n\\n# Fallback Heading\\nbody\\n' ;;\n*heading*) printf '# Only Heading\\n\\ntext\\n' ;;\n*fail*) echo boom \u003e\u00262; exit 3 ;;\n*) printf 'plain body without any title\\n' ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/empty-bin",
+        "SYMAIRA_BIN": "$ROOT/home/managed"
+      },
+      "snapshot_vault": true,
+      "steps": [
+        {
+          "args": [
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "map[path:Clipped:_Only_Heading.md status:ok]\n",
+          "stderr": "",
+          "vault": {
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "clip",
+            "https://example.test/heading"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"Clipped:_Only_Heading.md\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/history/manifest/Clipped:_Only_Heading.md.json": "(present)",
+            "Clipped:_Only_Heading.md": "---\ntitle: \"Clipped: Only Heading\"\ncreated: \"$TIME\"\nsource_uri: \"https://example.test/heading\"\ningested_at: \"$TIME\"\ntags: []\n---\n\n# Only Heading\n\ntext\n"
+          }
+        }
+      ]
+    },
+    {
       "name": "ingest-file-flow",
       "cwd_files": {
         "dir/x.txt": "inside a directory\n",

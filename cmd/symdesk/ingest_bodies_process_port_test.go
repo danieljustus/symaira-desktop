@@ -158,6 +158,16 @@ func snapshotIngestTree(t *testing.T, dir, root, closedPort string, skip func(re
 		if skip != nil && skip(rel) {
 			return nil
 		}
+		// History content ids hash notes that embed the wall clock, so neither
+		// the object names nor their counts are stable; the manifests prove
+		// that a snapshot was taken.
+		if strings.HasPrefix(rel, ".symdesk/history/objects/") {
+			return nil
+		}
+		if strings.HasPrefix(rel, ".symdesk/history/manifest/") {
+			snapshot[normalizeIngestText(rel, root)] = "(present)"
+			return nil
+		}
 		data, err := os.ReadFile(path) //nolint:gosec // test-only walk below a temporary directory
 		if err != nil {
 			return err
@@ -218,7 +228,7 @@ func observeCLIIngestCase(t *testing.T, binary string, c cliIngestCase) cliInges
 				t.Fatal(err)
 			}
 			mode := os.FileMode(0o600)
-			if strings.HasPrefix(name, "bin/") {
+			if strings.HasPrefix(name, "bin/") || strings.HasPrefix(name, "managed/") {
 				mode = 0o700
 			}
 			if err := os.WriteFile(target, []byte(replace(content)), mode); err != nil {

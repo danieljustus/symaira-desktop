@@ -4,6 +4,7 @@ mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
 mod asset_export_cli;
+mod clip_cli;
 mod cobra;
 mod config_cli;
 mod config_paths;
@@ -233,6 +234,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("clip", command)) => clip_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("ingest", command)) => ingest_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -715,6 +721,7 @@ fn cli() -> Command {
         .subcommand(consume_cli::cli())
         .subcommand(rules_cli::cli())
         .subcommand(ingest_cli::cli())
+        .subcommand(clip_cli::cli())
         .subcommand(
             Command::new("mail")
                 .subcommand(mail_cli::status_cli())

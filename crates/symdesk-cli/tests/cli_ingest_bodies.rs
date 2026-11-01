@@ -42,12 +42,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 25;
-const EXPECTED_STEPS: usize = 323;
+const EXPECTED_CASES: usize = 30;
+const EXPECTED_STEPS: usize = 345;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 170;
+const EXPECTED_FAILING_STEPS: usize = 176;
 /// Steps that also compare the vault tree / HOME text files after the step.
-const EXPECTED_VAULT_SNAPSHOTS: usize = 63;
+const EXPECTED_VAULT_SNAPSHOTS: usize = 77;
 const EXPECTED_HOME_SNAPSHOTS: usize = 108;
 
 #[derive(Deserialize)]
@@ -164,7 +164,7 @@ fn write_files(base: &Path, files: &BTreeMap<String, String>, replace: &dyn Fn(&
         fs::create_dir_all(target.parent().expect("file parent")).expect("make parent");
         fs::write(&target, replace(content)).expect("write case file");
         // Fake sibling-tool scripts live below `bin/` and must be executable.
-        if name.starts_with("bin/") {
+        if name.starts_with("bin/") || name.starts_with("managed/") {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&target, fs::Permissions::from_mode(0o700))
                 .expect("make fake tool executable");
@@ -229,6 +229,17 @@ fn snapshot(
                 .replace('\\', "/");
             if skip(&relative) {
                 return None;
+            }
+            // History content ids hash notes that embed the wall clock: only
+            // the manifests (proof that a snapshot was taken) are compared.
+            if relative.starts_with(".symdesk/history/objects/") {
+                return None;
+            }
+            if relative.starts_with(".symdesk/history/manifest/") {
+                return Some((
+                    ingest_normalize::normalize(&relative, root, canonical),
+                    "(present)".to_owned(),
+                ));
             }
             let data = fs::read(&path).expect("read case file");
             let text = String::from_utf8(data).ok()?;

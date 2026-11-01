@@ -721,6 +721,16 @@ cli-bodies-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIBodiesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test cli_bodies --locked
 
+# RUST-013 ingest, mail, meeting, rules and clip command bodies: Go-recorded
+# process fixtures (loopback fakes only) in their own fixture file.
+.PHONY: cli-ingest-bodies-fixtures-generate cli-ingest-bodies-differential
+cli-ingest-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIIngestBodiesProcessContract$$'
+
+cli-ingest-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIIngestBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_ingest_bodies --locked
+
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.

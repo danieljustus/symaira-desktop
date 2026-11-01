@@ -63,7 +63,8 @@ pub use metadata::{
 };
 pub use mutations::{
     MutationError, delete_frontmatter_value, render_go_yaml_double_quoted, render_go_yaml_map,
-    render_go_yaml_string, set_frontmatter_key, set_frontmatter_value, write_atomic,
+    render_go_yaml_meeting_map, render_go_yaml_string, set_frontmatter_key, set_frontmatter_value,
+    write_atomic,
 };
 pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
@@ -301,15 +302,105 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
         if value.starts_with(['"', '\'']) {
             continue;
         }
-        if is_iso_date(value) {
-            result.insert(key.trim().to_owned(), format!("{value}T00:00:00Z"));
-        } else if time::OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339)
-            .is_ok()
-        {
-            result.insert(key.trim().to_owned(), value.to_owned());
+        if let Some(stamp) = yaml_v3_timestamp(value) {
+            result.insert(key.trim().to_owned(), stamp);
         }
     }
     result
+}
+
+/// yaml.v3 `parseTimestamp` (`2006-1-2T15:4:5.999999999Z07:00`, the
+/// lowercase-`t` form, `2006-1-2 15:4:5.999999999` and `2006-1-2`), as the
+/// RFC3339Nano text Go formats a decoded `time.Time` with.
+fn yaml_v3_timestamp(value: &str) -> Option<String> {
+    let bytes = value.as_bytes();
+    let number = |at: &mut usize, max: usize| -> Option<u32> {
+        let start = *at;
+        while *at < bytes.len() && *at - start < max && bytes[*at].is_ascii_digit() {
+            *at += 1;
+        }
+        if *at == start {
+            return None;
+        }
+        value[start..*at].parse().ok()
+    };
+    if bytes.len() < 8 || !bytes[0..4].iter().all(u8::is_ascii_digit) || bytes[4] != b'-' {
+        return None;
+    }
+    let year: u32 = value[0..4].parse().ok()?;
+    let mut at = 5;
+    let month = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b'-') || !(1..=12).contains(&month) {
+        return None;
+    }
+    at += 1;
+    let day = number(&mut at, 2)?;
+    let leap = (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400);
+    let days = match month {
+        2 if leap => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+    if day == 0 || day > days {
+        return None;
+    }
+    let date = format!("{year:04}-{month:02}-{day:02}");
+    if at == bytes.len() {
+        return Some(format!("{date}T00:00:00Z"));
+    }
+    let zoned = match bytes[at] {
+        b'T' | b't' => true,
+        b' ' => false,
+        _ => return None,
+    };
+    at += 1;
+    let hour = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b':') || hour > 23 {
+        return None;
+    }
+    at += 1;
+    let minute = number(&mut at, 2)?;
+    if bytes.get(at) != Some(&b':') || minute > 59 {
+        return None;
+    }
+    at += 1;
+    let second = number(&mut at, 2)?;
+    if second > 59 {
+        return None;
+    }
+    let mut fraction = String::new();
+    if matches!(bytes.get(at), Some(b'.' | b',')) {
+        let start = at + 1;
+        let mut end = start;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+        }
+        if end == start {
+            return None;
+        }
+        let digits = value[start..end].trim_end_matches('0');
+        if !digits.is_empty() {
+            fraction = format!(".{digits}");
+        }
+        at = end;
+    }
+    let clock = format!("{date}T{hour:02}:{minute:02}:{second:02}{fraction}");
+    if !zoned {
+        return (at == bytes.len()).then(|| format!("{clock}Z"));
+    }
+    if bytes.get(at) == Some(&b'Z') {
+        return (at + 1 == bytes.len()).then(|| format!("{clock}Z"));
+    }
+    if at + 6 != bytes.len() || !matches!(bytes[at], b'+' | b'-') || bytes[at + 3] != b':' {
+        return None;
+    }
+    let zone_hours: u32 = value[at + 1..at + 3].parse().ok()?;
+    let zone_minutes: u32 = value[at + 4..at + 6].parse().ok()?;
+    if zone_hours == 0 && zone_minutes == 0 {
+        return Some(format!("{clock}Z"));
+    }
+    Some(format!("{clock}{}", &value[at..]))
 }
 
 /// Returns the first repeated top-level key with its 1-based line numbers in
@@ -334,17 +425,6 @@ fn duplicate_top_level_key(input: &[u8]) -> Option<(String, usize, usize)> {
         seen.insert(key.to_owned(), index + 1);
     }
     None
-}
-
-fn is_iso_date(value: &str) -> bool {
-    let bytes = value.as_bytes();
-    bytes.len() == 10
-        && bytes[4] == b'-'
-        && bytes[7] == b'-'
-        && bytes
-            .iter()
-            .enumerate()
-            .all(|(index, byte)| matches!(index, 4 | 7) || byte.is_ascii_digit())
 }
 
 fn string_or_list(values: &BTreeMap<String, Value>, key: &str) -> Vec<String> {

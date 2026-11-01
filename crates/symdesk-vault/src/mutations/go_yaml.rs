@@ -10,6 +10,19 @@ pub(super) fn render_mapping(mapping: &Mapping) -> Result<String, String> {
     render_mapping_at(mapping, 0)
 }
 
+thread_local! {
+    /// Set while rendering a SymMeet meeting note: Go marshals those from
+    /// typed structs (declaration order), not from sorted maps.
+    static MEETING_STRUCTS: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+pub(super) fn render_meeting_mapping(mapping: &Mapping) -> Result<String, String> {
+    MEETING_STRUCTS.with(|flag| flag.set(true));
+    let rendered = render_mapping_at(mapping, 0);
+    MEETING_STRUCTS.with(|flag| flag.set(false));
+    rendered
+}
+
 pub(super) fn format_scalar_number(number: &Number, nested: bool) -> Result<String, String> {
     match number {
         Number::Integer(value) => Ok(value.to_string()),
@@ -26,16 +39,7 @@ fn render_mapping_at(mapping: &Mapping, depth: usize) -> Result<String, String> 
     }
 
     let mut entries: Vec<_> = mapping.iter().collect();
-    if let Some(field_order) = struct_field_order(mapping) {
-        entries.sort_by_key(|(key, _)| {
-            field_order
-                .iter()
-                .position(|field| *field == key.as_str())
-                .unwrap_or(usize::MAX)
-        });
-    } else {
-        entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
-    }
+    sort_entries(mapping, &mut entries);
 
     let mut lines = Vec::new();
     for (key, value) in entries {
@@ -60,7 +64,62 @@ fn render_mapping_at(mapping: &Mapping, depth: usize) -> Result<String, String> 
     Ok(lines.join("\n"))
 }
 
+/// Go emits struct fields in declaration order and then an inline `map`
+/// (`yaml:",inline"`) in natural key order; plain maps are fully natural-sorted.
+fn sort_entries(mapping: &Mapping, entries: &mut [(&String, &Value)]) {
+    if let Some(field_order) = struct_field_order(mapping) {
+        let position = |key: &String| {
+            field_order
+                .iter()
+                .position(|field| *field == key.as_str())
+                .unwrap_or(usize::MAX)
+        };
+        entries.sort_by(|(left, _), (right, _)| {
+            position(left)
+                .cmp(&position(right))
+                .then_with(|| natural_cmp(left, right))
+        });
+    } else {
+        entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+    }
+}
+
 fn struct_field_order(mapping: &Mapping) -> Option<&'static [&'static str]> {
+    // SymMeet meeting notes (Go `service.meetingFrontmatter`,
+    // `MeetingParticipant`, `contacts.Ref`): declaration order, inline extras.
+    const MEETING: &[&str] = &[
+        "type",
+        "title",
+        "created",
+        "tags",
+        "meeting_id",
+        "started_at",
+        "ended_at",
+        "duration_ms",
+        "language",
+        "participants",
+        "symmeet_source",
+    ];
+    const MEETING_PARTICIPANT: &[&str] = &["label", "speaker_ids", "entity_id", "contact_ref"];
+    const CONTACT_REF: &[&str] = &["provider", "schema_version", "id", "kind", "display_name"];
+    if MEETING_STRUCTS.with(std::cell::Cell::get) {
+        if mapping.contains_key("meeting_id")
+            && mapping.contains_key("symmeet_source")
+            && mapping.contains_key("started_at")
+        {
+            return Some(MEETING);
+        }
+        if mapping.contains_key("label") && mapping.contains_key("speaker_ids") {
+            return Some(MEETING_PARTICIPANT);
+        }
+        if mapping.contains_key("provider")
+            && mapping.contains_key("schema_version")
+            && mapping.contains_key("id")
+            && mapping.contains_key("kind")
+        {
+            return Some(CONTACT_REF);
+        }
+    }
     const PROPERTY_CONFIG: &[&str] = &["type", "label", "options", "description", "default"];
     const VIEW: &[&str] = &[
         "id",
@@ -169,16 +228,7 @@ fn render_sequence(items: &[Value], depth: usize) -> Result<Vec<String>, String>
                     continue;
                 }
                 let mut entries: Vec<_> = mapping.iter().collect();
-                if let Some(field_order) = struct_field_order(mapping) {
-                    entries.sort_by_key(|(key, _)| {
-                        field_order
-                            .iter()
-                            .position(|field| *field == key.as_str())
-                            .unwrap_or(usize::MAX)
-                    });
-                } else {
-                    entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
-                }
+                sort_entries(mapping, &mut entries);
 
                 let (first_key, first_val) = entries[0];
                 if first_key.contains('\n') {
@@ -419,14 +469,97 @@ fn is_yaml_style_float(s: &str) -> bool {
     }
 }
 
+/// yaml.v3 `parseTimestamp`: the four `time.Parse` layouts it accepts
+/// (`2006-1-2T15:4:5.999999999Z07:00`, the lowercase-`t` form, `2006-1-2
+/// 15:4:5.999999999` and `2006-1-2`), with `time.Parse`'s range checks.
 fn is_yaml_timestamp(s: &str) -> bool {
     let bytes = s.as_bytes();
-    bytes.len() >= 10
-        && bytes[0..4].iter().all(u8::is_ascii_digit)
-        && bytes[4] == b'-'
-        && bytes[5..7].iter().all(u8::is_ascii_digit)
-        && bytes[7] == b'-'
-        && bytes[8..10].iter().all(u8::is_ascii_digit)
+    let number = |at: &mut usize, max: usize| -> Option<u32> {
+        let start = *at;
+        while *at < bytes.len() && *at - start < max && bytes[*at].is_ascii_digit() {
+            *at += 1;
+        }
+        if *at == start {
+            return None;
+        }
+        s[start..*at].parse().ok()
+    };
+    if bytes.len() < 8 || !bytes[0..4].iter().all(u8::is_ascii_digit) || bytes[4] != b'-' {
+        return false;
+    }
+    let year: u32 = s[0..4].parse().unwrap_or(0);
+    let mut at = 5;
+    let Some(month) = number(&mut at, 2) else {
+        return false;
+    };
+    if at >= bytes.len() || bytes[at] != b'-' || !(1..=12).contains(&month) {
+        return false;
+    }
+    at += 1;
+    let Some(day) = number(&mut at, 2) else {
+        return false;
+    };
+    let leap = (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400);
+    let days = match month {
+        2 if leap => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+    if day == 0 || day > days {
+        return false;
+    }
+    if at == bytes.len() {
+        return true;
+    }
+    let zoned = match bytes[at] {
+        b'T' | b't' => true,
+        b' ' => false,
+        _ => return false,
+    };
+    at += 1;
+    let Some(hour) = number(&mut at, 2) else {
+        return false;
+    };
+    if at >= bytes.len() || bytes[at] != b':' || hour > 23 {
+        return false;
+    }
+    at += 1;
+    let Some(minute) = number(&mut at, 2) else {
+        return false;
+    };
+    if at >= bytes.len() || bytes[at] != b':' || minute > 59 {
+        return false;
+    }
+    at += 1;
+    let Some(second) = number(&mut at, 2) else {
+        return false;
+    };
+    if second > 59 {
+        return false;
+    }
+    if at < bytes.len() && matches!(bytes[at], b'.' | b',') {
+        let start = at + 1;
+        let mut end = start;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+        }
+        if end == start {
+            return false;
+        }
+        at = end;
+    }
+    if !zoned {
+        return at == bytes.len();
+    }
+    if at < bytes.len() && bytes[at] == b'Z' {
+        return at + 1 == bytes.len();
+    }
+    if at + 6 != bytes.len() || !matches!(bytes[at], b'+' | b'-') || bytes[at + 3] != b':' {
+        return false;
+    }
+    let digits = |slice: &[u8]| slice.iter().all(u8::is_ascii_digit);
+    digits(&bytes[at + 1..at + 3]) && digits(&bytes[at + 4..at + 6])
 }
 
 pub(super) fn render_string(

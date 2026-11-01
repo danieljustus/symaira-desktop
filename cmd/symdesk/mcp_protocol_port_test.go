@@ -29,14 +29,14 @@ type mcpProtocolGen struct {
 }
 
 type mcpProtocolCase struct {
-	ID         string             `json:"id"`
-	AllowWrite bool               `json:"allow_write,omitempty"`
-	Input      string             `json:"input"`
-	InputHex   string             `json:"input_hex,omitempty"`
-	Gen        *mcpProtocolGen    `json:"generate,omitempty"`
-	Stdout     string             `json:"stdout"`
-	Stderr     string             `json:"stderr"`
-	ExitCode   int                `json:"exit_code"`
+	ID         string          `json:"id"`
+	AllowWrite bool            `json:"allow_write,omitempty"`
+	Input      string          `json:"input"`
+	InputHex   string          `json:"input_hex,omitempty"`
+	Gen        *mcpProtocolGen `json:"generate,omitempty"`
+	Stdout     string          `json:"stdout"`
+	Stderr     string          `json:"stderr"`
+	ExitCode   int             `json:"exit_code"`
 }
 
 type mcpProtocolFixture struct {

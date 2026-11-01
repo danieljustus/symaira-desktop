@@ -127,6 +127,7 @@
     "testdata/port/ingest/vlm.json": "b7f24f73fff1b03a64deda6285bef406f83f2d049cb302de676e11f84a43a5fe",
     "testdata/port/ingest/watcher.json": "62d8580c8f628e4d1a1e3fdfb493aa9abf91726a52ed3fb72976da24b9e2561f",
     "testdata/port/mcp/ask-offline.json": "4da4f8fd74764cad82978b401c8f9c751d119b9e22edb5bc3d696eb4b89a7b69",
+    "testdata/port/mcp/calls-process.json": "3b9f532ea832613c512ea295086ed040173fc54be5891630e7745772c353386b",
     "testdata/port/mcp/protocol-process.json": "aa11d633c311f140b22d34113746888e1bbfcd87a3645c3da44e6cd35cfd7970",
     "testdata/port/mcp/read-process.json": "5fe81d0137271924109b85eef5e6ba21fe46bffa2714e8e83f56835093ba0f84",
     "testdata/port/mcp/representative.json": "1495af33374cf08d81b5ca235d37adab2e064c526f8fd400a744f0cd75d115be",

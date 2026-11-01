@@ -1,5 +1,7 @@
 #![allow(clippy::module_name_repetitions)]
 
+mod args;
+mod ingest_tools;
 mod pdf;
 #[cfg(test)]
 mod pdf_tests;
@@ -437,6 +439,8 @@ where
         name,
         "desk_status" | "desk_ls" | "desk_search" | "desk_ask" | "search_documents"
     ) && !read::supports(name)
+        && !ingest_tools::canonical(name)
+            .is_some_and(|tool| config.allow_write || !ingest_tools::is_write(tool))
         && !(config.allow_write && (pdf::canonical_name(name).is_some() || write::supports(name)))
     {
         if !request.has_id {
@@ -585,6 +589,11 @@ fn call_tool(
             write::call(name, raw_arguments, config)
         }
         _ if read::supports(name) => read::call(name, raw_arguments, config),
+        _ if ingest_tools::canonical(name)
+            .is_some_and(|tool| config.allow_write || !ingest_tools::is_write(tool)) =>
+        {
+            ingest_tools::call(name, raw_arguments, config)
+        }
         _ if config.allow_write && pdf::canonical_name(name).is_some() => {
             pdf::call(name, raw_arguments, &config.pdf_context)
         }

@@ -47,6 +47,11 @@ impl<'a> From<&'a ClassificationRule> for Rule<'a> {
     }
 }
 
+/// The JSON object of one rule as Go marshals `ingest.Rule` (MCP rule tools).
+pub(crate) fn rule_value(rule: &ClassificationRule) -> serde_json::Value {
+    serde_json::to_value(Rule::from(rule)).expect("rule serializes")
+}
+
 #[derive(Serialize)]
 struct RuleMatch<'a> {
     id: i64,

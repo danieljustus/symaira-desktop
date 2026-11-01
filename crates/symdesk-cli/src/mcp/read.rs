@@ -33,7 +33,7 @@ pub(super) fn supports(name: &str) -> bool {
         )
 }
 
-fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
+pub(super) fn encoded<T: Serialize>(value: &T) -> Result<Value, String> {
     let text = serde_json::to_string(value).map_err(|error| error.to_string())?;
     Ok(Value::String(crate::go_escape_json(text)))
 }

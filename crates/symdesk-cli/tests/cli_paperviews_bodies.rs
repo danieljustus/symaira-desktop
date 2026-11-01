@@ -365,7 +365,35 @@ fn pv_normalize(text: &str) -> String {
     let text = normalize_prefixed_digits(&text, "symingest-import-");
     let mut imported = b"Imported from CSV on ".to_vec();
     imported.extend_from_slice(&[4, b'-', 2, b'-', 2]);
-    normalize_shape(&text, &imported, "Imported from CSV on $DATE")
+    let text = normalize_shape(&text, &imported, "Imported from CSV on $DATE");
+    normalize_truncated_scalar(&text)
+}
+
+/// Go: ``(cannot unmarshal !!str `)[^`\n]*\.\.\.(` into)`` replaced by
+/// `${1}$TRUNC${2}` (a YAML type error quotes the first characters of the
+/// offending scalar, which for a path argument is the host's root prefix).
+fn normalize_truncated_scalar(text: &str) -> String {
+    const OPEN: &str = "cannot unmarshal !!str `";
+    const CLOSE: &str = "` into";
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(OPEN) {
+        let after = at + OPEN.len();
+        out.push_str(&rest[..after]);
+        let tail = &rest[after..];
+        let quoted = tail
+            .find(['`', '\n'])
+            .filter(|end| tail[*end..].starts_with('`'));
+        match quoted {
+            Some(end) if tail[..end].ends_with("...") && tail[end..].starts_with(CLOSE) => {
+                out.push_str("$TRUNC");
+                rest = &tail[end..];
+            }
+            _ => rest = tail,
+        }
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Go: `<prefix>\d+` replaced by `$TMP`.

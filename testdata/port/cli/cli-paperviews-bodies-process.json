@@ -19116,7 +19116,7 @@
           ],
           "exit_code": 1,
           "stdout": "",
-          "stderr": "invalid symdesk-base specification: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `/Volume...` into service.BaseEmbedSpec\n",
+          "stderr": "invalid symdesk-base specification: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `$TRUNC` into service.BaseEmbedSpec\n",
           "vault": {
             "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
             "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
@@ -19148,7 +19148,7 @@
             "$ROOT"
           ],
           "exit_code": 1,
-          "stdout": "{\"error\":\"invalid symdesk-base specification: yaml: unmarshal errors:\\n  line 1: cannot unmarshal !!str `/Volume...` into service.BaseEmbedSpec\"}\n",
+          "stdout": "{\"error\":\"invalid symdesk-base specification: yaml: unmarshal errors:\\n  line 1: cannot unmarshal !!str `$TRUNC` into service.BaseEmbedSpec\"}\n",
           "stderr": "",
           "vault": {
             "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

@@ -93,6 +93,9 @@ var (
 	pvRunIDRE   = regexp.MustCompile(`paperless-\d{8}T\d{6}\.\d{9}Z`)
 	pvTempRE    = regexp.MustCompile(`\.tmp-\d+|symingest-import-\d+`)
 	pvImportRE  = regexp.MustCompile(`Imported from CSV on \d{4}-\d{2}-\d{2}`)
+	// A YAML type error quotes the first characters of the offending scalar;
+	// for a path argument that is the host's root prefix.
+	pvTruncatedScalarRE = regexp.MustCompile("(cannot unmarshal !!str `)[^`\n]*\\.\\.\\.(` into)")
 )
 
 // pvNormalize hides the wall clock and the process-specific names these
@@ -101,6 +104,7 @@ func pvNormalize(text string) string {
 	text = pvLogTimeRE.ReplaceAllString(text, "$$LOGTIME")
 	text = pvRunIDRE.ReplaceAllString(text, "$$RUNID")
 	text = pvTempRE.ReplaceAllString(text, "$$TMP")
+	text = pvTruncatedScalarRE.ReplaceAllString(text, "${1}$$TRUNC${2}")
 	return pvImportRE.ReplaceAllString(text, "Imported from CSV on $$DATE")
 }
 

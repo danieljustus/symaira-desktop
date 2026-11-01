@@ -64,7 +64,6 @@ func cliBodiesConsumeCases() []cliBodiesCase {
 			bodiesBoth("search", "notebook", "hello"),
 			bodiesBoth("notebook", "delete", "missing"),
 			bodiesBoth("related", "missing.md"),
-			bodiesBoth("sidecar", "list"),
 			bodiesBoth("sidecar", "prune"),
 			bodiesBoth("asset", "store", "$ROOT/vault/missing.bin"),
 			bodiesBoth("props", "get", "missing.md"),

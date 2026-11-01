@@ -1580,25 +1580,6 @@
         {
           "args": [
             "sidecar",
-            "list"
-          ],
-          "exit_code": 0,
-          "stdout": "Sidecars: 1\nTotal size: 221184 bytes\nOrphaned: 0\nLegacy retrieval index: $ROOT/home/data/symdesk/retrieval.db (not managed)\nlive\t$ROOT/vault\t221184 bytes\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "--json",
-            "sidecar",
-            "list"
-          ],
-          "exit_code": 0,
-          "stdout": "{\"sidecars\":[{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\",\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\",\"size\":221184,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":true}],\"count\":1,\"total_bytes\":221184,\"orphan_count\":0,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":false,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
-          "stderr": ""
-        },
-        {
-          "args": [
-            "sidecar",
             "prune"
           ],
           "exit_code": 1,

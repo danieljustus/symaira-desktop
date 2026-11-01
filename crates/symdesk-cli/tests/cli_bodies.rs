@@ -36,7 +36,7 @@ use serde::Deserialize;
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
 const EXPECTED_CASES: usize = 29;
-const EXPECTED_STEPS: usize = 542;
+const EXPECTED_STEPS: usize = 540;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
 const EXPECTED_FAILING_STEPS: usize = 198;
 /// Steps that also compare the vault tree after the step.

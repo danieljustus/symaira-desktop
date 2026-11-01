@@ -28,19 +28,19 @@ pub struct Paths {
 }
 
 #[derive(Clone, Debug)]
-struct IngestConfig {
-    vault: String,
-    ocr_lang: String,
-    db_path: String,
-    archive_path: String,
+pub(crate) struct IngestConfig {
+    pub(crate) vault: String,
+    pub(crate) ocr_lang: String,
+    pub(crate) db_path: String,
+    pub(crate) archive_path: String,
     inbox: String,
     paperless_base_url: String,
     symseek_enabled: bool,
     symseek_binary: String,
     imap_accounts: Vec<()>,
     imap_poll_interval: String,
-    ollama_base_url: String,
-    ollama_model: String,
+    pub(crate) ollama_base_url: String,
+    pub(crate) ollama_model: String,
 }
 
 impl IngestConfig {
@@ -157,7 +157,7 @@ fn load_ingest_config(
         .map_err(|error| format!("reload symingest configuration: {error}"))
 }
 
-fn load_ingest_config_inner(
+pub(crate) fn load_ingest_config_inner(
     environment: &BTreeMap<String, String>,
     cwd: &Path,
 ) -> Result<IngestConfig, String> {

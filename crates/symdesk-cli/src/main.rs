@@ -20,8 +20,10 @@ mod history;
 mod history_cli;
 mod http;
 mod index_cli;
+mod ingest_common;
 mod lifecycle;
 mod links_cli;
+mod mail_rules_cli;
 mod mcp;
 mod mutate_cli;
 mod notebook_cli;
@@ -31,6 +33,7 @@ mod related_cli;
 mod relations_cli;
 mod restore_cli;
 mod retention;
+mod rules_cli;
 mod search_cli;
 mod search_export_cli;
 mod service_cli;
@@ -227,6 +230,15 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("rules", command)) => rules_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("mail", command)) => match command.subcommand() {
+            Some(("rules", sub)) => mail_rules_cli::run(sub, output_json),
+            _ => process_exit(CoreExitCode::Ok),
+        },
         Some(("consume", command)) => consume_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -688,6 +700,8 @@ fn cli() -> Command {
         .subcommand(notebook_cli::cli())
         .subcommand(sidecar_cli::cli())
         .subcommand(consume_cli::cli())
+        .subcommand(rules_cli::cli())
+        .subcommand(Command::new("mail").subcommand(mail_rules_cli::cli()))
         .subcommand(asset_export_cli::asset_cli())
         .subcommand(asset_export_cli::export_cli())
         .subcommand(relations_cli::related_command())

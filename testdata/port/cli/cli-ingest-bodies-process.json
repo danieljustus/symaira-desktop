@@ -1,0 +1,2082 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "rules-crud",
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "Invoice",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 1: tag \"Invoice\" -\u003e \"billing\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "Invoice",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":2,\"pattern\":\"Invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "  Strom ",
+            "category",
+            "energy"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 3: category \"  Strom \" -\u003e \"energy\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "  Strom ",
+            "category",
+            "energy"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":4,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "Müller",
+            "correspondent",
+            "Mueller GmbH"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 5: correspondent \"Müller\" -\u003e \"Mueller GmbH\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "Müller",
+            "correspondent",
+            "Mueller GmbH"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "Rechnung",
+            "document_type",
+            "invoice"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 7: document_type \"Rechnung\" -\u003e \"invoice\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "Rechnung",
+            "document_type",
+            "invoice"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\tInvoice\tbilling\n2\ttag\tInvoice\tbilling\n3\tcategory\t  Strom \tenergy\n4\tcategory\t  Strom \tenergy\n5\tcorrespondent\tMüller\tMueller GmbH\n6\tcorrespondent\tMüller\tMueller GmbH\n7\tdocument_type\tRechnung\tinvoice\n8\tdocument_type\tRechnung\tinvoice\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[{\"id\":1,\"pattern\":\"Invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"$TIME\"},{\"id\":2,\"pattern\":\"Invoice\",\"kind\":\"tag\",\"value\":\"billing\",\"created_at\":\"$TIME\"},{\"id\":3,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":4,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":5,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":7,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"},{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "",
+            "tag",
+            "x"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "pattern cannot be empty\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "",
+            "tag",
+            "x"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"pattern cannot be empty\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "p",
+            "colour",
+            "x"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule kind: \"colour\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "p",
+            "colour",
+            "x"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule kind: \\\"colour\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "p",
+            "tag",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "value cannot be empty\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "p",
+            "tag",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"value cannot be empty\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "p",
+            "",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule kind: \"\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "p",
+            "",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule kind: \\\"\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "p",
+            "TAG",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule kind: \"TAG\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "p",
+            "TAG",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule kind: \\\"TAG\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "1",
+            "Invoices",
+            "tag",
+            "billing2"
+          ],
+          "exit_code": 0,
+          "stdout": "updated rule 1: tag \"Invoices\" -\u003e \"billing2\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "1",
+            "Invoices",
+            "tag",
+            "billing2"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":1,\"pattern\":\"Invoices\",\"kind\":\"tag\",\"value\":\"billing2\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "2",
+            "Strom",
+            "category",
+            "energy"
+          ],
+          "exit_code": 0,
+          "stdout": "updated rule 2: category \"Strom\" -\u003e \"energy\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "2",
+            "Strom",
+            "category",
+            "energy"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":2,\"pattern\":\"Strom\",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "99",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "rule not found with ID 99\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "99",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"rule not found with ID 99\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "1",
+            "",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "pattern cannot be empty\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "1",
+            "",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"pattern cannot be empty\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "1",
+            "p",
+            "nope",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule kind: \"nope\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "1",
+            "p",
+            "nope",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule kind: \\\"nope\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "abc",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule id \"abc\": strconv.ParseInt: parsing \"abc\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "abc",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule id \\\"abc\\\": strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "1.5",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule id \"1.5\": strconv.ParseInt: parsing \"1.5\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "1.5",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule id \\\"1.5\\\": strconv.ParseInt: parsing \\\"1.5\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "-1",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown shorthand flag: '1' in -1\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "-1",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown shorthand flag: '1' in -1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "update",
+            "9223372036854775808",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule id \"9223372036854775808\": strconv.ParseInt: parsing \"9223372036854775808\": value out of range\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "update",
+            "9223372036854775808",
+            "p",
+            "tag",
+            "v"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule id \\\"9223372036854775808\\\": strconv.ParseInt: parsing \\\"9223372036854775808\\\": value out of range\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\tInvoices\tbilling2\n2\tcategory\tStrom\tenergy\n3\tcategory\t  Strom \tenergy\n4\tcategory\t  Strom \tenergy\n5\tcorrespondent\tMüller\tMueller GmbH\n6\tcorrespondent\tMüller\tMueller GmbH\n7\tdocument_type\tRechnung\tinvoice\n8\tdocument_type\tRechnung\tinvoice\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[{\"id\":1,\"pattern\":\"Invoices\",\"kind\":\"tag\",\"value\":\"billing2\",\"created_at\":\"$TIME\"},{\"id\":2,\"pattern\":\"Strom\",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":3,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":4,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":5,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":7,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"},{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "test",
+            "an INVOICES arrived from müller"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\tInvoices\tbilling2\n5\tcorrespondent\tMüller\tMueller GmbH\n6\tcorrespondent\tMüller\tMueller GmbH\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "test",
+            "an INVOICES arrived from müller"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"matches\":[{\"id\":1,\"pattern\":\"Invoices\",\"kind\":\"tag\",\"value\":\"billing2\"},{\"id\":5,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\"},{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "test",
+            "RECHNUNG und strom"
+          ],
+          "exit_code": 0,
+          "stdout": "2\tcategory\tStrom\tenergy\n7\tdocument_type\tRechnung\tinvoice\n8\tdocument_type\tRechnung\tinvoice\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "test",
+            "RECHNUNG und strom"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"matches\":[{\"id\":2,\"pattern\":\"Strom\",\"kind\":\"category\",\"value\":\"energy\"},{\"id\":7,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\"},{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "test",
+            "nothing matches"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "test",
+            "nothing matches"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"matches\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "test",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "test",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"matches\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "delete",
+            "2"
+          ],
+          "exit_code": 0,
+          "stdout": "deleted rule 2\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "delete",
+            "2"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"rule not found with ID 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "delete",
+            "2"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "rule not found with ID 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "delete",
+            "2"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"rule not found with ID 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "delete",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule id \"abc\": strconv.ParseInt: parsing \"abc\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "delete",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule id \\\"abc\\\": strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "delete",
+            "0"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "rule not found with ID 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "delete",
+            "0"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"rule not found with ID 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\tInvoices\tbilling2\n3\tcategory\t  Strom \tenergy\n4\tcategory\t  Strom \tenergy\n5\tcorrespondent\tMüller\tMueller GmbH\n6\tcorrespondent\tMüller\tMueller GmbH\n7\tdocument_type\tRechnung\tinvoice\n8\tdocument_type\tRechnung\tinvoice\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[{\"id\":1,\"pattern\":\"Invoices\",\"kind\":\"tag\",\"value\":\"billing2\",\"created_at\":\"$TIME\"},{\"id\":3,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":4,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":5,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":7,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"},{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "invoice",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 0,
+          "stdout": "dry-run: 0/0 documents matched (0 skipped)\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "invoice",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"dry_run\",\"proposed_rule\":{\"pattern\":\"invoice\",\"kind\":\"tag\",\"value\":\"billing\"},\"vault_path\":\"$ROOT/vault\",\"total_documents\":0,\"matched_documents\":0,\"skipped_documents\":0,\"matches\":[],\"skipped\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "pattern cannot be empty\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "",
+            "tag",
+            "billing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"pattern cannot be empty\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "x",
+            "bad",
+            "billing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid rule kind: \"bad\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "x",
+            "bad",
+            "billing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid rule kind: \\\"bad\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "x",
+            "tag",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "value cannot be empty\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "x",
+            "tag",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"value cannot be empty\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\tInvoices\tbilling2\n3\tcategory\t  Strom \tenergy\n4\tcategory\t  Strom \tenergy\n5\tcorrespondent\tMüller\tMueller GmbH\n6\tcorrespondent\tMüller\tMueller GmbH\n7\tdocument_type\tRechnung\tinvoice\n8\tdocument_type\tRechnung\tinvoice\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[{\"id\":1,\"pattern\":\"Invoices\",\"kind\":\"tag\",\"value\":\"billing2\",\"created_at\":\"$TIME\"},{\"id\":3,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":4,\"pattern\":\"  Strom \",\"kind\":\"category\",\"value\":\"energy\",\"created_at\":\"$TIME\"},{\"id\":5,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":6,\"pattern\":\"Müller\",\"kind\":\"correspondent\",\"value\":\"Mueller GmbH\",\"created_at\":\"$TIME\"},{\"id\":7,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"},{\"id\":8,\"pattern\":\"Rechnung\",\"kind\":\"document_type\",\"value\":\"invoice\",\"created_at\":\"$TIME\"}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "rules-no-vault-flag",
+      "skip_index": true,
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 1: tag \"a\" -\u003e \"b\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":2,\"pattern\":\"a\",\"kind\":\"tag\",\"value\":\"b\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "dry-run: 0/0 documents matched (0 skipped)\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"dry_run\",\"proposed_rule\":{\"pattern\":\"a\",\"kind\":\"tag\",\"value\":\"b\"},\"vault_path\":\"\",\"total_documents\":0,\"matched_documents\":0,\"skipped_documents\":0,\"matches\":[],\"skipped\":[]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "rules-store-unusable",
+      "home_files": {
+        "not-a-dir": "a file where a directory is expected\n"
+      },
+      "env": {
+        "SYMINGEST_DB_PATH": "$ROOT/home/not-a-dir/file/symingest.db"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open document store: create store directory: mkdir $ROOT/home/not-a-dir: not a directory\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "rules-config-db-path",
+      "home_files": {
+        ".config/symingest/config.toml": "db_path = \"$ROOT/home/custom/rules.db\"\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "added rule 1: tag \"a\" -\u003e \"b\"\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rule\":{\"id\":2,\"pattern\":\"a\",\"kind\":\"tag\",\"value\":\"b\",\"created_at\":\"$TIME\"}}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "1\ttag\ta\tb\n2\ttag\ta\tb\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"rules\":[{\"id\":1,\"pattern\":\"a\",\"kind\":\"tag\",\"value\":\"b\",\"created_at\":\"$TIME\"},{\"id\":2,\"pattern\":\"a\",\"kind\":\"tag\",\"value\":\"b\",\"created_at\":\"$TIME\"}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "rules-bad-symingest-config",
+      "home_files": {
+        ".config/symingest/config.toml": "this is = = not toml\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "rules",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "add",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "rules",
+            "dry-run",
+            "a",
+            "tag",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"load symingest configuration: global config error: failed to parse $ROOT/home/.config/symingest/config.toml: toml: line $TOML\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "mail-rules-flow",
+      "skip_index": true,
+      "snapshot_home": true,
+      "canaries": [
+        "plain-secret-canary-1"
+      ],
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 0 account(s) at $ROOT/home/mail.toml\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 0,
+          "stdout": "create: 2 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"plain-secret-canary-1\",\"action\":\"move\",\"move_to\":\"Archive\"}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[\"accounts[2].password_secret is plaintext; use a secret reference\"]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"plain-secret-canary-1\",\"action\":\"move\",\"move_to\":\"Archive\"}",
+          "exit_code": 0,
+          "stdout": "create: 4 account(s) at $ROOT/home/mail.toml\n  warning: accounts[2].password_secret is plaintext; use a secret reference\n  warning: accounts[3].password_secret is plaintext; use a secret reference\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 4 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid mail configuration: accounts[4].host is required; accounts[4].port must be between 1 and 65535; accounts[4].username is required; accounts[4].password_secret is required\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"h\",\"port\":70000,\"username\":\"u\",\"password_secret\":\"env://X\"}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid mail configuration: accounts[4].port must be between 1 and 65535\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"env://X\",\"action\":\"delete\"}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid mail configuration: accounts[4].action must be mark_seen or move\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"env://X\",\"action\":\"move\"}",
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid mail configuration: accounts[4].move_to is required when action is move\n",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"h\",\"port\":1,\"username\":\"u\"}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid mail configuration: accounts[4].password_secret is required\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "not json",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read account JSON from stdin: invalid character 'o' in literal null (expecting 'u')\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read account JSON from stdin: EOF\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\"} trailing",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[\"accounts[2].password_secret is plaintext; use a secret reference\",\"accounts[3].password_secret is plaintext; use a secret reference\"]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\u003credacted\u003e\",\"folder\":\"Work\",\"action\":\"move\",\"move_to\":\"Done\"}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"update\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/Work\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"Work\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Done\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[\"accounts[2].password_secret is plaintext; use a secret reference\",\"accounts[3].password_secret is plaintext; use a secret reference\"]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfolder = \"Work\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Done\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "bob@imap2.example.test:143/Work",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\",\"folder\":\"INBOX\",\"action\":\"mark_seen\"}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"update\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"INBOX\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[\"accounts[2].password_secret is plaintext; use a secret reference\",\"accounts[3].password_secret is plaintext; use a secret reference\"]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"mark_seen\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"env://NEW\",\"folder\":\"INBOX\"}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"update\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"env://NEW\",\"folder\":\"INBOX\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[\"accounts[3].password_secret is plaintext; use a secret reference\"]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "nobody@nowhere:1/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no configured mail account with ID \\\"nobody@nowhere:1/INBOX\\\"\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid mail configuration: accounts[0].host is required; accounts[0].port must be between 1 and 65535; accounts[0].username is required\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "garbage",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read account JSON from stdin: invalid character 'g' looking for beginning of value\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 5 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/INBOX\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"env://NEW\",\"folder\":\"INBOX\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false},{\"id\":\"bob@imap2.example.test:143/INBOX\",\"host\":\"imap2.example.test\",\"port\":143,\"username\":\"bob\",\"password_secret\":\"\\u003credacted\\u003e\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"move\",\"move_to\":\"Archive\",\"archive_mail\":false},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"env://NEW\"\nfolder = \"INBOX\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "delete: 4 account(s) at $ROOT/home/mail.toml\n  warning: accounts[2].password_secret is plaintext; use a secret reference\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  bob@imap2.example.test:143/INBOX\tbob@imap2.example.test:143/\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap2.example.test\"\nport = 143\nusername = \"bob\"\npassword_secret = \"plain-secret-canary-1\"\nfrom = []\nsubject = []\nhas_attachment = false\naction = \"move\"\nmove_to = \"Archive\"\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"delete\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "no configured mail account with ID \"bob@imap2.example.test:143/INBOX\"\n",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "bob@imap2.example.test:143/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no configured mail account with ID \\\"bob@imap2.example.test:143/INBOX\\\"\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 3 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true},{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "delete: 2 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"delete\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 1 account(s) at $ROOT/home/mail.toml\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"keychain://k\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "[[imap_accounts]]\nhost = \"h\"\nport = 1\nusername = \"u\"\npassword_secret = \"keychain://k\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mail-rules-preserve-toml",
+      "home_files": {
+        "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"old.example.test\"\nport = 993\nusername = \"carol\"\npassword_secret = \"env://CAROL\"\n\n[tail]\nvalue = 1\n"
+      },
+      "skip_index": true,
+      "snapshot_home": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 1 account(s) at $ROOT/home/mail.toml\n  carol@old.example.test:993/INBOX\tcarol@old.example.test:993/\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"old.example.test\"\nport = 993\nusername = \"carol\"\npassword_secret = \"env://CAROL\"\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"carol@old.example.test:993/INBOX\",\"host\":\"old.example.test\",\"port\":993,\"username\":\"carol\",\"password_secret\":\"env://CAROL\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"old.example.test\"\nport = 993\nusername = \"carol\"\npassword_secret = \"env://CAROL\"\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/home/mail.toml\",\"accounts\":[{\"id\":\"carol@old.example.test:993/INBOX\",\"host\":\"old.example.test\",\"port\":993,\"username\":\"carol\",\"password_secret\":\"env://CAROL\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false},{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"old.example.test\"\nport = 993\nusername = \"carol\"\npassword_secret = \"env://CAROL\"\nfrom = []\nsubject = []\nhas_attachment = false\narchive_mail = false\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "carol@old.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "delete: 1 account(s) at $ROOT/home/mail.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "carol@old.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no configured mail account with ID \\\"carol@old.example.test:993/INBOX\\\"\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "delete: 0 account(s) at $ROOT/home/mail.toml\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[tail]\nvalue = 1\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/mail.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"no configured mail account with ID \\\"alice@imap.example.test:993/INBOX\\\"\"}\n",
+          "stderr": "",
+          "home": {
+            "mail.toml": "# my comment\nocr_lang = \"eng\"\nimap_poll_interval = \"10m\"\n\n[other]\nkeep = true\n\n[tail]\nvalue = 1\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mail-rules-bad-files",
+      "home_files": {
+        "bad-poll.toml": "imap_poll_interval = \"soon\"\n[[imap_accounts]]\nhost=\"h\"\nport=1\nusername=\"u\"\npassword_secret=\"env://X\"\n",
+        "bad.toml": "x = = 1\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/bad.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read mail configuration: parse config $ROOT/home/bad.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/bad.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: parse config $ROOT/home/bad.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/bad-poll.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 1 account(s) at $ROOT/home/bad-poll.toml\n  u@h:1/INBOX\tu@h:1/\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home/bad-poll.toml"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/bad-poll.toml\",\"accounts\":[{\"id\":\"u@h:1/INBOX\",\"host\":\"h\",\"port\":1,\"username\":\"u\",\"password_secret\":\"env://X\",\"folder\":\"\",\"from\":[],\"subject\":[],\"has_attachment\":false,\"action\":\"\",\"move_to\":\"\",\"archive_mail\":false}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read mail configuration: parse config $ROOT/home: read $ROOT/home: is a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list",
+            "--config=$ROOT/home"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: parse config $ROOT/home: read $ROOT/home: is a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "x@y:1/INBOX",
+            "--config=$ROOT/home/bad.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read mail configuration: parse config $ROOT/home/bad.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "x@y:1/INBOX",
+            "--config=$ROOT/home/bad.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: parse config $ROOT/home/bad.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "delete",
+            "x@y:1/INBOX",
+            "--config=$ROOT/home/missing.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read mail configuration: symingest configuration file not found: $ROOT/home/missing.toml\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "delete",
+            "x@y:1/INBOX",
+            "--config=$ROOT/home/missing.toml"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: symingest configuration file not found: $ROOT/home/missing.toml\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home/bad.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: parse config $ROOT/home/bad.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create",
+            "--config=$ROOT/home"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: parse config $ROOT/home: read $ROOT/home: is a directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "update",
+            "alice@imap.example.test:993/INBOX",
+            "--config=$ROOT/home/missing.toml"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read mail configuration: symingest configuration file not found: $ROOT/home/missing.toml\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "mail-rules-default-paths",
+      "skip_index": true,
+      "snapshot_home": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 0 account(s) at $ROOT/home/config/symingest/config.toml\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/config/symingest/config.toml\",\"accounts\":[],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/home/config/symingest/config.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 1 account(s) at $ROOT/home/config/symingest/config.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n",
+          "stderr": "",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/home/config/symingest/config.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": "",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"imap.example.test\"\nport = 993\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\nfolder = \"INBOX\"\nfrom = [\"billing@example.test\"]\nsubject = [\"Invoice\"]\nhas_attachment = true\naction = \"mark_seen\"\narchive_mail = true\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mail-rules-project-config",
+      "cwd_files": {
+        ".symingest.toml": "ocr_lang = \"eng\"\n"
+      },
+      "skip_index": true,
+      "snapshot_home": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 0 account(s) at $ROOT/cwd/.symingest.toml\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/cwd/.symingest.toml\",\"accounts\":[],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "create"
+          ],
+          "stdin": "{\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}",
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"create\",\"config_path\":\"$ROOT/cwd/.symingest.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":true,\"warnings\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "list: 1 account(s) at $ROOT/cwd/.symingest.toml\n  alice@imap.example.test:993/INBOX\talice@imap.example.test:993/INBOX\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "rules",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"schema_version\":1,\"operation\":\"list\",\"config_path\":\"$ROOT/cwd/.symingest.toml\",\"accounts\":[{\"id\":\"alice@imap.example.test:993/INBOX\",\"host\":\"imap.example.test\",\"port\":993,\"username\":\"alice\",\"password_secret\":\"symvault://mail/alice\",\"folder\":\"INBOX\",\"from\":[\"billing@example.test\"],\"subject\":[\"Invoice\"],\"has_attachment\":true,\"action\":\"mark_seen\",\"move_to\":\"\",\"archive_mail\":true}],\"reload_required\":false,\"warnings\":[]}\n",
+          "stderr": ""
+        }
+      ]
+    }
+  ]
+}

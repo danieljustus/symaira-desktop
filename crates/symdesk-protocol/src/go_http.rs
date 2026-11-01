@@ -62,11 +62,15 @@ fn with_reason(mut response: Response, reason: &str) -> Response {
 /// Go writes these connection-level errors itself: plain text, no length,
 /// `Connection: close`.
 fn conn_error(status: StatusCode, reason: &str, body: &str) -> Response {
-    // A streamed body has no known length, so hyper (like Go) frames the
-    // reply by closing the connection instead of sending `Content-Length`.
+    // hyper frames a streamed HTTP/1.1 body as chunked, so the front door
+    // writes the reply itself (see `close_delimited_wire`); the body here is
+    // only what a unit test without a socket sees.
     let mut response = Response::new(Body::from_stream(OnceStream(Some(
         axum::body::Bytes::from(body.to_owned()),
     ))));
+    response
+        .extensions_mut()
+        .insert(CloseDelimited(body.to_owned()));
     *response.status_mut() = status;
     response.headers_mut().insert(
         header::CONTENT_TYPE,
@@ -76,6 +80,30 @@ fn conn_error(status: StatusCode, reason: &str, body: &str) -> Response {
         .headers_mut()
         .insert(header::CONNECTION, HeaderValue::from_static("close"));
     with_reason(response, reason)
+}
+
+/// Marks a reply Go writes with no length and `Connection: close`.
+#[derive(Clone)]
+struct CloseDelimited(String);
+
+/// The exact bytes Go's `http.Server` writes for a [`CloseDelimited`] reply:
+/// status line, `Content-Type`, `Connection: close`, no `Date`, no length.
+pub(crate) fn close_delimited_wire(response: &Response) -> Option<Vec<u8>> {
+    let body = response.extensions().get::<CloseDelimited>()?;
+    let reason = response
+        .extensions()
+        .get::<ReasonPhrase>()
+        .map_or_else(
+            || response.status().canonical_reason().unwrap_or("").to_owned(),
+            |phrase| String::from_utf8_lossy(phrase.as_bytes()).into_owned(),
+        );
+    let mut wire = format!(
+        "HTTP/1.1 {} {reason}\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n",
+        response.status().as_u16()
+    )
+    .into_bytes();
+    wire.extend_from_slice(body.0.as_bytes());
+    Some(wire)
 }
 
 struct OnceStream(Option<axum::body::Bytes>);

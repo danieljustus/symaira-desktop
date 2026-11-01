@@ -29,6 +29,9 @@ func httpStdSymlinks() map[string]string {
 	return map[string]string{"internal.md": "Hello.md", "escape.md": "$ROOT/outside.md"}
 }
 
+// httpVolatile masks every volatile value class a surface response may carry.
+var httpVolatile = []string{"time", "hex", "version", "date"}
+
 func httpAuth(name string) [][2]string {
 	if name == "" {
 		return nil
@@ -88,7 +91,7 @@ func httpRouteCases() []httpCase {
 				label := fmt.Sprintf("%s %s auth=%s", method, route.target, strings.ToLower(auth))
 				step := httpReq(label, method, route.target, httpAuth(auth), body)
 				// Snapshots and job/share documents carry volatile values.
-				step.Mask = []string{"time", "hex"}
+				step.Mask = httpVolatile
 				step.VolatileLength = true
 				steps = append(steps, step)
 			}
@@ -122,7 +125,7 @@ func httpPathCases() []httpCase {
 					body = "{}"
 				}
 				step := httpReq(fmt.Sprintf("%s %s", method, target), method, target, httpAuth("ADMIN"), body)
-				step.Mask = []string{"time", "hex"}
+				step.Mask = httpVolatile
 				step.VolatileLength = true
 				steps = append(steps, step)
 			}

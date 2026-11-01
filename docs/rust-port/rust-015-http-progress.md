@@ -36,3 +36,32 @@ Go observations as a Go-recorded process fixture that the Rust replay checks wit
 ## Progress log
 
 - Slice 1 (front door): `crates/symdesk-protocol/src/go_http.rs`; existing 291-case `make http-differential` still passes.
+
+## Checkpoint (session end; branch rebased on main 7145e89b, PG-001 merged)
+
+Done:
+- Go harness `cmd/symdesk/http_process_port_test.go` (+ `http_surface_port_test.go`): real Go `symdesk serve`, raw socket,
+  25 cases / 613 steps in `testdata/port/http/http-surface-process.json`. Symlink-target leak fixed (readlink target goes
+  through `maskText`; fixture regenerated, no absolute temp paths). New mask classes `version` and `date`; fixture regenerated.
+- `go vet ./cmd/symdesk` clean; `gofmt -l` lists only two pre-existing files (`ask_agent_port_test.go`, `ask_cancel_port_test.go`).
+- Rust replay `crates/symdesk-cli/tests/http_surface.rs` + engine `tests/support/http_replay.rs` (dev-deps `regex`, `sha2`);
+  the schema already supports fs/tree/restart(rotate)/shutdown/raw steps for the later cases.
+- Rust server: `server_state.rs` (job-store dir, permissions manager, one-time legacy-token admin migration into
+  `.symdesk/users.json` with the `storage_entries` SQLite `state.db` marker); Go-exact close-delimited connection errors
+  written on the socket (`go_http::close_delimited_wire`, `RawAnswered`), replacing the chunked framing listed above as a limit.
+- Go `serve` never sets `ServerConfig.StateDSN`, so no route uses PostgreSQL; nothing to wire to `symdesk-storage`.
+
+Last check (macOS, http_surface test): FAILS with 2 divergences left of 613 steps (35 before the fixes):
+1. `POST /api/v1/jobs/retry?id=000...0`: Go `{"error":"openat <id>.json: no such file or directory"}`, Rust `job not found`.
+2. `GET /api/v1/notebooks/research%00`: Go `notebook not found: open vault file $VAULT/notebooks/research\u0000.md: openat notebooks/research\u0000.md: invalid argument`, Rust `notebook not found`
+   (Go also has the `... is not a notebook note (type=...)` and read-error texts; reuse the `symdesk_vault::typed` notebook resolve).
+
+Remaining (not started): fixture cases for HTTP-002 (rotation via restart+rotate, named users), HTTP-003 (file paths,
+preconditions, limits, command), HTTP-005 (shares create/list/revoke/expire/access, legacy `token` field cleared on start),
+HTTP-006 (fake loopback providers; needs a fake-provider step in the Go harness and replay), HTTP-007 (Host, Origin, body,
+timeouts, shutdown, TLS: Rust `serve` has no `--tls-cert/--tls-key`, nor `--local-worker`), SEC-002 failure paths.
+Not run after the server_state/raw-error changes: `representative-differential` (291 cases), `http-differential`. Not done:
+`port-fixtures-check` digest re-freeze, matrix rows HTTP-001/002/003/005/006/007/SEC-002 and the RUST-015 note, the two-host
+local gate, clippy/fmt of the new Rust. Declared: Go's fail-open `CanRead/CanWrite` on an unreadable `permissions.json`
+stays unported (Rust keeps fail-closed).
+Cleanup owed: target dir `/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/builds/symaira-desktop/.worktrees/r015-http`; no Docker volumes were created.

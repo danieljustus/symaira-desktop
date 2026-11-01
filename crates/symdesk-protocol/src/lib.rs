@@ -14,6 +14,7 @@ mod native_mime;
 mod retrieval_embedding;
 mod retrieval_query_expansion;
 mod retrieval_search;
+mod server_state;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
@@ -360,6 +361,10 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         return Err("vault root is not a directory".to_owned());
     }
     validate_tokens(&config.token, config.worker_token.as_deref())?;
+    // Go's `NewServer` order: sidecar database, job store, permissions and the
+    // legacy admin migration, share store, then the index refresh.
+    server_state::create_job_store(&root)?;
+    server_state::initialise_permissions(&root, &config.token)?;
     refresh_server_index(&root)?;
     let address: SocketAddr = config
         .listen_address
@@ -451,6 +456,15 @@ async fn serve(
                 continue;
             }
         };
+        // A second handle on the socket lets the front door write Go's
+        // close-delimited connection errors byte for byte (hyper frames
+        // every streamed HTTP/1.1 body as chunked).
+        let raw_socket: Option<Arc<std::net::TcpStream>> = linger_socket
+            .as_ref()
+            .and_then(|socket| socket.try_clone().ok())
+            .map(Arc::new);
+        let raw_answered = Arc::new(AtomicBool::new(false));
+        let request_raw_answered = Arc::clone(&raw_answered);
         let io = TokioIo::new(io);
         let unread_body = ConnectionLinger::default();
         let request_linger = unread_body.clone();
@@ -463,6 +477,8 @@ async fn serve(
         let tower_service = tower::service_fn(move |request: Request<hyper::body::Incoming>| {
             let service = tower_service.clone();
             let linger = request_linger.clone();
+            let raw_socket = raw_socket.clone();
+            let raw_answered = Arc::clone(&request_raw_answered);
             async move {
                 let complete = Arc::new(AtomicBool::new(false));
                 let body_complete = Arc::clone(&complete);
@@ -480,8 +496,21 @@ async fn serve(
                 let request = Request::from_parts(parts, body);
                 let mut response = match rejected {
                     Some(response) => response,
-                    None => service.oneshot(request).await?,
+                    None => service
+                        .oneshot(request)
+                        .await
+                        .unwrap_or_else(|error| match error {}),
                 };
+                if let Some(wire) = go_http::close_delimited_wire(&response) {
+                    // Go writes these itself and closes after a bounded
+                    // linger; the hyper response is never sent.
+                    if let Some(socket) = raw_socket.as_deref() {
+                        raw_answered.store(true, Ordering::SeqCst);
+                        linger.set();
+                        write_raw(socket, &wire).await;
+                        return Err(RawAnswered);
+                    }
+                }
                 go_http::apply_go_reason_phrase(&mut response);
                 if !complete.load(Ordering::SeqCst) {
                     linger.set();
@@ -491,7 +520,7 @@ async fn serve(
                         .headers_mut()
                         .insert(header::CONNECTION, HeaderValue::from_static("close"));
                 }
-                Ok::<_, std::convert::Infallible>(response)
+                Ok::<_, RawAnswered>(response)
             }
         });
         let hyper_service = TowerToHyperService::new(tower_service);
@@ -502,7 +531,9 @@ async fn serve(
             let mut connection = std::pin::pin!(connection);
             tokio::select! {
                 result = &mut connection => {
-                    if let Err(error) = result {
+                    if let Err(error) = result
+                        && !raw_answered.load(Ordering::SeqCst)
+                    {
                         eprintln!("HTTP connection failed: {error}");
                     }
                 }
@@ -519,6 +550,34 @@ async fn serve(
         });
     }
     Ok(())
+}
+
+/// Ends a connection whose reply the front door wrote on the socket itself.
+#[derive(Debug)]
+struct RawAnswered;
+
+impl std::fmt::Display for RawAnswered {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("connection answered at the front door")
+    }
+}
+
+impl std::error::Error for RawAnswered {}
+
+/// Writes `bytes` to a non-blocking socket, waiting out a full send buffer.
+async fn write_raw(mut socket: &std::net::TcpStream, bytes: &[u8]) {
+    use std::io::Write as _;
+    let mut written = 0;
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    while written < bytes.len() && tokio::time::Instant::now() < deadline {
+        match socket.write(&bytes[written..]) {
+            Ok(0) | Err(_) => break,
+            Ok(count) => written += count,
+        }
+        if written < bytes.len() {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+    }
 }
 
 /// Observes actual body consumption without buffering or changing body limits.

@@ -145,7 +145,8 @@ type httpStep struct {
 	// ReadMS bounds the wait for the response (default 5000).
 	ReadMS int `json:"read_ms,omitempty"`
 	// Mask lists the volatile value classes of this step: "time" hides RFC 3339
-	// timestamps, "hex" hides runs of 32 or more lower-case hex digits.
+	// timestamps, "hex" hides runs of 32 or more lower-case hex digits,
+	// "version" the status document's version and "date" HTTP dates.
 	Mask []string `json:"mask,omitempty"`
 	// VolatileLength drops Content-Length from the comparison.
 	VolatileLength bool `json:"volatile_length,omitempty"`
@@ -188,6 +189,10 @@ var (
 	httpRFC3339 = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})`)
 	httpHexRun  = regexp.MustCompile(`[0-9a-f]{32,}`)
 	httpBoundry = regexp.MustCompile(`boundary=[0-9a-f]+`)
+	// httpVersion hides the build version of the JSON status document: the Go
+	// test binary reports "(devel)", the Rust binary its package version.
+	httpVersion = regexp.MustCompile(`"version":"[^"]*"`)
+	httpDate    = regexp.MustCompile(`[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT`)
 )
 
 type httpServer struct {
@@ -445,6 +450,10 @@ func (s *httpServer) maskText(text string, mask []string) string {
 			text = httpRFC3339.ReplaceAllString(text, "$$TIME")
 		case "hex":
 			text = httpHexRun.ReplaceAllString(text, "$$HEX")
+		case "version":
+			text = httpVersion.ReplaceAllString(text, `"version":"$$VERSION"`)
+		case "date":
+			text = httpDate.ReplaceAllString(text, "$$DATE")
 		}
 	}
 	return text

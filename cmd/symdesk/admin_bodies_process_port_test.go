@@ -399,10 +399,14 @@ func sortAdminLines(enabled bool, text string) string {
 
 // normalizeAdminText hides the random identifiers Go draws (24 lowercase hex
 // digits), the wall-clock timestamps of text listings and the measured
-// duration of a report. A volatile case also hides 64-digit hex values.
+// duration of a report. A volatile case also hides 64-digit hex values and the
+// random order of the migrated dataset policy fields.
 func normalizeAdminText(volatile bool, text string) string {
 	if volatile {
 		text = adminSHARE.ReplaceAllString(text, "$$SHA256")
+		// The dataset policy migration ranges over a two-entry map, so Go
+		// writes the two fields in either order from run to run.
+		text = strings.ReplaceAll(text, "retention_rule: \"default\"\nsensitivity: \"restricted\"", "sensitivity: \"restricted\"\nretention_rule: \"default\"")
 	}
 	text = adminRandomRE.ReplaceAllString(text, "$$RAND24")
 	text = adminLocalTimeRE.ReplaceAllString(text, "$$LOCALTIME")

@@ -35,6 +35,21 @@ pub fn run_related(command: &ArgMatches, vault: Option<&str>, output_json: bool)
     crate::related_cli::run(files[0], vault, output_json)
 }
 
+/// Go `initServiceDeps`: the resolved vault root and its open sidecar.
+pub(crate) fn service_deps(
+    vault: Option<&str>,
+) -> Result<(std::path::PathBuf, symdesk_index::Sidecar), String> {
+    let root = resolve_vault(vault).map_err(|e| {
+        if e.starts_with("vault path not configured") {
+            "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned()
+        } else {
+            crate::index_cli::index_vault_error(vault, &e)
+        }
+    })?;
+    let sidecar = open_for_vault(&root).map_err(|e| e.to_string())?;
+    Ok((root, sidecar))
+}
+
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
     if let Some(("related", related)) = command.subcommand() {
         return run_related(related, vault, output_json);

@@ -2,6 +2,606 @@
   "schema_version": 1,
   "cases": [
     {
+      "name": "dataset-list-basic",
+      "files": {
+        "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+        "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"2026-01-01T00:00:00Z\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"2026-02-03T04:05:06Z\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n---\n\n# Body of alpha\n",
+        "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+        "datasets/notes.txt": "not a handle\n",
+        "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\n---\n\n# Body of orders\n",
+        "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+        "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+        "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Slug:alpha Title:alpha lower Path:datasets/alpha.md Source:datasets/alpha/source.csv Rows:0 Columns:map[id:{Type:number Label:Identifier Options:[] Description: Default:} state:{Type:select Label: Options:[open closed] Description:Order state Default:open}] IdentityField:id Sensitivity:internal RetentionRule:default Provenance:{ImportedAt:$TIME SourceName:erp \u003cexport\u003e SourceSHA256:$SHA256}} {Slug:beta-key Title:Beta ünï Path:datasets/beta-key.md Source:datasets/beta-key/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:confidential RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}} {Slug:orders Title:Orders Path:datasets/orders.md Source:datasets/orders/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}} {Slug:zeta Title:Zeta Path:datasets/zeta.md Source:datasets/zeta/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}}]\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"slug\":\"alpha\",\"title\":\"alpha lower\",\"path\":\"datasets/alpha.md\",\"source\":\"datasets/alpha/source.csv\",\"rows\":0,\"columns\":{\"id\":{\"type\":\"number\",\"label\":\"Identifier\"},\"state\":{\"type\":\"select\",\"options\":[\"open\",\"closed\"],\"description\":\"Order state\",\"default\":\"open\"}},\"identity_field\":\"id\",\"sensitivity\":\"internal\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"$TIME\",\"source_name\":\"erp \\u003cexport\\u003e\",\"source_sha256\":\"$SHA256\"}},{\"slug\":\"beta-key\",\"title\":\"Beta ünï\",\"path\":\"datasets/beta-key.md\",\"source\":\"datasets/beta-key/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"confidential\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}},{\"slug\":\"orders\",\"title\":\"Orders\",\"path\":\"datasets/orders.md\",\"source\":\"datasets/orders/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}},{\"slug\":\"zeta\",\"title\":\"Zeta\",\"path\":\"datasets/zeta.md\",\"source\":\"datasets/zeta/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}}]\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "describe",
+            "alpha"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{DatasetSummary:{Slug:alpha Title:alpha lower Path:datasets/alpha.md Source:datasets/alpha/source.csv Rows:0 Columns:map[id:{Type:number Label:Identifier Options:[] Description: Default:} state:{Type:select Label: Options:[open closed] Description:Order state Default:open}] IdentityField:id Sensitivity:internal RetentionRule:default Provenance:{ImportedAt:$TIME SourceName:erp \u003cexport\u003e SourceSHA256:$SHA256}} Coverage:{From:2026-01-01 To:2026-06-30} RefreshCommand:}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "describe",
+            "alpha"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"alpha\",\"title\":\"alpha lower\",\"path\":\"datasets/alpha.md\",\"source\":\"datasets/alpha/source.csv\",\"rows\":0,\"columns\":{\"id\":{\"type\":\"number\",\"label\":\"Identifier\"},\"state\":{\"type\":\"select\",\"options\":[\"open\",\"closed\"],\"description\":\"Order state\",\"default\":\"open\"}},\"identity_field\":\"id\",\"sensitivity\":\"internal\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"$TIME\",\"source_name\":\"erp \\u003cexport\\u003e\",\"source_sha256\":\"$SHA256\"},\"coverage\":{\"from\":\"2026-01-01\",\"to\":\"2026-06-30\"}}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "describe",
+            "orders"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{DatasetSummary:{Slug:orders Title:Orders Path:datasets/orders.md Source:datasets/orders/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}} Coverage:{From: To:} RefreshCommand:}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "describe",
+            "orders"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"orders\",\"title\":\"Orders\",\"path\":\"datasets/orders.md\",\"source\":\"datasets/orders/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"},\"coverage\":{}}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "describe",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset \"missing\" not found: open vault file $ROOT/vault/datasets/missing.md: openat datasets/missing.md: no such file or directory\n",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "describe",
+            "missing"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset \\\"missing\\\" not found: open vault file $ROOT/vault/datasets/missing.md: openat datasets/missing.md: no such file or directory\"}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Slug:alpha Title:alpha lower Path:datasets/alpha.md Source:datasets/alpha/source.csv Rows:0 Columns:map[id:{Type:number Label:Identifier Options:[] Description: Default:} state:{Type:select Label: Options:[open closed] Description:Order state Default:open}] IdentityField:id Sensitivity:internal RetentionRule:default Provenance:{ImportedAt:$TIME SourceName:erp \u003cexport\u003e SourceSHA256:$SHA256}} {Slug:beta-key Title:Beta ünï Path:datasets/beta-key.md Source:datasets/beta-key/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:confidential RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}} {Slug:orders Title:Orders Path:datasets/orders.md Source:datasets/orders/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}} {Slug:zeta Title:Zeta Path:datasets/zeta.md Source:datasets/zeta/source.csv Rows:0 Columns:map[] IdentityField: Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt: SourceName: SourceSHA256:}}]\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"slug\":\"alpha\",\"title\":\"alpha lower\",\"path\":\"datasets/alpha.md\",\"source\":\"datasets/alpha/source.csv\",\"rows\":0,\"columns\":{\"id\":{\"type\":\"number\",\"label\":\"Identifier\"},\"state\":{\"type\":\"select\",\"options\":[\"open\",\"closed\"],\"description\":\"Order state\",\"default\":\"open\"}},\"identity_field\":\"id\",\"sensitivity\":\"internal\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"$TIME\",\"source_name\":\"erp \\u003cexport\\u003e\",\"source_sha256\":\"$SHA256\"}},{\"slug\":\"beta-key\",\"title\":\"Beta ünï\",\"path\":\"datasets/beta-key.md\",\"source\":\"datasets/beta-key/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"confidential\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}},{\"slug\":\"orders\",\"title\":\"Orders\",\"path\":\"datasets/orders.md\",\"source\":\"datasets/orders/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}},{\"slug\":\"zeta\",\"title\":\"Zeta\",\"path\":\"datasets/zeta.md\",\"source\":\"datasets/zeta/source.csv\",\"rows\":0,\"columns\":null,\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"\",\"source_sha256\":\"\"}}]\n",
+          "stderr": "",
+          "vault": {
+            "datasets/UPPER.MD": "---\ntype: dataset\ntitle: Upper\ndataset_id: upper\nsource: datasets/upper/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of upper\n",
+            "datasets/alpha.md": "---\ntype: dataset\ntitle: alpha lower\ndataset_id: alpha\nsource: datasets/alpha/source.csv\nsensitivity: internal\nretention_rule: default\ncreated: \"$TIME\"\nidentity_field: id\nrefresh: make refresh\nschema:\n  id:\n    type: number\n    label: Identifier\n  state:\n    type: select\n    options: [open, closed]\n    description: Order state\n    default: open\ncoverage:\n  from: \"2026-01-01\"\n  to: \"2026-06-30\"\nprovenance:\n  imported_at: \"$TIME\"\n  source_name: erp \u003cexport\u003e\n  source_sha256: $SHA256\n---\n\n# Body of alpha\n",
+            "datasets/beta-key.md": "---\ntype: dataset\ntitle: Beta ünï\ndataset_id: beta-key\nsource: datasets/beta-key/source.csv\nsensitivity: confidential\nretention_rule: default\n---\n\n# Body of beta-key\n",
+            "datasets/notes.txt": "not a handle\n",
+            "datasets/orders.md": "---\ntype: dataset\ntitle: Orders\ndataset_id: orders\nsource: datasets/orders/source.csv\ncustom_policy: keep-me\nsensitivity: \"restricted\"\nretention_rule: \"default\"\n---\n\n# Body of orders\n",
+            "datasets/sub/deep.md": "---\ntype: dataset\ntitle: Deep\ndataset_id: deep\nsource: datasets/deep/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of deep\n",
+            "datasets/zeta.md": "---\ntype: dataset\ntitle: Zeta\ndataset_id: zeta\nsource: datasets/zeta/source.csv\nsensitivity: restricted\nretention_rule: default\n---\n\n# Body of zeta\n",
+            "other/plain.md": "---\ntitle: Plain\n---\nbody\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "dataset-list-synced",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Slug:orders Rows:2 ImportedRows:2 RawPath:datasets/orders/2026-01-02.csv HandlePath:datasets/orders.md Idempotent:false}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"orders\",\"rows\":2,\"imported_rows\":2,\"raw_path\":\"datasets/orders/2026-01-02.csv\",\"handle_path\":\"datasets/orders.md\",\"idempotent\":true}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Slug:orders Title:Orders Path:datasets/orders.md Source:datasets/orders/2026-01-02.csv Rows:2 Columns:map[id:{Type:number Label:id Options:[] Description: Default:} name:{Type:text Label:Name Options:[] Description: Default:}] IdentityField:id Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt:$TIME SourceName:feed SourceSHA256:$SHA256}}]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"slug\":\"orders\",\"title\":\"Orders\",\"path\":\"datasets/orders.md\",\"source\":\"datasets/orders/2026-01-02.csv\",\"rows\":2,\"columns\":{\"id\":{\"type\":\"number\",\"label\":\"id\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}},\"identity_field\":\"id\",\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"$TIME\",\"source_name\":\"feed\",\"source_sha256\":\"$SHA256\"}}]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        },
+        {
+          "args": [
+            "dataset",
+            "describe",
+            "orders"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{DatasetSummary:{Slug:orders Title:Orders Path:datasets/orders.md Source:datasets/orders/2026-01-02.csv Rows:2 Columns:map[id:{Type:number Label:id Options:[] Description: Default:} name:{Type:text Label:Name Options:[] Description: Default:}] IdentityField:id Sensitivity:restricted RetentionRule:default Provenance:{ImportedAt:$TIME SourceName:feed SourceSHA256:$SHA256}} Coverage:{From: To:} RefreshCommand:}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "describe",
+            "orders"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"orders\",\"title\":\"Orders\",\"path\":\"datasets/orders.md\",\"source\":\"datasets/orders/2026-01-02.csv\",\"rows\":2,\"columns\":{\"id\":{\"type\":\"number\",\"label\":\"id\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}},\"identity_field\":\"id\",\"sensitivity\":\"restricted\",\"retention_rule\":\"default\",\"provenance\":{\"imported_at\":\"$TIME\",\"source_name\":\"feed\",\"source_sha256\":\"$SHA256\"},\"coverage\":{}}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n",
+            "datasets/orders.md": "---\ncoverage: {}\ncreated: \"$TIME\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"$TIME\"\n    source_name: feed\n    source_sha256: $SHA256\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: id\n    name:\n        type: text\n        label: Name\nsensitivity: restricted\nsource: datasets/orders/2026-01-02.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-02.csv`\n",
+            "datasets/orders/2026-01-02.csv": "id,name\n1,first\n2,second\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "dataset-list-diagnostics",
+      "files": {
+        "datasets/badpolicy.md": "---\ntype: dataset\ntitle: Bad\ndataset_id: badpolicy\nsource: datasets/badpolicy/source.csv\nsensitivity: ultra\nretention_rule: default\n---\n\n# Body of badpolicy\n",
+        "datasets/good.md": "---\ntype: dataset\ntitle: Good\ndataset_id: good\nsource: datasets/good/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of good\n",
+        "datasets/half.md": "---\ntype: dataset\ntitle: Half\ndataset_id: half\nsource: datasets/half/source.csv\nsensitivity: internal\n---\n\n# Body of half\n",
+        "datasets/half2.md": "---\ntype: dataset\ntitle: Half Two\ndataset_id: half2\nsource: datasets/half2/source.csv\nretention_rule: default\n---\n\n# Body of half2\n",
+        "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+        "datasets/nofm.md": "no frontmatter\n",
+        "datasets/notdataset.md": "---\ntype: note\ntitle: Not\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset list diagnostics: datasets/badpolicy.md: dataset handle datasets/badpolicy.md: invalid dataset sensitivity \"ultra\" (valid: public, internal, confidential, restricted)\ndatasets/half.md: dataset handle datasets/half.md: dataset handle policy metadata is incomplete; missing retention_rule\ndatasets/half2.md: dataset handle datasets/half2.md: dataset handle policy metadata is incomplete; missing sensitivity\ndatasets/nofm.md: datasets/nofm.md is not a dataset handle\ndatasets/notdataset.md: datasets/notdataset.md is not a dataset handle\n",
+          "vault": {
+            "datasets/badpolicy.md": "---\ntype: dataset\ntitle: Bad\ndataset_id: badpolicy\nsource: datasets/badpolicy/source.csv\nsensitivity: ultra\nretention_rule: default\n---\n\n# Body of badpolicy\n",
+            "datasets/good.md": "---\ntype: dataset\ntitle: Good\ndataset_id: good\nsource: datasets/good/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of good\n",
+            "datasets/half.md": "---\ntype: dataset\ntitle: Half\ndataset_id: half\nsource: datasets/half/source.csv\nsensitivity: internal\n---\n\n# Body of half\n",
+            "datasets/half2.md": "---\ntype: dataset\ntitle: Half Two\ndataset_id: half2\nsource: datasets/half2/source.csv\nretention_rule: default\n---\n\n# Body of half2\n",
+            "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+            "datasets/nofm.md": "no frontmatter\n",
+            "datasets/notdataset.md": "---\ntype: note\ntitle: Not\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset list diagnostics: datasets/badpolicy.md: dataset handle datasets/badpolicy.md: invalid dataset sensitivity \\\"ultra\\\" (valid: public, internal, confidential, restricted)\\ndatasets/half.md: dataset handle datasets/half.md: dataset handle policy metadata is incomplete; missing retention_rule\\ndatasets/half2.md: dataset handle datasets/half2.md: dataset handle policy metadata is incomplete; missing sensitivity\\ndatasets/nofm.md: datasets/nofm.md is not a dataset handle\\ndatasets/notdataset.md: datasets/notdataset.md is not a dataset handle\"}\n",
+          "stderr": "",
+          "vault": {
+            "datasets/badpolicy.md": "---\ntype: dataset\ntitle: Bad\ndataset_id: badpolicy\nsource: datasets/badpolicy/source.csv\nsensitivity: ultra\nretention_rule: default\n---\n\n# Body of badpolicy\n",
+            "datasets/good.md": "---\ntype: dataset\ntitle: Good\ndataset_id: good\nsource: datasets/good/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of good\n",
+            "datasets/half.md": "---\ntype: dataset\ntitle: Half\ndataset_id: half\nsource: datasets/half/source.csv\nsensitivity: internal\n---\n\n# Body of half\n",
+            "datasets/half2.md": "---\ntype: dataset\ntitle: Half Two\ndataset_id: half2\nsource: datasets/half2/source.csv\nretention_rule: default\n---\n\n# Body of half2\n",
+            "datasets/mismatch.md": "---\ntype: dataset\ntitle: Mismatch\ndataset_id: other\nsource: datasets/other/source.csv\nsensitivity: internal\nretention_rule: default\n---\n\n# Body of other\n",
+            "datasets/nofm.md": "no frontmatter\n",
+            "datasets/notdataset.md": "---\ntype: note\ntitle: Not\n---\nbody\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "dataset-list-empty",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "---\ntitle: A\n---\nbody\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "dataset-list-arguments",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk dataset list\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk dataset list\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "dataset",
+            "list",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n"
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "dataset"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage bounded, Markdown-backed datasets\n\nUsage:\n  symdesk dataset [command]\n\nAvailable Commands:\n  describe    Describe a dataset\n  list        List datasets\n  query       Query a dataset with bounded structured filters and aggregates\n  sync        Sync producer rows with explicit provenance\n\nFlags:\n  -h, --help   help for dataset\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk dataset [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "dataset"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage bounded, Markdown-backed datasets\n\nUsage:\n  symdesk dataset [command]\n\nAvailable Commands:\n  describe    Describe a dataset\n  list        List datasets\n  query       Query a dataset with bounded structured filters and aggregates\n  sync        Sync producer rows with explicit provenance\n\nFlags:\n  -h, --help   help for dataset\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk dataset [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "dataset-list-without-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "dataset-datasets-is-file",
+      "files": {
+        "datasets": "a file, not a directory\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read vault directory datasets: fdopendir $ROOT/vault/datasets: not a directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read vault directory datasets: fdopendir $ROOT/vault/datasets: not a directory\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "demo-init-small",
       "skip_index": true,
       "no_vault": true,

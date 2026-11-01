@@ -36,12 +36,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 32;
-const EXPECTED_STEPS: usize = 354;
+const EXPECTED_CASES: usize = 39;
+const EXPECTED_STEPS: usize = 386;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 147;
+const EXPECTED_FAILING_STEPS: usize = 159;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 254;
+const EXPECTED_SNAPSHOT_STEPS: usize = 276;
 /// Steps that also compare the working-directory tree after the step.
 const EXPECTED_CWD_STEPS: usize = 50;
 
@@ -445,7 +445,12 @@ fn normalize_duration(text: &str) -> String {
 /// Go: `normalizeAdminText` (volatile cases hide 64-digit hex values first).
 fn normalize_text(text: &str, volatile: bool) -> String {
     let text = if volatile {
-        normalize_sha256(text)
+        // The dataset policy migration ranges over a two-entry Go map, so Go
+        // writes the two fields in either order from run to run.
+        normalize_sha256(text).replace(
+            "retention_rule: \"default\"\nsensitivity: \"restricted\"",
+            "sensitivity: \"restricted\"\nretention_rule: \"default\"",
+        )
     } else {
         text.to_owned()
     };

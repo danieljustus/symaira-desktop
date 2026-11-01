@@ -21,7 +21,7 @@ silent `_ => Ok` arm.
 | `vault health` | this slice |
 | `relations contact [link|unlink]` | done (contact commit) |
 | `doctor` | done (doctor commit) |
-| `dataset list` | this slice |
+| `dataset list` | done (dataset commit) |
 | `ai autofill` | this slice |
 | `notebook generate` | this slice |
 | `export` (group node) | this slice (verify Go behavior) |
@@ -40,7 +40,7 @@ silent `_ => Ok` arm.
 
 ## Remaining
 
-- vault health, dataset list, ai autofill, notebook generate, export.
+- vault health, ai autofill, notebook generate, export.
 
 - doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
   fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
@@ -50,7 +50,15 @@ silent `_ => Ok` arm.
   `Resolver::inspect_tool` (symdesk-core) is the port of `compose.InspectTool`; `index_cli::retrieval_health`
   and `config_paths::ingest_archive_path` expose the retrieval snapshot and the ingest archive resolution.
 
+- dataset list / describe (text and `--json`): 3 migration cases + arguments/empty/no-vault/`datasets`-is-a-file,
+  7 cases / 32 steps. `dataset describe` now goes through the same legacy-policy migration as Go
+  (`readDatasetHandleWithMigration`) and wraps its error as `dataset "x" not found: <cause>`.
+
 ## Declared limits
+
+- dataset policy migration: Go ranges over a two-entry map, so it writes `sensitivity` / `retention_rule` in
+  random order. The Rust port writes `sensitivity` first; the harness folds the swapped adjacent pair
+  (`normalizeAdminText` / `normalize_text`, volatile cases) so the Go recorder is deterministic.
 
 - doctor: `parse_errors[].message` for malformed frontmatter and `workspace_tools[].probe_error` for a
   failing/non-JSON `version --json` probe carry the Go yaml.v3 / `os/exec` / `encoding/json` wording; the

@@ -17,6 +17,7 @@ use crate::{emit_error, write_go_json, write_stdout};
 pub fn cli() -> Command {
     Command::new("dataset")
         .about("Manage bounded, Markdown-backed datasets")
+        .subcommand(Command::new("list").arg(Arg::new("extra").num_args(0..).hide(true)))
         .subcommand(
             Command::new("sync")
                 .about("Sync producer rows with explicit provenance")
@@ -66,6 +67,7 @@ pub fn cli() -> Command {
 
 pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
     match command.subcommand() {
+        Some(("list", _)) => run_list(vault, json_output),
         Some(("sync", args)) => run_sync(args, vault, json_output),
         Some(("describe", args)) => run_describe(args, vault, json_output),
         Some(("query", args)) => run_query(args, vault, json_output),
@@ -81,6 +83,7 @@ struct Description<'a> {
     path: &'a str,
     source: &'a str,
     rows: usize,
+    #[serde(serialize_with = "serialize_columns")]
     columns: &'a BTreeMap<String, PropertyConfig>,
     #[serde(skip_serializing_if = "str::is_empty")]
     identity_field: &'a str,
@@ -99,25 +102,11 @@ fn run_describe(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool)
         Err(error) => return emit_error(error, json_output),
     };
     let rel = format!("datasets/{slug}.md");
-    let safe_rel = Path::new(&rel);
-    if safe_rel
-        .components()
-        .any(|component| !matches!(component, std::path::Component::Normal(_)))
-    {
-        return emit_error(format!("dataset {slug:?} not found"), json_output);
-    }
-    let vault_dir = match Dir::open_ambient_dir(&root, ambient_authority()) {
-        Ok(dir) => dir,
-        Err(_) => return emit_error(format!("dataset {slug:?} not found"), json_output),
-    };
-    let bytes = match read_dataset_handle(&vault_dir, safe_rel) {
-        Ok(Some(bytes)) => bytes,
-        Ok(None) => return emit_error(format!("dataset {slug:?} not found"), json_output),
-        Err(error) => return emit_error(error, json_output),
-    };
-    let handle = match parse_dataset_handle(&rel, &bytes) {
+    let handle = match read_handle_with_migration(&root, &rel) {
         Ok(handle) => handle,
-        Err(error) => return emit_error(error.to_string(), json_output),
+        Err(error) => {
+            return emit_error(format!("dataset {slug:?} not found: {error}"), json_output);
+        }
     };
     let sidecar = match open_for_vault(&root) {
         Ok(sidecar) => sidecar,
@@ -145,8 +134,190 @@ fn run_describe(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool)
         write_go_json(&description)
     } else {
         write_stdout(format!(
-            "{}\n",
-            serde_json::to_string(&description).unwrap_or_default()
+            "&{{DatasetSummary:{} Coverage:{{From:{} To:{}}} RefreshCommand:{}}}\n",
+            summary_text(&handle, rows),
+            handle.coverage.from,
+            handle.coverage.to,
+            handle.refresh_command
+        ))
+    }
+}
+
+/// Go marshals a nil schema map as `null`; the handle carries no schema then.
+fn serialize_columns<S: serde::Serializer>(
+    columns: &BTreeMap<String, PropertyConfig>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    if columns.is_empty() {
+        serializer.serialize_none()
+    } else {
+        columns.serialize(serializer)
+    }
+}
+
+/// Go `service.DatasetSummary`.
+#[derive(Serialize)]
+struct Summary<'a> {
+    slug: &'a str,
+    title: &'a str,
+    path: &'a str,
+    source: &'a str,
+    rows: usize,
+    #[serde(serialize_with = "serialize_columns")]
+    columns: &'a BTreeMap<String, PropertyConfig>,
+    #[serde(skip_serializing_if = "str::is_empty")]
+    identity_field: &'a str,
+    sensitivity: &'a str,
+    retention_rule: &'a str,
+    provenance: &'a Provenance,
+}
+
+/// Go `fmt` `%+v` of a `DatasetSummary`.
+fn summary_text(handle: &symdesk_vault::DatasetHandle, rows: usize) -> String {
+    let columns = handle
+        .schema
+        .iter()
+        .map(|(name, column)| {
+            format!(
+                "{name}:{{Type:{} Label:{} Options:[{}] Description:{} Default:{}}}",
+                column.r#type,
+                column.label,
+                column.options.join(" "),
+                column.description,
+                column.default
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    format!(
+        "{{Slug:{} Title:{} Path:{} Source:{} Rows:{rows} Columns:map[{columns}] IdentityField:{} Sensitivity:{} RetentionRule:{} Provenance:{{ImportedAt:{} SourceName:{} SourceSHA256:{}}}}}",
+        handle.slug,
+        handle.title,
+        handle.path,
+        handle.source,
+        handle.identity_field,
+        handle.sensitivity,
+        handle.retention_rule,
+        handle.provenance.imported_at,
+        handle.provenance.source_name,
+        handle.provenance.source_sha256
+    )
+}
+
+/// Go `readDatasetHandleWithMigration`: read a handle and persist the exact
+/// legacy shape (neither policy field) with both fields.
+fn read_handle_with_migration(
+    root: &Path,
+    rel: &str,
+) -> Result<symdesk_vault::DatasetHandle, String> {
+    let path = symdesk_vault::secure_path(root, rel).map_err(|error| error.to_string())?;
+    let data = symdesk_render::export_vault::read_in_root(root, &path)?;
+    let handle = parse_dataset_handle(rel, &data).map_err(|error| error.to_string())?;
+    let document = symdesk_vault::parse_bytes(rel, &data).map_err(|error| error.to_string())?;
+    let legacy = !document.frontmatter.contains_key("sensitivity")
+        && !document.frontmatter.contains_key("retention_rule");
+    if !legacy {
+        return Ok(handle);
+    }
+    // Go ranges over a two-entry map; the recorded order is sensitivity first.
+    for (key, value) in [("sensitivity", "restricted"), ("retention_rule", "default")] {
+        let missing = BTreeMap::from([(key.to_owned(), noyalib::Value::String(value.to_owned()))]);
+        symdesk_vault::backfill_frontmatter(&path, &missing)
+            .map_err(|error| format!("migrate dataset policy metadata: {error}"))?;
+    }
+    let migrated = symdesk_render::export_vault::read_in_root(root, &path)
+        .map_err(|error| format!("verify migrated dataset handle: {error}"))?;
+    parse_dataset_handle(rel, &migrated)
+        .map_err(|error| format!("verify migrated dataset handle: {error}"))
+}
+
+fn run_list(vault: Option<&str>, json_output: bool) -> ExitCode {
+    let (root, mut sidecar) = match crate::relations_cli::service_deps(vault) {
+        Ok(deps) => deps,
+        Err(error) => return emit_error(error, json_output),
+    };
+    let outcome = list_datasets(&root, &sidecar);
+    if let Err(error) = sidecar.close() {
+        eprintln!("warning: failed to close sidecar database: {error}");
+    }
+    let handles = match outcome {
+        Ok(handles) => handles,
+        Err(error) => return emit_error(error, json_output),
+    };
+    if json_output {
+        let summaries: Vec<Summary<'_>> = handles
+            .iter()
+            .map(|(handle, rows)| Summary {
+                slug: &handle.slug,
+                title: &handle.title,
+                path: &handle.path,
+                source: &handle.source,
+                rows: *rows,
+                columns: &handle.schema,
+                identity_field: &handle.identity_field,
+                sensitivity: &handle.sensitivity,
+                retention_rule: &handle.retention_rule,
+                provenance: &handle.provenance,
+            })
+            .collect();
+        return write_go_json(&summaries);
+    }
+    write_stdout(format!(
+        "[{}]\n",
+        handles
+            .iter()
+            .map(|(handle, rows)| summary_text(handle, *rows))
+            .collect::<Vec<_>>()
+            .join(" ")
+    ))
+}
+
+/// Go `Service.DatasetList`.
+fn list_datasets(
+    root: &Path,
+    sidecar: &symdesk_index::Sidecar,
+) -> Result<Vec<(symdesk_vault::DatasetHandle, usize)>, String> {
+    let directory = root.join("datasets");
+    let list_error = |error: &std::io::Error| {
+        format!(
+            "read vault directory datasets: {}",
+            symdesk_vault::go_path_error("fdopendir", &directory, error)
+        )
+    };
+    let mut entries: Vec<_> = match fs::read_dir(&directory) {
+        Ok(entries) => entries
+            .collect::<Result<_, _>>()
+            .map_err(|error| list_error(&error))?,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(list_error(&error)),
+    };
+    entries.sort_by_key(fs::DirEntry::file_name);
+    let mut result = Vec::new();
+    let mut diagnostics = Vec::new();
+    for entry in entries {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let is_directory = entry.file_type().is_ok_and(|kind| kind.is_dir());
+        if is_directory || !name.ends_with(".md") {
+            continue;
+        }
+        let rel = format!("datasets/{name}");
+        match read_handle_with_migration(root, &rel) {
+            Err(error) => diagnostics.push(format!("{rel}: {error}")),
+            Ok(handle) => {
+                let rows = sidecar
+                    .dataset_query_page(&handle.slug, 0)
+                    .map_or(0, |(rows, _)| rows);
+                result.push((handle, rows));
+            }
+        }
+    }
+    result.sort_by_key(|(handle, _)| symdesk_vault::go_lowercase(&handle.title));
+    if diagnostics.is_empty() {
+        Ok(result)
+    } else {
+        Err(format!(
+            "dataset list diagnostics: {}",
+            diagnostics.join("\n")
         ))
     }
 }

@@ -210,6 +210,38 @@ fn pipeline_for(resolved: &Resolved, store: Store) -> Pipeline {
     pipeline
 }
 
+/// Go `service.Ingest`: run the pipeline, index the new note and journal it.
+/// Returns the note's vault-relative path.
+pub fn service_ingest(
+    root: &std::path::Path,
+    sidecar: &mut symdesk_index::Sidecar,
+    source: &str,
+) -> Result<String, String> {
+    let root_text = root.to_string_lossy().into_owned();
+    let resolved = resolve(&root_text)?;
+    if resolved.vault.is_empty() {
+        return Err("no vault configured".to_owned());
+    }
+    let absolute = go_abs(source)
+        .map_err(|error| format!("invalid source path {}: {error}", go_quote(source)))?;
+    let store = open_store(&resolved)?;
+    let pipeline = pipeline_for(&resolved, store);
+    let result = pipeline
+        .ingest(&absolute, None)
+        .map_err(|error: PipelineError| error.to_string())?;
+    let rel = if result.vault_path.starts_with('/') {
+        go_rel(&root_text, &result.vault_path).unwrap_or_else(|| result.vault_path.clone())
+    } else {
+        result.vault_path.clone()
+    };
+    // Index the new note (best effort) and journal the ingest.
+    if let Ok(path) = symdesk_vault::secure_path(root, &rel) {
+        let _ = crate::mutate_cli::reindex(sidecar, &path);
+    }
+    let _ = append_activity(root, "file_added", &rel, "", "ingested document");
+    Ok(rel)
+}
+
 fn ingest_file(command: &ArgMatches, vault: Option<&str>, json: bool) -> Result<ExitCode, String> {
     let args = positional(command);
     let Some(source) = args.first() else {
@@ -217,33 +249,7 @@ fn ingest_file(command: &ArgMatches, vault: Option<&str>, json: bool) -> Result<
         return Ok(crate::help_cli::render("ingest"));
     };
     let (root, mut sidecar) = init_service_deps(vault)?;
-    let outcome = (|| {
-        let root_text = root.to_string_lossy().into_owned();
-        let resolved = resolve(&root_text)?;
-        if resolved.vault.is_empty() {
-            return Err("no vault configured".to_owned());
-        }
-        let absolute = go_abs(source)
-            .map_err(|error| format!("invalid source path {}: {error}", go_quote(source)))?;
-        let store = open_store(&resolved)?;
-        let pipeline = pipeline_for(&resolved, store);
-        let result = pipeline
-            .ingest(&absolute, None)
-            .map_err(|error: PipelineError| error.to_string())?;
-        let rel = if result.vault_path.starts_with('/') {
-            go_rel(&root_text, &result.vault_path).unwrap_or_else(|| result.vault_path.clone())
-        } else {
-            result.vault_path.clone()
-        };
-        // Index the new note (best effort) and journal the ingest.
-        if let Ok(path) = symdesk_vault::secure_path(&root, &rel)
-            && let Err(error) = crate::mutate_cli::reindex(&mut sidecar, &path)
-        {
-            let _ = error;
-        }
-        let _ = append_activity(&root, "file_added", &rel, "", "ingested document");
-        Ok(rel)
-    })();
+    let outcome = service_ingest(&root, &mut sidecar, source);
     close_sidecar(sidecar);
     let rel = outcome?;
     if json {

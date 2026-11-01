@@ -24,6 +24,7 @@ mod ingest_cli;
 mod ingest_common;
 mod lifecycle;
 mod links_cli;
+mod mail_cli;
 mod mail_rules_cli;
 mod mcp;
 mod mutate_cli;
@@ -244,6 +245,11 @@ fn main() -> ExitCode {
         ),
         Some(("mail", command)) => match command.subcommand() {
             Some(("rules", sub)) => mail_rules_cli::run(sub, output_json),
+            Some((name @ ("status" | "fetch"), _)) => mail_cli::run(
+                name,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            ),
             _ => process_exit(CoreExitCode::Ok),
         },
         Some(("consume", command)) => consume_cli::run(
@@ -709,7 +715,12 @@ fn cli() -> Command {
         .subcommand(consume_cli::cli())
         .subcommand(rules_cli::cli())
         .subcommand(ingest_cli::cli())
-        .subcommand(Command::new("mail").subcommand(mail_rules_cli::cli()))
+        .subcommand(
+            Command::new("mail")
+                .subcommand(mail_cli::status_cli())
+                .subcommand(mail_cli::fetch_cli())
+                .subcommand(mail_rules_cli::cli()),
+        )
         .subcommand(asset_export_cli::asset_cli())
         .subcommand(asset_export_cli::export_cli())
         .subcommand(relations_cli::related_command())

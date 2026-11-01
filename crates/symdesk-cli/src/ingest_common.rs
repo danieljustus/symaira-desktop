@@ -186,3 +186,36 @@ pub fn go_ext(path: &str) -> String {
     base.rfind('.')
         .map_or_else(String::new, |at| base[at..].to_owned())
 }
+
+/// Go's `log.Printf` after `slog.SetDefault(logkit.New(os.Stderr, ..., "text"))`:
+/// one slog text-handler line on stderr.
+pub fn go_log(message: &str) {
+    let now = time::OffsetDateTime::now_utc();
+    let now = now.to_offset(crate::local_offset_at(now));
+    let format = time::format_description::parse_borrowed::<2>(
+        "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]",
+    )
+    .expect("static slog timestamp");
+    let stamp = now.format(&format).unwrap_or_default();
+    let zone = if now.offset() == time::UtcOffset::UTC {
+        "Z".to_owned()
+    } else {
+        now.format(
+            &time::format_description::parse_borrowed::<2>(
+                "[offset_hour sign:mandatory]:[offset_minute]",
+            )
+            .expect("static offset format"),
+        )
+        .unwrap_or_default()
+    };
+    let needs_quote = message.is_empty()
+        || message
+            .chars()
+            .any(|c| c.is_whitespace() || c == '"' || c == '=' || c.is_control());
+    let msg = if needs_quote {
+        symdesk_vault::go_quote(message)
+    } else {
+        message.to_owned()
+    };
+    eprintln!("time={stamp}{zone} level=INFO msg={msg}");
+}

@@ -140,7 +140,7 @@ func observeCLIIngestProcess(t *testing.T) cliIngestFixture {
 // snapshotIngestTree returns every regular UTF-8 file below dir (key: the
 // slash-separated relative path), normalized; non-text files and SQLite
 // stores are skipped because their bytes are not a portable contract.
-func snapshotIngestTree(t *testing.T, dir, root string, skip func(rel string) bool) map[string]string {
+func snapshotIngestTree(t *testing.T, dir, root, closedPort string, skip func(rel string) bool) map[string]string {
 	t.Helper()
 	snapshot := map[string]string{}
 	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
@@ -165,7 +165,8 @@ func snapshotIngestTree(t *testing.T, dir, root string, skip func(rel string) bo
 		if !utf8.Valid(data) {
 			return nil
 		}
-		snapshot[normalizeIngestText(rel, root)] = normalizeIngestText(string(data), root)
+		// The case's closed loopback port is random per run.
+		snapshot[normalizeIngestText(rel, root)] = strings.ReplaceAll(normalizeIngestText(string(data), root), closedPort, "$CLOSED_PORT")
 		return nil
 	})
 	if err != nil {
@@ -289,10 +290,10 @@ func observeCLIIngestCase(t *testing.T, binary string, c cliIngestCase) cliInges
 			Stderr:   normalizeIngestText(stderr, root),
 		}
 		if c.SnapshotVault {
-			recorded.Vault = snapshotIngestTree(t, vault, root, nil)
+			recorded.Vault = snapshotIngestTree(t, vault, root, closedPort, nil)
 		}
 		if c.SnapshotHome {
-			recorded.Home = snapshotIngestTree(t, home, root, ingestHomeSkip)
+			recorded.Home = snapshotIngestTree(t, home, root, closedPort, ingestHomeSkip)
 		}
 		observed.Steps = append(observed.Steps, recorded)
 	}

@@ -42,13 +42,13 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 16;
-const EXPECTED_STEPS: usize = 289;
+const EXPECTED_CASES: usize = 25;
+const EXPECTED_STEPS: usize = 323;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 164;
+const EXPECTED_FAILING_STEPS: usize = 170;
 /// Steps that also compare the vault tree / HOME text files after the step.
-const EXPECTED_VAULT_SNAPSHOTS: usize = 59;
-const EXPECTED_HOME_SNAPSHOTS: usize = 104;
+const EXPECTED_VAULT_SNAPSHOTS: usize = 63;
+const EXPECTED_HOME_SNAPSHOTS: usize = 108;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -214,6 +214,7 @@ fn snapshot(
     directory: &Path,
     root: &Path,
     canonical: &Path,
+    closed_port: &str,
     skip: &dyn Fn(&str) -> bool,
 ) -> BTreeMap<String, String> {
     let mut files = Vec::new();
@@ -233,7 +234,9 @@ fn snapshot(
             let text = String::from_utf8(data).ok()?;
             Some((
                 ingest_normalize::normalize(&relative, root, canonical),
-                ingest_normalize::normalize(&text, root, canonical),
+                // The case's closed loopback port is random per run.
+                ingest_normalize::normalize(&text, root, canonical)
+                    .replace(closed_port, "$CLOSED_PORT"),
             ))
         })
         .collect()
@@ -410,7 +413,13 @@ fn cli_ingest_bodies_match_go_process_contract() {
             if case.snapshot_vault {
                 vault_snapshots += 1;
                 let expected = step.vault.clone().unwrap_or_default();
-                let tree = snapshot(&vault, &root, &canonical, &|_| false);
+                let tree = snapshot(
+                    &vault,
+                    &root,
+                    &canonical,
+                    &placeholders["$CLOSED_PORT"],
+                    &|_| false,
+                );
                 if tree != expected {
                     failures.push(format!(
                         "{label} vault tree\n{}",
@@ -421,7 +430,13 @@ fn cli_ingest_bodies_match_go_process_contract() {
             if case.snapshot_home {
                 home_snapshots += 1;
                 let expected = step.home.clone().unwrap_or_default();
-                let tree = snapshot(&home, &root, &canonical, &home_skip);
+                let tree = snapshot(
+                    &home,
+                    &root,
+                    &canonical,
+                    &placeholders["$CLOSED_PORT"],
+                    &home_skip,
+                );
                 if tree != expected {
                     failures.push(format!(
                         "{label} HOME files\n{}",

@@ -2546,6 +2546,440 @@
       ]
     },
     {
+      "name": "mail-status-fetch-unconfigured",
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "mail-status-fetch-empty-config",
+      "home_files": {
+        "config/symingest/config.toml": "ocr_lang = \"eng\"\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "mail-status-two-accounts",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://A\"\nfolder = \"Work\"\n[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://B\"\n\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/Work\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    },\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/Work\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    },\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "mail-status-fetch-bad-config",
+      "home_files": {
+        "config/symingest/config.toml": "x = = 1\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to list mail accounts: read mail accounts: read mail configuration: parse config $ROOT/home/config/symingest/config.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to list mail accounts: read mail accounts: read mail configuration: parse config $ROOT/home/config/symingest/config.toml: toml: line $TOML\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: failed to list accounts: read mail accounts: read mail configuration: parse config $ROOT/home/config/symingest/config.toml: toml: line $TOML\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: failed to list accounts: read mail accounts: read mail configuration: parse config $ROOT/home/config/symingest/config.toml: toml: line $TOML\n"
+        }
+      ]
+    },
+    {
+      "name": "mail-fetch-refused",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_PW\"\n\n"
+      },
+      "env": {
+        "MAIL_TEST_PW": "mail-secret-canary-2"
+      },
+      "snapshot_vault": true,
+      "snapshot_home": true,
+      "canaries": [
+        "mail-secret-canary-2"
+      ],
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": "",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_PW\"\n\n",
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": "",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_PW\"\n\n",
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\"\n",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_PW\"\n\n",
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\"\n",
+          "home": {
+            "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_PW\"\n\n",
+            "data/symdesk/vaults/$VAULT_ID/metadata.json": "{\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\"}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mail-fetch-secret-unset",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://MAIL_TEST_UNSET\"\n\n"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: resolve password_secret for alice: environment variable MAIL_TEST_UNSET is not set (reference env://MAIL_TEST_UNSET)\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: resolve password_secret for alice: environment variable MAIL_TEST_UNSET is not set (reference env://MAIL_TEST_UNSET)\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: resolve password_secret for alice: environment variable MAIL_TEST_UNSET is not set (reference env://MAIL_TEST_UNSET)\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: resolve password_secret for alice: environment variable MAIL_TEST_UNSET is not set (reference env://MAIL_TEST_UNSET)\"\n"
+        }
+      ]
+    },
+    {
+      "name": "mail-fetch-secret-bare",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"MAIL_TEST_BARE\"\n\n"
+      },
+      "env": {
+        "MAIL_TEST_BARE": "mail-secret-canary-3"
+      },
+      "skip_index": true,
+      "canaries": [
+        "mail-secret-canary-3"
+      ],
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: dial tls: dial tcp 127.0.0.1:$PORT: connect: connection refused\"\n"
+        }
+      ]
+    },
+    {
+      "name": "mail-fetch-secret-symvault",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"symvault://mail/alice\"\n\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/empty-bin"
+      },
+      "skip_index": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\n  \"accounts\": [\n    {\n      \"id\": \"alice@127.0.0.1:$PORT/INBOX\",\n      \"host\": \"127.0.0.1\",\n      \"username\": \"alice\"\n    }\n  ],\n  \"statuses\": []\n}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: resolve password_secret for alice: resolve \\u003credacted\\u003e symvault binary not found on PATH\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: resolve password_secret for alice: resolve \u003credacted\u003e symvault binary not found on PATH\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 0,
+          "stdout": "[\n  {\n    \"account_id\": \"alice@127.0.0.1:$PORT/INBOX\",\n    \"host\": \"127.0.0.1\",\n    \"username\": \"alice\",\n    \"last_run\": \"$TIME\",\n    \"last_error\": \"mail fetch failed: resolve password_secret for alice: resolve \\u003credacted\\u003e symvault binary not found on PATH\",\n    \"messages_total\": 0,\n    \"last_run_count\": 0\n  }\n]\n",
+          "stderr": "time=$TIME level=INFO msg=\"MailWatcher: fetch failed for alice@127.0.0.1:$PORT/INBOX: mail fetch failed: resolve password_secret for alice: resolve \u003credacted\u003e symvault binary not found on PATH\"\n"
+        }
+      ]
+    },
+    {
+      "name": "mail-no-vault",
+      "home_files": {
+        "config/symingest/config.toml": "[[imap_accounts]]\nhost = \"127.0.0.1\"\nport = $CLOSED_PORT\nusername = \"alice\"\npassword_secret = \"env://A\"\n\n"
+      },
+      "skip_index": true,
+      "no_vault": true,
+      "steps": [
+        {
+          "args": [
+            "mail",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "mail",
+            "fetch"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "rules-crud",
       "skip_index": true,
       "steps": [

@@ -26,18 +26,18 @@ pub fn cli() -> Command {
 /// Go `config.IMAPAccount`.
 #[derive(Clone, Default, Deserialize)]
 #[serde(default)]
-struct ImapAccount {
-    host: String,
-    port: i64,
-    username: String,
-    password_secret: String,
-    folder: String,
-    from: Vec<String>,
-    subject: Vec<String>,
-    has_attachment: bool,
-    action: String,
-    move_to: String,
-    archive_mail: bool,
+pub(crate) struct ImapAccount {
+    pub(crate) host: String,
+    pub(crate) port: i64,
+    pub(crate) username: String,
+    pub(crate) password_secret: String,
+    pub(crate) folder: String,
+    pub(crate) from: Vec<String>,
+    pub(crate) subject: Vec<String>,
+    pub(crate) has_attachment: bool,
+    pub(crate) action: String,
+    pub(crate) move_to: String,
+    pub(crate) archive_mail: bool,
 }
 
 /// Go `ingest.MailAccountRecord` (stdin payload).
@@ -103,7 +103,7 @@ struct MailFile {
     imap_poll_interval: String,
 }
 
-fn account_id(account: &ImapAccount) -> String {
+pub(crate) fn account_id(account: &ImapAccount) -> String {
     let folder = if account.folder.is_empty() {
         "INBOX"
     } else {
@@ -704,4 +704,57 @@ fn execute(name: &str, args: &[String], explicit: &str, json: bool) -> Result<Ex
             Ok(render("delete", &outcome, json))
         }
     }
+}
+
+impl From<&ImapAccount> for symdesk_ingest::mail::ImapAccount {
+    fn from(a: &ImapAccount) -> Self {
+        Self {
+            host: a.host.clone(),
+            port: a.port,
+            username: a.username.clone(),
+            password_secret: a.password_secret.clone(),
+            folder: a.folder.clone(),
+            from: a.from.clone(),
+            subject: a.subject.clone(),
+            has_attachment: a.has_attachment,
+            action: a.action.clone(),
+            move_to: a.move_to.clone(),
+            archive_mail: a.archive_mail,
+        }
+    }
+}
+
+/// Go `config.MailConfigPath("")`: the global symingest configuration file.
+pub(crate) fn global_config_path() -> Result<String, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let xdg = environment
+        .get("XDG_CONFIG_HOME")
+        .map(String::as_str)
+        .unwrap_or_default();
+    if xdg.starts_with('/') {
+        return Ok(go_join(&[xdg, "symingest", "config.toml"]));
+    }
+    let home = environment
+        .get("HOME")
+        .map(String::as_str)
+        .filter(|home| !home.is_empty());
+    Ok(match home {
+        Some(home) => go_join(&[home, ".config", "symingest", "config.toml"]),
+        None => go_join(&[".config", "symingest", "config.toml"]),
+    })
+}
+
+/// Go `ingest.MailAccounts` / the account list of `config.ReadMailConfig`:
+/// `None` when the file does not exist.
+pub(crate) fn read_accounts(path: &str) -> Result<Option<Vec<ImapAccount>>, String> {
+    match read_config(path) {
+        Ok(document) => Ok(Some(document.accounts)),
+        Err(ReadError::NotFound(_)) => Ok(None),
+        Err(ReadError::Other(error)) => Err(format!("read mail configuration: {error}")),
+    }
+}
+
+/// Go `config.ConfigPath(explicit)` for a non-empty explicit path.
+pub(crate) fn absolute_config_path(explicit: &str) -> Result<String, String> {
+    config_path(explicit)
 }

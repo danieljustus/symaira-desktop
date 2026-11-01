@@ -219,6 +219,23 @@ help-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortHelpProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test help --locked
 
+# CLI-001/003/004: Cobra command resolution, pflag grammar at every argv
+# position, argument counts, required/exclusive flags, --help/--version and
+# the generated help/completion/__complete commands, replayed from real Go
+# processes. CLI-002: the recorded Cobra tree (paths, aliases, visibility,
+# flags, argument validators) rebuilt in Rust and checked against every probe.
+.PHONY: cobra-parse-cli-fixtures-generate cobra-parse-cli-differential command-tree-cli-differential
+cobra-parse-cli-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortCobraParseProcessContract$$'
+
+cobra-parse-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortCobraParseProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cobra_parse --locked
+
+command-tree-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestSymdeskCobraInventory$$'
+	$(CARGO) test -p symdesk-cli --bin symdesk cobra:: --locked
+
 .PHONY: duplicates-cli-fixtures-generate duplicates-cli-differential
 .PHONY: room-flag-grammar-cli-fixtures-generate room-flag-grammar-cli-differential
 .PHONY: room-identity-provider-cli-fixtures-generate room-identity-provider-cli-differential

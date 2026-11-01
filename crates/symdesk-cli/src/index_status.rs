@@ -416,7 +416,7 @@ fn duration_quote(value: &str) -> String {
     output
 }
 
-fn parse_go_duration_nanos(input: &str) -> Result<i128, String> {
+pub(crate) fn parse_go_duration_nanos(input: &str) -> Result<i128, String> {
     let original = input;
     let invalid = || format!("time: invalid duration {}", duration_quote(original));
     let (negative, input) = match input.strip_prefix('-') {

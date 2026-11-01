@@ -12,7 +12,7 @@ pub fn cli() -> Command {
         .visible_alias("source")
         .subcommand_required(true)
         .subcommand(Command::new("add").arg(argument("path")))
-        .subcommand(Command::new("list"))
+        .subcommand(Command::new("list").arg(argument("extra")))
         .subcommand(Command::new("remove").arg(argument("id-or-path")))
         .subcommand(Command::new("watch").arg(argument("id-or-path")))
 }

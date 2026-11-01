@@ -81,6 +81,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"config vault selection", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortVaultSelectionCLIContract$"}, []string{"testdata/port/cli/config-vault-selection.json"}, false},
 	{"config process CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortConfigProcessContract$"}, []string{"testdata/port/cli/config-process.json"}, false},
 	{"help and completion CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHelpProcessContract$"}, []string{"testdata/port/cli/help-process.json", "testdata/port/cli/cobra-help.json"}, false},
+	{"cobra flag grammar CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortCobraParseProcessContract$"}, []string{"testdata/port/cli/cobra-parse-process.json", "testdata/port/cli/cobra-root-order.txt"}, false},
 	{"duplicates CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortDuplicatesProcessContract$"}, []string{"testdata/port/cli/duplicates-process.json"}, false},
 	{"backlinks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortBacklinksProcessContract$"}, []string{"testdata/port/cli/backlinks-process.json"}, false},
 	{"inverse relations CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRelationsInverseProcessContract$"}, []string{"testdata/port/cli/relations-inverse-process.json"}, false},

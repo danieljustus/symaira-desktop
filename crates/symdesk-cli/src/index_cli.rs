@@ -25,13 +25,14 @@ use tokio::time::Duration;
 
 #[path = "index_status.rs"]
 mod status;
-pub(crate) use status::go_time_text;
+pub(crate) use status::{go_time_text, parse_go_duration_nanos};
 #[path = "index_status_process.rs"]
 mod status_process;
 
 pub fn cli() -> Command {
     Command::new("index")
-        .arg(Arg::new("path").value_name("PATH").num_args(0..=1))
+        // Go reads `args[0]` and ignores the rest (no `Args` validator).
+        .arg(Arg::new("path").value_name("PATH").num_args(0..))
         .arg(
             Arg::new("prune")
                 .long("prune")
@@ -45,6 +46,7 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("status")
                 .about("Show retrieval and document indexing status")
+                .arg(Arg::new("extra").num_args(0..).hide(true))
                 .arg(
                     Arg::new("documents")
                         .long("documents")

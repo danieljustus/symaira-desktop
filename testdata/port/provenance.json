@@ -35,6 +35,7 @@
     "testdata/port/ai/transform-hermes-process.json": "dcd26d03b540f248aba064cca3b5d85f4f2a3a948499f86b82a536cd954ceb5e",
     "testdata/port/cli/ask-offline.json": "808c3c602cefdfc7fd02f682484b6b571657aa6dcb14c6ac694f1bd32ecb65bf",
     "testdata/port/cli/backlinks-process.json": "86562684c73b3916822f806fed9fb68cea1131a54e9cd52e144eb511e69c3792",
+    "testdata/port/cli/cli-admin-bodies-process.json": "623f249644baa3b85646c5fe3b292dde58448fd6edb7c9b89205c683b697b81f",
     "testdata/port/cli/cli-bodies-process.json": "8ad2c53fca69569b6b4516133d8ac6734097be0b2b1f36675faf8827983247a4",
     "testdata/port/cli/cli-errors-process.json": "6f4a2efd01231212c813b709fae407872375811fe5c0aeb9830021ba50e464f1",
     "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",

@@ -366,7 +366,32 @@ fn pv_normalize(text: &str) -> String {
     let mut imported = b"Imported from CSV on ".to_vec();
     imported.extend_from_slice(&[4, b'-', 2, b'-', 2]);
     let text = normalize_shape(&text, &imported, "Imported from CSV on $DATE");
-    normalize_truncated_scalar(&text)
+    normalize_dir_copy(&normalize_truncated_scalar(&text))
+}
+
+/// Go: `(copy archive file: )[^\n]*: is a directory` replaced by `${1}$DIRERR`
+/// (read(2) on macOS, copy_file_range(2) on Linux).
+fn normalize_dir_copy(text: &str) -> String {
+    const OPEN: &str = "copy archive file: ";
+    const TAIL: &str = ": is a directory";
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(OPEN) {
+        let after = at + OPEN.len();
+        out.push_str(&rest[..after]);
+        let tail = &rest[after..];
+        let line_end = tail.find('\n').unwrap_or(tail.len());
+        // `[^\n]*` is greedy: the last `: is a directory` of the line.
+        match tail[..line_end].rfind(TAIL) {
+            Some(end) => {
+                out.push_str("$DIRERR");
+                rest = &tail[end + TAIL.len()..];
+            }
+            None => rest = tail,
+        }
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Go: ``(cannot unmarshal !!str `)[^`\n]*\.\.\.(` into)`` replaced by

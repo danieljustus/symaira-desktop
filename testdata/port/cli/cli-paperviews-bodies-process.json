@@ -760,7 +760,7 @@
           ],
           "exit_code": 0,
           "stdout": "Paperless import \n  Total:   1\n  Created: 0\n  Updated: 0\n  Errors:  1\n",
-          "stderr": "  ✗ #9 \"Dir as archive\": copy archive file: read $ROOT/dirarchive/sub: is a directory\n",
+          "stderr": "  ✗ #9 \"Dir as archive\": copy archive file: $DIRERR\n",
           "vault": {
             "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
             "archive/paperless/doc1.pdf": "%PDF-1.4 invoice march\n",
@@ -790,7 +790,7 @@
             "$ROOT/dirarchive"
           ],
           "exit_code": 0,
-          "stdout": "{\"total\":1,\"created\":0,\"updated\":0,\"skipped\":0,\"errors\":1,\"results\":[{\"paperless_id\":9,\"title\":\"Dir as archive\",\"action\":\"error\",\"note_path\":\"paperless/Paperless_9_Dir as archive.md\",\"error\":\"copy archive file: read $ROOT/dirarchive/sub: is a directory\"}]}\n",
+          "stdout": "{\"total\":1,\"created\":0,\"updated\":0,\"skipped\":0,\"errors\":1,\"results\":[{\"paperless_id\":9,\"title\":\"Dir as archive\",\"action\":\"error\",\"note_path\":\"paperless/Paperless_9_Dir as archive.md\",\"error\":\"copy archive file: $DIRERR\"}]}\n",
           "stderr": "",
           "vault": {
             "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

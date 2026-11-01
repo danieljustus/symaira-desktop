@@ -456,6 +456,9 @@ fn normalize_text(text: &str, volatile: bool) -> String {
     } else {
         text.to_owned()
     };
+    // Reading a regular file as a directory fails in fdopendir on macOS and in
+    // readdirent on Linux; the replay reports the macOS spelling.
+    let text = text.replace("readdirent ", "fdopendir ");
     normalize_rfc3339(&normalize_duration(&normalize_local_time(
         &normalize_random(&text),
     )))

@@ -95,6 +95,9 @@ var (
 	pvImportRE  = regexp.MustCompile(`Imported from CSV on \d{4}-\d{2}-\d{2}`)
 	// A YAML type error quotes the first characters of the offending scalar;
 	// for a path argument that is the host's root prefix.
+	// Copying a directory as an archive file fails in read(2) on macOS and in
+	// copy_file_range(2) on Linux.
+	pvDirCopyRE         = regexp.MustCompile(`(copy archive file: )[^\n]*: is a directory`)
 	pvTruncatedScalarRE = regexp.MustCompile("(cannot unmarshal !!str `)[^`\n]*\\.\\.\\.(` into)")
 )
 
@@ -104,6 +107,7 @@ func pvNormalize(text string) string {
 	text = pvLogTimeRE.ReplaceAllString(text, "$$LOGTIME")
 	text = pvRunIDRE.ReplaceAllString(text, "$$RUNID")
 	text = pvTempRE.ReplaceAllString(text, "$$TMP")
+	text = pvDirCopyRE.ReplaceAllString(text, "${1}$$DIRERR")
 	text = pvTruncatedScalarRE.ReplaceAllString(text, "${1}$$TRUNC${2}")
 	return pvImportRE.ReplaceAllString(text, "Imported from CSV on $$DATE")
 }

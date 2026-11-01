@@ -410,6 +410,9 @@ func normalizeAdminText(volatile bool, text string) string {
 		// writes the two fields in either order from run to run.
 		text = strings.ReplaceAll(text, "retention_rule: \"default\"\nsensitivity: \"restricted\"", "sensitivity: \"restricted\"\nretention_rule: \"default\"")
 	}
+	// Reading a regular file as a directory fails in fdopendir on macOS and in
+	// readdirent on Linux; the replay reports the macOS spelling.
+	text = strings.ReplaceAll(text, "readdirent ", "fdopendir ")
 	text = adminRandomRE.ReplaceAllString(text, "$$RAND24")
 	text = adminLocalTimeRE.ReplaceAllString(text, "$$LOCALTIME")
 	text = adminDurationRE.ReplaceAllString(text, `"duration_seconds":$$DURATION`)

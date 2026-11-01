@@ -39,7 +39,7 @@
     "testdata/port/cli/cli-bodies-process.json": "8ad2c53fca69569b6b4516133d8ac6734097be0b2b1f36675faf8827983247a4",
     "testdata/port/cli/cli-errors-process.json": "6f4a2efd01231212c813b709fae407872375811fe5c0aeb9830021ba50e464f1",
     "testdata/port/cli/cli-ingest-bodies-process.json": "50c25778821ed8edd62b4a194c0ec3733145fd3062ffdd20aef224829fc4cc43",
-    "testdata/port/cli/cli-paperviews-bodies-process.json": "8f4f405ef862e5184abc20fea77354ff962bece97582f44d6aef035fc21cd458",
+    "testdata/port/cli/cli-paperviews-bodies-process.json": "39f6a9c2533ba8c24d683eb12c78241d8a950cfa19616df7e4b7db2319368d72",
     "testdata/port/cli/cobra-help.json": "5a320809f8f5480fd5d5a543d70a0a84f0a8bedb54e95afdc3df5a396ea78fe8",
     "testdata/port/cli/cobra-parse-process.json": "d2adbf65af89a37fb33d2ba53b7b81f97149a41712ecf7dfcdc437afb9bcdafb",
     "testdata/port/cli/cobra-root-order.txt": "d68d36b9bf271628da690c144ce97f4fc7b4288c7e2ced8823df7c03adbdb3dd",

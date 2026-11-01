@@ -157,6 +157,45 @@ fn load_ingest_config(
         .map_err(|error| format!("reload symingest configuration: {error}"))
 }
 
+/// Go `ingest.Options.resolve` for the in-process ingest commands: the
+/// symingest configuration plus the documented defaults.
+pub(crate) struct ResolvedIngest {
+    pub vault: String,
+    pub archive: String,
+    pub db_path: String,
+    pub ocr_lang: String,
+    pub ollama_base_url: String,
+    pub ollama_model: String,
+}
+
+pub(crate) fn resolve_ingest() -> Result<ResolvedIngest, String> {
+    let environment = symdesk_core::config::environment_snapshot()?;
+    let cwd = std::env::current_dir()
+        .map_err(|error| format!("failed to get working directory: {error}"))?;
+    let loaded = load_ingest_config_inner(&environment, &cwd)
+        .map_err(|error| format!("load symingest configuration: {error}"))?;
+    let archive = if !loaded.archive_path.is_empty() {
+        loaded.archive_path.clone()
+    } else if !loaded.vault.is_empty() {
+        clean_join(&[&loaded.vault, "archive", "ingest"])
+    } else {
+        config::ingest_data_path(&environment, "archive")?
+    };
+    let db_path = if loaded.db_path.is_empty() {
+        config::ingest_data_path(&environment, "symingest.db")?
+    } else {
+        loaded.db_path.clone()
+    };
+    Ok(ResolvedIngest {
+        vault: loaded.vault,
+        archive,
+        db_path,
+        ocr_lang: first_nonempty(&loaded.ocr_lang, "eng").to_owned(),
+        ollama_base_url: loaded.ollama_base_url,
+        ollama_model: loaded.ollama_model,
+    })
+}
+
 fn load_ingest_config_inner(
     environment: &BTreeMap<String, String>,
     cwd: &Path,

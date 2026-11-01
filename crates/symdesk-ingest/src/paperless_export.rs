@@ -19,10 +19,13 @@ pub struct ManifestNote {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct ManifestEntry {
+    #[serde(deserialize_with = "crate::paperless::null_default")]
     pub id: i64,
     pub correspondent: Option<String>,
     pub document_type: Option<String>,
+    #[serde(deserialize_with = "crate::paperless::null_default")]
     pub title: String,
+    #[serde(deserialize_with = "crate::paperless::null_default")]
     pub content: String,
     pub tags: Option<Vec<String>>,
     pub created: Option<String>,
@@ -73,6 +76,8 @@ fn text(path: impl AsRef<Path>) -> String {
 pub fn parse_manifest(path: &Path) -> Result<Option<Vec<ManifestEntry>>> {
     let data = go_read(path)
         .map_err(|(op, e)| format!("read manifest file: {}", go_path_error(op, path, &e)))?;
+    // Go reports its scanner's syntax error before any type error.
+    symdesk_vault::go_json_validate_syntax(&data).map_err(|e| format!("parse manifest: {e}"))?;
     serde_json::from_slice(&data).map_err(|e| format!("parse manifest: {e}"))
 }
 pub fn source_identifier(entry: &ManifestEntry) -> String {
@@ -307,8 +312,9 @@ pub fn import_at(opts: &ImportOptions, now: &str) -> Result<ImportSummary> {
                             go_path_error("open", &archive_path, &e)
                         )
                     })?;
-                    std::io::copy(&mut reader, &mut target)
-                        .map_err(|e| format!("copy archive file: {e}"))?;
+                    std::io::copy(&mut reader, &mut target).map_err(|e| {
+                        format!("copy archive file: {}", go_path_error("read", &src, &e))
+                    })?;
                     target
                         .sync_all()
                         .map_err(|e| format!("copy archive file: {e}"))?;

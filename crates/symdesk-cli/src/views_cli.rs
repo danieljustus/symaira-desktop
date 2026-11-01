@@ -12,6 +12,7 @@ pub fn cli() -> Command {
         .subcommand(read_command("siblings"))
         .subcommand(read_command("save"))
         .subcommand(read_command("delete"))
+        .subcommands(crate::views_exec_cli::commands())
         .subcommand(
             Command::new("base")
                 .subcommand(read_command("list"))
@@ -37,6 +38,9 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
         };
         name = child;
         args = matches;
+    }
+    if !base && crate::views_exec_cli::is_exec_command(name) {
+        return crate::views_exec_cli::run(name, args, vault, json);
     }
     let refs: Vec<_> = args
         .get_many::<String>("args")

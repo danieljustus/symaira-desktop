@@ -268,7 +268,7 @@ fn go_json_error(error: &serde_json::Error) -> String {
     }
 }
 
-fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String> {
+pub(crate) fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String> {
     const MAX_HANDLE_BYTES: u64 = 64 << 20;
     let mut options = cap_std::fs::OpenOptions::new();
     options.read(true);
@@ -340,7 +340,7 @@ fn output_query_result(result: &DatasetServiceResult, json_output: bool) -> Exit
     ))
 }
 
-fn go_debug_value(value: &Value) -> String {
+pub(crate) fn go_debug_value(value: &Value) -> String {
     match value {
         Value::Null => "<nil>".to_owned(),
         Value::String(value) => value.clone(),

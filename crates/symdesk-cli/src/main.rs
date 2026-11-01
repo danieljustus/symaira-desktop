@@ -25,6 +25,7 @@ mod links_cli;
 mod mcp;
 mod mutate_cli;
 mod notebook_cli;
+mod paperless_cli;
 mod props_tags_cli;
 mod recipe;
 mod related_cli;
@@ -37,6 +38,8 @@ mod service_cli;
 mod sidecar_cli;
 mod source_cli;
 mod views_cli;
+mod views_exec_cli;
+mod views_query;
 mod views_write_cli;
 mod worker_cli;
 
@@ -85,6 +88,7 @@ fn main() -> ExitCode {
     }
     rewrite_index_output_flag(&mut args);
     search_export_cli::rewrite_output_flag(&mut args);
+    views_exec_cli::rewrite_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
         return exit;
     }
@@ -246,6 +250,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("notebook", command)) => notebook_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("paperless", command)) => paperless_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -683,6 +692,7 @@ fn cli() -> Command {
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
         .subcommand(views_cli::cli())
+        .subcommand(paperless_cli::cli())
         .subcommand(props_tags_cli::props_cli())
         .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())

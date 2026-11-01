@@ -416,7 +416,7 @@ fn note_execute(
         _ => Ok(json!(null)),
     }
 }
-fn new_note(
+pub(crate) fn new_note(
     root: &Path,
     db: &mut Sidecar,
     title: &str,

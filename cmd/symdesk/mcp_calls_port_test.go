@@ -85,6 +85,7 @@ func mcpCallsAllCases() []mcpCallsCase {
 	var cases []mcpCallsCase
 	cases = append(cases, mcpCallsRulesCases()...)
 	cases = append(cases, mcpCallsIngestCases()...)
+	cases = append(cases, mcpCallsServiceCases()...)
 	return cases
 }
 

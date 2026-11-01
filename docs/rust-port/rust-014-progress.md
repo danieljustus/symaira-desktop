@@ -30,13 +30,47 @@ process (corekit `mcpserver` v0.18.3-0.20261012110002) in a disposable HOME/XDG/
    Go-eligible transcripts byte-for-byte, frame well-formedness, 3,000 seeded mutations). Fuzz target
    `fuzz/fuzz_targets/mcp_frame.rs` with 320 named seeds in `fuzz/seeds/mcp_frame`.
 
+## Done since (branch rebased on main 7145e89b, no rebase in progress)
+
+2. **Ingest-store tools** (rules, ingest, jobs, retry, reocr + 7 aliases): Go-recorded in
+   `testdata/port/mcp/calls-process.json` (393 cases). Root cause of the earlier 35 "databases differ"
+   failures: sidecar `files` rows hash/size/simhash notes that embed clock readings and the root path.
+   Fix (both sides): `sha256/size/simhash` of a `files` row are recomputed from the root/clock-normalized
+   file content; a row whose indexed SHA no longer matches the file on disk (5 cases: reocr-01/02/12,
+   no-vault-desk_ingest, ingest-framed; Go rewrites the note after indexing) is recorded as `"<STALE>"`.
+   Helper names verified: `symdesk_vault::sha256_hex`, `mcpCallsNormalize`, `dump_db(path, root)`.
+   Check: `make mcp-calls-differential` exit 0 (Go oracle ok 10.9 s; `cargo test -p symdesk-cli --test mcp_calls`
+   3 passed, 77.6 s) at commit "test(mcp): pin ingest call fixtures ...".
+
+## Uncommitted-at-session-end (WIP checkpoint)
+
+- `cmd/symdesk/mcp_calls_service_port_test.go` (new, ~170 cases) and its hook in `mcpCallsAllCases`:
+  Go corpus for the 11 still-missing tools. **Not yet generating**: `make mcp-calls-fixtures-generate` fails
+  because the seeded `broken.md` (invalid YAML) is indexed by `mcpCallsIndexVault` via `vault.ParseBytes`
+  (`health-broken-yaml` case). Fix: exclude `broken.md` from indexing (add an `IndexSkip` set or seed it as a
+  RootFile `vault/broken.md`). Until fixed the Go test fails; `calls-process.json` is still the 393-case
+  fixture from the last passing run, and the Rust replay will fail once regenerated until the handlers exist.
+
 ## Remaining
 
-- Handlers for the 26 missing tool names with Go-recorded calls (success/invalid/write-disabled/backend).
-- Alias and registry assertions (MCP-002) beyond the catalog bytes: alias-vs-canonical call equivalence.
-- SEC-002 MCP canary corpus.
-- `make mcp-conformance`, bounded `mcp_frame` fuzz (1800 s), full two-host local gate, matrix/work-items.
+- Fix the corpus above, generate, then implement the Rust handlers (new `mcp/service_tools.rs`, dispatch in
+  `mcp.rs::dispatch_tool_call`) for: vault_timeline (needs a port of Go `Service.Timeline`: journal ReadRange
+  with flexible `ts`, `Sidecar` TimelineDocs, meetings, `symdesk_vault::retention::load_history`,
+  `HistoryStore::trash_list`, stable sort + dedupe), desk_transform (reuse `ai_cli.rs` helpers, collect chunks
+  into `{"result":...}`; empty text -> "text is required"), vault_health (`vault_health_cli::scan`, add
+  `Kind::Int` for Go `int` in `mcp/args.rs`), desk_related (`related_cli` body), desk_dataset_list/describe/
+  query/sync (`dataset.rs`; Go uses DisallowUnknownFields + `dataset is required`), desk_clip
+  (`clip_cli::execute`), desk_export (`export_cli::export`), desk_autofill (`admin_ai_cli::autofill`).
+  Read-only ones: timeline, transform, health, related, dataset_list/describe/query; write: dataset_sync, clip,
+  export, autofill.
+- MCP-002 alias-vs-canonical equivalence assertions; SEC-002 MCP canary corpus (a transform canary case with
+  `SYMDESK_LLM_API_KEY` is already in the new corpus).
+- `make mcp-conformance`, `cargo nextest run -p symdesk-protocol`, `cargo +nightly fuzz run mcp_frame
+  -- -max_total_time=1800`, `dev-external make port-fixtures-check` (generator_source_digest re-freeze),
+  two-host `local-gate.sh` (macOS arm64 + Linux arm64), matrix/work-items rows. None of these ran this session.
 
 ## Last checks
 
-See the commit messages and the table below (filled as slices land).
+- `make mcp-calls-differential` PASS (see item 2). No other gate was run on this branch after the rebase.
+- RUST-014 is NOT passed: MCP-001 transport and MCP-003 for rules/ingest are verified; MCP-002/003 for the
+  11 tools above, SEC-002 canary, fuzz and the two-host gate are open.

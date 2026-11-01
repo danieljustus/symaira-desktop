@@ -1737,6 +1737,16 @@ ask-cancel-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskCancelProcessContract$$'
 	$(CARGO) test -p symdesk-cli --locked --test ask_cancel
 
+# CLI-007: signal and lifecycle contract of events, mcp, serve, worker,
+# `sources watch` and the children they spawn (Go-recorded real processes).
+.PHONY: cli-signals-fixtures-generate cli-signals-differential
+cli-signals-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortSignalsProcessContract$$'
+
+cli-signals-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortSignalsProcessContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test signals
+
 .PHONY: ask-agent-fixtures-generate ask-agent-differential
 ask-agent-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortAskAgentProcessContract$$'

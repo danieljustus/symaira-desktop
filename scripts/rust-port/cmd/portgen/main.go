@@ -183,6 +183,7 @@ var fixturePaths = []string{
 	"testdata/port/ai/ask-agent-process.json",
 	"testdata/port/ai/ask-provider-mcp.json",
 	"testdata/port/ai/ask-cancel-process.json",
+	"testdata/port/cli/signals-process.json",
 	"testdata/port/ai/secrets-resolve.json",
 	"testdata/port/ai/compose-memory.json",
 	"testdata/port/ai/transform-hermes-process.json",

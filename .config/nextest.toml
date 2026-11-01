@@ -24,3 +24,10 @@ threads-required = "num-test-threads"
 [[profile.default.overrides]]
 filter = 'binary(compose_probe)'
 threads-required = "num-test-threads"
+
+# The signal replay starts real processes, waits on wall-clock ceilings (slow
+# serve drains, polling workers, filesystem watchers) and measures "still
+# running after N ms"; a saturated host can starve it, so it runs alone.
+[[profile.default.overrides]]
+filter = 'binary(signals)'
+threads-required = "num-test-threads"

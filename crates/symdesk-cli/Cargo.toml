@@ -21,6 +21,7 @@ toml.workspace = true
 symdesk-core.workspace = true
 symaira-core-exit.workspace = true
 symdesk-index.workspace = true
+symdesk-ingest.workspace = true
 symdesk-protocol.workspace = true
 symdesk-render.workspace = true
 symdesk-service.workspace = true
@@ -30,6 +31,7 @@ time.workspace = true
 tokio.workspace = true
 rusqlite.workspace = true
 noyalib.workspace = true
+ureq = { version = "=3.4.1", default-features = false, features = ["rustls"] }
 notify.workspace = true
 
 [target.'cfg(windows)'.dependencies]

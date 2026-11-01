@@ -1,0 +1,1443 @@
+{
+  "schema_version": 1,
+  "non_comparable": [
+    "Wall-clock durations are not compared; each case only has a generous ceiling.",
+    "Go slog lines (time=... level=INFO) are removed from stderr before comparison.",
+    "Go `serve` drains idle and unused connections only after about five seconds; Rust drains them at once. Both exit 0.",
+    "Go keeps a spawned child alive when the parent dies by a signal (no handler, no process-group kill); the recorded child_alive_after_parent_exit pins that, the harness always kills the child itself.",
+    "The Rust `serve` prints a `LISTENING http://ADDR` readiness line on stderr that Go does not; it is dropped before comparison.",
+    "The Rust `events` and `worker` commands do not start the Go inbox/mail watchers or the OCR engines; cases that depend on them use declared settle times and are limited to lifecycle behaviour."
+  ],
+  "cases": [
+    {
+      "name": "mcp_idle_sigterm",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 800
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "mcp_idle_sigint",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 800
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGINT",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "mcp_idle_stdin_eof_exits_zero",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "close_stdin"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "mcp_answer_is_flushed_before_stdin_eof_exit",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "send",
+          "data": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}"
+        },
+        {
+          "op": "wait_stdout",
+          "text": "\"result\""
+        },
+        {
+          "op": "close_stdin"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Content-Length: 36\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}",
+      "stderr": ""
+    },
+    {
+      "name": "mcp_external_sigpipe_is_ignored",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 800
+        },
+        {
+          "op": "signal",
+          "signal": "PIPE"
+        },
+        {
+          "op": "observe",
+          "ms": 500,
+          "name": "running_after_sigpipe"
+        },
+        {
+          "op": "close_stdin"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "running_after_sigpipe": "running"
+      }
+    },
+    {
+      "name": "mcp_closed_stdout_ends_with_sigpipe",
+      "args": [
+        "mcp"
+      ],
+      "stdout_mode": "broken-pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 800
+        },
+        {
+          "op": "close_stdout_reader"
+        },
+        {
+          "op": "send",
+          "data": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}"
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "close_stdin"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGPIPE",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "serve_sigterm_shuts_down_gracefully",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "port_closed"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "post_state": {
+        "port_closed": "true"
+      }
+    },
+    {
+      "name": "serve_sigint_shuts_down_gracefully",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "post": [
+        "port_closed"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "post_state": {
+        "port_closed": "true"
+      }
+    },
+    {
+      "name": "serve_stdin_eof_does_not_stop",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "close_stdin"
+        },
+        {
+          "op": "observe",
+          "ms": 1000,
+          "name": "running_after_stdin_eof"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "port_closed"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "running_after_stdin_eof": "running"
+      },
+      "post_state": {
+        "port_closed": "true"
+      }
+    },
+    {
+      "name": "serve_external_sigpipe_is_ignored",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "PIPE"
+        },
+        {
+          "op": "observe",
+          "ms": 500,
+          "name": "running_after_sigpipe"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "running_after_sigpipe": "running"
+      }
+    },
+    {
+      "name": "serve_sigterm_with_a_connection_that_sent_nothing",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "connect_idle"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "port_closed"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "post_state": {
+        "port_closed": "true"
+      }
+    },
+    {
+      "name": "serve_sigterm_with_an_idle_keep_alive_connection",
+      "args": [
+        "serve",
+        "--listen",
+        "127.0.0.1:{port}",
+        "--token",
+        "signal-test-token-0123456789abcdef"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_port"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "keepalive_get",
+          "name": "keep_alive_status",
+          "path": "/healthz"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "port_closed"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "keep_alive_status": "HTTP/1.1 200 OK"
+      },
+      "post_state": {
+        "port_closed": "true"
+      }
+    },
+    {
+      "name": "worker_once_without_a_job_exits_zero",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--once"
+      ],
+      "fake": "worker-empty",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_exit"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}"
+      ]
+    },
+    {
+      "name": "worker_idle_poll_sigterm_exits_zero",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms"
+      ],
+      "fake": "worker-empty",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 2
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "requests_prefix:2"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}"
+      ]
+    },
+    {
+      "name": "worker_idle_poll_sigint_exits_zero",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms"
+      ],
+      "fake": "worker-empty",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 2
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "post": [
+        "requests_prefix:2"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}"
+      ]
+    },
+    {
+      "name": "worker_sigterm_cancels_an_in_flight_lease",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms"
+      ],
+      "fake": "worker-stall",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 1
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "server_saw_client_gone"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}"
+      ],
+      "post_state": {
+        "server_saw_client_gone": "true"
+      }
+    },
+    {
+      "name": "worker_download_failure_keeps_polling_until_sigterm",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "200ms"
+      ],
+      "fake": "worker-job404",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 6
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "requests_prefix:6"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "GET /api/v1/worker/input?id=job1 auth=bearer body=",
+        "POST /api/v1/worker/fail auth=bearer body={\"error\":\"input missing\",\"job_id\":\"job1\",\"retry\":true,\"worker_id\":\"w1\"}",
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "GET /api/v1/worker/input?id=job1 auth=bearer body=",
+        "POST /api/v1/worker/fail auth=bearer body={\"error\":\"input missing\",\"job_id\":\"job1\",\"retry\":true,\"worker_id\":\"w1\"}"
+      ]
+    },
+    {
+      "name": "worker_sigterm_stops_a_running_ocr_child",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms",
+        "--engine",
+        "tesseract"
+      ],
+      "fake": "worker-ocr-hold",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_file",
+          "path": "tesseract.ready"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "tesseract_alive_after_parent_exit",
+        "tesseract_args",
+        "requests_prefix:2"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "GET /api/v1/worker/input?id=job1 auth=bearer body="
+      ],
+      "post_state": {
+        "tesseract_alive_after_parent_exit": "false",
+        "tesseract_args": "-l deu+eng input.png stdout"
+      }
+    },
+    {
+      "name": "worker_ocr_result_is_reported_then_polling_continues",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms",
+        "--engine",
+        "tesseract"
+      ],
+      "fake": "worker-ocr-done",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 3
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "tesseract_args",
+        "requests_prefix:3"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}",
+        "GET /api/v1/worker/input?id=job1 auth=bearer body=",
+        "POST /api/v1/worker/complete auth=bearer body={\"engine\":\"tesseract\",\"job_id\":\"job1\",\"model\":\"\",\"text\":\"hello ocr\",\"worker_id\":\"w1\"}"
+      ],
+      "post_state": {
+        "tesseract_args": "-l deu+eng input.png stdout"
+      }
+    },
+    {
+      "name": "worker_unreachable_server_retries_silently_until_sigterm",
+      "args": [
+        "worker",
+        "--server",
+        "http://127.0.0.1:{closedport}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "settle",
+          "ms": 800
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "worker_stdin_eof_does_not_stop",
+      "args": [
+        "worker",
+        "--server",
+        "{server}",
+        "--token",
+        "signal-test-token-0123456789abcdef",
+        "--worker-id",
+        "w1",
+        "--poll",
+        "100ms"
+      ],
+      "fake": "worker-empty",
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_requests",
+          "count": 1
+        },
+        {
+          "op": "close_stdin"
+        },
+        {
+          "op": "observe",
+          "ms": 800,
+          "name": "running_after_stdin_eof"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "requests_prefix:1"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "running_after_stdin_eof": "running"
+      },
+      "requests": [
+        "POST /api/v1/worker/lease auth=bearer body={\"capabilities\":[\"ocr\"],\"worker_id\":\"w1\"}"
+      ]
+    },
+    {
+      "name": "events_idle_sigterm_exits_zero",
+      "args": [
+        "events"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "MailWatcher: starting",
+          "rust_settle_ms": 1500
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "events_idle_sigint_exits_zero",
+      "args": [
+        "events"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "MailWatcher: starting",
+          "rust_settle_ms": 1500
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "events_stdin_eof_exits_zero",
+      "args": [
+        "events"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "MailWatcher: starting",
+          "rust_settle_ms": 1500
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "close_stdin"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "events_external_sigpipe_is_ignored",
+      "args": [
+        "events"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "MailWatcher: starting",
+          "rust_settle_ms": 1500
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "signal",
+          "signal": "PIPE"
+        },
+        {
+          "op": "observe",
+          "ms": 500,
+          "name": "running_after_sigpipe"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "observations": {
+        "running_after_sigpipe": "running"
+      }
+    },
+    {
+      "name": "events_first_vault_change",
+      "args": [
+        "events"
+      ],
+      "stdout_mode": "pipe",
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "MailWatcher: starting",
+          "rust_settle_ms": 1500
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "write_file",
+          "data": "---\ntitle: New\n---\n\nbody\n",
+          "path": "vault/new.md"
+        },
+        {
+          "op": "wait_exit"
+        }
+      ],
+      "go_defect": "cmd/symdesk/events.go unlocks the debounce mutex without holding it, so the first filesystem event ends the Go process with `fatal error: sync: unlock of unlocked mutex` (exit 2)",
+      "rust": {
+        "steps": [
+          {
+            "op": "settle",
+            "ms": 1500
+          },
+          {
+            "op": "write_file",
+            "data": "---\ntitle: New\n---\n\nbody\n",
+            "path": "vault/new.md"
+          },
+          {
+            "op": "wait_stdout",
+            "text": "\"event\":\"index_updated\""
+          },
+          {
+            "op": "signal",
+            "signal": "TERM"
+          }
+        ],
+        "exit_code": 0,
+        "stdout": "{\"event\":\"index_updated\",\"path\":\"\u003cROOT\u003e/vault/new.md\",\"ts\":\"\u003cTS\u003e\"}\n",
+        "stderr": "",
+        "note": "Rust emits the NDJSON line the event processor produces (see event_cases) and then shuts down on SIGTERM instead of crashing."
+      },
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "fatal error: sync: unlock of unlocked mutex\n"
+    },
+    {
+      "name": "sources_watch_sigterm_ends_by_the_signal",
+      "args": [
+        "sources",
+        "watch",
+        "{ext}"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "sources-add"
+      ],
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "Watching 1 files in"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": "Performing initial sync for: \u003cROOT\u003e/ext\nWatching 1 files in \u003cROOT\u003e/ext\n"
+    },
+    {
+      "name": "sources_watch_sigint_ends_by_the_signal",
+      "args": [
+        "sources",
+        "watch",
+        "{ext}"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "sources-add"
+      ],
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "Watching 1 files in"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGINT",
+      "stdout": "",
+      "stderr": "Performing initial sync for: \u003cROOT\u003e/ext\nWatching 1 files in \u003cROOT\u003e/ext\n"
+    },
+    {
+      "name": "sources_watch_stdin_eof_does_not_stop",
+      "args": [
+        "sources",
+        "watch",
+        "{ext}"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "sources-add"
+      ],
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "Watching 1 files in"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "close_stdin"
+        },
+        {
+          "op": "observe",
+          "ms": 1000,
+          "name": "running_after_stdin_eof"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": "Performing initial sync for: \u003cROOT\u003e/ext\nWatching 1 files in \u003cROOT\u003e/ext\n",
+      "observations": {
+        "running_after_stdin_eof": "running"
+      }
+    },
+    {
+      "name": "sources_watch_external_sigpipe_is_ignored",
+      "args": [
+        "sources",
+        "watch",
+        "{ext}"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "sources-add"
+      ],
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "Watching 1 files in"
+        },
+        {
+          "op": "settle",
+          "ms": 300
+        },
+        {
+          "op": "signal",
+          "signal": "PIPE"
+        },
+        {
+          "op": "observe",
+          "ms": 500,
+          "name": "running_after_sigpipe"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": "Performing initial sync for: \u003cROOT\u003e/ext\nWatching 1 files in \u003cROOT\u003e/ext\n",
+      "observations": {
+        "running_after_sigpipe": "running"
+      }
+    },
+    {
+      "name": "sources_watch_indexes_changes_until_sigterm",
+      "args": [
+        "sources",
+        "watch",
+        "{ext}"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "sources-add"
+      ],
+      "steps": [
+        {
+          "op": "wait_stderr",
+          "text": "Watching 1 files in"
+        },
+        {
+          "op": "settle",
+          "ms": 500
+        },
+        {
+          "op": "write_file",
+          "data": "# Y\nnew file quarterly\n",
+          "path": "ext/y.md"
+        },
+        {
+          "op": "wait_stderr",
+          "text": "Watch: indexed=1 removed=0"
+        },
+        {
+          "op": "remove_file",
+          "path": "ext/x.md"
+        },
+        {
+          "op": "wait_stderr",
+          "text": "Watch: indexed=0 removed=1"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "search:quarterly"
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": "Performing initial sync for: \u003cROOT\u003e/ext\nWatching 1 files in \u003cROOT\u003e/ext\nIndexed: \u003cROOT\u003e/ext/y.md (2 chunks)\nWatch: indexed=1 removed=0\nWatch: indexed=0 removed=1\n",
+      "post_state": {
+        "search:quarterly": "{\"results\":[{\"path\":\"\u003cROOT\u003e/ext/y.md\",\"title\":\"y\",\"snippet\":\"# Y\\nnew file quarterly\",\"score\":\"\u003cSCORE\u003e\",\"source_type\":\"external\",\"read_only\":true}]}\n"
+      }
+    },
+    {
+      "name": "ask_hermes_sigterm_leaves_the_child_running",
+      "args": [
+        "--json",
+        "ask",
+        "quarterly"
+      ],
+      "fake": "hermes-hold",
+      "env": [
+        "SYMDESK_LLM_PROVIDER=hermes",
+        "SYMDESK_OLLAMA_URL=http://127.0.0.1:1"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "index"
+      ],
+      "steps": [
+        {
+          "op": "wait_file",
+          "path": "hermes.ready"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "child_alive_after_parent_exit"
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"snippet\":\"# A\\nhello quarterly\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n",
+      "stderr": "",
+      "post_state": {
+        "child_alive_after_parent_exit": "true"
+      }
+    },
+    {
+      "name": "ask_hermes_sigint_leaves_the_child_running",
+      "args": [
+        "--json",
+        "ask",
+        "quarterly"
+      ],
+      "fake": "hermes-hold",
+      "env": [
+        "SYMDESK_LLM_PROVIDER=hermes",
+        "SYMDESK_OLLAMA_URL=http://127.0.0.1:1"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "index"
+      ],
+      "steps": [
+        {
+          "op": "wait_file",
+          "path": "hermes.ready"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "INT"
+        }
+      ],
+      "post": [
+        "child_alive_after_parent_exit"
+      ],
+      "exit_code": -1,
+      "signal": "SIGINT",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"snippet\":\"# A\\nhello quarterly\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n",
+      "stderr": "",
+      "post_state": {
+        "child_alive_after_parent_exit": "true"
+      }
+    },
+    {
+      "name": "ask_hermes_stdin_eof_does_not_stop",
+      "args": [
+        "--json",
+        "ask",
+        "quarterly"
+      ],
+      "fake": "hermes-hold",
+      "env": [
+        "SYMDESK_LLM_PROVIDER=hermes",
+        "SYMDESK_OLLAMA_URL=http://127.0.0.1:1"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "index"
+      ],
+      "steps": [
+        {
+          "op": "wait_file",
+          "path": "hermes.ready"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "close_stdin"
+        },
+        {
+          "op": "observe",
+          "ms": 800,
+          "name": "running_after_stdin_eof"
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "child_alive_after_parent_exit"
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"snippet\":\"# A\\nhello quarterly\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n",
+      "stderr": "",
+      "observations": {
+        "running_after_stdin_eof": "running"
+      },
+      "post_state": {
+        "child_alive_after_parent_exit": "true"
+      }
+    },
+    {
+      "name": "mcp_desk_ask_hermes_sigterm_leaves_the_child_running",
+      "args": [
+        "mcp"
+      ],
+      "fake": "hermes-hold",
+      "env": [
+        "SYMDESK_LLM_PROVIDER=hermes",
+        "SYMDESK_OLLAMA_URL=http://127.0.0.1:1"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "index"
+      ],
+      "steps": [
+        {
+          "op": "send_line",
+          "data": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"desk_ask\",\"arguments\":{\"query\":\"quarterly\"}}}"
+        },
+        {
+          "op": "wait_file",
+          "path": "hermes.ready"
+        },
+        {
+          "op": "settle",
+          "ms": 200
+        },
+        {
+          "op": "signal",
+          "signal": "TERM"
+        }
+      ],
+      "post": [
+        "child_alive_after_parent_exit"
+      ],
+      "exit_code": -1,
+      "signal": "SIGTERM",
+      "stdout": "",
+      "stderr": "",
+      "post_state": {
+        "child_alive_after_parent_exit": "true"
+      }
+    },
+    {
+      "name": "ask_hermes_completion_reaps_the_child",
+      "args": [
+        "--json",
+        "ask",
+        "quarterly"
+      ],
+      "fake": "hermes-ok",
+      "env": [
+        "SYMDESK_LLM_PROVIDER=hermes",
+        "SYMDESK_OLLAMA_URL=http://127.0.0.1:1"
+      ],
+      "stdout_mode": "pipe",
+      "setup": [
+        "index"
+      ],
+      "steps": [
+        {
+          "op": "wait_exit"
+        }
+      ],
+      "post": [
+        "child_alive_after_parent_exit"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"running\"}\n{\"type\":\"tool\",\"tool_name\":\"search\",\"status\":\"done\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"snippet\":\"# A\\nhello quarterly\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"citation\",\"path\":\"a.md\",\"title\":\"a\",\"score\":\"\u003cSCORE\u003e\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"running\"}\n{\"type\":\"answer\",\"text\":\"Answer [[a.md]]\"}\n{\"type\":\"tool\",\"tool_name\":\"llm\",\"status\":\"done\"}\n{\"type\":\"done\"}\n",
+      "stderr": "",
+      "post_state": {
+        "child_alive_after_parent_exit": "false"
+      }
+    }
+  ],
+  "event_cases": [
+    {
+      "name": "create_md",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "ops": [
+        "create"
+      ],
+      "path": "note.md",
+      "output": "{\"event\":\"index_updated\",\"path\":\"\u003cVAULT\u003e/note.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": [
+        "\u003cVAULT\u003e/note.md | Test Note"
+      ]
+    },
+    {
+      "name": "write_md",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "ops": [
+        "write"
+      ],
+      "path": "note.md",
+      "output": "{\"event\":\"index_updated\",\"path\":\"\u003cVAULT\u003e/note.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": [
+        "\u003cVAULT\u003e/note.md | Test Note"
+      ]
+    },
+    {
+      "name": "create_then_write_stays_create",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "ops": [
+        "create",
+        "write"
+      ],
+      "path": "note.md",
+      "output": "{\"event\":\"index_updated\",\"path\":\"\u003cVAULT\u003e/note.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": [
+        "\u003cVAULT\u003e/note.md | Test Note"
+      ]
+    },
+    {
+      "name": "remove_md",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "remove": "note.md",
+      "ops": [
+        "remove"
+      ],
+      "path": "note.md",
+      "output": "{\"event\":\"file_removed\",\"path\":\"\u003cVAULT\u003e/note.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": []
+    },
+    {
+      "name": "rename_md",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "ops": [
+        "rename"
+      ],
+      "path": "note.md",
+      "output": "{\"event\":\"file_removed\",\"path\":\"\u003cVAULT\u003e/note.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": []
+    },
+    {
+      "name": "chmod_only_md",
+      "files": {
+        "note.md": "---\ntitle: Test Note\n---\n\nBody content\n"
+      },
+      "ops": [
+        "chmod"
+      ],
+      "path": "note.md",
+      "output": "",
+      "listed": []
+    },
+    {
+      "name": "create_txt_is_silent",
+      "files": {
+        "readme.txt": "hello"
+      },
+      "ops": [
+        "create"
+      ],
+      "path": "readme.txt",
+      "output": "",
+      "listed": []
+    },
+    {
+      "name": "create_directory_is_silent",
+      "mkdir": "subdir",
+      "ops": [
+        "create"
+      ],
+      "path": "subdir",
+      "output": "",
+      "listed": []
+    },
+    {
+      "name": "md_without_frontmatter",
+      "files": {
+        "plain.md": "# Plain\n\nJust text\n"
+      },
+      "ops": [
+        "create"
+      ],
+      "path": "plain.md",
+      "output": "{\"event\":\"index_updated\",\"path\":\"\u003cVAULT\u003e/plain.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": [
+        "\u003cVAULT\u003e/plain.md | plain"
+      ]
+    },
+    {
+      "name": "md_with_unparseable_frontmatter_is_not_indexed",
+      "files": {
+        "bad.md": "---\ntitle: [unclosed\n---\n\nbody\n"
+      },
+      "ops": [
+        "create"
+      ],
+      "path": "bad.md",
+      "output": "{\"event\":\"file_added\",\"path\":\"\u003cVAULT\u003e/bad.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": []
+    },
+    {
+      "name": "write_to_a_missing_md_is_not_indexed",
+      "ops": [
+        "write"
+      ],
+      "path": "gone.md",
+      "output": "{\"event\":\"file_changed\",\"path\":\"\u003cVAULT\u003e/gone.md\",\"ts\":\"2026-01-02T03:04:05Z\"}\n",
+      "listed": []
+    }
+  ]
+}

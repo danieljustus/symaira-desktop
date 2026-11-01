@@ -60,6 +60,7 @@
     "testdata/port/cli/remote-command-process.json": "27dcad83d27d8bcd4aa125aaa3bbc8960078f4605467e29e89088f40432c487f",
     "testdata/port/cli/restore-process.json": "59da9f7e8ee02f76c24ad669e5ad6bb3e77c384815f7f6718d83aa9a064ad99c",
     "testdata/port/cli/search-hybrid.json": "06a26de996ab59096db1169ef8b0edf2ca9170e605f071022b6a5d6a1d807178",
+    "testdata/port/cli/signals-process.json": "f73701a5895d7c3ba7d9c84085859e263d729689ba4d949fa8a32951645c91c5",
     "testdata/port/cli/sources-process.json": "c11affcd943800aedbe9bec41bbdc4b5a2127e3caf81124a5a88603967a5b2e1",
     "testdata/port/cli/symdesk-command-tree.json": "c010abe0290ae6159850e1b33c57fa0d831836373d7a94dc4210f22f43cc0747",
     "testdata/port/cli/symroom-grammar-process.json": "0e07e451d7ee7fb0a5dbc4280a58e02a1b3282f2ffd0e50ea1e7e8c3bd0852c7",

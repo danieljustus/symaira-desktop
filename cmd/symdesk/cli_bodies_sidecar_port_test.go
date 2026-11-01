@@ -24,13 +24,17 @@ func cliBodiesSidecarCases() []cliBodiesCase {
 	home["data/symdesk/vaults/0000nolast0000006/metadata.json"] = `{"vault_path":"/nonexistent-r013-vault/nolast"}`
 	home["data/symdesk/vaults/0000nodb000000007/metadata.json"] = `{"vault_path":"/nonexistent-r013-vault/nodb","last_used":"2024-01-01T00:00:00Z"}`
 	home["data/symdesk/vaults/stray-file"] = "a file, not a directory"
+	// A live sidecar: its vault path ("/") always exists. The size of a real
+	// SQLite sidecar differs between hosts, so no real vault is indexed here.
+	home["data/symdesk/vaults/0000live00000008/sidecar.db"] = "live sidecar bytes"
+	home["data/symdesk/vaults/0000live00000008/metadata.json"] = `{"vault_path":"/","last_used":"2025-02-03T04:05:06.123456789Z"}`
 	home["data/symdesk/sidecar.db"] = "legacy sidecar"
 	home["data/symdesk/retrieval.db"] = "legacy retrieval index"
 
 	vault := bodiesVault()
 	var cases []cliBodiesCase
 
-	cases = append(cases, cliBodiesCase{Name: "sidecar", VolatileHistory: true, Files: vault, HomeFiles: home, Steps: bodiesConcat(
+	cases = append(cases, cliBodiesCase{Name: "sidecar", VolatileHistory: true, SkipIndex: true, Files: vault, HomeFiles: home, Steps: bodiesConcat(
 		bodiesBoth("sidecar", "list"),
 		bodiesBoth("sidecar", "prune"),
 		bodiesBoth("sidecar", "prune", "--confirm=false"),

@@ -978,6 +978,449 @@
       ]
     },
     {
+      "name": "consume",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inbox_watch/readme.md": "inbox\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: \nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            "$ROOT/vault/inbox_watch"
+          ],
+          "exit_code": 0,
+          "stdout": "Consume folder path set to: $ROOT/vault/inbox_watch\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            "$ROOT/vault/inbox_watch"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: $ROOT/vault/inbox_watch\nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"$ROOT/vault/inbox_watch\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            "$ROOT/vault/not-there"
+          ],
+          "exit_code": 0,
+          "stdout": "Consume folder path set to: $ROOT/vault/not-there\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            "$ROOT/vault/not-there"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"inbox_path\":\"$ROOT/vault/not-there\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/not-there\nConfigured path: $ROOT/vault/not-there\nDirectory exists: false\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"$ROOT/vault/not-there\",\"exists\":false,\"inbox_path\":\"$ROOT/vault/not-there\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "Consume folder path set to: \n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            ""
+          ],
+          "exit_code": 0,
+          "stdout": "{\"inbox_path\":\"\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: \nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "status",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: \nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage the consume (watched inbox) folder configuration\n\nUsage:\n  symdesk consume [command]\n\nAvailable Commands:\n  set-path    Set the consume/watched inbox folder path\n  status      Show the configured consume folder path and status\n\nFlags:\n  -h, --help   help for consume\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk consume [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage the consume (watched inbox) folder configuration\n\nUsage:\n  symdesk consume [command]\n\nAvailable Commands:\n  set-path    Set the consume/watched inbox folder path\n  status      Show the configured consume folder path and status\n\nFlags:\n  -h, --help   help for consume\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk consume [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "consume-env-inbox",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inbox_watch/readme.md": "inbox\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "SYMDESK_INBOX": "$ROOT/vault/inbox_watch"
+      },
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/vault/inbox_watch\nConfigured path: $ROOT/vault/inbox_watch\nDirectory exists: true\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"$ROOT/vault/inbox_watch\",\"exists\":true,\"inbox_path\":\"$ROOT/vault/inbox_watch\",\"vault_path\":\"$ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            "$ROOT/elsewhere"
+          ],
+          "exit_code": 0,
+          "stdout": "Consume folder path set to: $ROOT/elsewhere\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            "$ROOT/elsewhere"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"inbox_path\":\"$ROOT/elsewhere\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/vault/inbox_watch\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "config",
+            "get",
+            "inbox"
+          ],
+          "exit_code": 0,
+          "stdout": "$ROOT/vault/inbox_watch\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "consume-no-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "consume",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to resolve vault root: vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to resolve vault root: vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "consume",
+            "set-path",
+            "$ROOT/x"
+          ],
+          "exit_code": 0,
+          "stdout": "Consume folder path set to: $ROOT/x\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "consume",
+            "set-path",
+            "$ROOT/x"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"inbox_path\":\"$ROOT/x\",\"status\":\"ok\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/nonexistent",
+            "consume",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to resolve vault root: vault path does not exist: stat $ROOT/nonexistent: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/nonexistent",
+            "consume",
+            "status"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to resolve vault root: vault path does not exist: stat $ROOT/nonexistent: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/cwd",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "Inbox path: $ROOT/x\nConfigured path: $ROOT/x\nDirectory exists: false\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/cwd",
+            "consume",
+            "status"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"configured_path\":\"$ROOT/x\",\"exists\":false,\"inbox_path\":\"$ROOT/x\",\"vault_path\":\"$ROOT/cwd\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "related-memory",
       "files": {
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

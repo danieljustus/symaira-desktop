@@ -36,12 +36,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 15;
-const EXPECTED_STEPS: usize = 220;
+const EXPECTED_CASES: usize = 22;
+const EXPECTED_STEPS: usize = 332;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 91;
+const EXPECTED_FAILING_STEPS: usize = 141;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 150;
+const EXPECTED_SNAPSHOT_STEPS: usize = 254;
 /// Steps that also compare the working-directory tree after the step.
 const EXPECTED_CWD_STEPS: usize = 50;
 
@@ -78,6 +78,8 @@ struct Case {
     hash_files: bool,
     #[serde(default)]
     digest_cwd: bool,
+    #[serde(default)]
+    contact_sql: Vec<String>,
     #[serde(default)]
     cwd_files: BTreeMap<String, String>,
     #[serde(default)]
@@ -608,6 +610,17 @@ fn cli_admin_bodies_match_go_process_contract() {
         }
         write_files(&vault, &case.post_index_files);
         apply_mtimes(&vault, &case.mtimes);
+        if !case.contact_sql.is_empty() {
+            // The Go recorder seeds the contact store below the isolated HOME;
+            // the replay applies the same statements to its own store.
+            let store_dir = home.join("data").join("symdesk");
+            fs::create_dir_all(&store_dir).expect("make contact store directory");
+            let store =
+                symdesk_contacts::open(store_dir.join("symrelate.db")).expect("open contact store");
+            for statement in &case.contact_sql {
+                store.execute_batch(statement).expect("seed contact store");
+            }
+        }
         for step in &case.steps {
             let mut args = Vec::new();
             if !case.no_vault {

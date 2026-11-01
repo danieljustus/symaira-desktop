@@ -9,6 +9,7 @@ mod config_cli;
 mod config_paths;
 mod conflict_cli;
 mod consume_cli;
+mod contact_cli;
 mod dataset;
 mod demo_cli;
 mod docs_cli;

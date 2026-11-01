@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"io/fs"
@@ -17,6 +18,8 @@ import (
 	"testing"
 	"time"
 	"unicode/utf8"
+
+	_ "modernc.org/sqlite"
 )
 
 // RUST-013 slice r013-admin: the administrative command bodies that the Rust
@@ -68,6 +71,10 @@ type adminBodiesCase struct {
 	// DigestCwd records one SHA-256 over the sorted (path, content) pairs of
 	// the working-directory tree instead of the tree (very large outputs).
 	DigestCwd bool `json:"digest_cwd,omitempty"`
+	// ContactSQL seeds the contact store below the isolated HOME: the real Go
+	// process first creates and migrates the store, then each statement runs
+	// against it (the Rust replay applies the same statements to its own store).
+	ContactSQL []string `json:"contact_sql,omitempty"`
 	// CwdFiles and CwdDirs prepare the working directory before the steps.
 	CwdFiles map[string]string `json:"cwd_files,omitempty"`
 	CwdDirs  []string          `json:"cwd_dirs,omitempty"`
@@ -314,6 +321,21 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 	}
 	writeFiles(c.PostIndexFiles)
 	applyMtimes()
+	if len(c.ContactSQL) > 0 {
+		run(baseEnv(), []string{"--vault", vault, "relations", "contact", "--id", "store-init"}, "")
+		store, err := sql.Open("sqlite", filepath.Join(home, "data", "symdesk", "symrelate.db"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, statement := range c.ContactSQL {
+			if _, err := store.Exec(statement); err != nil {
+				t.Fatalf("seed contact store for %s: %v", c.Name, err)
+			}
+		}
+		if err := store.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
 	observed := c
 	observed.Steps = nil
 	for _, step := range c.Steps {

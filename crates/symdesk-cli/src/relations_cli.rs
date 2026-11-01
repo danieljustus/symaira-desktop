@@ -12,6 +12,7 @@ pub fn cli() -> Command {
         .about("Inspect typed relations between notes")
         .subcommand(Command::new("inverse").arg(Arg::new("file").num_args(0..)))
         .subcommand(related_command())
+        .subcommand(crate::contact_cli::command())
 }
 
 /// Shared by `relations related` and the hidden top-level `related`.
@@ -37,6 +38,9 @@ pub fn run_related(command: &ArgMatches, vault: Option<&str>, output_json: bool)
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
     if let Some(("related", related)) = command.subcommand() {
         return run_related(related, vault, output_json);
+    }
+    if let Some(("contact", contact)) = command.subcommand() {
+        return crate::contact_cli::run(contact, vault, output_json);
     }
     let Some(("inverse", command)) = command.subcommand() else {
         return crate::process_exit(crate::CoreExitCode::Ok);

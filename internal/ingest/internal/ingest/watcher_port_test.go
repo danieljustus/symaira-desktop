@@ -340,7 +340,9 @@ func watcherScenarios() []watchScenario {
 		w("inbox/a.SWP", "upper"), w("inbox/a.swx", "swx"), w("inbox/real.txt", "real"), {Op: "start"}, pend}})
 
 	// live fsnotify loop: eventual outcomes only
-	live := watchOpts{StableForMS: 250, Processing: "work/processing", Failed: "work/failed", Processed: "work/processed"}
+	// 3 s stability window: the growing-file case appends after 80 ms pauses,
+	// which a saturated gate host stretched past a 250 ms window.
+	live := watchOpts{StableForMS: 3000, Processing: "work/processing", Failed: "work/failed", Processed: "work/processed"}
 	add(watchScenario{ID: "live-create-after-start", Live: true, Opts: live, Steps: []watchStep{
 		{Op: "start"}, w("inbox/a.txt", "live file"), {Op: "wait-jobs", N: 1}}})
 	add(watchScenario{ID: "live-growing-file-waits-until-stable", Live: true, Opts: live, Steps: []watchStep{

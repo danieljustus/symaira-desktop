@@ -121,7 +121,7 @@
     "testdata/port/ingest/store.json": "d7b8660e7cecd64a80de21dfc56a6fb68cf142e2342ef1366f429f5e6e03ca16",
     "testdata/port/ingest/structured.json": "fadec19a331e58e3ecfde6f78b910353902223048c53b0ce6a3a2cc28d76348b",
     "testdata/port/ingest/vlm.json": "b7f24f73fff1b03a64deda6285bef406f83f2d049cb302de676e11f84a43a5fe",
-    "testdata/port/ingest/watcher.json": "6477ee2df01c0a4d31f5ec612f5d4c80fc67adc3c88d1f05002c191b0daf4af8",
+    "testdata/port/ingest/watcher.json": "62d8580c8f628e4d1a1e3fdfb493aa9abf91726a52ed3fb72976da24b9e2561f",
     "testdata/port/mcp/ask-offline.json": "4da4f8fd74764cad82978b401c8f9c751d119b9e22edb5bc3d696eb4b89a7b69",
     "testdata/port/mcp/read-process.json": "5fe81d0137271924109b85eef5e6ba21fe46bffa2714e8e83f56835093ba0f84",
     "testdata/port/mcp/representative.json": "1495af33374cf08d81b5ca235d37adab2e064c526f8fd400a744f0cd75d115be",

@@ -404,6 +404,7 @@ func TestMCPCallsProcessPortFixture(t *testing.T) {
 // it indexes, then replaces the columns derived from the raw bytes (hash, size,
 // simhash) by values of the normalized content: generated notes embed clock
 // readings and the disposable root path, which differ between runs and hosts.
+// A row whose hash no longer matches the file is recorded as "<STALE>".
 func mcpCallsNormalizeIndexedFile(t *testing.T, entry map[string]any, vals []any, cols []string, root string) {
 	t.Helper()
 	var rawPath, rawSHA string
@@ -425,7 +426,11 @@ func mcpCallsNormalizeIndexedFile(t *testing.T, entry map[string]any, vals []any
 	}
 	digest := sha256.Sum256(body)
 	if hex.EncodeToString(digest[:]) != rawSHA {
-		t.Fatalf("index SHA of %s does not match the file", rawPath)
+		// The note was rewritten after it was indexed (the Go ingest and
+		// reocr paths do this); the indexed bytes held clock readings that
+		// are gone, so only the staleness itself is part of the contract.
+		entry["sha256"], entry["size"], entry["simhash"] = "<STALE>", "<STALE>", "<STALE>"
+		return
 	}
 	normalized := mcpCallsNormalize(string(body), root)
 	sum := sha256.Sum256([]byte(normalized))

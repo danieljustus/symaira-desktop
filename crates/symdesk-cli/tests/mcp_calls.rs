@@ -157,7 +157,7 @@ fn dump_db(path: &Path, root: &str) -> Dump {
                 entry.insert(column.clone(), value);
             }
             if name == "files" {
-                normalize_indexed_file(&mut entry, &raw_path, &root_text);
+                normalize_indexed_file(&mut entry, &raw_path, root);
             }
             entries.push(entry);
         }
@@ -169,7 +169,8 @@ fn dump_db(path: &Path, root: &str) -> Dump {
 // Verifies a sidecar `files` row against the file it indexes, then replaces
 // the columns derived from the raw bytes (hash, size, simhash) by values of the
 // normalized content: generated notes embed clock readings and the disposable
-// root path, which differ between runs and hosts.
+// root path, which differ between runs and hosts. A row whose hash no longer
+// matches the file is recorded as "<STALE>".
 fn normalize_indexed_file(entry: &mut BTreeMap<String, Value>, raw_path: &str, root: &str) {
     let Some(raw_sha) = entry.get("sha256").and_then(Value::as_str).map(str::to_owned) else {
         return;
@@ -178,11 +179,12 @@ fn normalize_indexed_file(entry: &mut BTreeMap<String, Value>, raw_path: &str, r
         return;
     }
     let body = fs::read(raw_path).unwrap_or_else(|error| panic!("{raw_path}: {error}"));
-    assert_eq!(
-        symdesk_vault::sha256_hex(&body),
-        raw_sha,
-        "index SHA of {raw_path} does not match the file"
-    );
+    if symdesk_vault::sha256_hex(&body) != raw_sha {
+        for column in ["sha256", "size", "simhash"] {
+            entry.insert(column.into(), json!("<STALE>"));
+        }
+        return;
+    }
     let text = String::from_utf8_lossy(&body).into_owned();
     let normalized = normalize(&text, root);
     entry.insert(

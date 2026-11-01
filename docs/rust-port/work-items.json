@@ -342,7 +342,7 @@
     {
       "id": "RUST-014",
       "title": "Complete all SymDesk MCP tools aliases and framing",
-      "status": "blocked",
+      "status": "in_progress",
       "depends_on": [
         "RUST-013"
       ],
@@ -364,7 +364,7 @@
     {
       "id": "RUST-015",
       "title": "Complete authenticated HTTP PostgreSQL workers and shares",
-      "status": "blocked",
+      "status": "in_progress",
       "depends_on": [
         "RUST-010",
         "RUST-012",

@@ -5,7 +5,5 @@ use std::{any::Any, collections::BTreeMap};
 /// Starts the named fake, registers the placeholders it provides and returns
 /// a guard that keeps it alive for the case.
 pub fn start(name: &str, _placeholders: &mut BTreeMap<String, String>) -> Box<dyn Any> {
-    match name {
-        other => panic!("unknown ingest fake server {other:?}"),
-    }
+    panic!("unknown ingest fake server {name:?}")
 }

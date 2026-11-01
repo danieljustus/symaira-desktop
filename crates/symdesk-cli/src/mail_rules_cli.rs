@@ -545,10 +545,9 @@ fn go_json_error(text: &str, serde_message: &str) -> String {
         return "EOF".to_owned();
     };
     let literal = |word: &str| -> Option<String> {
-        let mut expected = word.chars();
         let mut seen = trimmed.chars();
         let mut matched = 0;
-        while let Some(want) = expected.next() {
+        for want in word.chars() {
             match seen.next() {
                 None => return Some("unexpected EOF".to_owned()),
                 Some(got) if got == want => matched += 1,

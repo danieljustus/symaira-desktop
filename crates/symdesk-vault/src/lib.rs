@@ -335,7 +335,7 @@ fn yaml_v3_timestamp(value: &str) -> Option<String> {
     }
     at += 1;
     let day = number(&mut at, 2)?;
-    let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    let leap = (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400);
     let days = match month {
         2 if leap => 29,
         2 => 28,

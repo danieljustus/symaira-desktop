@@ -747,3 +747,72 @@ async fn replays_go_recorded_postgres_fixture() {
         scenarios.len()
     );
 }
+
+/// Rust-only behavior the Go fixture cannot pin deterministically (see the
+/// declared differences in `lib.rs`): a connection killed by the server is
+/// replaced instead of failing the next caller, and dropping an operation's
+/// future cancels its statement, so an abandoned write never lands later.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+#[ignore = "needs SYMDESK_PG_ADMIN_DSN; run through make postgres-integration"]
+async fn replaces_killed_connections_and_cancels_dropped_operations() {
+    let dsn = std::env::var(ADMIN_DSN_ENV)
+        .unwrap_or_else(|_| panic!("{ADMIN_DSN_ENV} is not set: use make postgres-integration"));
+    let admin = Admin::parse(&dsn);
+    let control = admin.connect("postgres").await;
+    let db = format!("{DB_PREFIX}extra");
+    control
+        .batch_execute(&format!("DROP DATABASE IF EXISTS \"{db}\" WITH (FORCE)"))
+        .await
+        .unwrap();
+    control
+        .batch_execute(&format!("CREATE DATABASE \"{db}\""))
+        .await
+        .unwrap();
+
+    let store_dsn = format!(
+        "postgres://{}:{}@{}:{}/{db}?sslmode=disable&application_name=symdesk_extra&pool_max_conns=2",
+        admin.user, admin.password, admin.host, admin.port
+    );
+    let store = PostgresBackend::open(&store_dsn).await.unwrap();
+    store.set("k", b"v").await.unwrap();
+
+    control
+        .simple_query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = 'symdesk_extra'")
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(
+        store.get("k").await.unwrap(),
+        b"v",
+        "the dead pooled connection is replaced"
+    );
+
+    let locker = admin.connect(&db).await;
+    locker.batch_execute("BEGIN").await.unwrap();
+    locker
+        .batch_execute("LOCK TABLE storage_entries IN ACCESS EXCLUSIVE MODE")
+        .await
+        .unwrap();
+    let abandoned = tokio::time::timeout(
+        Duration::from_millis(250),
+        store.set("abandoned", b"must-not-land"),
+    )
+    .await;
+    assert!(abandoned.is_err(), "the write waits for the table lock");
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    locker.batch_execute("ROLLBACK").await.unwrap();
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    assert_eq!(
+        store.get("abandoned").await,
+        Err(StorageError::NotFound("abandoned".to_string())),
+        "a dropped write is cancelled server-side and never applied"
+    );
+    assert_eq!(store.get("k").await.unwrap(), b"v");
+    store.close();
+    assert_eq!(store.get("k").await, Err(StorageError::Closed));
+    drop(locker);
+    control
+        .batch_execute(&format!("DROP DATABASE IF EXISTS \"{db}\" WITH (FORCE)"))
+        .await
+        .unwrap();
+}

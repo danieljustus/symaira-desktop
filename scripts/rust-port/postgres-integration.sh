@@ -40,7 +40,7 @@ case "$mode" in
       > "$scratch/rust.log" 2>&1 || { cat "$scratch/rust.log" >&2; exit 1; }
     grep -E '^replayed [0-9]+ scenarios' "$scratch/rust.log" \
       || { echo "postgres-integration: the Rust replay did not report its scenarios" >&2; cat "$scratch/rust.log" >&2; exit 1; }
-    grep -q 'test result: ok. 1 passed' "$scratch/rust.log" \
+    grep -q 'test result: ok. 2 passed' "$scratch/rust.log" \
       || { echo "postgres-integration: the Rust replay did not pass" >&2; cat "$scratch/rust.log" >&2; exit 1; }
     echo "PASS Rust store replays the Go-recorded PostgreSQL fixture"
     ;;

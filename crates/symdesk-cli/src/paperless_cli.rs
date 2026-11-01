@@ -271,9 +271,8 @@ fn parse_rfc3339_since(text: &str) -> Result<Option<String>, String> {
             at = end;
         }
     }
-    let utc_zero;
-    if literal(&mut at, b'Z') {
-        utc_zero = true;
+    let utc_zero = if literal(&mut at, b'Z') {
+        true
     } else if matches!(bytes.get(at), Some(b'+' | b'-')) {
         let sign = bytes[at];
         at += 1;
@@ -294,10 +293,10 @@ fn parse_rfc3339_since(text: &str) -> Result<Option<String>, String> {
                 go_quote(text)
             ));
         }
-        utc_zero = hours == 0 && minutes == 0 && sign == b'+';
+        hours == 0 && minutes == 0 && sign == b'+'
     } else {
         return Err(fail(&text[at..], "Z07:00"));
-    }
+    };
     if at < text.len() {
         return Err(format!(
             "parsing time {}: extra text: {}",

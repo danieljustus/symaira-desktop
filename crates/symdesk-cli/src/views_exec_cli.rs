@@ -1059,17 +1059,15 @@ fn import_csv(
         for (column_index, column) in headers.iter().enumerate() {
             let value = row[column_index].trim().to_owned();
             let key = mapped_key(column);
-            if !title_column.is_empty()
+            let is_title_column = !title_column.is_empty()
                 && (symdesk_vault::dataset::go_equal_fold(column, &title_column)
-                    || symdesk_vault::dataset::go_equal_fold(&key, &title_column))
-            {
-                title.clone_from(&value);
-            } else if title.is_empty()
+                    || symdesk_vault::dataset::go_equal_fold(&key, &title_column));
+            let is_default_title = title.is_empty()
                 && (key == "title"
                     || ["title", "name", "subject"]
                         .iter()
-                        .any(|name| symdesk_vault::dataset::go_equal_fold(column, name)))
-            {
+                        .any(|name| symdesk_vault::dataset::go_equal_fold(column, name)));
+            if is_title_column || is_default_title {
                 title.clone_from(&value);
             }
             if !value.is_empty() {

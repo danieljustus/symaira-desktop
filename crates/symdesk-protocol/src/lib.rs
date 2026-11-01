@@ -6,6 +6,7 @@
 //! Axum defaults: authentication, headers, path confinement, snapshots, and
 //! file ranges are all tested at the HTTP boundary.
 
+mod go_http;
 #[cfg(any(test, unix, target_os = "windows"))]
 mod mime;
 #[cfg(target_os = "windows")]
@@ -24,6 +25,7 @@ pub use retrieval_query_expansion::expand_local_ollama_query;
 pub(crate) use retrieval_search::hybrid_search_results_if_populated;
 pub use retrieval_search::{go_search_snippet, hybrid_search_results};
 
+use go_http::GoQuery;
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
@@ -47,7 +49,7 @@ use std::{
 use axum::{
     Router,
     body::{Body, Bytes, to_bytes},
-    extract::{DefaultBodyLimit, Extension, Path as AxumPath, Query, State},
+    extract::{DefaultBodyLimit, Extension, Path as AxumPath, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, Uri, header},
     middleware::{self, Next},
     response::Response,
@@ -234,7 +236,6 @@ struct FileQuery {
 struct JobQuery {
     limit: Option<String>,
     offset: Option<String>,
-    id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -398,7 +399,9 @@ async fn serve(
     connection_builder
         .timer(TokioTimer::new())
         .header_read_timeout(Some(HTTP_HEADER_READ_TIMEOUT))
-        .max_buf_size(HTTP_MAX_HEADER_BYTES)
+        // Hyper's limit must stay above Go's header budget so that the
+        // 431 decision is `go_http::connection_precheck`'s and deterministic.
+        .max_buf_size(HTTP_MAX_HEADER_BYTES + 8192)
         .max_headers(HTTP_MAX_HEADER_FIELDS);
     let connection_builder = connection_builder;
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(());
@@ -471,7 +474,15 @@ async fn serve(
                         complete: body_complete,
                     })
                 });
-                let mut response = service.oneshot(request).await?;
+                // Go's http.Server answers some requests before routing.
+                let (parts, body) = request.into_parts();
+                let rejected = go_http::connection_precheck(&parts);
+                let request = Request::from_parts(parts, body);
+                let mut response = match rejected {
+                    Some(response) => response,
+                    None => service.oneshot(request).await?,
+                };
+                go_http::apply_go_reason_phrase(&mut response);
                 if !complete.load(Ordering::SeqCst) {
                     linger.set();
                     // An unread body must never be interpreted as the next
@@ -646,15 +657,22 @@ fn router(state: Arc<AppState>) -> Router {
             Arc::clone(&state),
             authenticate,
         ));
-    Router::new()
+    let routes = Router::new()
         .route("/healthz", get(handle_health))
         .route("/s/{token}", get(handle_access_share))
         .merge(protected)
         .fallback(handle_not_found)
-        .layer(middleware::from_fn(normalize_method_not_allowed))
-        .layer(middleware::from_fn(request_timeout))
+        .with_state(state);
+    // `Router::layer` only wraps routes that matched, so Go's ServeMux
+    // decisions (path cleaning, 404/405 before authentication) must run in
+    // front of the whole router.
+    let app = tower::ServiceBuilder::new()
         .layer(middleware::from_fn(security_headers))
-        .with_state(state)
+        .layer(middleware::from_fn(go_http::serve_mux))
+        .layer(middleware::from_fn(request_timeout))
+        .layer(middleware::from_fn(normalize_method_not_allowed))
+        .service(routes);
+    Router::new().fallback_service(app)
 }
 
 async fn authenticate(
@@ -3838,11 +3856,12 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
     )
 }
 
-async fn handle_jobs(
-    State(state): State<Arc<AppState>>,
-    Query(query): Query<JobQuery>,
-) -> Response {
-    let paged = query.limit.is_some() || query.offset.is_some();
+async fn handle_jobs(State(state): State<Arc<AppState>>, query: GoQuery) -> Response {
+    let paged = query.has("limit") || query.has("offset");
+    let query = JobQuery {
+        limit: query.get("limit"),
+        offset: query.get("offset"),
+    };
     let limit = match query.limit.as_deref().filter(|value| !value.is_empty()) {
         Some(value) => match value.parse::<i64>() {
             Ok(value) if value > 0 => value as usize,
@@ -3894,11 +3913,12 @@ async fn handle_jobs(
 
 async fn handle_worker_input(
     State(state): State<Arc<AppState>>,
-    Query(query): Query<JobQuery>,
+    query: GoQuery,
     headers: HeaderMap,
     method: Method,
 ) -> Response {
-    let id = query.id.as_deref().unwrap_or_default();
+    let id = query.get_or_empty("id");
+    let id = id.as_str();
     if !valid_job_id(id) {
         return json_error(StatusCode::NOT_FOUND, "job not found");
     }
@@ -4549,13 +4569,13 @@ fn safe_upload_filename(name: &str) -> String {
     }
 }
 
-async fn handle_retry_job(
-    State(state): State<Arc<AppState>>,
-    Query(query): Query<JobRetryQuery>,
-) -> Response {
+async fn handle_retry_job(State(state): State<Arc<AppState>>, query: GoQuery) -> Response {
     let _guard = match state.job_retry.lock() {
         Ok(guard) => guard,
         Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let query = JobRetryQuery {
+        id: query.get("id"),
     };
     let Some(id) = query.id.as_deref().filter(|id| valid_job_id(id)) else {
         return json_error(StatusCode::CONFLICT, "invalid job id");
@@ -4985,10 +5005,13 @@ fn filtered_snapshot_payload(
 async fn handle_file(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
-    Query(query): Query<FileQuery>,
+    query: GoQuery,
     headers: HeaderMap,
     method: Method,
 ) -> Response {
+    let query = FileQuery {
+        path: query.get("path"),
+    };
     let requested = query.path.as_deref().unwrap_or_default();
     if requested == ".symdesk" || requested.starts_with(".symdesk/") {
         return json_error(
@@ -5134,9 +5157,12 @@ fn serve_vault_file_as(
 async fn handle_put_file(
     State(state): State<Arc<AppState>>,
     Extension(role): Extension<AuthRole>,
-    Query(query): Query<FileQuery>,
+    query: GoQuery,
     body: Body,
 ) -> Response {
+    let query = FileQuery {
+        path: query.get("path"),
+    };
     let requested = query.path.as_deref().unwrap_or_default();
     let relative = match confined_path(&state, requested) {
         Ok(path) if extension_is_markdown(&path) => path,

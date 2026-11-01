@@ -311,7 +311,7 @@ func normalizeBodiesText(volatile bool, text string) string {
 
 // bodiesRFC3339RE matches the UTC `created:` timestamps the commands write
 // (the cases run with TZ=UTC).
-var bodiesRFC3339RE = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z`)
+var bodiesRFC3339RE = regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z`)
 
 var bodiesRandomRE = regexp.MustCompile(`[0-9a-f]{24}`)
 

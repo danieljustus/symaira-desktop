@@ -3211,6 +3211,283 @@
       ]
     },
     {
+      "name": "sidecar",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+        "data/symdesk/retrieval.db": "legacy retrieval index",
+        "data/symdesk/sidecar.db": "legacy sidecar",
+        "data/symdesk/vaults/0000badmeta000004/metadata.json": "{not json",
+        "data/symdesk/vaults/0000badmeta000004/sidecar.db": "bad metadata",
+        "data/symdesk/vaults/0000emptymeta00005/metadata.json": "{\"vault_path\":\"\",\"last_used\":\"2024-01-01T00:00:00Z\"}",
+        "data/symdesk/vaults/0000emptymeta00005/sidecar.db": "empty vault path",
+        "data/symdesk/vaults/0000nodb000000007/metadata.json": "{\"vault_path\":\"/nonexistent-r013-vault/nodb\",\"last_used\":\"2024-01-01T00:00:00Z\"}",
+        "data/symdesk/vaults/0000nolast0000006/metadata.json": "{\"vault_path\":\"/nonexistent-r013-vault/nolast\"}",
+        "data/symdesk/vaults/0000nolast0000006/sidecar.db": "no last used",
+        "data/symdesk/vaults/0000nometa0000003/sidecar.db": "no metadata here",
+        "data/symdesk/vaults/0000orphan0000001/metadata.json": "{\"vault_path\":\"/nonexistent-r013-vault/one\",\"last_used\":\"2024-05-06T07:08:09.5Z\"}",
+        "data/symdesk/vaults/0000orphan0000001/sidecar.db": "not a database but a regular file",
+        "data/symdesk/vaults/0000orphan0000002/metadata.json": "{\"vault_path\":\"/nonexistent-r013-vault/two\",\"last_used\":\"2024-05-06T09:08:09+02:00\"}",
+        "data/symdesk/vaults/0000orphan0000002/retrieval.db": "retrieval index of the second orphan",
+        "data/symdesk/vaults/0000orphan0000002/sidecar.db": "second orphan with more bytes in it",
+        "data/symdesk/vaults/stray-file": "a file, not a directory"
+      },
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "Sidecars: 7\nTotal size: 180348 bytes\nOrphaned: 3\nLegacy sidecar: $ROOT/home/data/symdesk/sidecar.db (not managed)\nLegacy retrieval index: $ROOT/home/data/symdesk/retrieval.db (not managed)\nunknown (missing metadata)\t\t12 bytes\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\norphan\t/nonexistent-r013-vault/nolast\t12 bytes\t$ROOT/home/data/symdesk/vaults/0000nolast0000006/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\norphan\t/nonexistent-r013-vault/one\t33 bytes\t$ROOT/home/data/symdesk/vaults/0000orphan0000001/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\norphan\t/nonexistent-r013-vault/two\t35 bytes\t$ROOT/home/data/symdesk/vaults/0000orphan0000002/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\nlive\t$ROOT/vault\t180224 bytes\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":12,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000nolast0000006/sidecar.db\",\"vault_path\":\"/nonexistent-r013-vault/nolast\",\"last_used\":\"$TIME\",\"size\":12,\"orphan\":true,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000orphan0000001/sidecar.db\",\"vault_path\":\"/nonexistent-r013-vault/one\",\"last_used\":\"$TIME\",\"size\":33,\"orphan\":true,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000orphan0000002/sidecar.db\",\"vault_path\":\"/nonexistent-r013-vault/two\",\"last_used\":\"$TIME\",\"size\":35,\"orphan\":true,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\",\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\",\"size\":180224,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false}],\"count\":7,\"total_bytes\":180348,\"orphan_count\":3,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":true,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to remove sidecars without --confirm\n"
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to remove sidecars without --confirm\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune",
+            "--confirm=false"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to remove sidecars without --confirm\n"
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune",
+            "--confirm=false"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to remove sidecars without --confirm\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "Removed 3 orphan sidecar(s).\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "Sidecars: 4\nTotal size: 180268 bytes\nOrphaned: 0\nLegacy sidecar: $ROOT/home/data/symdesk/sidecar.db (not managed)\nLegacy retrieval index: $ROOT/home/data/symdesk/retrieval.db (not managed)\nunknown (missing metadata)\t\t12 bytes\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\nlive\t$ROOT/vault\t180224 bytes\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":12,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\",\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\",\"size\":180224,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false}],\"count\":4,\"total_bytes\":180268,\"orphan_count\":0,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":true,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "Removed 0 orphan sidecar(s).\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "list",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "Sidecars: 4\nTotal size: 180268 bytes\nOrphaned: 0\nLegacy sidecar: $ROOT/home/data/symdesk/sidecar.db (not managed)\nLegacy retrieval index: $ROOT/home/data/symdesk/retrieval.db (not managed)\nunknown (missing metadata)\t\t12 bytes\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\nunknown (missing metadata)\t\t16 bytes\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\t$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\nlive\t$ROOT/vault\t180224 bytes\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\t$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "list",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[{\"path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":12,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000badmeta000004/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000emptymeta00005/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/sidecar.db\",\"vault_path\":\"\",\"last_used\":\"$TIME\",\"size\":16,\"orphan\":false,\"metadata\":false,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/0000nometa0000003/retrieval.db\",\"retrieval_index_present\":false},{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/sidecar.db\",\"vault_path\":\"$ROOT/vault\",\"last_used\":\"$TIME\",\"size\":180224,\"orphan\":false,\"metadata\":true,\"retrieval_index_path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"retrieval_index_present\":false}],\"count\":4,\"total_bytes\":180268,\"orphan_count\":0,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":true,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune",
+            "--confirm=maybe"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"maybe\" for \"--confirm\" flag: strconv.ParseBool: parsing \"maybe\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune",
+            "--confirm=maybe"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"maybe\\\" for \\\"--confirm\\\" flag: strconv.ParseBool: parsing \\\"maybe\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and reclaim per-vault sidecar indexes\n\nUsage:\n  symdesk sidecar [command]\n\nAvailable Commands:\n  list        List sidecars and identify orphaned vaults\n  prune       Remove sidecars whose vault no longer exists\n\nFlags:\n  -h, --help   help for sidecar\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk sidecar [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar"
+          ],
+          "exit_code": 0,
+          "stdout": "Inspect and reclaim per-vault sidecar indexes\n\nUsage:\n  symdesk sidecar [command]\n\nAvailable Commands:\n  list        List sidecars and identify orphaned vaults\n  prune       Remove sidecars whose vault no longer exists\n\nFlags:\n  -h, --help   help for sidecar\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk sidecar [command] --help\" for more information about a command.\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "sidecar-empty",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n"
+      },
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "volatile_history": true,
+      "steps": [
+        {
+          "args": [
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "Sidecars: 0\nTotal size: 0 bytes\nOrphaned: 0\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"sidecars\":[],\"count\":0,\"total_bytes\":0,\"orphan_count\":0,\"legacy_path\":\"$ROOT/home/data/symdesk/sidecar.db\",\"legacy_present\":false,\"legacy_retrieval_index_path\":\"$ROOT/home/data/symdesk/retrieval.db\",\"legacy_retrieval_index_present\":false}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "Removed 0 orphan sidecar(s).\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "sidecar",
+            "prune",
+            "--confirm"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"removed\":0}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "props",
       "files": {
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

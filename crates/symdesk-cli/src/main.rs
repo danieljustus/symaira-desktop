@@ -30,6 +30,7 @@ mod restore_cli;
 mod retention;
 mod search_cli;
 mod search_export_cli;
+mod sidecar_cli;
 mod service_cli;
 mod source_cli;
 mod views_cli;
@@ -222,6 +223,7 @@ fn main() -> ExitCode {
             command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
         Some(("notebook", command)) => notebook_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -663,6 +665,7 @@ fn cli() -> Command {
         .subcommand(props_tags_cli::props_cli())
         .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())
+        .subcommand(sidecar_cli::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())

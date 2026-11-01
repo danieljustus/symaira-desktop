@@ -35,10 +35,10 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 14;
-const EXPECTED_STEPS: usize = 388;
+const EXPECTED_CASES: usize = 16;
+const EXPECTED_STEPS: usize = 410;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 146;
+const EXPECTED_FAILING_STEPS: usize = 152;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 388;
 
@@ -230,14 +230,55 @@ fn normalize_local_time(text: &str) -> String {
     )
 }
 
-/// Go: `\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z` replaced by `$RFC3339` (UTC
-/// timestamps of `created:` fields; the cases run with `TZ=UTC`).
+/// Go: `\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z` replaced by `$RFC3339`
+/// (UTC timestamps of `created:`/`last_used` fields; the cases run with
+/// `TZ=UTC`).
 fn normalize_rfc3339(text: &str) -> String {
-    normalize_shape(
-        text,
-        &[4, b'-', 2, b'-', 2, b'T', 2, b':', 2, b':', 2, b'Z'],
-        "$RFC3339",
-    )
+    let bytes = text.as_bytes();
+    let shape = [4, b'-', 2, b'-', 2, b'T', 2, b':', 2, b':', 2];
+    let matches_at = |at: usize| {
+        let mut cursor = at;
+        for part in shape {
+            if part > 4 {
+                if bytes.get(cursor) != Some(&part) {
+                    return None;
+                }
+                cursor += 1;
+            } else {
+                let width = usize::from(part);
+                if !(0..width)
+                    .all(|offset| bytes.get(cursor + offset).is_some_and(u8::is_ascii_digit))
+                {
+                    return None;
+                }
+                cursor += width;
+            }
+        }
+        if bytes.get(cursor) == Some(&b'.') {
+            let digits = bytes[cursor + 1..]
+                .iter()
+                .take_while(|byte| byte.is_ascii_digit())
+                .count();
+            if digits == 0 {
+                return None;
+            }
+            cursor += 1 + digits;
+        }
+        (bytes.get(cursor) == Some(&b'Z')).then(|| cursor + 1 - at)
+    };
+    let mut out = String::with_capacity(text.len());
+    let mut at = 0;
+    while at < bytes.len() {
+        if let Some(length) = matches_at(at) {
+            out.push_str("$RFC3339");
+            at += length;
+        } else {
+            let character = text[at..].chars().next().expect("non-empty remainder");
+            out.push(character);
+            at += character.len_utf8();
+        }
+    }
+    out
 }
 
 /// Replaces every match of a fixed digit/literal shape (digit-run widths

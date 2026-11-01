@@ -20,6 +20,7 @@ mod history;
 mod history_cli;
 mod http;
 mod index_cli;
+mod ingest_cli;
 mod ingest_common;
 mod lifecycle;
 mod links_cli;
@@ -88,6 +89,7 @@ fn main() -> ExitCode {
     }
     rewrite_index_output_flag(&mut args);
     search_export_cli::rewrite_output_flag(&mut args);
+    ingest_cli::rewrite_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
         return exit;
     }
@@ -230,6 +232,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("ingest", command)) => ingest_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("rules", command)) => rules_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -701,6 +708,7 @@ fn cli() -> Command {
         .subcommand(sidecar_cli::cli())
         .subcommand(consume_cli::cli())
         .subcommand(rules_cli::cli())
+        .subcommand(ingest_cli::cli())
         .subcommand(Command::new("mail").subcommand(mail_rules_cli::cli()))
         .subcommand(asset_export_cli::asset_cli())
         .subcommand(asset_export_cli::export_cli())

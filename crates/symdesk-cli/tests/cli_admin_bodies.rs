@@ -18,6 +18,8 @@ mod process_root;
 #[path = "support/cli_normalize.rs"]
 mod cli_normalize;
 
+#[path = "support/admin_llm_fake.rs"]
+mod admin_llm_fake;
 #[path = "support/embedding_fake.rs"]
 mod embedding_fake;
 
@@ -36,12 +38,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 59;
-const EXPECTED_STEPS: usize = 548;
+const EXPECTED_CASES: usize = 67;
+const EXPECTED_STEPS: usize = 642;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 243;
+const EXPECTED_FAILING_STEPS: usize = 285;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 276;
+const EXPECTED_SNAPSHOT_STEPS: usize = 366;
 /// Steps that also compare the working-directory tree after the step.
 const EXPECTED_CWD_STEPS: usize = 178;
 
@@ -573,6 +575,7 @@ fn cli_admin_bodies_match_go_process_contract() {
         write_files(&cwd, &case.cwd_files);
         let port = closed_port();
         let embeddings = embedding_fake::EmbeddingFake::start();
+        let llm = admin_llm_fake::LlmFake::start();
         write_files(
             &home,
             &case
@@ -603,7 +606,9 @@ fn cli_admin_bodies_match_go_process_contract() {
         }
         let root_text = root.to_string_lossy().into_owned();
         let materialize = |argument: &str| {
-            let argument = argument.replace("$CLOSED_PORT", &port);
+            let argument = argument
+                .replace("$CLOSED_PORT", &port)
+                .replace("$LLM_URL", &llm.url);
             process_root::expand_argument(&argument, &root_text)
         };
         let env: Vec<(String, String)> = case

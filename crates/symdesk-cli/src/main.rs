@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod admin_ai_cli;
 mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
@@ -420,6 +421,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("demo", command)) => demo_cli::run(command, output_json),
+        Some(("ai", command)) => admin_ai_cli::run_ai(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("doctor", _)) => doctor_cli::run(
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -792,6 +798,7 @@ fn cli() -> Command {
         .subcommand(demo_cli::cli())
         .subcommand(doctor_cli::command())
         .subcommand(vault_cli::cli())
+        .subcommand(admin_ai_cli::ai_cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

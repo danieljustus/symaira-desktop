@@ -657,6 +657,19 @@ enum AnthropicTransformError {
     Stream(symaira_core_llm::Error),
 }
 
+/// Go `ai.PromptOne` with the service's configuration (Go falls back to the
+/// default configuration when loading fails).
+pub(crate) fn prompt_one(prompt: &str) -> Result<String, String> {
+    let config = load_config().unwrap_or_default();
+    let mut environment = symdesk_core::config::environment_snapshot().unwrap_or_default();
+    if let Ok(path) = std::env::var("PATH") {
+        environment.insert("PATH".to_owned(), path);
+    }
+    let mut resolve_key = |reference: &str| crate::ai_secrets::resolve_key(reference);
+    let mut context = symdesk_service::ai::Context::new(&config, &environment, &mut resolve_key);
+    symdesk_service::ai::prompt_one(&mut context, prompt)
+}
+
 pub(crate) fn load_config() -> Result<symdesk_core::config::Config, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let path = PathBuf::from(symdesk_core::config::global_path(&environment));

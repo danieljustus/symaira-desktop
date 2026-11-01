@@ -281,6 +281,7 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 		}
 	}
 	closedPort := closedLoopbackPort(t)
+	llmURL := startAdminLLMServer(t).URL
 	if c.HomeFiles == nil {
 		c.HomeFiles = cliErrorsHomeFiles()
 	}
@@ -295,6 +296,7 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 	}
 	materialize := func(value string) string {
 		value = strings.ReplaceAll(value, "$CLOSED_PORT", closedPort)
+		value = strings.ReplaceAll(value, "$LLM_URL", llmURL)
 		return materializePortProcessArg(value, root, string(filepath.Separator))
 	}
 	baseEnv := func() []string {

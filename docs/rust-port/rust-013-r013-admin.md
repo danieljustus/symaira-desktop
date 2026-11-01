@@ -22,8 +22,8 @@ silent `_ => Ok` arm.
 | `relations contact [link|unlink]` | done (contact commit) |
 | `doctor` | done (doctor commit) |
 | `dataset list` | done (dataset commit) |
-| `ai autofill` | this slice |
-| `notebook generate` | this slice |
+| `ai autofill` | done (ai commit) |
+| `notebook generate` | done (ai commit) |
 | `export --note|--view` | done (export commits) |
 | `ingest jobs|retry|reocr|split|merge|rotate`, `mail *`, `rules *`, `clip`, `meeting *` | sibling r013-ingestcmds |
 | `paperless import|migrate`, `views embed|exec|export-csv|import-csv|new-entry` | sibling r013-paperviews |
@@ -40,7 +40,7 @@ silent `_ => Ok` arm.
 
 ## Remaining
 
-- ai autofill, notebook generate.
+- None known: every non-native path of `symdesk-command-tree.json` in this slice has a Go-recorded replay.
 
 - doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
   fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
@@ -65,6 +65,11 @@ silent `_ => Ok` arm.
 - export --view (html, csv, pdf-no-engine, dataset-sourced views and their policy): 4 cases / 28 steps, after merging
   main (r013-ingestcmds / r013-paperviews) into this branch for the saved-view engine (`views_exec_cli::{find_view,
   exec_view, view_csv, check_dataset_export}` are now `pub(crate)` and reused).
+
+- ai autofill / notebook generate (text and `--json`): 8 cases / 62 steps against a loopback fake of Ollama's
+  `/api/generate` (`$LLM_URL`; `adminLLMAnswer` in Go, `admin_llm_fake.rs` in the replay: same marker rules). Covers
+  dry-run, apply, re-apply, skipped/empty/failed notes, provider errors, no provider, vault templates and the
+  built-in kinds, artifact frontmatter and snapshots.
 
 ## Declared limits
 - export --note: a *successful* PDF render needs the host's typst and writes a non-reproducible PDF, so only the

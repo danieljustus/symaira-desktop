@@ -456,7 +456,12 @@ func writeCLIErrorsHomeFiles(t *testing.T, home string, files map[string]string,
 		}
 		content = strings.ReplaceAll(content, "$CLOSED_PORT", closedPort)
 		content = strings.ReplaceAll(content, "$EMBED_URL", embedURL)
-		if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+		mode := os.FileMode(0o600)
+		if strings.HasPrefix(name, "bin/") {
+			// Fake sibling-tool scripts must be executable.
+			mode = 0o700
+		}
+		if err := os.WriteFile(target, []byte(content), mode); err != nil {
 			t.Fatal(err)
 		}
 	}

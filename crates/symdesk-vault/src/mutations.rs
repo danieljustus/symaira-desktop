@@ -160,7 +160,7 @@ pub fn delete_frontmatter_value(path: impl AsRef<Path>, key: &str) -> Result<(),
     write_atomic(path, &join_with(&lines, separator))
 }
 
-fn quote_yaml(value: &str) -> String {
+pub(crate) fn quote_yaml(value: &str) -> String {
     if value.is_empty() {
         return "\"\"".to_owned();
     }
@@ -270,6 +270,21 @@ fn join_with(lines: &[Vec<u8>], separator: &[u8]) -> Vec<u8> {
         result.extend_from_slice(line);
     }
     result
+}
+
+/// Go `findFrontmatterBounds` over string lines: the first two `---` lines.
+pub(crate) fn frontmatter_bounds_str(lines: &[String]) -> (Option<usize>, Option<usize>) {
+    let mut start = None;
+    for (index, line) in lines.iter().enumerate() {
+        if line.trim_end_matches('\r') == "---" {
+            if start.is_none() {
+                start = Some(index);
+            } else {
+                return (start, Some(index));
+            }
+        }
+    }
+    (start, None)
 }
 
 fn frontmatter_bounds(lines: &[Vec<u8>]) -> Option<(usize, usize)> {

@@ -11,9 +11,33 @@ pub fn cli() -> Command {
     Command::new("relations")
         .about("Inspect typed relations between notes")
         .subcommand(Command::new("inverse").arg(Arg::new("file").num_args(0..)))
+        .subcommand(related_command())
+}
+
+/// Shared by `relations related` and the hidden top-level `related`.
+pub fn related_command() -> Command {
+    Command::new("related").arg(Arg::new("file").num_args(0..))
+}
+
+pub fn run_related(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
+    let files: Vec<_> = command
+        .get_many::<String>("file")
+        .into_iter()
+        .flatten()
+        .collect();
+    if files.len() != 1 {
+        return emit_error(
+            format!("accepts 1 arg(s), received {}", files.len()),
+            output_json,
+        );
+    }
+    crate::related_cli::run(files[0], vault, output_json)
 }
 
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
+    if let Some(("related", related)) = command.subcommand() {
+        return run_related(related, vault, output_json);
+    }
     let Some(("inverse", command)) = command.subcommand() else {
         return crate::process_exit(crate::CoreExitCode::Ok);
     };

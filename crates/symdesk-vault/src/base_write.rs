@@ -12,7 +12,8 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{Base, MutationError, TypedVaultError, View, parse_base, secure_path};
 
-const BASES_DIR: &str = "bases";
+/// Vault-relative directory of base notes (Go `dbviews.Dir`).
+pub const BASES_DIR: &str = "bases";
 const LEGACY_VIEWS: &str = ".symdesk/views.json";
 
 #[derive(Debug, Error)]
@@ -521,7 +522,8 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
     Ok(format!("---\n{frontmatter}---\n\n{body}"))
 }
 
-fn slugify(value: &str) -> String {
+/// Go `dbviews.Slugify`.
+pub fn slugify(value: &str) -> String {
     let mut slug = String::new();
     let mut separator = false;
     for character in value.trim().chars().flat_map(char::to_lowercase) {

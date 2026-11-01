@@ -19,7 +19,7 @@ use symdesk_index::{
     parse_text_retrieval_sections, relocate_index_for_vault, restore_database,
     retrieval_embedding_config,
 };
-use symdesk_protocol::{LocalEmbeddingError, embed_local_ollama};
+use symdesk_protocol::embed_local_ollama;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::time::Duration;
 
@@ -973,10 +973,7 @@ pub(crate) async fn embed_chunks(
                         (vector.len() == (*expected_dimension).unwrap_or(768)).then_some(vector)
                     }
                     Ok(_) => None,
-                    Err(error) => {
-                        eprintln!("engine: embedding request failed: {error}");
-                        None
-                    }
+                    Err(_) => None,
                 };
                 cache.insert(key, vector.clone());
                 vectors.push(vector);
@@ -986,14 +983,35 @@ pub(crate) async fn embed_chunks(
     }
 }
 
+/// Go `time.Duration.String` for the retry backoff (at most eight seconds).
+fn go_duration(milliseconds: u64) -> String {
+    match milliseconds {
+        0 => "0s".to_owned(),
+        value if value < 1000 => format!("{value}ms"),
+        value if value % 1000 == 0 => format!("{}s", value / 1000),
+        value => {
+            let fraction = format!("{:03}", value % 1000);
+            format!("{}.{}s", value / 1000, fraction.trim_end_matches('0'))
+        }
+    }
+}
+
+/// Go `embedWithRetries`: retries transient failures with exponential backoff,
+/// logging each retry like the engine does, and wraps an exhausted run in
+/// `ollama: exhausted N retries: ...`. Non-transient failures return as is.
 async fn embed_with_retries(
     config: &RetrievalEmbeddingConfig,
     inputs: &[String],
-) -> Result<Vec<Vec<f32>>, LocalEmbeddingError> {
+) -> Result<Vec<Vec<f32>>, String> {
     let mut backoff = config.retry_backoff_ms;
-    let mut last_error = None;
-    for attempt in 0..=config.retry_count {
+    let retries = config.retry_count;
+    let mut last_error = String::new();
+    for attempt in 0..=retries {
         if attempt > 0 {
+            eprintln!(
+                "engine: ollama retry {attempt}/{retries} after {} (last error: {last_error})",
+                go_duration(backoff)
+            );
             tokio::time::sleep(Duration::from_millis(backoff)).await;
             backoff = backoff.saturating_mul(2).min(8_000);
         }
@@ -1007,13 +1025,11 @@ async fn embed_with_retries(
         .await
         {
             Ok(vectors) => return Ok(vectors),
-            Err(error) if error.is_transient() && attempt < config.retry_count => {
-                last_error = Some(error);
-            }
-            Err(error) => return Err(error),
+            Err(error) if error.is_transient() => last_error = error.to_string(),
+            Err(error) => return Err(error.to_string()),
         }
     }
-    Err(last_error.unwrap_or(LocalEmbeddingError::EmptyInputs))
+    Err(format!("ollama: exhausted {retries} retries: {last_error}"))
 }
 
 pub(crate) fn index_vault_error(requested: Option<&str>, error: &str) -> String {

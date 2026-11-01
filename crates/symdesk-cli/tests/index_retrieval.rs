@@ -330,13 +330,11 @@ fn normalize(text: &str, root: &Path) -> String {
     value
 }
 
-/// Provider retry diagnostics carry transport-specific error text in both
-/// stacks; the contract is every other stderr line, in order.
+/// The provider retry diagnostics (`engine: ollama retry ...`, transport
+/// errors, batch fallback) are part of the contract: both stacks print the
+/// same lines in the same order, so nothing is filtered out.
 fn without_provider_diagnostics(stderr: &str) -> String {
-    stderr
-        .split_inclusive('\n')
-        .filter(|line| !line.starts_with("engine: "))
-        .collect()
+    stderr.to_owned()
 }
 
 fn run(root: &TempRoot, args: &[String]) -> ProcessResult {
@@ -576,9 +574,7 @@ fn index_writes_hybrid_retrieval_like_go_process_fixture() {
 }
 
 #[test]
-fn provider_diagnostics_filter_keeps_contract_lines() {
-    assert_eq!(
-        without_provider_diagnostics("engine: retry\nIndexed: a (1 chunks)\nengine: x\n"),
-        "Indexed: a (1 chunks)\n"
-    );
+fn provider_diagnostics_are_compared_exactly() {
+    let text = "engine: retry\nIndexed: a (1 chunks)\nengine: x\n";
+    assert_eq!(without_provider_diagnostics(text), text);
 }

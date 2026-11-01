@@ -47,37 +47,37 @@ impl fmt::Display for LocalEmbeddingError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EmptyInputs => {
-                formatter.write_str("ollama: input_validation: embed inputs must not be empty")
+                formatter.write_str("llmkit: input_validation: embed inputs must not be empty")
             }
             Self::InvalidEndpoint => formatter.write_str(
-                "ollama: invalid_endpoint: embedding endpoint must use cleartext HTTP on an IP-literal loopback host",
+                "llmkit: invalid_endpoint: embedding endpoint must use cleartext HTTP on an IP-literal loopback host",
             ),
-            Self::Transport(message) => write!(formatter, "ollama: transport_error: {message}"),
+            Self::Transport(message) => write!(formatter, "llmkit: transport_error: {message}"),
             Self::Timeout => {
-                formatter.write_str("ollama: transport_error: context deadline exceeded")
+                formatter.write_str("llmkit: transport_error: context deadline exceeded")
             }
             Self::HttpStatus { status, body, .. } if body.is_empty() => {
                 write!(
                     formatter,
-                    "ollama: {} (status {status})",
+                    "llmkit: {} (status {status})",
                     self.contract_code()
                 )
             }
             Self::HttpStatus { status, body, .. } => {
                 write!(
                     formatter,
-                    "ollama: {} (status {status}): {body}",
+                    "llmkit: {} (status {status}): {body}",
                     self.contract_code()
                 )
             }
             Self::ResponseTooLarge => formatter
-                .write_str("ollama: provider_error: embeddings response exceeds 64 MiB limit"),
+                .write_str("llmkit: provider_error: embeddings response exceeds 64 MiB limit"),
             Self::InvalidResponse(message) => {
-                write!(formatter, "ollama: provider_error: {message}")
+                write!(formatter, "llmkit: provider_error: {message}")
             }
             Self::EmbeddingCount { expected, actual } => write!(
                 formatter,
-                "ollama: provider_error: expected {expected} embeddings, got {actual}"
+                "llmkit: provider_error: expected {expected} embeddings, got {actual}"
             ),
         }
     }
@@ -163,6 +163,7 @@ pub async fn embed_local_ollama(
     let request_body = serde_json::to_vec(&body).map_err(|error| {
         LocalEmbeddingError::InvalidResponse(format!("encode request: {error}"))
     })?;
+    let endpoint_text = endpoint.to_string();
     let request = Request::builder()
         .method(Method::POST)
         .uri(endpoint)
@@ -177,15 +178,38 @@ pub async fn embed_local_ollama(
     connector.enforce_http(true);
     let client: HttpClient<HttpConnector, _> =
         HttpClient::builder(TokioExecutor::new()).build(connector);
+    let url = endpoint_text;
     let result = timeout(request_timeout, async move {
         let response = client
             .request(request)
             .await
-            .map_err(|error| LocalEmbeddingError::Transport(error.to_string()))?;
+            .map_err(|error| LocalEmbeddingError::Transport(go_transport_message(&error, &url)))?;
         parse_embedding_response(response, inputs.len()).await
     })
     .await;
     result.unwrap_or(Err(LocalEmbeddingError::Timeout))
+}
+
+/// Go's `net/http` text of a failed request:
+/// `Post "<url>": dial tcp <host:port>: connect: connection refused`. Other
+/// transport failures keep the Rust stack's own description.
+fn go_transport_message(error: &(dyn Error + 'static), url: &str) -> String {
+    let mut source: Option<&(dyn Error + 'static)> = Some(error);
+    while let Some(current) = source {
+        if let Some(io) = current.downcast_ref::<std::io::Error>()
+            && io.kind() == std::io::ErrorKind::ConnectionRefused
+        {
+            let authority = url
+                .split_once("://")
+                .map_or(url, |(_, rest)| rest)
+                .split('/')
+                .next()
+                .unwrap_or_default();
+            return format!("Post \"{url}\": dial tcp {authority}: connect: connection refused");
+        }
+        source = current.source();
+    }
+    error.to_string()
 }
 
 async fn parse_embedding_response(

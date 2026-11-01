@@ -260,9 +260,12 @@ fn underscore_ok(text: &[u8]) -> bool {
     saw != b'_'
 }
 
-/// Go's `SimilarDocs` front half: confine the path, read it through the vault
-/// root and return the stored or freshly computed simhash.
-pub(crate) fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
+/// Go `vault.SecurePath` + `ReadFileInRoot`: the confined absolute path and
+/// the file bytes, with Go's wording for every failure.
+pub(crate) fn read_vault_file(
+    vault_root: &Path,
+    requested: &str,
+) -> Result<(std::path::PathBuf, Vec<u8>), String> {
     let absolute = secure_path(vault_root, requested).map_err(|error| error.to_string())?;
     let canonical_root = fs::canonicalize(vault_root)
         .map_err(|error| format!("resolve canonical vault root: {error}"))?;
@@ -290,6 +293,13 @@ pub(crate) fn reference_simhash(vault_root: &Path, requested: &str) -> Result<St
             go_path_error("openat", relative, &error)
         )
     })?;
+    Ok((absolute, bytes))
+}
+
+/// Go's `SimilarDocs` front half: confine the path, read it through the vault
+/// root and return the stored or freshly computed simhash.
+pub(crate) fn reference_simhash(vault_root: &Path, requested: &str) -> Result<String, String> {
+    let (absolute, bytes) = read_vault_file(vault_root, requested)?;
     let path = absolute
         .to_str()
         .ok_or_else(|| format!("non-UTF-8 vault path: {:?}", absolute))?;

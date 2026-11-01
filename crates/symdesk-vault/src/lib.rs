@@ -23,6 +23,7 @@ mod resolver;
 pub mod retention;
 pub mod retention_state;
 pub mod sha256;
+mod tag_rewrite;
 mod tags;
 mod typed;
 mod walk;
@@ -38,9 +39,9 @@ use serde as _;
 use serde_json as _;
 
 pub use base_write::{
-    BaseWriteError, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
-    get_base, list_bases, migrate_legacy_views, save_base, save_base_with_snapshot, save_view,
-    save_view_with_snapshot,
+    BASES_DIR, BaseWriteError, delete_base, delete_base_with_snapshot, delete_view,
+    delete_view_with_snapshot, get_base, list_bases, migrate_legacy_views, save_base,
+    save_base_with_snapshot, save_view, save_view_with_snapshot, slugify,
 };
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
@@ -66,7 +67,7 @@ pub use mutations::{
 };
 pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
-    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
+    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query, notebook_slug,
     remove_notebook_source,
 };
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
@@ -74,6 +75,10 @@ pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};
 /// Go `encoding/json` syntax check (the first error Go's scanner reports).
 pub use retention::json_decoder::validate_syntax as go_json_validate_syntax;
+pub use tag_rewrite::{
+    BodyRewrite, FrontmatterTagRewrite, InlineTagRewrite, rewrite_document_tags_and_body,
+    rewrite_inline_tags,
+};
 pub use tags::{TagSpan, extract_inline_tags, find_inline_tag_spans};
 pub use typed::{
     Base, ComputedColumn, Coverage, DatasetHandle, Filter, FilterGroup, Notebook, PropertyConfig,

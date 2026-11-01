@@ -7512,6 +7512,423 @@
           "stderr": ""
         }
       ]
+    },
+    {
+      "name": "health-clean",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nSee [[b]] and [beta](notes/b.md) and https://example.com/x and [top](#top).\n",
+        "assets/pic.png": "not really a png",
+        "notes/b.md": "---\ntitle: Beta\n---\nBack to [[a.md]] and [[Alpha]] and [[people-without-extension]].\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:2 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":2,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-findings",
+      "files": {
+        "assets/pic.png": "bytes",
+        "data.canvas": "{}",
+        "links.md": "---\ntitle: Links\n---\n[[missing/doc]] [[folder/pic.png]] [[assets/pic.png]] [[notes/b#Heading|alias]] [[Gamma Alias]] [[ghost.md]]\n[ok](notes/b.md) [bad](notes/gone.md) [esc](../outside.md) [enc](notes/b%20x.md) [abs](/etc/passwd) [mail](mailto:a@example.com)\n```\n[[in-code/ignored]] [x](in-code/ignored.md)\n```\n",
+        "no-frontmatter.md": "plain body without frontmatter\n",
+        "notes/b.md": "---\ntitle: Beta\naliases: [Gamma Alias]\n---\nbody\n"
+      },
+      "post_index_files": {
+        "bad-asn.md": "---\ntitle: Bad\nasn: 0\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:4 Findings:[{Category:parse_error Severity:error Path:bad-asn.md Message:invalid asn in $ROOT/vault/bad-asn.md: must be a positive integer} {Category:broken_markdown_link Severity:warning Path:links.md Message:Markdown target \"notes/gone.md\" does not resolve to a vault file} {Category:broken_markdown_link Severity:warning Path:links.md Message:Markdown target \"../outside.md\" does not resolve to a vault file} {Category:broken_markdown_link Severity:warning Path:links.md Message:Markdown target \"notes/b x.md\" does not resolve to a vault file} {Category:broken_markdown_link Severity:warning Path:links.md Message:Markdown target \"/etc/passwd\" does not resolve to a vault file} {Category:broken_wikilink Severity:warning Path:links.md Message:wikilink target \"missing/doc\" does not resolve to a vault document} {Category:broken_wikilink Severity:warning Path:links.md Message:wikilink target \"ghost.md\" does not resolve to a vault document} {Category:missing_frontmatter Severity:warning Path:no-frontmatter.md Message:Markdown file has no frontmatter}] RepairPlan:[{Category:parse_error Path:bad-asn.md Action:review Reason:The file could not be parsed safely} {Category:missing_frontmatter Path:no-frontmatter.md Action:review-frontmatter Reason:Metadata is unavailable to the index and repair tools} {Category:broken_markdown_link Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link} {Category:broken_markdown_link Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link} {Category:broken_markdown_link Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link} {Category:broken_markdown_link Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link} {Category:broken_wikilink Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link} {Category:broken_wikilink Path:links.md Action:review-link Reason:Choose an existing target or remove the stale link}] Healthy:false}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":4,\"findings\":[{\"category\":\"parse_error\",\"severity\":\"error\",\"path\":\"bad-asn.md\",\"message\":\"invalid asn in $ROOT/vault/bad-asn.md: must be a positive integer\"},{\"category\":\"broken_markdown_link\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"Markdown target \\\"notes/gone.md\\\" does not resolve to a vault file\"},{\"category\":\"broken_markdown_link\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"Markdown target \\\"../outside.md\\\" does not resolve to a vault file\"},{\"category\":\"broken_markdown_link\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"Markdown target \\\"notes/b x.md\\\" does not resolve to a vault file\"},{\"category\":\"broken_markdown_link\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"Markdown target \\\"/etc/passwd\\\" does not resolve to a vault file\"},{\"category\":\"broken_wikilink\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"wikilink target \\\"missing/doc\\\" does not resolve to a vault document\"},{\"category\":\"broken_wikilink\",\"severity\":\"warning\",\"path\":\"links.md\",\"message\":\"wikilink target \\\"ghost.md\\\" does not resolve to a vault document\"},{\"category\":\"missing_frontmatter\",\"severity\":\"warning\",\"path\":\"no-frontmatter.md\",\"message\":\"Markdown file has no frontmatter\"}],\"repair_plan\":[{\"category\":\"parse_error\",\"path\":\"bad-asn.md\",\"action\":\"review\",\"reason\":\"The file could not be parsed safely\"},{\"category\":\"missing_frontmatter\",\"path\":\"no-frontmatter.md\",\"action\":\"review-frontmatter\",\"reason\":\"Metadata is unavailable to the index and repair tools\"},{\"category\":\"broken_markdown_link\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"},{\"category\":\"broken_markdown_link\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"},{\"category\":\"broken_markdown_link\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"},{\"category\":\"broken_markdown_link\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"},{\"category\":\"broken_wikilink\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"},{\"category\":\"broken_wikilink\",\"path\":\"links.md\",\"action\":\"review-link\",\"reason\":\"Choose an existing target or remove the stale link\"}],\"healthy\":false}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-derived",
+      "files": {
+        "gen/flag-only.md": "---\ntitle: Flag\nderived: true\n---\nflag\n",
+        "gen/fresh.md": "---\ntitle: Fresh\nderived: true\nderived_from: src/source.md\n---\nfresh\n",
+        "gen/noext.md": "---\ntitle: NoExt\nderived_from: src/source\n---\nnoext\n",
+        "gen/orphan.md": "---\ntitle: Orphan\nderived_from: nowhere/vanished.md\n---\norphan\n",
+        "gen/pipe-anchor.md": "---\ntitle: Anchor\nderived_from: \"[[source.md#Part|label]]\"\n---\nanchor\n",
+        "gen/relative.md": "---\ntitle: Relative\nderived_from: ../src/source.md\n---\nrelative\n",
+        "gen/stale.md": "---\ntitle: Stale\nderived_from: \"[[Source]]\"\n---\nstale\n",
+        "src/source.md": "---\ntitle: Source\n---\nsource text\n"
+      },
+      "mtimes": {
+        "gen/flag-only.md": 1700000000,
+        "gen/fresh.md": 1700001000,
+        "gen/noext.md": 1700000000,
+        "gen/orphan.md": 1700000000,
+        "gen/pipe-anchor.md": 1700000000,
+        "gen/relative.md": 1700001000,
+        "gen/stale.md": 1700000000,
+        "src/source.md": 1700000500
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:8 Findings:[{Category:stale_derived_artifact Severity:warning Path:gen/noext.md Message:derived artifact \"gen/noext.md\" is older than its source \"src/source\"} {Category:orphaned_derived_artifact Severity:warning Path:gen/orphan.md Message:derived artifact \"gen/orphan.md\" source \"nowhere/vanished.md\" does not exist} {Category:stale_derived_artifact Severity:warning Path:gen/pipe-anchor.md Message:derived artifact \"gen/pipe-anchor.md\" is older than its source \"[[source.md#Part|label]]\"} {Category:stale_derived_artifact Severity:warning Path:gen/stale.md Message:derived artifact \"gen/stale.md\" is older than its source \"[[Source]]\"}] RepairPlan:[{Category:stale_derived_artifact Path:gen/noext.md Action:regenerate-derived Reason:Source document was modified after artifact generation} {Category:orphaned_derived_artifact Path:gen/orphan.md Action:review-derived Reason:Source document is missing or has been deleted} {Category:stale_derived_artifact Path:gen/pipe-anchor.md Action:regenerate-derived Reason:Source document was modified after artifact generation} {Category:stale_derived_artifact Path:gen/stale.md Action:regenerate-derived Reason:Source document was modified after artifact generation}] Healthy:false}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":8,\"findings\":[{\"category\":\"stale_derived_artifact\",\"severity\":\"warning\",\"path\":\"gen/noext.md\",\"message\":\"derived artifact \\\"gen/noext.md\\\" is older than its source \\\"src/source\\\"\"},{\"category\":\"orphaned_derived_artifact\",\"severity\":\"warning\",\"path\":\"gen/orphan.md\",\"message\":\"derived artifact \\\"gen/orphan.md\\\" source \\\"nowhere/vanished.md\\\" does not exist\"},{\"category\":\"stale_derived_artifact\",\"severity\":\"warning\",\"path\":\"gen/pipe-anchor.md\",\"message\":\"derived artifact \\\"gen/pipe-anchor.md\\\" is older than its source \\\"[[source.md#Part|label]]\\\"\"},{\"category\":\"stale_derived_artifact\",\"severity\":\"warning\",\"path\":\"gen/stale.md\",\"message\":\"derived artifact \\\"gen/stale.md\\\" is older than its source \\\"[[Source]]\\\"\"}],\"repair_plan\":[{\"category\":\"stale_derived_artifact\",\"path\":\"gen/noext.md\",\"action\":\"regenerate-derived\",\"reason\":\"Source document was modified after artifact generation\"},{\"category\":\"orphaned_derived_artifact\",\"path\":\"gen/orphan.md\",\"action\":\"review-derived\",\"reason\":\"Source document is missing or has been deleted\"},{\"category\":\"stale_derived_artifact\",\"path\":\"gen/pipe-anchor.md\",\"action\":\"regenerate-derived\",\"reason\":\"Source document was modified after artifact generation\"},{\"category\":\"stale_derived_artifact\",\"path\":\"gen/stale.md\",\"action\":\"regenerate-derived\",\"reason\":\"Source document was modified after artifact generation\"}],\"healthy\":false}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-duplicates",
+      "files": {
+        "one.md": "---\ntitle: One\n---\nThe quick brown fox jumps over the lazy dog near the quiet river bank every morning at dawn.\n",
+        "three.md": "---\ntitle: Three\n---\nCompletely different content about spreadsheets, invoices and archive retention schedules.\n",
+        "two.md": "---\ntitle: Two\n---\nThe quick brown fox jumps over the lazy dog near the quiet river bank every morning at dawn.\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:3 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":3,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "100"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:3 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "100"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":3,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:3 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "0"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":3,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold=-5"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:3 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold=-5"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":3,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:3 Findings:[{Category:near_duplicate Severity:warning Path:three.md Message:belongs to a near-duplicate group at 57% similarity} {Category:near_duplicate Severity:warning Path:two.md Message:belongs to a near-duplicate group at 100% similarity}] RepairPlan:[{Category:near_duplicate Path:two.md Action:review-duplicate Reason:Review the group before choosing a canonical document} {Category:near_duplicate Path:three.md Action:review-duplicate Reason:Review the group before choosing a canonical document}] Healthy:false}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "1"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":3,\"findings\":[{\"category\":\"near_duplicate\",\"severity\":\"warning\",\"path\":\"three.md\",\"message\":\"belongs to a near-duplicate group at 57% similarity\"},{\"category\":\"near_duplicate\",\"severity\":\"warning\",\"path\":\"two.md\",\"message\":\"belongs to a near-duplicate group at 100% similarity\"}],\"repair_plan\":[{\"category\":\"near_duplicate\",\"path\":\"two.md\",\"action\":\"review-duplicate\",\"reason\":\"Review the group before choosing a canonical document\"},{\"category\":\"near_duplicate\",\"path\":\"three.md\",\"action\":\"review-duplicate\",\"reason\":\"Review the group before choosing a canonical document\"}],\"healthy\":false}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-arguments",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk vault health\"\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk vault health\\\"\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid argument \"abc\" for \"--duplicate-threshold\" flag: strconv.ParseInt: parsing \"abc\": invalid syntax\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "abc"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid argument \\\"abc\\\" for \\\"--duplicate-threshold\\\" flag: strconv.ParseInt: parsing \\\"abc\\\": invalid syntax\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "0x10"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:1 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold",
+            "0x10"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":1,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "vault",
+            "health",
+            "--duplicate-threshold"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --duplicate-threshold\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health",
+            "--duplicate-threshold"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --duplicate-threshold\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-empty-vault",
+      "files": {
+        "readme.txt": "text only\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{Vault:$ROOT/vault FilesScanned:0 Findings:[] RepairPlan:[] Healthy:true}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"vault\":\"$ROOT/vault\",\"files_scanned\":0,\"findings\":[],\"repair_plan\":[],\"healthy\":true}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "health-without-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "vault",
+            "health"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "vault",
+            "health"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        }
+      ]
     }
   ]
 }

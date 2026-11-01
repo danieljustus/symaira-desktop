@@ -17,20 +17,23 @@ use time::OffsetDateTime;
 use crate::{emit_error, resolve_vault_root, write_go_json, write_stdout};
 
 pub fn cli() -> Command {
-    Command::new("vault").subcommand(
-        Command::new("adopt")
-            .arg(Arg::new("dir").num_args(0..).hide(true))
-            .arg(
-                Arg::new("dry-run")
-                    .long("dry-run")
-                    .action(ArgAction::SetTrue),
-            ),
-    )
+    Command::new("vault")
+        .subcommand(crate::vault_health_cli::command())
+        .subcommand(
+            Command::new("adopt")
+                .arg(Arg::new("dir").num_args(0..).hide(true))
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
 }
 
 pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
     match command.subcommand() {
         Some(("adopt", adopt)) => run_adopt(adopt, vault, output_json),
+        Some(("health", health)) => crate::vault_health_cli::run(health, vault, output_json),
         _ => crate::process_exit(crate::CoreExitCode::Ok),
     }
 }

@@ -41,6 +41,7 @@ mod service_cli;
 mod sidecar_cli;
 mod source_cli;
 mod vault_cli;
+mod vault_health_cli;
 mod views_cli;
 mod views_write_cli;
 mod worker_cli;

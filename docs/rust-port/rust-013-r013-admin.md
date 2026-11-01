@@ -18,7 +18,7 @@ silent `_ => Ok` arm.
 | `perm user|group ...` | done (7f79cb00) |
 | `vault adopt` | done (ca07d32d) |
 | `demo init` | done (88261163) |
-| `vault health` | this slice |
+| `vault health` | done (vault health commit) |
 | `relations contact [link|unlink]` | done (contact commit) |
 | `doctor` | done (doctor commit) |
 | `dataset list` | done (dataset commit) |
@@ -40,7 +40,7 @@ silent `_ => Ok` arm.
 
 ## Remaining
 
-- vault health, ai autofill, notebook generate, export.
+- ai autofill, notebook generate, export (`--note/--view/--format/--output/--profile`; `export profiles` is native).
 
 - doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
   fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
@@ -54,7 +54,14 @@ silent `_ => Ok` arm.
   7 cases / 32 steps. `dataset describe` now goes through the same legacy-policy migration as Go
   (`readDatasetHandleWithMigration`) and wraps its error as `dataset "x" not found: <cause>`.
 
+- vault health (text and `--json`): 7 cases / 30 steps (clean, findings of every category, derived fresh/stale/
+  orphaned with set mtimes, near-duplicate groups at several thresholds, arguments, empty vault, no vault).
+  `vault_health_cli.rs` ports `health.Scan` on `HealthLinkResolver` / `MarkdownLinkResolver`.
+
 ## Declared limits
+- vault health: a YAML *syntax* error in frontmatter carries the yaml.v3 wording in Go (noyalib text in Rust), so
+  the fixture records an invalid-ASN parse error instead. Findings are sorted stably; Go's `sort.Slice` is
+  unstable above twelve findings, so the cases stay below that.
 
 - dataset policy migration: Go ranges over a two-entry map, so it writes `sensitivity` / `retention_rule` in
   random order. The Rust port writes `sensitivity` first; the harness folds the swapped adjacent pair

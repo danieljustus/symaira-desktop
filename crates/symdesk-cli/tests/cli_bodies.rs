@@ -35,10 +35,10 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 16;
-const EXPECTED_STEPS: usize = 410;
+const EXPECTED_CASES: usize = 20;
+const EXPECTED_STEPS: usize = 440;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 152;
+const EXPECTED_FAILING_STEPS: usize = 168;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 388;
 
@@ -152,7 +152,14 @@ fn write_files(vault: &Path, files: &BTreeMap<String, String>) {
     for (name, content) in files {
         let target = vault.join(name);
         fs::create_dir_all(target.parent().expect("file parent")).expect("make parent");
-        fs::write(target, content).expect("write vault file");
+        fs::write(&target, content).expect("write vault file");
+        // Fake sibling-tool scripts live below `bin/` and must be executable.
+        #[cfg(unix)]
+        if name.starts_with("bin/") {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&target, fs::Permissions::from_mode(0o755))
+                .expect("make fake tool executable");
+        }
     }
 }
 

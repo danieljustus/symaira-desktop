@@ -28,6 +28,7 @@ mod recipe;
 mod relations_cli;
 mod restore_cli;
 mod retention;
+mod related_cli;
 mod search_cli;
 mod search_export_cli;
 mod sidecar_cli;
@@ -224,6 +225,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("related", command)) => relations_cli::run_related(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("notebook", command)) => notebook_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -666,6 +672,7 @@ fn cli() -> Command {
         .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())
         .subcommand(sidecar_cli::cli())
+        .subcommand(relations_cli::related_command())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
         .subcommand(source_cli::cli())

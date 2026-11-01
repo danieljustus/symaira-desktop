@@ -2,6 +2,396 @@
   "schema_version": 1,
   "cases": [
     {
+      "name": "related-memory",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "mentions.md": "---\ntitle: Mentions\n---\nAlpha is discussed with Neighbor Corp and Al.\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "notes/neighbor-corp.md": "no frontmatter\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n",
+        "zeta.md": "---\ntitle: Zeta\n---\nunrelated body\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+        "bin/symmemory": "#!/bin/sh\ncase \"$1 $2\" in\n\"version --json\")\n  echo '{\"tool\":\"symmemory\",\"version\":\"1.2.3\",\"schema_version\":1}'\n  ;;\n\"entity list\")\n  cat \u003c\u003c'EOF'\n[\n {\"id\":\"e1\",\"name\":\"Alpha\",\"type\":\"person\",\"aliases\":[\"Al\"],\"description\":\"first\"},\n {\"id\":\"e2\",\"name\":\"gamma\",\"type\":\"topic\",\"aliases\":null,\"description\":\"\"},\n {\"id\":\"e3\",\"name\":\"Zeta Corp\",\"type\":\"org\",\"aliases\":[\"Zeta\"],\"description\":\"\"}\n]\nEOF\n  ;;\n\"entity neighbors\")\n  case \"$3\" in\n  Alpha)\n    cat \u003c\u003c'EOF'\n{\"nodes\":[{\"id\":\"e1\",\"name\":\"Alpha\",\"type\":\"person\",\"aliases\":[\"Al\"],\"description\":\"first\"},{\"id\":\"n1\",\"name\":\"Neighbor Corp\",\"type\":\"org\",\"aliases\":null,\"description\":\"\"},{\"id\":\"n1\",\"name\":\"Neighbor Corp\",\"type\":\"org\",\"aliases\":null,\"description\":\"\"},{\"id\":\"n2\",\"name\":\"Loner\",\"type\":\"topic\",\"aliases\":[\"Lone\"],\"description\":\"\"}],\n \"edges\":[{\"from_entity_id\":\"n1\",\"to_entity_id\":\"e1\",\"relation_type\":\"works_with\"}]}\nEOF\n    ;;\n  gamma)\n    echo '{\"nodes\":null,\"edges\":null}'\n    ;;\n  *)\n    echo \"no such entity\" \u003e\u00262\n    exit 3\n    ;;\n  esac\n  ;;\n*)\n  echo \"unexpected: $*\" \u003e\u00262\n  exit 2\n  ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:Alpha Type:person Relation:} {Name:Neighbor Corp Type:org Relation:works_with} {Name:Loner Type:topic Relation:}] Notes:[mentions.md plain.md]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"Alpha\",\"type\":\"person\"},{\"name\":\"Neighbor Corp\",\"type\":\"org\",\"relation\":\"works_with\"},{\"name\":\"Loner\",\"type\":\"topic\"}],\"notes\":[\"mentions.md\",\"plain.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "relations",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:Alpha Type:person Relation:} {Name:Neighbor Corp Type:org Relation:works_with} {Name:Loner Type:topic Relation:}] Notes:[mentions.md plain.md]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "relations",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"Alpha\",\"type\":\"person\"},{\"name\":\"Neighbor Corp\",\"type\":\"org\",\"relation\":\"works_with\"},{\"name\":\"Loner\",\"type\":\"topic\"}],\"notes\":[\"mentions.md\",\"plain.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "notes/c.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:gamma Type:topic Relation:}] Notes:[plain.md]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "notes/c.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"gamma\",\"type\":\"topic\"}],\"notes\":[\"plain.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "zeta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:Zeta Corp Type:org Relation:}] Notes:[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "zeta.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"Zeta Corp\",\"type\":\"org\"}],\"notes\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "mentions.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:Alpha Type:person Relation:} {Name:Neighbor Corp Type:org Relation:works_with} {Name:Loner Type:topic Relation:}] Notes:[a.md plain.md]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "mentions.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"Alpha\",\"type\":\"person\"},{\"name\":\"Neighbor Corp\",\"type\":\"org\",\"relation\":\"works_with\"},{\"name\":\"Loner\",\"type\":\"topic\"}],\"notes\":[\"a.md\",\"plain.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "plain.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[{Name:Alpha Type:person Relation:} {Name:gamma Type:topic Relation:} {Name:Neighbor Corp Type:org Relation:works_with} {Name:Loner Type:topic Relation:}] Notes:[a.md mentions.md notes/c.md]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "plain.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[{\"name\":\"Alpha\",\"type\":\"person\"},{\"name\":\"gamma\",\"type\":\"topic\"},{\"name\":\"Neighbor Corp\",\"type\":\"org\",\"relation\":\"works_with\"},{\"name\":\"Loner\",\"type\":\"topic\"}],\"notes\":[\"a.md\",\"mentions.md\",\"notes/c.md\"]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "../escape.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "path traversal denied: ../escape.md is outside vault\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "../escape.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"path traversal denied: ../escape.md is outside vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path is not a regular file: $ROOT/vault\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path is not a regular file: $ROOT/vault\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "a.md",
+            "b.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "a.md",
+            "b.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "related-no-memory",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "mentions.md": "---\ntitle: Mentions\n---\nAlpha is discussed with Neighbor Corp and Al.\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "notes/neighbor-corp.md": "no frontmatter\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n",
+        "zeta.md": "---\ntitle: Zeta\n---\nunrelated body\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "/usr/bin:/bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Entities:[] Notes:[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"entities\":[],\"notes\":[]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "missing.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"open vault file $ROOT/vault/missing.md: openat missing.md: no such file or directory\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "related-memory-broken",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "mentions.md": "---\ntitle: Mentions\n---\nAlpha is discussed with Neighbor Corp and Al.\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "notes/neighbor-corp.md": "no frontmatter\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n",
+        "zeta.md": "---\ntitle: Zeta\n---\nunrelated body\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+        "bin/symmemory": "#!/bin/sh\ncase \"$1 $2\" in\n\"version --json\") echo '{\"tool\":\"symmemory\",\"version\":\"1.2.3\"}' ;;\n\"entity list\") echo \"database is locked\" \u003e\u00262; exit 1 ;;\n*) exit 2 ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "related",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "symmemory entity list failed: exit status 1 (stderr: database is locked\n)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"symmemory entity list failed: exit status 1 (stderr: database is locked\\n)\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "related-memory-garbage",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",
+        "b.md": "---\ntitle: Beta\n---\nhello beta links to [[a]] and more\n",
+        "crlf.md": "---\r\ntitle: Crlf\r\ntags: [x]\r\n---\r\nbody #x\r\n",
+        "inline-only.md": "no frontmatter but #x inline and #x again\n",
+        "mentions.md": "---\ntitle: Mentions\n---\nAlpha is discussed with Neighbor Corp and Al.\n",
+        "notes/c.md": "---\ntitle: Gamma\n---\ngamma links to [[b]] and [[a]]\n",
+        "notes/d.md": "---\ntitle: Delta\ntags: [y]\n---\ndelta text\n",
+        "notes/neighbor-corp.md": "no frontmatter\n",
+        "plain.md": "no frontmatter at all, just words about gamma\n",
+        "tagged.md": "---\ntitle: Tagged\ntags: [x, Y, z]\n---\nbody with #x and #y inline, `#x` code and #other\n\n```\n#x fenced\n```\n",
+        "unicode-é.md": "---\ntitle: Ünï \u003c\u0026\u003e “quoted”\n---\nunicode body hello\n",
+        "zeta.md": "---\ntitle: Zeta\n---\nunrelated body\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+        "bin/symmemory": "#!/bin/sh\ncase \"$1 $2\" in\n\"version --json\") echo 'not json' ;;\n\"entity list\") echo '{\"not\":\"a list\"}' ;;\n*) exit 2 ;;\nesac\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/bin:/usr/bin:/bin"
+      },
+      "steps": [
+        {
+          "args": [
+            "related",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to unmarshal symmemory entities: json: cannot unmarshal object into Go value of type []compose.MemoryEntity\n"
+        },
+        {
+          "args": [
+            "--json",
+            "related",
+            "a.md"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to unmarshal symmemory entities: json: cannot unmarshal object into Go value of type []compose.MemoryEntity\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "search-export",
       "files": {
         "a.md": "---\ntitle: Alpha\ntags: [x, y]\n---\nhello alpha world about rust\n",

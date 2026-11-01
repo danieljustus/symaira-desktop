@@ -101,6 +101,11 @@ fn entities_from(value: &Value, path: &str) -> Result<Option<Vec<MemoryEntity>>,
             .map(|item| entity_from(item, path))
             .collect::<Result<Vec<_>, _>>()
             .map(Some),
+        // A mismatch of the top-level value has no enclosing struct field.
+        other if path == "[]" => Err(format!(
+            "json: cannot unmarshal {} into Go value of type []compose.MemoryEntity",
+            crate::gojson::kind(other)
+        )),
         other => Err(type_error(other, path, "[]compose.MemoryEntity")),
     }
 }

@@ -29,6 +29,7 @@ mod relations_cli;
 mod restore_cli;
 mod retention;
 mod search_cli;
+mod search_export_cli;
 mod service_cli;
 mod source_cli;
 mod views_cli;
@@ -79,6 +80,7 @@ fn main() -> ExitCode {
         return result;
     }
     rewrite_index_output_flag(&mut args);
+    search_export_cli::rewrite_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
         return exit;
     }
@@ -165,6 +167,17 @@ fn main() -> ExitCode {
             },
             output_json,
         ),
+        Some(("search", command))
+            if matches!(command.subcommand_name(), Some("export" | "notebook")) =>
+        {
+            let (name, sub) = command.subcommand().expect("checked subcommand");
+            search_export_cli::run(
+                name,
+                sub,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            )
+        }
         Some(("search", command)) => {
             let queries = command
                 .get_many::<String>("query")
@@ -612,7 +625,11 @@ fn cli() -> Command {
                 .arg(Arg::new("extra").num_args(0..)),
         )
         .subcommand(
-            Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
+            Command::new("search")
+                .subcommand_precedence_over_arg(true)
+                .arg(Arg::new("query").num_args(0..).action(ArgAction::Append))
+                .subcommand(search_export_cli::export_cli())
+                .subcommand(search_export_cli::notebook_cli()),
         )
         .subcommand(ai_cli::transform_cli())
         .subcommand(ai_cli::ask_cli())
@@ -708,30 +725,42 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let Some(query) = parsed.query.as_deref() else {
                 return emit_error("search query is required".to_owned(), output_json);
             };
-            let sources = match SourceRegistry::open(&vault).and_then(|registry| registry.list()) {
-                Ok(sources) => sources,
-                Err(error) => return emit_error(error.to_string(), output_json),
-            };
-            let hits = match search_cli::hybrid_search(&vault, query, &sources, &sidecar) {
-                Ok(Some(hits)) => hits,
-                Ok(None) => match sidecar.search_plan(&vault, query) {
-                    Ok(response) => search_cli::lexical_hits(response.results, &sources)
-                        .into_iter()
-                        .map(|mut hit| {
-                            if hit.source_type.is_none() {
-                                hit.path = relative_path(&vault, &hit.path);
-                            }
-                            hit
-                        })
-                        .collect(),
-                    Err(error) => return emit_error(error.to_string(), output_json),
-                },
+            let hits = match search_hits(&vault, &sidecar, query) {
+                Ok(hits) => hits,
                 Err(error) => return emit_error(error, output_json),
             };
             let hint = search_cli::syntax_fallback_hint(query);
             render_search(&hits, hint, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),
+    }
+}
+
+/// Go `Service.SearchWithMeta` as the CLI renders it.
+pub(crate) fn search_hits(
+    vault: &Path,
+    sidecar: &symdesk_index::Sidecar,
+    query: &str,
+) -> Result<Vec<search_cli::CliSearchHit>, String> {
+    let sources = SourceRegistry::open(vault)
+        .and_then(|registry| registry.list())
+        .map_err(|error| error.to_string())?;
+    match search_cli::hybrid_search(vault, query, &sources, sidecar)? {
+        Some(hits) => Ok(hits),
+        None => {
+            let response = sidecar
+                .search_plan(vault, query)
+                .map_err(|error| error.to_string())?;
+            Ok(search_cli::lexical_hits(response.results, &sources)
+                .into_iter()
+                .map(|mut hit| {
+                    if hit.source_type.is_none() {
+                        hit.path = relative_path(vault, &hit.path);
+                    }
+                    hit
+                })
+                .collect())
+        }
     }
 }
 

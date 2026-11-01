@@ -35,12 +35,12 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 10;
-const EXPECTED_STEPS: usize = 295;
+const EXPECTED_CASES: usize = 14;
+const EXPECTED_STEPS: usize = 388;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 104;
+const EXPECTED_FAILING_STEPS: usize = 146;
 /// Steps that also compare the vault tree after the step.
-const EXPECTED_SNAPSHOT_STEPS: usize = 295;
+const EXPECTED_SNAPSHOT_STEPS: usize = 388;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -223,11 +223,30 @@ fn normalize_random(text: &str) -> String {
 
 /// Go: `\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}` replaced by `$LOCALTIME`.
 fn normalize_local_time(text: &str) -> String {
+    normalize_shape(
+        text,
+        &[4, b'-', 2, b'-', 2, b' ', 2, b':', 2, b':', 2],
+        "$LOCALTIME",
+    )
+}
+
+/// Go: `\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z` replaced by `$RFC3339` (UTC
+/// timestamps of `created:` fields; the cases run with `TZ=UTC`).
+fn normalize_rfc3339(text: &str) -> String {
+    normalize_shape(
+        text,
+        &[4, b'-', 2, b'-', 2, b'T', 2, b':', 2, b':', 2, b'Z'],
+        "$RFC3339",
+    )
+}
+
+/// Replaces every match of a fixed digit/literal shape (digit-run widths
+/// are the values <= 4, literals the rest) like the Go regexp would.
+fn normalize_shape(text: &str, shape: &[u8], replacement: &str) -> String {
     let bytes = text.as_bytes();
-    let shape = [4, b'-', 2, b'-', 2, b' ', 2, b':', 2, b':', 2];
     let matches_at = |at: usize| {
         let mut cursor = at;
-        for part in shape {
+        for &part in shape {
             if part > 4 {
                 if bytes.get(cursor) != Some(&part) {
                     return None;
@@ -249,7 +268,7 @@ fn normalize_local_time(text: &str) -> String {
     let mut at = 0;
     while at < bytes.len() {
         if let Some(length) = matches_at(at) {
-            out.push_str("$LOCALTIME");
+            out.push_str(replacement);
             at += length;
         } else {
             let character = text[at..].chars().next().expect("non-empty remainder");
@@ -294,7 +313,7 @@ fn normalize(text: &str, root: &Path, canonical: &Path, volatile: bool) -> Strin
     } else {
         text
     };
-    normalize_local_time(&normalize_random(&text))
+    normalize_rfc3339(&normalize_local_time(&normalize_random(&text)))
 }
 
 /// Every regular file below `vault`: text as normalized text, everything else

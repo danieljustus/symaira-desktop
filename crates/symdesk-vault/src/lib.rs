@@ -67,7 +67,7 @@ pub use mutations::{
 };
 pub use notebook_read::{NotebookSource, list_notebooks, load_notebook, resolve_notebook_sources};
 pub use notebook_write::{
-    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
+    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query, notebook_slug,
     remove_notebook_source,
 };
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};

@@ -106,7 +106,8 @@ pub fn new_notebook_with_query(
     }
 }
 
-fn notebook_slug(title: &str) -> String {
+/// Go `notebook.Slugify`.
+pub fn notebook_slug(title: &str) -> String {
     let mut slug = String::new();
     let mut separator = false;
     for character in title.chars().flat_map(char::to_lowercase) {

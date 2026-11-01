@@ -27,6 +27,7 @@ pub fn cli() -> Command {
         )
         .subcommand(Command::new("add-source").arg(Arg::new("args").num_args(0..)))
         .subcommand(Command::new("remove-source").arg(Arg::new("args").num_args(0..)))
+        .subcommand(Command::new("delete").arg(Arg::new("args").num_args(0..)))
 }
 
 pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
@@ -109,6 +110,22 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
                 crate::write_go_json(&notebook)
             } else {
                 crate::write_stdout(notebook_text(&notebook))
+            });
+        }
+        if name == "delete" {
+            let notebook = load_notebook(&root, &args[0])?;
+            crate::mutate_cli::delete_note(&root, &mut db, &notebook.path)?;
+            let status = std::collections::BTreeMap::from([
+                ("notebook".to_owned(), args[0].clone()),
+                ("status".to_owned(), "trashed".to_owned()),
+            ]);
+            return Ok(if json {
+                crate::write_go_json(&status)
+            } else {
+                crate::write_stdout(format!(
+                    "{}\n",
+                    crate::service_cli::go_string_map(status.iter())
+                ))
             });
         }
         let notebook = load_notebook(&root, &args[0])?;

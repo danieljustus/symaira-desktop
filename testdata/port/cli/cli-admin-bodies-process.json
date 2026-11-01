@@ -1,0 +1,2037 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "perm-lifecycle",
+      "files": {
+        "a.md": "hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "null\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "alice"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"alice\" created.\nToken: $SHA256\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "alice"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"alice\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "alice"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"alice\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "alice"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"alice\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "bob"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"bob\" created.\nToken: $SHA256\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "bob"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"bob\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:alice TokenHash:$SHA256 Roles:[user]} {Name:bob TokenHash:$SHA256 Roles:[user]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"alice\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"bob\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"team\" created.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"team\",\"status\":\"created\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"team\" created.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"team\",\"status\":\"created\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "team2"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"team2\" created.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "team2"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"team2\",\"status\":\"created\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:team Members:[]} {Name:team2 Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"team\",\"members\":null},{\"name\":\"team2\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": null\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "carol",
+            "--group",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"carol\" created.\nToken: $SHA256\nAdded to group \"team\".\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "carol",
+            "--group",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"carol\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "dave",
+            "--group",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"dave\" created.\nToken: $SHA256\nAdded to group \"team\".\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "dave",
+            "--group",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"dave\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "erin",
+            "--group",
+            "nogroup"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "user created but failed to add to group \"nogroup\": group \"nogroup\" not found\n",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "erin",
+            "--group",
+            "nogroup"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"erin\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:team Members:[carol dave]} {Name:team2 Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"team\",\"members\":[\"carol\",\"dave\"]},{\"name\":\"team2\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:alice TokenHash:$SHA256 Roles:[user]} {Name:bob TokenHash:$SHA256 Roles:[user]} {Name:carol TokenHash:$SHA256 Roles:[user]} {Name:dave TokenHash:$SHA256 Roles:[user]} {Name:erin TokenHash:$SHA256 Roles:[user]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"alice\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"bob\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"carol\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"dave\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"erin\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "alice"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "use --generate to confirm token rotation\n",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "alice"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"use --generate to confirm token rotation\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "alice",
+            "--generate"
+          ],
+          "exit_code": 0,
+          "stdout": "New token for \"alice\": $SHA256\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "alice",
+            "--generate"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"alice\",\"status\":\"rotated\",\"token\":\"$SHA256\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "nobody",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "user \"nobody\" not found\n",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "nobody",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"user \\\"nobody\\\" not found\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "alice",
+            "--generate=false"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "use --generate to confirm token rotation\n",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "alice",
+            "--generate=false"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"use --generate to confirm token rotation\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"carol\",\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"carol\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "remove",
+            "carol"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"carol\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "remove",
+            "carol"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"carol\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "remove",
+            "ghost"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"ghost\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "remove",
+            "ghost"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"ghost\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:team Members:[dave]} {Name:team2 Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"team\",\"members\":[\"dave\"]},{\"name\":\"team2\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team\",\n    \"members\": [\n      \"dave\"\n    ]\n  },\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "remove",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"team\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "remove",
+            "team"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"team\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "remove",
+            "ghost"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"ghost\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "remove",
+            "ghost"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"ghost\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"team2\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "remove",
+            "team2"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"team2\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "remove",
+            "team2"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"team2\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:alice TokenHash:$SHA256 Roles:[user]} {Name:bob TokenHash:$SHA256 Roles:[user]} {Name:dave TokenHash:$SHA256 Roles:[user]} {Name:erin TokenHash:$SHA256 Roles:[user]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"alice\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"bob\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"dave\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"erin\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"alice\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"bob\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"dave\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"erin\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "perm-arguments",
+      "files": {
+        "a.md": "hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "user name is required\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"user name is required\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "group name is required\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            ""
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"group name is required\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 2\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown command \"extra\" for \"symdesk perm user list\"\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list",
+            "extra"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown command \\\"extra\\\" for \\\"symdesk perm user list\\\"\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "x",
+            "--group"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --group\n",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "x",
+            "--group"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --group\"}\n",
+          "stderr": "",
+          "vault": {
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "x",
+            "--group",
+            "a",
+            "--group",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "user created but failed to add to group \"b\": group \"b\" not found\n",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "x",
+            "--group",
+            "a",
+            "--group",
+            "b"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"x\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "remove"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "remove"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "remove"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "remove"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts 1 arg(s), received 0\n",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts 1 arg(s), received 0\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage users, groups, and document permissions\n\nUsage:\n  symdesk perm [command]\n\nAvailable Commands:\n  group       Manage named groups\n  user        Manage named user accounts\n\nFlags:\n  -h, --help   help for perm\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage users, groups, and document permissions\n\nUsage:\n  symdesk perm [command]\n\nAvailable Commands:\n  group       Manage named groups\n  user        Manage named user accounts\n\nFlags:\n  -h, --help   help for perm\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named user accounts\n\nUsage:\n  symdesk perm user [command]\n\nAvailable Commands:\n  add         Create a new user and print their token\n  list        List all registered users\n  remove      Delete a user and remove them from all groups\n  token       Generate a new token for a user (invalidates the old one)\n\nFlags:\n  -h, --help   help for user\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm user [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named user accounts\n\nUsage:\n  symdesk perm user [command]\n\nAvailable Commands:\n  add         Create a new user and print their token\n  list        List all registered users\n  remove      Delete a user and remove them from all groups\n  token       Generate a new token for a user (invalidates the old one)\n\nFlags:\n  -h, --help   help for user\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm user [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named groups\n\nUsage:\n  symdesk perm group [command]\n\nAvailable Commands:\n  add         Create a new empty group\n  list        List all groups\n  remove      Delete a group (does not remove users)\n\nFlags:\n  -h, --help   help for group\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm group [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named groups\n\nUsage:\n  symdesk perm group [command]\n\nAvailable Commands:\n  add         Create a new empty group\n  list        List all groups\n  remove      Delete a group (does not remove users)\n\nFlags:\n  -h, --help   help for group\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm group [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage users, groups, and document permissions\n\nUsage:\n  symdesk perm [command]\n\nAvailable Commands:\n  group       Manage named groups\n  user        Manage named user accounts\n\nFlags:\n  -h, --help   help for perm\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage users, groups, and document permissions\n\nUsage:\n  symdesk perm [command]\n\nAvailable Commands:\n  group       Manage named groups\n  user        Manage named user accounts\n\nFlags:\n  -h, --help   help for perm\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named user accounts\n\nUsage:\n  symdesk perm user [command]\n\nAvailable Commands:\n  add         Create a new user and print their token\n  list        List all registered users\n  remove      Delete a user and remove them from all groups\n  token       Generate a new token for a user (invalidates the old one)\n\nFlags:\n  -h, --help   help for user\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm user [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Manage named user accounts\n\nUsage:\n  symdesk perm user [command]\n\nAvailable Commands:\n  add         Create a new user and print their token\n  list        List all registered users\n  remove      Delete a user and remove them from all groups\n  token       Generate a new token for a user (invalidates the old one)\n\nFlags:\n  -h, --help   help for user\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk perm user [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "\u003c\u0026\u003e"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"\u003c\u0026\u003e\" created.\nToken: $SHA256\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "\u003c\u0026\u003e"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"\u003c\u0026\u003e\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "ünï \"q\""
+          ],
+          "exit_code": 0,
+          "stdout": "User \"ünï \\\"q\\\"\" created.\nToken: $SHA256\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "ünï \"q\""
+          ],
+          "exit_code": 0,
+          "stdout": "User \"ünï \\\"q\\\"\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "\u003c\u0026\u003e g"
+          ],
+          "exit_code": 0,
+          "stdout": "Group \"\u003c\u0026\u003e g\" created.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "\u003c\u0026\u003e g"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"\\u003c\\u0026\\u003e g\",\"status\":\"created\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:x TokenHash:$SHA256 Roles:[user]} {Name:\u003c\u0026\u003e TokenHash:$SHA256 Roles:[user]} {Name:ünï \"q\" TokenHash:$SHA256 Roles:[user]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"x\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"\\u003c\\u0026\\u003e\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]},{\"name\":\"ünï \\\"q\\\"\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:\u003c\u0026\u003e g Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"\\u003c\\u0026\\u003e g\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"\\u003c\\u0026\\u003e g\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"\\u003c\\u0026\\u003e\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"ünï \\\"q\\\"\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "perm-stored-state",
+      "files": {
+        ".symdesk/groups.json": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\"}]",
+        ".symdesk/permissions.json": "[]",
+        ".symdesk/users.json": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\"}]",
+        "a.md": "hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:x TokenHash:abc Roles:[admin user]} {Name:y TokenHash:def Roles:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\"}]",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\"}]",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\",\"roles\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\"}]",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\"}]",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:g Members:[x]} {Name:h Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\"}]",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\"}]",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":\"g\",\"members\":[\"x\"]},{\"name\":\"h\"}]",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[{\"name\":\"x\",\"token_hash\":\"abc\",\"roles\":[\"admin\",\"user\"]},{\"name\":\"y\",\"token_hash\":\"def\"}]",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "z",
+            "--group",
+            "g"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"z\" created.\nToken: $SHA256\nAdded to group \"g\".\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"x\",\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"abc\",\n    \"roles\": [\n      \"admin\",\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "z",
+            "--group",
+            "g"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"z\" already exists.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"x\",\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"x\",\n    \"token_hash\": \"abc\",\n    \"roles\": [\n      \"admin\",\n      \"user\"\n    ]\n  },\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "remove",
+            "x"
+          ],
+          "exit_code": 0,
+          "stdout": "User \"x\" removed.\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "remove",
+            "x"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"name\":\"x\",\"status\":\"removed\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:g Members:[z]} {Name:h Members:[]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"g\",\"members\":[\"z\"]},{\"name\":\"h\",\"members\":null}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{Name:y TokenHash:def Roles:[]} {Name:z TokenHash:$SHA256 Roles:[user]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 0,
+          "stdout": "[{\"name\":\"y\",\"token_hash\":\"def\",\"roles\":null},{\"name\":\"z\",\"token_hash\":\"$SHA256\",\"roles\":[\"user\"]}]\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[\n  {\n    \"name\": \"g\",\n    \"members\": [\n      \"z\"\n    ]\n  },\n  {\n    \"name\": \"h\",\n    \"members\": null\n  }\n]\n",
+            ".symdesk/permissions.json": "[]",
+            ".symdesk/users.json": "[\n  {\n    \"name\": \"y\",\n    \"token_hash\": \"def\",\n    \"roles\": null\n  },\n  {\n    \"name\": \"z\",\n    \"token_hash\": \"$SHA256\",\n    \"roles\": [\n      \"user\"\n    ]\n  }\n]\n",
+            "a.md": "hello\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "perm-corrupt-state",
+      "files": {
+        ".symdesk/groups.json": "[{\"name\":1}]",
+        ".symdesk/users.json": "{bad",
+        "a.md": "hello\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_vault": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid character 'b' looking for beginning of object key string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid character 'b' looking for beginning of object key string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "add",
+            "a"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid character 'b' looking for beginning of object key string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "add",
+            "a"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid character 'b' looking for beginning of object key string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "json: cannot unmarshal number into Go struct field Group.name of type string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field Group.name of type string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "g"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "json: cannot unmarshal number into Go struct field Group.name of type string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "g"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"json: cannot unmarshal number into Go struct field Group.name of type string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "a",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid character 'b' looking for beginning of object key string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "a",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid character 'b' looking for beginning of object key string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "remove",
+            "a"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "invalid character 'b' looking for beginning of object key string\n",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "remove",
+            "a"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"invalid character 'b' looking for beginning of object key string\"}\n",
+          "stderr": "",
+          "vault": {
+            ".symdesk/groups.json": "[{\"name\":1}]",
+            ".symdesk/users.json": "{bad",
+            "a.md": "hello\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "perm-without-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "steps": [
+        {
+          "args": [
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "perm",
+            "group",
+            "add",
+            "g"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "group",
+            "add",
+            "g"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "perm",
+            "user",
+            "token",
+            "a",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path not configured (use flag or SYMDESK_VAULT env)\n"
+        },
+        {
+          "args": [
+            "--json",
+            "perm",
+            "user",
+            "token",
+            "a",
+            "--generate"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path not configured (use flag or SYMDESK_VAULT env)\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--vault",
+            "$ROOT/missing",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "vault path does not exist: stat $ROOT/missing: no such file or directory\n"
+        },
+        {
+          "args": [
+            "--json",
+            "--vault",
+            "$ROOT/missing",
+            "perm",
+            "group",
+            "list"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/missing: no such file or directory\"}\n",
+          "stderr": ""
+        }
+      ]
+    }
+  ]
+}

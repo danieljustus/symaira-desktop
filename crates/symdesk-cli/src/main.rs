@@ -25,6 +25,7 @@ mod links_cli;
 mod mcp;
 mod mutate_cli;
 mod notebook_cli;
+mod perm_cli;
 mod props_tags_cli;
 mod recipe;
 mod related_cli;
@@ -352,6 +353,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("relations", command)) => relations_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("perm", command)) => perm_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -704,6 +710,7 @@ fn cli() -> Command {
         .subcommand(recipe::cli())
         .subcommand(events_cli::cli())
         .subcommand(worker_cli::cli())
+        .subcommand(perm_cli::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

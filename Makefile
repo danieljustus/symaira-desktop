@@ -721,6 +721,17 @@ cli-bodies-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIBodiesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test cli_bodies --locked
 
+# RUST-013 slice r013-admin command bodies (perm, vault health/adopt, relations
+# contact, demo init, doctor, dataset list, ai autofill): Go-recorded process
+# fixtures with vault-tree and working-directory snapshots after every step.
+.PHONY: cli-admin-bodies-fixtures-generate cli-admin-bodies-differential
+cli-admin-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIAdminBodiesProcessContract$$'
+
+cli-admin-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIAdminBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_admin_bodies --locked
+
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.

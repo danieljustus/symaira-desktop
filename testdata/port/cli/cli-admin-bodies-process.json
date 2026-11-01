@@ -2977,6 +2977,1022 @@
       ]
     },
     {
+      "name": "export-view-html-csv",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nbody\n",
+        "invoices/one.md": "---\ntitle: One\nstatus: open\namount: 10\n---\nfirst\n",
+        "invoices/sub/four.md": "---\ntitle: Four\nstatus: \"quo\\\"te\"\n---\nfourth\n",
+        "invoices/three.md": "---\ntitle: Three, with comma\nstatus: open\namount: 5.5\n---\nthird\n",
+        "invoices/two.md": "---\ntitle: Two\nstatus: paid\namount: 20\n---\nsecond\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "cwd_dirs": [
+        "sub"
+      ],
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"all\",\"name\":\"All notes\",\"columns\":[\"title\",\"status\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"all\",\"name\":\"All notes\",\"columns\":[\"title\",\"status\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"open\",\"name\":\"Open invoices\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"columns\":[\"title\",\"amount\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"open\",\"name\":\"Open invoices\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}],\"columns\":[\"title\",\"amount\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"none\",\"name\":\"No match\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"nothing\"}]}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"none\",\"name\":\"No match\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"nothing\"}]}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"baddir\",\"name\":\"Bad dir\",\"source\":\"nowhere/\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"baddir\",\"name\":\"Bad dir\",\"source\":\"nowhere/\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/all.html Profile: Rendered:true Message:Exported view All notes to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/all.html\",\"rendered\":true,\"message\":\"Exported view All notes to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "html",
+            "--output",
+            "open.html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/open.html Profile: Rendered:true Message:Exported view Open invoices to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "html",
+            "--output",
+            "open.html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/open.html\",\"rendered\":true,\"message\":\"Exported view Open invoices to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "none",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/none.html Profile: Rendered:true Message:Exported view No match to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "none",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/none.html\",\"rendered\":true,\"message\":\"Exported view No match to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:csv Path:$ROOT/cwd/all.csv Profile: Rendered:true Message:Exported view all to CSV}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"csv\",\"path\":\"$ROOT/cwd/all.csv\",\"rendered\":true,\"message\":\"Exported view all to CSV\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "csv",
+            "--output",
+            "sub/open.csv"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:csv Path:$ROOT/cwd/sub/open.csv Profile: Rendered:true Message:Exported view open to CSV}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "csv",
+            "--output",
+            "sub/open.csv"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"csv\",\"path\":\"$ROOT/cwd/sub/open.csv\",\"rendered\":true,\"message\":\"Exported view open to CSV\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "none",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:csv Path:$ROOT/cwd/none.csv Profile: Rendered:true Message:Exported view none to CSV}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "none",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"csv\",\"path\":\"$ROOT/cwd/none.csv\",\"rendered\":true,\"message\":\"Exported view none to CSV\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "ghost",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "view not found: view not found\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "ghost",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"view not found: view not found\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "ghost",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "views export csv: view not found\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "ghost",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"views export csv: view not found\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "baddir",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to evaluate view: view source folder \"nowhere/\" does not exist\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "baddir",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to evaluate view: view source folder \\\"nowhere/\\\" does not exist\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "baddir",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "views exec \"baddir\": view source folder \"nowhere/\" does not exist\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "baddir",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"views exec \\\"baddir\\\": view source folder \\\"nowhere/\\\" does not exist\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "csv",
+            "--output",
+            "missing-dir/open.csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "failed to write CSV: open $ROOT/cwd/missing-dir/open.csv: no such file or directory\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "open",
+            "--format",
+            "csv",
+            "--output",
+            "missing-dir/open.csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"failed to write CSV: open $ROOT/cwd/missing-dir/open.csv: no such file or directory\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--note",
+            "a.md",
+            "--view",
+            "all",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "if any flags in the group [note view] are set none of the others can be; [note view] were all set\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--note",
+            "a.md",
+            "--view",
+            "all",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"if any flags in the group [note view] are set none of the others can be; [note view] were all set\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "flag needs an argument: --view\n",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"flag needs an argument: --view\"}\n",
+          "stderr": "",
+          "cwd": {
+            "all.csv": "title,status\nAlpha,\nAll notes,\nBad dir,\nOpen invoices,\nOne,open\nFour,\"quo\"\"te\"\n\"Three, with comma\",open\nTwo,paid\n",
+            "all.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eAll notes\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | base_id | created | status | tags | title | type | views |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/a.md | Alpha |  |  |  |  |  | Alpha |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/all-notes.md | All notes |  | all-notes | $TIME |  | [base] | All notes | base | [map[columns:[title status] id:all name:All notes]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/bad-dir.md | Bad dir |  | bad-dir | $TIME |  | [base] | Bad dir | base | [map[id:baddir name:Bad dir source:nowhere/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/bases/open-invoices.md | Open invoices |  | open-invoices | $TIME |  | [base] | Open invoices | base | [map[columns:[title amount] filters:[map[key:status operator:equals value:open]] id:open name:Open invoices source:invoices/] map[filters:[map[key:status operator:equals value:nothing]] id:none name:No match source:invoices/]] |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 |  |  | open |  | One |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/sub/four.md | Four |  |  |  | quo\u0026#34;te |  | Four |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 |  |  | open |  | Three, with comma |  |  |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/two.md | Two | 20 |  |  | paid |  | Two |  |  |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "none.csv": "title\n",
+            "none.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eNo match\u003c/h1\u003e\n\n\u003cp\u003eNo matching notes.\u003c/p\u003e\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "open.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOpen invoices\u003c/h1\u003e\n\n\u003cp\u003e| _path | _title | amount | status | title |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/one.md | One | 10 | open | One |\u003c/p\u003e\n\u003cp\u003e| $ROOT/vault/invoices/three.md | Three, with comma | 5.5 | open | Three, with comma |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "sub/open.csv": "title,amount\nOne,10\n\"Three, with comma\",5.5\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-view-dataset-policy",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Slug:orders Rows:2 ImportedRows:2 RawPath:datasets/orders/2026-01-02.csv HandlePath:datasets/orders.md Idempotent:false}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"orders\",\"rows\":2,\"imported_rows\":2,\"raw_path\":\"datasets/orders/2026-01-02.csv\",\"handle_path\":\"datasets/orders.md\",\"idempotent\":true}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"dset\",\"name\":\"Orders\",\"source\":\"dataset:orders\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"dset\",\"name\":\"Orders\",\"source\":\"dataset:orders\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"orders\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "html"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"orders\\\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "dataset export denied: dataset \"orders\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "csv"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"dataset export denied: dataset \\\"orders\\\" is restricted; maximum configured export sensitivity is internal (set dataset_export_max_sensitivity explicitly to opt in)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        }
+      ]
+    },
+    {
+      "name": "export-view-dataset-policy-widened",
+      "files": {
+        "a.md": "---\ntitle: A\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "restricted"
+      },
+      "snapshot_cwd": true,
+      "volatile": true,
+      "steps": [
+        {
+          "args": [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Slug:orders Rows:2 ImportedRows:2 RawPath:datasets/orders/2026-01-02.csv HandlePath:datasets/orders.md Idempotent:false}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            "[{\"identity\":\"1\",\"values\":{\"id\":1,\"name\":\"first\"}},{\"identity\":\"2\",\"values\":{\"id\":2,\"name\":\"second\"}}]",
+            "--title",
+            "Orders",
+            "--identity-field",
+            "id",
+            "--source-name",
+            "feed",
+            "--source-sha256",
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "--imported-at",
+            "2026-01-02T03:04:05Z",
+            "--schema",
+            "{\"id\":{\"type\":\"number\"},\"name\":{\"type\":\"text\",\"label\":\"Name\"}}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"slug\":\"orders\",\"rows\":2,\"imported_rows\":2,\"raw_path\":\"datasets/orders/2026-01-02.csv\",\"handle_path\":\"datasets/orders.md\",\"idempotent\":true}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"dset\",\"name\":\"Orders\",\"source\":\"dataset:orders\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"dset\",\"name\":\"Orders\",\"source\":\"dataset:orders\"}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:html Path:$ROOT/cwd/dset.html Profile: Rendered:true Message:Exported view Orders to HTML}\n",
+          "stderr": "",
+          "cwd": {
+            "dset.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOrders\u003c/h1\u003e\n\n\u003cp\u003e| _identity | _key | _path | _title | id | identity | name |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| 1 | identity:1 | datasets/orders/2026-01-02.csv | 1 | 1 | 1 | first |\u003c/p\u003e\n\u003cp\u003e| 2 | identity:2 | datasets/orders/2026-01-02.csv | 2 | 2 | 2 | second |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "html"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"html\",\"path\":\"$ROOT/cwd/dset.html\",\"rendered\":true,\"message\":\"Exported view Orders to HTML\"}\n",
+          "stderr": "",
+          "cwd": {
+            "dset.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOrders\u003c/h1\u003e\n\n\u003cp\u003e| _identity | _key | _path | _title | id | identity | name |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| 1 | identity:1 | datasets/orders/2026-01-02.csv | 1 | 1 | 1 | first |\u003c/p\u003e\n\u003cp\u003e| 2 | identity:2 | datasets/orders/2026-01-02.csv | 2 | 2 | 2 | second |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e"
+          }
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "csv",
+            "--output",
+            "orders.csv"
+          ],
+          "exit_code": 0,
+          "stdout": "\u0026{Format:csv Path:$ROOT/cwd/orders.csv Profile: Rendered:true Message:Exported view dset to CSV}\n",
+          "stderr": "",
+          "cwd": {
+            "dset.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOrders\u003c/h1\u003e\n\n\u003cp\u003e| _identity | _key | _path | _title | id | identity | name |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| 1 | identity:1 | datasets/orders/2026-01-02.csv | 1 | 1 | 1 | first |\u003c/p\u003e\n\u003cp\u003e| 2 | identity:2 | datasets/orders/2026-01-02.csv | 2 | 2 | 2 | second |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "orders.csv": "title,_identity,_key,id,identity,name\n1,1,identity:1,1,1,first\n2,2,identity:2,2,2,second\n"
+          }
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "dset",
+            "--format",
+            "csv",
+            "--output",
+            "orders.csv"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"format\":\"csv\",\"path\":\"$ROOT/cwd/orders.csv\",\"rendered\":true,\"message\":\"Exported view dset to CSV\"}\n",
+          "stderr": "",
+          "cwd": {
+            "dset.html": "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n\u003cmeta charset=\"utf-8\"\u003e\n\u003ctitle\u003eExported Note\u003c/title\u003e\n\u003c/head\u003e\n\u003cbody\u003e\n\u003ch1\u003eOrders\u003c/h1\u003e\n\n\u003cp\u003e| _identity | _key | _path | _title | id | identity | name |\u003c/p\u003e\n\u003cp\u003e| --- | --- | --- | --- | --- | --- | --- |\u003c/p\u003e\n\u003cp\u003e| 1 | identity:1 | datasets/orders/2026-01-02.csv | 1 | 1 | 1 | first |\u003c/p\u003e\n\u003cp\u003e| 2 | identity:2 | datasets/orders/2026-01-02.csv | 2 | 2 | 2 | second |\u003c/p\u003e\n\n\n\u003c/body\u003e\n\u003c/html\u003e",
+            "orders.csv": "title,_identity,_key,id,identity,name\n1,1,identity:1,1,1,first\n2,2,identity:2,2,2,second\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "export-view-pdf-no-engine",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nbody\n",
+        "invoices/one.md": "---\ntitle: One\nstatus: open\namount: 10\n---\nfirst\n",
+        "invoices/sub/four.md": "---\ntitle: Four\nstatus: \"quo\\\"te\"\n---\nfourth\n",
+        "invoices/three.md": "---\ntitle: Three, with comma\nstatus: open\namount: 5.5\n---\nthird\n",
+        "invoices/two.md": "---\ntitle: Two\nstatus: paid\namount: 20\n---\nsecond\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "views",
+            "save",
+            "{\"id\":\"all\",\"name\":\"All notes\",\"columns\":[\"title\",\"status\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "map[status:saved]\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "views",
+            "save",
+            "{\"id\":\"all\",\"name\":\"All notes\",\"columns\":[\"title\",\"status\"]}"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"status\":\"saved\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "pdf"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\n  • macOS:   brew install typst\n  • Windows: winget install --id Typst.Typst\n  • Cargo:   cargo install typst-cli\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "all",
+            "--format",
+            "pdf"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"PDF export requires a typesetting engine: typst not found on PATH. Install it with one of:\\n  • macOS:   brew install typst\\n  • Windows: winget install --id Typst.Typst\\n  • Cargo:   cargo install typst-cli\\n  • Binary:  https://github.com/typst/typst/releases (put it on PATH)\"}\n",
+          "stderr": "",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "export",
+            "--view",
+            "ghost"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "view not found: view not found\n",
+          "cwd": {}
+        },
+        {
+          "args": [
+            "--json",
+            "export",
+            "--view",
+            "ghost"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"view not found: view not found\"}\n",
+          "stderr": "",
+          "cwd": {}
+        }
+      ]
+    },
+    {
       "name": "perm-lifecycle",
       "files": {
         "a.md": "hello\n"

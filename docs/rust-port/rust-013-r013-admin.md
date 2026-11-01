@@ -24,7 +24,7 @@ silent `_ => Ok` arm.
 | `dataset list` | done (dataset commit) |
 | `ai autofill` | this slice |
 | `notebook generate` | this slice |
-| `export --note` | done (export commit); `export --view` / csv: see Remaining |
+| `export --note|--view` | done (export commits) |
 | `ingest jobs|retry|reocr|split|merge|rotate`, `mail *`, `rules *`, `clip`, `meeting *` | sibling r013-ingestcmds |
 | `paperless import|migrate`, `views embed|exec|export-csv|import-csv|new-entry` | sibling r013-paperviews |
 
@@ -41,9 +41,6 @@ silent `_ => Ok` arm.
 ## Remaining
 
 - ai autofill, notebook generate.
-- `export --view` and `export --view --format csv` (Go `ViewsExec` / `ViewsExportCSV`): the saved-view engine lives in the
-  r013-paperviews slice, merged on main but not in this branch's base (290bc4d2). After integration, call that
-  engine from `export_cli.rs` (`export_view` in `symdesk-render` already renders the rows). Not stubbed here.
 
 - doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
   fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
@@ -64,6 +61,10 @@ silent `_ => Ok` arm.
 - export --note (html, pdf, dataset export policy): 10 cases / 51 steps. HTML files are compared in the working
   directory snapshot; the dataset policy is exercised with the default, a widened, a narrowed and an invalid
   `SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY`. `--output` is Cobra's local flag (argv rewrite like `search export`).
+
+- export --view (html, csv, pdf-no-engine, dataset-sourced views and their policy): 4 cases / 28 steps, after merging
+  main (r013-ingestcmds / r013-paperviews) into this branch for the saved-view engine (`views_exec_cli::{find_view,
+  exec_view, view_csv, check_dataset_export}` are now `pub(crate)` and reused).
 
 ## Declared limits
 - export --note: a *successful* PDF render needs the host's typst and writes a non-reproducible PDF, so only the

@@ -23,6 +23,7 @@ pub fn export_cli() -> Command {
     Command::new("export")
         .arg(Arg::new("extra").num_args(0..).hide(true))
         .arg(Arg::new("note").long("note"))
+        .arg(Arg::new("view").long("view"))
         // Cobra's local `--output` shadows the persistent switch; the argv
         // rewrite in `main` renames it for Clap.
         .arg(Arg::new("local-output").long("local-output"))

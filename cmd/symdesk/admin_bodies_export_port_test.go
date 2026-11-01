@@ -3,11 +3,11 @@ package main
 // `export --note`: HTML files in the working directory, the format/argument
 // errors, the dataset export policy and the PDF path without a typesetting
 // engine (PATH is an empty case directory, so the host toolchain never shows
-// through). `export --view` and the csv format of a view belong to the saved
-// view engine and are not recorded here.
+// through). Views are saved through `views save` and exported as HTML, CSV
+// and (without an engine) PDF.
 
 func init() {
-	adminBodiesCaseBuilders = append(adminBodiesCaseBuilders, adminExportCases)
+	adminBodiesCaseBuilders = append(adminBodiesCaseBuilders, adminExportCases, adminExportViewCases)
 }
 
 func adminExportCases() []adminBodiesCase {
@@ -87,5 +87,60 @@ func adminExportCases() []adminBodiesCase {
 		)},
 		{Name: "export-without-vault", NoVault: true, SkipIndex: true, Steps: adminBoth("export", "--note", "a.md", "--format", "html")},
 		{Name: "export-profiles", Steps: adminBoth("export", "profiles")},
+	}
+}
+
+func adminExportViewCases() []adminBodiesCase {
+	invoices := map[string]string{
+		"a.md":                 "---\ntitle: Alpha\n---\nbody\n",
+		"invoices/one.md":      "---\ntitle: One\nstatus: open\namount: 10\n---\nfirst\n",
+		"invoices/two.md":      "---\ntitle: Two\nstatus: paid\namount: 20\n---\nsecond\n",
+		"invoices/three.md":    "---\ntitle: Three, with comma\nstatus: open\namount: 5.5\n---\nthird\n",
+		"invoices/sub/four.md": "---\ntitle: Four\nstatus: \"quo\\\"te\"\n---\nfourth\n",
+	}
+	const (
+		viewAll  = `{"id":"all","name":"All notes","columns":["title","status"]}`
+		viewOpen = `{"id":"open","name":"Open invoices","source":"invoices/","filters":[{"key":"status","operator":"equals","value":"open"}],"columns":["title","amount"]}`
+		viewNone = `{"id":"none","name":"No match","source":"invoices/","filters":[{"key":"status","operator":"equals","value":"nothing"}]}`
+		viewDSet = `{"id":"dset","name":"Orders","source":"dataset:orders"}`
+		viewBad  = `{"id":"baddir","name":"Bad dir","source":"nowhere/"}`
+	)
+	save := func(spec string) []adminBodiesStep { return adminBoth("views", "save", spec) }
+	sync := adminBoth("dataset", "sync", "orders", "--rows", `[{"identity":"1","values":{"id":1,"name":"first"}},{"identity":"2","values":{"id":2,"name":"second"}}]`,
+		"--title", "Orders", "--identity-field", "id", "--source-name", "feed", "--source-sha256", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		"--imported-at", "2026-01-02T03:04:05Z", "--schema", `{"id":{"type":"number"},"name":{"type":"text","label":"Name"}}`)
+	return []adminBodiesCase{
+		{Name: "export-view-html-csv", Files: invoices, CwdDirs: []string{"sub"}, SnapshotCwd: true, Volatile: true, Steps: adminConcat(
+			save(viewAll), save(viewOpen), save(viewNone), save(viewBad),
+			adminBoth("export", "--view", "all", "--format", "html"),
+			adminBoth("export", "--view", "open", "--format", "html", "--output", "open.html"),
+			adminBoth("export", "--view", "none", "--format", "html"),
+			adminBoth("export", "--view", "all", "--format", "csv"),
+			adminBoth("export", "--view", "open", "--format", "csv", "--output", "sub/open.csv"),
+			adminBoth("export", "--view", "none", "--format", "csv"),
+			adminBoth("export", "--view", "ghost", "--format", "html"),
+			adminBoth("export", "--view", "ghost", "--format", "csv"),
+			adminBoth("export", "--view", "baddir", "--format", "html"),
+			adminBoth("export", "--view", "baddir", "--format", "csv"),
+			adminBoth("export", "--view", "open", "--format", "csv", "--output", "missing-dir/open.csv"),
+			adminBoth("export", "--note", "a.md", "--view", "all", "--format", "html"),
+			adminBoth("export", "--view"),
+		)},
+		{Name: "export-view-dataset-policy", Files: map[string]string{"a.md": "---\ntitle: A\n---\nbody\n"}, SnapshotCwd: true, Volatile: true, Steps: adminConcat(
+			sync, save(viewDSet),
+			adminBoth("export", "--view", "dset", "--format", "html"),
+			adminBoth("export", "--view", "dset", "--format", "csv"),
+		)},
+		{Name: "export-view-dataset-policy-widened", Files: map[string]string{"a.md": "---\ntitle: A\n---\nbody\n"}, SnapshotCwd: true, Volatile: true,
+			Env: map[string]string{"SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "restricted"}, Steps: adminConcat(
+				sync, save(viewDSet),
+				adminBoth("export", "--view", "dset", "--format", "html"),
+				adminBoth("export", "--view", "dset", "--format", "csv", "--output", "orders.csv"),
+			)},
+		{Name: "export-view-pdf-no-engine", Files: invoices, SnapshotCwd: true, Env: map[string]string{"PATH": "$ROOT/nopath"}, Steps: adminConcat(
+			save(viewAll),
+			adminBoth("export", "--view", "all", "--format", "pdf"),
+			adminBoth("export", "--view", "ghost"),
+		)},
 	}
 }

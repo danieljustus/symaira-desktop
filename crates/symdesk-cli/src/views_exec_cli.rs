@@ -111,7 +111,7 @@ pub fn run(name: &str, command: &ArgMatches, vault: Option<&str>, json: bool) ->
 
 // ---- view lookup and execution ------------------------------------------
 
-fn find_view(root: &Path, id: &str) -> Result<View, String> {
+pub(crate) fn find_view(root: &Path, id: &str) -> Result<View, String> {
     list_bases(root)
         .map_err(|error| error.to_string())?
         .into_iter()
@@ -310,7 +310,11 @@ fn dataset_rows(
 }
 
 /// Go `ViewsExec` for a resolved view; `None` stands for Go's nil slice.
-fn exec_view(root: &Path, db: &Sidecar, view: &View) -> Result<Option<Vec<Row>>, String> {
+pub(crate) fn exec_view(
+    root: &Path,
+    db: &Sidecar,
+    view: &View,
+) -> Result<Option<Vec<Row>>, String> {
     if view.source.trim().starts_with("dataset:") {
         return dataset_rows(root, db, view, 10_000).map(|(rows, _)| Some(rows));
     }
@@ -409,7 +413,7 @@ fn dataset_sensitivity_rank(value: &str) -> i32 {
 
 /// Go `checkDatasetExport`: a dataset-sourced view is exported only up to the
 /// configured maximum sensitivity of its authoritative handle.
-fn check_dataset_export(root: &Path, view: &View) -> Result<(), String> {
+pub(crate) fn check_dataset_export(root: &Path, view: &View) -> Result<(), String> {
     let source = view.source.trim();
     let Some(slug) = source.strip_prefix("dataset:") else {
         return Ok(());
@@ -612,13 +616,8 @@ fn csv_record(fields: &[String]) -> String {
     line
 }
 
-fn export_csv(
-    root: &Path,
-    db: &Sidecar,
-    id: &str,
-    command: &ArgMatches,
-    json: bool,
-) -> Result<ExitCode, String> {
+/// Go `ViewsExportCSV`: the view's rows as CSV text.
+pub(crate) fn view_csv(root: &Path, db: &Sidecar, id: &str) -> Result<String, String> {
     let view = find_view(root, id).map_err(|error| format!("views export csv: {error}"))?;
     check_dataset_export(root, &view)?;
     let rows = exec_view(root, db, &view)
@@ -642,6 +641,17 @@ fn export_csv(
             .collect();
         data.push_str(&csv_record(&record));
     }
+    Ok(data)
+}
+
+fn export_csv(
+    root: &Path,
+    db: &Sidecar,
+    id: &str,
+    command: &ArgMatches,
+    json: bool,
+) -> Result<ExitCode, String> {
+    let data = view_csv(root, db, id)?;
     let output = command
         .get_one::<String>("local-output")
         .cloned()

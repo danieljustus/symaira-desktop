@@ -1,9 +1,7 @@
-//! `symdesk export --note` (Go `cmd/symdesk/export.go`,
+//! `symdesk export --note|--view` (Go `cmd/symdesk/export.go`,
 //! `internal/service/export.go`, `dataset_policy.go`): one vault note rendered
-//! to HTML or PDF, behind the dataset export policy.
-//!
-//! `--view` and `--format csv` for a view need the saved-view engine
-//! (`ViewsExec` / `ViewsExportCSV`), which lives in the r013-paperviews slice.
+//! or a saved view rendered to HTML, PDF or CSV, behind the dataset export
+//! policy.
 
 use std::{
     fs,
@@ -29,16 +27,27 @@ struct ExportResult {
 
 pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
     let value = |name: &str| command.get_one::<String>(name).cloned().unwrap_or_default();
+    if command.contains_id("note") && command.contains_id("view") {
+        return emit_error(
+            "if any flags in the group [note view] are set none of the others can be; [note view] were all set"
+                .to_owned(),
+            json_output,
+        );
+    }
     let (root, mut sidecar) = match crate::relations_cli::service_deps(vault) {
         Ok(deps) => deps,
         Err(error) => return emit_error(error, json_output),
     };
     let outcome = export(
         &root,
-        &value("note"),
-        &value("local-output"),
-        &value("format"),
-        &value("profile"),
+        &sidecar,
+        &Request {
+            note: value("note"),
+            view: value("view"),
+            output: value("local-output"),
+            format: value("format"),
+            profile: value("profile"),
+        },
     );
     if let Err(error) = sidecar.close() {
         eprintln!("warning: failed to close sidecar database: {error}");
@@ -56,15 +65,21 @@ pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -
     ))
 }
 
-/// Go `Service.Export` for a note.
+struct Request {
+    note: String,
+    view: String,
+    output: String,
+    format: String,
+    profile: String,
+}
+
+/// Go `Service.Export`.
 fn export(
     root: &Path,
-    note: &str,
-    output: &str,
-    format: &str,
-    profile: &str,
+    sidecar: &symdesk_index::Sidecar,
+    request: &Request,
 ) -> Result<ExportResult, String> {
-    let format = format.to_lowercase();
+    let format = request.format.to_lowercase();
     let format: &'static str = match format.as_str() {
         "pdf" => "pdf",
         "html" => "html",
@@ -76,36 +91,76 @@ fn export(
             ));
         }
     };
+    let (note, view_id) = (request.note.as_str(), request.view.as_str());
     if !note.is_empty() {
         check_dataset_export_path(root, note)?;
     }
     if format == "csv" {
-        return Err("csv export is only supported for views (use --view)".to_owned());
+        if view_id.is_empty() {
+            return Err("csv export is only supported for views (use --view)".to_owned());
+        }
+        let data = crate::views_exec_cli::view_csv(root, sidecar, view_id)?;
+        let target = absolute_output(&output_or_default(&request.output, note, view_id, format))?;
+        write_file(&target, data.as_bytes(), 0o600)
+            .map_err(|error| format!("failed to write CSV: {}", path_error(&target, &error)))?;
+        return Ok(ExportResult {
+            format: "csv",
+            path: target.to_string_lossy().into_owned(),
+            profile: String::new(),
+            rendered: true,
+            message: format!("Exported view {view_id} to CSV"),
+        });
     }
-    if note.is_empty() {
-        return Err("export requires --note or --view".to_owned());
-    }
-    let rendered = symdesk_render::export_vault::export_note(root, note, format)?;
-    let output = if output.is_empty() {
-        default_output(note, format)
-    } else {
-        output.to_owned()
-    };
-    let target = absolute_output(&output)?;
-    let description = format!("note {note}");
-    if format == "pdf" {
-        let source_dir = root
-            .join(note)
-            .parent()
-            .map_or_else(|| root.to_path_buf(), Path::to_path_buf);
-        return render_pdf(&rendered, &target, profile, &source_dir, &description);
-    }
-    write_html(&target, &rendered).map_err(|error| {
-        format!(
-            "failed to write HTML: {}",
-            symdesk_vault::go_path_error("open", &target, &error)
+    let (rendered, description) = if !view_id.is_empty() {
+        let view = crate::views_exec_cli::find_view(root, view_id)
+            .map_err(|error| format!("view not found: {error}"))?;
+        crate::views_exec_cli::check_dataset_export(root, &view)?;
+        let rows = crate::views_exec_cli::exec_view(root, sidecar, &view)
+            .map_err(|error| format!("failed to evaluate view: {error}"))?
+            .unwrap_or_default();
+        let rows: Vec<std::collections::BTreeMap<String, String>> = rows
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|(key, value)| (key.clone(), crate::dataset::go_debug_value(value)))
+                    .collect()
+            })
+            .collect();
+        let spec = symdesk_render::export_vault::ViewSpec {
+            name: view.name.clone(),
+            columns: view.columns.clone(),
+        };
+        (
+            symdesk_render::export_vault::export_view(root, &spec, &rows, format)?,
+            format!("view {}", view.name),
         )
-    })?;
+    } else if !note.is_empty() {
+        (
+            symdesk_render::export_vault::export_note(root, note, format)?,
+            format!("note {note}"),
+        )
+    } else {
+        return Err("export requires --note or --view".to_owned());
+    };
+    let target = absolute_output(&output_or_default(&request.output, note, view_id, format))?;
+    if format == "pdf" {
+        let source_dir = if note.is_empty() {
+            root.to_path_buf()
+        } else {
+            root.join(note)
+                .parent()
+                .map_or_else(|| root.to_path_buf(), Path::to_path_buf)
+        };
+        return render_pdf(
+            &rendered,
+            &target,
+            &request.profile,
+            &source_dir,
+            &description,
+        );
+    }
+    write_file(&target, &rendered, 0o644)
+        .map_err(|error| format!("failed to write HTML: {}", path_error(&target, &error)))?;
     Ok(ExportResult {
         format: "html",
         path: target.to_string_lossy().into_owned(),
@@ -113,6 +168,18 @@ fn export(
         rendered: true,
         message: format!("Exported {description} to HTML"),
     })
+}
+
+fn path_error(target: &Path, error: &std::io::Error) -> String {
+    symdesk_vault::go_path_error("open", target, error)
+}
+
+fn output_or_default(output: &str, note: &str, view: &str, format: &str) -> String {
+    if output.is_empty() {
+        default_output(note, view, format)
+    } else {
+        output.to_owned()
+    }
 }
 
 fn render_pdf(
@@ -159,21 +226,30 @@ fn render_pdf(
     })
 }
 
-fn write_html(path: &Path, data: &[u8]) -> std::io::Result<()> {
+fn write_file(path: &Path, data: &[u8], mode: u32) -> std::io::Result<()> {
     use std::io::Write as _;
     let mut options = fs::OpenOptions::new();
     options.write(true).create(true).truncate(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o644);
+        options.mode(mode);
     }
+    #[cfg(not(unix))]
+    let _ = mode;
     options.open(path)?.write_all(data)
 }
 
-/// Go `defaultOutputPath` for a note.
-fn default_output(note: &str, format: &str) -> String {
-    let base = note.rsplit('/').next().unwrap_or(note);
+/// Go `defaultOutputPath`: the note's (else the view id's) base name.
+fn default_output(note: &str, view: &str, format: &str) -> String {
+    let source = if !note.is_empty() {
+        note
+    } else if !view.is_empty() {
+        view
+    } else {
+        return format!("export.{format}");
+    };
+    let base = source.rsplit('/').next().unwrap_or(source);
     let stem = base.rfind('.').map_or(base, |index| &base[..index]);
     format!("{stem}.{format}")
 }

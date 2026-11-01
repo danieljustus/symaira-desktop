@@ -171,7 +171,7 @@ fn fake_tesseract(root: &Path, action: &str) -> String {
 }
 
 impl Scratch {
-    fn new(case: &Case) -> Self {
+    fn new(case: &Case, embed_url: &str) -> Self {
         static COUNTER: AtomicUsize = AtomicUsize::new(0);
         let unique = format!(
             "symdesk-signals-{}-{}",
@@ -195,7 +195,9 @@ impl Scratch {
         }
         write_file(
             &scratch.home.join(".config/symseek/config.toml"),
-            "retry_count = 1\nretry_backoff_ms = 1\n",
+            &format!(
+                "ollama_url = \"{embed_url}/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+            ),
             0o600,
         );
         write_file(&scratch.vault.join("a.md"), "# A\nhello quarterly\n", 0o600);
@@ -397,7 +399,14 @@ fn serve_fake(
             body.len()
         );
     };
-    if method == "POST" && path.ends_with("/lease") {
+    if mode == "embed" {
+        let count = serde_json::from_str::<serde_json::Value>(&body)
+            .ok()
+            .and_then(|value| value.get("input").and_then(|input| input.as_array().map(Vec::len)))
+            .unwrap_or(0);
+        let data = vec![r#"{"embedding":[1,0,0]}"#; count].join(",");
+        respond(&mut stream, "200 OK", &format!(r#"{{"data":[{data}]}}"#));
+    } else if method == "POST" && path.ends_with("/lease") {
         match mode {
             "worker-stall" => {
                 // Wait until the client hangs up (Go: request context done).
@@ -588,7 +597,10 @@ fn signal_name(signal: i32) -> String {
 /// Runs one case against the Rust binary. Errors are harness failures (the
 /// process never became ready); behavioural differences come back as Outcome.
 fn run_case(case: &Case, rust_steps: bool) -> Result<Outcome, String> {
-    let scratch = Scratch::new(case);
+    // Hermetic embedding provider: no recording depends on a service the host
+    // happens to run (the Go harness serves the same constant vectors).
+    let embedder = FakeServer::start("embed");
+    let scratch = Scratch::new(case, &format!("http://{}", embedder.address));
     let steps = if rust_steps {
         case.rust.as_ref().map_or(&case.steps, |over| &over.steps)
     } else {

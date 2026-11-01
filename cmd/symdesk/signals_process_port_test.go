@@ -226,7 +226,7 @@ type signalEnv struct {
 	token                       string
 }
 
-func newSignalEnv(t *testing.T, c signalCase) *signalEnv {
+func newSignalEnv(t *testing.T, c signalCase, embedURL string) *signalEnv {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
@@ -238,7 +238,7 @@ func newSignalEnv(t *testing.T, c signalCase) *signalEnv {
 			t.Fatal(err)
 		}
 	}
-	writeSignalFile(t, filepath.Join(e.home, ".config", "symseek", "config.toml"), "retry_count = 1\nretry_backoff_ms = 1\n", 0o600)
+	writeSignalFile(t, filepath.Join(e.home, ".config", "symseek", "config.toml"), "ollama_url = \""+embedURL+"/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n", 0o600)
 	stamp := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
 	for path, content := range map[string]string{
 		filepath.Join(e.vault, "a.md"): "# A\nhello quarterly\n",
@@ -281,6 +281,24 @@ func mustDecodeBase64(text string) []byte {
 		panic(err)
 	}
 	return data
+}
+
+// newSignalEmbedder is the hermetic embedding provider every case indexes
+// against, so no recording depends on a service the host happens to run.
+func newSignalEmbedder(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Input []string `json:"input"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		data := make([]map[string]any, 0, len(body.Input))
+		for range body.Input {
+			data = append(data, map[string]any{"embedding": []float64{1, 0, 0}})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": data})
+	}))
 }
 
 func writeSignalFile(t *testing.T, path, content string, mode os.FileMode) {
@@ -479,7 +497,9 @@ func framedSignalBody(body string) []byte {
 // recorded expectation.
 func observeSignalCase(t *testing.T, binary string, c signalCase) signalCase {
 	t.Helper()
-	e := newSignalEnv(t, c)
+	embedder := newSignalEmbedder(t)
+	defer embedder.Close()
+	e := newSignalEnv(t, c, embedder.URL)
 	var fake *signalServer
 	server := ""
 	if strings.HasPrefix(c.Fake, "worker-") {

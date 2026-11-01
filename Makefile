@@ -1833,6 +1833,22 @@ mcp-write-differential:
 mcp-write-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPWriteProcessPortFixture$$'
 
+.PHONY: mcp-protocol-fixtures-generate mcp-protocol-differential
+mcp-protocol-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPProtocolProcessPortFixture$$'
+
+mcp-protocol-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPProtocolProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --test mcp_protocol --locked
+
+# RUST-014 conformance: every recorded Go MCP transcript (raw protocol, catalog,
+# read/write/remaining tool calls) replayed against the native server, plus the
+# pure transport port and its bounded property tests.
+.PHONY: mcp-conformance
+mcp-conformance: mcp-protocol-differential
+	$(CARGO) test -p symdesk-protocol --test mcp_frame --locked
+	$(CARGO) test -p symdesk-cli --locked --test mcp_surface --test mcp_read --test mcp_write --test mcp_initialize
+
 .PHONY: note-doc-cli-fixtures-generate note-doc-cli-differential
 note-doc-cli-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestPortNoteDocProcessContract$$'

@@ -7,7 +7,6 @@ pub(crate) mod read;
 pub(crate) mod write;
 
 use std::{
-    collections::BTreeMap,
     io::{self, BufRead, Write},
     path::PathBuf,
     sync::{Arc, Mutex, mpsc},
@@ -23,6 +22,7 @@ use serde_json::{Value, json, value::RawValue};
 use symdesk_index::{
     ListedDocument, SearchHit, SearchSource, Sidecar, SourceRegistry, open_for_vault,
 };
+use symdesk_protocol::mcp_frame;
 
 const PROTOCOL_VERSION: &str = "2024-11-05";
 const MAX_MESSAGE_BYTES: usize = 1 << 20;
@@ -31,6 +31,18 @@ const INVALID_REQUEST: i64 = -32600;
 const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 const INTERNAL_ERROR: i64 = -32603;
+
+/// The raw JSON text of a request id: Go decodes numbers as `json.Number`, so
+/// the response echoes the token exactly as the client wrote it.
+type Id = Box<RawValue>;
+
+fn id_from_text(text: &str) -> Id {
+    RawValue::from_string(text.to_owned()).expect("the shared MCP parser emits valid JSON ids")
+}
+
+fn null_id() -> Id {
+    id_from_text("null")
+}
 
 struct ServerConfig {
     version: String,
@@ -53,7 +65,7 @@ enum ResponseMode {
 
 #[derive(Clone)]
 struct Request {
-    id: Value,
+    id: Id,
     has_id: bool,
     method: String,
     raw_arguments: Option<String>,
@@ -96,7 +108,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for OrderedFields<T> {
 #[derive(Serialize)]
 struct RpcResponse {
     jsonrpc: &'static str,
-    id: Value,
+    id: Id,
     #[serde(skip_serializing_if = "Option::is_none")]
     result: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -259,7 +271,7 @@ where
                 if let Err(error) = send_error(
                     &output,
                     mode,
-                    Value::Null,
+                    null_id(),
                     PARSE_ERROR,
                     format!("Parse error: {message}"),
                 ) {
@@ -276,7 +288,7 @@ where
                 if let Err(error) = send_error(
                     &output,
                     mode,
-                    Value::Null,
+                    null_id(),
                     INVALID_REQUEST,
                     "Invalid Request".to_owned(),
                 ) {
@@ -288,7 +300,11 @@ where
             Err(ReadFailure::Fatal(error)) => {
                 config.pdf_context.cancel();
                 input_finished = true;
-                terminal_error = Some(error);
+                // Go: fmt.Errorf("mcpserver: read error: %w", err).
+                terminal_error = Some(io::Error::new(
+                    error.kind(),
+                    format!("mcpserver: read error: {error}"),
+                ));
                 break;
             }
         }
@@ -319,11 +335,7 @@ where
     }
 }
 
-type PendingCall = (
-    ResponseMode,
-    Option<Value>,
-    thread::JoinHandle<io::Result<()>>,
-);
+type PendingCall = (ResponseMode, Option<Id>, thread::JoinHandle<io::Result<()>>);
 
 fn join_calls<W>(
     calls: &mut Vec<PendingCall>,
@@ -376,9 +388,10 @@ where
             output,
             mode,
             request.id.clone(),
+            // Go marshals this map with sorted keys.
             json!({
-                "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": {"tools": {}},
+                "protocolVersion": PROTOCOL_VERSION,
                 "serverInfo": {"name": "symdesk", "version": config.version},
             }),
         ),
@@ -920,13 +933,13 @@ fn search_entry(root: &std::path::Path, hit: &SearchHit, sources: &[SearchSource
 fn send_tools_list<W: Write + Send + 'static>(
     output: &Arc<Mutex<W>>,
     mode: ResponseMode,
-    id: Value,
+    id: Id,
     allow_write: bool,
 ) -> io::Result<()> {
     #[derive(Serialize)]
     struct Response {
         jsonrpc: &'static str,
-        id: Value,
+        id: Id,
         result: Box<RawValue>,
     }
     let catalog = if allow_write {
@@ -946,7 +959,7 @@ fn send_tools_list<W: Write + Send + 'static>(
 fn send_result<W>(
     output: &Arc<Mutex<W>>,
     mode: ResponseMode,
-    id: Value,
+    id: Id,
     result: Value,
 ) -> io::Result<()>
 where
@@ -967,7 +980,7 @@ where
 fn send_tool_result<W>(
     output: &Arc<Mutex<W>>,
     mode: ResponseMode,
-    id: Value,
+    id: Id,
     value: Value,
     is_error: bool,
 ) -> io::Result<()>
@@ -994,7 +1007,7 @@ where
 fn send_error<W>(
     output: &Arc<Mutex<W>>,
     mode: ResponseMode,
-    id: Value,
+    id: Id,
     code: i64,
     message: String,
 ) -> io::Result<()>
@@ -1053,177 +1066,57 @@ fn write_data<W: Write + Send + 'static>(
     writer.flush()
 }
 
+impl From<mcp_frame::Mode> for ResponseMode {
+    fn from(mode: mcp_frame::Mode) -> Self {
+        match mode {
+            mcp_frame::Mode::Line => Self::Line,
+            mcp_frame::Mode::Framed => Self::Framed,
+        }
+    }
+}
+
+/// One request off the wire, through the shared Go-faithful transport port
+/// (`symdesk_protocol::mcp_frame`).
 fn read_request<R: BufRead>(
     reader: &mut R,
 ) -> Result<Option<(Request, ResponseMode)>, ReadFailure> {
-    let Some((first, _terminated)) = read_non_empty_line(reader).map_err(ReadFailure::Fatal)?
-    else {
-        return Ok(None);
-    };
-    let first = String::from_utf8_lossy(&first).trim().to_owned();
-    if first.starts_with('{') || !first.contains(':') {
-        return parse_request(first.as_bytes(), ResponseMode::Line).map(Some);
-    }
-
-    let mut content_length = None;
-    parse_header(&first, &mut content_length)?;
-    loop {
-        let (line, terminated) = read_line_limited(reader).map_err(ReadFailure::Fatal)?;
-        if !terminated {
-            return Err(ReadFailure::Fatal(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "truncated MCP headers",
-            )));
+    match mcp_frame::read_request(reader) {
+        Ok(None) => Ok(None),
+        Ok(Some((request, mode))) => {
+            let raw_arguments = request
+                .params
+                .as_deref()
+                .and_then(raw_arguments_from_params);
+            Ok(Some((
+                Request {
+                    id: id_from_text(&request.id),
+                    has_id: request.has_id,
+                    method: request.method,
+                    raw_arguments,
+                    raw_params: request.params,
+                },
+                mode.into(),
+            )))
         }
-        let line = String::from_utf8_lossy(&line)
-            .trim_end_matches(['\r', '\n'])
-            .to_owned();
-        if line.is_empty() {
-            break;
+        Err(mcp_frame::ReadError::Parse(message, mode)) => Err(ReadFailure::Parse {
+            mode: mode.into(),
+            message,
+        }),
+        Err(mcp_frame::ReadError::InvalidRequest(mode)) => {
+            Err(ReadFailure::InvalidRequest { mode: mode.into() })
         }
-        parse_header(&line, &mut content_length)?;
+        Err(mcp_frame::ReadError::Fatal(error)) => Err(ReadFailure::Fatal(error)),
     }
-    let length = content_length.ok_or_else(|| {
-        ReadFailure::Fatal(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "missing Content-Length header",
-        ))
-    })?;
-    if length == 0 || length > MAX_MESSAGE_BYTES {
-        return Err(ReadFailure::Fatal(io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("invalid Content-Length: {length}"),
-        )));
-    }
-    let mut body = vec![0_u8; length];
-    reader.read_exact(&mut body).map_err(|error| {
-        ReadFailure::Fatal(io::Error::new(
-            io::ErrorKind::UnexpectedEof,
-            format!("read body: {error}"),
-        ))
-    })?;
-    parse_request(&body, ResponseMode::Framed).map(Some)
 }
 
-fn parse_header(line: &str, content_length: &mut Option<usize>) -> Result<(), ReadFailure> {
-    if let Some(value) = line.strip_prefix("Content-Length:") {
-        let parsed = value.trim().parse::<usize>().map_err(|_| {
-            ReadFailure::Fatal(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("invalid Content-Length: {:?}", value.trim()),
-            ))
-        })?;
-        *content_length = Some(parsed);
-    }
-    Ok(())
-}
-
-fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMode), ReadFailure> {
-    // Go keeps params/arguments as RawMessage. Do not coerce an argument's
-    // numeric token through f64 before its handler can validate a Go int.
-    let parse_error = |error: serde_json::Error| ReadFailure::Parse {
-        mode,
-        message: if error.is_eof() {
-            "unexpected end of JSON input".to_owned()
-        } else {
-            error.to_string()
-        },
-    };
-    let compatible = go_json_text(data).map_err(|message| ReadFailure::Parse { mode, message })?;
-    let data = compatible.as_slice();
-    let raw: Box<RawValue> = serde_json::from_slice(data).map_err(parse_error)?;
-    // CoreKit v0.18 mcpserver: well-formed JSON that is not a JSON-RPC 2.0
-    // request object is an Invalid Request answered with a null id.
-    let invalid = || ReadFailure::InvalidRequest { mode };
-    if !raw.get().starts_with('{') {
-        return Err(invalid());
-    }
-    let object: BTreeMap<String, Box<RawValue>> =
-        serde_json::from_str(raw.get()).map_err(parse_error)?;
-    let string_field = |key: &str| {
-        object
-            .get(key)
-            .and_then(|value| serde_json::from_str::<String>(value.get()).ok())
-    };
-    if string_field("jsonrpc").as_deref() != Some("2.0") {
-        return Err(invalid());
-    }
-    let method = match string_field("method") {
-        Some(method) if !method.is_empty() => method,
-        _ => return Err(invalid()),
-    };
-    let id: Value = object
-        .get("id")
-        .map(|raw| serde_json::from_str(raw.get()))
-        .transpose()
-        .map_err(parse_error)?
-        .unwrap_or(Value::Null);
-    if !matches!(id, Value::Null | Value::String(_) | Value::Number(_))
-        || object
-            .get("params")
-            .is_some_and(|params| !matches!(params.get().as_bytes().first(), Some(b'{' | b'[')))
-    {
-        return Err(invalid());
-    }
-    let raw_arguments = raw_arguments_from_frame(data);
-    let raw_params = object.get("params").map(|raw| raw.get().to_owned());
-    Ok((
-        Request {
-            id,
-            has_id: object.contains_key("id"),
-            method,
-            raw_arguments,
-            raw_params,
-        },
-        mode,
-    ))
-}
-
-fn raw_arguments_from_frame(data: &[u8]) -> Option<String> {
-    let frame: BTreeMap<String, Box<RawValue>> = serde_json::from_slice(data).ok()?;
-    let params = frame.get("params")?;
-    let params: OrderedFields<Box<RawValue>> = serde_json::from_str(params.get()).ok()?;
+fn raw_arguments_from_params(params: &str) -> Option<String> {
+    let params: OrderedFields<Box<RawValue>> = serde_json::from_str(params).ok()?;
     params
         .0
         .into_iter()
         .rev()
         .find(|(key, _)| symdesk_vault::dataset::go_equal_fold(key, "arguments"))
         .map(|(_, raw)| raw.get().to_owned())
-}
-
-fn read_non_empty_line<R: BufRead>(reader: &mut R) -> io::Result<Option<(Vec<u8>, bool)>> {
-    loop {
-        let (line, terminated) = read_line_limited(reader)?;
-        if line.iter().any(|byte| !byte.is_ascii_whitespace()) {
-            return Ok(Some((line, terminated)));
-        }
-        if !terminated {
-            return Ok(None);
-        }
-    }
-}
-
-fn read_line_limited<R: BufRead>(reader: &mut R) -> io::Result<(Vec<u8>, bool)> {
-    let mut line = Vec::new();
-    loop {
-        let chunk = reader.fill_buf()?;
-        if chunk.is_empty() {
-            return Ok((line, false));
-        }
-        let newline = chunk.iter().position(|byte| *byte == b'\n');
-        let take = newline.map_or(chunk.len(), |position| position + 1);
-        if line.len() + take > MAX_MESSAGE_BYTES {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("line exceeds {MAX_MESSAGE_BYTES} bytes"),
-            ));
-        }
-        line.extend_from_slice(&chunk[..take]);
-        reader.consume(take);
-        if newline.is_some() {
-            return Ok((line, true));
-        }
-    }
 }
 
 #[cfg(test)]
@@ -1358,7 +1251,7 @@ mod tests {
     fn oversized_response_is_rejected_before_writing() {
         let response = RpcResponse {
             jsonrpc: "2.0",
-            id: Value::from(1),
+            id: id_from_text("1"),
             result: Some(Value::String("x".repeat(MAX_MESSAGE_BYTES))),
             error: None,
         };
@@ -1381,7 +1274,7 @@ mod tests {
         });
         let mut calls = vec![(
             ResponseMode::Framed,
-            Some(Value::from(7)),
+            Some(id_from_text("7")),
             thread::spawn(|| -> io::Result<()> { Err(io::Error::other("response exceeds limit")) }),
         )];
 

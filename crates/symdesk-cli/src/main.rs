@@ -228,7 +228,7 @@ fn main() -> ExitCode {
             command.get_flag("allow-write"),
         ) {
             Ok(()) => process_exit(CoreExitCode::Ok),
-            Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
+            Err(error) => write_stderr(&format!("{error}\n"), CoreExitCode::Generic),
         },
         Some(("transform", command)) => ai_cli::run_transform(command, output_json),
         Some(("ask", command)) => ai_cli::run_ask(

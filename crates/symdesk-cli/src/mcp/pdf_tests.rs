@@ -296,7 +296,7 @@ fn pdf_response_escaping_and_framing_preserve_go_wire_shape() {
         send_tool_result(
             &output,
             mode,
-            json!("<&>"),
+            id_from_text(r#""\u003c\u0026\u003e""#),
             json!({"output":"<&>\u{2028}\u{2029}"}),
             false,
         )

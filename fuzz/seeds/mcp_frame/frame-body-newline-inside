@@ -1,0 +1,4 @@
+Content-Length: 41
+
+{"jsonrpc":"2.0",
+"id":1,"method":"ping"}

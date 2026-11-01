@@ -731,6 +731,16 @@ cli-ingest-bodies-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIIngestBodiesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test cli_ingest_bodies --locked
 
+# RUST-013 slice r013-paperviews: `paperless import|migrate` (loopback fake
+# Paperless-ngx) and `views exec|new-entry|export-csv|import-csv|embed`.
+.PHONY: cli-paperviews-bodies-fixtures-generate cli-paperviews-bodies-differential
+cli-paperviews-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIPaperviewsBodiesProcessContract$$'
+
+cli-paperviews-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIPaperviewsBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_paperviews_bodies --locked
+
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.

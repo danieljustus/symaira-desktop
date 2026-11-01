@@ -12,7 +12,7 @@ use std::{
 };
 
 /// Go decodes JSON `null` into a scalar's zero value.
-fn null_default<'de, D, T>(d: D) -> std::result::Result<T, D::Error>
+pub(crate) fn null_default<'de, D, T>(d: D) -> std::result::Result<T, D::Error>
 where
     D: serde::Deserializer<'de>,
     T: Deserialize<'de> + Default,

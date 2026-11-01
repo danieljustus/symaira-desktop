@@ -46,6 +46,7 @@ var fixturePaths = []string{
 	"testdata/port/cli/remote-command-process.json",
 	"testdata/port/cli/cli-bodies-process.json",
 	"testdata/port/cli/cli-ingest-bodies-process.json",
+	"testdata/port/cli/cli-paperviews-bodies-process.json",
 	"testdata/port/cli/docs-read-process.json",
 	"testdata/port/cli/note-doc-process.json",
 	"testdata/port/cli/views-process.json",

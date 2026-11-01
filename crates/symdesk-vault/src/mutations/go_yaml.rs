@@ -598,9 +598,15 @@ pub(super) fn render_string(
         '#', ',', '[', ']', '{', '}', '&', '*', '!', '|', '>', '\'', '"', '%', '@', '`',
     ]) || value.starts_with("- ")
         || value.starts_with(": ")
-        || value.starts_with("? ");
-    let has_inner_indicator =
-        value.contains(": ") || value.contains(" #") || value == "---" || value == "...";
+        || value.starts_with("? ")
+        || matches!(value, "-" | "?");
+    // libyaml treats a `:` followed by a blank or the end of the scalar as a
+    // block indicator, so a trailing colon forces quoting.
+    let has_inner_indicator = value.contains(": ")
+        || value.ends_with(':')
+        || value.contains(" #")
+        || value == "---"
+        || value == "...";
 
     let can_use_plain = !is_old_bool(value)
         && !is_base60_float(value)

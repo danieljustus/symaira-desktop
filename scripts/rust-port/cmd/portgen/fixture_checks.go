@@ -87,6 +87,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"remote command", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRemoteCommandProcessContract$"}, []string{"testdata/port/cli/remote-command-process.json"}, false},
 	{"CLI bodies", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortCLIBodiesProcessContract$"}, []string{"testdata/port/cli/cli-bodies-process.json"}, false},
 	{"CLI ingest bodies", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortCLIIngestBodiesProcessContract$"}, []string{"testdata/port/cli/cli-ingest-bodies-process.json"}, false},
+	{"CLI paperless and views bodies", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortCLIPaperviewsBodiesProcessContract$"}, []string{"testdata/port/cli/cli-paperviews-bodies-process.json"}, false},
 	{"backlinks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortBacklinksProcessContract$"}, []string{"testdata/port/cli/backlinks-process.json"}, false},
 	{"inverse relations CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortRelationsInverseProcessContract$"}, []string{"testdata/port/cli/relations-inverse-process.json"}, false},
 	{"history tasks CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestPortHistoryTasksCLIContract$"}, []string{"testdata/port/cli/history-tasks.json"}, false},

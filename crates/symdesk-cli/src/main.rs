@@ -4,6 +4,7 @@ mod agent_cli;
 mod ai_cli;
 mod ai_secrets;
 mod asset_export_cli;
+mod clip_cli;
 mod cobra;
 mod config_cli;
 mod config_paths;
@@ -24,11 +25,17 @@ mod history;
 mod history_cli;
 mod http;
 mod index_cli;
+mod ingest_cli;
+mod ingest_common;
 mod lifecycle;
 mod links_cli;
+mod mail_cli;
+mod mail_rules_cli;
 mod mcp;
+mod meeting_cli;
 mod mutate_cli;
 mod notebook_cli;
+mod paperless_cli;
 mod perm_cli;
 mod props_tags_cli;
 mod recipe;
@@ -36,6 +43,7 @@ mod related_cli;
 mod relations_cli;
 mod restore_cli;
 mod retention;
+mod rules_cli;
 mod search_cli;
 mod search_export_cli;
 mod service_cli;
@@ -44,6 +52,8 @@ mod source_cli;
 mod vault_cli;
 mod vault_health_cli;
 mod views_cli;
+mod views_exec_cli;
+mod views_query;
 mod views_write_cli;
 mod worker_cli;
 
@@ -92,6 +102,8 @@ fn main() -> ExitCode {
     }
     rewrite_index_output_flag(&mut args);
     search_export_cli::rewrite_output_flag(&mut args);
+    ingest_cli::rewrite_output_flag(&mut args);
+    views_exec_cli::rewrite_output_flag(&mut args);
     if let Some(exit) = links_cli::prepare_args(&mut args) {
         return exit;
     }
@@ -234,6 +246,35 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
+        Some(("clip", command)) => clip_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("ingest", command)) => ingest_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("meeting", command)) => meeting_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("rules", command)) => rules_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("mail", command)) => match command.subcommand() {
+            Some(("rules", sub)) => mail_rules_cli::run(sub, output_json),
+            Some((name @ ("status" | "fetch"), _)) => mail_cli::run(
+                name,
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            ),
+            _ => process_exit(CoreExitCode::Ok),
+        },
         Some(("consume", command)) => consume_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -258,6 +299,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("notebook", command)) => notebook_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("paperless", command)) => paperless_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -710,11 +756,22 @@ fn cli() -> Command {
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
         .subcommand(views_cli::cli())
+        .subcommand(paperless_cli::cli())
         .subcommand(props_tags_cli::props_cli())
         .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())
         .subcommand(sidecar_cli::cli())
         .subcommand(consume_cli::cli())
+        .subcommand(rules_cli::cli())
+        .subcommand(meeting_cli::cli())
+        .subcommand(ingest_cli::cli())
+        .subcommand(clip_cli::cli())
+        .subcommand(
+            Command::new("mail")
+                .subcommand(mail_cli::status_cli())
+                .subcommand(mail_cli::fetch_cli())
+                .subcommand(mail_rules_cli::cli()),
+        )
         .subcommand(asset_export_cli::asset_cli())
         .subcommand(asset_export_cli::export_cli())
         .subcommand(relations_cli::related_command())

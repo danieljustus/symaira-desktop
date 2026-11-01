@@ -1,7 +1,7 @@
 //! Read-only notebook/property tools; storage semantics live in the libraries.
 mod extra;
 mod graph;
-mod meetings;
+pub(crate) mod meetings;
 mod results;
 
 use serde::Serialize;

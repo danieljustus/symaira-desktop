@@ -36,7 +36,7 @@ const ADMIN_TOKEN: &str = "remote-command-admin-token-0123456789abcdef";
 const WORKER_TOKEN: &str = "remote-command-worker-token-fedcba9876543210";
 const EXPECTED_CASES: usize = 5;
 const EXPECTED_STEPS: usize = 184;
-const EXPECTED_DECISION_STEPS: usize = 4;
+const EXPECTED_DECISION_STEPS: usize = 1;
 const EXPECTED_FORBIDDEN: usize = 97;
 
 #[derive(Deserialize)]

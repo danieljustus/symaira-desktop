@@ -2306,7 +2306,7 @@
     "id": "live-create-after-start",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -2393,7 +2393,7 @@
     "id": "live-growing-file-waits-until-stable",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -2502,7 +2502,7 @@
     "id": "live-new-subdirectory-is-watched",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -2604,7 +2604,7 @@
     "id": "live-removed-before-stable-and-ignored-names",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -2760,7 +2760,7 @@
     "id": "live-duplicate-content-skipped",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -2874,7 +2874,7 @@
     "id": "live-undetectable-file-fails-with-sidecar",
     "live": true,
     "opts": {
-     "stable_for_ms": 250,
+     "stable_for_ms": 3000,
      "processing": "work/processing",
      "processed": "work/processed",
      "failed": "work/failed"
@@ -3083,6 +3083,6 @@
  "source_hashes": {
   "clock.go": "4f38cc22afcff9f384b7da83d3635fcc5ebab6cdcb87d30c0aac610107f915f8",
   "watcher.go": "7d9cdfdd5042d61de88eb158d7c7b5acf3a303cdf6d2b651ff494cdaf8f72fe1",
-  "watcher_port_test.go": "53e72d9fbda30edb811fdcbbabc68a511d99a85975964628b22c488a6e29bcea"
+  "watcher_port_test.go": "0b43920ab967db95d371be5fbb5374e020156f981b9b2ebb6ea8ad4c609441ec"
  }
 }

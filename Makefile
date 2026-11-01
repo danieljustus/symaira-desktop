@@ -721,6 +721,26 @@ cli-bodies-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIBodiesProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test cli_bodies --locked
 
+# RUST-013 ingest, mail, meeting, rules and clip command bodies: Go-recorded
+# process fixtures (loopback fakes only) in their own fixture file.
+.PHONY: cli-ingest-bodies-fixtures-generate cli-ingest-bodies-differential
+cli-ingest-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIIngestBodiesProcessContract$$'
+
+cli-ingest-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIIngestBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_ingest_bodies --locked
+
+# RUST-013 slice r013-paperviews: `paperless import|migrate` (loopback fake
+# Paperless-ngx) and `views exec|new-entry|export-csv|import-csv|embed`.
+.PHONY: cli-paperviews-bodies-fixtures-generate cli-paperviews-bodies-differential
+cli-paperviews-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIPaperviewsBodiesProcessContract$$'
+
+cli-paperviews-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIPaperviewsBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_paperviews_bodies --locked
+
 # RUST-013 slice r013-admin command bodies (perm, vault health/adopt, relations
 # contact, demo init, doctor, dataset list, ai autofill): Go-recorded process
 # fixtures with vault-tree and working-directory snapshots after every step.

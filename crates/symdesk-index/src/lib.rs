@@ -2409,8 +2409,11 @@ fn go_value(value: &Value) -> String {
             values.iter().map(go_value).collect::<Vec<_>>().join(" ")
         ),
         Value::Mapping(values) => {
-            let items = values
-                .iter()
+            // `fmt` prints map keys in sorted order, whatever the decode order.
+            let mut entries: Vec<_> = values.iter().collect();
+            entries.sort_by(|left, right| left.0.cmp(right.0));
+            let items = entries
+                .into_iter()
                 .map(|(key, value)| format!("{key}:{}", go_value(value)))
                 .collect::<Vec<_>>()
                 .join(" ");

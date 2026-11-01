@@ -74,7 +74,6 @@ type remoteCommandFixture struct {
 }
 
 const (
-	remotePendingRust = "command not implemented in the Rust CLI yet (RUST-013 residual)"
 	remoteParserWords = "clap-generated flag/argument wording (CLI-003/CLI-004)"
 	remoteHostState   = "output depends on host tools and environment"
 )
@@ -138,12 +137,12 @@ func remoteCommandCases() []remoteCommandCase {
 		remoteArgs("tags-rename", "tags", "rename", "x", "y"),
 		remoteArgs("tags-merge", "tags", "merge", "x", "y"),
 		remoteArgs("tags-delete", "tags", "delete", "x"),
-		remotePending("paperless-import", remotePendingRust, "paperless", "import", "/nonexistent-paperless-export"),
+		remoteArgs("paperless-import", "paperless", "import", "/nonexistent-paperless-export"),
 		remoteArgs("trash-delete", "trash", "delete", "missing"),
 		remoteArgs("views-save", "views", "save", "{}"),
 		remoteArgs("views-delete", "views", "delete", "missing"),
-		remotePending("views-new-entry", remotePendingRust, "views", "new-entry", "missing", "T"),
-		remotePending("views-exec", remotePendingRust, "views", "exec", "missing"),
+		remoteArgs("views-new-entry", "views", "new-entry", "missing", "T"),
+		remoteArgs("views-exec", "views", "exec", "missing"),
 		remotePending("doctor", remoteHostState, "doctor"),
 		{Name: "transform-stream", Args: []string{"transform", "summarize", "--text", "short input"}},
 		{Name: "transform-stdin", Args: []string{"transform", "summarize"}, Stdin: "short stdin input"},

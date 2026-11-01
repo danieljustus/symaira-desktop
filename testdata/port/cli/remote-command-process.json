@@ -682,6 +682,25 @@
           "outside_files": []
         },
         {
+          "name": "paperless-import",
+          "args": [
+            "paperless",
+            "import",
+            "/nonexistent-paperless-export"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
           "name": "trash-delete",
           "args": [
             "trash",
@@ -725,6 +744,47 @@
           "args": [
             "views",
             "delete",
+            "missing"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "views-new-entry",
+          "args": [
+            "views",
+            "new-entry",
+            "missing",
+            "T"
+          ],
+          "status": 422,
+          "content_type": "application/json",
+          "body": "{\"error\":\"exit status 1\"}\n",
+          "vault_files": [
+            "$DATE.md",
+            "a.md",
+            "b.md",
+            "bases/base.md",
+            "notes/c.md",
+            "remote-moved.md"
+          ],
+          "outside_files": []
+        },
+        {
+          "name": "views-exec",
+          "args": [
+            "views",
+            "exec",
             "missing"
           ],
           "status": 422,
@@ -1072,64 +1132,6 @@
         ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
       },
       "steps": [
-        {
-          "name": "paperless-import",
-          "args": [
-            "paperless",
-            "import",
-            "/nonexistent-paperless-export"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "views-new-entry",
-          "args": [
-            "views",
-            "new-entry",
-            "missing",
-            "T"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
-        {
-          "name": "views-exec",
-          "args": [
-            "views",
-            "exec",
-            "missing"
-          ],
-          "compare": "decision",
-          "reason": "command not implemented in the Rust CLI yet (RUST-013 residual)",
-          "status": 200,
-          "content_type": "",
-          "body": "",
-          "vault_files": [
-            "a.md",
-            "b.md",
-            "notes/c.md"
-          ],
-          "outside_files": []
-        },
         {
           "name": "doctor",
           "args": [

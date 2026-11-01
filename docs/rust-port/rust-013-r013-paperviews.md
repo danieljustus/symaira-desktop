@@ -1,0 +1,66 @@
+# RUST-013 slice r013-paperviews
+
+Native Rust bodies for `paperless import`, `paperless migrate` and
+`views exec|new-entry|export-csv|import-csv|embed`, replayed against real Go
+`symdesk` process recordings.
+
+- Worktree/branch: `Worktrees/symaira-desktop/r013-paperviews`, `local/r013-paperviews` (base `290bc4d2`).
+- Oracle fixture: `testdata/port/cli/cli-paperviews-bodies-process.json`
+  (15 cases / 457 steps / 149 non-zero exits; every step also records the vault tree).
+  Generator: `cmd/symdesk/paperviews_bodies_process_port_test.go`
+  (`make cli-paperviews-bodies-fixtures-generate`). Replay:
+  `crates/symdesk-cli/tests/cli_paperviews_bodies.rs`
+  (`make cli-paperviews-bodies-differential`).
+- `paperless migrate` talks to a loopback fake Paperless-ngx
+  (`tests/support/paperless_fake.rs`); the requests the fake served are
+  compared per step.
+
+## Done
+
+- Replay green: 457/457 steps equal (stdout, stderr, exit, vault tree, fake requests).
+- Go parity fixes found by the replay: trailing-colon YAML scalars are
+  single-quoted (libyaml block indicator), last-wins duplicate manifest keys,
+  Go-named wrong top-level manifest type, `filter.value` optional, `fmt`
+  sorted nested map keys in `views exec` rows, missing archive destination
+  directory is non-fatal on import, archive path is `filepath.Join`-cleaned,
+  dataset export-sensitivity policy for `views export-csv`, Go wording for
+  dataset-handle/`new-entry` write/CSV-directory errors, embed duplicate-key
+  and type-error line numbers / short scalars.
+
+- portgen manifest/check target and provenance checksum registered, generator
+  digest re-frozen; `make port-fixtures-check` PASS (commit `127fa68a`).
+
+- `remote-command-process.json`: `paperless import`, `views new-entry` and
+  `views exec` are exact steps now (decision-only residual 4 -> 1, only
+  `doctor` stays host-dependent); `remote_command.rs` passes.
+
+## Remaining
+
+- Linux half of the two-host gate (see Gate).
+
+## Declared limits
+
+- YAML *syntax*-error wording of `views embed` (libyaml vs noyalib) is not
+  replayed (the `bad.yaml` case is not recorded); type errors and duplicate
+  keys are.
+- `paperless migrate` connection-refused / invalid-URL wording (Go `net/http`)
+  and wrong-element-type manifests (Go decoder wording) are not recorded.
+
+## Gate
+
+Targets: `rust-check rust-lint rust-test port-contract
+cli-paperviews-bodies-differential cli-bodies-differential
+remote-command-differential`, `LOCAL_GATE_SLUG=r013-paperviews`.
+
+- macOS arm64 @ `b457dabf`: exit 0 (949 nextest tests, `port-contract` incl.
+  `port-fixtures-check`, the three differentials). Run with
+  `MAKE_PREFIX="env CARGO_PROFILE_DEV_DEBUG=0 .../dev-external"` because the
+  shared volume was down to a few GB; test semantics are unchanged.
+- Linux arm64: not run on the final tree. The first attempt (`22ced025`)
+  stopped at `rust-lint` (two clippy findings, fixed in `b457dabf`); the rerun
+  was not started because the shared `/Volumes/1TB_NVMe_SN850X` (which also
+  holds the OrbStack home) had ~4.7 GiB free and the Linux build needs ~6-10 GiB.
+  Rerun once space is available:
+  `LOCAL_GATE_SLUG=r013-paperviews scripts/rust-port/local-gate.sh linux
+  rust-check rust-lint rust-test port-contract cli-paperviews-bodies-differential
+  cli-bodies-differential remote-command-differential`.

@@ -5,7 +5,7 @@ use cap_std::{ambient_authority, fs::Dir};
 use serde::Serialize;
 use symdesk_vault::{Document, go_path_error, parse_bytes, secure_path, walk_markdown};
 
-pub(super) fn read(root: &Path, requested: &str) -> Result<Document, String> {
+pub(crate) fn read(root: &Path, requested: &str) -> Result<Document, String> {
     let path = secure_path(root, requested).map_err(|e| e.to_string())?;
     let canonical_root = std::fs::canonicalize(root).map_err(|e| e.to_string())?;
     let relative = path
@@ -48,22 +48,40 @@ pub(super) fn read(root: &Path, requested: &str) -> Result<Document, String> {
 }
 
 #[derive(Serialize)]
-struct Summary {
-    path: String,
-    title: String,
-    meeting_id: String,
-    started_at: String,
-    duration_ms: i64,
-    language: String,
-    review_state: String,
+pub(crate) struct Summary {
+    pub(crate) path: String,
+    pub(crate) title: String,
+    pub(crate) meeting_id: String,
+    pub(crate) started_at: String,
+    pub(crate) duration_ms: i64,
+    pub(crate) language: String,
+    pub(crate) review_state: String,
 }
 
-pub(super) fn list(root: &Path) -> Result<serde_json::Value, String> {
+/// One vault file that could not be decoded while listing (Go
+/// `service.MeetingListFailure`).
+#[derive(Serialize)]
+pub(crate) struct Failure {
+    pub(crate) path: String,
+    pub(crate) message: String,
+}
+
+/// Go `MeetingListDetailed`: every parseable meeting note plus the per-file
+/// decode failures, in walk order.
+pub(crate) fn summaries(root: &Path) -> Result<(Vec<Summary>, Vec<Failure>), String> {
     let mut summaries = Vec::new();
+    let mut failures = Vec::new();
     for path in walk_markdown(root).map_err(|e| e.to_string())? {
         let relative = super::backlink_relative_path(root, &path);
-        let Ok(doc) = read(root, &relative) else {
-            continue;
+        let doc = match read(root, &relative) {
+            Ok(doc) => doc,
+            Err(message) => {
+                failures.push(Failure {
+                    path: relative,
+                    message,
+                });
+                continue;
+            }
         };
         let text = |key: &str| {
             if doc.yaml_timestamps.contains_key(key) {
@@ -100,10 +118,26 @@ pub(super) fn list(root: &Path) -> Result<serde_json::Value, String> {
             review_state,
         });
     }
+    Ok((summaries, failures))
+}
+
+pub(super) fn list(root: &Path) -> Result<serde_json::Value, String> {
+    let (summaries, _) = summaries(root)?;
     super::encoded(&summaries)
 }
 
-pub(super) fn show(root: &Path, requested: &str) -> Result<serde_json::Value, String> {
+/// Go `MeetingShow`: the typed document of one meeting note.
+pub(crate) fn show_document(root: &Path, requested: &str) -> Result<Document, String> {
+    let doc = read(root, requested)?;
+    if doc.frontmatter.get("type").and_then(noyalib::Value::as_str) != Some("meeting") {
+        return Err(format!(
+            "{requested} is not a meeting note (frontmatter type != \"meeting\")"
+        ));
+    }
+    Ok(doc)
+}
+
+pub(crate) fn show(root: &Path, requested: &str) -> Result<serde_json::Value, String> {
     let doc = read(root, requested)?;
     if doc.frontmatter.get("type").and_then(noyalib::Value::as_str) != Some("meeting") {
         return Err(format!(

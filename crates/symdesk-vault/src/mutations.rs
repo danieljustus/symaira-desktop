@@ -211,6 +211,22 @@ pub fn render_go_yaml_map(
     Ok(rendered)
 }
 
+/// yaml.v3 `Marshal` of a SymMeet meeting note's frontmatter, which Go encodes
+/// from typed structs: declaration order for the known fields, then the
+/// inline extras in natural key order.
+pub fn render_go_yaml_meeting_map(
+    entries: &std::collections::BTreeMap<String, Value>,
+) -> Result<String, MutationError> {
+    let mut mapping = Mapping::new();
+    for (key, value) in entries {
+        mapping.insert(key.clone(), value.clone());
+    }
+    let mut rendered = go_yaml::render_meeting_mapping(&mapping)
+        .map_err(|detail| MutationError::Marshal { detail })?;
+    rendered.push('\n');
+    Ok(rendered)
+}
+
 pub(crate) fn render_go_yaml_mapping(mapping: &Mapping) -> Result<String, MutationError> {
     go_yaml::render_mapping(mapping).map_err(|detail| MutationError::Marshal { detail })
 }

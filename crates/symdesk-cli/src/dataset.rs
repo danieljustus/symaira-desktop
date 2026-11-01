@@ -439,7 +439,7 @@ fn go_json_error(error: &serde_json::Error) -> String {
     }
 }
 
-fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String> {
+pub(crate) fn read_dataset_handle(root: &Dir, rel: &Path) -> Result<Option<Vec<u8>>, String> {
     const MAX_HANDLE_BYTES: u64 = 64 << 20;
     let mut options = cap_std::fs::OpenOptions::new();
     options.read(true);
@@ -511,7 +511,7 @@ fn output_query_result(result: &DatasetServiceResult, json_output: bool) -> Exit
     ))
 }
 
-fn go_debug_value(value: &Value) -> String {
+pub(crate) fn go_debug_value(value: &Value) -> String {
     match value {
         Value::Null => "<nil>".to_owned(),
         Value::String(value) => value.clone(),
@@ -523,14 +523,19 @@ fn go_debug_value(value: &Value) -> String {
                 .collect::<Vec<_>>()
                 .join(" ")
         ),
-        Value::Object(values) => format!(
-            "map[{}]",
-            values
-                .iter()
-                .map(|(key, value)| format!("{key}:{}", go_debug_value(value)))
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
+        // `fmt` prints a map with its keys sorted, whatever the decode order.
+        Value::Object(values) => {
+            let mut entries: Vec<_> = values.iter().collect();
+            entries.sort_by(|left, right| left.0.cmp(right.0));
+            format!(
+                "map[{}]",
+                entries
+                    .into_iter()
+                    .map(|(key, value)| format!("{key}:{}", go_debug_value(value)))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        }
         _ => symdesk_index::go_percent_v(value),
     }
 }

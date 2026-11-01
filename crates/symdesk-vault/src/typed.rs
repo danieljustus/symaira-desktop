@@ -14,6 +14,7 @@ pub struct Filter {
     pub key: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub operator: String,
+    #[serde(default)]
     pub value: String,
 }
 

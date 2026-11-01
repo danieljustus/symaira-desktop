@@ -71,21 +71,32 @@ fn props_get(
     })
 }
 
+/// Go `Service.PropsEdit`: snapshot, set the frontmatter value, re-index.
+pub(crate) fn apply_props_edit(
+    root: &Path,
+    sidecar: &mut Sidecar,
+    file: &str,
+    key: &str,
+    value: &str,
+) -> Result<(), String> {
+    if key == "asn" {
+        return Err("use \"symdesk doc asn <file> <next|N>\" to assign an ASN safely".to_owned());
+    }
+    let path = secure_path(root, file).map_err(|error| error.to_string())?;
+    snapshot(root, &path);
+    set_frontmatter_value(&path, key, &noyalib::Value::from(value.to_owned()))
+        .map_err(|error| error.to_string())?;
+    reindex(sidecar, &path)?;
+    Ok(())
+}
+
 fn props_edit(
     root: &Path,
     sidecar: &mut Sidecar,
     args: &[String],
     output_json: bool,
 ) -> Result<ExitCode, String> {
-    let (file, key, value) = (&args[0], &args[1], &args[2]);
-    if key == "asn" {
-        return Err("use \"symdesk doc asn <file> <next|N>\" to assign an ASN safely".to_owned());
-    }
-    let path = secure_path(root, file).map_err(|error| error.to_string())?;
-    snapshot(root, &path);
-    set_frontmatter_value(&path, key, &noyalib::Value::from(value.clone()))
-        .map_err(|error| error.to_string())?;
-    reindex(sidecar, &path)?;
+    apply_props_edit(root, sidecar, &args[0], &args[1], &args[2])?;
     let status = std::collections::BTreeMap::from([("status".to_owned(), "updated".to_owned())]);
     Ok(if output_json {
         write_go_json(&status)

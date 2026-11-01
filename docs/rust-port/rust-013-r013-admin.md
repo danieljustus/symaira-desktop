@@ -97,4 +97,10 @@ silent `_ => Ok` arm.
   Typed meeting-frontmatter decoding is approximated by scalar/sequence/mapping shape checks; a meeting that
   fails them is skipped as in Go, but exotic yaml.v3 coercions are not reproduced. The on-disk-changed
   conflict guard is implemented but not exercised (two reads of one instant).
+- Integration: `main` (r013-ingestcmds, r013-paperviews) is merged into this branch (ca8bc98e) so `export --view` and
+  `ai autofill` can reuse the saved-view engine; the conflicts (Makefile, portgen lists, `main.rs` module list,
+  `symdesk-vault` duplicate-key helper, provenance) were resolved by keeping both sides.
+- Fixture: 67 cases / 642 steps (`make cli-admin-bodies-differential`); `port-fixtures-check` PASS with the refreshed
+  checksum and re-frozen generator digest; negative control: changing one recorded stdout byte fails the replay
+  (`1 of 642 steps differ from Go`).
 - Gate: `scripts/rust-port/local-gate.sh` on both hosts.

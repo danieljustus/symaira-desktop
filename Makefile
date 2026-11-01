@@ -742,8 +742,9 @@ cli-paperviews-bodies-differential:
 	$(CARGO) test -p symdesk-cli --test cli_paperviews_bodies --locked
 
 # RUST-013 slice r013-admin command bodies (perm, vault health/adopt, relations
-# contact, demo init, doctor, dataset list, ai autofill): Go-recorded process
-# fixtures with vault-tree and working-directory snapshots after every step.
+# contact, demo init, doctor, dataset list, export, ai autofill, notebook
+# generate): Go-recorded process fixtures with vault-tree and working-directory
+# snapshots after every step.
 .PHONY: cli-admin-bodies-fixtures-generate cli-admin-bodies-differential
 cli-admin-bodies-fixtures-generate:
 	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIAdminBodiesProcessContract$$'

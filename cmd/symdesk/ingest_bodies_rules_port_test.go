@@ -60,7 +60,7 @@ func cliIngestRulesCases() []cliIngestCase {
 			ingestBoth("rules", "dry-run", "a", "tag", "b"),
 		)},
 		{Name: "rules-store-unusable", SkipIndex: true,
-			Env: map[string]string{"SYMINGEST_DB_PATH": "$ROOT/home/not-a-dir/file/symingest.db"},
+			Env:       map[string]string{"SYMINGEST_DB_PATH": "$ROOT/home/not-a-dir/file/symingest.db"},
 			HomeFiles: map[string]string{"not-a-dir": "a file where a directory is expected\n"},
 			Steps: ingestConcat(
 				ingestBoth("rules", "list"),

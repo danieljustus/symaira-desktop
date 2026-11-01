@@ -135,10 +135,52 @@ pub fn normalize_toml(text: &str) -> String {
     out
 }
 
+/// Go `(?m)^(symmeet_published_facts: \[)(.*)(\])$`: the ledger hash order
+/// comes from Go map iteration, so the items are compared sorted.
+pub fn sort_published_facts(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for (index, line) in text.split('\n').enumerate() {
+        if index > 0 {
+            out.push('\n');
+        }
+        let sorted = line
+            .strip_prefix("symmeet_published_facts: [")
+            .and_then(|rest| rest.strip_suffix(']'))
+            .map(|items| {
+                let mut items: Vec<&str> = items.split(", ").collect();
+                items.sort_unstable();
+                format!("symmeet_published_facts: [{}]", items.join(", "))
+            });
+        out.push_str(sorted.as_deref().unwrap_or(line));
+    }
+    out
+}
+
+/// Go `\$LOCALTIME\.\d+` replaced by `$LOCALTIME`.
+pub fn normalize_local_fraction(text: &str) -> String {
+    let marker = "$LOCALTIME.";
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(marker) {
+        let after = &rest[at + marker.len()..];
+        let digits = after.bytes().take_while(u8::is_ascii_digit).count();
+        if digits == 0 {
+            out.push_str(&rest[..at + marker.len()]);
+            rest = after;
+            continue;
+        }
+        out.push_str(&rest[..at]);
+        out.push_str("$LOCALTIME");
+        rest = &after[digits..];
+    }
+    out.push_str(rest);
+    out
+}
+
 /// The recorder's `normalizeIngestText`.
 pub fn normalize(text: &str, root: &Path, canonical: &Path) -> String {
-    let text = cli_normalize::normalize(text, root, canonical, false);
-    normalize_toml(&normalize_rfc3339(&normalize_local_time(
-        &normalize_random(&text),
+    let text = sort_published_facts(&cli_normalize::normalize(text, root, canonical, false));
+    normalize_toml(&normalize_local_fraction(&normalize_rfc3339(
+        &normalize_local_time(&normalize_random(&text)),
     )))
 }

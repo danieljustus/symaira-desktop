@@ -3,7 +3,7 @@
 mod pdf;
 #[cfg(test)]
 mod pdf_tests;
-mod read;
+pub(crate) mod read;
 pub(crate) mod write;
 
 use std::{

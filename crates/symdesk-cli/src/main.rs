@@ -28,6 +28,7 @@ mod links_cli;
 mod mail_cli;
 mod mail_rules_cli;
 mod mcp;
+mod meeting_cli;
 mod mutate_cli;
 mod notebook_cli;
 mod props_tags_cli;
@@ -240,6 +241,11 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("ingest", command)) => ingest_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("meeting", command)) => meeting_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -720,6 +726,7 @@ fn cli() -> Command {
         .subcommand(sidecar_cli::cli())
         .subcommand(consume_cli::cli())
         .subcommand(rules_cli::cli())
+        .subcommand(meeting_cli::cli())
         .subcommand(ingest_cli::cli())
         .subcommand(clip_cli::cli())
         .subcommand(

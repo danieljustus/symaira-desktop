@@ -335,7 +335,23 @@ var ingestServerStarters []ingestServerStarter
 // line is part of the contract (declared limit).
 var ingestTomlRE = regexp.MustCompile(`toml: line \d+[^\n]*`)
 
+// ingestFactsRE matches the published-fact ledger line: its hash order comes
+// from Go map iteration and is not part of the contract, so the items are
+// compared sorted.
+var ingestFactsRE = regexp.MustCompile(`(?m)^(symmeet_published_facts: \[)(.*)(\])$`)
+
+// ingestLocalFractionRE hides the sub-second part of a printed modification
+// time (`$LOCALTIME.123456789`).
+var ingestLocalFractionRE = regexp.MustCompile(`\$LOCALTIME\.\d+`)
+
 func normalizeIngestText(text, root string) string {
-	text = normalizeBodiesText(false, normalizeCLIErrors(text, root))
+	text = ingestFactsRE.ReplaceAllStringFunc(normalizeCLIErrors(text, root), func(line string) string {
+		parts := ingestFactsRE.FindStringSubmatch(line)
+		items := strings.Split(parts[2], ", ")
+		sort.Strings(items)
+		return parts[1] + strings.Join(items, ", ") + parts[3]
+	})
+	text = normalizeBodiesText(false, text)
+	text = ingestLocalFractionRE.ReplaceAllString(text, "$$LOCALTIME")
 	return ingestTomlRE.ReplaceAllString(text, "toml: line $$TOML")
 }

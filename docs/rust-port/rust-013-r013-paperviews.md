@@ -30,10 +30,12 @@ Native Rust bodies for `paperless import`, `paperless migrate` and
 - portgen manifest/check target and provenance checksum registered, generator
   digest re-frozen; `make port-fixtures-check` PASS (commit `127fa68a`).
 
+- `remote-command-process.json`: `paperless import`, `views new-entry` and
+  `views exec` are exact steps now (decision-only residual 4 -> 1, only
+  `doctor` stays host-dependent); `remote_command.rs` passes.
+
 ## Remaining
 
-- Promote the decision-only `paperless import`, `views new-entry`, `views exec`
-  steps of `remote-command-process.json` to exact.
 - Two-host gate.
 
 ## Declared limits

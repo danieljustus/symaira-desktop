@@ -42,6 +42,8 @@ var fixturePaths = []string{
 	"testdata/port/cli/cobra-parse-process.json",
 	"testdata/port/cli/cobra-root-order.txt",
 	"testdata/port/cli/duplicates-process.json",
+	"testdata/port/cli/cli-errors-process.json",
+	"testdata/port/cli/remote-command-process.json",
 	"testdata/port/cli/docs-read-process.json",
 	"testdata/port/cli/note-doc-process.json",
 	"testdata/port/cli/views-process.json",

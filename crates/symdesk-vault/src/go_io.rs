@@ -38,6 +38,16 @@ pub fn read_to_string(path: &Path) -> Result<String, (&'static str, io::Error)> 
     })
 }
 
+/// Wraps `error` so that its `Display` is Go's `*PathError` text
+/// (`op path: reason`) while the original kind is preserved.
+#[must_use]
+pub fn go_path_io_error(operation: &str, path: &str, error: &std::io::Error) -> std::io::Error {
+    std::io::Error::new(
+        error.kind(),
+        format!("{operation} {path}: {}", io_error(error)),
+    )
+}
+
 #[must_use]
 pub fn path_error(operation: &str, path: &Path, error: &std::io::Error) -> String {
     format!("{operation} {}: {}", path.display(), io_error(error))

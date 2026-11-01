@@ -229,7 +229,10 @@ pub fn ask(context: &mut Context<'_>, query: &str, docs: &[Doc], emit: &mut dyn 
                 }
             }
         }
-        Err(error) => emit(&format!("⚠️ Request failed: {error}\n")),
+        Err(error) => emit(&format!(
+            "⚠️ Request failed: {}\n",
+            crate::gofmt::go_transport_error(&error, &context.config.ollama_url)
+        )),
     }
 }
 
@@ -249,7 +252,10 @@ pub fn transform(context: &mut Context<'_>, text: &str, intent: &str, emit: &mut
     match result {
         Ok(()) => {}
         Err(error) if error == NOT_CONFIGURED => emit(not_configured_chunk(context.config)),
-        Err(error) => emit(&format!("⚠️ Request failed: {error}\n")),
+        Err(error) => emit(&format!(
+            "⚠️ Request failed: {}\n",
+            crate::gofmt::go_transport_error(&error, &context.config.ollama_url)
+        )),
     }
 }
 

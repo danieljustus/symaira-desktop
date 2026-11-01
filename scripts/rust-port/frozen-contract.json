@@ -110,6 +110,28 @@
         0,
         "exit_code"
       ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test cli_errors --locked",
+      "fixture": "testdata/port/cli/cli-errors-process.json",
+      "increment": [
+        "cases",
+        0,
+        "steps",
+        1,
+        "exit_code"
+      ]
+    },
+    {
+      "command": "cargo test -p symdesk-cli --test remote_command --locked",
+      "fixture": "testdata/port/cli/remote-command-process.json",
+      "increment": [
+        "cases",
+        0,
+        "steps",
+        0,
+        "status"
+      ]
     }
   ],
   "replays": {

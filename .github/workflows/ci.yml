@@ -477,6 +477,14 @@ jobs:
         shell: bash
         run: make duplicates-cli-differential
 
+      - name: Run native CLI errors differential
+        shell: bash
+        run: make cli-errors-differential
+
+      - name: Run native remote command differential
+        shell: bash
+        run: make remote-command-differential
+
       - name: Run native retention differential
         shell: bash
         run: make vault-retention-differential

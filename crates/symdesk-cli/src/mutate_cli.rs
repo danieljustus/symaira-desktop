@@ -357,9 +357,13 @@ fn note_execute(
                 .strip_prefix(&canonical_root)
                 .map_err(|e| e.to_string())?
                 .to_string_lossy();
-            let entry = HistoryStore::new(root)
-                .trash(&rel)
-                .map_err(|e| e.to_string())?;
+            let entry = HistoryStore::new(root).trash(&rel).map_err(|e| match e {
+                // Go returns the os.Root `statat <path>: <reason>` error as is.
+                symdesk_vault::HistoryError::Io(io) if io.to_string().starts_with("statat ") => {
+                    io.to_string()
+                }
+                other => other.to_string(),
+            })?;
             let key = symdesk_index::document_storage_key(&path).map_err(|e| e.to_string())?;
             db.delete_document(&key.to_string_lossy())
                 .map_err(|e| format!("moved to trash but failed to deindex: {e}"))?;

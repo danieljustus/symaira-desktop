@@ -724,20 +724,16 @@ fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
 }
 
 fn resolve_vault_with_report(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
-    resolve_vault_inner(flag, report, false)
+    resolve_vault_inner(flag, report)
 }
 
 /// Go `vault.ResolveVaultRoot`, whose wording differs from the service-deps
 /// resolver used by most commands (it names the stat call and path).
 fn resolve_vault_root(flag: Option<&str>) -> Result<PathBuf, String> {
-    resolve_vault_inner(flag, || {}, true)
+    resolve_vault_inner(flag, || {})
 }
 
-fn resolve_vault_inner(
-    flag: Option<&str>,
-    report: impl FnOnce(),
-    go_root_wording: bool,
-) -> Result<PathBuf, String> {
+fn resolve_vault_inner(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
@@ -755,9 +751,7 @@ fn resolve_vault_inner(
                 .filter(|value| !value.is_empty())
         })
         .or_else(|| (!config.vault.is_empty()).then_some(config.vault.as_str()))
-        .ok_or_else(|| {
-            "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)".to_owned()
-        })?;
+        .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
     report();
     let path = PathBuf::from(raw);
     let absolute = if path.is_absolute() {
@@ -769,15 +763,15 @@ fn resolve_vault_inner(
     };
     let absolute = lexical_clean(&absolute);
     let metadata = std::fs::metadata(&absolute).map_err(|error| {
-        if go_root_wording {
-            format!(
-                "vault path does not exist: stat {}: {}",
-                absolute.display(),
-                symdesk_service::gofmt::os_error_text(&error)
-            )
+        let operation = if cfg!(windows) {
+            "GetFileAttributesEx"
         } else {
-            format!("vault path does not exist: {error}")
-        }
+            "stat"
+        };
+        format!(
+            "vault path does not exist: {}",
+            symdesk_vault::go_path_error(operation, &absolute, &error)
+        )
     })?;
     if !metadata.is_dir() {
         return Err("vault path is not a directory".to_owned());
@@ -914,10 +908,7 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
                 modified: file.modified_at.clone(),
             })
             .collect::<Vec<_>>();
-        return write_stdout(format!(
-            "{}\n",
-            serde_json::to_string(&entries).unwrap_or_default()
-        ));
+        return write_go_json(&entries);
     }
     let entries = files
         .iter()
@@ -958,10 +949,7 @@ fn render_search(
                 read_only: hit.read_only,
             })
             .collect::<Vec<_>>();
-        return write_stdout(format!(
-            "{}\n",
-            serde_json::to_string(&SearchJsonResponse { results, hint }).unwrap_or_default()
-        ));
+        return write_go_json(&SearchJsonResponse { results, hint });
     }
     let results = hits
         .iter()

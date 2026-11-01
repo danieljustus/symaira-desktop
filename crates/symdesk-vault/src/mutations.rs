@@ -60,7 +60,9 @@ pub fn set_frontmatter_key(
     value: &str,
 ) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let mut lines = split_on_lf(&data);
     let rendered = format!("{key}: {}", quote_yaml(value)).into_bytes();
 
@@ -99,7 +101,9 @@ pub fn set_frontmatter_value(
     value: &Value,
 ) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let separator = if data.windows(2).any(|window| window == b"\r\n") {
         b"\r\n".as_slice()
     } else {
@@ -138,7 +142,9 @@ pub fn set_frontmatter_value(
 /// Returns [`MutationError`] when the selected file cannot be read or rewritten.
 pub fn delete_frontmatter_value(path: impl AsRef<Path>, key: &str) -> Result<(), MutationError> {
     let path = path.as_ref();
-    let data = fs::read(path).map_err(|source| MutationError::Read { source })?;
+    let data = fs::read(path).map_err(|source| MutationError::Read {
+        source: crate::go_io::go_path_io_error("open", &path.display().to_string(), &source),
+    })?;
     let separator = if data.windows(2).any(|window| window == b"\r\n") {
         b"\r\n".as_slice()
     } else {

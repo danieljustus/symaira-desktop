@@ -236,12 +236,12 @@ fn execute(
     }
     result
 }
-fn parse(path: &Path) -> Result<symdesk_vault::Document, String> {
+pub(crate) fn parse(path: &Path) -> Result<symdesk_vault::Document, String> {
     let bytes = symdesk_vault::go_read(path)
         .map_err(|(op, e)| symdesk_vault::go_path_error(op, path, &e))?;
     parse_bytes(&path.to_string_lossy(), &bytes).map_err(|e| e.to_string())
 }
-fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, String> {
+pub(crate) fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, String> {
     let mut doc = parse(path)?;
     doc.path = symdesk_index::document_storage_key(path)
         .map_err(|e| e.to_string())?
@@ -258,7 +258,7 @@ fn reindex(db: &mut Sidecar, path: &Path) -> Result<symdesk_vault::Document, Str
     db.index_document(&indexed).map_err(|e| e.to_string())?;
     Ok(doc)
 }
-fn snapshot(root: &Path, path: &Path) {
+pub(crate) fn snapshot(root: &Path, path: &Path) {
     if let Ok(root) = fs::canonicalize(root)
         && let Ok(rel) = path.strip_prefix(&root)
     {

@@ -23,6 +23,7 @@ mod resolver;
 pub mod retention;
 pub mod retention_state;
 pub mod sha256;
+mod tag_rewrite;
 mod tags;
 mod typed;
 mod walk;
@@ -74,6 +75,10 @@ pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};
 /// Go `encoding/json` syntax check (the first error Go's scanner reports).
 pub use retention::json_decoder::validate_syntax as go_json_validate_syntax;
+pub use tag_rewrite::{
+    BodyRewrite, FrontmatterTagRewrite, InlineTagRewrite, rewrite_document_tags_and_body,
+    rewrite_inline_tags,
+};
 pub use tags::{TagSpan, extract_inline_tags, find_inline_tag_spans};
 pub use typed::{
     Base, ComputedColumn, Coverage, DatasetHandle, Filter, FilterGroup, Notebook, PropertyConfig,

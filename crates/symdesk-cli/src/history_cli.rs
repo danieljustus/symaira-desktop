@@ -22,6 +22,8 @@ pub fn cli() -> Command {
         .arg(positions())
         .subcommand(Command::new("tasks").arg(positions()))
         .subcommand(Command::new("show").arg(positions()))
+        .subcommand(Command::new("checkpoint").arg(positions()))
+        .subcommand(Command::new("undo-task").arg(positions()))
         .subcommand(
             Command::new("prune")
                 .arg(positions())
@@ -99,6 +101,9 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, output_json: bool, trash: 
             Ok(_) => crate::history::run_tasks(vault, output_json),
             Err(e) => emit_error(e, output_json),
         };
+    }
+    if !trash && matches!(operation, "checkpoint" | "undo-task") {
+        return crate::history::run_checkpoint(command, operation, vault, output_json);
     }
     let result = (|| -> Result<ExitCode, String> {
         let path = format!(

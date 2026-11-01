@@ -23,11 +23,13 @@ mod links_cli;
 mod mcp;
 mod mutate_cli;
 mod notebook_cli;
+mod props_tags_cli;
 mod recipe;
 mod relations_cli;
 mod restore_cli;
 mod retention;
 mod search_cli;
+mod service_cli;
 mod source_cli;
 mod views_cli;
 mod worker_cli;
@@ -212,6 +214,16 @@ fn main() -> ExitCode {
             output_json,
         ),
         Some(("views", command)) => views_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("props", command)) => props_tags_cli::run_props(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("tags", command)) => props_tags_cli::run_tags(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
@@ -630,6 +642,8 @@ fn cli() -> Command {
         .subcommand(duplicates_cli::duplicates_cli())
         .subcommand(duplicates_cli::similar_cli())
         .subcommand(views_cli::cli())
+        .subcommand(props_tags_cli::props_cli())
+        .subcommand(props_tags_cli::tags_cli())
         .subcommand(notebook_cli::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())

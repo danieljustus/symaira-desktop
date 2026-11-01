@@ -710,6 +710,17 @@ remote-command-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortRemoteCommandProcessContract$$'
 	$(CARGO) test -p symdesk-cli --test remote_command --locked
 
+# RUST-013 command bodies (props, tags, history checkpoint/undo-task, trash,
+# search export/notebook, views, relations, ...): Go-recorded process
+# fixtures with vault-tree snapshots after every step.
+.PHONY: cli-bodies-fixtures-generate cli-bodies-differential
+cli-bodies-fixtures-generate:
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIBodiesProcessContract$$'
+
+cli-bodies-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 go test -count=1 ./cmd/symdesk -run '^TestPortCLIBodiesProcessContract$$'
+	$(CARGO) test -p symdesk-cli --test cli_bodies --locked
+
 # VAULT-006 multi-document rules file and document-to-metadata mapping against
 # the pinned Go oracle. The fixture is Go-owned and only regenerated through the
 # target above.

@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj
+<< /Length 591 >>
+stream
+BT
+/F1 16 Tf
+72 740 Td
+(Arztbrief Dr. med. Beispiel) Tj
+/F1 11 Tf
+0 -30 Td
+(# Arztbrief – Dr. med. Beispiel) Tj
+0 -16 Td
+(**Patient:** Erika Mustermann) Tj
+0 -16 Td
+(**Geburtsdatum:** 15.03.1985) Tj
+0 -16 Td
+(**Untersuchungsdatum:** 20.02.2026) Tj
+0 -16 Td
+(**Befund:**) Tj
+0 -16 Td
+(Routineuntersuchung ohne pathologische Befunde. Blutdruck 120/80 mmHg,) Tj
+0 -16 Td
+(Gewicht stabil, Blutwerte im Normbereich.) Tj
+0 -16 Td
+(**Empfehlung:**) Tj
+0 -16 Td
+(Nächste Kontrolle in 12 Monaten.) Tj
+0 -16 Td
+(**Arzt:** Dr. med. Beispiel, Praxis Musterweg 10, 12345 Beispielstadt) Tj
+0 -16 Td
+ET
+
+endstream endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000883 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+953
+%%EOF

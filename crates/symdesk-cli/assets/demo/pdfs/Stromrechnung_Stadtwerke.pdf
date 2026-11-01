@@ -1,0 +1,60 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj
+<< /Length 702 >>
+stream
+BT
+/F1 16 Tf
+72 740 Td
+(Stromrechnung Stadtwerke) Tj
+/F1 11 Tf
+0 -30 Td
+(# Stromrechnung – Stadtwerke Beispielstadt) Tj
+0 -16 Td
+(**Kundenkonto:** SW-987654) Tj
+0 -16 Td
+(**Zählerstand:** 12.450 kWh) Tj
+0 -16 Td
+(**Abrechnungszeitraum:** 01.01.2025 – 31.12.2025) Tj
+0 -16 Td
+(| Position | Betrag |) Tj
+0 -16 Td
+(|----------|--------|) Tj
+0 -16 Td
+(| Grundpreis | 120,00 € |) Tj
+0 -16 Td
+(| Arbeitspreis \(3.200 kWh × 0,32 €\) | 1.024,00 € |) Tj
+0 -16 Td
+(| Netto | 1.144,00 € |) Tj
+0 -16 Td
+(| MwSt. 19% | 217,36 € |) Tj
+0 -16 Td
+(| **Gesamtbetrag** | **1.361,36 €** |) Tj
+0 -16 Td
+(**Zahlungsziel:** 10.02.2026) Tj
+0 -16 Td
+(**Verweis:** [[Stadtwerke Beispielstadt]]) Tj
+0 -16 Td
+ET
+
+endstream endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000994 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1064
+%%EOF

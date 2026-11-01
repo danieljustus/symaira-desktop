@@ -1,0 +1,68 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj
+<< /Length 1078 >>
+stream
+BT
+/F1 16 Tf
+72 740 Td
+(Rechnung Musterfirma Februar 2026) Tj
+/F1 11 Tf
+0 -30 Td
+(# Rechnung Musterfirma GmbH – Februar 2026) Tj
+0 -16 Td
+(**Rechnungsnr.:** MF-2026-002) Tj
+0 -16 Td
+(**Kunde:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt) Tj
+0 -16 Td
+(| Position | Beschreibung | Betrag |) Tj
+0 -16 Td
+(|----------|-------------|--------|) Tj
+0 -16 Td
+(| 1 | Webhosting Basic \(12 Monate\) | 120,00 € |) Tj
+0 -16 Td
+(| 2 | Domainregistrierung example.de | 15,00 € |) Tj
+0 -16 Td
+(| 3 | SSL-Zertifikat | 25,00 € |) Tj
+0 -16 Td
+(**Nettobetrag:** 160,00 €) Tj
+0 -16 Td
+(**MwSt. 19%:** 30,40 €) Tj
+0 -16 Td
+(**Gesamtbetrag:** 190,40 €) Tj
+0 -16 Td
+(**Zahlungsziel:** 15.03.2026) Tj
+0 -16 Td
+(**Verweis:** [[Musterfirma GmbH]]) Tj
+0 -16 Td
+(Webhosting Basic Monatsrechnung für Max Mustermann von Musterfirma GmbH.) Tj
+0 -16 Td
+(Domainregistrierung example.de und SSL-Zertifikat sind im Paket enthalten.) Tj
+0 -16 Td
+(Gesamtbetrag 190,40 Euro inklusive MwSt. 19 Prozent.) Tj
+0 -16 Td
+(Zahlungsziel 15. März 2026 für die Rechnung MF-2026-002.) Tj
+0 -16 Td
+ET
+
+endstream endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001371 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1441
+%%EOF

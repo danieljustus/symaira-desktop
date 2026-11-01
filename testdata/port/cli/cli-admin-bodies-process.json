@@ -2,6 +2,681 @@
   "schema_version": 1,
   "cases": [
     {
+      "name": "demo-init-small",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "hash_files": true,
+      "digest_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "demo",
+            "init"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/symdesk-demo\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/symdesk-demo symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/symdesk-demo symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=26 sha256=be5c7f6f209fb79a6d0df13b47c1cfd91d90e7687230ec2dbf4722f5e91e11f1"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/symdesk-demo\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=26 sha256=be5c7f6f209fb79a6d0df13b47c1cfd91d90e7687230ec2dbf4722f5e91e11f1"
+        },
+        {
+          "args": [
+            "demo",
+            "init"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to overwrite non-empty directory: $ROOT/cwd/symdesk-demo\n",
+          "cwd_digest": "files=26 sha256=be5c7f6f209fb79a6d0df13b47c1cfd91d90e7687230ec2dbf4722f5e91e11f1"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/symdesk-demo\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=26 sha256=be5c7f6f209fb79a6d0df13b47c1cfd91d90e7687230ec2dbf4722f5e91e11f1"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "other"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/other\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/other symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/other symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=52 sha256=1c660b521a610e2cb24e310deb27a9319a18a14659c0b03a0e2541dad362ee8d"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "other"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/other\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=52 sha256=1c660b521a610e2cb24e310deb27a9319a18a14659c0b03a0e2541dad362ee8d"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "other"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to overwrite non-empty directory: $ROOT/cwd/other\n",
+          "cwd_digest": "files=52 sha256=1c660b521a610e2cb24e310deb27a9319a18a14659c0b03a0e2541dad362ee8d"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "other"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/other\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=52 sha256=1c660b521a610e2cb24e310deb27a9319a18a14659c0b03a0e2541dad362ee8d"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "nested/deeper/vault"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/nested/deeper/vault\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/nested/deeper/vault symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/nested/deeper/vault symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=78 sha256=bb5c3d4e8953055a26b7f67d42a2284c71066322a529487b9aae539506c1970c"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "nested/deeper/vault"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/nested/deeper/vault\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=78 sha256=bb5c3d4e8953055a26b7f67d42a2284c71066322a529487b9aae539506c1970c"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "clean/../tidy"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/tidy\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/tidy symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/tidy symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=104 sha256=ee9dc6a0225bdc1410490dba50977ccef69b29e38747ae13a1ed023092c881eb"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "clean/../tidy"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/tidy\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=104 sha256=ee9dc6a0225bdc1410490dba50977ccef69b29e38747ae13a1ed023092c881eb"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "$ROOT/cwd/absolute"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/absolute\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/absolute symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/absolute symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=130 sha256=47e09e56a07b2ac000967bc406395641bf4aa69f9fe307eb21d91c5001616f31"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "$ROOT/cwd/absolute"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/absolute\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=130 sha256=47e09e56a07b2ac000967bc406395641bf4aa69f9fe307eb21d91c5001616f31"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size",
+            "small",
+            "sized"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/sized\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/sized symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/sized symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=156 sha256=f3fa44726c7c33492db3acbd0c2f17437776eb60d9162fd30363dca6464e00db"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "small",
+            "sized"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/sized\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=156 sha256=f3fa44726c7c33492db3acbd0c2f17437776eb60d9162fd30363dca6464e00db"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size=",
+            "blank-size"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/blank-size\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/blank-size symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/blank-size symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=182 sha256=7a9966af25ce5f14d56d39a204c3f486f8b1f5e2375507120c57bd09432e25e5"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size=",
+            "blank-size"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/blank-size\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=182 sha256=7a9966af25ce5f14d56d39a204c3f486f8b1f5e2375507120c57bd09432e25e5"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size",
+            "SMALL",
+            "upper-size"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/upper-size\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/upper-size symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/upper-size symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=208 sha256=66c78a9388375e378cf81acc0b505e8036aeb7999fccd5161f9ba191b152cfc5"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "SMALL",
+            "upper-size"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/upper-size\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=208 sha256=66c78a9388375e378cf81acc0b505e8036aeb7999fccd5161f9ba191b152cfc5"
+        }
+      ]
+    },
+    {
+      "name": "demo-init-text",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "demo",
+            "init",
+            "readable"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/readable\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/readable symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/readable symdesk docs list\n",
+          "stderr": "",
+          "cwd": {
+            "readable/.symdesk/views.json": "[\n  {\n    \"id\": \"demo_open_invoices\",\n    \"name\": \"Open invoices\",\n    \"filters\": [\n      {\n        \"key\": \"document_type\",\n        \"operator\": \"equals\",\n        \"value\": \"invoice\"\n      },\n      {\n        \"key\": \"status\",\n        \"operator\": \"equals\",\n        \"value\": \"open\"\n      }\n    ],\n    \"sorts\": [\n      {\n        \"key\": \"document_date\",\n        \"ascending\": false\n      }\n    ],\n    \"columns\": [\n      \"_title\",\n      \"document_date\",\n      \"correspondent\",\n      \"due_date\",\n      \"confidence\"\n    ]\n  },\n  {\n    \"id\": \"demo_tax_2026\",\n    \"name\": \"Tax 2026\",\n    \"filters\": [\n      {\n        \"key\": \"document_type\",\n        \"operator\": \"equals\",\n        \"value\": \"tax_assessment\"\n      }\n    ],\n    \"sorts\": [\n      {\n        \"key\": \"document_date\",\n        \"ascending\": false\n      }\n    ],\n    \"columns\": [\n      \"_title\",\n      \"document_date\",\n      \"person\",\n      \"status\",\n      \"confidence\"\n    ]\n  },\n  {\n    \"id\": \"demo_needs_review\",\n    \"name\": \"Needs review\",\n    \"filters\": [\n      {\n        \"key\": \"status\",\n        \"operator\": \"equals\",\n        \"value\": \"needs_review\"\n      }\n    ],\n    \"sorts\": [\n      {\n        \"key\": \"confidence\",\n        \"ascending\": true\n      }\n    ],\n    \"columns\": [\n      \"_title\",\n      \"document_type\",\n      \"document_date\",\n      \"confidence\"\n    ]\n  },\n  {\n    \"id\": \"demo_invoice_gallery\",\n    \"name\": \"Invoice gallery\",\n    \"type\": \"gallery\",\n    \"group_by\": \"status\",\n    \"filters\": [\n      {\n        \"key\": \"document_type\",\n        \"operator\": \"equals\",\n        \"value\": \"invoice\"\n      }\n    ],\n    \"sorts\": null,\n    \"columns\": [\n      \"_title\",\n      \"correspondent\",\n      \"status\",\n      \"due_date\"\n    ],\n    \"source\": \"documents\"\n  },\n  {\n    \"id\": \"demo_document_timeline\",\n    \"name\": \"Document timeline\",\n    \"type\": \"timeline\",\n    \"date_property\": \"document_date\",\n    \"filters\": null,\n    \"sorts\": null,\n    \"columns\": [\n      \"_title\",\n      \"document_date\",\n      \"status\"\n    ],\n    \"source\": \"documents\"\n  },\n  {\n    \"id\": \"demo_document_list\",\n    \"name\": \"All documents\",\n    \"type\": \"list\",\n    \"filters\": null,\n    \"sorts\": null,\n    \"columns\": [\n      \"_title\",\n      \"document_type\",\n      \"status\"\n    ],\n    \"source\": \"documents\"\n  }\n]",
+            "readable/documents/Arztbrief_Dr_Beispiel.md": "---\ntitle: \"Arztbrief Dr. med. Beispiel\"\ndocument_type: \"medical_letter\"\ndocument_date: \"2026-02-20\"\ncorrespondent: \"Dr. med. Beispiel\"\nperson: \"Erika Mustermann\"\nstatus: \"done\"\nconfidence: 91\ntags:\n  - arztbrief\n  - gesundheit\n---\n\n# Arztbrief – Dr. med. Beispiel\n\n**Patient:** Erika Mustermann\n**Geburtsdatum:** 15.03.1985\n**Untersuchungsdatum:** 20.02.2026\n\n**Befund:**\nRoutineuntersuchung ohne pathologische Befunde. Blutdruck 120/80 mmHg,\nGewicht stabil, Blutwerte im Normbereich.\n\n**Empfehlung:**\nNächste Kontrolle in 12 Monaten.\n\n**Arzt:** Dr. med. Beispiel, Praxis Musterweg 10, 12345 Beispielstadt\n",
+            "readable/documents/Brief_Versicherung_Erika.md": "---\ntitle: \"Brief Versicherung AG an Erika\"\ndocument_type: \"letter\"\ncorrespondent: \"Versicherung AG\"\nperson: \"Erika Mustermann\"\nstatus: \"waiting_for_reply\"\nconfidence: 72\ntags:\n  - versicherung\n  - brief\n---\n\n# Schreiben der Versicherung AG\n\n**An:** Erika Mustermann\n**Betreff:** Aktualisierung der Versicherungspolice\n\nSehr geehrte Frau Mustermann,\n\nhiermit bestätigen wir den Eingang Ihrer Police-Aktualisierung.\nWir benötigen noch folgende Unterlagen:\n\n1. Kopie des aktuellen Einkommensnachweises\n2. Ausgefülltes Formular „Lebenslage ändern\"\n\nBitte senden Sie diese Unterlagen bis zum 31.03.2026 an uns.\n\nMit freundlichen Grüßen\nVersicherung AG\n\n**Verweis:** [[Versicherung AG]]\n",
+            "readable/documents/Gehaltsabrechnung_Max_2026-01.md": "---\ntitle: \"Gehaltsabrechnung Max Januar 2026\"\ndocument_type: \"payslip\"\ndocument_date: \"2026-01-31\"\ncorrespondent: \"Musterfirma GmbH\"\nperson: \"Max Mustermann\"\nstatus: \"paid\"\nconfidence: 94\ntags:\n  - gehaltsabrechnung\n  - 2026\n---\n\n# Gehaltsabrechnung – Januar 2026\n\n**Arbeitgeber:** Musterfirma GmbH\n**Arbeitnehmer:** Max Mustermann\n**Abrechnungszeitraum:** 01.01.2026 – 31.01.2026\n\n| Position | Betrag |\n|----------|--------|\n| Bruttogehalt | 4.200,00 € |\n| Lohnsteuer | -680,00 € |\n| Solidaritätszuschlag | -37,40 € |\n| Kirchensteuer | -61,20 € |\n| Krankenversicherung | -330,00 € |\n| Rentenversicherung | -365,40 € |\n| Arbeitslosenversicherung | -50,40 € |\n| **Nettogehalt** | **2.675,60 €** |\n\n**Verweis:** [[Musterfirma GmbH]]\n",
+            "readable/documents/Kontoauszug_Sparkasse_2026-01.md": "---\ntitle: \"Kontoauszug Sparkasse Januar 2026\"\ndocument_type: \"bank_statement\"\ndocument_date: \"2026-01-31\"\ncorrespondent: \"Sparkasse Beispielstadt\"\nperson: \"Max Mustermann\"\nstatus: \"paid\"\nconfidence: 92\ntags:\n  - kontoauszug\n  - 2026\n---\n\n# Kontoauszug – Sparkasse Beispielstadt\n\n**Kontonummer:** DE89 3704 0044 0532 0130 00\n**Zeitraum:** 01.01.2026 – 31.01.2026\n\n| Datum | Buchungstext | Betrag |\n|-------|-------------|--------|\n| 02.01. | Gehalt Musterfirma GmbH | +3.200,00 € |\n| 05.0 | Miete Wohnung | -850,00 € |\n| 10.01. | Versicherung AG | -120,00 € |\n| 15.01. | Lebensmittel | -234,56 € |\n| 20.01. | Strom Stadtwerke | -95,00 € |\n\n**Kontostand:** 2.150,44 €\n\n**Hinweis:** Dies ist ein simulierter Kontoauszug zu Demonstrationszwecken.\n",
+            "readable/documents/Rechnung_Musterfirma_2026-01.md": "---\ntitle: \"Rechnung Musterfirma Januar 2026\"\ndocument_type: \"invoice\"\ndocument_date: \"2026-01-15\"\ncorrespondent: \"Musterfirma GmbH\"\nperson: \"Max Mustermann\"\nstatus: \"open\"\ndue_date: \"2026-02-15\"\nconfidence: 95\ntags:\n  - rechnung\n  - 2026\n---\n\n# Rechnung Musterfirma GmbH – Januar 2026\n\n**Rechnungsnr.:** MF-2026-001\n**Kunde:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt\n\n| Position | Beschreibung | Betrag |\n|----------|-------------|--------|\n| 1 | Webhosting Basic (12 Monate) | 120,00 € |\n| 2 | Domainregistrierung example.de | 15,00 € |\n| 3 | SSL-Zertifikat | 25,00 € |\n\n**Nettobetrag:** 160,00 €\n**MwSt. 19%:** 30,40 €\n**Gesamtbetrag:** 190,40 €\n\n**Zahlungsziel:** 15.02.2026\n**Verweis:** [[Musterfirma GmbH]]\n\nWebhosting Basic Monatsrechnung für Max Mustermann von Musterfirma GmbH.\nDomainregistrierung example.de und SSL-Zertifikat sind im Paket enthalten.\nGesamtbetrag 190,40 Euro inklusive MwSt. 19 Prozent.\nZahlungsziel 15. Februar 2026 für die Rechnung MF-2026-001.\n",
+            "readable/documents/Rechnung_Musterfirma_2026-02.md": "---\ntitle: \"Rechnung Musterfirma Februar 2026\"\ndocument_type: \"invoice\"\ndocument_date: \"2026-02-15\"\ncorrespondent: \"Musterfirma GmbH\"\nperson: \"Max Mustermann\"\nstatus: \"open\"\ndue_date: \"2026-03-15\"\nconfidence: 96\ntags:\n  - rechnung\n  - 2026\n---\n\n# Rechnung Musterfirma GmbH – Februar 2026\n\n**Rechnungsnr.:** MF-2026-002\n**Kunde:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt\n\n| Position | Beschreibung | Betrag |\n|----------|-------------|--------|\n| 1 | Webhosting Basic (12 Monate) | 120,00 € |\n| 2 | Domainregistrierung example.de | 15,00 € |\n| 3 | SSL-Zertifikat | 25,00 € |\n\n**Nettobetrag:** 160,00 €\n**MwSt. 19%:** 30,40 €\n**Gesamtbetrag:** 190,40 €\n\n**Zahlungsziel:** 15.03.2026\n**Verweis:** [[Musterfirma GmbH]]\n\nWebhosting Basic Monatsrechnung für Max Mustermann von Musterfirma GmbH.\nDomainregistrierung example.de und SSL-Zertifikat sind im Paket enthalten.\nGesamtbetrag 190,40 Euro inklusive MwSt. 19 Prozent.\nZahlungsziel 15. März 2026 für die Rechnung MF-2026-002.\n",
+            "readable/documents/Steuerbescheid_Max_2025.md": "---\ntitle: \"Steuerbescheid Max Mustermann 2025\"\ndocument_type: \"tax_assessment\"\ndocument_date: \"2026-03-10\"\ncorrespondent: \"Finanzamt Beispielstadt\"\nperson: \"Max Mustermann\"\nstatus: \"needs_review\"\nconfidence: 30\ntags:\n  - steuer\n  - bescheid\n  - 2025\n---\n\n# Steuerbescheid 2025 – Finanzamt Beispielstadt\n\n**Aktenzeichen:** FA-BES-2025-4567\n**Steuerpflichtiger:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt\n\n**Veranlagungsjahr:** 2025\n**Steuerart:** Einkommensteuer\n\n| Position | Betrag |\n|----------|--------|\n| Gesamtbetrag der Einkünfte | 48.500,00 € |\n| Zu versteuerndes Einkommen | 42.200,00 € |\n| Einkommensteuer | 8.840,00 € |\n| Solidaritätszuschlag | 486,20 € |\n| Kirchensteuer | 795,60 € |\n\n**Nachzahlung:** 1.250,00 €\n\n**Hinweis:** Niedrige Confidence (30%) – manuelle Prüfung empfohlen.\nDie extrahierten Daten könnten unvollständig sein.\n\n**Verweis:** [[Finanzamt Beispielstadt]]\n",
+            "readable/documents/Stromrechnung_Stadtwerke.md": "---\ntitle: \"Stromrechnung Stadtwerke\"\ndocument_type: \"invoice\"\ndocument_date: \"2026-01-20\"\ncorrespondent: \"Stadtwerke Beispielstadt\"\nperson: \"Erika Mustermann\"\nstatus: \"open\"\ndue_date: \"2026-02-10\"\nconfidence: 89\ntags:\n  - strom\n  - rechnung\n---\n\n# Stromrechnung – Stadtwerke Beispielstadt\n\n**Kundenkonto:** SW-987654\n**Zählerstand:** 12.450 kWh\n\n**Abrechnungszeitraum:** 01.01.2025 – 31.12.2025\n\n| Position | Betrag |\n|----------|--------|\n| Grundpreis | 120,00 € |\n| Arbeitspreis (3.200 kWh × 0,32 €) | 1.024,00 € |\n| Netto | 1.144,00 € |\n| MwSt. 19% | 217,36 € |\n| **Gesamtbetrag** | **1.361,36 €** |\n\n**Zahlungsziel:** 10.02.2026\n**Verweis:** [[Stadtwerke Beispielstadt]]\n",
+            "readable/documents/Versicherungspolice_Erika.md": "---\ntitle: \"Versicherungspolice Erika Mustermann\"\ndocument_type: \"insurance_policy\"\ndocument_date: \"2025-06-01\"\ncorrespondent: \"Versicherung AG\"\nperson: \"Erika Mustermann\"\nstatus: \"done\"\ndue_date: \"2026-06-01\"\nconfidence: 88\ntags:\n  - versicherung\n  - police\n---\n\n# Versicherungspolice – Versicherung AG\n\n**Police-Nr.:** VAG-2025-78901\n**Versicherungsnehmer:** Erika Mustermann\n**Versicherungsart:** Private Krankenversicherung\n**Beginn:** 01.06.2025\n**Laufzeit:** 12 Monate\n**Monatlicher Beitrag:** 380,00 €\n\n**Leistungen:**\n- Arztbesuche: 100% Erstattung\n- Krankenhausaufenthalt: 100% Erstattung\n- Zahnbehandlung: 80% Erstattung\n\n**Verweis:** [[Versicherung AG]]\n",
+            "readable/documents/Vertrag_Dienstleister.md": "---\ntitle: \"Vertrag Dienstleister GmbH\"\ndocument_type: \"contract\"\ndocument_date: \"2025-11-01\"\ncorrespondent: \"Dienstleister GmbH\"\nperson: \"Max Mustermann\"\nstatus: \"submitted\"\ndue_date: \"2026-11-01\"\nconfidence: 87\ntags:\n  - vertrag\n  - dienstleistung\n---\n\n# Dienstleistungsvertrag – Dienstleister GmbH\n\n**Vertragsnr.:** DG-2025-123\n**Vertragspartner:** Max Mustermann\n**Anbieter:** Dienstleister GmbH, Geschäftsweg 5, 12345 Beispielstadt\n\n**Vertragsgegenstand:** Wartung und Support für IT-Infrastruktur\n\n**Laufzeit:** 01.11.2025 – 01.11.2026\n**Monatlich kündbar nach Erstlaufzeit**\n\n**Kosten:**\n- Monatliche Pauschale: 250,00 € netto\n- Reaktionszeit: 4 Stunden (werktags)\n\n**Verweis:** [[Dienstleister GmbH]]\n",
+            "readable/notes/Hausstand_Mustermann.md": "---\ntitle: \"Hausstand Mustermann\"\ncreated: \"$TIME\"\ntags:\n  - projekt\n  - haushalt\n---\n\n# Hausstand Mustermann\n\n**Haushaltsmitglieder:**\n- [[Max Mustermann]] – Hauptberuflich tätig bei Musterfirma GmbH\n- [[Erika Mustermann]] – Versichert bei Versicherung AG\n\n## Monatliche Fixkosten\n\n| Kostenart | Betrag | Anbieter |\n|-----------|--------|----------|\n| Miete | 850 € | Vermieter |\n| Strom | 95 € | [[Stadtwerke Beispielstadt]] |\n| Internet/Hosting | 190 € | Musterfirma GmbH |\n| Versicherung | 380 € | Versicherung AG |\n\n## Steuern\n\n- [[Steuerbescheid Max Mustermann 2025]] – Nachzahlung 1.250 €\n- Steuererklärung 2026 in Vorbereitung\n",
+            "readable/notes/Musterfirma_GmbH.md": "---\ntitle: \"Musterfirma GmbH\"\ncreated: \"$TIME\"\ntags:\n  - korrespondent\n  - unternehmen\n---\n\n# Musterfirma GmbH\n\n**Branche:** IT-Dienstleistungen \u0026 Webhosting\n**Anschrift:** Firmenweg 42, 12345 Beispielstadt\n**Kontakt:** info@musterfirma.de\n\n## Verknüpfte Dokumente\n\n- [[Rechnung Musterfirma Januar 2026]] – Webhosting-Rechnung\n- [[Rechnung Musterfirma Februar 2026]] – Folgerechnung\n- [[Gehaltsabrechnung Max Januar 2026]] – Arbeitgeber\n\n## Notizen\n\nRegelmäßiger Rechnungsempfänger. Die monatlichen Rechnungen für\nWebhosting und Domain betragen ca. 190 € netto.\n",
+            "readable/notes/Sparkasse_Beispielstadt.md": "---\ntitle: \"Sparkasse Beispielstadt\"\ncreated: \"$TIME\"\ntags:\n  - korrespondent\n  - bank\n---\n\n# Sparkasse Beispielstadt\n\n**Art:** Sparkasse\n**BLZ:** 370 400 44\n**Kontonummer:** 0532 0130 00\n\n## Verknüpfte Dokumente\n\n- [[Kontoauszug Sparkasse Januar 2026]] – Monatlicher Kontoauszug\n\n## Notizen\n\nHauptgirokonto für den Haushalt. Gehaltseingänge und Daueraufände\nwerden über dieses Konto abgewickelt.\n",
+            "readable/notes/Steuererklaerung_2026.md": "---\ntitle: \"Steuererklärung 2026\"\ncreated: \"$TIME\"\ntags:\n  - projekt\n  - steuer\n---\n\n# Steuererklärung 2026\n\n**Status:** In Vorbereitung\n**Frist:** 31.07.2027\n\n## Benötigte Unterlagen\n\n- [[Gehaltsabrechnung Max Januar 2026]] – Einkommensnachweis\n- [[Steuerbescheid Max Mustermann 2025]] – Vorjahr\n- [[Kontoauszug Sparkasse Januar 2026]] – Bankbelege\n\n## Notizen\n\nDie Steuererklärung für 2026 ist ähnlich aufgebaut wie 2025.\nWichtig: Homeoffice-Pauschale und Werbungskosten dokumentieren.\n",
+            "readable/notes/Versicherung_AG.md": "---\ntitle: \"Versicherung AG\"\ncreated: \"$TIME\"\ntags:\n  - korrespondent\n  - versicherung\n---\n\n# Versicherung AG\n\n**Branche:** Private Krankenversicherung\n**Kundennummer:** VAG-998877\n\n## Verknüpfte Dokumente\n\n- [[Versicherungspolice Erika Mustermann]] – Aktive Police\n- [[Brief Versicherung AG an Erika]] – Aktualisierung angefordert\n\n## Notizen\n\nErika Mustermann ist seit Juni 2025 versichert. Die jährliche\nVertragsverlängerung steht im Juni 2026 an.\n",
+            "readable/pdfs/Arztbrief_Dr_Beispiel.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 591 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Arztbrief Dr. med. Beispiel) Tj\n/F1 11 Tf\n0 -30 Td\n(# Arztbrief – Dr. med. Beispiel) Tj\n0 -16 Td\n(**Patient:** Erika Mustermann) Tj\n0 -16 Td\n(**Geburtsdatum:** 15.03.1985) Tj\n0 -16 Td\n(**Untersuchungsdatum:** 20.02.2026) Tj\n0 -16 Td\n(**Befund:**) Tj\n0 -16 Td\n(Routineuntersuchung ohne pathologische Befunde. Blutdruck 120/80 mmHg,) Tj\n0 -16 Td\n(Gewicht stabil, Blutwerte im Normbereich.) Tj\n0 -16 Td\n(**Empfehlung:**) Tj\n0 -16 Td\n(Nächste Kontrolle in 12 Monaten.) Tj\n0 -16 Td\n(**Arzt:** Dr. med. Beispiel, Praxis Musterweg 10, 12345 Beispielstadt) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000000883 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n953\n%%EOF\n",
+            "readable/pdfs/Brief_Versicherung_Erika.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 723 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Brief Versicherung AG an Erika) Tj\n/F1 11 Tf\n0 -30 Td\n(# Schreiben der Versicherung AG) Tj\n0 -16 Td\n(**An:** Erika Mustermann) Tj\n0 -16 Td\n(**Betreff:** Aktualisierung der Versicherungspolice) Tj\n0 -16 Td\n(Sehr geehrte Frau Mustermann,) Tj\n0 -16 Td\n(hiermit bestätigen wir den Eingang Ihrer Police-Aktualisierung.) Tj\n0 -16 Td\n(Wir benötigen noch folgende Unterlagen:) Tj\n0 -16 Td\n(1. Kopie des aktuellen Einkommensnachweises) Tj\n0 -16 Td\n(2. Ausgefülltes Formular „Lebenslage ändern\") Tj\n0 -16 Td\n(Bitte senden Sie diese Unterlagen bis zum 31.03.2026 an uns.) Tj\n0 -16 Td\n(Mit freundlichen Grüßen) Tj\n0 -16 Td\n(Versicherung AG) Tj\n0 -16 Td\n(**Verweis:** [[Versicherung AG]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001015 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1085\n%%EOF\n",
+            "readable/pdfs/Gehaltsabrechnung_Max_2026-01.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 813 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Gehaltsabrechnung Max Januar 2026) Tj\n/F1 11 Tf\n0 -30 Td\n(# Gehaltsabrechnung – Januar 2026) Tj\n0 -16 Td\n(**Arbeitgeber:** Musterfirma GmbH) Tj\n0 -16 Td\n(**Arbeitnehmer:** Max Mustermann) Tj\n0 -16 Td\n(**Abrechnungszeitraum:** 01.01.2026 – 31.01.2026) Tj\n0 -16 Td\n(| Position | Betrag |) Tj\n0 -16 Td\n(|----------|--------|) Tj\n0 -16 Td\n(| Bruttogehalt | 4.200,00 € |) Tj\n0 -16 Td\n(| Lohnsteuer | -680,00 € |) Tj\n0 -16 Td\n(| Solidaritätszuschlag | -37,40 € |) Tj\n0 -16 Td\n(| Kirchensteuer | -61,20 € |) Tj\n0 -16 Td\n(| Krankenversicherung | -330,00 € |) Tj\n0 -16 Td\n(| Rentenversicherung | -365,40 € |) Tj\n0 -16 Td\n(| Arbeitslosenversicherung | -50,40 € |) Tj\n0 -16 Td\n(| **Nettogehalt** | **2.675,60 €** |) Tj\n0 -16 Td\n(**Verweis:** [[Musterfirma GmbH]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001105 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1175\n%%EOF\n",
+            "readable/pdfs/Kontoauszug_Sparkasse_2026-01.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 769 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Kontoauszug Sparkasse Januar 2026) Tj\n/F1 11 Tf\n0 -30 Td\n(# Kontoauszug – Sparkasse Beispielstadt) Tj\n0 -16 Td\n(**Kontonummer:** DE89 3704 0044 0532 0130 00) Tj\n0 -16 Td\n(**Zeitraum:** 01.01.2026 – 31.01.2026) Tj\n0 -16 Td\n(| Datum | Buchungstext | Betrag |) Tj\n0 -16 Td\n(|-------|-------------|--------|) Tj\n0 -16 Td\n(| 02.01. | Gehalt Musterfirma GmbH | +3.200,00 € |) Tj\n0 -16 Td\n(| 05.0 | Miete Wohnung | -850,00 € |) Tj\n0 -16 Td\n(| 10.01. | Versicherung AG | -120,00 € |) Tj\n0 -16 Td\n(| 15.01. | Lebensmittel | -234,56 € |) Tj\n0 -16 Td\n(| 20.01. | Strom Stadtwerke | -95,00 € |) Tj\n0 -16 Td\n(**Kontostand:** 2.150,44 €) Tj\n0 -16 Td\n(**Hinweis:** Dies ist ein simulierter Kontoauszug zu Demonstrationszwecken.) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001061 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1131\n%%EOF\n",
+            "readable/pdfs/Rechnung_Musterfirma_2026-01.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 1078 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Rechnung Musterfirma Januar 2026) Tj\n/F1 11 Tf\n0 -30 Td\n(# Rechnung Musterfirma GmbH – Januar 2026) Tj\n0 -16 Td\n(**Rechnungsnr.:** MF-2026-001) Tj\n0 -16 Td\n(**Kunde:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt) Tj\n0 -16 Td\n(| Position | Beschreibung | Betrag |) Tj\n0 -16 Td\n(|----------|-------------|--------|) Tj\n0 -16 Td\n(| 1 | Webhosting Basic \\(12 Monate\\) | 120,00 € |) Tj\n0 -16 Td\n(| 2 | Domainregistrierung example.de | 15,00 € |) Tj\n0 -16 Td\n(| 3 | SSL-Zertifikat | 25,00 € |) Tj\n0 -16 Td\n(**Nettobetrag:** 160,00 €) Tj\n0 -16 Td\n(**MwSt. 19%:** 30,40 €) Tj\n0 -16 Td\n(**Gesamtbetrag:** 190,40 €) Tj\n0 -16 Td\n(**Zahlungsziel:** 15.02.2026) Tj\n0 -16 Td\n(**Verweis:** [[Musterfirma GmbH]]) Tj\n0 -16 Td\n(Webhosting Basic Monatsrechnung für Max Mustermann von Musterfirma GmbH.) Tj\n0 -16 Td\n(Domainregistrierung example.de und SSL-Zertifikat sind im Paket enthalten.) Tj\n0 -16 Td\n(Gesamtbetrag 190,40 Euro inklusive MwSt. 19 Prozent.) Tj\n0 -16 Td\n(Zahlungsziel 15. Februar 2026 für die Rechnung MF-2026-001.) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001371 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1441\n%%EOF\n",
+            "readable/pdfs/Rechnung_Musterfirma_2026-02.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 1078 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Rechnung Musterfirma Februar 2026) Tj\n/F1 11 Tf\n0 -30 Td\n(# Rechnung Musterfirma GmbH – Februar 2026) Tj\n0 -16 Td\n(**Rechnungsnr.:** MF-2026-002) Tj\n0 -16 Td\n(**Kunde:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt) Tj\n0 -16 Td\n(| Position | Beschreibung | Betrag |) Tj\n0 -16 Td\n(|----------|-------------|--------|) Tj\n0 -16 Td\n(| 1 | Webhosting Basic \\(12 Monate\\) | 120,00 € |) Tj\n0 -16 Td\n(| 2 | Domainregistrierung example.de | 15,00 € |) Tj\n0 -16 Td\n(| 3 | SSL-Zertifikat | 25,00 € |) Tj\n0 -16 Td\n(**Nettobetrag:** 160,00 €) Tj\n0 -16 Td\n(**MwSt. 19%:** 30,40 €) Tj\n0 -16 Td\n(**Gesamtbetrag:** 190,40 €) Tj\n0 -16 Td\n(**Zahlungsziel:** 15.03.2026) Tj\n0 -16 Td\n(**Verweis:** [[Musterfirma GmbH]]) Tj\n0 -16 Td\n(Webhosting Basic Monatsrechnung für Max Mustermann von Musterfirma GmbH.) Tj\n0 -16 Td\n(Domainregistrierung example.de und SSL-Zertifikat sind im Paket enthalten.) Tj\n0 -16 Td\n(Gesamtbetrag 190,40 Euro inklusive MwSt. 19 Prozent.) Tj\n0 -16 Td\n(Zahlungsziel 15. März 2026 für die Rechnung MF-2026-002.) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001371 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1441\n%%EOF\n",
+            "readable/pdfs/Steuerbescheid_Max_2025.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 970 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Steuerbescheid Max Mustermann 2025) Tj\n/F1 11 Tf\n0 -30 Td\n(# Steuerbescheid 2025 – Finanzamt Beispielstadt) Tj\n0 -16 Td\n(**Aktenzeichen:** FA-BES-2025-4567) Tj\n0 -16 Td\n(**Steuerpflichtiger:** Max Mustermann, Musterstraße 1, 12345 Beispielstadt) Tj\n0 -16 Td\n(**Veranlagungsjahr:** 2025) Tj\n0 -16 Td\n(**Steuerart:** Einkommensteuer) Tj\n0 -16 Td\n(| Position | Betrag |) Tj\n0 -16 Td\n(|----------|--------|) Tj\n0 -16 Td\n(| Gesamtbetrag der Einkünfte | 48.500,00 € |) Tj\n0 -16 Td\n(| Zu versteuerndes Einkommen | 42.200,00 € |) Tj\n0 -16 Td\n(| Einkommensteuer | 8.840,00 € |) Tj\n0 -16 Td\n(| Solidaritätszuschlag | 486,20 € |) Tj\n0 -16 Td\n(| Kirchensteuer | 795,60 € |) Tj\n0 -16 Td\n(**Nachzahlung:** 1.250,00 €) Tj\n0 -16 Td\n(**Hinweis:** Niedrige Confidence \\(30%\\) – manuelle Prüfung empfohlen.) Tj\n0 -16 Td\n(Die extrahierten Daten könnten unvollständig sein.) Tj\n0 -16 Td\n(**Verweis:** [[Finanzamt Beispielstadt]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000001262 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1332\n%%EOF\n",
+            "readable/pdfs/Stromrechnung_Stadtwerke.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 702 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Stromrechnung Stadtwerke) Tj\n/F1 11 Tf\n0 -30 Td\n(# Stromrechnung – Stadtwerke Beispielstadt) Tj\n0 -16 Td\n(**Kundenkonto:** SW-987654) Tj\n0 -16 Td\n(**Zählerstand:** 12.450 kWh) Tj\n0 -16 Td\n(**Abrechnungszeitraum:** 01.01.2025 – 31.12.2025) Tj\n0 -16 Td\n(| Position | Betrag |) Tj\n0 -16 Td\n(|----------|--------|) Tj\n0 -16 Td\n(| Grundpreis | 120,00 € |) Tj\n0 -16 Td\n(| Arbeitspreis \\(3.200 kWh × 0,32 €\\) | 1.024,00 € |) Tj\n0 -16 Td\n(| Netto | 1.144,00 € |) Tj\n0 -16 Td\n(| MwSt. 19% | 217,36 € |) Tj\n0 -16 Td\n(| **Gesamtbetrag** | **1.361,36 €** |) Tj\n0 -16 Td\n(**Zahlungsziel:** 10.02.2026) Tj\n0 -16 Td\n(**Verweis:** [[Stadtwerke Beispielstadt]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000000994 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1064\n%%EOF\n",
+            "readable/pdfs/Versicherungspolice_Erika.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 657 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Versicherungspolice Erika Mustermann) Tj\n/F1 11 Tf\n0 -30 Td\n(# Versicherungspolice – Versicherung AG) Tj\n0 -16 Td\n(**Police-Nr.:** VAG-2025-78901) Tj\n0 -16 Td\n(**Versicherungsnehmer:** Erika Mustermann) Tj\n0 -16 Td\n(**Versicherungsart:** Private Krankenversicherung) Tj\n0 -16 Td\n(**Beginn:** 01.06.2025) Tj\n0 -16 Td\n(**Laufzeit:** 12 Monate) Tj\n0 -16 Td\n(**Monatlicher Beitrag:** 380,00 €) Tj\n0 -16 Td\n(**Leistungen:**) Tj\n0 -16 Td\n(- Arztbesuche: 100% Erstattung) Tj\n0 -16 Td\n(- Krankenhausaufenthalt: 100% Erstattung) Tj\n0 -16 Td\n(- Zahnbehandlung: 80% Erstattung) Tj\n0 -16 Td\n(**Verweis:** [[Versicherung AG]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000000949 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1019\n%%EOF\n",
+            "readable/pdfs/Vertrag_Dienstleister.pdf": "%PDF-1.4\n1 0 obj\n\u003c\u003c /Type /Catalog /Pages 2 0 R \u003e\u003e endobj\n2 0 obj\n\u003c\u003c /Type /Pages /Kids [3 0 R] /Count 1 \u003e\u003e endobj\n3 0 obj\n\u003c\u003c /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources \u003c\u003c /Font \u003c\u003c /F1 5 0 R \u003e\u003e \u003e\u003e \u003e\u003e endobj\n4 0 obj\n\u003c\u003c /Length 691 \u003e\u003e\nstream\nBT\n/F1 16 Tf\n72 740 Td\n(Vertrag Dienstleister GmbH) Tj\n/F1 11 Tf\n0 -30 Td\n(# Dienstleistungsvertrag – Dienstleister GmbH) Tj\n0 -16 Td\n(**Vertragsnr.:** DG-2025-123) Tj\n0 -16 Td\n(**Vertragspartner:** Max Mustermann) Tj\n0 -16 Td\n(**Anbieter:** Dienstleister GmbH, Geschäftsweg 5, 12345 Beispielstadt) Tj\n0 -16 Td\n(**Vertragsgegenstand:** Wartung und Support für IT-Infrastruktur) Tj\n0 -16 Td\n(**Laufzeit:** 01.11.2025 – 01.11.2026) Tj\n0 -16 Td\n(**Monatlich kündbar nach Erstlaufzeit**) Tj\n0 -16 Td\n(**Kosten:**) Tj\n0 -16 Td\n(- Monatliche Pauschale: 250,00 € netto) Tj\n0 -16 Td\n(- Reaktionszeit: 4 Stunden \\(werktags\\)) Tj\n0 -16 Td\n(**Verweis:** [[Dienstleister GmbH]]) Tj\n0 -16 Td\nET\n\nendstream endobj\n5 0 obj\n\u003c\u003c /Type /Font /Subtype /Type1 /BaseFont /Helvetica \u003e\u003e endobj\nxref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000241 00000 n \n0000000983 00000 n \ntrailer\n\u003c\u003c /Size 6 /Root 1 0 R \u003e\u003e\nstartxref\n1053\n%%EOF\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "demo-init-errors",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "hash_files": true,
+      "digest_cwd": true,
+      "cwd_files": {
+        "afile": "x",
+        "occupied/x": "y"
+      },
+      "cwd_dirs": [
+        "empty"
+      ],
+      "steps": [
+        {
+          "args": [
+            "demo",
+            "init",
+            "afile"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read directory: open $ROOT/cwd/afile: not a directory\n",
+          "cwd_digest": "files=2 sha256=42937cc51b88dbb63f8d9c5af8e2e29fa25ed75326baf1c6826a4b961e52c007"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "afile"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read directory: open $ROOT/cwd/afile: not a directory\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=2 sha256=42937cc51b88dbb63f8d9c5af8e2e29fa25ed75326baf1c6826a4b961e52c007"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "afile/below"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read directory: open $ROOT/cwd/afile/below: not a directory\n",
+          "cwd_digest": "files=2 sha256=42937cc51b88dbb63f8d9c5af8e2e29fa25ed75326baf1c6826a4b961e52c007"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "afile/below"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read directory: open $ROOT/cwd/afile/below: not a directory\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=2 sha256=42937cc51b88dbb63f8d9c5af8e2e29fa25ed75326baf1c6826a4b961e52c007"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "empty"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/empty\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/empty symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/empty symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "empty"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/empty\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "empty"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to overwrite non-empty directory: $ROOT/cwd/empty\n",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "empty"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/empty\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "occupied"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "refusing to overwrite non-empty directory: $ROOT/cwd/occupied\n",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "occupied"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/occupied\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size",
+            "huge",
+            "bad-size"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown demo size \"huge\": use small or large\n",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "huge",
+            "bad-size"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown demo size \\\"huge\\\": use small or large\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=28 sha256=f6680069c1dd8f799f0e5619f34d1ca106679922acf427cbbed2ff6cd83c16de"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size",
+            "",
+            "x-blank"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/x-blank\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/x-blank symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/x-blank symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "",
+            "x-blank"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/x-blank\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "accepts at most 1 arg(s), received 2\n",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "a",
+            "b"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"accepts at most 1 arg(s), received 2\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "/dev/null/below"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "read directory: open /dev/null/below: not a directory\n",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "/dev/null/below"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"read directory: open /dev/null/below: not a directory\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault management\n\nUsage:\n  symdesk demo [command]\n\nAvailable Commands:\n  init        Materialise the built-in demo vault into a directory\n\nFlags:\n  -h, --help   help for demo\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk demo [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault management\n\nUsage:\n  symdesk demo [command]\n\nAvailable Commands:\n  init        Materialise the built-in demo vault into a directory\n\nFlags:\n  -h, --help   help for demo\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk demo [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault management\n\nUsage:\n  symdesk demo [command]\n\nAvailable Commands:\n  init        Materialise the built-in demo vault into a directory\n\nFlags:\n  -h, --help   help for demo\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk demo [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "bogus"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault management\n\nUsage:\n  symdesk demo [command]\n\nAvailable Commands:\n  init        Materialise the built-in demo vault into a directory\n\nFlags:\n  -h, --help   help for demo\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n\nUse \"symdesk demo [command] --help\" for more information about a command.\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout": "Materialise the built-in demo vault into a directory\n\nUsage:\n  symdesk demo init [dir] [flags]\n\nFlags:\n  -h, --help          help for init\n      --size string   demo size: small or large (default \"small\")\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout": "Materialise the built-in demo vault into a directory\n\nUsage:\n  symdesk demo init [dir] [flags]\n\nFlags:\n  -h, --help          help for init\n      --size string   demo size: small or large (default \"small\")\n\nGlobal Flags:\n      --json            output in JSON format\n      --output string   output format: text|json|yaml (--json is shorthand for --output json)\n      --vault string    override document vault path (the Markdown workspace; unrelated to symvault)\n",
+          "stderr": "",
+          "cwd_digest": "files=54 sha256=7497d3f9ceb21954da57bbe66317f96f2f03d8d5032ff9c423b9248e44a527be"
+        }
+      ]
+    },
+    {
+      "name": "demo-init-large",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "snapshot_cwd": true,
+      "hash_files": true,
+      "digest_cwd": true,
+      "steps": [
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "large",
+            "big"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"path\":\"$ROOT/cwd/big\",\"status\":\"ok\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=10026 sha256=f9929a3820620b0e21ceff2cba6721665928e5c53d432b91c1ab073f50e3c5bf"
+        },
+        {
+          "args": [
+            "--json",
+            "demo",
+            "init",
+            "--size",
+            "LARGE",
+            "big"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"refusing to overwrite non-empty directory: $ROOT/cwd/big\"}\n",
+          "stderr": "",
+          "cwd_digest": "files=10026 sha256=f9929a3820620b0e21ceff2cba6721665928e5c53d432b91c1ab073f50e3c5bf"
+        },
+        {
+          "args": [
+            "demo",
+            "init",
+            "--size",
+            "Large",
+            "big2"
+          ],
+          "exit_code": 0,
+          "stdout": "Demo vault created at $ROOT/cwd/big2\nNext steps:\n  SYMDESK_VAULT=$ROOT/cwd/big2 symdesk index\n  SYMDESK_VAULT=$ROOT/cwd/big2 symdesk docs list\n",
+          "stderr": "",
+          "cwd_digest": "files=20052 sha256=c8aecd45c45ffe23a4299193e558badb6d48cae8e89ce73527a871408c04c14f"
+        }
+      ]
+    },
+    {
       "name": "perm-lifecycle",
       "files": {
         "a.md": "hello\n"

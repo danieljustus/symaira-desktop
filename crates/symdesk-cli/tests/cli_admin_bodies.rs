@@ -36,14 +36,14 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 11;
-const EXPECTED_STEPS: usize = 170;
+const EXPECTED_CASES: usize = 15;
+const EXPECTED_STEPS: usize = 220;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 60;
+const EXPECTED_FAILING_STEPS: usize = 91;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 150;
 /// Steps that also compare the working-directory tree after the step.
-const EXPECTED_CWD_STEPS: usize = 0;
+const EXPECTED_CWD_STEPS: usize = 50;
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -77,6 +77,12 @@ struct Case {
     #[serde(default)]
     hash_files: bool,
     #[serde(default)]
+    digest_cwd: bool,
+    #[serde(default)]
+    cwd_files: BTreeMap<String, String>,
+    #[serde(default)]
+    cwd_dirs: Vec<String>,
+    #[serde(default)]
     volatile: bool,
     steps: Vec<Step>,
 }
@@ -93,6 +99,8 @@ struct Step {
     vault: Option<BTreeMap<String, String>>,
     #[serde(default)]
     cwd: Option<BTreeMap<String, String>>,
+    #[serde(default)]
+    cwd_digest: Option<String>,
 }
 
 fn fixture() -> Fixture {
@@ -170,6 +178,19 @@ fn write_files(vault: &Path, files: &BTreeMap<String, String>) {
                 .expect("make fake tool executable");
         }
     }
+}
+
+/// Go: `adminTreeDigest` — `files=<n> sha256=<hex>` over the sorted
+/// (path NUL value LF) lines of a snapshot.
+fn tree_digest(tree: &BTreeMap<String, String>) -> String {
+    let mut bytes = Vec::new();
+    for (key, value) in tree {
+        bytes.extend_from_slice(key.as_bytes());
+        bytes.push(0);
+        bytes.extend_from_slice(value.as_bytes());
+        bytes.push(b'\n');
+    }
+    format!("files={} sha256={}", tree.len(), sha256_hex(&bytes))
 }
 
 /// Sets the modification time of recorded vault files (Unix seconds); the
@@ -496,7 +517,9 @@ fn cli_admin_bodies_match_go_process_contract() {
         EXPECTED_SNAPSHOT_STEPS
     );
     assert_eq!(
-        steps().filter(|step| step.cwd.is_some()).count(),
+        steps()
+            .filter(|step| step.cwd.is_some() || step.cwd_digest.is_some())
+            .count(),
         EXPECTED_CWD_STEPS
     );
     let binary = env!("CARGO_BIN_EXE_symdesk");
@@ -524,6 +547,10 @@ fn cli_admin_bodies_match_go_process_contract() {
         let canonical = fs::canonicalize(&root).expect("canonical case root");
         write_files(&vault, &case.files);
         apply_mtimes(&vault, &case.mtimes);
+        for name in &case.cwd_dirs {
+            fs::create_dir_all(cwd.join(name)).expect("make working-directory folder");
+        }
+        write_files(&cwd, &case.cwd_files);
         let port = closed_port();
         let embeddings = embedding_fake::EmbeddingFake::start();
         write_files(
@@ -617,9 +644,20 @@ fn cli_admin_bodies_match_go_process_contract() {
             );
             assert_eq!(
                 case.snapshot_cwd,
-                step.cwd.is_some(),
+                step.cwd.is_some() || step.cwd_digest.is_some(),
                 "{label}: working-directory cases record a tree after every step"
             );
+            assert_eq!(case.digest_cwd, step.cwd_digest.is_some());
+            if let Some(expected) = &step.cwd_digest {
+                cwd_snapshots += 1;
+                let tree = snapshot(&cwd, &root, &canonical, case.volatile, case.hash_files);
+                let digest = tree_digest(&tree);
+                if &digest != expected {
+                    failures.push(format!(
+                        "{label} cwd digest\n  go:   {expected}\n  rust: {digest}"
+                    ));
+                }
+            }
             if let Some(expected) = &step.cwd {
                 cwd_snapshots += 1;
                 let tree = snapshot(&cwd, &root, &canonical, case.volatile, case.hash_files);
@@ -756,6 +794,21 @@ fn random_name_normalization_matches_the_go_regexp() {
     );
     assert_eq!(normalize_random("x0123456789abcdef01234567y"), "x$RAND24y");
     assert_eq!(normalize_random("g0123456789abcdef01234567"), "g$RAND24");
+}
+
+#[test]
+fn tree_digest_distinguishes_content_names_and_count() {
+    let tree = |pairs: &[(&str, &str)]| -> BTreeMap<String, String> {
+        pairs
+            .iter()
+            .map(|(key, value)| ((*key).to_owned(), (*value).to_owned()))
+            .collect()
+    };
+    let base = tree_digest(&tree(&[("a", "1"), ("b", "2")]));
+    assert!(base.starts_with("files=2 sha256="));
+    assert_ne!(base, tree_digest(&tree(&[("a", "1"), ("b", "3")])));
+    assert_ne!(base, tree_digest(&tree(&[("a", "1"), ("c", "2")])));
+    assert_ne!(base, tree_digest(&tree(&[("a", "1")])));
 }
 
 #[test]

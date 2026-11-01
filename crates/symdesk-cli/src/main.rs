@@ -10,6 +10,7 @@ mod config_paths;
 mod conflict_cli;
 mod consume_cli;
 mod dataset;
+mod demo_cli;
 mod docs_cli;
 mod duplicates_cli;
 mod events_cli;
@@ -363,6 +364,7 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
+        Some(("demo", command)) => demo_cli::run(command, output_json),
         Some(("perm", command)) => perm_cli::run(
             command,
             matches.get_one::<String>("vault").map(String::as_str),
@@ -717,6 +719,7 @@ fn cli() -> Command {
         .subcommand(events_cli::cli())
         .subcommand(worker_cli::cli())
         .subcommand(perm_cli::cli())
+        .subcommand(demo_cli::cli())
         .subcommand(vault_cli::cli())
         .subcommand(
             Command::new("serve")

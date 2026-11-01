@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -40,8 +41,10 @@ type adminBodiesStep struct {
 	Stderr   string   `json:"stderr"`
 	// Vault is the vault tree after the step (SnapshotVault cases only).
 	Vault *map[string]string `json:"vault,omitempty"`
-	// Cwd is the working-directory tree after the step (SnapshotCwd cases).
-	Cwd *map[string]string `json:"cwd,omitempty"`
+	// Cwd is the working-directory tree after the step (SnapshotCwd cases);
+	// CwdDigest replaces it for cases that set DigestCwd.
+	Cwd       *map[string]string `json:"cwd,omitempty"`
+	CwdDigest string             `json:"cwd_digest,omitempty"`
 }
 
 type adminBodiesCase struct {
@@ -62,6 +65,12 @@ type adminBodiesCase struct {
 	SnapshotVault bool `json:"snapshot_vault,omitempty"`
 	SnapshotCwd   bool `json:"snapshot_cwd,omitempty"`
 	HashFiles     bool `json:"hash_files,omitempty"`
+	// DigestCwd records one SHA-256 over the sorted (path, content) pairs of
+	// the working-directory tree instead of the tree (very large outputs).
+	DigestCwd bool `json:"digest_cwd,omitempty"`
+	// CwdFiles and CwdDirs prepare the working directory before the steps.
+	CwdFiles map[string]string `json:"cwd_files,omitempty"`
+	CwdDirs  []string          `json:"cwd_dirs,omitempty"`
 	// Volatile hides 64-digit hex values (random tokens, content ids) and the
 	// history objects that embed the wall clock.
 	Volatile bool              `json:"volatile,omitempty"`
@@ -247,6 +256,20 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 	}
 	writeFiles(c.Files)
 	applyMtimes()
+	for _, name := range c.CwdDirs {
+		if err := os.MkdirAll(filepath.Join(cwd, filepath.FromSlash(name)), 0o755); err != nil { //nolint:gosec // test-only working directory
+			t.Fatal(err)
+		}
+	}
+	for name, content := range c.CwdFiles {
+		target := filepath.Join(cwd, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	closedPort := closedLoopbackPort(t)
 	if c.HomeFiles == nil {
 		c.HomeFiles = cliErrorsHomeFiles()
@@ -320,7 +343,11 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 		}
 		if c.SnapshotCwd {
 			tree := snapshotAdminTree(t, cwd, root, c.Volatile, c.HashFiles)
-			recorded.Cwd = &tree
+			if c.DigestCwd {
+				recorded.CwdDigest = adminTreeDigest(tree)
+			} else {
+				recorded.Cwd = &tree
+			}
 		}
 		observed.Steps = append(observed.Steps, recorded)
 	}
@@ -353,3 +380,18 @@ var adminLocalTimeRE = regexp.MustCompile(`\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 
 // adminDurationRE matches the measured `"duration_seconds":<number>` member.
 var adminDurationRE = regexp.MustCompile(`"duration_seconds":[0-9eE.+-]+`)
+
+// adminTreeDigest folds a snapshot into `files=<n> sha256=<hex>` over the
+// sorted (path NUL value LF) lines.
+func adminTreeDigest(tree map[string]string) string {
+	keys := make([]string, 0, len(tree))
+	for key := range tree {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	hasher := sha256.New()
+	for _, key := range keys {
+		_, _ = hasher.Write([]byte(key + "\x00" + tree[key] + "\n"))
+	}
+	return "files=" + strconv.Itoa(len(keys)) + " sha256=" + hex.EncodeToString(hasher.Sum(nil))
+}

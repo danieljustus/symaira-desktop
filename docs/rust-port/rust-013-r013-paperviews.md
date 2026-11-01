@@ -27,9 +27,11 @@ Native Rust bodies for `paperless import`, `paperless migrate` and
   dataset-handle/`new-entry` write/CSV-directory errors, embed duplicate-key
   and type-error line numbers / short scalars.
 
+- portgen manifest/check target and provenance checksum registered, generator
+  digest re-frozen; `make port-fixtures-check` PASS (commit `127fa68a`).
+
 ## Remaining
 
-- portgen manifest + provenance registration, digest re-freeze, `port-fixtures-check`.
 - Promote the decision-only `paperless import`, `views new-entry`, `views exec`
   steps of `remote-command-process.json` to exact.
 - Two-host gate.

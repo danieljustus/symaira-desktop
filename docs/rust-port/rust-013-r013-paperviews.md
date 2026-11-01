@@ -36,7 +36,7 @@ Native Rust bodies for `paperless import`, `paperless migrate` and
 
 ## Remaining
 
-- Two-host gate.
+- Linux half of the two-host gate (see Gate).
 
 ## Declared limits
 
@@ -45,3 +45,22 @@ Native Rust bodies for `paperless import`, `paperless migrate` and
   keys are.
 - `paperless migrate` connection-refused / invalid-URL wording (Go `net/http`)
   and wrong-element-type manifests (Go decoder wording) are not recorded.
+
+## Gate
+
+Targets: `rust-check rust-lint rust-test port-contract
+cli-paperviews-bodies-differential cli-bodies-differential
+remote-command-differential`, `LOCAL_GATE_SLUG=r013-paperviews`.
+
+- macOS arm64 @ `b457dabf`: exit 0 (949 nextest tests, `port-contract` incl.
+  `port-fixtures-check`, the three differentials). Run with
+  `MAKE_PREFIX="env CARGO_PROFILE_DEV_DEBUG=0 .../dev-external"` because the
+  shared volume was down to a few GB; test semantics are unchanged.
+- Linux arm64: not run on the final tree. The first attempt (`22ced025`)
+  stopped at `rust-lint` (two clippy findings, fixed in `b457dabf`); the rerun
+  was not started because the shared `/Volumes/1TB_NVMe_SN850X` (which also
+  holds the OrbStack home) had ~4.7 GiB free and the Linux build needs ~6-10 GiB.
+  Rerun once space is available:
+  `LOCAL_GATE_SLUG=r013-paperviews scripts/rust-port/local-gate.sh linux
+  rust-check rust-lint rust-test port-contract cli-paperviews-bodies-differential
+  cli-bodies-differential remote-command-differential`.

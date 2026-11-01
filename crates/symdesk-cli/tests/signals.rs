@@ -402,7 +402,11 @@ fn serve_fake(
     if mode == "embed" {
         let count = serde_json::from_str::<serde_json::Value>(&body)
             .ok()
-            .and_then(|value| value.get("input").and_then(|input| input.as_array().map(Vec::len)))
+            .and_then(|value| {
+                value
+                    .get("input")
+                    .and_then(|input| input.as_array().map(Vec::len))
+            })
             .unwrap_or(0);
         let data = vec![r#"{"embedding":[1,0,0]}"#; count].join(",");
         respond(&mut stream, "200 OK", &format!(r#"{{"data":[{data}]}}"#));

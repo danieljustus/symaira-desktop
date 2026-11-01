@@ -677,6 +677,400 @@
       ]
     },
     {
+      "name": "doctor-clean",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-archive-paths",
+      "files": {
+        "a.md": "---\ntitle: Alpha\n---\nbody\n",
+        "abs-dir.md": "---\ntitle: AbsDir\narchive_path: /\n---\nbody\n",
+        "abs-missing.md": "---\ntitle: Abs\narchive_path: /nonexistent/abs.pdf\n---\nbody\n",
+        "archive/real.pdf": "%PDF-1.4 not parsed\n",
+        "dir-rel.md": "---\ntitle: Dir\narchive_path: archive\n---\nbody\n",
+        "empty-path.md": "---\ntitle: Empty\narchive_path: \"\"\n---\nbody\n",
+        "escape.md": "---\ntitle: Escape\narchive_path: ../outside.pdf\n---\nbody\n",
+        "missing-rel.md": "---\ntitle: Missing\narchive_path: archive/gone.pdf\n---\nbody\n",
+        "nonstring.md": "---\ntitle: Num\narchive_path: 5\n---\nbody\n",
+        "note 2.md": "---\ntitle: Dup\n---\nsync copy\n",
+        "ok-rel.md": "---\ntitle: Ok\narchive_path: archive/real.pdf\n---\nbody\n",
+        "x conflicted copy.md": "---\ntitle: Copy\n---\nsync copy\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  - note 2.md\n  - x conflicted copy.md\n  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:2 message:one or more notes have an archive_path that does not resolve under the vault; re-ingest or move the original back into the vault; one or more notes still use absolute archive_path values from a pre-#660 install; re-ingest the affected notes to rewrite the path in the vault-relative form status:warn unresolved:[map[archive_path:/ note:$ROOT/vault/abs-dir.md reason:archive_path is a directory] map[archive_path:/nonexistent/abs.pdf note:$ROOT/vault/abs-missing.md reason:missing absolute archive] map[archive_path:archive note:$ROOT/vault/dir-rel.md reason:archive_path is a directory] map[archive_path:../outside.pdf note:$ROOT/vault/escape.md reason:archive_path escapes the vault] map[archive_path:archive/gone.pdf note:$ROOT/vault/missing-rel.md reason:missing vault-relative archive]] unresolved_count:5 vault_relative_ok:true]\nasn: 0 assigned, 0 malformed, 0 duplicate values\nconflicts: 2 found\ncontract: map[files_found:11 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:22 document_count:11 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":2,\"message\":\"one or more notes have an archive_path that does not resolve under the vault; re-ingest or move the original back into the vault; one or more notes still use absolute archive_path values from a pre-#660 install; re-ingest the affected notes to rewrite the path in the vault-relative form\",\"status\":\"warn\",\"unresolved\":[{\"archive_path\":\"/\",\"note\":\"$ROOT/vault/abs-dir.md\",\"reason\":\"archive_path is a directory\"},{\"archive_path\":\"/nonexistent/abs.pdf\",\"note\":\"$ROOT/vault/abs-missing.md\",\"reason\":\"missing absolute archive\"},{\"archive_path\":\"archive\",\"note\":\"$ROOT/vault/dir-rel.md\",\"reason\":\"archive_path is a directory\"},{\"archive_path\":\"../outside.pdf\",\"note\":\"$ROOT/vault/escape.md\",\"reason\":\"archive_path escapes the vault\"},{\"archive_path\":\"archive/gone.pdf\",\"note\":\"$ROOT/vault/missing-rel.md\",\"reason\":\"missing vault-relative archive\"}],\"unresolved_count\":5,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":11,\"assigned\":0,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[\"note 2.md\",\"x conflicted copy.md\"],\"contract\":{\"files_found\":11,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":22,\"document_count\":11,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-archive-env",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": "$ROOT/vault/archive"
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[path:$ROOT/vault/archive status:ok]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"path\":\"$ROOT/vault/archive\",\"status\":\"ok\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-asn",
+      "files": {
+        "dups/a.md": "---\ntitle: DA\nasn: 11\n---\nbody\n",
+        "dups/b.md": "---\ntitle: DB\nasn: 11\n---\nbody\n",
+        "dups/c.md": "---\ntitle: DC\nasn: 11\n---\nbody\n",
+        "fine.md": "---\ntitle: Fine\n---\nbody\n",
+        "one.md": "---\ntitle: One\nasn: 5\n---\nbody\n",
+        "three.md": "---\ntitle: Three\nasn: 9\n---\nbody\n",
+        "two.md": "---\ntitle: Two\nasn: 5\n---\nbody\n"
+      },
+      "post_index_files": {
+        "neg.md": "---\ntitle: Neg\nasn: -3\n---\nbody\n",
+        "text.md": "---\ntitle: Text\nasn: abc\n---\nbody\n",
+        "zero.md": "---\ntitle: Zero\nasn: 0\n---\nbody\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 1,
+          "stdout": "  duplicate ASN 11: dups/a.md, dups/b.md, dups/c.md\n  duplicate ASN 5: one.md, two.md\n  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  malformed: neg.md (must be a positive integer)\n  malformed: text.md (must be a positive integer)\n  malformed: zero.md (must be a positive integer)\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: error\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 6 assigned, 3 malformed, 2 duplicate values\nconflicts: none\ncontract: map[files_found:10 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:14 document_count:7 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": "doctor: one or more health checks failed\n"
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":10,\"assigned\":6,\"malformed\":[{\"path\":\"neg.md\",\"message\":\"must be a positive integer\"},{\"path\":\"text.md\",\"message\":\"must be a positive integer\"},{\"path\":\"zero.md\",\"message\":\"must be a positive integer\"}],\"duplicates\":[{\"asn\":5,\"paths\":[\"one.md\",\"two.md\"]},{\"asn\":11,\"paths\":[\"dups/a.md\",\"dups/b.md\",\"dups/c.md\"]}],\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":10,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"error\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":14,\"document_count\":7,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-no-vault",
+      "skip_index": true,
+      "no_vault": true,
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 1,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: error\nai: map[provider:ollama]\nai: provider=ollama\nconflicts: none\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:0 document_count:0 embedding_model:fixture index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[message:vault path not configured (use flag or SYMDESK_VAULT env) status:error]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": "doctor: one or more health checks failed\n"
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"ai\":{\"provider\":\"ollama\"},\"conflicts\":[],\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"error\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":0,\"document_count\":0,\"embedding_model\":\"fixture\",\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"message\":\"vault path not configured (use flag or SYMDESK_VAULT env)\",\"status\":\"error\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-tools",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n",
+        ".symaira/bin/symbrowse": "#!/bin/sh\nprintf '%s\\n' '{\"schema_version\":1,\"version\":\"0.9.0\"}'\n",
+        ".symaira/bin/symvault": "#!/bin/sh\nprintf '%s\\n' '{\"schema_version\":1,\"version\":\"1.0.0\"}'\n",
+        "bin/symmemory": "#!/bin/sh\nprintf '%s\\n' '{\"schema_version\":1,\"version\":\"1.2.3\"}'\n",
+        "path/bin/symbrowse": "#!/bin/sh\nprintf '%s\\n' '{\"schema_version\":1,\"version\":\"0.9.0\"}'\n",
+        "path/bin/symvault": "#!/bin/sh\nprintf '%s\\n' '{\"schema_version\":1,\"version\":\"1.1.0\"}'\n"
+      },
+      "env": {
+        "PATH": "$ROOT/home/path/bin",
+        "SYMAIRA_BIN": "$ROOT/home/bin",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "    warning: managed version 1.0.0 shadows newer PATH version 1.1.0\n  symbrowse: ok (version 0.9.0, from managed)\n  symmemory: ok (version 1.2.3, from override)\n  symvault: ok (version 1.0.0, from managed)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (present)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory true $ROOT/home/bin/symmemory 1.2.3  override  brew install danieljustus/tap/symmemory false false  false} {symvault symvault true $ROOT/home/.symaira/bin/symvault 1.0.0 1.0.0 managed  brew install danieljustus/tap/symvault true true 1.1.0 true} {symbrowse symbrowse true $ROOT/home/.symaira/bin/symbrowse 0.9.0 0.9.0 managed  brew install danieljustus/tap/symbrowse true true 0.9.0 false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":true},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"managed_runtime\",\"symmemory\":\"symaira_bin_env\",\"symvault\":\"managed_runtime\"},\"tools\":{\"symbrowse\":\"ok\",\"symmemory\":\"ok\",\"symvault\":\"ok\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"0.9.0\",\"symmemory\":\"1.2.3\",\"symvault\":\"1.0.0\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":true,\"path\":\"$ROOT/home/bin/symmemory\",\"version\":\"1.2.3\",\"origin\":\"override\",\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":true,\"path\":\"$ROOT/home/.symaira/bin/symvault\",\"version\":\"1.0.0\",\"managed_version\":\"1.0.0\",\"origin\":\"managed\",\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":true,\"path_found\":true,\"path_version\":\"1.1.0\",\"managed_shadows_newer\":true},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":true,\"path\":\"$ROOT/home/.symaira/bin/symbrowse\",\"version\":\"0.9.0\",\"managed_version\":\"0.9.0\",\"origin\":\"managed\",\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":true,\"path_found\":true,\"path_version\":\"0.9.0\",\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-retrieval-down",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"http://127.0.0.1:$CLOSED_PORT/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 1\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:false chunk_count:4 detail:index has unembeddable (pending) chunks; run `symdesk index --re-embed` once the embedding backend is available document_count:2 embedding_model:local-hash encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:4 status:warn unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":false,\"chunk_count\":4,\"detail\":\"index has unembeddable (pending) chunks; run `symdesk index --re-embed` once the embedding backend is available\",\"document_count\":2,\"embedding_model\":\"local-hash\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":4,\"status\":\"warn\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-ai",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "DOCTOR_FAKE_KEY": "k",
+        "PATH": "$ROOT/nopath",
+        "SYMDESK_LLM_API_KEY": "env:DOCTOR_FAKE_KEY",
+        "SYMDESK_LLM_PROVIDER": "anthropic",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[model:claude-sonnet-5 provider:anthropic secret_source:config/env]\nai: provider=anthropic, secret_source=config/env, model=claude-sonnet-5\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"model\":\"claude-sonnet-5\",\"provider\":\"anthropic\",\"secret_source\":\"config/env\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-ai-default-model",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMDESK_LLM_API_KEY": "plain-secret-value",
+        "SYMDESK_LLM_MODEL": "claude-test",
+        "SYMDESK_LLM_PROVIDER": "anthropic",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "canaries": [
+        "plain-secret-value"
+      ],
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[model:claude-test provider:anthropic secret_source:config/env]\nai: provider=anthropic, secret_source=config/env, model=claude-test\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"model\":\"claude-test\",\"provider\":\"anthropic\",\"secret_source\":\"config/env\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "doctor-arguments",
+      "files": {
+        "a.md": "---\ntitle: Alpha\ntags: [x]\n---\nhello alpha\n",
+        "notes/b.md": "---\ntitle: Beta\nasn: 7\n---\nhello beta [[a]]\n"
+      },
+      "home_files": {
+        ".config/symseek/config.toml": "ollama_url = \"$EMBED_URL/api/embeddings\"\nembedding_dim = 3\ntimeout_seconds = 2\nretry_count = 0\nmodel = \"fixture\"\n"
+      },
+      "env": {
+        "PATH": "$ROOT/nopath",
+        "SYMINGEST_ARCHIVE_PATH": ""
+      },
+      "sort_lines": true,
+      "steps": [
+        {
+          "args": [
+            "doctor",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.\n  symbrowse: not found (managed: absent, PATH: absent)\n  symmemory: not found (managed: absent, PATH: absent)\n  symvault: not found (managed: absent, PATH: absent)\nOverall status: ok\nagent_results: map[bytes:0 files:0 status:ok]\nai: map[provider:ollama]\nai: provider=ollama\narchive_backup: map[message:archive is outside the vault; include it separately in backups path:$ROOT/home/data/symdesk/archive status:warn]\narchive_paths: map[absolute_count:0 status:ok unresolved_count:0 vault_relative_ok:true]\nasn: 1 assigned, 0 malformed, 0 duplicate values\nconflicts: none\ncontract: map[files_found:2 status:ok]\nmail_config: map[path:$ROOT/home/config/symingest/config.toml status:ok]\nmanaged runtime: $ROOT/home/.symaira/bin (absent)\nretrieval: map[backend_available:true chunk_count:4 document_count:2 embedding_model:fixture encrypted_documents:0 failed_documents:0 index_location:$ROOT/home/data/symdesk/retrieval.db pending_chunks:0 status:ok unsupported_documents:0]\nretrieval_index: map[path:$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db status:ok]\nsidecar: map[status:ok]\ntools: tools this workspace can use\nvault: map[path:$ROOT/vault status:ok]\nworkspace_tools: [{symmemory symmemory false      brew install danieljustus/tap/symmemory false false  false} {symvault symvault false      brew install danieljustus/tap/symvault false false  false} {symbrowse symbrowse false      brew install danieljustus/tap/symbrowse false false  false}]\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "--json",
+            "doctor",
+            "extra"
+          ],
+          "exit_code": 0,
+          "stdout": "{\"agent_results\":{\"bytes\":0,\"files\":0,\"status\":\"ok\"},\"ai\":{\"provider\":\"ollama\"},\"archive_backup\":{\"message\":\"archive is outside the vault; include it separately in backups\",\"path\":\"$ROOT/home/data/symdesk/archive\",\"status\":\"warn\"},\"archive_paths\":{\"absolute_count\":0,\"status\":\"ok\",\"unresolved_count\":0,\"vault_relative_ok\":true},\"asn\":{\"files_scanned\":2,\"assigned\":1,\"malformed\":null,\"duplicates\":null,\"parse_errors\":null},\"conflicts\":[],\"contract\":{\"files_found\":2,\"status\":\"ok\"},\"mail_config\":{\"path\":\"$ROOT/home/config/symingest/config.toml\",\"status\":\"ok\"},\"managed_runtime\":{\"dir\":\"$ROOT/home/.symaira/bin\",\"exists\":false},\"overall\":\"ok\",\"retrieval\":{\"backend_available\":true,\"chunk_count\":4,\"document_count\":2,\"embedding_model\":\"fixture\",\"encrypted_documents\":0,\"failed_documents\":0,\"index_location\":\"$ROOT/home/data/symdesk/retrieval.db\",\"pending_chunks\":0,\"status\":\"ok\",\"unsupported_documents\":0},\"retrieval_index\":{\"path\":\"$ROOT/home/data/symdesk/vaults/$VAULT_ID/retrieval.db\",\"status\":\"ok\"},\"sidecar\":{\"status\":\"ok\"},\"tool_origins\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"tools\":{\"symbrowse\":\"not_found\",\"symmemory\":\"not_found\",\"symvault\":\"not_found\"},\"vault\":{\"path\":\"$ROOT/vault\",\"status\":\"ok\"},\"versions\":{\"symbrowse\":\"\",\"symmemory\":\"\",\"symvault\":\"\"},\"workspace_tools\":[{\"name\":\"symmemory\",\"binary\":\"symmemory\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symmemory\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symvault\",\"binary\":\"symvault\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symvault\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false},{\"name\":\"symbrowse\",\"binary\":\"symbrowse\",\"found\":false,\"install_hint\":\"brew install danieljustus/tap/symbrowse\",\"managed_found\":false,\"path_found\":false,\"managed_shadows_newer\":false}]}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "doctor",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "unknown flag: --bogus\n"
+        },
+        {
+          "args": [
+            "--json",
+            "doctor",
+            "--bogus"
+          ],
+          "exit_code": 1,
+          "stdout": "{\"error\":\"unknown flag: --bogus\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
       "name": "perm-lifecycle",
       "files": {
         "a.md": "hello\n"

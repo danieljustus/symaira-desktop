@@ -133,6 +133,21 @@ pub fn run(
     Ok(render(&paths, json))
 }
 
+/// Go `ingest.ArchivePath()`: the archive the absorbed ingest pipeline
+/// resolves with no explicit options.
+pub fn ingest_archive_path(environment: &BTreeMap<String, String>) -> Result<String, String> {
+    let cwd = std::env::current_dir()
+        .map_err(|error| format!("failed to get working directory: {error}"))?;
+    let ingest_config = load_ingest_config(environment, &cwd)?;
+    if !ingest_config.archive_path.is_empty() {
+        return Ok(ingest_config.archive_path);
+    }
+    if !ingest_config.vault.is_empty() {
+        return Ok(clean_join(&[&ingest_config.vault, "archive", "ingest"]));
+    }
+    config::ingest_data_path(environment, "archive")
+}
+
 fn preflight(
     vault_root: &str,
     environment: &BTreeMap<String, String>,

@@ -20,7 +20,7 @@ silent `_ => Ok` arm.
 | `demo init` | done (88261163) |
 | `vault health` | this slice |
 | `relations contact [link|unlink]` | done (contact commit) |
-| `doctor` | this slice |
+| `doctor` | done (doctor commit) |
 | `dataset list` | this slice |
 | `ai autofill` | this slice |
 | `notebook generate` | this slice |
@@ -40,9 +40,24 @@ silent `_ => Ok` arm.
 
 ## Remaining
 
-- vault health, doctor, dataset list, ai autofill, notebook generate, export.
+- vault health, dataset list, ai autofill, notebook generate, export.
+
+- doctor (text and `--json`): 10 cases / 22 steps (clean, archive paths, archive env, ASN problems, no vault,
+  fake sibling tools through SYMAIRA_BIN / managed runtime / controlled PATH, backend down, AI provider,
+  extra arguments). The host toolchain never shows through: PATH is a case directory, tools are scripts below
+  the isolated HOME, the embedding backend is a loopback fake or a closed port. Go lists the text report in
+  random map order, so the harness compares the sorted lines (`sort_lines`).
+  `Resolver::inspect_tool` (symdesk-core) is the port of `compose.InspectTool`; `index_cli::retrieval_health`
+  and `config_paths::ingest_archive_path` expose the retrieval snapshot and the ingest archive resolution.
 
 ## Declared limits
+
+- doctor: `parse_errors[].message` for malformed frontmatter and `workspace_tools[].probe_error` for a
+  failing/non-JSON `version --json` probe carry the Go yaml.v3 / `os/exec` / `encoding/json` wording; the
+  Rust text differs, so neither is recorded (the Go fixture has no malformed frontmatter and every fake
+  tool answers correctly). `ai.secret_source` for an empty key asks the host Keychain (`security`), so the
+  cases always configure a key. A non-empty `agent_results` directory is not recorded (it lives under a
+  hashed data directory).
 
 - relations contact: the frontmatter of a note that is rewritten (link, unlink, `--id` cache refresh) is
   re-encoded through the shared Go-yaml renderer (`render_go_yaml_map`). Unquoted YAML timestamps in

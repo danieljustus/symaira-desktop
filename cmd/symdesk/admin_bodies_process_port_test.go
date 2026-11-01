@@ -71,6 +71,9 @@ type adminBodiesCase struct {
 	// DigestCwd records one SHA-256 over the sorted (path, content) pairs of
 	// the working-directory tree instead of the tree (very large outputs).
 	DigestCwd bool `json:"digest_cwd,omitempty"`
+	// SortLines compares the sorted lines of stdout (commands that print a
+	// Go map in its random order).
+	SortLines bool `json:"sort_lines,omitempty"`
 	// ContactSQL seeds the contact store below the isolated HOME: the real Go
 	// process first creates and migrates the store, then each statement runs
 	// against it (the Rust replay applies the same statements to its own store).
@@ -282,6 +285,14 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 		c.HomeFiles = cliErrorsHomeFiles()
 	}
 	writeCLIErrorsHomeFiles(t, home, c.HomeFiles, closedPort, startCLIErrorsEmbeddingServer(t).URL)
+	for name := range c.HomeFiles {
+		// Fake tools below `.symaira/bin/` must be executable as well.
+		if strings.Contains(name, "/bin/") {
+			if err := os.Chmod(filepath.Join(home, filepath.FromSlash(name)), 0o700); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 	materialize := func(value string) string {
 		value = strings.ReplaceAll(value, "$CLOSED_PORT", closedPort)
 		return materializePortProcessArg(value, root, string(filepath.Separator))
@@ -356,7 +367,7 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 			Args:     step.Args,
 			Stdin:    step.Stdin,
 			ExitCode: code,
-			Stdout:   normalizeAdminText(c.Volatile, normalizeCLIErrors(stdout, root)),
+			Stdout:   sortAdminLines(c.SortLines, normalizeAdminText(c.Volatile, normalizeCLIErrors(stdout, root))),
 			Stderr:   normalizeAdminText(c.Volatile, normalizeCLIErrors(stderr, root)),
 		}
 		if c.SnapshotVault {
@@ -374,6 +385,16 @@ func observeCLIAdminBodiesCase(t *testing.T, binary string, c adminBodiesCase) a
 		observed.Steps = append(observed.Steps, recorded)
 	}
 	return observed
+}
+
+// sortAdminLines sorts the lines of a report whose section order is random.
+func sortAdminLines(enabled bool, text string) string {
+	if !enabled {
+		return text
+	}
+	lines := strings.SplitAfter(text, "\n")
+	sort.Strings(lines)
+	return strings.Join(lines, "")
 }
 
 // normalizeAdminText hides the random identifiers Go draws (24 lowercase hex

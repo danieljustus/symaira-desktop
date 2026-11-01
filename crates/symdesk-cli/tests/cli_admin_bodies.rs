@@ -36,10 +36,10 @@ use serde::Deserialize;
 /// Cases and steps recorded in the committed fixture. A fixture that changes
 /// without these numbers changing is rejected, and a replay that skips cases
 /// or steps cannot pass.
-const EXPECTED_CASES: usize = 22;
-const EXPECTED_STEPS: usize = 332;
+const EXPECTED_CASES: usize = 32;
+const EXPECTED_STEPS: usize = 354;
 /// Steps whose Go process exited non-zero: the negative half of the suite.
-const EXPECTED_FAILING_STEPS: usize = 141;
+const EXPECTED_FAILING_STEPS: usize = 147;
 /// Steps that also compare the vault tree after the step.
 const EXPECTED_SNAPSHOT_STEPS: usize = 254;
 /// Steps that also compare the working-directory tree after the step.
@@ -80,6 +80,8 @@ struct Case {
     digest_cwd: bool,
     #[serde(default)]
     contact_sql: Vec<String>,
+    #[serde(default)]
+    sort_lines: bool,
     #[serde(default)]
     cwd_files: BTreeMap<String, String>,
     #[serde(default)]
@@ -174,12 +176,23 @@ fn write_files(vault: &Path, files: &BTreeMap<String, String>) {
         fs::write(&target, content).expect("write vault file");
         // Fake sibling-tool scripts live below `bin/` and must be executable.
         #[cfg(unix)]
-        if name.starts_with("bin/") {
+        if name.starts_with("bin/") || name.contains("/bin/") {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&target, fs::Permissions::from_mode(0o755))
                 .expect("make fake tool executable");
         }
     }
+}
+
+/// Go `sortAdminLines`: commands that print a Go map in its random order
+/// are compared as the sorted lines of their report.
+fn sort_report_lines(enabled: bool, text: String) -> String {
+    if !enabled {
+        return text;
+    }
+    let mut lines: Vec<&str> = text.split_inclusive('\n').collect();
+    lines.sort_unstable();
+    lines.concat()
 }
 
 /// Go: `adminTreeDigest` — `files=<n> sha256=<hex>` over the sorted
@@ -630,7 +643,10 @@ fn cli_admin_bodies_match_go_process_contract() {
             args.extend(step.args.iter().map(|argument| materialize(argument)));
             let observed = run(binary, &home, &cwd, &env, &args, &materialize(&step.stdin));
             let label = format!("{} {:?}", case.name, step.args);
-            let stdout = normalize(&observed.stdout, &root, &canonical, case.volatile);
+            let stdout = sort_report_lines(
+                case.sort_lines,
+                normalize(&observed.stdout, &root, &canonical, case.volatile),
+            );
             let stderr = normalize(&observed.stderr, &root, &canonical, case.volatile);
             if stdout != step.stdout {
                 failures.push(format!(

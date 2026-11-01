@@ -27,6 +27,24 @@ impl ResolveOrigin {
     }
 }
 
+/// One possible installation of a sibling tool (Go `compose.ToolInstallation`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ToolInstallation {
+    pub path: String,
+    pub found: bool,
+    pub version: String,
+    pub probe_error: String,
+}
+
+/// Read-only provenance of a sibling tool (Go `compose.ToolProvenance`).
+#[derive(Clone, Debug, Default)]
+pub struct ToolProvenance {
+    pub managed: ToolInstallation,
+    pub path_install: ToolInstallation,
+    pub effective: ToolInstallation,
+    pub origin: Option<ResolveOrigin>,
+}
+
 /// Inputs to a single discovery. Empty PATH is distinct from a PATH containing
 /// an empty component; only the latter implies the current directory.
 #[derive(Clone, Debug)]
@@ -94,6 +112,52 @@ impl Resolver {
                 };
                 format!("{name} not found via $SYMAIRA_BIN, {dir}, or PATH: {error}")
             })
+    }
+    /// Go `InspectTool`: probe the managed, PATH and effective installations
+    /// of `name`, each distinct executable at most once.
+    pub fn inspect_tool(&self, name: &str) -> ToolProvenance {
+        let mut seen: std::collections::HashMap<String, ToolInstallation> =
+            std::collections::HashMap::new();
+        let mut inspect = |path: &str| -> ToolInstallation {
+            if path.is_empty() {
+                return ToolInstallation::default();
+            }
+            seen.entry(path.to_owned())
+                .or_insert_with(|| {
+                    let mut installation = ToolInstallation {
+                        path: path.to_owned(),
+                        found: true,
+                        ..ToolInstallation::default()
+                    };
+                    match crate::compose_probe::probe(self, path) {
+                        Ok(version) => installation.version = version,
+                        Err(error) => {
+                            "unknown".clone_into(&mut installation.version);
+                            installation.probe_error = error.to_string();
+                        }
+                    }
+                    installation
+                })
+                .clone()
+        };
+        let mut provenance = ToolProvenance::default();
+        let dir = self.managed_runtime_dir();
+        if !dir.is_empty() {
+            let candidate = clean_join(&dir, name);
+            if fs::metadata(self.absolute(&candidate))
+                .is_ok_and(|m| !m.is_dir() && m.permissions().mode() & 0o111 != 0)
+            {
+                provenance.managed = inspect(&candidate);
+            }
+        }
+        if let Ok(path) = self.look_path(name) {
+            provenance.path_install = inspect(&path);
+        }
+        if let Ok((path, origin)) = self.resolve_with_origin(name) {
+            provenance.effective = inspect(&path);
+            provenance.origin = Some(origin);
+        }
+        provenance
     }
     pub fn resolve(&self, name: &str) -> Result<String, String> {
         self.resolve_with_origin(name).map(|(path, _)| path)

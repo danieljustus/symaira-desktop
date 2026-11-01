@@ -25,7 +25,7 @@ use tokio::time::Duration;
 
 #[path = "index_status.rs"]
 mod status;
-pub(crate) use status::{go_time_text, parse_go_duration_nanos};
+pub(crate) use status::{go_time_text, parse_go_duration_nanos, retrieval_health};
 #[path = "index_status_process.rs"]
 mod status_process;
 

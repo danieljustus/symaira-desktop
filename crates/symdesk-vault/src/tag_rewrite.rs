@@ -45,13 +45,7 @@ pub fn rewrite_inline_tags(body: &str, mutate: &mut InlineTagRewrite<'_>) -> (St
             let mut cut_end = span.end;
             if cut_start > 0
                 && bytes[cut_start - 1] == b' '
-                && cut_end < bytes.len()
-                && bytes[cut_end] == b' '
-            {
-                cut_start -= 1;
-            } else if cut_start > 0
-                && bytes[cut_start - 1] == b' '
-                && (cut_end == bytes.len() || matches!(bytes[cut_end], b'\n' | b'\r'))
+                && (cut_end == bytes.len() || matches!(bytes[cut_end], b' ' | b'\n' | b'\r'))
             {
                 cut_start -= 1;
             } else if (cut_start == 0 || bytes[cut_start - 1] == b'\n')

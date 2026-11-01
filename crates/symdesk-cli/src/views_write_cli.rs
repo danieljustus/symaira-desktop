@@ -25,7 +25,8 @@ fn decode<T: serde::de::DeserializeOwned>(raw: &str, go_type: &str) -> Result<T,
     let kind = match &value {
         // `null` leaves the zero value, like Go.
         serde_json::Value::Null => {
-            return serde_json::from_value(serde_json::json!({})).map_err(|error| error.to_string());
+            return serde_json::from_value(serde_json::json!({}))
+                .map_err(|error| error.to_string());
         }
         serde_json::Value::Object(_) => {
             return serde_json::from_value(value).map_err(|error| error.to_string());

@@ -9,11 +9,7 @@ use symdesk_core::{compose::Resolver, compose_probe::ToolCache};
 use symdesk_service::memory::{self, MemoryEntity};
 use symdesk_vault::Document;
 
-use crate::{
-    mutate_cli::parse,
-    service_cli::with_deps,
-    write_go_json, write_stdout,
-};
+use crate::{mutate_cli::parse, service_cli::with_deps, write_go_json, write_stdout};
 
 #[derive(Serialize)]
 struct RelatedEntity {
@@ -93,7 +89,10 @@ pub fn run(file: &str, vault: Option<&str>, json: bool) -> ExitCode {
             ))
         };
         let resolver = Resolver::from_environment().map_err(|error| error.to_string())?;
-        if !ToolCache::default().has_tool(&resolver, "symmemory").available {
+        if !ToolCache::default()
+            .has_tool(&resolver, "symmemory")
+            .available
+        {
             return Ok(render(&result));
         }
         let resolve = |name: &str| resolver.resolve(name);
@@ -111,7 +110,9 @@ pub fn run(file: &str, vault: Option<&str>, json: bool) -> ExitCode {
             let lower_entity = entity.name.to_lowercase();
             let mut matches = lower_title == lower_entity || lower_name == lower_entity;
             if !matches {
-                matches = aliases.iter().any(|alias| lower_title == alias.to_lowercase());
+                matches = aliases
+                    .iter()
+                    .any(|alias| lower_title == alias.to_lowercase());
             }
             if !matches && !document.body.is_empty() {
                 matches = lower_body.contains(&lower_entity)

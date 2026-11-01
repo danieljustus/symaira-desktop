@@ -51,7 +51,11 @@ pub fn export_cli() -> Command {
         .arg(Arg::new("title").long("title").default_value(""))
         // Cobra's local `--output` shadows the persistent switch; the argv
         // rewrite in `main` renames it for Clap.
-        .arg(Arg::new("local-output").long("local-output").default_value(""))
+        .arg(
+            Arg::new("local-output")
+                .long("local-output")
+                .default_value(""),
+        )
 }
 
 pub fn notebook_cli() -> Command {
@@ -71,12 +75,7 @@ struct ExportResult {
     count: usize,
 }
 
-pub fn run(
-    name: &str,
-    command: &ArgMatches,
-    vault: Option<&str>,
-    output_json: bool,
-) -> ExitCode {
+pub fn run(name: &str, command: &ArgMatches, vault: Option<&str>, output_json: bool) -> ExitCode {
     let query = command
         .get_many::<String>("args")
         .into_iter()
@@ -106,7 +105,16 @@ pub fn run(
             .get_one::<String>("local-output")
             .cloned()
             .unwrap_or_default();
-        export(&canonical, sidecar, &query, &title, &output, &format, &hits, output_json)
+        export(
+            &canonical,
+            sidecar,
+            &query,
+            &title,
+            &output,
+            &format,
+            &hits,
+            output_json,
+        )
     })
 }
 
@@ -136,11 +144,12 @@ fn search_notebook(
         if path.is_empty() || !seen.insert(path.clone()) {
             continue;
         }
-        notebook = add_notebook_source(root, &notebook.path, &path)
-            .map_err(|error| error.to_string())?;
+        notebook =
+            add_notebook_source(root, &notebook.path, &path).map_err(|error| error.to_string())?;
     }
     let path = secure_path(root, &notebook.path).map_err(|error| error.to_string())?;
-    parse(&path).map_err(|error| format!("wrote notebook but failed to parse for indexing: {error}"))?;
+    parse(&path)
+        .map_err(|error| format!("wrote notebook but failed to parse for indexing: {error}"))?;
     reindex(sidecar, &path)
         .map_err(|error| format!("wrote notebook but failed to index: {error}"))?;
     Ok(if output_json {
@@ -282,7 +291,8 @@ fn note_path(root: &Path, title: &str, extension: &str) -> Result<(String, PathB
         } else {
             format!("{slug}-{attempt}{extension}")
         };
-        let (relative, absolute) = vault_output_path(root, &format!("search-results/{name}"), extension)?;
+        let (relative, absolute) =
+            vault_output_path(root, &format!("search-results/{name}"), extension)?;
         if !absolute.exists() {
             return Ok((relative, absolute));
         }
@@ -342,7 +352,10 @@ fn create_dir_all_0750(path: &Path) -> std::io::Result<()> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;
-        std::fs::DirBuilder::new().recursive(true).mode(0o750).create(path)
+        std::fs::DirBuilder::new()
+            .recursive(true)
+            .mode(0o750)
+            .create(path)
     }
     #[cfg(not(unix))]
     {
@@ -427,10 +440,10 @@ fn search_results_markdown(
         render_go_yaml_string(value, 4, false)
             .map_err(|error| format!("encode search result metadata: {error}"))
     };
-    let _ = write!(out, "created: {}\n", scalar(created)?.trim_end_matches('\n'));
-    let _ = write!(out, "query: {}\n", render_go_yaml_double_quoted(query));
-    let _ = write!(out, "result_count: {}\n", hits.len());
-    let _ = write!(out, "title: {}\n", scalar(title)?.trim_end_matches('\n'));
+    let _ = writeln!(out, "created: {}", scalar(created)?.trim_end_matches('\n'));
+    let _ = writeln!(out, "query: {}", render_go_yaml_double_quoted(query));
+    let _ = writeln!(out, "result_count: {}", hits.len());
+    let _ = writeln!(out, "title: {}", scalar(title)?.trim_end_matches('\n'));
     out.push_str("type: search_result_set\n");
     out.push_str("---\n\n");
     if format != "pdf" {
@@ -468,7 +481,7 @@ fn search_results_markdown(
             }
             _ => out.push_str("**Location:** Not available\n"),
         }
-        let _ = write!(out, "**Score:** {:.6}\n", hit.score);
+        let _ = writeln!(out, "**Score:** {:.6}", hit.score);
         if !hit.metadata_matches.is_empty() {
             out.push_str("**Metadata matches:** ");
             for (position, field) in hit.metadata_matches.iter().enumerate() {

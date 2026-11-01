@@ -61,7 +61,11 @@ pub fn run_asset(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitC
                 "read asset data: {}",
                 symdesk_vault::go_path_error(
                     // Opening a directory succeeds; the read then fails (EISDIR).
-                    if error.raw_os_error() == Some(21) { "read" } else { "open" },
+                    if error.raw_os_error() == Some(21) {
+                        "read"
+                    } else {
+                        "open"
+                    },
                     std::path::Path::new(&source),
                     &error,
                 )

@@ -7,7 +7,8 @@ use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 
 use crate::{
-    config_paths::load_root_config, emit_error, resolve_vault_root, write_go_json, write_stderr, write_stdout,
+    config_paths::load_root_config, emit_error, resolve_vault_root, write_go_json, write_stderr,
+    write_stdout,
 };
 
 pub fn cli() -> Command {
@@ -23,7 +24,10 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json: bool) -> ExitCode {
     let (mut config, environment) = match load_root_config() {
         Ok(value) => value,
         Err(error) => {
-            return write_stderr(&format!("failed to load config: {error}\n"), CoreExitCode::Config);
+            return write_stderr(
+                &format!("failed to load config: {error}\n"),
+                CoreExitCode::Config,
+            );
         }
     };
     if let Some(flag) = vault.filter(|value| !value.is_empty()) {

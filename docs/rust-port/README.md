@@ -5,6 +5,8 @@
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
+> **Current entry point (2026-11-02):** [handover-20261102.md](handover-20261102.md) — finish RUST-014/015 and the residual rows locally, remove Go (RUST-019), then push once.
+
 ## Cutover decision (2026-10-30)
 
 The maintainer replaced the dual-binary cutover with the EraseMe model. The

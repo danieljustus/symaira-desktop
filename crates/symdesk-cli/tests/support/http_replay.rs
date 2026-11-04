@@ -192,6 +192,9 @@ pub struct Fixture {
     pub cases: Vec<Case>,
 }
 
+/// Arguments and environment of one server launch.
+type ServeCommand = (Vec<String>, Vec<(String, String)>);
+
 pub struct Secrets {
     values: BTreeMap<String, String>,
     /// Captured response values (share ids/tokens): expanded and redacted like
@@ -1054,7 +1057,7 @@ impl Server {
     }
 
     /// Mirrors the Go harness: arguments (including `serve`) and environment.
-    fn serve_command(&self) -> Result<(Vec<String>, Vec<(String, String)>), String> {
+    fn serve_command(&self) -> Result<ServeCommand, String> {
         let mut env = self.base_env();
         let mut args: Vec<String> = Vec::new();
         if let Some(serve) = &self.case.serve {

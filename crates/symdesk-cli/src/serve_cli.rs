@@ -174,7 +174,7 @@ fn parse_bool(text: &str) -> Option<bool> {
 fn last(matches: &ArgMatches, name: &str) -> Option<String> {
     matches
         .get_many::<String>(name)
-        .and_then(|values| values.last().cloned())
+        .and_then(|mut values| values.next_back().cloned())
 }
 
 fn changed(matches: &ArgMatches, name: &str) -> bool {

@@ -488,6 +488,8 @@ impl Server {
 
     fn mask_text(&self, text: &str, mask: &[String]) -> String {
         let mut out = self.secrets.redact(text);
+        // The host's MIME tables decide `.md` (see maskText in the Go recorder).
+        out = out.replace("text/markdown; charset=utf-8", "text/plain; charset=utf-8");
         out = self
             .patterns
             .archive_month

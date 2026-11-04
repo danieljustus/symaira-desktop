@@ -5480,7 +5480,7 @@ fn check_preconditions(
     fn trim(text: &str) -> &str {
         text.trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
     }
-    fn value<'a>(headers: &'a HeaderMap, name: header::HeaderName) -> &'a str {
+    fn value(headers: &HeaderMap, name: header::HeaderName) -> &str {
         headers
             .get(name)
             .and_then(|value| value.to_str().ok())

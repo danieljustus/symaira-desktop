@@ -168,8 +168,13 @@ type homeAssistantOptions struct {
 	OllamaModel     string `json:"ollama_model"`
 }
 
+// homeAssistantOptionsPath is the Home Assistant add-on options file. It is a
+// variable only so the RUST-015 process fixture can build a binary that reads a
+// disposable file (`-ldflags "-X main.homeAssistantOptionsPath=..."`).
+var homeAssistantOptionsPath = "/data/options.json"
+
 func readHomeAssistantOptions() homeAssistantOptions {
-	return readHomeAssistantOptionsFromFile("/data/options.json")
+	return readHomeAssistantOptionsFromFile(homeAssistantOptionsPath)
 }
 
 func readHomeAssistantOptionsFromFile(path string) homeAssistantOptions {

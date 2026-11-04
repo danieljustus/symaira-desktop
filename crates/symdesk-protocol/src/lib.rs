@@ -18,6 +18,7 @@ mod server_state;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
+mod tls;
 
 pub use retrieval_embedding::{
     LocalEmbeddingError, embed_local_ollama, local_ollama_embeddings_endpoint,
@@ -119,6 +120,9 @@ pub struct HttpConfig {
     pub token: String,
     pub worker_token: Option<String>,
     pub version: String,
+    /// Go `ServerConfig.TLSCert` / `TLSKey`; empty means not configured.
+    pub tls_cert: String,
+    pub tls_key: String,
 }
 
 struct AppState {
@@ -350,11 +354,18 @@ enum RangeError {
     NoOverlap,
 }
 
-/// Starts the representative HTTP server and waits for SIGINT/SIGTERM.
-///
-/// The listener is bound before readiness is printed, so port `0` is safe for
-/// the differential harness and the emitted address is the actual socket.
-pub async fn run(config: HttpConfig) -> Result<(), String> {
+/// A fully initialised server (Go `selfhost.NewServer`) that has not bound its
+/// listener yet.
+pub struct PreparedServer {
+    listen_address: String,
+    tls_cert: String,
+    tls_key: String,
+    app: Router,
+}
+
+/// Go `NewServer`: token validation, job store, permissions with the legacy
+/// admin migration and the index refresh. Nothing is bound.
+pub fn prepare(config: HttpConfig) -> Result<PreparedServer, String> {
     let root = fs::canonicalize(&config.vault_root)
         .map_err(|error| format!("resolve vault root: {error}"))?;
     if !root.is_dir() {
@@ -366,16 +377,11 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     server_state::create_job_store(&root)?;
     server_state::initialise_permissions(&root, &config.token)?;
     refresh_server_index(&root)?;
-    let address: SocketAddr = config
-        .listen_address
-        .parse()
-        .map_err(|error| format!("invalid listen address: {error}"))?;
-    let listener = tokio::net::TcpListener::bind(address)
-        .await
-        .map_err(|error| format!("bind HTTP listener: {error}"))?;
-    let actual = listener
-        .local_addr()
-        .map_err(|error| format!("read HTTP listener address: {error}"))?;
+    let listen_address = if config.listen_address.is_empty() {
+        "127.0.0.1:8787".to_owned()
+    } else {
+        config.listen_address
+    };
     let state = Arc::new(AppState {
         vault_root: root.clone(),
         token: Arc::from(config.token.into_bytes()),
@@ -388,9 +394,88 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         job_retry: Mutex::new(()),
         share_write: Mutex::new(()),
     });
-    let app = router(state);
-    eprintln!("LISTENING http://{actual}");
-    serve(listener, app, shutdown_signal()).await
+    Ok(PreparedServer {
+        listen_address,
+        tls_cert: config.tls_cert,
+        tls_key: config.tls_key,
+        app: router(state),
+    })
+}
+
+/// Go `net.Listen("tcp", addr)` address forms: `host:port` with an IP or a
+/// resolvable name, and `:port` for every interface.
+async fn bind_listener(address: &str) -> Result<tokio::net::TcpListener, String> {
+    let go_error = |detail: String| format!("listen tcp {address}: {detail}");
+    // Go's `net.SplitHostPort` and port lookup wording.
+    let Some(colon) = address.rfind(':') else {
+        return Err(format!("listen tcp: address {address}: missing port in address"));
+    };
+    let (host, port) = (&address[..colon], &address[colon + 1..]);
+    if !host.starts_with('[') && host.contains(':') {
+        return Err(format!("listen tcp: address {address}: too many colons in address"));
+    }
+    let port_number: u16 = if port.chars().all(|c| c.is_ascii_digit()) && !port.is_empty() {
+        port.parse()
+            .map_err(|_| format!("listen tcp: address {port}: invalid port"))?
+    } else if port.is_empty() {
+        0
+    } else {
+        return Err(format!("listen tcp: lookup tcp/{port}: unknown port"));
+    };
+    let host = host.trim_start_matches('[').trim_end_matches(']');
+    let target = if host.is_empty() {
+        format!("[::]:{port_number}")
+    } else if host.contains(':') {
+        format!("[{host}]:{port_number}")
+    } else {
+        format!("{host}:{port_number}")
+    };
+    let mut candidates = tokio::net::lookup_host(target.as_str())
+        .await
+        .map_err(|_| format!("listen tcp: lookup {host}: no such host"))?;
+    let socket_address = candidates
+        .next()
+        .ok_or_else(|| format!("listen tcp: lookup {host}: no such host"))?;
+    tokio::net::TcpListener::bind(socket_address)
+        .await
+        .map_err(|error| match error.kind() {
+            io::ErrorKind::AddrInUse => go_error("bind: address already in use".to_owned()),
+            io::ErrorKind::PermissionDenied => go_error("bind: permission denied".to_owned()),
+            io::ErrorKind::AddrNotAvailable => {
+                go_error("bind: can't assign requested address".to_owned())
+            }
+            _ => go_error(error.to_string()),
+        })
+}
+
+impl PreparedServer {
+    /// Go `ListenAndServe` / `ListenAndServeTLS` followed by the signal-driven
+    /// graceful stop.
+    pub async fn serve(self) -> Result<(), String> {
+        if self.tls_cert.is_empty() != self.tls_key.is_empty() {
+            return Err("both TLS certificate and key are required".to_owned());
+        }
+        let listener = bind_listener(&self.listen_address).await?;
+        let acceptor = if self.tls_cert.is_empty() {
+            None
+        } else {
+            Some(tls::acceptor(&self.tls_cert, &self.tls_key)?)
+        };
+        let actual = listener
+            .local_addr()
+            .map_err(|error| format!("read HTTP listener address: {error}"))?;
+        let scheme = if acceptor.is_some() { "https" } else { "http" };
+        eprintln!("LISTENING {scheme}://{actual}");
+        serve(listener, self.app, shutdown_signal(), acceptor).await
+    }
+}
+
+/// Starts the representative HTTP server and waits for SIGINT/SIGTERM.
+///
+/// The listener is bound before readiness is printed, so port `0` is safe for
+/// the differential harness and the emitted address is the actual socket.
+pub async fn run(config: HttpConfig) -> Result<(), String> {
+    prepare(config)?.serve().await
 }
 
 /// Accepts connections until `shutdown` resolves, then drains active ones.
@@ -398,6 +483,7 @@ async fn serve(
     listener: tokio::net::TcpListener,
     app: Router,
     shutdown: impl std::future::Future<Output = ()>,
+    acceptor: Option<tokio_rustls::TlsAcceptor>,
 ) -> Result<(), String> {
     let mut make_service = app.into_make_service_with_connect_info::<SocketAddr>();
     let mut connection_builder = ConnectionBuilder::new();
@@ -459,13 +545,15 @@ async fn serve(
         // A second handle on the socket lets the front door write Go's
         // close-delimited connection errors byte for byte (hyper frames
         // every streamed HTTP/1.1 body as chunked).
+        // Not over TLS: the plaintext socket handle must never carry bytes of a
+        // TLS session (the connection error then uses hyper's framing).
         let raw_socket: Option<Arc<std::net::TcpStream>> = linger_socket
             .as_ref()
+            .filter(|_| acceptor.is_none())
             .and_then(|socket| socket.try_clone().ok())
             .map(Arc::new);
         let raw_answered = Arc::new(AtomicBool::new(false));
         let request_raw_answered = Arc::clone(&raw_answered);
-        let io = TokioIo::new(io);
         let unread_body = ConnectionLinger::default();
         let request_linger = unread_body.clone();
         let tower_service = make_service
@@ -526,20 +614,50 @@ async fn serve(
         let hyper_service = TowerToHyperService::new(tower_service);
         let builder = connection_builder.clone();
         let mut connection_shutdown = shutdown_rx.clone();
+        let tls_acceptor = acceptor.clone();
         active.spawn(async move {
-            let connection = builder.serve_connection(io, hyper_service);
-            let mut connection = std::pin::pin!(connection);
-            tokio::select! {
-                result = &mut connection => {
-                    if let Err(error) = result
-                        && !raw_answered.load(Ordering::SeqCst)
-                    {
-                        eprintln!("HTTP connection failed: {error}");
+            // The same drive loop for a plaintext socket and a TLS session.
+            macro_rules! drive {
+                ($io:expr) => {{
+                    let connection = builder.serve_connection(TokioIo::new($io), hyper_service);
+                    let mut connection = std::pin::pin!(connection);
+                    tokio::select! {
+                        result = &mut connection => {
+                            if let Err(error) = result
+                                && !raw_answered.load(Ordering::SeqCst)
+                            {
+                                eprintln!("HTTP connection failed: {error}");
+                            }
+                        }
+                        _ = connection_shutdown.changed() => {
+                            connection.as_mut().graceful_shutdown();
+                            let _ = connection.await;
+                        }
                     }
-                }
-                _ = connection_shutdown.changed() => {
-                    connection.as_mut().graceful_shutdown();
-                    let _ = connection.await;
+                }};
+            }
+            match tls_acceptor {
+                None => drive!(io),
+                Some(tls_acceptor) => {
+                    let mut io = io;
+                    let Some(header) = tls::peek_record_header(&io).await else {
+                        return;
+                    };
+                    if tls::looks_like_http(&header) {
+                        let _ = tls::reply_plaintext_on_tls(&mut io).await;
+                        return;
+                    }
+                    match tokio::time::timeout(tls::HANDSHAKE_TIMEOUT, tls_acceptor.accept(io))
+                        .await
+                    {
+                        Ok(Ok(session)) => drive!(session),
+                        Ok(Err(error)) => {
+                            eprintln!("http: TLS handshake error from {remote_addr}: {error}");
+                        }
+                        Err(_) => {
+                            eprintln!("http: TLS handshake error from {remote_addr}: timeout");
+                        }
+                    }
                 }
             }
             if unread_body.is_set()
@@ -7728,7 +7846,7 @@ mod tests {
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
         let server = tokio::spawn(serve(listener, app, async {
             let _ = stop_rx.await;
-        }));
+        }, None));
         let client = tokio::task::spawn_blocking(move || {
             use std::io::{BufRead, BufReader, Read, Write};
             let socket = std::net::TcpStream::connect(address).unwrap();
@@ -7820,7 +7938,7 @@ mod tests {
         let (stop_tx, stop_rx) = tokio::sync::oneshot::channel::<()>();
         let server = tokio::spawn(serve(listener, app, async {
             let _ = stop_rx.await;
-        }));
+        }, None));
 
         let client = tokio::task::spawn_blocking(move || {
             let token = if authorized { token } else { "" };

@@ -1,1 +1,1 @@
-pub use symdesk_protocol::{HttpConfig, run};
+pub use symdesk_protocol::{HttpConfig, prepare};

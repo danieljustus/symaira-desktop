@@ -3146,6 +3146,8 @@ dependencies = [
  "libc",
  "notify",
  "rusqlite",
+ "rustls",
+ "rustls-pki-types",
  "same-file",
  "serde",
  "serde_json",
@@ -3155,6 +3157,7 @@ dependencies = [
  "symdesk-vault",
  "time",
  "tokio",
+ "tokio-rustls",
  "tower",
  "winreg",
 ]

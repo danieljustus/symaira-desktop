@@ -47,6 +47,7 @@ mod retention;
 mod rules_cli;
 mod search_cli;
 mod search_export_cli;
+mod serve_cli;
 mod service_cli;
 mod sidecar_cli;
 mod source_cli;
@@ -92,6 +93,7 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 
 fn main() -> ExitCode {
     let mut args: Vec<OsString> = std::env::args_os().collect();
+    serve_cli::take_internal_options_path(&mut args);
     // Cobra/pflag front half: command resolution, flag grammar, help,
     // version, argument counts and the generated commands (CLI-001..004).
     match cobra::front(&args) {
@@ -240,12 +242,9 @@ fn main() -> ExitCode {
             events_cli::run(matches.get_one::<String>("vault").map(String::as_str))
         }
         Some(("worker", command)) => worker_cli::run(command),
-        Some(("serve", command)) => run_http_server(
-            command.get_one::<String>("listen").cloned(),
-            command.get_one::<String>("token").cloned(),
-            command.get_one::<String>("worker-token").cloned(),
-            matches.get_one::<String>("vault").cloned(),
-        ),
+        Some(("serve", command)) => {
+            serve_cli::run(command, matches.get_one::<String>("vault").cloned())
+        }
         Some(("sidecar", command)) => sidecar_cli::run(command, output_json),
         Some(("clip", command)) => clip_cli::run(
             command,
@@ -653,59 +652,6 @@ fn rewrite_index_output_flag(args: &mut [OsString]) {
     }
 }
 
-fn run_http_server(
-    listen: Option<String>,
-    token: Option<String>,
-    worker_token: Option<String>,
-    vault: Option<String>,
-) -> ExitCode {
-    let vault = match resolve_vault(vault.as_deref()) {
-        Ok(path) => path,
-        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    };
-    // A flag wins without reading its environment fallback. Never turn an
-    // invalid consumed value into a missing token or a default listener.
-    let setting = |flag: Option<String>, name: &str| {
-        flag.filter(|value| !value.is_empty()).map_or_else(
-            || symdesk_core::config::environment_value(name),
-            |value| Ok(Some(value)),
-        )
-    };
-    let config = match (|| {
-        let token = setting(token, "SYMDESK_SERVER_TOKEN")?.unwrap_or_default();
-        let worker_token =
-            setting(worker_token, "SYMDESK_WORKER_TOKEN")?.filter(|value| !value.is_empty());
-        let listen_address = setting(listen, "SYMDESK_SERVER_LISTEN")?
-            .unwrap_or_else(|| "127.0.0.1:8787".to_owned());
-        Ok::<_, String>(http::HttpConfig {
-            listen_address,
-            vault_root: vault,
-            token,
-            worker_token,
-            version: VERSION.to_owned(),
-        })
-    })() {
-        Ok(config) => config,
-        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    };
-    let runtime = match tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-    {
-        Ok(runtime) => runtime,
-        Err(error) => {
-            return write_stderr(
-                &format!("http: create runtime: {error}\n"),
-                CoreExitCode::Generic,
-            );
-        }
-    };
-    match runtime.block_on(http::run(config)) {
-        Ok(()) => process_exit(CoreExitCode::Ok),
-        Err(error) => write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
-    }
-}
-
 fn cli() -> Command {
     Command::new("symdesk")
         .about("Markdown vault workspace (contract v6)")
@@ -799,14 +745,7 @@ fn cli() -> Command {
         .subcommand(doctor_cli::command())
         .subcommand(vault_cli::cli())
         .subcommand(admin_ai_cli::ai_cli())
-        .subcommand(
-            Command::new("serve")
-                .arg(Arg::new("listen").long("listen").num_args(1))
-                .arg(Arg::new("token").long("token").num_args(1))
-                .arg(Arg::new("worker-token").long("worker-token").num_args(1))
-                // Go's `serve` and `mcp` have no `Args` validator: extra words are ignored.
-                .arg(Arg::new("extra").num_args(0..).hide(true)),
-        )
+        .subcommand(serve_cli::command())
 }
 
 fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode {
@@ -910,6 +849,23 @@ fn resolve_vault_root(flag: Option<&str>) -> Result<PathBuf, String> {
 }
 
 fn resolve_vault_inner(flag: Option<&str>, report: impl FnOnce()) -> Result<PathBuf, String> {
+    resolve_vault_fallback(flag, None, report)
+}
+
+/// `serve`: the Home Assistant options vault applies only when neither the
+/// flag nor the environment/config names a vault.
+fn resolve_vault_with_fallback(
+    flag: Option<&str>,
+    fallback: Option<&str>,
+) -> Result<PathBuf, String> {
+    resolve_vault_fallback(flag, fallback, || {})
+}
+
+fn resolve_vault_fallback(
+    flag: Option<&str>,
+    fallback: Option<&str>,
+    report: impl FnOnce(),
+) -> Result<PathBuf, String> {
     let environment = symdesk_core::config::environment_snapshot()?;
     let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
     let toml_input = match std::fs::read_to_string(config_path) {
@@ -927,6 +883,7 @@ fn resolve_vault_inner(flag: Option<&str>, report: impl FnOnce()) -> Result<Path
                 .filter(|value| !value.is_empty())
         })
         .or_else(|| (!config.vault.is_empty()).then_some(config.vault.as_str()))
+        .or(fallback.filter(|value| !value.is_empty()))
         .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
     report();
     let path = PathBuf::from(raw);

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -38,18 +39,22 @@ import (
 // `$NAME` in requests and files.
 type httpSecrets struct {
 	values map[string]string
+	// vars are values captured from responses (share ids, share tokens). They
+	// expand and redact like secrets but are expected in responses, so they are
+	// not leak-scanned.
+	vars map[string]string
 }
 
 func newHTTPSecrets() *httpSecrets {
-	s := &httpSecrets{values: map[string]string{}}
-	for _, name := range []string{"ADMIN", "WORKER", "ADMIN2", "WORKER2", "NAMED", "WNAMED"} {
+	s := &httpSecrets{values: map[string]string{}, vars: map[string]string{}}
+	for _, name := range []string{"ADMIN", "WORKER", "ADMIN2", "WORKER2", "NAMED", "WNAMED", "NAMEDADM", "SHARE", "SHARE2", "PROVKEY"} {
 		buf := make([]byte, 20)
 		if _, err := rand.Read(buf); err != nil {
 			panic(err)
 		}
 		s.values[name] = hex.EncodeToString(buf)
 	}
-	for _, name := range []string{"NAMED", "WNAMED"} {
+	for _, name := range []string{"NAMED", "WNAMED", "NAMEDADM", "SHARE", "SHARE2"} {
 		sum := sha256.Sum256([]byte(s.values[name]))
 		s.values[name+"_HASH"] = hex.EncodeToString(sum[:])
 	}
@@ -59,8 +64,11 @@ func newHTTPSecrets() *httpSecrets {
 // order lists placeholder names longest first so `$ADMIN2` is not read as
 // `$ADMIN` followed by `2`.
 func (s *httpSecrets) order() []string {
-	names := make([]string, 0, len(s.values))
+	names := make([]string, 0, len(s.values)+len(s.vars))
 	for name := range s.values {
+		names = append(names, name)
+	}
+	for name := range s.vars {
 		names = append(names, name)
 	}
 	sort.Slice(names, func(i, j int) bool {
@@ -72,9 +80,16 @@ func (s *httpSecrets) order() []string {
 	return names
 }
 
+func (s *httpSecrets) lookup(name string) string {
+	if value, ok := s.values[name]; ok {
+		return value
+	}
+	return s.vars[name]
+}
+
 func (s *httpSecrets) expand(text string) string {
 	for _, name := range s.order() {
-		text = strings.ReplaceAll(text, "$"+name, s.values[name])
+		text = strings.ReplaceAll(text, "$"+name, s.lookup(name))
 	}
 	return text
 }
@@ -83,7 +98,9 @@ func (s *httpSecrets) expand(text string) string {
 // a distinct secret and is redacted before the plain token.
 func (s *httpSecrets) redact(text string) string {
 	for _, name := range s.order() {
-		text = strings.ReplaceAll(text, s.values[name], "$"+name)
+		if value := s.lookup(name); value != "" {
+			text = strings.ReplaceAll(text, value, "$"+name)
+		}
 	}
 	return text
 }
@@ -122,6 +139,11 @@ type httpObserved struct {
 	Tree map[string]string `json:"tree,omitempty"`
 	// Exit is the process outcome of a restart or shutdown step.
 	Exit string `json:"exit,omitempty"`
+	// Early is the response body read before the provider was released (a
+	// streamed response must be flushed while the upstream is still running).
+	Early string `json:"early,omitempty"`
+	// TLS is the negotiated protocol of a TLS exchange.
+	TLS string `json:"tls,omitempty"`
 }
 
 type httpStep struct {
@@ -164,6 +186,26 @@ type httpStep struct {
 	// Stall (kind "shutdown"): headers of a request are written, the body
 	// is not, then SIGTERM is sent; the observed exit is recorded.
 	Stall string `json:"stall,omitempty"`
+	// Capture stores top-level string members of a JSON response body as
+	// `$NAME` variables for later steps.
+	Capture map[string]string `json:"capture,omitempty"`
+	// Count is the number of provider cancellations a "provider" step waits
+	// for. StreamLines/Release/Abort drive a "stream" step: read that many
+	// body lines, then release the provider gate (or drop the connection).
+	Count       int  `json:"count,omitempty"`
+	StreamLines int  `json:"stream_lines,omitempty"`
+	Release     bool `json:"release,omitempty"`
+	Abort       bool `json:"abort,omitempty"`
+	// Args are the `serve` arguments of a "launch" step.
+	Args []string `json:"args,omitempty"`
+	// Plain sends the request in plaintext to a TLS listener; TLSVersion pins
+	// the client to "1.2" or "1.3".
+	Plain      bool   `json:"plain,omitempty"`
+	TLSVersion string `json:"tls_version,omitempty"`
+	// TimeClass records the elapsed-time class of the exchange in Exit.
+	TimeClass bool `json:"time_class,omitempty"`
+	// WaitMS is the pause of a "sleep" step.
+	WaitMS int `json:"wait_ms,omitempty"`
 
 	Expect *httpObserved `json:"expect,omitempty"`
 }
@@ -174,7 +216,18 @@ type httpCase struct {
 	Symlinks map[string]string `json:"symlinks,omitempty"`
 	Mtime    int64             `json:"mtime,omitempty"`
 	NoWorker bool              `json:"no_worker,omitempty"`
-	Steps    []httpStep        `json:"steps"`
+	// Serve replaces the default `serve` command line; Env adds server
+	// environment variables; TLS mints a certificate pair under $ROOT/tls and
+	// makes the client speak TLS; Provider starts the fake loopback provider
+	// and points the server at it; EmptyPath gives the server an empty PATH;
+	// NoServer starts nothing (launch-only cases).
+	Serve     *httpServe        `json:"serve,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	TLS       bool              `json:"tls,omitempty"`
+	Provider  bool              `json:"provider,omitempty"`
+	EmptyPath bool              `json:"empty_path,omitempty"`
+	NoServer  bool              `json:"no_server,omitempty"`
+	Steps     []httpStep        `json:"steps"`
 	// StderrLeaks lists the secret names found in the server's stderr and in
 	// every recorded response (must be empty).
 	StderrLeaks []string `json:"stderr_leaks"`
@@ -210,6 +263,12 @@ type httpServer struct {
 	noWork  bool
 	// leaked collects the secrets seen in raw responses.
 	leaked map[string]bool
+	// Extension state (http_process_ext_port_test.go).
+	c        httpCase
+	vault2   string
+	provider *httpProvider
+	tlsRoots *x509.CertPool
+	capture  map[string]string
 }
 
 func httpFreePort(t *testing.T) int {
@@ -225,28 +284,11 @@ func httpFreePort(t *testing.T) int {
 func (s *httpServer) start() {
 	s.t.Helper()
 	s.port = httpFreePort(s.t)
-	token, worker := s.secrets.values["ADMIN"], s.secrets.values["WORKER"]
-	if s.rotated {
-		token, worker = s.secrets.values["ADMIN2"], s.secrets.values["WORKER2"]
-	}
-	args := []string{"serve", "--listen", fmt.Sprintf("127.0.0.1:%d", s.port), "--vault", s.vault, "--token", token}
-	if !s.noWork {
-		args = append(args, "--worker-token", worker)
-	}
+	args, env := s.serveCommand()
 	//nolint:gosec // the Go CLI built from this package, arguments are fixed.
-	cmd := exec.Command(s.binary, args...)
+	cmd := exec.Command(s.serveBinary(), args...)
 	cmd.Dir = s.home
-	tmp := filepath.Join(s.home, "tmp")
-	cmd.Env = []string{
-		"HOME=" + s.home, "USERPROFILE=" + s.home,
-		"XDG_CONFIG_HOME=" + filepath.Join(s.home, ".config"),
-		"XDG_DATA_HOME=" + filepath.Join(s.home, ".local", "share"),
-		"XDG_CACHE_HOME=" + filepath.Join(s.home, ".cache"),
-		"TMPDIR=" + tmp, "TMP=" + tmp, "TEMP=" + tmp,
-		"LANG=C", "LC_ALL=C", "TZ=UTC", "TERM=dumb", "NO_COLOR=1",
-		"SYMDESK_VAULT=" + s.vault, "SYMDESK_VERSION=0.12.2",
-		"PATH=" + os.Getenv("PATH"),
-	}
+	cmd.Env = env
 	stderr, err := os.OpenFile(filepath.Join(s.root, "stderr.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		s.t.Fatal(err)
@@ -308,14 +350,14 @@ func describeExit(err error) string {
 	return err.Error()
 }
 
-func (s *httpServer) exchange(raw []byte, headOnly bool, readMS int, mask []string, volatileLength bool) httpObserved {
+func (s *httpServer) exchange(raw []byte, headOnly bool, step httpStep, readMS int, mask []string, volatileLength bool) httpObserved {
 	s.t.Helper()
 	if readMS == 0 {
 		readMS = 5000
 	}
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", s.port), 5*time.Second)
-	if err != nil {
-		s.t.Fatal(err)
+	conn, tlsState, failure := s.dialStep(step.Plain, step.TLSVersion)
+	if failure != "" {
+		return httpObserved{Exit: failure}
 	}
 	defer func() { _ = conn.Close() }()
 	// Large requests are written concurrently so a server answering early
@@ -329,6 +371,7 @@ func (s *httpServer) exchange(raw []byte, headOnly bool, readMS int, mask []stri
 	var wire bytes.Buffer
 	reader := bufio.NewReaderSize(io.TeeReader(conn, &wire), 1<<20)
 	observed := s.readResponse(conn, reader, headOnly, mask, volatileLength)
+	observed.TLS = tlsState()
 	<-writeDone
 	for _, name := range s.secrets.leaks(wire.String()) {
 		s.leaked[name] = true
@@ -403,6 +446,7 @@ func (s *httpServer) readResponse(conn net.Conn, reader *bufio.Reader, headOnly 
 		default:
 			body, _ = io.ReadAll(reader)
 		}
+		s.applyCapture(body)
 		s.recordBody(&observed, body, mask)
 		// Does the server close the connection once the response is complete?
 		_ = conn.SetReadDeadline(time.Now().Add(400 * time.Millisecond))
@@ -658,7 +702,8 @@ func observeHTTPCase(t *testing.T, binary string, c httpCase) httpCase {
 		root = resolved
 	}
 	secrets := newHTTPSecrets()
-	s := &httpServer{t: t, binary: binary, root: root, vault: filepath.Join(root, "vault"), home: filepath.Join(root, "home"), secrets: secrets, noWork: c.NoWorker, leaked: map[string]bool{}}
+	s := &httpServer{t: t, binary: binary, root: root, vault: filepath.Join(root, "vault"), home: filepath.Join(root, "home"), secrets: secrets, noWork: c.NoWorker, leaked: map[string]bool{}, c: c, vault2: filepath.Join(root, "vault2")}
+	defer s.closeExt()
 	for _, dir := range []string{s.vault, filepath.Join(s.home, "tmp")} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			t.Fatal(err)
@@ -692,16 +737,22 @@ func observeHTTPCase(t *testing.T, binary string, c httpCase) httpCase {
 	if err := os.WriteFile(filepath.Join(root, "outside.md"), []byte("outside"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	s.start()
-	out := httpCase{Name: c.Name, Files: c.Files, Symlinks: c.Symlinks, Mtime: c.Mtime, NoWorker: c.NoWorker}
+	s.prepareExt()
+	if !c.NoServer {
+		s.start()
+	}
+	out := c
+	out.Steps = nil
 	for _, step := range c.Steps {
 		observed := observeHTTPStep(t, s, step, mtime)
 		step.Expect = &observed
 		out.Steps = append(out.Steps, step)
 	}
-	exit := s.stop()
-	if exit != "exit 0" && exit != "exit 1" {
-		t.Fatalf("case %s: server stop: %s", c.Name, exit)
+	if !c.NoServer {
+		exit := s.stop()
+		if exit != "exit 0" && exit != "exit 1" {
+			t.Fatalf("case %s: server stop: %s", c.Name, exit)
+		}
 	}
 	logData, _ := os.ReadFile(filepath.Join(root, "stderr.log")) //nolint:gosec // disposable case root.
 	// A hit is a live credential in the server's log or in any raw response.
@@ -718,6 +769,11 @@ func observeHTTPCase(t *testing.T, binary string, c httpCase) httpCase {
 
 func observeHTTPStep(t *testing.T, s *httpServer, step httpStep, mtime int64) httpObserved {
 	t.Helper()
+	if observed, handled := s.observeExtStep(step); handled {
+		return observed
+	}
+	s.capture = step.Capture
+	defer func() { s.capture = nil }()
 	switch step.Kind {
 	case "fs":
 		httpApplyFS(t, s, step, mtime)
@@ -738,10 +794,14 @@ func observeHTTPStep(t *testing.T, s *httpServer, step httpStep, mtime int64) ht
 		raw = strings.ReplaceAll(raw, "{{FILL}}", strings.Repeat("a", step.RawFill))
 		raw = strings.ReplaceAll(raw, "{{PORT}}", strconv.Itoa(s.port))
 		method, _, _ := strings.Cut(raw, " ")
-		return s.exchange([]byte(raw), method == "HEAD", step.ReadMS, step.Mask, step.VolatileLength)
+		return s.timed(step, func() httpObserved {
+			return s.exchange([]byte(raw), method == "HEAD", step, step.ReadMS, step.Mask, step.VolatileLength)
+		})
 	default:
 		raw, head := buildHTTPRequest(s.secrets, step, s.port)
-		return s.exchange(raw, head, step.ReadMS, step.Mask, step.VolatileLength)
+		return s.timed(step, func() httpObserved {
+			return s.exchange(raw, head, step, step.ReadMS, step.Mask, step.VolatileLength)
+		})
 	}
 }
 

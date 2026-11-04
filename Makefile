@@ -1852,8 +1852,19 @@ mcp-calls-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.10 $(GO) test -count=1 ./cmd/symdesk -run '^TestMCPCallsProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --test mcp_calls --locked
 
+# MCP-002: every legacy alias answers byte for byte like its canonical tool.
+.PHONY: mcp-aliases
+mcp-aliases:
+	$(CARGO) test -p symdesk-cli --locked --test mcp_aliases
+
+# SEC-002 (MCP part): planted credentials never reach responses, stderr or
+# files; includes a planted-leak negative control.
+.PHONY: mcp-secret-canary
+mcp-secret-canary:
+	$(CARGO) test -p symdesk-cli --locked --test mcp_secret_canary
+
 .PHONY: mcp-conformance
-mcp-conformance: mcp-protocol-differential mcp-calls-differential
+mcp-conformance: mcp-protocol-differential mcp-calls-differential mcp-aliases mcp-secret-canary
 	$(CARGO) test -p symdesk-protocol --test mcp_frame --locked
 	$(CARGO) test -p symdesk-cli --locked --test mcp_surface --test mcp_read --test mcp_write --test mcp_initialize
 

@@ -441,8 +441,9 @@ fn recorded_tool_calls_match_go_stdio_and_resulting_state() {
     }
     assert!(executed > 0, "no case matches the filter");
     if filter.is_empty() {
-        assert!(executed >= 190, "fixture shrank to {executed} cases");
+        assert!(executed >= 640, "fixture shrank to {executed} cases");
     }
+    println!("mcp_calls: executed {executed} cases / {steps} steps (filter {filter:?})");
     assert!(
         failures.is_empty(),
         "{} problem(s) over {executed} cases / {steps} steps:\n{}",
